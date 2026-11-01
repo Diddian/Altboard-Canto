@@ -18,6 +18,7 @@ enum KeyboardHaptics {
     case ..<0.74: generator = medium
     default: generator = heavy
     }
+    generator.prepare()
     generator.impactOccurred(intensity: CGFloat(strength))
     generator.prepare()
   }

@@ -52,7 +52,9 @@ struct AlphabeticLetterKey: View {
           .onChanged { value in
             if !self.pressed { self.beginPress() }
             if self.choosing {
-              let index = Int(abs(value.translation.width) / 32.kbScaled)
+              let travel = self.popupAlignment == .topTrailing
+                ? -value.translation.width : value.translation.width
+              let index = Int(max(0, travel) / 32.kbScaled)
               self.selected = min(max(index, 0), self.options.count - 1)
             }
           }

@@ -45,6 +45,7 @@ jobs:
           set -euo pipefail
           python3 scripts/build-jyutping-lexicon.py
           test -s JyutpingResources/jyutping.sqlite3
+          swiftc -typecheck Shared/JyutpingComposition.swift Shared/SentenceCapitalization.swift
 
       - name: Generate Xcode project
         run: |
@@ -121,6 +122,14 @@ jobs:
           (cd "$RUNNER_TEMP/ipa" && zip -q -r "$GITHUB_WORKSPACE/dist/Altboard-Canto-SideStore.ipa" Payload)
           unzip -t "$GITHUB_WORKSPACE/dist/Altboard-Canto-SideStore.ipa" | tail -n 1
           ls -lh "$GITHUB_WORKSPACE/dist/Altboard-Canto-SideStore.ipa"
+
+      - name: Upload IPA to this Actions run
+        uses: actions/upload-artifact@v4
+        with:
+          name: Altboard-Canto-Unsigned-IPA
+          path: dist/Altboard-Canto-SideStore.ipa
+          if-no-files-found: error
+          retention-days: 14
 
       # GitHub Actions artifacts always download as a ZIP wrapper. Publishing the
       # IPA as a Release asset provides a real, direct .ipa download instead.

@@ -125,7 +125,7 @@ private struct KeyboardHeightPreview: View {
 
   var body: some View {
     GeometryReader { geo in
-      let gap: CGFloat = 6
+      let gap: CGFloat = self.kind == .alphabetic ? 11 : 6
       let rowsHeight: CGFloat = self.compact ? 96 : 198
       let inset = self.compact
         ? max(0, (geo.size.height - rowsHeight) / 2)
@@ -144,33 +144,25 @@ private struct KeyboardHeightPreview: View {
           self.standardControls(compact: self.compact)
         } else if self.kind == .alphabetic {
           HStack(spacing: 6) {
-            self.key("gearshape")
+            self.key("gearshape", width: 48)
+            Text("EN / 粵").font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
             Spacer()
-            Image(systemName: "mic")
-              .frame(width: 88, height: 45)
-              .background(Color(.tertiarySystemFill),
-                in: RoundedRectangle(cornerRadius: 8.5))
+            self.key("mic", width: 86)
           }
-          ForEach(0..<3, id: \.self) { rowIndex in
-            HStack(spacing: 4) {
-              ForEach(self.letterArrangement.rows[rowIndex], id: \.self) { letter in
-                Button {
-                  KeyboardHaptics.key(
-                    strength: self.hapticStrength, enabled: self.keyboardHapticsEnabled
-                  )
-                } label: {
-                  Text(letter)
-                    .font(.system(size: 20, weight: .regular))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 45)
-                    .background(Color(.tertiarySystemFill),
-                      in: RoundedRectangle(cornerRadius: 5.5))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Try \(letter) key haptic")
+          .padding(.horizontal, 6.67)
+          .frame(height: 46.33)
+          self.previewLetterRow(self.letterArrangement.rows[0], inset: 6.67)
+          self.previewLetterRow(self.letterArrangement.rows[1], inset: 28)
+          HStack(spacing: 14.67) {
+            self.key("shift.fill", width: 50)
+            HStack(spacing: 6) {
+              ForEach(self.letterArrangement.rows[2], id: \.self) { letter in
+                self.previewLetterKey(letter)
               }
             }
+            self.key("delete.left", width: 50)
           }
+          .padding(.horizontal, 6.67)
         } else {
           self.standardControls(compact: true)
           ForEach(0..<3, id: \.self) { _ in
@@ -183,7 +175,7 @@ private struct KeyboardHeightPreview: View {
             }
           }
         }
-        self.spaceRow
+        if self.kind == .alphabetic { self.alphabeticSpaceRow } else { self.spaceRow }
       }
       .padding(.top, self.kind == .standard ? inset : 0)
       .frame(maxWidth: .infinity, alignment: .top)
@@ -193,7 +185,65 @@ private struct KeyboardHeightPreview: View {
     .background(Color(.secondarySystemGroupedBackground),
       in: RoundedRectangle(cornerRadius: 14))
     .animation(.easeInOut(duration: 0.15), value: self.heightFactor)
-    .accessibilityLabel("Preview of keyboard: every key keeps the same size")
+  }
+
+  private func previewLetterRow(_ letters: [String], inset: CGFloat) -> some View {
+    HStack(spacing: 6) {
+      ForEach(letters, id: \.self) { self.previewLetterKey($0) }
+    }
+    .padding(.horizontal, inset)
+    .frame(height: 45)
+  }
+
+  private func previewLetterKey(_ letter: String) -> some View {
+    Button {
+      KeyboardHaptics.key(strength: self.hapticStrength, enabled: self.keyboardHapticsEnabled)
+    } label: {
+      Text(verbatim: letter)
+        .font(.system(size: 23, weight: .regular))
+        .foregroundStyle(.primary)
+        .offset(y: -1.2)
+        .frame(maxWidth: .infinity)
+        .frame(height: 45)
+        .background(Color(.tertiarySystemFill),
+          in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel("Test \(letter) key haptic")
+  }
+
+  private var alphabeticSpaceRow: some View {
+    HStack(spacing: 6) {
+      self.previewTextKey("?123", width: 48)
+      self.key("face.smiling", width: 48)
+      Button {
+        KeyboardHaptics.key(strength: self.hapticStrength, enabled: self.keyboardHapticsEnabled)
+      } label: {
+        Rectangle().fill(Color(.tertiarySystemFill))
+          .frame(maxWidth: .infinity)
+          .frame(height: 45)
+          .clipShape(RoundedRectangle(cornerRadius: 8))
+      }
+      .buttonStyle(.plain)
+      .accessibilityLabel("Test space bar haptic")
+      self.key("return.left", width: 102)
+    }
+    .padding(.horizontal, 6.67)
+    .frame(height: 45)
+  }
+
+  private func previewTextKey(_ text: String, width: CGFloat) -> some View {
+    Button {
+      KeyboardHaptics.key(strength: self.hapticStrength, enabled: self.keyboardHapticsEnabled)
+    } label: {
+      Text(verbatim: text)
+        .font(.system(size: 16))
+        .foregroundStyle(.primary)
+        .frame(width: width, height: 45)
+        .background(Color(.tertiarySystemFill),
+          in: RoundedRectangle(cornerRadius: 8))
+    }
+    .buttonStyle(.plain)
   }
 
   private func standardControls(compact: Bool) -> some View {
