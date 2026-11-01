@@ -23,8 +23,8 @@ extension ModelDownloadService {
 
   func enqueueDownload(variant: ModelVariant) async {
     do {
-      let manifest = try await self.fetchManifestCached()
-      guard let entry = manifest.entry(for: variant) else {
+      let manifest = variant == .qwen3ASR17B ? nil : try await self.fetchManifestCached()
+      guard let entry = variant == .qwen3ASR17B ? CustomQwenModelSource.entry() : manifest?.entry(for: variant) else {
         throw R2DownloadError.manifestMissingVariant(variant.rawValue)
       }
 
