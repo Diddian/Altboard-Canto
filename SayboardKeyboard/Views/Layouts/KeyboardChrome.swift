@@ -54,55 +54,43 @@ struct KeyboardStatusStrip: View {
   let onContentHeightChange: (CGFloat) -> Void
 
   var body: some View {
-    Color.clear
-      .overlay(alignment: .top) {
-        Group {
-          if self.keyboardState.isProcessing {
-            VoiceProcessingStatusView(progress: self.keyboardState.voiceProcessingProgress)
-              .transition(.opacity)
-          } else if self.keyboardState.isStartingRecording && !self.keyboardState.isRecording {
-            Text("Activating microphone…")
-              .font(.subheadline.weight(.semibold))
-              .foregroundStyle(.secondary)
-              .padding(.vertical, 6.kbScaled)
-          } else if self.showModelLoading {
-            ModelLoadingLabel(
-              isLoading: self.keyboardState.isModelLoading,
-              lowStorage: self.keyboardState.isLowDiskSpace,
-              isFirstUse: !self.keyboardState.hasPreparedModelOnce,
-              rebuildsAfterUpdates: self.keyboardState.selectedVariantSpecializesForNeuralEngine,
-            )
-            .transition(.opacity)
-          } else if let outcome = self.keyboardState.dictationOutcome {
-            DictationOutcomeLabel(outcome: outcome) {
-              self.keyboardState.dictationOutcome = nil
-            }
-            .transition(.opacity)
-          } else if self.keyboardState.isDictationLocked {
-            DictationLockedLabel()
-              .transition(.opacity)
-          }
+    Group {
+      if self.keyboardState.isProcessing {
+        VoiceProcessingStatusView(progress: self.keyboardState.voiceProcessingProgress)
+          .transition(.opacity)
+      } else if self.keyboardState.isStartingRecording && !self.keyboardState.isRecording {
+        Text("Activating microphone…")
+          .font(.subheadline.weight(.semibold))
+          .foregroundStyle(.secondary)
+          .padding(.vertical, 6.kbScaled)
+      } else if let outcome = self.keyboardState.dictationOutcome {
+        DictationOutcomeLabel(outcome: outcome) {
+          self.keyboardState.dictationOutcome = nil
         }
-        .animation(.easeOut(duration: 0.3), value: self.keyboardState.isStartingRecording)
-        .animation(.easeOut(duration: 0.3), value: self.keyboardState.isModelLoading)
-        .animation(.easeOut(duration: 0.3), value: self.keyboardState.isLowDiskSpace)
-        .animation(.easeOut(duration: 0.3), value: self.keyboardState.dictationOutcome)
-        .animation(.easeOut(duration: 0.3), value: self.keyboardState.isDictationLocked)
-        .background {
-          GeometryReader { geo in
-            Color.clear
-              .onAppear { self.onContentHeightChange(geo.size.height) }
-              .onChange(of: geo.size.height) { _, height in
-                self.onContentHeightChange(height)
-              }
-          }
-        }
+        .transition(.opacity)
+      } else if self.keyboardState.isDictationLocked {
+        DictationLockedLabel()
+          .transition(.opacity)
       }
+    }
+    // The status is the final row in the keyboard. It must contribute its
+    // intrinsic height, not overflow a zero-height Color.clear overlay.
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .animation(.easeOut(duration: 0.3), value: self.keyboardState.isStartingRecording)
+    .animation(.easeOut(duration: 0.3), value: self.keyboardState.isProcessing)
+    .animation(.easeOut(duration: 0.3), value: self.keyboardState.dictationOutcome)
+    .animation(.easeOut(duration: 0.3), value: self.keyboardState.isDictationLocked)
+    .background {
+      GeometryReader { geo in
+        Color.clear
+          .onAppear { self.onContentHeightChange(geo.size.height) }
+          .onChange(of: geo.size.height) { _, height in
+            self.onContentHeightChange(height)
+          }
+      }
+    }
   }
 
-  private var showModelLoading: Bool {
-    self.keyboardState.isModelLoading && self.keyboardState.isProcessing
-  }
 }
 
 /// A low-contrast status below the keyboard. Elapsed seconds are real, not a
