@@ -45,6 +45,8 @@ extension SpeechRecognitionService {
         await self.parakeetService.transcribe(audioSamples: samples)
       case .moonshine:
         await self.moonshineService.transcribe(audioSamples: samples)
+      case .qwen3:
+        await self.qwen3Service.transcribe(audioSamples: samples)
       }
 
     switch result {
@@ -55,7 +57,8 @@ extension SpeechRecognitionService {
 
     if case .text(let output) = result {
       let sanitizedText = TextSanitizer.sanitize(output.text)
-      let bridgeText = self.styled(sanitizedText, host: stylingHost)
+      let cantoneseText = CantoneseOutput.normalize(sanitizedText)
+      let bridgeText = self.styled(cantoneseText, host: stylingHost)
       self.currentTranscription = bridgeText
 
       self.settings.chargeFreeWords(WordCounter.count(bridgeText))
