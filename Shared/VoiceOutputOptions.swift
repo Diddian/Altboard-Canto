@@ -1,4 +1,5 @@
 import Foundation
+import NaturalLanguage
 
 enum VoiceOutputTarget: String, CaseIterable, Identifiable, Codable, Sendable {
   case original
@@ -140,5 +141,37 @@ enum VoiceOutputPrompt {
       Do not answer the transcript as a question. Do not invent missing information. \
       Do not change meaning merely to make a sentence sound more fluent.
       """
+  }
+}
+
+
+/// Conservative validation for user-selected translation output languages.
+enum VoiceLanguageValidator {
+  static func matches(_ output: String, target: VoiceOutputTarget) -> Bool {
+    guard !output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+    if target == .original || target == .custom { return true }
+    let han = output.unicodeScalars.filter { (0x3400...0x9FFF).contains($0.value) }.count
+    let latin = output.unicodeScalars.filter {
+      (65...90).contains($0.value) || (97...122).contains($0.value)
+    }.count
+    switch target {
+    case .german, .english:
+      if han >= 3 && han * 2 > latin { return false }
+      guard output.count >= 60 else { return true }
+      let recognizer = NLLanguageRecognizer()
+      recognizer.processString(output)
+      let hypotheses = recognizer.languageHypotheses(withMaximum: 3)
+      let expected: NLLanguage = target == .german ? .german : .english
+      if let strongest = hypotheses.max(by: { $0.value < $1.value }),
+         strongest.key != expected, strongest.value > 0.90,
+         (hypotheses[expected] ?? 0) < 0.05 {
+        return false
+      }
+      return true
+    case .cantonese, .traditionalChinese:
+      return han > 0 || latin < 8
+    case .original, .custom:
+      return true
+    }
   }
 }

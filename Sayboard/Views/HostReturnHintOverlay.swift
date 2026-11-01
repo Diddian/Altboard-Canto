@@ -3,6 +3,8 @@ import UIKit
 
 struct HostReturnHintOverlay: View {
 
+  let isRecording: Bool
+  let activationFailed: Bool
   let onClose: () -> Void
 
   var body: some View {
@@ -37,12 +39,15 @@ struct HostReturnHintOverlay: View {
 
   private var messageCard: some View {
     VStack(spacing: Self.cardInnerSpacing) {
-      Text("Swipe right to return")
+      Text(self.activationFailed ? "Microphone unavailable" :
+           (self.isRecording ? "Recording started" : "Activating microphone…"))
         .font(.title2.bold())
         .multilineTextAlignment(.center)
-      Text(
-        "The app opened to turn on the microphone: no mic session was active. Recording is already running — just head back."
-      )
+      Text(self.activationFailed
+        ? "Microphone activation failed. Check Altboard microphone permission and selected model."
+        : (self.isRecording
+          ? "Recording is active. Return to the previous app to dictate."
+          : "Arming the microphone. Speak when recording has started."))
       .font(.subheadline)
       .foregroundStyle(.secondary)
       .multilineTextAlignment(.center)
@@ -146,5 +151,5 @@ private struct SwipeRightAnimation: View {
 }
 
 #Preview {
-  HostReturnHintOverlay { }
+  HostReturnHintOverlay(isRecording: true, activationFailed: false) { }
 }

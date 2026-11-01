@@ -61,18 +61,29 @@ extension SpeechRecognitionService {
     }
 
     if case .text(let output) = result {
-      let sanitizedText = TextSanitizer.sanitize(output.text)
-      let cantoneseText = CantoneseOutput.normalize(sanitizedText)
-      self.currentRawTranscription = cantoneseText
-      // Edit in the main app before notifying the keyboard; do not insert twice.
-      let composing = self.recordingComposeMode
-      let spokenLanguage = VoiceComposeLanguage.detectedCode(transcript: cantoneseText)
-      self.settings.defaults.set(spokenLanguage, forKey: SharedKey.lastSpokenLanguage)
-      let finalText = await self.llmCoordinator?.processVoiceDictation(
-        cantoneseText, compose: composing, composePreset: self.recordingComposePreset,
-        spokenLanguage: spokenLanguage
-      ) ?? cantoneseText
-      let bridgeText = composing ? CantoneseOutput.normalize(finalText) : self.styled(CantoneseOutput.normalize(finalText), host: stylingHost)
+      let rawText = CantoneseOutput.normalize(TextSanitizer.sanitize(output.text))
+      guard !rawText.isEmpty else {
+        self.settings.lastDictationOutcome = .noSpeech
+        return
+      }
+      self.currentRawTranscription = rawText
+
+      // Snapshot is taken when the microphone begins capturing.
+      let options = self.recordingOutputOptions
+      self.settings.lastVoiceOutputProcessed = options.needsLLM
+      var finalText = rawText
+      if options.needsLLM {
+        let processed = await self.llmCoordinator?.processVoiceDictation(rawText, options: options)
+        if let processed, !processed.isEmpty {
+          finalText = processed
+        } else if options.target != .original {
+          // Explicit language must not silently fall back to untranslated text.
+          self.settings.lastDictationOutcome = .processingFailed
+          DiagnosticLog.write("voice: selected output language failed; raw speech retained in history")
+          return
+        }
+      }
+      let bridgeText = self.styled(CantoneseOutput.normalize(finalText), host: stylingHost)
       self.currentTranscription = bridgeText
 
       self.settings.chargeFreeWords(WordCounter.count(bridgeText))
@@ -97,7 +108,7 @@ extension SpeechRecognitionService {
     guard let fileName = currentAudioFileName else { return }
     guard let result = audioRecorder.stopRecording() else { return }
 
-    let transcription = self.currentTranscription
+    let transcription = self.currentTranscription.isEmpty ? self.currentRawTranscription : self.currentTranscription
     guard !transcription.isEmpty else {
       if let url = HistoryStore.shared.audioFileURL(for: fileName) {
         try? FileManager.default.removeItem(at: url)

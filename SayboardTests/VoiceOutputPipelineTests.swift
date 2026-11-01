@@ -45,6 +45,15 @@ struct VoiceOutputPipelineTests {
   }
 
   @Test
+  func explicitLanguageRejectsUntranslatedCantonese() {
+    #expect(!VoiceLanguageValidator.matches("我唔想同你講嘢", target: .german))
+    #expect(!VoiceLanguageValidator.matches("我唔想同你講嘢", target: .english))
+    #expect(VoiceLanguageValidator.matches("Ich bin müde.", target: .german))
+    #expect(VoiceLanguageValidator.matches("I am tired.", target: .english))
+    #expect(!VoiceLanguageValidator.matches("English only", target: .cantonese))
+  }
+
+  @Test
   func keyboardCyclesOutputLanguages() {
     #expect(VoiceOutputTarget.nextKeyboardTarget(after: .original) == .cantonese)
     #expect(VoiceOutputTarget.nextKeyboardTarget(after: .cantonese) == .english)

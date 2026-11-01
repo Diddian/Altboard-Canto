@@ -56,15 +56,6 @@ final class KeyboardViewController: UIInputViewController {
     self.setupForegroundObserver()
     self.setupLLMObservers()
     self.setupDictationLockObserver()
-    self.composeHeightObserver = NotificationCenter.default.addObserver(
-      forName: .init("AltboardComposeModeChanged"), object: nil, queue: .main
-    ) { [weak self] _ in
-      MainActor.assumeIsolated { self?.applyKeyboardHeight() }
-    }
-    self.keyboardState.onStaleLevelDetected = { [weak self] in
-      guard let self else { return }
-      self.resetProcessingState()
-    }
   }
 
   override func viewWillAppear(_ animated: Bool) {
@@ -130,8 +121,7 @@ final class KeyboardViewController: UIInputViewController {
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.requestSessionStatus)
   }
 
-  private static let staleFallbackTimeout: TimeInterval = 5
-  private static let heartbeatStaleThreshold: TimeInterval = 1.5
+  private static let staleFallbackTimeout: TimeInterval = 1.0
 
   private static var transcriptionObserver: DarwinNotificationObserver?
   private static var dictationStartedObserver: DarwinNotificationObserver?
@@ -146,7 +136,6 @@ final class KeyboardViewController: UIInputViewController {
   private var statusStripHeight: CGFloat = 0
 
   private var hostingController: UIHostingController<KeyboardView>?
-  private var composeHeightObserver: NSObjectProtocol?
   private var staleFallbackTimer: Timer?
   private var lastSyncedFullAccess = false
   private var hasPerformedInitialFullAccessSync = false
@@ -226,6 +215,7 @@ final class KeyboardViewController: UIInputViewController {
         vc.cancelProcessingTimeout()
         vc.keyboardState.isProcessing = false
         vc.keyboardState.isRecording = true
+        vc.keyboardState.isStartingRecording = false
         if !vc.isPerformingHistoryNavigation {
           vc.keyboardState.clearLLMHistory()
         }
@@ -244,6 +234,7 @@ final class KeyboardViewController: UIInputViewController {
         vc.cancelProcessingTimeout()
         vc.keyboardState.stopLevelPolling()
         vc.keyboardState.isRecording = false
+        vc.keyboardState.isStartingRecording = false
         vc.keyboardState.syncModelLoading()
         vc.keyboardState.syncDictationLock()
         vc.insertTranscribedText()
@@ -305,12 +296,6 @@ final class KeyboardViewController: UIInputViewController {
     let settings = SharedSettings()
     settings.synchronize()
 
-    let heartbeatAge = CFAbsoluteTimeGetCurrent() - settings.mainAppHeartbeat
-    if heartbeatAge > Self.heartbeatStaleThreshold {
-      self.openDictateDeepLinkFallback(reason: "heartbeat stale (\(heartbeatAge)s)")
-      return
-    }
-
     settings.dictationSessionToken = UUID().uuidString
     settings.synchronize()
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.requestStartDictation)
@@ -337,7 +322,9 @@ final class KeyboardViewController: UIInputViewController {
     settings.isSessionActive = false
     settings.keyboardRequestedDictationAt = CFAbsoluteTimeGetCurrent()
     settings.keyboardRequestedDictation = true
-    settings.dictationSessionToken = UUID().uuidString
+    if settings.dictationSessionToken == nil {
+      settings.dictationSessionToken = UUID().uuidString
+    }
     settings.synchronize()
     self.keyboardState.isSessionActive = false
     self.keyboardState.isProcessing = false
@@ -391,11 +378,14 @@ extension KeyboardViewController {
       DispatchQueue.main.async {
         guard let vc = Self.activeInstance else { return }
         let _ = vc.keyboardState.isSessionActive
-        vc.cancelProcessingTimeout()
+        let finalizing = vc.keyboardState.isProcessing
+        if !finalizing { vc.cancelProcessingTimeout() }
         vc.keyboardState.stopLevelPolling()
         vc.keyboardState.isSessionActive = false
         vc.keyboardState.isRecording = false
-        vc.keyboardState.isProcessing = false
+        vc.keyboardState.isStartingRecording = false
+        vc.keyboardState.isProcessing = finalizing
+        if finalizing { vc.startProcessingTimeout() }
       }
     }
   }
@@ -459,7 +449,7 @@ extension KeyboardViewController {
       actionBarVisible: self.actionBarVisible,
       kind: self.keyboardState.keyboardKind,
     )
-    let target = base + self.statusStripHeight + (self.keyboardState.isComposeMode ? KeyboardMetrics.composePresetBarHeight.kbScaled : 0)
+    let target = base + self.statusStripHeight
     guard hc.constant != target else { return }
     hc.constant = target
     self.hostingHeightConstraint?.constant = target

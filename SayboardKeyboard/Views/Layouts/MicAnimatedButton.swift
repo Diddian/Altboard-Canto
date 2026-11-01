@@ -62,6 +62,13 @@ struct MicAnimatedButton: View {
     .allowsHitTesting(!self.keyboardState.isProcessing)
     .onChange(of: self.keyboardState.isRecording, self.handleRecordingChanged)
     .task(id: self.keyboardState.isProcessing, self.observeProcessing)
+    .task(id: self.keyboardState.isStartingRecording) {
+      guard self.keyboardState.isStartingRecording else { return }
+      do { try await Task.sleep(for: .seconds(8)) } catch { return }
+      guard self.keyboardState.isStartingRecording else { return }
+      self.keyboardState.isStartingRecording = false
+      self.keyboardState.dictationOutcome = .activationFailed
+    }
     .gatedSensoryFeedback(.impact(weight: .medium), trigger: self.recordingStartCount)
     .gatedSensoryFeedback(.impact(weight: .light), trigger: self.recordingStopCount)
   }
@@ -81,7 +88,8 @@ struct MicAnimatedButton: View {
   private var micButtonLabel: some View {
     let shouldShowWave = self.keyboardState.isRecording
     let isLoading = self.keyboardState.isModelLoading && !self.keyboardState.isRecording
-    let isSpin = self.showSpinner || (isLoading && !self.isSpinnerMorphing && !self.pendingSpinnerMorph)
+    let isSpin = self.showSpinner || self.keyboardState.isStartingRecording
+      || (isLoading && !self.isSpinnerMorphing && !self.pendingSpinnerMorph)
     let isIdle = !shouldShowWave && !isSpin && !self.isMorphing && !self.isSpinnerMorphing
       && !self.pendingSpinnerMorph
     ZStack {
@@ -120,11 +128,15 @@ struct MicAnimatedButton: View {
     self.keyboardState.dismissMicHint()
     if self.keyboardState.isRecording {
       self.proxy.stopDictation()
+    } else if self.keyboardState.isStartingRecording {
+      return
     } else if self.keyboardState.isDictationLocked {
       if let url = DeepLink.unlockURL { self.proxy.openURL(url) }
     } else if self.keyboardState.isSessionActive {
+      self.keyboardState.isStartingRecording = true
       self.proxy.startDictation()
     } else if let url = DeepLink.dictateURL {
+      self.keyboardState.isStartingRecording = true
       let settings = SharedSettings()
       if OperatingSystem.isHostBundleIdBroken {
         self.proxy.resolveHost()

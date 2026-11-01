@@ -3,6 +3,7 @@ import Combine
 import FluidAudio
 
 import SwiftUI
+import UIKit
 
 @MainActor
 protocol ModelLoading: AnyObject {
@@ -37,8 +38,9 @@ final class SpeechRecognitionService: ObservableObject {
   let audioRecorder = AudioRecorder()
   var currentTranscription = ""
   @Published var currentRawTranscription = ""
-  var recordingComposeMode = false
-  var recordingComposePreset = VoiceComposePreset.automatic
+  var recordingOutputOptions = VoiceOutputConfiguration(
+    cleanupEnabled: false, target: .original, register: .faithful, customLanguage: ""
+  )
   var currentAudioFileName: String?
   var currentWordBoundaries: (start: Float, end: Float)?
 
@@ -54,39 +56,8 @@ final class SpeechRecognitionService: ObservableObject {
   }
 
   func startRecording() {
-    let _ = String(describing: self.activeLoadState)
-    let micAuth = self.settings.isMicrophoneAuthorized
-    let _ = self.session.isSessionActive
-    let _ = self.session.audioEngine.isRunning
-
-    guard !self.isRecording, !self.isStopping else {
-      return
-    }
-    guard micAuth else {
-      self.errorMessage = "Microphone access is required for voice input."
-      return
-    }
-    guard self.activeLoadState == .loaded else {
-      return
-    }
-
-    self.errorMessage = nil
-    self.currentTranscription = ""
-    self.currentRawTranscription = ""
-    self.recordingComposeMode = self.settings.voiceComposeMode
-    self.recordingComposePreset = self.settings.voiceComposePreset
-    self.currentAudioFileName = "\(UUID().uuidString).caf"
-
-    guard self.ensureSessionActive() else {
-      return
-    }
-
-    self.accumulator.reset()
-    self.startAudioCapture()
-    self.isRecording = true
-    self.settings.isRecording = true
-    self.armMaxDurationTimer()
-    TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStarted)
+    guard self.activeLoadState == .loaded else { return }
+    self.startCapture()
   }
 
   func startCapture() {
@@ -106,8 +77,10 @@ final class SpeechRecognitionService: ObservableObject {
     self.errorMessage = nil
     self.currentTranscription = ""
     self.currentRawTranscription = ""
-    self.recordingComposeMode = self.settings.voiceComposeMode
-    self.recordingComposePreset = self.settings.voiceComposePreset
+    self.recordingOutputOptions = self.settings.voiceOutputConfiguration
+    self.settings.lastVoiceOutputProcessed = false
+    self.settings.lastDictationOutcome = nil
+    TranscriptionBridge.clearTranscription()
     self.currentAudioFileName = "\(UUID().uuidString).caf"
 
     guard self.ensureSessionActive() else {
@@ -141,6 +114,23 @@ final class SpeechRecognitionService: ObservableObject {
     self.session.deactivateTap()
     let savedSamples = self.accumulator.samples
     let stylingHost = OnboardingTextEntry.stylingHost(self.settings.hostBundleId)
+
+    // Preserve the first words: capture before cold Qwen3 ONNX initialization.
+    let coldQwen = self.settings.selectedVariant.engine == .qwen3 && self.activeLoadState != .loaded
+    if coldQwen {
+      self.settings.isModelLoading = true
+      self.session.endSession()
+    }
+    defer { if coldQwen { self.settings.isModelLoading = false } }
+
+    let backgroundTask = UIApplication.shared.beginBackgroundTask(withName: "VoiceFinalization") {
+      DictationBreadcrumb.record("voice: background finalization time expired")
+    }
+    defer {
+      if backgroundTask != .invalid {
+        UIApplication.shared.endBackgroundTask(backgroundTask)
+      }
+    }
 
     if self.activeLoadState != .loaded {
       let _ = String(describing: self.activeLoadState)
@@ -192,45 +182,25 @@ final class SpeechRecognitionService: ObservableObject {
   }
 
   func startRecordingAfterModelLoad() async {
-    let _ = String(describing: self.activeLoadState)
-    guard !self.isStopping else { return }
-
+    guard !self.isRecording, !self.isStopping else { return }
     if self.settings.selectedVariant.engine == .qwen3 {
-      // Qwen3 must finish native ONNX initialization before AVAudioEngine starts.
-      // Loading a 1.7B model alongside a live audio session can exhaust memory.
-      DictationBreadcrumb.record("qwen: dictation requested, model=" + String(describing: self.activeLoadState))
-      if self.activeLoadState != .loaded, let downloadService {
-        self.settings.isModelLoading = true
-        defer { self.settings.isModelLoading = false }
-        if self.activeLoadState == .loading {
-          await self.qwen3Service.waitForLoad()
-        }
-        if self.activeLoadState != .loaded {
-          downloadService.verifyExistingModels()
-          await self.loadModelIfAvailable(downloadService: downloadService)
-        }
+      // Qwen3 loads after capture ends to avoid delaying microphone startup.
+      self.startCapture()
+      if self.isRecording {
+        DictationBreadcrumb.record("qwen: recording started, cold recognizer deferred until stop")
       }
-      guard self.activeLoadState == .loaded else {
-        DictationBreadcrumb.record("qwen: model not ready; audio session not started")
-        TranscriptionBridge.postDarwinNotification(DarwinNotificationName.modelLoadingFailed)
-        return
-      }
-      DictationBreadcrumb.record("qwen: model ready; starting microphone")
-      self.startRecording()
       return
     }
-
     if self.activeLoadState == .loaded {
       self.startRecording()
     } else {
       self.startCapture()
-      if let downloadService {
-        self.settings.isModelLoading = true
-        Task {
-          defer { self.settings.isModelLoading = false }
-          downloadService.verifyExistingModels()
-          await self.loadModelIfAvailable(downloadService: downloadService)
-        }
+      guard self.isRecording, let downloadService else { return }
+      self.settings.isModelLoading = true
+      Task {
+        defer { self.settings.isModelLoading = false }
+        downloadService.verifyExistingModels()
+        await self.loadModelIfAvailable(downloadService: downloadService)
       }
     }
   }

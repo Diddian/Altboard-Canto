@@ -46,6 +46,15 @@ struct TextSanitizerTests {
   }
 
   @Test
+  func qwen3ControlHeaders() {
+    #expect(TextSanitizer.sanitize("language Cantonese<asr_text>我而家好攰") == "我而家好攰")
+    #expect(TextSanitizer.sanitize("language English<|asr_text|>Hello there") == "Hello there")
+    #expect(TextSanitizer.sanitize("<asr_text>Ich komme morgen") == "Ich komme morgen")
+    #expect(TextSanitizer.sanitize("language Cantonese is actual speech") ==
+      "language Cantonese is actual speech")
+  }
+
+  @Test
   func `empty input`() {
     #expect(TextSanitizer.sanitize("").isEmpty)
   }

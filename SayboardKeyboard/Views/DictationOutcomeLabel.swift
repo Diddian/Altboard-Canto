@@ -26,7 +26,7 @@ struct DictationOutcomeLabel: View {
 
   private var labelText: Text {
     let text = Text(self.message)
-    guard self.outcome == .engineFailed else { return text }
+    guard self.outcome != .noSpeech else { return text }
     return Text(verbatim: "\u{26A0}\u{FE0F} ") + text
   }
 
@@ -34,6 +34,8 @@ struct DictationOutcomeLabel: View {
     switch self.outcome {
     case .noSpeech: "No speech recognized. Try speaking again"
     case .engineFailed: "Dictation failed. Try a different speech model in Altboard"
+    case .processingFailed: "Translation failed. Original speech saved in Altboard history"
+    case .activationFailed: "Microphone did not start. Open Altboard to check mic permission"
     }
   }
 }

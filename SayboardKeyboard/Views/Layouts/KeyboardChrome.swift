@@ -17,7 +17,7 @@ struct KeyboardChromeMetrics {
     let compact = keyboardState.selectedVariantSupportsTranslation || keyboardState.showsAIButton
     let side: CGFloat = (compact ? 43 : 45).kbScaled
     let wide: CGFloat = 92.kbScaled
-    let showsGlobe = keyboardState.showsGlobeButton
+    let showsGlobe = true // Reserve leading Emoji key.
 
     self.sideButtonWidth = side
     self.showsGlobe = showsGlobe
@@ -57,7 +57,12 @@ struct KeyboardStatusStrip: View {
     Color.clear
       .overlay(alignment: .top) {
         Group {
-          if self.showModelLoading {
+          if self.keyboardState.isStartingRecording && !self.keyboardState.isRecording {
+            Text("Activating microphone…")
+              .font(.subheadline.weight(.semibold))
+              .foregroundStyle(.secondary)
+              .padding(.vertical, 6.kbScaled)
+          } else if self.showModelLoading {
             ModelLoadingLabel(
               isLoading: self.keyboardState.isModelLoading,
               lowStorage: self.keyboardState.isLowDiskSpace,
@@ -75,6 +80,7 @@ struct KeyboardStatusStrip: View {
               .transition(.opacity)
           }
         }
+        .animation(.easeOut(duration: 0.3), value: self.keyboardState.isStartingRecording)
         .animation(.easeOut(duration: 0.3), value: self.keyboardState.isModelLoading)
         .animation(.easeOut(duration: 0.3), value: self.keyboardState.isLowDiskSpace)
         .animation(.easeOut(duration: 0.3), value: self.keyboardState.dictationOutcome)
@@ -105,8 +111,16 @@ struct KeyboardBottomRow: View {
 
   var body: some View {
     HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
-      if self.metrics.showsGlobe {
-        GlobeKey(fixedWidth: self.metrics.sideButtonWidth)
+      KeyButton(
+        content: .systemImage("face.smiling"),
+        fixedWidth: self.metrics.sideButtonWidth
+      ) {
+        self.keyboardState.showsEmojiPicker = true
+      }
+      .onLongPressGesture(minimumDuration: 0.55) {
+        if self.keyboardState.needsInputModeSwitchKey {
+          self.proxy.advanceToNextInputMode()
+        }
       }
 
       KeyButton(
@@ -130,6 +144,9 @@ struct KeyboardBottomRow: View {
     }
     .padding(.horizontal, 4.kbScaled)
     .padding(.bottom, 4.kbScaled)
+    .opacity(self.keyboardState.auxiliaryControlsHidden ? 0 : 1)
+    .allowsHitTesting(!self.keyboardState.auxiliaryControlsHidden)
+    .animation(.easeOut(duration: 0.22), value: self.keyboardState.auxiliaryControlsHidden)
   }
 }
 

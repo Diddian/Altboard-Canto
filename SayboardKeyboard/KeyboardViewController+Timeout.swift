@@ -32,7 +32,9 @@ extension KeyboardViewController {
           Date().timeIntervalSince($0)
         } ?? 0
 
-        if self.receivedPingDuringProcessing {
+        let settings = SharedSettings()
+        settings.synchronize()
+        if self.receivedPingDuringProcessing || settings.dictationSessionToken != nil {
           if elapsed < Self.processingHardTimeout {
             if self.keyboardState.isLLMProcessing {
               self.checkForPendingLLMResult()
@@ -61,6 +63,7 @@ extension KeyboardViewController {
     self.keyboardState.stopLevelPolling()
     self.keyboardState.isProcessing = false
     self.keyboardState.isRecording = false
+    self.keyboardState.isStartingRecording = false
     self.keyboardState.isSessionActive = false
     self.keyboardState.isLLMProcessing = false
     if !self.isPerformingHistoryNavigation {

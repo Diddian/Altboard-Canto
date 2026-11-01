@@ -6,6 +6,11 @@ enum TextSanitizer {
   static func sanitize(_ text: String) -> String {
     var result = text
 
+    result = self.qwenControlHeaderPattern.stringByReplacingMatches(
+      in: result,
+      range: NSRange(result.startIndex..., in: result)
+    )
+
     result = self.whisperTokenPattern.stringByReplacingMatches(
       in: result,
       range: NSRange(result.startIndex..., in: result),
@@ -26,6 +31,12 @@ enum TextSanitizer {
 
     return result
   }
+
+  private static let qwenControlHeaderPattern: NSRegularExpression =
+    try! NSRegularExpression(
+      pattern: #"^\s*(?:language\s+(?:Cantonese|English|German|Chinese|Mandarin|Yue)\s*)?(?:<asr_text>|<\|asr_text\|>|<text_sentinel>|<\|text_sentinel\|>)\s*"#,
+      options: [.caseInsensitive]
+    )
 
   private static let whisperTokenPattern: NSRegularExpression =
     try! NSRegularExpression(pattern: #"<\|[^|]+\|>"#)

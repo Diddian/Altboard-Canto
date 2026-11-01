@@ -77,7 +77,7 @@ final class SceneDelegate: NSObject, UIWindowSceneDelegate {
 
   func sceneWillEnterForeground(_: UIScene) {
     let settings = SharedSettings()
-    guard settings.hostBundleId == nil, settings.isKeyboardRequestRecent() else { return }
+    guard settings.isKeyboardRequestRecent() else { return }
     AppDelegate.pendingPreShowHint = true
     NotificationCenter.default.post(name: AppDelegate.preShowHintNotification, object: nil)
   }
@@ -206,7 +206,7 @@ private struct SayboardRootView: View {
     self._llmCoordinator = ObservedObject(wrappedValue: services.llmCoordinator)
     self._pipTutorialService = ObservedObject(wrappedValue: services.pipTutorialService)
     let settings = SharedSettings()
-    let preShowHint = settings.hostBundleId == nil && settings.isKeyboardRequestRecent()
+    let preShowHint = settings.isKeyboardRequestRecent()
     self._showsHostReturnHint = State(initialValue: preShowHint)
     self._isOnboardingPresented = State(initialValue: Self.shouldPresentOnboarding)
   }
@@ -242,6 +242,8 @@ private struct SayboardRootView: View {
   @State private var isChangingLanguage = false
   @State private var pendingPiPTutorial: TutorialVideo?
   @State private var showsHostReturnHint = false
+  @State private var hostActivationFailed = false
+  @State private var lastHostReturnToken: String?
   @State private var isOnboardingPresented = false
 
   private let services: AppServices
@@ -315,7 +317,10 @@ private struct SayboardRootView: View {
   @ViewBuilder
   private var hostReturnHintOverlay: some View {
     if self.showsHostReturnHint {
-      HostReturnHintOverlay { self.showsHostReturnHint = false }
+      HostReturnHintOverlay(
+        isRecording: self.speechService.isRecording,
+        activationFailed: self.hostActivationFailed
+      ) { self.showsHostReturnHint = false }
         .transition(.asymmetric(insertion: .identity, removal: .opacity))
     }
   }
@@ -481,41 +486,47 @@ private struct SayboardRootView: View {
   }
 
   private func handleDictateDeepLink() {
-    // SceneDelegate and onOpenURL may deliver the same deep link twice.
-    // Do not reset the session token or restart an in-flight model load.
-    guard !self.speechService.isRecording, !self.speechService.isStopping,
-          !SharedSettings().isModelLoading else {
-      DictationBreadcrumb.record("host: duplicate dictate link ignored")
-      return
-    }
-    SharedSettings().dictationSessionToken = UUID().uuidString
-
     let staysInApp = OnboardingTextEntry.isVisible
-
-    if SharedSettings().hostBundleId == nil, !staysInApp {
+    if !staysInApp {
       self.showsHostReturnHint = true
+      self.hostActivationFailed = false
     }
 
-    if self.downloadService.selectedVariant.engine == .qwen3 {
-      // Unlike lightweight engines, do not return to the host app while
-      // the Qwen3 ONNX recognizer is being constructed.
-      Task { await self.startQwenDictationFromKeyboard(staysInApp: staysInApp) }
+    // A Darwin request may start recording just before a fallback deep link.
+    // Reuse its active session and complete the host-return request.
+    if self.speechService.isRecording {
+      DictationBreadcrumb.record("host: recording already active; returning to host")
+      if !staysInApp { self.returnToHostWhenResolved() }
       return
     }
+    guard !self.speechService.isStopping else { return }
+
+    let settings = SharedSettings()
+    if settings.dictationSessionToken == nil {
+      settings.dictationSessionToken = UUID().uuidString
+    }
+    self.speechService.downloadService = self.downloadService
+    self.speechService.llmCoordinator = self.llmCoordinator
+    self.llmCoordinator.speechService = self.speechService
+    self.llmCoordinator.downloadService = self.llmDownloadService
 
     guard self.tryStartDictation() else {
-      self.showsHostReturnHint = false
+      self.hostActivationFailed = true
+      settings.dictationSessionToken = nil
+      DictationBreadcrumb.record("host: microphone activation failed")
       return
     }
 
-    if !staysInApp {
-      self.returnToHostWhenResolved()
+    if !staysInApp { self.returnToHostWhenResolved() }
+    if self.downloadService.selectedVariant.engine != .qwen3 {
+      Task { await self.loadModelInBackgroundIfNeeded() }
     }
-
-    Task { await self.loadModelInBackgroundIfNeeded() }
   }
 
   private func returnToHostWhenResolved() {
+    let token = SharedSettings().dictationSessionToken
+    guard let token, token != self.lastHostReturnToken else { return }
+    self.lastHostReturnToken = token
     Task { @MainActor in
       let deadline = Date().addingTimeInterval(Self.hostResolveTimeout)
       while SharedSettings().hostBundleId == nil, Date() < deadline {
@@ -535,34 +546,6 @@ private struct SayboardRootView: View {
     }
   }
 
-  private func startQwenDictationFromKeyboard(staysInApp: Bool) async {
-    DictationBreadcrumb.record("qwen: keyboard deep link received")
-    guard !self.speechService.isRecording else { return }
-    guard !SharedSettings().isDictationLocked else {
-      NotificationCenter.default.post(name: .purchaseScreenRequested, object: nil)
-      return
-    }
-    self.permissionService.refreshMicrophoneState()
-    guard self.permissionService.microphoneState == .granted else {
-      NotificationCenter.default.post(name: .dictationFailedNoMic, object: nil)
-      return
-    }
-    guard self.downloadService.isDownloaded(self.downloadService.selectedVariant) else {
-      NotificationCenter.default.post(name: .dictationFailedNoModel, object: nil)
-      return
-    }
-
-    await self.speechService.startRecordingAfterModelLoad()
-    guard self.speechService.isRecording else {
-      DictationBreadcrumb.record("qwen: did not start recording")
-      self.showsHostReturnHint = false
-      NotificationCenter.default.post(name: .dictationFailedNoModel, object: nil)
-      return
-    }
-    DictationBreadcrumb.record("qwen: recording started, returning to host")
-    if !staysInApp { self.returnToHostWhenResolved() }
-  }
-
   private func tryStartDictation() -> Bool {
     let isRec = self.speechService.isRecording
 
@@ -578,6 +561,7 @@ private struct SayboardRootView: View {
       NotificationCenter.default.post(name: .dictationFailedNoMic, object: nil)
       return false
     }
+    self.downloadService.verifyExistingModels()
     guard self.downloadService.hasUsableModel else {
       NotificationCenter.default.post(name: .dictationFailedNoModel, object: nil)
       return false

@@ -12,14 +12,16 @@ struct ExtendedKeyboardLayout: View {
         keyboardState: self.keyboardState,
         onContentHeightChange: self.proxy.setStatusStripHeight,
       )
-      if self.keyboardState.isComposeMode {
-        ComposePresetBar(keyboardState: self.keyboardState)
-      }
       VStack(spacing: Self.rowSpacing) {
         self.chromeRow
-        self.symbolsRow1View
-        self.symbolsRow2View
-        self.symbolsRow3View
+        Group {
+          self.symbolsRow1View
+          self.symbolsRow2View
+          self.symbolsRow3View
+        }
+        .opacity(self.keyboardState.auxiliaryControlsHidden ? 0 : 1)
+        .allowsHitTesting(!self.keyboardState.auxiliaryControlsHidden)
+        .animation(.easeOut(duration: 0.22), value: self.keyboardState.auxiliaryControlsHidden)
         KeyboardBottomRow(proxy: self.proxy, metrics: self.chrome, keyboardState: self.keyboardState)
       }
     }
@@ -69,34 +71,29 @@ struct ExtendedKeyboardLayout: View {
 extension ExtendedKeyboardLayout {
   private var chromeRow: some View {
     HStack(alignment: .center, spacing: KeyboardChromeMetrics.buttonSpacing) {
-      KeyButton(
-        content: .systemImage("gearshape"),
-        fixedWidth: self.chrome.sideButtonWidth,
-        shape: .pill,
-        fillOnPress: true,
-        firesHaptic: false,
-      ) {
-        if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
+      HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
+        KeyButton(
+          content: .systemImage("gearshape"),
+          fixedWidth: self.chrome.sideButtonWidth,
+          shape: .pill,
+          fillOnPress: true,
+          firesHaptic: false
+        ) {
+          if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
+        }
+        TranslateToggleButton(
+          fixedWidth: self.chrome.sideButtonWidth,
+          shape: .pill,
+          compactStyle: true,
+          keyboardState: self.keyboardState
+        )
+        if self.keyboardState.showsAIButton { self.aiButton }
+        if self.keyboardState.hasLLMHistory { self.undoRedoRow }
+        Spacer(minLength: 0)
       }
-      KeyButton(content: .systemImage("face.smiling"), fixedWidth: self.chrome.sideButtonWidth, shape: .pill) {
-        self.keyboardState.showsEmojiPicker = true
-      }
-      TranslateToggleButton(
-        fixedWidth: self.chrome.sideButtonWidth,
-        shape: .pill,
-        compactStyle: true,
-        keyboardState: self.keyboardState,
-      )
-      .transition(.opacity.combined(with: .scale))
-      if self.keyboardState.showsAIButton {
-        self.aiButton.transition(.opacity.combined(with: .scale))
-      }
-      if self.keyboardState.hasLLMHistory {
-        self.undoRedoRow
-          .transition(.opacity.combined(with: .scale))
-      }
-      Spacer()
-      ComposeModeButton(keyboardState: self.keyboardState, compact: true)
+      .opacity(self.keyboardState.auxiliaryControlsHidden ? 0 : 1)
+      .allowsHitTesting(!self.keyboardState.auxiliaryControlsHidden)
+      .animation(.easeOut(duration: 0.22), value: self.keyboardState.auxiliaryControlsHidden)
       self.micButton
     }
     .padding(.leading, 12.kbScaled)

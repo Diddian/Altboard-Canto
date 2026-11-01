@@ -11,7 +11,7 @@ struct SharedSettings {
     _ = Self.registration
   }
 
-  static let keyboardRequestTTL: TimeInterval = 3.0
+  static let keyboardRequestTTL: TimeInterval = 15.0
 
   let defaults: UserDefaults
 
@@ -220,14 +220,10 @@ struct SharedSettings {
     nonmutating set { defaults.set(newValue, forKey: SharedKey.voiceCleanupEnabled) }
   }
 
-  var voiceComposeMode: Bool {
-    get { defaults.bool(forKey: SharedKey.voiceComposeMode) }
-    nonmutating set { defaults.set(newValue, forKey: SharedKey.voiceComposeMode) }
-  }
-
-  var voiceComposePreset: VoiceComposePreset {
-    get { VoiceComposePreset(rawValue: defaults.string(forKey: SharedKey.voiceComposePreset) ?? "") ?? .automatic }
-    nonmutating set { defaults.set(newValue.rawValue, forKey: SharedKey.voiceComposePreset) }
+  /// Whether the latest dictation result has already used the main-app text model.
+  var lastVoiceOutputProcessed: Bool {
+    get { defaults.bool(forKey: SharedKey.lastVoiceOutputProcessed) }
+    nonmutating set { defaults.set(newValue, forKey: SharedKey.lastVoiceOutputProcessed) }
   }
 
   var voiceOutputTarget: VoiceOutputTarget {

@@ -7,6 +7,7 @@ import SwiftUI
 final class KeyboardState: ObservableObject {
 
   @Published var isRecording = false
+  @Published var isStartingRecording = false
   @Published var isProcessing = false
   @Published var isSessionActive = false
   @Published var isModelLoading = false
@@ -17,8 +18,6 @@ final class KeyboardState: ObservableObject {
   @Published var hasFullAccess = false
   @Published var useCustomSpaceBar = false
   @Published var isTranslationMode = false
-  @Published var isComposeMode = false
-  @Published var composePreset = VoiceComposePreset.automatic
   @Published var showsEmojiPicker = false
   @Published var selectedVariantSupportsTranslation = false
   @Published var selectedVariantSpecializesForNeuralEngine = false
@@ -44,11 +43,14 @@ final class KeyboardState: ObservableObject {
   @Published var isDictationLocked = false
   @Published var showsMicHint = false
 
-  var onStaleLevelDetected: (() -> Void)?
 
   var openURLAction: ((URL) -> Void)?
 
   var appearedAt: CFAbsoluteTime = 0
+
+  var auxiliaryControlsHidden: Bool {
+    self.isStartingRecording || self.isRecording || self.isProcessing
+  }
 
   var canUndoLLM: Bool {
     self.llmHistoryIndex > 0
@@ -76,8 +78,7 @@ final class KeyboardState: ObservableObject {
 
   func refresh() {
     self.settings.synchronize()
-    let prevRec = self.isRecording
-    let prevSession = self.isSessionActive
+    self.isStartingRecording = false
     self.isRecording = self.settings.isRecording
     self.isSessionActive = self.settings.isSessionActive
     if self.isRecording, !self.isSessionActive {
@@ -90,8 +91,6 @@ final class KeyboardState: ObservableObject {
     self.hasUsableModel = self.settings.hasUsableModel
     self.parakeetV3NeedsRedownload = self.settings.parakeetV3NeedsRedownload
     self.isMicrophoneAuthorized = self.settings.isMicrophoneAuthorized
-    self.isComposeMode = self.settings.voiceComposeMode
-    self.composePreset = self.settings.voiceComposePreset
     self.useCustomSpaceBar = self.settings.useCustomSpaceBar
     self.keyboardKind = self.settings.keyboardKind
     let selectedVariant = self.settings.selectedVariant
@@ -101,7 +100,6 @@ final class KeyboardState: ObservableObject {
       self.isTranslationMode = false
       self.settings.isTranslationMode = false
     }
-    if self.isRecording != prevRec || self.isSessionActive != prevSession { }
     self.hasUsableLLMModel = self.settings.hasUsableLLMModel
     self.isLLMProcessing = self.settings.isLLMProcessing
     self.llmEnabled = self.settings.llmEnabled
@@ -114,7 +112,6 @@ final class KeyboardState: ObservableObject {
     self.keyboardHapticsEnabled = self.settings.keyboardHapticsEnabled
     self.syncDictationLock()
     self.checkDiskSpace()
-    let _ = self.displayLink != nil
   }
 
   func syncModelLoading() {
@@ -146,17 +143,6 @@ final class KeyboardState: ObservableObject {
     self.settings.isMicHintDismissed = true
   }
 
-  func selectComposePreset(_ preset: VoiceComposePreset) {
-    self.composePreset = preset
-    self.settings.voiceComposePreset = preset
-  }
-
-  func toggleComposeMode() {
-    self.isComposeMode.toggle()
-    self.settings.voiceComposeMode = self.isComposeMode
-    NotificationCenter.default.post(name: .init("AltboardComposeModeChanged"), object: nil)
-  }
-
   func toggleTranslationMode() {
     self.isTranslationMode.toggle()
     self.settings.isTranslationMode = self.isTranslationMode
@@ -164,9 +150,6 @@ final class KeyboardState: ObservableObject {
 
   func startLevelPolling() {
     guard self.displayLink == nil else { return }
-    self.lastPolledLevel = 0
-    self.lastLevelChangeTime = CACurrentMediaTime()
-    self.staleLevelDetected = false
     let target = DisplayLinkTarget { [weak self] in
       guard let self else { return false }
       self.pollAudioLevel()
@@ -187,50 +170,23 @@ final class KeyboardState: ObservableObject {
     self.audioLevel = 0
   }
 
-  private static let staleLevelThreshold: TimeInterval = 2
-
   private let settings = SharedSettings()
   private let levelBridge = AudioLevelBridge(mode: .reader)
   private var displayLink: CADisplayLink?
   private var displayLinkTarget: DisplayLinkTarget?
-  private var lastLevelChangeTime: CFTimeInterval = 0
-  private var lastPolledLevel: Float = 0
-  private var pollCount = 0
-  private var staleLevelDetected = false
-
   private func checkDiskSpace() {
     self.isLowDiskSpace = DiskSpace.isLow()
   }
 
   private func pollAudioLevel() {
     let newLevel = self.levelBridge.readLevel()
-    let now = CACurrentMediaTime()
-
-    if newLevel != self.lastPolledLevel {
-      self.lastPolledLevel = newLevel
-      self.lastLevelChangeTime = now
-    }
-
     if newLevel != self.audioLevel {
       withAnimation(.interpolatingSpring(duration: 0.08, bounce: 0)) {
         self.audioLevel = newLevel
       }
     }
-
-    self.pollCount += 1
-    if self.pollCount % 20 == 0 { }
-
-    if
-      !self.staleLevelDetected,
-      self.isRecording,
-      self.lastLevelChangeTime > 0,
-      now - self.lastLevelChangeTime >= Self.staleLevelThreshold
-    {
-      self.staleLevelDetected = true
-      self.stopLevelPolling()
-      self.onStaleLevelDetected?()
-    }
   }
+
 }
 
 private final class DisplayLinkTarget: NSObject {

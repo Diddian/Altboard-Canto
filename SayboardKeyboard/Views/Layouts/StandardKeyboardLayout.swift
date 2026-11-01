@@ -12,9 +12,6 @@ struct StandardKeyboardLayout: View {
         keyboardState: self.keyboardState,
         onContentHeightChange: self.proxy.setStatusStripHeight,
       )
-      if self.keyboardState.isComposeMode {
-        ComposePresetBar(keyboardState: self.keyboardState)
-      }
       VStack(spacing: 8.5.kbScaled) {
         self.micRow
         KeyboardBottomRow(proxy: self.proxy, metrics: self.chrome, keyboardState: self.keyboardState)
@@ -31,15 +28,6 @@ struct StandardKeyboardLayout: View {
       self.sideButtons
       MicButtonWithPulse(sizing: .standard, proxy: self.proxy, keyboardState: self.keyboardState)
         .padding(.bottom, 6.kbScaled)
-    }
-    .overlay(alignment: .top) {
-      HStack {
-        KeyButton(content: .systemImage("face.smiling"), fixedWidth: self.chrome.sideButtonWidth) {
-          self.keyboardState.showsEmojiPicker = true
-        }
-        Spacer()
-        ComposeModeButton(keyboardState: self.keyboardState, compact: false)
-      }
     }
     .padding(.horizontal, 4.kbScaled)
   }
@@ -73,6 +61,9 @@ extension StandardKeyboardLayout {
         }
       }
     }
+    .opacity(self.keyboardState.auxiliaryControlsHidden ? 0 : 1)
+    .allowsHitTesting(!self.keyboardState.auxiliaryControlsHidden)
+    .animation(.easeOut(duration: 0.22), value: self.keyboardState.auxiliaryControlsHidden)
     .animation(.easeInOut(duration: 0.35), value: self.keyboardState.selectedVariantSupportsTranslation)
     .animation(.easeInOut(duration: 0.35), value: self.keyboardState.showsAIButton)
     .animation(.easeInOut(duration: 0.25), value: self.keyboardState.hasLLMHistory)

@@ -39,29 +39,24 @@ final class LLMProcessingCoordinator: ObservableObject {
 
   private var requestObserver: DarwinNotificationObserver?
 
-  /// Edit the speech transcript in the main app before it reaches the keyboard.
-  /// If the model is unavailable or fails, the original transcription survives.
-  func processVoiceDictation(_ input: String, compose: Bool = false,
-    composePreset: VoiceComposePreset = .automatic, spokenLanguage: String? = nil) async -> String? {
-    let settings = SharedSettings()
-    let options = settings.voiceOutputConfiguration
-    guard (options.needsLLM || compose), !input.isEmpty else { return nil }
+  /// Optional cleanup or translation. Spoken dictation is never a Compose prompt.
+  func processVoiceDictation(_ input: String, options: VoiceOutputConfiguration) async -> String? {
+    guard options.needsLLM, !input.isEmpty else { return nil }
     let started = CFAbsoluteTimeGetCurrent()
-    DictationBreadcrumb.record("llm: voice cleanup requested")
     guard !self.isProcessing else {
-      DiagnosticLog.write("voice/llm: already processing; use raw transcription")
+      DiagnosticLog.write("voice/llm: already processing")
       return nil
     }
     guard let downloads = self.downloadService, downloads.hasUsableModel else {
-      DiagnosticLog.write("voice/llm: offline LLM not downloaded; use raw transcription")
+      DiagnosticLog.write("voice/llm: offline text model unavailable")
       return nil
     }
+    let settings = SharedSettings()
     let variant = settings.selectedLLMVariant
     guard let modelPath = downloads.modelFileURL(for: variant)?.path else {
-      DiagnosticLog.write("voice/llm: selected model file missing; use raw transcription")
+      DiagnosticLog.write("voice/llm: selected model file missing")
       return nil
     }
-
     self.isProcessing = true
     settings.isLLMProcessing = true
     defer {
@@ -69,46 +64,32 @@ final class LLMProcessingCoordinator: ObservableObject {
       settings.isLLMProcessing = false
       self.isProcessing = false
     }
-
     let backgroundTask = self.beginInferenceBackgroundTask()
     defer { self.endInferenceBackgroundTask(backgroundTask) }
-
     await self.prepareForInference(variant: variant, modelPath: modelPath)
-    let prepareDuration = CFAbsoluteTimeGetCurrent() - started
-    DictationBreadcrumb.record("llm: prepare finished in \(String(format: "%.1f", prepareDuration))s")
     guard self.inferenceService.loadState == .loaded else {
-      DiagnosticLog.write("voice/llm: model failed to load; use raw transcription")
+      DiagnosticLog.write("voice/llm: offline model load failed")
       return nil
     }
-
-    let prompt = compose ? VoiceComposePrompt.systemPrompt(for: options, spokenInstruction: input,
-        preset: composePreset, spokenLanguage: spokenLanguage) : VoiceOutputPrompt.systemPrompt(for: options)
-    var result = await self.runInferenceWithTimeout(
-      systemPrompt: prompt,
-      userText: input,
-      assistantPrefill: "",
-      forComposition: compose
+    let result = await self.runInferenceWithTimeout(
+      systemPrompt: VoiceOutputPrompt.systemPrompt(for: options),
+      userText: input, assistantPrefill: ""
     )
-    if let text = result, VoiceComposePrompt.needsCantoneseRetry(output: text, target: options.target) {
-      DictationBreadcrumb.record("llm: repairing unconverted Cantonese output")
-      result = await self.runInferenceWithTimeout(systemPrompt: VoiceComposePrompt.cantoneseRepairPrompt, userText: text, assistantPrefill: "") ?? result
+    guard let output = result?.trimmingCharacters(in: .whitespacesAndNewlines), !output.isEmpty else {
+      DiagnosticLog.write("voice/llm: output missing or timed out")
+      return nil
+    }
+    guard VoiceLanguageValidator.matches(output, target: options.target) else {
+      DiagnosticLog.write("voice/llm: generated text did not match selected language")
+      return nil
+    }
+    if input.count >= 30, output.count > max(input.count * 4, input.count + 200) {
+      DiagnosticLog.write("voice/llm: output excessively long")
+      return nil
     }
     DictationBreadcrumb.record(
-      "llm: generation took \(String(format: "%.1f", CFAbsoluteTimeGetCurrent() - started - prepareDuration))s"
+      "voice/llm: complete in \(String(format: "%.1f", CFAbsoluteTimeGetCurrent() - started))s"
     )
-
-    guard let result, !result.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-      DiagnosticLog.write("voice/llm: empty or timed out; use raw transcription")
-      return nil
-    }
-
-    let output = result.trimmingCharacters(in: .whitespacesAndNewlines)
-    if !compose && input.count >= 30 && output.count > max(input.count * 4, input.count + 200) {
-      DiagnosticLog.write("voice/llm: excessive output; use raw transcription")
-      return nil
-    }
-    DiagnosticLog.write("voice/llm: processed \(input.count) to \(output.count) characters")
-    DictationBreadcrumb.record("llm: cleanup complete in \(String(format: "%.1f", CFAbsoluteTimeGetCurrent() - started))s; \(input.count) to \(output.count) chars")
     return output
   }
 
@@ -251,8 +232,7 @@ final class LLMProcessingCoordinator: ObservableObject {
   private func runInferenceWithTimeout(
     systemPrompt: String,
     userText: String,
-    assistantPrefill: String,
-    forComposition: Bool = false,
+    assistantPrefill: String
   ) async -> String? {
     let remaining = UIApplication.shared.backgroundTimeRemaining
     let timeout: TimeInterval =
@@ -268,8 +248,8 @@ final class LLMProcessingCoordinator: ObservableObject {
           systemPrompt: systemPrompt,
           userText: userText,
           assistantPrefill: assistantPrefill,
-          maxOutputTokens: forComposition ? 768 : nil,
-          deadlineSeconds: forComposition ? 40 : 15,
+          maxOutputTokens: nil,
+          deadlineSeconds: 15,
         )
       }
 

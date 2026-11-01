@@ -13,13 +13,8 @@ struct KeyboardSettingsView: View {
           }
         }
         Toggle("Haptic Feedback", isOn: self.$keyboardHapticsEnabled)
-        if !self.needsInputModeSwitchKey {
-          Toggle("Show Keyboard Switch Key", isOn: self.$showGlobeKey)
-        }
       } footer: {
-        if !self.needsInputModeSwitchKey {
-          Text("Display an extra globe key on the keyboard. Your device already provides one, so this is optional.")
-        }
+        Text("The duplicate globe key is now Emoji. Long-press Emoji to switch keyboards where required.")
       }
       Section {
         Toggle("“.” Shortcut", isOn: self.$periodShortcutEnabled)
@@ -31,12 +26,8 @@ struct KeyboardSettingsView: View {
     .navigationBarTitleDisplayMode(.inline)
   }
 
-  @AppStorage(SharedKey.showGlobeKey, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var showGlobeKey = true
   @AppStorage(SharedKey.keyboardHapticsEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
   private var keyboardHapticsEnabled = true
-  @AppStorage(SharedKey.needsInputModeSwitchKey, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var needsInputModeSwitchKey = true
   @AppStorage(SharedKey.periodShortcutEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
   private var periodShortcutEnabled = true
 }
