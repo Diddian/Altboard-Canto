@@ -98,6 +98,7 @@ struct ModelsView: View, Equatable {
     let variants = self.filteredAndSortedVariants
     return Group {
       self.languageFilterButton
+      CustomQwenModelView()
       VStack(spacing: 12) {
         ForEach(variants) { variant in
           self.modelCard(for: variant)
