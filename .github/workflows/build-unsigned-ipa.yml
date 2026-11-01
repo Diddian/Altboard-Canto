@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: altboard-unsigned-${{ github.ref }}
@@ -111,19 +111,33 @@ jobs:
           unzip -t "$GITHUB_WORKSPACE/dist/Altboard-Canto-SideStore.ipa" | tail -n 1
           ls -lh "$GITHUB_WORKSPACE/dist/Altboard-Canto-SideStore.ipa"
 
-      - name: Upload IPA artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Altboard-Canto-SideStore-IPA
-          path: dist/Altboard-Canto-SideStore.ipa
-          if-no-files-found: error
-          retention-days: 14
-
-      - name: Upload failure log
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: Altboard-Canto-build-log
-          path: ${{ runner.temp }}/xcodebuild.log
-          if-no-files-found: ignore
-          retention-days: 7
+      # GitHub Actions artifacts always download as a ZIP wrapper. Publishing the
+      # IPA as a Release asset provides a real, direct .ipa download instead.
+      - name: Publish direct IPA to rolling development release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="altboard-canto-dev"
+          IPA="dist/Altboard-Canto-SideStore.ipa"
+          test -s "$IPA"
+          NOTES="Unsigned SideStore IPA built from commit $GITHUB_SHA on branch $GITHUB_REF_NAME. Install using SideStore, which must re-sign the IPA."
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$IPA" --repo "$GITHUB_REPOSITORY" --clobber
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --notes "$NOTES"
+          else
+            gh release create "$TAG" "$IPA" \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "Altboard-Canto development IPA" \
+              --notes "$NOTES" \
+              --prerelease
+          fi
+          # Keep the release tag and its download tied to the latest built SHA.
+          gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/$TAG" \
+            -f "sha=$GITHUB_SHA" -F "force=true" >/dev/null
+          DIRECT="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/Altboard-Canto-SideStore.ipa"
+          echo "### Direct IPA download" >> "$GITHUB_STEP_SUMMARY"
+          echo "[$DIRECT]($DIRECT)" >> "$GITHUB_STEP_SUMMARY"
+          echo "Built from commit: \`$GITHUB_SHA\`" >> "$GITHUB_STEP_SUMMARY"
