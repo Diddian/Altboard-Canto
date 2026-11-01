@@ -25,13 +25,22 @@ extension ModelDownloadService {
     if variant.engine == .qwen3 {
       do {
         try await QwenHubDownloader.download(variant: variant) { [weak self] fraction in
-          self?.variantStates[variant] = .downloading(
-            progress: min(fraction * Self.downloadProgressCeiling, Self.downloadProgressCeiling - 0.01)
+          guard let self, self.enqueueTasks[variant] != nil else { return }
+          guard case .downloading = self.state(for: variant) else { return }
+          self.variantStates[variant] = .downloading(
+            progress: min(max(fraction, 0) * Self.downloadProgressCeiling, Self.downloadProgressCeiling)
           )
         }
         try Task.checkCancellation()
         guard ModelStorageManager.isDownloaded(variant) else {
           throw QwenHubDownloader.DownloadError.incompatible("Expected Qwen3 ONNX files were not found after download")
+        }
+        // Use the same preparing-model progress phase as every other model.
+        let modelReady = await self.loadModelAfterDownload(variant: variant)
+        guard modelReady else {
+          self.removeVariantFromPersistence(variant)
+          self.enqueueTasks[variant] = nil
+          return
         }
         self.variantStates[variant] = .downloaded
         self.removeVariantFromPersistence(variant)

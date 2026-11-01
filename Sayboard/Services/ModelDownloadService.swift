@@ -133,6 +133,10 @@ final class ModelDownloadService: ObservableObject {
   }
 
   func startDownload(variant: ModelVariant) {
+    if variant.engine == .qwen3 {
+      // Avoid concurrent foreground tasks for the same multi-GB model.
+      guard self.enqueueTasks[variant] == nil else { return }
+    }
     guard
       !BackgroundDownloadManager.shared.hasActiveDownload(
         variantRawValue: variant.rawValue,

@@ -1,70 +1,81 @@
 import SwiftUI
 
+/// Model source settings use normal Altboard navigation. Model installation and
+/// progress remain in the standard ModelCardView on the Models screen.
 struct CustomQwenModelView: View {
+
   @EnvironmentObject private var downloadService: ModelDownloadService
-  @State private var variant: ModelVariant = .qwen3ASR17B
+  @Environment(\.dismiss) private var dismiss
+
   @State private var repositoryID = CustomQwenModelSource.repositoryID(for: .qwen3ASR17B)
-  @State private var status: String?
+  @State private var message: String?
+
+  private let variant = ModelVariant.qwen3ASR17B
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 12) {
-      Label("Offline Qwen3-ASR", systemImage: "waveform").font(.headline)
-      Text("Built-in model downloads from Hugging Face, automatically retrying each file on HF-Mirror. No API key or model URL required.")
-        .font(.footnote).foregroundStyle(.secondary)
-
-      Picker("Model size", selection: self.$variant) {
-        Text("Qwen3 0.6B — smaller").tag(ModelVariant.qwen3ASR06B)
-        Text("Qwen3 1.7B — higher quality").tag(ModelVariant.qwen3ASR17B)
-      }
-      .pickerStyle(.menu)
-
-      if !self.variant.isSupportedOnCurrentDevice {
-        Label("This model exceeds the configured device RAM limit.", systemImage: "exclamationmark.triangle")
-          .font(.footnote).foregroundStyle(.orange)
-      }
-
-      Menu {
-        ForEach(CustomQwenModelSource.presets(for: self.variant), id: \.self) { source in
-          Button(source) { self.repositoryID = source }
+    Form {
+      Section {
+        LabeledContent("Model", value: self.variant.displayName)
+        Menu {
+          ForEach(CustomQwenModelSource.presets(for: self.variant), id: \.self) { source in
+            Button(source) { self.repositoryID = source }
+          }
+        } label: {
+          HStack {
+            Text("Known free sources")
+            Spacer()
+            Image(systemName: "chevron.up.chevron.down")
+              .foregroundStyle(.secondary)
+          }
         }
-      } label: {
-        Label("Choose free Hugging Face source", systemImage: "server.rack")
-      }
 
-      TextField("Hugging Face model URL or owner/repository", text: self.$repositoryID)
-        .textInputAutocapitalization(.never).autocorrectionDisabled()
-        .keyboardType(.URL)
-        .textFieldStyle(.roundedBorder)
+        TextField("Hugging Face owner/repository or URL", text: self.$repositoryID)
+          .textInputAutocapitalization(.never)
+          .autocorrectionDisabled()
+          .keyboardType(.URL)
 
-      Text("Custom import accepts sherpa-onnx Qwen3-ASR repositories only. MLX, GGUF, general Whisper and arbitrary Hugging Face files are not compatible.")
-        .font(.caption).foregroundStyle(.secondary)
-
-      Button {
-        guard CustomQwenModelSource.save(self.repositoryID, for: self.variant) else {
-          self.status = "Enter a valid public Hugging Face repository."
-          return
+        Button("Save Source") {
+          guard CustomQwenModelSource.save(self.repositoryID, for: self.variant) else {
+            self.message = "Enter a valid Hugging Face model repository."
+            return
+          }
+          self.dismiss()
         }
-        self.status = "Source saved. Starting download; keep Altboard open during large downloads."
-        self.downloadService.startDownload(variant: self.variant)
-      } label: {
-        Label("Save source and download", systemImage: "arrow.down.circle.fill")
-      }
-      .disabled(CustomQwenModelSource.normalizedRepositoryID(self.repositoryID) == nil
-                || !self.variant.isSupportedOnCurrentDevice
-                || self.downloadService.isDownloaded(self.variant))
+        .disabled(
+          CustomQwenModelSource.normalizedRepositoryID(self.repositoryID) == nil
+            || self.isBusyOrInstalled
+        )
 
-      if let status {
-        Text(status).font(.footnote).foregroundStyle(.secondary)
+        if let message {
+          Text(message)
+            .font(.footnote)
+            .foregroundStyle(.orange)
+        }
+      } header: {
+        Text("Qwen3-ASR 1.7B")
+      } footer: {
+        Text("Download, progress, Cancel and Retry are on the Qwen model card. Sources must provide sherpa-onnx Qwen3-ASR ONNX files.")
       }
-      Text("Detected device RAM: \(ProcessInfo.processInfo.physicalMemory / 1_000_000_000) GB. Storage and free app memory are also checked; 1.7B is experimental.")
-        .font(.caption).foregroundStyle(.secondary)
+
+      if self.isBusyOrInstalled {
+        Section {
+          Label(
+            "Cancel the download or remove the installed model before changing its source.",
+            systemImage: "info.circle"
+          )
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+        }
+      }
     }
-    .padding(12)
-    .background(Color(.secondarySystemGroupedBackground))
-    .clipShape(RoundedRectangle(cornerRadius: 12))
-    .onChange(of: self.variant) { _, choice in
-      self.repositoryID = CustomQwenModelSource.repositoryID(for: choice)
-      self.status = nil
+    .navigationTitle("Model Source")
+    .navigationBarTitleDisplayMode(.inline)
+  }
+
+  private var isBusyOrInstalled: Bool {
+    switch self.downloadService.state(for: self.variant) {
+    case .downloading, .downloaded: true
+    case .notDownloaded, .error: false
     }
   }
 }

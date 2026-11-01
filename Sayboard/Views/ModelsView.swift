@@ -85,11 +85,13 @@ struct ModelsView: View, Equatable {
   }
 
   private var filteredAndSortedVariants: [ModelVariant] {
+    // Keep legacy 0.6B data compatible while showing only the 1.7B model card.
+    let available = ModelVariant.allCases.filter { $0 != .qwen3ASR06B }
     let variants =
       if let language = self.selectedLanguageFilter {
-        ModelVariant.allCases.filter { $0.supportedLanguages.contains(language) }
+        available.filter { $0.supportedLanguages.contains(language) }
       } else {
-        Array(ModelVariant.allCases)
+        available
       }
     return variants.sorted { self.sortKey(for: $0).precedes(self.sortKey(for: $1)) }
   }
@@ -98,10 +100,27 @@ struct ModelsView: View, Equatable {
     let variants = self.filteredAndSortedVariants
     return Group {
       self.languageFilterButton
-      CustomQwenModelView()
       VStack(spacing: 12) {
         ForEach(variants) { variant in
-          self.modelCard(for: variant)
+          VStack(spacing: 5) {
+            self.modelCard(for: variant)
+            if variant == .qwen3ASR17B {
+              NavigationLink {
+                CustomQwenModelView()
+              } label: {
+                HStack(spacing: 4) {
+                  Text("Advanced: Change Qwen model source")
+                  Image(systemName: "chevron.right")
+                    .font(.caption2)
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .padding(.horizontal, 8)
+              }
+              .buttonStyle(.plain)
+            }
+          }
         }
       }
       .animation(.easeInOut(duration: 0.35), value: variants)
