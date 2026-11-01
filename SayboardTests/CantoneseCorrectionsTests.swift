@@ -40,11 +40,17 @@ struct CantoneseCorrectionsTests {
 }
 
 
+/// This mirrors the Chinese transform in the app without linking the main
+/// application module into the Shared-only unit-test target.
+private func testChineseNormalization(_ text: String) -> String {
+  text.applyingTransform(StringTransform("Hans-Hant"), reverse: false) ?? text
+}
+
 @Suite("Cantonese final output after Traditional Chinese conversion")
 struct CantoneseFinalizationTests {
   @Test func greetingRestoredAfterHansHant() {
     let original = "喂，你做乜嘢呀？"
-    let converted = CantoneseOutput.normalize(original)
+    let converted = testChineseNormalization(original)
     // The unqualified Hans-Hant transform can undo a proper HK greeting.
     #expect(CantoneseCorrections.apply(converted, customRules: []) == original)
   }
@@ -52,7 +58,7 @@ struct CantoneseFinalizationTests {
   @Test func savedRuleAppliedAfterConversion() {
     let wrong = "餵，你做乜嘢呀？"
     let correction = CantoneseCorrectionRule(heard: "餵，你", intended: "喂，你")
-    let converted = CantoneseOutput.normalize(wrong)
+    let converted = testChineseNormalization(wrong)
     let result = CantoneseCorrections.applyDetailed(converted, customRules: [correction])
     #expect(result.text == "喂，你做乜嘢呀？")
     #expect(result.matchedRules == 1)
@@ -60,6 +66,6 @@ struct CantoneseFinalizationTests {
 
   @Test func feedingWordsNotReplaced() {
     let input = "我餵你食飯啦"
-    #expect(CantoneseCorrections.apply(CantoneseOutput.normalize(input), customRules: []) == input)
+    #expect(CantoneseCorrections.apply(testChineseNormalization(input), customRules: []) == input)
   }
 }
