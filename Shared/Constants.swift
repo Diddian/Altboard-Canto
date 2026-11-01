@@ -1,14 +1,43 @@
 import Foundation
 
 enum AppGroup {
-  static let identifier = "group.app.sayboard.shared"
+  static let baseIdentifier = "group.app.sayboard.shared"
 
-  static var containerURL: URL? {
-    FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier)
+  // SideStore can add an Apple Team suffix to both app and App Group IDs.
+  static var identifier: String { resolvedGroup?.identifier ?? baseIdentifier }
+  static var containerURL: URL? { resolvedGroup?.url }
+  static var sharedDefaults: UserDefaults? {
+    guard let group = resolvedGroup else { return nil }
+    return UserDefaults(suiteName: group.identifier)
   }
 
-  static var sharedDefaults: UserDefaults? {
-    UserDefaults(suiteName: identifier)
+  static var resolutionDescription: String {
+    guard let group = resolvedGroup else { return "No authorized App Group found" }
+    return group.identifier == baseIdentifier ? "Original App Group" : "SideStore-renamed App Group"
+  }
+
+  private struct Group {
+    let identifier: String
+    let url: URL
+  }
+
+  private static let resolvedGroup: Group? = {
+    for id in AppGroup.candidateIdentifiers(for: Bundle.main.bundleIdentifier) {
+      if let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: id) {
+        return Group(identifier: id, url: url)
+      }
+    }
+    return nil
+  }()
+
+  static func candidateIdentifiers(for bundleIdentifier: String?) -> [String] {
+    let parts = (bundleIdentifier ?? "").split(separator: ".")
+    let teamSuffixes = parts.filter { part in
+      part.utf8.count == 10 && part.utf8.allSatisfy { byte in
+        (65...90).contains(byte) || (48...57).contains(byte)
+      }
+    }
+    return teamSuffixes.map { baseIdentifier + "." + String($0) } + [baseIdentifier]
   }
 }
 

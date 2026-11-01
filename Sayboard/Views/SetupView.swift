@@ -34,6 +34,7 @@ struct SetupView: View {
         LabeledContent("iOS microphone", value: self.microphoneStatus)
         LabeledContent("Keyboard enabled", value: self.permissionService.isKeyboardAdded ? "Detected" : "Not confirmed")
         LabeledContent("Main App Group", value: self.permissionService.mainGroupTestResult)
+        LabeledContent("App Group identifier", value: AppGroup.resolutionDescription)
         LabeledContent("Keyboard extension", value: self.permissionService.keyboardProbeSummary)
         LabeledContent("Keyboard Full Access (actual)", value: self.boolStatus(self.permissionService.keyboardReportedFullAccess))
         LabeledContent("Keyboard App Group", value: self.boolStatus(self.permissionService.keyboardReportedGroupAvailable))
@@ -140,6 +141,7 @@ struct SetupView: View {
       "iOS mic: \(self.microphoneStatus)",
       "Keyboard detected: \(self.permissionService.isKeyboardAdded)",
       "Main App Group: \(self.permissionService.mainGroupTestResult)",
+      "App Group identifier: \(AppGroup.resolutionDescription)",
       "Keyboard report: \(self.permissionService.keyboardProbeSummary)",
       "Keyboard Full Access: \(self.boolStatus(self.permissionService.keyboardReportedFullAccess))",
       "Keyboard shared group: \(self.boolStatus(self.permissionService.keyboardReportedGroupAvailable))",

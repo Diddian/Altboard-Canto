@@ -62,7 +62,43 @@ jobs:
             'DEVELOPMENT_TEAM=' \
             build 2>&1 | tee "$RUNNER_TEMP/xcodebuild.log"
 
-      - name: Create unsigned IPA with keyboard extension
+      - name: Preserve App Group entitlements for SideStore
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP="$RUNNER_TEMP/AltboardDerived/Build/Products/Release-iphoneos/Sayboard.app"
+          test -d "$APP/PlugIns" || exit 1
+
+          # No developer credential is needed. These ad-hoc signatures only
+          # carry capability requests for SideStore to re-sign on the device.
+          for dir in "$APP/Frameworks" "$APP/PlugIns/SayboardKeyboard.appex/Frameworks"; do
+            if [ -d "$dir" ]; then
+              for item in "$dir"/*; do
+                [ -e "$item" ] || continue
+                case "$item" in
+                  *.framework|*.dylib) codesign --force --sign - --timestamp=none "$item" ;;
+                esac
+              done
+            fi
+          done
+
+          for extension in "$APP"/PlugIns/*.appex; do
+            test -d "$extension" || exit 1
+            codesign --force --sign - --timestamp=none \
+              --entitlements "$GITHUB_WORKSPACE/SayboardKeyboard/SayboardKeyboard.entitlements" \
+              "$extension"
+            codesign -d --entitlements - "$extension" > "$RUNNER_TEMP/keyboard-entitlements.plist" 2>/dev/null
+            grep -Fq 'group.app.sayboard.shared' "$RUNNER_TEMP/keyboard-entitlements.plist" || exit 1
+          done
+
+          codesign --force --sign - --timestamp=none \
+            --entitlements "$GITHUB_WORKSPACE/Sayboard/Sayboard.entitlements" "$APP"
+          codesign -d --entitlements - "$APP" > "$RUNNER_TEMP/app-entitlements.plist" 2>/dev/null
+          grep -Fq 'group.app.sayboard.shared' "$RUNNER_TEMP/app-entitlements.plist" || exit 1
+          codesign --verify --deep --verbose=2 "$APP"
+          echo 'App and keyboard both request the same App Group'
+
+      - name: Package IPA for SideStore with keyboard extension
         shell: bash
         run: |
           set -euo pipefail
@@ -71,15 +107,15 @@ jobs:
           test -d "$APP/PlugIns" || { echo 'ERROR: keyboard extension not found'; exit 1; }
           mkdir -p "$RUNNER_TEMP/ipa/Payload" "$GITHUB_WORKSPACE/dist"
           cp -R "$APP" "$RUNNER_TEMP/ipa/Payload/"
-          (cd "$RUNNER_TEMP/ipa" && zip -q -r "$GITHUB_WORKSPACE/dist/Altboard-Canto-unsigned.ipa" Payload)
-          unzip -t "$GITHUB_WORKSPACE/dist/Altboard-Canto-unsigned.ipa" | tail -n 1
-          ls -lh "$GITHUB_WORKSPACE/dist/Altboard-Canto-unsigned.ipa"
+          (cd "$RUNNER_TEMP/ipa" && zip -q -r "$GITHUB_WORKSPACE/dist/Altboard-Canto-SideStore.ipa" Payload)
+          unzip -t "$GITHUB_WORKSPACE/dist/Altboard-Canto-SideStore.ipa" | tail -n 1
+          ls -lh "$GITHUB_WORKSPACE/dist/Altboard-Canto-SideStore.ipa"
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Altboard-Canto-unsigned-IPA
-          path: dist/Altboard-Canto-unsigned.ipa
+          name: Altboard-Canto-SideStore-IPA
+          path: dist/Altboard-Canto-SideStore.ipa
           if-no-files-found: error
           retention-days: 14
 
