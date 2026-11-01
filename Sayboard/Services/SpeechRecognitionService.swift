@@ -28,6 +28,7 @@ final class SpeechRecognitionService: ObservableObject {
   let whisperService = WhisperKitTranscriptionService()
   let parakeetService = ParakeetTranscriptionService()
   let moonshineService = MoonshineTranscriptionService()
+  let qwen3Service = Qwen3TranscriptionService()
   weak var downloadService: ModelDownloadService?
 
   let settings = SharedSettings()
@@ -44,6 +45,7 @@ final class SpeechRecognitionService: ObservableObject {
     case .whisperKit: self.whisperService.loadState
     case .parakeet: self.parakeetService.loadState
     case .moonshine: self.moonshineService.loadState
+    case .qwen3: self.qwen3Service.loadState
     }
   }
 
@@ -228,6 +230,8 @@ final class SpeechRecognitionService: ObservableObject {
       await self.parakeetService.waitForLoad()
     case .moonshine:
       await self.moonshineService.waitForLoad()
+    case .qwen3:
+      await self.qwen3Service.waitForLoad()
     }
   }
 
@@ -243,6 +247,7 @@ final class SpeechRecognitionService: ObservableObject {
     await self.whisperService.unloadModel()
     await self.parakeetService.unloadModel()
     self.moonshineService.unloadModel()
+    self.qwen3Service.unloadModel()
   }
 
   private func ensureSessionActive() -> Bool {
@@ -373,6 +378,9 @@ extension SpeechRecognitionService: ModelLoading {
       }
       return self.parakeetService.loadState == .loaded
 
+    case .qwen3:
+      await self.qwen3Service.loadModel(from: url)
+      return self.qwen3Service.loadState == .loaded
     case .moonshine:
       guard let arch = variant.moonshineModelArch else { return false }
       await self.moonshineService.loadModel(from: url.path, archName: arch)
