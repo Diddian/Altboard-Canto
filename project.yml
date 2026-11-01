@@ -51,6 +51,9 @@ packages:
   Moonshine:
     url: https://github.com/moonshine-ai/moonshine-swift.git
     exactVersion: "0.0.49"
+  sherpa-onnx:
+    url: https://github.com/k2-fsa/sherpa-onnx.git
+    exactVersion: "2.0.1"
 localPackages:
   - Packages/LlamaCpp
 
@@ -76,6 +79,8 @@ targets:
       - package: FluidAudio
       - package: ZIPFoundation
       - package: Moonshine
+      - package: sherpa-onnx
+        product: sherpa-onnx
       - package: LlamaCpp
         product: llama
     postCompileScripts:
@@ -155,7 +160,7 @@ schemes:
     analyze:
       config: Debug
     archive:
-      config: AppStore
+      config: Release
 
   # For trying the purchase locally against StoreKit/Sayboard.storekit; not used for releases.
   Sayboard StoreKit:
