@@ -12,7 +12,7 @@ struct KeyboardChromeMetrics {
   @MainActor
   init(keyboardState: KeyboardState) {
     let compact = keyboardState.selectedVariantSupportsTranslation || keyboardState.showsAIButton
-    let side: CGFloat = (compact ? 43 : 45).kbScaled
+    let side: CGFloat = (keyboardState.keyboardKind == .alphabetic ? 48 : (compact ? 43 : 45)).kbScaled
     let wide: CGFloat = 92.kbScaled
     let showsGlobe = true // Reserve leading Emoji key.
 
@@ -141,6 +141,9 @@ struct KeyboardBottomRow: View {
   @ObservedObject var keyboardState: KeyboardState
   var alphabeticModeLabel: String? = nil
   var onAlphabeticModeSwitch: (() -> Void)? = nil
+  var onSpaceAction: (() -> Void)? = nil
+  var onReturnAction: (() -> Void)? = nil
+  var onTextEdited: (() -> Void)? = nil
 
   var body: some View {
     HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
@@ -176,15 +179,19 @@ struct KeyboardBottomRow: View {
 
       SpaceBarKey(
         useCustomSpaceBar: self.keyboardState.useCustomSpaceBar,
-        onSpace: { self.proxy.insertSpace() },
+        onSpace: {
+          if let action = self.onSpaceAction { action() } else { self.proxy.insertSpace() }
+          self.onTextEdited?()
+        },
         onCursorMove: { self.proxy.adjustTextPosition($0) },
       )
 
       KeyButton(content: .systemImage("return.left"), fixedWidth: self.metrics.returnWidth) {
-        self.proxy.insertText("\n")
+        if let action = self.onReturnAction { action() } else { self.proxy.insertText("\n") }
+        self.onTextEdited?()
       }
     }
-    .padding(.horizontal, 4.kbScaled)
+    .padding(.horizontal, (self.keyboardState.keyboardKind == .alphabetic ? 6.67 : 4).kbScaled)
     .padding(.bottom, 4.kbScaled)
     .opacity(self.keyboardState.auxiliaryControlsHidden ? 0 : 1)
     .allowsHitTesting(!self.keyboardState.auxiliaryControlsHidden)

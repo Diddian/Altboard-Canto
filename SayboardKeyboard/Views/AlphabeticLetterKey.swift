@@ -28,10 +28,11 @@ struct AlphabeticLetterKey: View {
     Text(verbatim: self.uppercase ? self.letter.uppercased() : self.letter.lowercased())
       .font(.system(size: 23.kbScaled, weight: .regular, design: .default))
       .foregroundStyle(.primary)
+      .offset(y: -1.2.kbScaled)
       .frame(maxWidth: .infinity)
       .frame(height: KeyboardChromeMetrics.keyHeight)
       .background {
-        RoundedRectangle(cornerRadius: 5.5.kbScaled, style: .continuous)
+        RoundedRectangle(cornerRadius: 8.kbScaled, style: .continuous)
           .fill(Color(self.pressed ? .keyPressedBackground : .keyBackground))
           .shadow(color: .black.opacity(0.13), radius: 0.5, y: 0.5)
       }

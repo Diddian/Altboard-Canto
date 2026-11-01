@@ -38,6 +38,9 @@ struct SharedSettingsDefaultsTests {
     #expect(settings.keyboardHeightScale == 0.92)
     #expect(settings.keyboardHapticsEnabled)
     #expect(settings.periodShortcutEnabled)
+    #expect(settings.keyboardAutoCapitalizationEnabled)
+    #expect(settings.keyboardTypingLanguage == .english)
+    #expect(settings.needsInputModeSwitchKey)
   }
 
   @Test
@@ -83,6 +86,23 @@ struct SharedSettingsDefaultsTests {
     #expect(SharedSettings(defaults: defaults).keyboardLetterArrangement == .qwerty)
     #expect(LetterKeyArrangement.qwerty.rows.flatMap { $0 }.count == 26)
     #expect(LetterKeyArrangement.qwertz.rows.flatMap { $0 }.count == 26)
+  }
+
+  @Test
+  func unsetAppGroupHapticsAndCapitalsDefaultToEnabled() throws {
+    let suiteName = Self.uniqueSuiteName()
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { Self.cleanup(suiteName: suiteName) }
+    #expect(defaults.object(forKey: SharedKey.keyboardHapticsEnabled) == nil)
+    let settings = SharedSettings(defaults: defaults)
+    #expect(settings.keyboardHapticsEnabled)
+    #expect(settings.keyboardAutoCapitalizationEnabled)
+    settings.keyboardHapticsEnabled = false
+    settings.keyboardAutoCapitalizationEnabled = false
+    #expect(!SharedSettings(defaults: defaults).keyboardHapticsEnabled)
+    #expect(!SharedSettings(defaults: defaults).keyboardAutoCapitalizationEnabled)
+    settings.keyboardTypingLanguage = .jyutping
+    #expect(SharedSettings(defaults: defaults).keyboardTypingLanguage == .jyutping)
   }
 
   @Test

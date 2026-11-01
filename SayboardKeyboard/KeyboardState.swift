@@ -42,6 +42,7 @@ final class KeyboardState: ObservableObject {
   @Published var voiceProcessingProgress: VoiceProcessingProgress?
   @Published var needsInputModeSwitchKey = false
   @Published var keyboardHapticsEnabled = true
+  @Published var textContextRevision = 0
   @Published var keyboardKind = KeyboardKind.standard
   @Published var isDictationLocked = false
   @Published var showsMicHint = false

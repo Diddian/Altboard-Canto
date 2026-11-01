@@ -33,3 +33,8 @@ enum LetterKeyArrangement: String, CaseIterable, Sendable {
     }
   }
 }
+
+enum KeyboardTypingLanguage: String, CaseIterable, Sendable {
+  case english
+  case jyutping
+}

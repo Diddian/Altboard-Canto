@@ -8,7 +8,6 @@ struct SharedSettings {
 
   init(defaults: UserDefaults) {
     self.defaults = defaults
-    _ = Self.registration
   }
 
   static let keyboardRequestTTL: TimeInterval = 15.0
@@ -234,13 +233,28 @@ struct SharedSettings {
     }
   }
 
+  // Read the actual App Group domain, not UserDefaults.standard's registration.
+  // The initial (unset) value is ON; an explicit user choice of false wins.
   var keyboardHapticsEnabled: Bool {
-    get { self.defaults.bool(forKey: SharedKey.keyboardHapticsEnabled) }
+    get { defaults.object(forKey: SharedKey.keyboardHapticsEnabled) as? Bool ?? true }
     nonmutating set { defaults.set(newValue, forKey: SharedKey.keyboardHapticsEnabled) }
   }
 
+  var keyboardAutoCapitalizationEnabled: Bool {
+    get { defaults.object(forKey: SharedKey.keyboardAutoCapitalizationEnabled) as? Bool ?? true }
+    nonmutating set { defaults.set(newValue, forKey: SharedKey.keyboardAutoCapitalizationEnabled) }
+  }
+
+  var keyboardTypingLanguage: KeyboardTypingLanguage {
+    get {
+      guard let value = defaults.string(forKey: SharedKey.keyboardTypingLanguage) else { return .english }
+      return KeyboardTypingLanguage(rawValue: value) ?? .english
+    }
+    nonmutating set { defaults.set(newValue.rawValue, forKey: SharedKey.keyboardTypingLanguage) }
+  }
+
   var periodShortcutEnabled: Bool {
-    get { self.defaults.bool(forKey: SharedKey.periodShortcutEnabled) }
+    get { defaults.object(forKey: SharedKey.periodShortcutEnabled) as? Bool ?? true }
     nonmutating set { defaults.set(newValue, forKey: SharedKey.periodShortcutEnabled) }
   }
 
@@ -250,7 +264,7 @@ struct SharedSettings {
   }
 
   var needsInputModeSwitchKey: Bool {
-    get { self.defaults.bool(forKey: SharedKey.needsInputModeSwitchKey) }
+    get { defaults.object(forKey: SharedKey.needsInputModeSwitchKey) as? Bool ?? true }
     nonmutating set { defaults.set(newValue, forKey: SharedKey.needsInputModeSwitchKey) }
   }
 
@@ -528,9 +542,4 @@ struct SharedSettings {
     self.defaults.synchronize()
   }
 
-  private static let registration: Void = UserDefaults.standard.register(defaults: [
-    SharedKey.keyboardHapticsEnabled: true,
-    SharedKey.needsInputModeSwitchKey: true,
-    SharedKey.periodShortcutEnabled: true,
-  ])
 }

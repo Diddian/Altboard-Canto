@@ -50,6 +50,7 @@ final class KeyboardViewController: UIInputViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
     self.keyboardState.bootstrapLayoutSettings()
+    KeyboardHaptics.prepare()
     Self.activeInstance = self
     self.setupTranscriptionObserver()
     self.setupVoiceProgressObserver()
@@ -475,6 +476,9 @@ extension KeyboardViewController {
         self?.previousSpaceTap = nil
         self?.textDocumentProxy.insertText(text)
       },
+      documentContextBeforeInput: { [weak self] in
+        self?.textDocumentProxy.documentContextBeforeInput
+      },
       insertSpace: { [weak self] in
         self?.insertSpace()
       },
@@ -554,6 +558,7 @@ extension KeyboardViewController {
 
   override func textDidChange(_ textInput: (any UITextInput)?) {
     super.textDidChange(textInput)
+    self.keyboardState.textContextRevision &+= 1
     self.syncInputModeSwitchKey()
     self.insertDeferredAppearanceText()
   }

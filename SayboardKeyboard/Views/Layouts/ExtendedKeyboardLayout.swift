@@ -144,7 +144,6 @@ extension ExtendedKeyboardLayout {
           Capsule(style: .continuous).fill(Color(.keyBackground))
         }
     } else {
-      let isRecording = self.keyboardState.isRecording
       AIButton(
         fixedWidth: self.chrome.sideButtonWidth,
         onTap: { KeyboardActions.tapLLM(state: self.keyboardState, proxy: self.proxy) },
@@ -153,9 +152,7 @@ extension ExtendedKeyboardLayout {
         isActive: self.keyboardState.showLLMActions,
         shape: .pill,
       )
-      .opacity(isRecording ? 0.5 : 1)
-      .allowsHitTesting(!isRecording)
-      .animation(.easeOut(duration: 0.2), value: isRecording)
+      .allowsHitTesting(!self.keyboardState.isRecording)
     }
   }
 

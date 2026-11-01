@@ -43,6 +43,7 @@ extension View {
 
 struct KeyboardProxy {
   let insertText: (String) -> Void
+  let documentContextBeforeInput: () -> String?
   let insertSpace: () -> Void
   let deleteBackward: () -> Void
   let deleteWordBackward: () -> Void
@@ -160,7 +161,7 @@ struct KeyboardView: View {
           AlphabeticKeyboardLayout(proxy: self.proxy, keyboardState: self.keyboardState)
         }
       }
-      .padding(.top, self.keyboardState.keyboardKind == .standard ? 0 : 3.kbScaled)
+      .padding(.top, self.keyboardState.keyboardKind == .extended ? 3.kbScaled : 0)
       .overlay(alignment: .top) {
         if self.keyboardState.showLLMActions {
           LLMActionBar(

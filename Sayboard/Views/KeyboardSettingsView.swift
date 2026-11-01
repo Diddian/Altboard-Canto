@@ -18,7 +18,13 @@ struct KeyboardSettingsView: View {
             Text("QWERTY").tag(LetterKeyArrangement.qwerty.rawValue)
           }
           .pickerStyle(.segmented)
-          Text("QWERTZ is the default. Both layouts type English and retain the microphone.")
+          Picker("Typing language", selection: self.$typingLanguageRaw) {
+            Text("English").tag(KeyboardTypingLanguage.english.rawValue)
+            Text("粵拼").tag(KeyboardTypingLanguage.jyutping.rawValue)
+          }
+          .pickerStyle(.segmented)
+          Toggle("Auto-capitalize sentences", isOn: self.$autoCapitalizationEnabled)
+          Text("QWERTZ is the default. Both arrangements keep the same iOS-style keys and microphone.")
             .font(.footnote)
             .foregroundStyle(.secondary)
         }
@@ -90,6 +96,10 @@ struct KeyboardSettingsView: View {
   private var heightScale = 0.92
   @AppStorage(SharedKey.keyboardLetterArrangement, store: UserDefaults(suiteName: AppGroup.identifier))
   private var letterArrangementRaw = LetterKeyArrangement.qwertz.rawValue
+  @AppStorage(SharedKey.keyboardAutoCapitalizationEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var autoCapitalizationEnabled = true
+  @AppStorage(SharedKey.keyboardTypingLanguage, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var typingLanguageRaw = KeyboardTypingLanguage.english.rawValue
 }
 
 

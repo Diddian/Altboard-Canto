@@ -5,6 +5,9 @@ import SwiftUI
 struct RepeatDeleteButton: View {
   let proxy: KeyboardProxy
   let fixedWidth: CGFloat
+  /// Return true when a composition absorbed this delete.
+  var onDeleteIntercept: (() -> Bool)? = nil
+  var onHostDeletion: (() -> Void)? = nil
 
   @State private var deletionTask: Task<Void, Never>?
   @State private var didRepeat = false
@@ -33,11 +36,15 @@ struct RepeatDeleteButton: View {
               self.didRepeat = true
               var repeats = 0
               while !Task.isCancelled {
-                if repeats < 24 {
-                  self.proxy.deleteBackward()
-                } else {
-                  if repeats == 24 { KeyboardHaptics.key() }
-                  self.proxy.deleteWordBackward()
+                let intercepted = self.onDeleteIntercept?() ?? false
+                if !intercepted {
+                  if repeats < 24 {
+                    self.proxy.deleteBackward()
+                  } else {
+                    if repeats == 24 { KeyboardHaptics.key() }
+                    self.proxy.deleteWordBackward()
+                  }
+                  self.onHostDeletion?()
                 }
                 repeats += 1
                 try? await Task.sleep(for: .milliseconds(repeats < 24 ? 85 : 155))
@@ -47,7 +54,10 @@ struct RepeatDeleteButton: View {
           .onEnded { _ in
             self.deletionTask?.cancel()
             self.deletionTask = nil
-            if !self.didRepeat { self.proxy.deleteBackward() }
+            if !self.didRepeat, !(self.onDeleteIntercept?() ?? false) {
+              self.proxy.deleteBackward()
+              self.onHostDeletion?()
+            }
             self.pressed = false
           }
       )
