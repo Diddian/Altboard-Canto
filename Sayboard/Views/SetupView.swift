@@ -49,6 +49,9 @@ struct SetupView: View {
             .font(.footnote).foregroundStyle(.secondary)
         }
 
+      }
+
+      Section("Functional tests") {
         if self.permissionService.microphoneState != .granted {
           Button("Request or repair microphone access") {
             if self.permissionService.microphoneState == .undetermined {
