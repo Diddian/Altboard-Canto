@@ -489,6 +489,13 @@ private struct SayboardRootView: View {
       self.showsHostReturnHint = true
     }
 
+    if self.downloadService.selectedVariant.engine == .qwen3 {
+      // Unlike lightweight engines, do not return to the host app while
+      // the Qwen3 ONNX recognizer is being constructed.
+      Task { await self.startQwenDictationFromKeyboard(staysInApp: staysInApp) }
+      return
+    }
+
     guard self.tryStartDictation() else {
       self.showsHostReturnHint = false
       return
@@ -512,6 +519,34 @@ private struct SayboardRootView: View {
       self.showsHostReturnHint = false
       self.returnToHostApp()
     }
+  }
+
+  private func startQwenDictationFromKeyboard(staysInApp: Bool) async {
+    DictationBreadcrumb.record("qwen: keyboard deep link received")
+    guard !self.speechService.isRecording else { return }
+    guard !SharedSettings().isDictationLocked else {
+      NotificationCenter.default.post(name: .purchaseScreenRequested, object: nil)
+      return
+    }
+    self.permissionService.refreshMicrophoneState()
+    guard self.permissionService.microphoneState == .granted else {
+      NotificationCenter.default.post(name: .dictationFailedNoMic, object: nil)
+      return
+    }
+    guard self.downloadService.isDownloaded(self.downloadService.selectedVariant) else {
+      NotificationCenter.default.post(name: .dictationFailedNoModel, object: nil)
+      return
+    }
+
+    await self.speechService.startRecordingAfterModelLoad()
+    guard self.speechService.isRecording else {
+      DictationBreadcrumb.record("qwen: did not start recording")
+      self.showsHostReturnHint = false
+      NotificationCenter.default.post(name: .dictationFailedNoModel, object: nil)
+      return
+    }
+    DictationBreadcrumb.record("qwen: recording started, returning to host")
+    if !staysInApp { self.returnToHostWhenResolved() }
   }
 
   private func tryStartDictation() -> Bool {

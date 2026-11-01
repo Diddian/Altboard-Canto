@@ -40,10 +40,8 @@ final class BackgroundAudioSession: ObservableObject {
   nonisolated let tapDiagnostics = OSAllocatedUnfairLock<TapDiagnostics>(initialState: TapDiagnostics())
 
   func startSession() throws {
-    guard !self.isSessionActive else {
-      return
-    }
-
+    guard !self.isSessionActive else { return }
+    DictationBreadcrumb.record("audio: startSession entered")
     let audioSession = AVAudioSession.sharedInstance()
     try audioSession.setCategory(
       .playAndRecord,
@@ -51,13 +49,14 @@ final class BackgroundAudioSession: ObservableObject {
       options: [.mixWithOthers, .defaultToSpeaker, .allowBluetoothA2DP],
     )
     try audioSession.setAllowHapticsAndSystemSoundsDuringRecording(true)
+    DictationBreadcrumb.record("audio: activating AVAudioSession")
     try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
-
+    DictationBreadcrumb.record("audio: installing persistent input tap")
     try self.installPersistentTap()
-
+    DictationBreadcrumb.record("audio: starting AVAudioEngine")
     self.audioEngine.prepare()
     try self.audioEngine.start()
-
+    DictationBreadcrumb.record("audio: AVAudioEngine started")
     self.isSessionActive = true
     self.settings.isSessionActive = true
     self.settings.mainAppHeartbeat = CFAbsoluteTimeGetCurrent()

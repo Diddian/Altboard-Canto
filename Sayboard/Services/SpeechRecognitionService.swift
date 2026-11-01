@@ -162,6 +162,10 @@ final class SpeechRecognitionService: ObservableObject {
 
   func reloadModel(variant: ModelVariant, folderURL: URL?) async {
     await self.unloadAllEngines()
+    // Stop the persistent audio engine before initializing the larger Qwen3 ONNX model.
+    if variant.engine == .qwen3, self.session.isSessionActive, !self.isRecording {
+      self.session.endSession()
+    }
     guard let folderURL else { return }
     _ = await self.loadModel(variant: variant, from: folderURL)
   }
@@ -180,9 +184,33 @@ final class SpeechRecognitionService: ObservableObject {
 
   func startRecordingAfterModelLoad() async {
     let _ = String(describing: self.activeLoadState)
-    guard !self.isStopping else {
+    guard !self.isStopping else { return }
+
+    if self.settings.selectedVariant.engine == .qwen3 {
+      // Qwen3 must finish native ONNX initialization before AVAudioEngine starts.
+      // Loading a 1.7B model alongside a live audio session can exhaust memory.
+      DictationBreadcrumb.record("qwen: dictation requested, model=" + String(describing: self.activeLoadState))
+      if self.activeLoadState != .loaded, let downloadService {
+        self.settings.isModelLoading = true
+        defer { self.settings.isModelLoading = false }
+        if self.activeLoadState == .loading {
+          await self.qwen3Service.waitForLoad()
+        }
+        if self.activeLoadState != .loaded {
+          downloadService.verifyExistingModels()
+          await self.loadModelIfAvailable(downloadService: downloadService)
+        }
+      }
+      guard self.activeLoadState == .loaded else {
+        DictationBreadcrumb.record("qwen: model not ready; audio session not started")
+        TranscriptionBridge.postDarwinNotification(DarwinNotificationName.modelLoadingFailed)
+        return
+      }
+      DictationBreadcrumb.record("qwen: model ready; starting microphone")
+      self.startRecording()
       return
     }
+
     if self.activeLoadState == .loaded {
       self.startRecording()
     } else {

@@ -97,6 +97,15 @@ struct SettingsView: View, Equatable {
         Text("Speech to Text and Translation")
       }
       self.keyboardSection
+      Section {
+        NavigationLink {
+          DiagnosticsView()
+        } label: {
+          Label("Diagnostics", systemImage: "stethoscope")
+        }
+      } header: {
+        Text("Troubleshooting")
+      }
       FeedbackSection()
       self.aboutSection
     }
