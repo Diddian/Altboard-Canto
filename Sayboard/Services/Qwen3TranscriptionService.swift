@@ -9,7 +9,7 @@ enum Qwen3ModelBundle {
     let candidates = [root] + ((try? fm.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? [])
     return candidates.first { directory in
       required.allSatisfy { fm.fileExists(atPath: directory.appendingPathComponent($0).path) }
-        && ((try? fm.contentsOfDirectory(atPath: directory, includingPropertiesForKeys: nil)) ?? [])
+        && ((try? fm.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? [])
           .contains { $0.lastPathComponent.hasPrefix("encoder") && $0.pathExtension == "onnx" }
         && ((try? fm.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? [])
           .contains { $0.lastPathComponent.hasPrefix("decoder") && $0.pathExtension == "onnx" }
