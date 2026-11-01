@@ -242,7 +242,6 @@ private struct SayboardRootView: View {
   @State private var isChangingLanguage = false
   @State private var pendingPiPTutorial: TutorialVideo?
   @State private var showsHostReturnHint = false
-  @State private var hostReturnAttempted = false
   @State private var isOnboardingPresented = false
 
   private let services: AppServices
