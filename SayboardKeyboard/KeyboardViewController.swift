@@ -324,6 +324,7 @@ final class KeyboardViewController: UIInputViewController {
         guard let self else { return }
         let sessionActive = self.keyboardState.isSessionActive
         let isRec = self.keyboardState.isRecording
+        guard !sessionActive, !isRec else { return }
         self.openDictateDeepLinkFallback(
           reason: "stale fallback fired (no response in \(Self.staleFallbackTimeout)s, session=\(sessionActive) rec=\(isRec))"
         )

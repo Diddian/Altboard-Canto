@@ -225,7 +225,7 @@ private struct SayboardRootView: View {
   private static let dismissToBackgroundDelay = 0.05
   private static let onboardingFadeDuration = 0.35
 
-  private static let hostResolveTimeout = 1.0
+  private static let hostResolveTimeout = 2.5
   private static let hostResolvePollInterval = 50
 
   private static var shouldPresentOnboarding: Bool {
@@ -242,6 +242,7 @@ private struct SayboardRootView: View {
   @State private var isChangingLanguage = false
   @State private var pendingPiPTutorial: TutorialVideo?
   @State private var showsHostReturnHint = false
+  @State private var hostReturnAttempted = false
   @State private var isOnboardingPresented = false
 
   private let services: AppServices
@@ -481,6 +482,13 @@ private struct SayboardRootView: View {
   }
 
   private func handleDictateDeepLink() {
+    // SceneDelegate and onOpenURL may deliver the same deep link twice.
+    // Do not reset the session token or restart an in-flight model load.
+    guard !self.speechService.isRecording, !self.speechService.isStopping,
+          !SharedSettings().isModelLoading else {
+      DictationBreadcrumb.record("host: duplicate dictate link ignored")
+      return
+    }
     SharedSettings().dictationSessionToken = UUID().uuidString
 
     let staysInApp = OnboardingTextEntry.isVisible
@@ -514,10 +522,17 @@ private struct SayboardRootView: View {
       while SharedSettings().hostBundleId == nil, Date() < deadline {
         try? await Task.sleep(for: .milliseconds(Self.hostResolvePollInterval))
       }
-      guard SharedSettings().hostBundleId != nil else { return }
+      // Private host activation APIs do not confirm foreground transition.
+      // Keep the manual-return hint until the app actually backgrounds.
+      guard let host = SharedSettings().hostBundleId else {
+        DictationBreadcrumb.record("host: no resolved host; manual return shown")
+        self.showsHostReturnHint = true
+        return
+      }
       try? await Task.sleep(for: .seconds(Self.dismissToBackgroundDelay))
-      self.showsHostReturnHint = false
-      self.returnToHostApp()
+      let opened = HostAppOpener.open(bundleId: host)
+      DictationBreadcrumb.record("host: requested return to \(host), dispatched=\(opened)")
+      self.showsHostReturnHint = true
     }
   }
 
