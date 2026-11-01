@@ -65,8 +65,20 @@ extension SpeechRecognitionService {
       let cantoneseText = CantoneseOutput.normalize(sanitizedText)
       self.currentRawTranscription = cantoneseText
       // Edit in the main app before notifying the keyboard; do not insert twice.
-      let finalText = await self.llmCoordinator?.processVoiceDictation(cantoneseText) ?? cantoneseText
-      let bridgeText = self.styled(CantoneseOutput.normalize(finalText), host: stylingHost)
+      let composing = self.recordingComposeMode
+      let processed = await self.llmCoordinator?.processVoiceDictation(cantoneseText, compose: composing)
+      // A failed Compose request must not paste spoken instructions into a chat.
+      guard !composing || processed != nil else {
+        DiagnosticLog.write("compose: unavailable or failed; no writing inserted")
+        self.settings.lastDictationOutcome = .engineFailed
+        self.currentTranscription = ""
+        return
+      }
+      let finalText = processed ?? cantoneseText
+      // Preserve deliberate paragraph breaks in letters/messages; host app controls text field height.
+      let bridgeText = composing
+        ? CantoneseOutput.normalize(finalText)
+        : self.styled(CantoneseOutput.normalize(finalText), host: stylingHost)
       self.currentTranscription = bridgeText
 
       self.settings.chargeFreeWords(WordCounter.count(bridgeText))
