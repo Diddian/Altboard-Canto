@@ -51,7 +51,7 @@ struct SetupView: View {
 
       }
 
-      Section("Functional tests") {
+      Section {
         if self.permissionService.microphoneState != .granted {
           Button("Request or repair microphone access") {
             if self.permissionService.microphoneState == .undetermined {
@@ -85,6 +85,8 @@ struct SetupView: View {
         Button("Copy diagnostic summary") {
           UIPasteboard.general.string = self.diagnosticSummary
         }
+      } header: {
+        Text("Functional tests")
       } footer: {
         Text("The microphone and ASR tests run inside the main app. They bypass keyboard communication so you can isolate the failure.")
       }
