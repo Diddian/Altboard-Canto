@@ -44,7 +44,7 @@ struct CantoneseCorrectionsView: View {
       } header: {
         Text("Test your saved corrections")
       } footer: {
-        Text("This runs the same offline correction engine as dictation. It shows whether a rule matches before you record another message.")
+        Text("This preview includes Traditional Chinese conversion followed by saved corrections, just like real dictation. No AI Cleanup is needed.")
       }
 
       Section {
@@ -71,7 +71,11 @@ struct CantoneseCorrectionsView: View {
   }
 
   private var preview: CantoneseCorrectionResult {
-    CantoneseCorrections.applyDetailed(self.sampleText, customRules: self.rules)
+    // Match the live pipeline: Traditional conversion occurs before final
+    // corrections. This catches words Hans-Hant would otherwise undo.
+    CantoneseCorrections.applyDetailed(
+      CantoneseOutput.normalize(self.sampleText), customRules: self.rules
+    )
   }
 
   private var trimmedHeard: String {

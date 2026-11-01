@@ -135,7 +135,7 @@ struct KeyboardView: View {
   @ObservedObject var keyboardState: KeyboardState
 
   var body: some View {
-    if let blocker = self.activeBlocker {
+    if let blocker = self.activeBlocker, self.keyboardState.keyboardKind != .alphabetic {
       VStack(spacing: 0) {
         BlockerPrompt(blocker: blocker)
         KeyboardBottomRow(
@@ -156,6 +156,8 @@ struct KeyboardView: View {
           StandardKeyboardLayout(proxy: self.proxy, keyboardState: self.keyboardState)
         case .extended:
           ExtendedKeyboardLayout(proxy: self.proxy, keyboardState: self.keyboardState)
+        case .alphabetic:
+          AlphabeticKeyboardLayout(proxy: self.proxy, keyboardState: self.keyboardState)
         }
       }
       .padding(.top, self.keyboardState.keyboardKind == .standard ? 0 : 3.kbScaled)

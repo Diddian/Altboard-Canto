@@ -109,21 +109,22 @@ extension SpeechRecognitionService {
           return
         }
       }
-      // Apply deterministic technical unit formatting after ASR/optional
-      // translation. Do not guess missing digits the recognizer never heard.
-      // A local text model may reintroduce a homophone. Re-apply
-      // user corrections to Chinese-language output without another LLM pass.
-      let outputWithCorrections: String
+      // The user's corrections MUST be the last text operation before the
+      // bridge. Foundation's Hans-Hant transliterator turns the valid Hong
+      // Kong greeting 喂 back into 餵, even after earlier corrections.
+      let displayText = TechnicalTextFormatter.format(CantoneseOutput.normalize(finalText))
+      let styledText = self.styled(displayText, host: stylingHost)
+      let bridgeText: String
       switch options.target {
       case .original, .cantonese, .traditionalChinese:
-        outputWithCorrections = CantoneseCorrections.apply(
-          finalText, customRules: savedCorrections
+        let finalCorrection = CantoneseCorrections.applyDetailed(
+          styledText, customRules: savedCorrections
         )
+        bridgeText = finalCorrection.text
+        DiagnosticLog.write("voice: final user correction matches=\(finalCorrection.matchedRules)")
       default:
-        outputWithCorrections = finalText
+        bridgeText = styledText
       }
-      let displayText = TechnicalTextFormatter.format(CantoneseOutput.normalize(outputWithCorrections))
-      let bridgeText = self.styled(displayText, host: stylingHost)
       TranscriptionBridge.writeVoiceProgress(.finalizing)
       self.currentTranscription = bridgeText
 

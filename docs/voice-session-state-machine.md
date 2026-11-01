@@ -117,3 +117,13 @@ flowchart TD
 - The settings page has an offline "Test your saved corrections" field with a rule-hit counter and final preview, using the identical processor as dictation.
 - User-defined phrase replacements run before built-in "餵/喂" heuristics and take precedence; commas, spaces and enumeration commas are optional between phrase characters. Single-character blanket substitutions remain disabled to avoid corrupting feeding-related words.
 - ASR processing reads freshly synchronized shared preferences. It logs only rule count and match count, not transcript text. Rules work while AI Cleanup is off. If optional Chinese cleanup reintroduces an error, rules are re-applied after it.
+
+
+## Keyboard modes and correction finalization (November 2026)
+
+- User-visible keyboard types: Microphone Only (raw value standard), Symbols (raw value extended), and English Keyboard (raw value alphabetic). Keep the legacy identifiers to preserve existing preferences.
+- English Keyboard: QWERTZ by default, QWERTY optional in Keyboard settings. Includes Shift, double-tap Caps Lock, repeat Backspace, ?123/ABC, numbers and symbols, punctuation, Space Bar cursor drag, Emoji, Return, and the existing microphone.
+- Ordinary English typing stays functional if voice setup is incomplete; only the microphone needs voice model and permission.
+- Cantonese personal corrections are reapplied after the Hans-Hant transform, technical unit formatting, and text style changes. Otherwise the ICU Hans-Hant transform can undo valid HK interjections such as 喂 to 餵.
+- The corrections test preview uses the same Chinese-normalization-then-correction ordering and does not depend on AI Cleanup.
+- Tests cover retained old keyboard modes, QWERTZ/QWERTY ordering, and correct final Cantonese text.

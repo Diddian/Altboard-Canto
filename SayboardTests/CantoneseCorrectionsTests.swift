@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 
 @Suite("Cantonese speech corrections")
@@ -35,5 +36,30 @@ struct CantoneseCorrectionsTests {
   @Test func invalidSingleCharacterRuleIgnored() {
     let rule = CantoneseCorrectionRule(heard: "餵", intended: "喂")
     #expect(CantoneseCorrections.apply("餵食", customRules: [rule]) == "餵食")
+  }
+}
+
+
+@Suite("Cantonese final output after Traditional Chinese conversion")
+struct CantoneseFinalizationTests {
+  @Test func greetingRestoredAfterHansHant() {
+    let original = "喂，你做乜嘢呀？"
+    let converted = CantoneseOutput.normalize(original)
+    // The unqualified Hans-Hant transform can undo a proper HK greeting.
+    #expect(CantoneseCorrections.apply(converted, customRules: []) == original)
+  }
+
+  @Test func savedRuleAppliedAfterConversion() {
+    let wrong = "餵，你做乜嘢呀？"
+    let correction = CantoneseCorrectionRule(heard: "餵，你", intended: "喂，你")
+    let converted = CantoneseOutput.normalize(wrong)
+    let result = CantoneseCorrections.applyDetailed(converted, customRules: [correction])
+    #expect(result.text == "喂，你做乜嘢呀？")
+    #expect(result.matchedRules == 1)
+  }
+
+  @Test func feedingWordsNotReplaced() {
+    let input = "我餵你食飯啦"
+    #expect(CantoneseCorrections.apply(CantoneseOutput.normalize(input), customRules: []) == input)
   }
 }

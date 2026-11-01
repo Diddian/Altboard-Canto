@@ -82,6 +82,16 @@ struct SharedSettings {
     }
   }
 
+  var keyboardLetterArrangement: LetterKeyArrangement {
+    get {
+      guard let raw = defaults.string(forKey: SharedKey.keyboardLetterArrangement),
+            let value = LetterKeyArrangement(rawValue: raw)
+      else { return .qwertz }
+      return value
+    }
+    nonmutating set { defaults.set(newValue.rawValue, forKey: SharedKey.keyboardLetterArrangement) }
+  }
+
   var keyboardKind: KeyboardKind {
     get {
       guard

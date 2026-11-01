@@ -139,6 +139,8 @@ struct KeyboardBottomRow: View {
   let metrics: KeyboardChromeMetrics
 
   @ObservedObject var keyboardState: KeyboardState
+  var alphabeticModeLabel: String? = nil
+  var onAlphabeticModeSwitch: (() -> Void)? = nil
 
   var body: some View {
     HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
@@ -154,13 +156,22 @@ struct KeyboardBottomRow: View {
         }
       }
 
-      KeyButton(
-        content: .systemImage("trash"),
-        fixedWidth: self.metrics.trashWidth,
-        fillOnPress: true,
-        firesHaptic: false,
-      ) {
-        self.proxy.deleteAll()
+      if let action = self.onAlphabeticModeSwitch {
+        KeyButton(
+          content: .symbol(self.alphabeticModeLabel ?? "?123", fontSize: 14),
+          fixedWidth: self.metrics.trashWidth
+        ) {
+          action()
+        }
+      } else {
+        KeyButton(
+          content: .systemImage("trash"),
+          fixedWidth: self.metrics.trashWidth,
+          fillOnPress: true,
+          firesHaptic: false
+        ) {
+          self.proxy.deleteAll()
+        }
       }
 
       SpaceBarKey(

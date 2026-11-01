@@ -135,6 +135,7 @@ enum SharedKey {
   static let needsInputModeSwitchKey = "needsInputModeSwitchKey"
   static let alsoCopyToClipboard = "alsoCopyToClipboard"
   static let keyboardKind = "keyboardKind"
+  static let keyboardLetterArrangement = "keyboardLetterArrangement"
   static let keyboardHeightScale = "keyboardHeightScale"
   static let keyboardHapticsEnabled = "keyboardHapticsEnabled"
   static let periodShortcutEnabled = "periodShortcutEnabled"

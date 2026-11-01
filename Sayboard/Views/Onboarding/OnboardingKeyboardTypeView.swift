@@ -12,9 +12,12 @@ struct OnboardingKeyboardTypeView: View {
         subtitle: "You can change this anytime in Settings.",
       )
       Spacer(minLength: Self.sectionSpacing)
-      self.cardsLayout {
-        self.option(.standard, subtitle: "Big microphone button")
-        self.option(.extended, subtitle: "Numbers and symbols, smaller microphone")
+      VStack(spacing: Self.columnSpacing) {
+        self.cardsLayout {
+          self.option(.standard, subtitle: "Large microphone for dictation")
+          self.option(.extended, subtitle: "Numbers, symbols and a microphone")
+        }
+        self.option(.alphabetic, subtitle: "Type in English using QWERTZ or QWERTY, with built-in dictation")
       }
       .fixedSize(horizontal: false, vertical: true)
       .padding(.horizontal, 16)

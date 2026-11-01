@@ -12,6 +12,16 @@ struct KeyboardSettingsView: View {
             Text(LocalizedStringKey(kind.displayNameKey)).tag(kind)
           }
         }
+        if self.selectedKind == .alphabetic {
+          Picker("English key order", selection: self.$letterArrangementRaw) {
+            Text("QWERTZ").tag(LetterKeyArrangement.qwertz.rawValue)
+            Text("QWERTY").tag(LetterKeyArrangement.qwerty.rawValue)
+          }
+          .pickerStyle(.segmented)
+          Text("QWERTZ is the default. Both layouts type English and retain the microphone.")
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+        }
         Toggle("Haptic Feedback", isOn: self.$keyboardHapticsEnabled)
         VStack(alignment: .leading, spacing: 12) {
           HStack {
@@ -23,10 +33,16 @@ struct KeyboardSettingsView: View {
           }
           Slider(value: self.$heightScale, in: 0.70...1.10, step: 0.02)
             .accessibilityLabel("Keyboard height")
-          KeyboardHeightPreview(kind: self.selectedKind, heightFactor: self.heightScale)
-          Text(self.heightScale < 0.90
-            ? "Compact layout: a wide mic pill with one-line status."
-            : "Round microphone. Only vertical whitespace changes; key sizes stay fixed.")
+          KeyboardHeightPreview(
+            kind: self.selectedKind,
+            heightFactor: self.heightScale,
+            letterArrangement: LetterKeyArrangement(rawValue: self.letterArrangementRaw) ?? .qwertz
+          )
+          Text(self.selectedKind == .standard
+            ? (self.heightScale < 0.90
+              ? "Compact microphone matches the space bar width and shape."
+              : "Only vertical whitespace changes; key sizes stay fixed.")
+            : "Letter and symbol keys retain their normal size at every height.")
             .font(.footnote)
             .foregroundStyle(.secondary)
           Button("Reset to recommended height") { self.heightScale = 0.92 }
@@ -51,16 +67,19 @@ struct KeyboardSettingsView: View {
   private var periodShortcutEnabled = true
   @AppStorage(SharedKey.keyboardHeightScale, store: UserDefaults(suiteName: AppGroup.identifier))
   private var heightScale = 0.92
+  @AppStorage(SharedKey.keyboardLetterArrangement, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var letterArrangementRaw = LetterKeyArrangement.qwertz.rawValue
 }
 
 
 private struct KeyboardHeightPreview: View {
   let kind: KeyboardKind
   let heightFactor: Double
+  let letterArrangement: LetterKeyArrangement
 
   private var compact: Bool { kind == .standard && heightFactor < 0.90 }
   private var previewHeight: CGFloat {
-    if kind == .extended {
+    if kind != .standard {
       return max(284, 289.5 * CGFloat(heightFactor))
     }
     let factor = CGFloat(heightFactor)
@@ -88,6 +107,27 @@ private struct KeyboardHeightPreview: View {
               .frame(maxWidth: .infinity)
           }
           self.standardControls(compact: self.compact)
+        } else if self.kind == .alphabetic {
+          HStack(spacing: 6) {
+            self.key("gearshape")
+            Spacer()
+            Image(systemName: "mic")
+              .frame(width: 88, height: 45)
+              .background(Color(.tertiarySystemFill),
+                in: RoundedRectangle(cornerRadius: 8.5))
+          }
+          ForEach(0..<3, id: \.self) { rowIndex in
+            HStack(spacing: 4) {
+              ForEach(self.letterArrangement.rows[rowIndex], id: \.self) { letter in
+                Text(letter)
+                  .font(.system(size: 12))
+                  .frame(maxWidth: .infinity)
+                  .frame(height: 45)
+                  .background(Color(.tertiarySystemFill),
+                    in: RoundedRectangle(cornerRadius: 6))
+              }
+            }
+          }
         } else {
           self.standardControls(compact: true)
           ForEach(0..<3, id: \.self) { _ in

@@ -15,12 +15,22 @@ struct KeyboardLayoutPreview: View {
   })
 
   let kind: KeyboardKind
+  @AppStorage(
+    SharedKey.keyboardLetterArrangement,
+    store: UserDefaults(suiteName: AppGroup.identifier)
+  )
+  private var letterArrangementRaw = LetterKeyArrangement.qwertz.rawValue
+
+  private var letters: [[String]] {
+    (LetterKeyArrangement(rawValue: self.letterArrangementRaw) ?? .qwertz).rows
+  }
 
   var body: some View {
     VStack(spacing: 0) {
       switch self.kind {
       case .standard: self.standardLayout
       case .extended: self.extendedLayout
+      case .alphabetic: self.alphabeticLayout
       }
     }
     .padding(.top, Self.topPadding)
@@ -108,6 +118,41 @@ struct KeyboardLayoutPreview: View {
       }
       .padding(.horizontal, Self.edgeInset)
       self.bottomRow
+    }
+  }
+
+  private var alphabeticLayout: some View {
+    VStack(spacing: Self.rowSpacing) {
+      HStack(spacing: Self.keySpacing) {
+        self.symbolKey("gearshape", width: Self.sideKeyWidth)
+        Spacer()
+        self.symbolKey("mic.fill", width: 86)
+      }
+      .padding(.horizontal, Self.edgeInset)
+      .frame(height: Self.keyHeight)
+      self.characterRow(self.letters[0])
+      self.characterRow(self.letters[1])
+        .padding(.horizontal, 14)
+      HStack(spacing: Self.keySpacing) {
+        self.symbolKey("shift", width: 48)
+        ForEach(self.letters[2], id: \.self) { key in
+          self.textKey(key, width: nil)
+        }
+        self.symbolKey("delete.left", width: 48)
+      }
+      .padding(.horizontal, Self.edgeInset)
+      HStack(spacing: Self.keySpacing) {
+        self.symbolKey("face.smiling", width: Self.sideKeyWidth)
+        self.textKey("?123", width: Self.sideKeyWidth, size: 15)
+        Image(systemName: "space")
+          .font(.system(size: Self.characterSize))
+          .frame(maxWidth: .infinity)
+          .frame(height: Self.keyHeight)
+          .background(Self.keyFill,
+            in: RoundedRectangle(cornerRadius: Self.keyRadius, style: .continuous))
+        self.symbolKey("return.left", width: Self.returnKeyWidth)
+      }
+      .padding(.horizontal, Self.edgeInset)
     }
   }
 

@@ -54,6 +54,37 @@ struct SharedSettingsDefaultsTests {
     #expect(SharedSettings(defaults: defaults).keyboardHeightScale == 0.88)
   }
 
+  @Test
+  func keyboardModesRetainLegacyIdentifiers() throws {
+    let suiteName = Self.uniqueSuiteName()
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { Self.cleanup(suiteName: suiteName) }
+    let settings = SharedSettings(defaults: defaults)
+    defaults.set("standard", forKey: SharedKey.keyboardKind)
+    #expect(settings.keyboardKind == .standard)
+    defaults.set("extended", forKey: SharedKey.keyboardKind)
+    #expect(settings.keyboardKind == .extended)
+    settings.keyboardKind = .alphabetic
+    #expect(SharedSettings(defaults: defaults).keyboardKind == .alphabetic)
+  }
+
+  @Test
+  func letterLayoutDefaultsToQWERTZAndCanUseQWERTY() throws {
+    let suiteName = Self.uniqueSuiteName()
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { Self.cleanup(suiteName: suiteName) }
+    let settings = SharedSettings(defaults: defaults)
+    #expect(settings.keyboardLetterArrangement == .qwertz)
+    #expect(LetterKeyArrangement.qwertz.rows[0][5] == "Z")
+    #expect(LetterKeyArrangement.qwertz.rows[2][0] == "Y")
+    #expect(LetterKeyArrangement.qwerty.rows[0][5] == "Y")
+    #expect(LetterKeyArrangement.qwerty.rows[2][0] == "Z")
+    settings.keyboardLetterArrangement = .qwerty
+    #expect(SharedSettings(defaults: defaults).keyboardLetterArrangement == .qwerty)
+    #expect(LetterKeyArrangement.qwerty.rows.flatMap { $0 }.count == 26)
+    #expect(LetterKeyArrangement.qwertz.rows.flatMap { $0 }.count == 26)
+  }
+
   private static func uniqueSuiteName() -> String {
     "app.sayboard.tests.\(UUID().uuidString)"
   }
