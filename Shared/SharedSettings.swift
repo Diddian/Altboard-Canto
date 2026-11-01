@@ -449,6 +449,17 @@ struct SharedSettings {
     nonmutating set { defaults.set(newValue, forKey: SharedKey.dictationSessionToken) }
   }
 
+  var cantoneseCorrectionRules: [CantoneseCorrectionRule] {
+    get {
+      guard let data = defaults.data(forKey: SharedKey.cantoneseCorrectionRules) else { return [] }
+      return (try? JSONDecoder().decode([CantoneseCorrectionRule].self, from: data)) ?? []
+    }
+    nonmutating set {
+      let encoded = try? JSONEncoder().encode(Array(newValue.prefix(50)))
+      defaults.set(encoded, forKey: SharedKey.cantoneseCorrectionRules)
+    }
+  }
+
   var snippets: [Snippet] {
     get {
       guard let data = defaults.data(forKey: SharedKey.snippets) else {

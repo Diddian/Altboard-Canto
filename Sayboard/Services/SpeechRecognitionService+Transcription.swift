@@ -84,12 +84,16 @@ extension SpeechRecognitionService {
         : (self.recordingOutputOptions.needsLLM ? .editing : .finalizing)
       TranscriptionBridge.writeVoiceProgress(stage, rawPreview: rawText)
 
-      // Snapshot is taken when the microphone begins capturing.
+      // A conservative built-in greeting correction and editable local
+      // phrase rules run independently of the optional offline LLM.
+      let correctedText = CantoneseCorrections.apply(
+        rawText, customRules: self.settings.cantoneseCorrectionRules
+      )
       let options = self.recordingOutputOptions
       self.settings.lastVoiceOutputProcessed = options.needsLLM
-      var finalText = rawText
+      var finalText = correctedText
       if options.needsLLM {
-        let processed = await self.llmCoordinator?.processVoiceDictation(rawText, options: options)
+        let processed = await self.llmCoordinator?.processVoiceDictation(correctedText, options: options)
         if let processed, !processed.isEmpty {
           finalText = processed
         } else if options.target != .original {

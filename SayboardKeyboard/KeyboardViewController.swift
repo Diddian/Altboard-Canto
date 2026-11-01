@@ -115,6 +115,7 @@ final class KeyboardViewController: UIInputViewController {
     DiagnosticLog.write("keyboard: inserting \(text.count) chars into textDocumentProxy")
     self.insertSpacedText(text)
     self.copyFinalTextToClipboardIfEnabled(text)
+    self.keyboardState.showFinalOutputPreview(text)
   }
 
   func copyFinalTextToClipboardIfEnabled(_ text: String) {
@@ -139,7 +140,6 @@ final class KeyboardViewController: UIInputViewController {
   private var heightConstraint: NSLayoutConstraint?
   private var hostingHeightConstraint: NSLayoutConstraint?
   private var actionBarVisible = false
-  private var statusStripHeight: CGFloat = 0
 
   private var hostingController: UIHostingController<KeyboardView>?
   private var staleFallbackTimer: Timer?
@@ -234,6 +234,7 @@ final class KeyboardViewController: UIInputViewController {
         vc.cancelProcessingTimeout()
         vc.keyboardState.isProcessing = false
         vc.keyboardState.voiceProcessingProgress = nil
+        vc.keyboardState.clearFinalOutputPreview()
         vc.keyboardState.isRecording = true
         vc.keyboardState.isStartingRecording = false
         if !vc.isPerformingHistoryNavigation {
@@ -426,13 +427,6 @@ extension KeyboardViewController {
     self.applyKeyboardHeight()
   }
 
-  func updateStatusStripHeight(_ height: CGFloat) {
-    let rounded = height.rounded(.up)
-    guard self.statusStripHeight != rounded else { return }
-    self.statusStripHeight = rounded
-    self.applyKeyboardHeight()
-  }
-
   func setupKeyboardView() {
     let proxy = self.makeKeyboardProxy()
     let keyboardView = KeyboardView(proxy: proxy, keyboardState: self.keyboardState)
@@ -465,7 +459,7 @@ extension KeyboardViewController {
       actionBarVisible: self.actionBarVisible,
       kind: self.keyboardState.keyboardKind,
     )
-    let target = base + self.statusStripHeight
+    let target = base
     guard hc.constant != target else { return }
     hc.constant = target
     self.hostingHeightConstraint?.constant = target
@@ -521,9 +515,6 @@ extension KeyboardViewController {
       redoLLM: { [weak self] in self?.redoLLM() },
       setActionBarVisible: { [weak self] visible in
         self?.updateKeyboardHeight(actionBarVisible: visible)
-      },
-      setStatusStripHeight: { [weak self] height in
-        self?.updateStatusStripHeight(height)
       },
     )
   }

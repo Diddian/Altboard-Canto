@@ -112,6 +112,18 @@ struct VoiceOutputSettingsView: View {
       }
 
       Section {
+        NavigationLink {
+          CantoneseCorrectionsView()
+        } label: {
+          Label("Cantonese word corrections", systemImage: "text.badge.checkmark")
+        }
+      } header: {
+        Text("Personal Dictionary")
+      } footer: {
+        Text("Add exact phrases the speech recognizer often mishears. These corrections run offline before any optional AI cleanup and do not retrain the speech model.")
+      }
+
+      Section {
         Text("ASR detects spoken languages where supported. An LLM edits the transcript, not the original audio. It can correct likely errors but cannot recover words it never heard.")
           .font(.footnote).foregroundStyle(.secondary)
       }

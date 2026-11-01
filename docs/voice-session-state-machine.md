@@ -88,3 +88,24 @@ flowchart TD
 - The recording icon is accompanied by a left-to-right 17-sample audio-level history from the real AVAudioEngine RMS tap (30 Hz source, 20 Hz display), including quiet/speaking indication. Silent input produces a flat line; unlike the previous animation, the trace is not synthesized from a sine wave.
 - Audio polling is rearmed when the keyboard returns from Altboard to the host app, including if the initial Darwin start notification was missed.
 - Removed obsolete custom globe-display state and empty diagnostic reads; essential crash/ASR diagnostics are kept for troubleshooting rather than deleting evidence.
+
+
+## Layout and personal correction pass (November 2026)
+
+- The screenshot's unwanted **top gap** came from the old pulse-ring view reserving its full outer-ring height before the circular microphone and from 14.5pt top padding. The revised layout overlays rather than reserves the pulse rings and reduces top padding to 3pt.
+- A standard keyboard now has three fixed rows: microphone, settings + language | status | AI + delete, and Emoji/trash/space/return. Status never inserts another row or changes key height.
+- The height slider changes total extension height and surrounding whitespace only. All normal keys remain 45pt; the 106pt circular microphone stays full size. Under 90%, it switches to a 56pt-high, wide pill without making other buttons smaller. The preview mirrors fixed control sizes.
+- While controls fade out, status expands across the control row. With controls visible, No Speech and a clipped final output preview are centered between the two icon pairs. The final inserted text preview lasts five seconds and does not resize WhatsApp or other host input fields.
+- In compact mode, status and the clipped final result replace the microphone glyph inside the pill and use a single line. The pill retains the same tap target. Recording continues to show real amplitude.
+- Deterministic Cantonese greeting correction changes opening 餵，你... to 喂，你... only in conversational contexts, not feeding words such as 餵食 and 餵你食飯.
+- User-defined corrections are an editable local phrase dictionary under Voice Output → Cantonese word corrections. These are exact phrase replacements, *not* retraining or fine-tuning Qwen3; no extra model and no automatic LLM pass required.
+- Dynamic status-strip keyboard-height plumbing and duplicate status padding were removed because status no longer occupies a separate vertical row.
+
+### Device regression checklist
+
+1. At 92% compare top vs bottom whitespace; verify the circular mic is centered and all four middle keys remain 45pt.
+2. At 88% and 70% verify the mic becomes a wide pill, other controls remain 45pt, and no control overflows the keyboard.
+3. Stop with silence: No speech detected must appear between left/right control pairs, not below the buttons.
+4. Dictate a sentence with cleanup and DE output: gray processing stage and raw preview occupy the middle row while controls fade; the finished translation appears briefly in the same row after insertion.
+5. At 70%, confirm processing state and final output each show one truncated line inside the pill, not in an extra row.
+6. Test 餵，你做乜嘢呀 / 餵食 / 餵你食飯 and a manually saved personal phrase correction.

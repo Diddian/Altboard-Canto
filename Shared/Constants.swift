@@ -94,6 +94,7 @@ enum SharedKey {
   static let downloadStartedAt = "downloadStartedAt"
   static let preferredLanguagesPerVariant = "preferredLanguagesPerVariant"
   static let preferredSpokenLanguages = "preferredSpokenLanguages"
+  static let cantoneseCorrectionRules = "cantoneseCorrectionRules"
   static let hasUsableModel = "hasUsableModel"
   static let parakeetV3NeedsRedownload = "parakeetV3NeedsRedownload"
   static let audioLevel = "audioLevel"

@@ -12,24 +12,27 @@ enum KeyboardMetrics {
     CGFloat(SharedSettings().keyboardHeightScale)
   }
 
+  /// Switch before the 106pt circle could collide with the fixed 45pt keys.
   static var isCompactStandard: Bool {
-    heightFactor < 0.82
+    heightFactor < 0.90
   }
 
+  /// Height changes whitespace, not key sizes.
   static var scale: CGFloat {
-    (UIDevice.current.userInterfaceIdiom == .pad ? 293 / baseHeight : 1)
-      * heightFactor
+    UIDevice.current.userInterfaceIdiom == .pad ? 293 / baseHeight : 1
   }
 
   static var height: CGFloat {
-    (isCompactStandard ? 164 : baseHeight) * scale
+    max((isCompactStandard ? 158 : 216) * scale, baseHeight * heightFactor * scale)
   }
 
   static var extendedHeight: CGFloat {
-    baseExtendedHeight * scale
+    max(284 * scale, baseExtendedHeight * heightFactor * scale)
   }
 
-  static let actionBarExtraHeight: CGFloat = baseActionBarExtra * scale
+  static var actionBarExtraHeight: CGFloat {
+    baseActionBarExtra * scale
+  }
 
   static func totalHeight(actionBarVisible: Bool, kind: KeyboardKind) -> CGFloat {
     let base = kind == .extended ? self.extendedHeight : self.height

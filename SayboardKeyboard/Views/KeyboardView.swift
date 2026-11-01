@@ -57,7 +57,6 @@ struct KeyboardProxy {
   let undoLLM: () -> Void
   let redoLLM: () -> Void
   let setActionBarVisible: (Bool) -> Void
-  let setStatusStripHeight: (CGFloat) -> Void
 }
 
 enum SetupBlocker {
@@ -145,15 +144,12 @@ struct KeyboardView: View {
           keyboardState: self.keyboardState,
         )
       }
-      .onAppear { self.proxy.setStatusStripHeight(0) }
       .environment(\.keyboardHapticsEnabled, self.keyboardState.keyboardHapticsEnabled)
     } else if self.keyboardState.showsEmojiPicker {
       EmojiKeyboardView(proxy: self.proxy, keyboardState: self.keyboardState)
-        .onAppear { self.proxy.setStatusStripHeight(0) }
-    } else if let error = self.keyboardState.llmError {
+      } else if let error = self.keyboardState.llmError {
       LLMErrorPrompt(error: error, keyboardState: self.keyboardState)
-        .onAppear { self.proxy.setStatusStripHeight(0) }
-    } else {
+      } else {
       Group {
         switch self.keyboardState.keyboardKind {
         case .standard:
@@ -162,7 +158,7 @@ struct KeyboardView: View {
           ExtendedKeyboardLayout(proxy: self.proxy, keyboardState: self.keyboardState)
         }
       }
-      .padding(.top, 14.5.kbScaled)
+      .padding(.top, 3.kbScaled)
       .overlay(alignment: .top) {
         if self.keyboardState.showLLMActions {
           LLMActionBar(
@@ -190,6 +186,7 @@ struct KeyboardView: View {
           openURL(url)
         }
       }
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
       .environment(\.keyboardHapticsEnabled, self.keyboardState.keyboardHapticsEnabled)
     }
   }

@@ -106,13 +106,18 @@ struct MicAnimatedButton: View {
     let isLoading = self.keyboardState.isModelLoading && !self.keyboardState.isRecording
     let isSpin = self.showSpinner || self.keyboardState.isStartingRecording
       || (isLoading && !self.isSpinnerMorphing && !self.pendingSpinnerMorph)
+    let compactStatus = KeyboardMetrics.isCompactStandard
+      && !self.keyboardState.isRecording
+      && (self.keyboardState.isProcessing || self.keyboardState.isStartingRecording
+        || self.keyboardState.dictationOutcome != nil
+        || self.keyboardState.finalOutputPreview != nil)
     let isIdle = !shouldShowWave && !isSpin && !self.isMorphing && !self.isSpinnerMorphing
       && !self.pendingSpinnerMorph
     ZStack {
       MicMorphShape(frameIndex: 0)
         .fill(.primary)
         .frame(width: self.sizing.labelWidth, height: self.sizing.labelHeight)
-        .opacity(isIdle ? 1 : 0)
+        .opacity(isIdle && !compactStatus ? 1 : 0)
         .transaction { $0.animation = nil }
 
       if self.isMorphing {
@@ -136,11 +141,18 @@ struct MicAnimatedButton: View {
             && !self.isSpinnerMorphing && !self.pendingSpinnerMorph ? 1 : 0
         )
 
-      self.spinnerView(isSpin: isSpin)
+      self.spinnerView(isSpin: isSpin && !compactStatus)
+      if compactStatus {
+        KeyboardStatusStrip(keyboardState: self.keyboardState, compact: true)
+          .padding(.horizontal, 10)
+          .frame(width: self.sizing.buttonWidth - 20, height: self.sizing.buttonHeight)
+          .transition(.opacity)
+      }
     }
   }
 
   private func handleTap() {
+    self.keyboardState.clearFinalOutputPreview()
     self.keyboardState.dismissMicHint()
     if self.keyboardState.isRecording {
       self.proxy.stopDictation()

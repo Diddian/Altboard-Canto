@@ -10,10 +10,6 @@ struct ExtendedKeyboardLayout: View {
     VStack(spacing: 0) {
       VStack(spacing: Self.rowSpacing) {
         self.chromeRow
-        KeyboardStatusStrip(
-          keyboardState: self.keyboardState,
-          onContentHeightChange: self.proxy.setStatusStripHeight
-        )
         Group {
           self.symbolsRow1View
           self.symbolsRow2View
@@ -97,6 +93,14 @@ extension ExtendedKeyboardLayout {
       self.micButton
     }
     .padding(.leading, 12.kbScaled)
+    .overlay(alignment: .center) {
+      if self.keyboardState.auxiliaryControlsHidden || self.keyboardState.dictationOutcome != nil
+          || self.keyboardState.finalOutputPreview != nil {
+        KeyboardStatusStrip(keyboardState: self.keyboardState, compact: true)
+          .frame(maxWidth: 142.kbScaled, maxHeight: KeyboardChromeMetrics.keyHeight)
+          .allowsHitTesting(false)
+      }
+    }
     .animation(.easeInOut(duration: 0.35), value: self.keyboardState.selectedVariantSupportsTranslation)
     .animation(.easeInOut(duration: 0.35), value: self.keyboardState.showsAIButton)
     .animation(.easeInOut(duration: 0.25), value: self.keyboardState.hasLLMHistory)

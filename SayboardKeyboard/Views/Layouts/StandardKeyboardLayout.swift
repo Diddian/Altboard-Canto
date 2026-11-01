@@ -1,21 +1,14 @@
 import SwiftUI
 
 struct StandardKeyboardLayout: View {
-
   let proxy: KeyboardProxy
-
   @ObservedObject var keyboardState: KeyboardState
 
   var body: some View {
-    VStack(spacing: 0) {
-      VStack(spacing: 8.5.kbScaled) {
-        self.micRow
-        KeyboardStatusStrip(
-          keyboardState: self.keyboardState,
-          onContentHeightChange: self.proxy.setStatusStripHeight
-        )
-        KeyboardBottomRow(proxy: self.proxy, metrics: self.chrome, keyboardState: self.keyboardState)
-      }
+    VStack(spacing: 6.kbScaled) {
+      self.micRow
+      self.controlsRow
+      KeyboardBottomRow(proxy: self.proxy, metrics: self.chrome, keyboardState: self.keyboardState)
     }
   }
 
@@ -24,18 +17,39 @@ struct StandardKeyboardLayout: View {
   }
 
   private var micRow: some View {
-    ZStack(alignment: .bottom) {
-      self.sideButtons
+    HStack {
+      Spacer(minLength: 0)
       MicButtonWithPulse(
-        sizing: .standard, proxy: self.proxy,
-        reservesPulseSpace: !KeyboardMetrics.isCompactStandard,
+        sizing: .standard,
+        proxy: self.proxy,
+        reservesPulseSpace: false,
         keyboardState: self.keyboardState
       )
-        .padding(.bottom, 6.kbScaled)
+      Spacer(minLength: 0)
     }
-    .padding(.horizontal, 4.kbScaled)
+    .frame(height: MicSizing.standard.buttonHeight)
   }
 
+  /// Reserves one fixed-height row for four controls and the center status.
+  /// During processing the buttons fade and the status uses the full width.
+  private var controlsRow: some View {
+    GeometryReader { geometry in
+      let side = self.chrome.sideButtonWidth
+      let reserved = (side * 4) + (KeyboardChromeMetrics.buttonSpacing * 6) + 16.kbScaled
+      let available = self.keyboardState.auxiliaryControlsHidden
+        ? geometry.size.width - 8.kbScaled
+        : max(90.kbScaled, geometry.size.width - reserved)
+      ZStack(alignment: .bottom) {
+        self.sideButtons
+        if !KeyboardMetrics.isCompactStandard {
+          KeyboardStatusStrip(keyboardState: self.keyboardState)
+            .frame(width: available, height: KeyboardChromeMetrics.keyHeight)
+            .allowsHitTesting(false)
+        }
+      }
+    }
+    .frame(height: KeyboardChromeMetrics.keyHeight)
+  }
 }
 
 extension StandardKeyboardLayout {

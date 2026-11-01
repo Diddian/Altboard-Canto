@@ -37,6 +37,8 @@ final class KeyboardState: ObservableObject {
   @Published var showLLMActions = false
   @Published var llmError: LLMError?
   @Published var dictationOutcome: DictationOutcome?
+  @Published var finalOutputPreview: String?
+  private var finalPreviewGeneration = UUID()
   @Published var voiceProcessingProgress: VoiceProcessingProgress?
   @Published var needsInputModeSwitchKey = false
   @Published var keyboardHapticsEnabled = true
@@ -63,6 +65,26 @@ final class KeyboardState: ObservableObject {
 
   var hasLLMHistory: Bool {
     self.llmTextHistory.count > 1
+  }
+
+  /// A small final result preview remains in the existing control row for
+  /// five seconds, without changing the host application's input field.
+  func showFinalOutputPreview(_ text: String) {
+    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else { return }
+    let generation = UUID()
+    self.finalPreviewGeneration = generation
+    self.finalOutputPreview = String(trimmed.prefix(100))
+    Task { @MainActor [weak self] in
+      do { try await Task.sleep(for: .seconds(5)) } catch { return }
+      guard let self, self.finalPreviewGeneration == generation else { return }
+      self.finalOutputPreview = nil
+    }
+  }
+
+  func clearFinalOutputPreview() {
+    self.finalPreviewGeneration = UUID()
+    self.finalOutputPreview = nil
   }
 
   func clearLLMHistory() {

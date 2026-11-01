@@ -9,7 +9,8 @@ struct DictationOutcomeLabel: View {
   var body: some View {
     self.labelText
       .multilineTextAlignment(.center)
-      .fixedSize(horizontal: false, vertical: true)
+      .lineLimit(2)
+      .minimumScaleFactor(0.75)
       .font(.subheadline.weight(.semibold))
       .foregroundStyle(.secondary)
       .padding(.horizontal, 12.kbScaled)
@@ -32,11 +33,11 @@ struct DictationOutcomeLabel: View {
 
   private var message: LocalizedStringKey {
     switch self.outcome {
-    case .noSpeech: "No speech recognized. Try speaking again"
-    case .engineFailed: "Dictation failed. Try a different speech model in Altboard"
-    case .processingFailed: "Translation failed. Original speech saved in Altboard history"
-    case .activationFailed: "Microphone did not start. Open Altboard to check mic permission"
-    case .unexpectedLanguage: "Speech model detected a language outside your preferences. No text inserted; adjust Voice Output languages or try again"
+    case .noSpeech: "No speech detected"
+    case .engineFailed: "Recognition failed"
+    case .processingFailed: "Translation failed"
+    case .activationFailed: "Mic activation failed"
+    case .unexpectedLanguage: "Unexpected language"
     }
   }
 }

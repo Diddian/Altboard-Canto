@@ -172,6 +172,9 @@ extension KeyboardViewController {
       self.keyboardState.llmHistorySuffix = kept
     }
     self.copyFinalTextToClipboardIfEnabled(result)
+    if self.pendingAutoActionText != nil {
+      self.keyboardState.showFinalOutputPreview(result)
+    }
 
     self.keyboardState.llmTextHistory.append(result)
     self.keyboardState.llmHistoryIndex = self.keyboardState.llmTextHistory.count - 1

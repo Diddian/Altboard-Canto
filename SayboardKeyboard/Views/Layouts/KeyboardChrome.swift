@@ -44,92 +44,83 @@ struct KeyboardChromeMetrics {
 
 }
 
+/// Centered status in the existing control row; no extra keyboard height.
 struct KeyboardStatusStrip: View {
-
   @ObservedObject var keyboardState: KeyboardState
-
-  let onContentHeightChange: (CGFloat) -> Void
+  var compact = false
 
   var body: some View {
     Group {
       if self.keyboardState.isProcessing {
-        VoiceProcessingStatusView(progress: self.keyboardState.voiceProcessingProgress)
-          .transition(.opacity)
+        VoiceProcessingStatusView(
+          progress: self.keyboardState.voiceProcessingProgress, compact: self.compact
+        )
       } else if self.keyboardState.isStartingRecording && !self.keyboardState.isRecording {
-        Text("Activating microphone…")
-          .font(.subheadline.weight(.semibold))
+        Text(self.compact ? "Activating…" : "Activating microphone…")
+          .font(.caption2.weight(.medium))
           .foregroundStyle(.secondary)
-          .padding(.vertical, 6.kbScaled)
       } else if let outcome = self.keyboardState.dictationOutcome {
         DictationOutcomeLabel(outcome: outcome) {
           self.keyboardState.dictationOutcome = nil
         }
-        .transition(.opacity)
+      } else if let preview = self.keyboardState.finalOutputPreview {
+        Text(preview)
+          .font(.caption2)
+          .foregroundStyle(.secondary)
+          .lineLimit(self.compact ? 1 : 2)
+          .truncationMode(.tail)
+          .accessibilityLabel("Inserted dictation: \(preview)")
       } else if self.keyboardState.isDictationLocked {
-        DictationLockedLabel()
-          .transition(.opacity)
+        Text("Dictation locked").font(.caption2).foregroundStyle(.secondary)
       }
     }
-    // The status is the final row in the keyboard. It must contribute its
-    // intrinsic height, not overflow a zero-height Color.clear overlay.
-    .frame(maxWidth: .infinity, alignment: .center)
-    .animation(.easeOut(duration: 0.3), value: self.keyboardState.isStartingRecording)
-    .animation(.easeOut(duration: 0.3), value: self.keyboardState.isProcessing)
-    .animation(.easeOut(duration: 0.3), value: self.keyboardState.dictationOutcome)
-    .animation(.easeOut(duration: 0.3), value: self.keyboardState.isDictationLocked)
-    .background {
-      GeometryReader { geo in
-        Color.clear
-          .onAppear { self.onContentHeightChange(geo.size.height) }
-          .onChange(of: geo.size.height) { _, height in
-            self.onContentHeightChange(height)
-          }
-      }
-    }
+    .multilineTextAlignment(.center)
+    .minimumScaleFactor(0.75)
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+    .animation(.easeOut(duration: 0.18), value: self.keyboardState.isProcessing)
+    .animation(.easeOut(duration: 0.18), value: self.keyboardState.finalOutputPreview)
   }
-
 }
 
-/// A low-contrast status below the keyboard. Elapsed seconds are real, not a
-/// fabricated ONNX loading percentage; ASR text appears before cleanup.
 private struct VoiceProcessingStatusView: View {
   let progress: VoiceProcessingProgress?
+  var compact = false
 
   var body: some View {
-    VStack(alignment: .center, spacing: 4.kbScaled) {
-      HStack(spacing: 6.kbScaled) {
-        ProgressView()
-          .controlSize(.mini)
+    VStack(alignment: .center, spacing: 2) {
+      HStack(spacing: 5) {
+        ProgressView().controlSize(.mini)
         TimelineView(.periodic(from: .now, by: 1)) { context in
           let elapsed = max(0, Int(context.date.timeIntervalSinceReferenceDate
             - (self.progress?.startedAt ?? context.date.timeIntervalSinceReferenceDate)))
           Text("\(self.stageTitle) · \(elapsed)s")
-            .font(.caption.weight(.medium))
+            .font(.caption2.weight(.medium))
             .foregroundStyle(.secondary)
             .lineLimit(1)
         }
       }
-      if let preview = self.progress?.rawPreview, !preview.isEmpty {
-        Text("Recognized: \(preview)")
+      if !self.compact, let raw = self.progress?.rawPreview, !raw.isEmpty {
+        Text("Raw: \(raw)")
           .font(.caption2)
-          .multilineTextAlignment(.center)
           .foregroundStyle(.tertiary)
-          .lineLimit(2)
+          .lineLimit(1)
           .truncationMode(.tail)
-          .accessibilityLabel("Raw speech transcript: \(preview)")
       }
     }
     .frame(maxWidth: .infinity, alignment: .center)
-    .padding(.horizontal, 13.kbScaled)
-    .padding(.vertical, 7.kbScaled)
+    .accessibilityElement(children: .combine)
   }
 
   private var stageTitle: String {
-    guard let progress else { return "Processing recording" }
-    if progress.stage == .loadingRecognizer {
-      return "Loading \(SharedSettings().selectedVariant.displayName)"
+    guard let progress else { return "Processing" }
+    switch progress.stage {
+    case .stoppingAudio: return "Preparing audio"
+    case .loadingRecognizer: return "Loading model"
+    case .transcribing: return "Transcribing"
+    case .translating: return "Translating"
+    case .editing: return "Cleaning up"
+    case .finalizing: return "Finalizing"
     }
-    return progress.stage.title
   }
 }
 
