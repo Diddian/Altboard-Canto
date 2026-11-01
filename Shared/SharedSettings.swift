@@ -156,6 +156,23 @@ struct SharedSettings {
     }
   }
 
+  /// One user preference shared by onboarding, output toggle and ASR checks.
+  /// Missing key is migrated from the previous per-model preference where possible.
+  var preferredSpokenLanguages: [String] {
+    get {
+      if let stored = defaults.stringArray(forKey: SharedKey.preferredSpokenLanguages) {
+        return PreferredVoiceLanguages.normalized(stored)
+      }
+      let legacy = preferredLanguages(for: selectedVariant)
+      return legacy.isEmpty
+        ? PreferredVoiceLanguages.legacyChoices
+        : PreferredVoiceLanguages.normalized(Array(legacy).sorted())
+    }
+    nonmutating set {
+      defaults.set(PreferredVoiceLanguages.normalized(newValue), forKey: SharedKey.preferredSpokenLanguages)
+    }
+  }
+
   var hasUsableModel: Bool {
     get { self.defaults.bool(forKey: SharedKey.hasUsableModel) }
     nonmutating set { defaults.set(newValue, forKey: SharedKey.hasUsableModel) }

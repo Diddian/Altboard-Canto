@@ -29,8 +29,6 @@ struct TranslateToggleButton: View {
   private var targetRawValue = VoiceOutputTarget.original.rawValue
   @AppStorage(SharedKey.voiceCustomLanguage, store: AppGroup.sharedDefaults ?? .standard)
   private var customLanguage = ""
-  @AppStorage(SharedKey.preferredSpokenLanguages, store: AppGroup.sharedDefaults ?? .standard)
-  private var preferredSpokenLanguages = [String]()
 
   private var target: VoiceOutputTarget {
     VoiceOutputTarget(rawValue: self.targetRawValue) ?? .original

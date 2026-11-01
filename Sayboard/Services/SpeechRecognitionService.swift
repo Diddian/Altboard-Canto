@@ -39,6 +39,7 @@ final class SpeechRecognitionService: ObservableObject {
   let audioRecorder = AudioRecorder()
   var currentTranscription = ""
   @Published var currentRawTranscription = ""
+  var recordingSpokenLanguages = [String]()
   var recordingOutputOptions = VoiceOutputConfiguration(
     cleanupEnabled: false, target: .original, register: .faithful, customLanguage: ""
   )
@@ -76,6 +77,7 @@ final class SpeechRecognitionService: ObservableObject {
     self.currentTranscription = ""
     self.currentRawTranscription = ""
     self.recordingOutputOptions = self.settings.voiceOutputConfiguration
+    self.recordingSpokenLanguages = self.settings.preferredSpokenLanguages
     self.settings.lastVoiceOutputProcessed = false
     self.settings.lastDictationOutcome = nil
     TranscriptionBridge.clearTranscription()
