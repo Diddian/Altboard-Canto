@@ -127,7 +127,7 @@ final class LLMInferenceService: ObservableObject {
     self.loadState = .unloaded
   }
 
-  func process(systemPrompt: String, userText: String, assistantPrefill: String = "") async -> String? {
+  func process(systemPrompt: String, userText: String, assistantPrefill: String = "", maxOutputTokens: Int? = nil, deadlineSeconds: TimeInterval = 15) async -> String? {
     let prompt = Prompt(system: systemPrompt, user: userText, assistantPrefill: assistantPrefill)
     guard
       let model = self.model,
@@ -149,6 +149,8 @@ final class LLMInferenceService: ObservableObject {
         context: sendableCtx.pointer,
         variant: variant,
         prompt: prompt,
+        maxOutputTokens: maxOutputTokens,
+        deadlineSeconds: deadlineSeconds,
       )
     }.value
   }
@@ -163,7 +165,6 @@ final class LLMInferenceService: ObservableObject {
 
   private nonisolated static let pieceBufferSize = 64
 
-  private nonisolated static let generationDeadlineSeconds: TimeInterval = 15
   private nonisolated static let memoryCheckSafetyMultiplier = 1.2
   private nonisolated static let temperature: Float = 0.3
   private nonisolated static let topP: Float = 0.9
@@ -184,6 +185,8 @@ final class LLMInferenceService: ObservableObject {
     context: OpaquePointer,
     variant: LLMModelVariant,
     prompt: Prompt,
+    maxOutputTokens: Int?,
+    deadlineSeconds: TimeInterval,
   ) -> String? {
     let template = variant.chatTemplate
     let promptString = self.buildFormattedPrompt(
@@ -223,7 +226,8 @@ final class LLMInferenceService: ObservableObject {
         vocab: vocab,
         batch: &batch,
         startPos: Int32(tokens.count),
-        maxTokens: maxTokens,
+        maxTokens: min(maxTokens, maxOutputTokens ?? maxTokens),
+        deadlineSeconds: deadlineSeconds,
       )
     else {
       DiagnosticLog.write("llm: generation failed")
@@ -285,6 +289,7 @@ final class LLMInferenceService: ObservableObject {
     batch: inout llama_batch,
     startPos: Int32,
     maxTokens: Int,
+    deadlineSeconds: TimeInterval,
   ) -> (text: String, stoppedAtEOS: Bool)? {
     guard let sampler = self.makeSampler() else {
       return nil
@@ -307,7 +312,7 @@ final class LLMInferenceService: ObservableObject {
       if index > 0, index.isMultiple(of: 32) {
         DiagnosticLog.write("llm: \(index) tok in \(Self.elapsed(since: startedAt))s")
       }
-      if Date().timeIntervalSince(startedAt) > Self.generationDeadlineSeconds {
+      if Date().timeIntervalSince(startedAt) > deadlineSeconds {
         DiagnosticLog.write("llm: DEADLINE after \(index) tok in \(Self.elapsed(since: startedAt))s")
         hitDeadline = true
         break

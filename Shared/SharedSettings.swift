@@ -216,8 +216,13 @@ struct SharedSettings {
   }
 
   var voiceCleanupEnabled: Bool {
-    get { defaults.object(forKey: SharedKey.voiceCleanupEnabled) as? Bool ?? true }
+    get { defaults.object(forKey: SharedKey.voiceCleanupEnabled) as? Bool ?? false }
     nonmutating set { defaults.set(newValue, forKey: SharedKey.voiceCleanupEnabled) }
+  }
+
+  var voiceComposeMode: Bool {
+    get { defaults.bool(forKey: SharedKey.voiceComposeMode) }
+    nonmutating set { defaults.set(newValue, forKey: SharedKey.voiceComposeMode) }
   }
 
   var voiceOutputTarget: VoiceOutputTarget {

@@ -5,7 +5,10 @@ struct VoiceOutputSettingsView: View {
   @EnvironmentObject private var speechModels: ModelDownloadService
 
   @AppStorage(SharedKey.voiceCleanupEnabled, store: AppGroup.sharedDefaults ?? .standard)
-  private var cleanupEnabled = true
+  private var cleanupEnabled = false
+
+  @AppStorage(SharedKey.voiceComposeMode, store: AppGroup.sharedDefaults ?? .standard)
+  private var composeMode = false
 
   @AppStorage(SharedKey.voiceOutputTarget, store: AppGroup.sharedDefaults ?? .standard)
   private var target = VoiceOutputTarget.original.rawValue
@@ -43,6 +46,14 @@ struct VoiceOutputSettingsView: View {
         Text("Dictation → Edit → Output")
       } footer: {
         Text("Original keeps the language you spoke, including Cantonese-English-German mixing. As spoken preserves your tone; Casual and Formal change only the register.")
+      }
+
+      Section {
+        Toggle("Voice Compose (WRITE mode)", isOn: self.$composeMode)
+        Text("Compose infers WhatsApp, email, letter or message from Cantonese, Chinese, English and German instructions. The keyboard output language always takes precedence. One LLM pass produces the finished text.")
+          .font(.footnote).foregroundStyle(.secondary)
+      } header: {
+        Text("Voice Compose")
       }
 
       Section {

@@ -41,10 +41,10 @@ final class LLMProcessingCoordinator: ObservableObject {
 
   /// Edit the speech transcript in the main app before it reaches the keyboard.
   /// If the model is unavailable or fails, the original transcription survives.
-  func processVoiceDictation(_ input: String) async -> String? {
+  func processVoiceDictation(_ input: String, compose: Bool = false) async -> String? {
     let settings = SharedSettings()
     let options = settings.voiceOutputConfiguration
-    guard options.needsLLM, !input.isEmpty else { return nil }
+    guard (options.needsLLM || compose), !input.isEmpty else { return nil }
     let started = CFAbsoluteTimeGetCurrent()
     DictationBreadcrumb.record("llm: voice cleanup requested")
     guard !self.isProcessing else {
@@ -80,12 +80,17 @@ final class LLMProcessingCoordinator: ObservableObject {
       return nil
     }
 
-    let prompt = VoiceOutputPrompt.systemPrompt(for: options)
-    let result = await self.runInferenceWithTimeout(
+    let prompt = compose ? VoiceComposePrompt.systemPrompt(for: options, spokenInstruction: input) : VoiceOutputPrompt.systemPrompt(for: options)
+    var result = await self.runInferenceWithTimeout(
       systemPrompt: prompt,
       userText: input,
-      assistantPrefill: ""
+      assistantPrefill: "",
+      forComposition: compose
     )
+    if let text = result, VoiceComposePrompt.needsCantoneseRetry(output: text, target: options.target) {
+      DictationBreadcrumb.record("llm: repairing unconverted Cantonese output")
+      result = await self.runInferenceWithTimeout(systemPrompt: VoiceComposePrompt.cantoneseRepairPrompt, userText: text, assistantPrefill: "") ?? result
+    }
     DictationBreadcrumb.record(
       "llm: generation took \(String(format: "%.1f", CFAbsoluteTimeGetCurrent() - started - prepareDuration))s"
     )
@@ -96,7 +101,7 @@ final class LLMProcessingCoordinator: ObservableObject {
     }
 
     let output = result.trimmingCharacters(in: .whitespacesAndNewlines)
-    if input.count >= 30 && output.count > max(input.count * 4, input.count + 200) {
+    if !compose && input.count >= 30 && output.count > max(input.count * 4, input.count + 200) {
       DiagnosticLog.write("voice/llm: excessive output; use raw transcription")
       return nil
     }
@@ -245,6 +250,7 @@ final class LLMProcessingCoordinator: ObservableObject {
     systemPrompt: String,
     userText: String,
     assistantPrefill: String,
+    forComposition: Bool = false,
   ) async -> String? {
     let remaining = UIApplication.shared.backgroundTimeRemaining
     let timeout: TimeInterval =
@@ -260,6 +266,8 @@ final class LLMProcessingCoordinator: ObservableObject {
           systemPrompt: systemPrompt,
           userText: userText,
           assistantPrefill: assistantPrefill,
+          maxOutputTokens: forComposition ? 768 : nil,
+          deadlineSeconds: forComposition ? 40 : 15,
         )
       }
 
