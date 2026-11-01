@@ -4,17 +4,20 @@ enum STTEngine: String, Codable, Sendable {
   case whisperKit
   case parakeet
   case moonshine
+  case qwen3
 
   var sectionTitle: String {
     switch self {
     case .whisperKit: "Whisper"
     case .parakeet: "Parakeet"
     case .moonshine: "Moonshine"
+    case .qwen3: "Qwen3-ASR"
     }
   }
 }
 
 enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
+  case qwen3ASR17B = "qwen3-asr-1.7b-onnx"
   case whisperTiny = "openai_whisper-tiny"
   case whisperBase = "openai_whisper-base"
   case whisperSmall = "openai_whisper-small"
@@ -33,6 +36,8 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
 
   var engine: STTEngine {
     switch self {
+    case .qwen3ASR17B:
+      .qwen3
     case .whisperTiny, .whisperBase, .whisperSmall, .whisperTurbo:
       .whisperKit
     case .parakeetV2, .parakeetV3:
@@ -44,6 +49,7 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
 
   var displayName: String {
     switch self {
+    case .qwen3ASR17B: "Qwen3-ASR 1.7B (ONNX)"
     case .whisperTiny: "Whisper Tiny"
     case .whisperBase: "Whisper Base"
     case .whisperSmall: "Whisper Small"
@@ -60,6 +66,8 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
 
   var descriptionKey: String {
     switch self {
+    case .qwen3ASR17B:
+      "Experimental Cantonese/multilingual recognizer. Requires a sherpa-onnx-compatible model ZIP URL and SHA-256. The 1.61 GB MLX file will not load."
     case .whisperTiny: "Lightest multilingual model. Basic accuracy, but supports 100 languages."
 
     case .whisperBase: "Better accuracy than Whisper Tiny. Supports 100 languages."
@@ -98,6 +106,7 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
 
   var downloadSizeMB: Int {
     switch self {
+    case .qwen3ASR17B: 3500 // Approximate; size depends on the custom ONNX archive.
     case .whisperTiny: 69
     case .whisperBase: 132
     case .whisperSmall: 445
@@ -114,6 +123,7 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
 
   var ramRequirementMB: Int {
     switch self {
+    case .qwen3ASR17B: 6000 // Conservative estimate; on-device peak must be measured.
     case .whisperTiny: 130
     case .whisperBase: 250
     case .whisperSmall: 850
@@ -130,6 +140,7 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
 
   var accuracy: Double {
     switch self {
+    case .qwen3ASR17B: 0.85 // Placeholder ranking, not a benchmark.
     case .whisperTiny: 0.35
     case .whisperBase: 0.48
     case .whisperSmall: 0.68
@@ -146,6 +157,7 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
 
   var speed: Double {
     switch self {
+    case .qwen3ASR17B: 0.25 // Estimated; no iPhone benchmark yet.
     case .whisperTiny: 0.98
     case .whisperBase: 0.93
     case .whisperSmall: 0.85
@@ -170,6 +182,7 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
 
   var minimumDeviceMemoryMB: Int? {
     switch self {
+    case .qwen3ASR17B: 8000
     case .whisperTurbo: 5000
     default: nil
     }
@@ -184,6 +197,8 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
 
   var supportedLanguages: Set<String> {
     switch self {
+    case .qwen3ASR17B:
+      SpeechLanguages.whisper // Broad catalog; actual Qwen recognition is model-dependent.
     case .whisperTiny, .whisperBase, .whisperSmall, .whisperTurbo:
       SpeechLanguages.whisper
     case .parakeetV2:
@@ -197,6 +212,7 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
 
   var languageTagKey: String {
     switch self {
+    case .qwen3ASR17B: "Cantonese + multilingual"
     case .whisperTiny, .whisperBase, .whisperSmall, .whisperTurbo:
       "100 languages"
     case .parakeetV2:
@@ -219,14 +235,14 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
   var supportsTranslation: Bool {
     switch self.engine {
     case .whisperKit: true
-    case .parakeet, .moonshine: false
+    case .parakeet, .moonshine, .qwen3: false
     }
   }
 
   var supportsLanguageSelection: Bool {
     switch self.engine {
     case .whisperKit, .parakeet: self.supportedLanguages.count > 1
-    case .moonshine: false
+    case .moonshine, .qwen3: false
     }
   }
 
@@ -248,7 +264,7 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
     return switch self {
     case .whisperTiny, .whisperBase, .whisperSmall, .parakeetV2, .parakeetV3:
       true
-    case .whisperTurbo, .moonshineTiny, .moonshineBase, .moonshineTinyStreaming, .moonshineSmallStreaming,
+    case .qwen3ASR17B, .whisperTurbo, .moonshineTiny, .moonshineBase, .moonshineTinyStreaming, .moonshineSmallStreaming,
          .moonshineMediumStreaming:
       false
     }
