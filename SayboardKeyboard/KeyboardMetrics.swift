@@ -4,7 +4,7 @@ import UIKit
 @MainActor
 enum KeyboardMetrics {
 
-  static let baseHeight: CGFloat = 240
+  static let baseHeight: CGFloat = 260
   static let baseExtendedHeight: CGFloat = 289.5
   static let baseActionBarExtra: CGFloat = 42
 

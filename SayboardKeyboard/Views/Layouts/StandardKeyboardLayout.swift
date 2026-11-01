@@ -24,7 +24,7 @@ struct StandardKeyboardLayout: View {
         ? max(0, (geometry.size.height - rowsHeight) / 2)
         : max(0, geometry.size.height - rowsHeight - 4.kbScaled)
       let restingY = topInset + (compact ? keyHeight / 2 : normalMic.buttonHeight / 2)
-      let focused = self.keyboardState.auxiliaryControlsHidden
+      let focused = self.keyboardState.isStartingRecording || self.keyboardState.isRecording
       let mic = compact
         ? MicSizing.compact(spaceBarWidth: self.chrome.spaceBarWidth(totalWidth: geometry.size.width))
         : normalMic
