@@ -41,7 +41,8 @@ final class LLMProcessingCoordinator: ObservableObject {
 
   /// Edit the speech transcript in the main app before it reaches the keyboard.
   /// If the model is unavailable or fails, the original transcription survives.
-  func processVoiceDictation(_ input: String, compose: Bool = false) async -> String? {
+  func processVoiceDictation(_ input: String, compose: Bool = false,
+    composePreset: VoiceComposePreset = .automatic, spokenLanguage: String? = nil) async -> String? {
     let settings = SharedSettings()
     let options = settings.voiceOutputConfiguration
     guard (options.needsLLM || compose), !input.isEmpty else { return nil }
@@ -80,7 +81,8 @@ final class LLMProcessingCoordinator: ObservableObject {
       return nil
     }
 
-    let prompt = compose ? VoiceComposePrompt.systemPrompt(for: options, spokenInstruction: input) : VoiceOutputPrompt.systemPrompt(for: options)
+    let prompt = compose ? VoiceComposePrompt.systemPrompt(for: options, spokenInstruction: input,
+        preset: composePreset, spokenLanguage: spokenLanguage) : VoiceOutputPrompt.systemPrompt(for: options)
     var result = await self.runInferenceWithTimeout(
       systemPrompt: prompt,
       userText: input,

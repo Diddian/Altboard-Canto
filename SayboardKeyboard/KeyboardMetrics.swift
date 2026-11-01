@@ -7,6 +7,7 @@ enum KeyboardMetrics {
   static let baseHeight: CGFloat = 240
   static let baseExtendedHeight: CGFloat = 289.5
   static let baseActionBarExtra: CGFloat = 42
+  static let composePresetBarHeight: CGFloat = 35
 
   static let height: CGFloat = UIDevice.current.userInterfaceIdiom == .pad ? 293 : baseHeight
 

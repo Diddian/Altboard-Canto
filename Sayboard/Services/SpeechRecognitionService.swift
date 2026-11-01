@@ -38,6 +38,7 @@ final class SpeechRecognitionService: ObservableObject {
   var currentTranscription = ""
   @Published var currentRawTranscription = ""
   var recordingComposeMode = false
+  var recordingComposePreset = VoiceComposePreset.automatic
   var currentAudioFileName: String?
   var currentWordBoundaries: (start: Float, end: Float)?
 
@@ -73,6 +74,7 @@ final class SpeechRecognitionService: ObservableObject {
     self.currentTranscription = ""
     self.currentRawTranscription = ""
     self.recordingComposeMode = self.settings.voiceComposeMode
+    self.recordingComposePreset = self.settings.voiceComposePreset
     self.currentAudioFileName = "\(UUID().uuidString).caf"
 
     guard self.ensureSessionActive() else {
@@ -105,6 +107,7 @@ final class SpeechRecognitionService: ObservableObject {
     self.currentTranscription = ""
     self.currentRawTranscription = ""
     self.recordingComposeMode = self.settings.voiceComposeMode
+    self.recordingComposePreset = self.settings.voiceComposePreset
     self.currentAudioFileName = "\(UUID().uuidString).caf"
 
     guard self.ensureSessionActive() else {

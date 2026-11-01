@@ -12,6 +12,9 @@ struct StandardKeyboardLayout: View {
         keyboardState: self.keyboardState,
         onContentHeightChange: self.proxy.setStatusStripHeight,
       )
+      if self.keyboardState.isComposeMode {
+        ComposePresetBar(keyboardState: self.keyboardState)
+      }
       VStack(spacing: 8.5.kbScaled) {
         self.micRow
         KeyboardBottomRow(proxy: self.proxy, metrics: self.chrome, keyboardState: self.keyboardState)

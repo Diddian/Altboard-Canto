@@ -225,6 +225,11 @@ struct SharedSettings {
     nonmutating set { defaults.set(newValue, forKey: SharedKey.voiceComposeMode) }
   }
 
+  var voiceComposePreset: VoiceComposePreset {
+    get { VoiceComposePreset(rawValue: defaults.string(forKey: SharedKey.voiceComposePreset) ?? "") ?? .automatic }
+    nonmutating set { defaults.set(newValue.rawValue, forKey: SharedKey.voiceComposePreset) }
+  }
+
   var voiceOutputTarget: VoiceOutputTarget {
     get {
       guard let raw = defaults.string(forKey: SharedKey.voiceOutputTarget) else { return .original }

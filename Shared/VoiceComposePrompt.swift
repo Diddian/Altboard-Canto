@@ -51,12 +51,20 @@ enum VoiceComposeKind: String, Sendable {
 enum VoiceComposePrompt {
   static func systemPrompt(
     for options: VoiceOutputConfiguration,
-    spokenInstruction: String
+    spokenInstruction: String,
+    preset: VoiceComposePreset = .automatic,
+    spokenLanguage: String? = nil
   ) -> String {
-    let medium = VoiceComposeKind.detect(in: spokenInstruction)
+    let medium = preset.formatOverride ?? VoiceComposeKind.detect(in: spokenInstruction)
+    let detected = VoiceComposeLanguage.displayName(for: spokenLanguage ?? VoiceComposeLanguage.detectedCode(transcript: spokenInstruction))
+    let tone = preset.toneInstruction ?? (medium == .whatsapp || medium == .message
+      ? "Use casual, everyday language."
+      : medium == .letter || medium == .email
+        ? "Use a courteous professional register."
+        : "Infer tone: client, tenant, booking, business, appointment, rental and customer requests should be professionally courteous; friends and social chat should be casual.")
     let language: String
     if options.target == .original {
-      language = "Use the language the speaker explicitly requests; otherwise use their main spoken language, retaining natural code-switching."
+      language = "AUTO OUTPUT: Write in \(detected). Follow the language actually spoken; Qwen3 ASR being the speech model does not mean the response should be Cantonese. Do not translate to Cantonese unless the speaker used Cantonese. Keep natural code-switching only when it occurred."
     } else {
       language = "OVERRIDING KEYBOARD OUTPUT LANGUAGE: "
         + (options.target.targetInstruction(customLanguage: options.customLanguage)
@@ -70,12 +78,13 @@ enum VoiceComposePrompt {
       Write the FINISHED text requested by the speaker, not a transcript of their instructions. \
       Infer WhatsApp, email, formal letter or another medium from the utterance itself. \
       Detected medium: \(medium.formatHint) \
+      Register: \(tone) \
       WhatsApp is ALWAYS casual and conversational, with short paragraphs; \
       never write a formal letter, subject line or invented sign-off for WhatsApp. \
       Email needs an appropriate greeting/closing. Letter needs a suitable structure. \
       Respect explicit tone requests unless they conflict with the WhatsApp default. \
       \(language) \
-      For Cantonese output, use natural HONG KONG SPOKEN CANTONESE in Traditional Chinese, \
+      ONLY IF the chosen output language is Cantonese: use natural HONG KONG SPOKEN CANTONESE in Traditional Chinese, \
       e.g. 唔、冇、喺、嘅、咗、啲、佢、畀、而家、點解. Never write Mandarin or generic 書面語. \
       Actually translate English, German or written Chinese sentences to spoken Cantonese \
       when Cantonese is selected; proper names and essential technical terms may remain. \

@@ -12,6 +12,9 @@ struct ExtendedKeyboardLayout: View {
         keyboardState: self.keyboardState,
         onContentHeightChange: self.proxy.setStatusStripHeight,
       )
+      if self.keyboardState.isComposeMode {
+        ComposePresetBar(keyboardState: self.keyboardState)
+      }
       VStack(spacing: Self.rowSpacing) {
         self.chromeRow
         self.symbolsRow1View

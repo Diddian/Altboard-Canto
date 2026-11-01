@@ -56,6 +56,11 @@ final class KeyboardViewController: UIInputViewController {
     self.setupForegroundObserver()
     self.setupLLMObservers()
     self.setupDictationLockObserver()
+    self.composeHeightObserver = NotificationCenter.default.addObserver(
+      forName: .init("AltboardComposeModeChanged"), object: nil, queue: .main
+    ) { [weak self] _ in
+      MainActor.assumeIsolated { self?.applyKeyboardHeight() }
+    }
     self.keyboardState.onStaleLevelDetected = { [weak self] in
       guard let self else { return }
       self.resetProcessingState()
@@ -141,6 +146,7 @@ final class KeyboardViewController: UIInputViewController {
   private var statusStripHeight: CGFloat = 0
 
   private var hostingController: UIHostingController<KeyboardView>?
+  private var composeHeightObserver: NSObjectProtocol?
   private var staleFallbackTimer: Timer?
   private var lastSyncedFullAccess = false
   private var hasPerformedInitialFullAccessSync = false
@@ -452,7 +458,7 @@ extension KeyboardViewController {
       actionBarVisible: self.actionBarVisible,
       kind: self.keyboardState.keyboardKind,
     )
-    let target = base + self.statusStripHeight
+    let target = base + self.statusStripHeight + (self.keyboardState.isComposeMode ? KeyboardMetrics.composePresetBarHeight.kbScaled : 0)
     guard hc.constant != target else { return }
     hc.constant = target
     self.hostingHeightConstraint?.constant = target

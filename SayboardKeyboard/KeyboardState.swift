@@ -18,6 +18,7 @@ final class KeyboardState: ObservableObject {
   @Published var useCustomSpaceBar = false
   @Published var isTranslationMode = false
   @Published var isComposeMode = false
+  @Published var composePreset = VoiceComposePreset.automatic
   @Published var showsEmojiPicker = false
   @Published var selectedVariantSupportsTranslation = false
   @Published var selectedVariantSpecializesForNeuralEngine = false
@@ -90,6 +91,7 @@ final class KeyboardState: ObservableObject {
     self.parakeetV3NeedsRedownload = self.settings.parakeetV3NeedsRedownload
     self.isMicrophoneAuthorized = self.settings.isMicrophoneAuthorized
     self.isComposeMode = self.settings.voiceComposeMode
+    self.composePreset = self.settings.voiceComposePreset
     self.useCustomSpaceBar = self.settings.useCustomSpaceBar
     self.keyboardKind = self.settings.keyboardKind
     let selectedVariant = self.settings.selectedVariant
@@ -144,9 +146,15 @@ final class KeyboardState: ObservableObject {
     self.settings.isMicHintDismissed = true
   }
 
+  func selectComposePreset(_ preset: VoiceComposePreset) {
+    self.composePreset = preset
+    self.settings.voiceComposePreset = preset
+  }
+
   func toggleComposeMode() {
     self.isComposeMode.toggle()
     self.settings.voiceComposeMode = self.isComposeMode
+    NotificationCenter.default.post(name: .init("AltboardComposeModeChanged"), object: nil)
   }
 
   func toggleTranslationMode() {
