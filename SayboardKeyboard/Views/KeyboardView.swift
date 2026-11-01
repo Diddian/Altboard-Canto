@@ -60,6 +60,7 @@ struct KeyboardProxy {
 }
 
 enum SetupBlocker {
+  case sharedContainerUnavailable
   case fullAccessMissing
   case micDenied
   case noModel
@@ -67,6 +68,7 @@ enum SetupBlocker {
 
   var icon: String {
     switch self {
+    case .sharedContainerUnavailable: "externaldrive.badge.exclamationmark"
     case .fullAccessMissing: "lock.open"
     case .micDenied: "mic.slash"
     case .noModel, .modelRemovedByUpdate: "arrow.down.circle"
@@ -75,6 +77,7 @@ enum SetupBlocker {
 
   var message: LocalizedStringKey {
     switch self {
+    case .sharedContainerUnavailable: "Shared keyboard storage is unavailable. Open Altboard Setup diagnostics to check signing"
     case .fullAccessMissing: "Full Access is disabled. Open the Altboard app for setup instructions"
     case .micDenied: "Microphone is disabled. Allow Altboard microphone access to recognize your speech"
     case .noModel: "No speech model yet. Download a speech model to start using voice input"
@@ -84,6 +87,7 @@ enum SetupBlocker {
 
   var buttonTitle: LocalizedStringKey {
     switch self {
+    case .sharedContainerUnavailable: "Open Altboard"
     case .fullAccessMissing: "Open Settings"
     case .micDenied: "Open Settings"
     case .noModel, .modelRemovedByUpdate: "Open Models"
@@ -92,6 +96,7 @@ enum SetupBlocker {
 
   var linkURL: URL? {
     switch self {
+    case .sharedContainerUnavailable: DeepLink.settingsURL
     case .fullAccessMissing: nil
     case .micDenied: DeepLink.setupMicURL
     case .noModel, .modelRemovedByUpdate: DeepLink.modelsURL
@@ -188,7 +193,9 @@ struct KeyboardView: View {
   @Environment(\.openURL) private var openURL
 
   private var activeBlocker: SetupBlocker? {
-    if !self.keyboardState.hasFullAccess {
+    if AppGroup.containerURL == nil {
+      .sharedContainerUnavailable
+    } else if !self.keyboardState.hasFullAccess {
       .fullAccessMissing
     } else if !self.keyboardState.isMicrophoneAuthorized {
       .micDenied

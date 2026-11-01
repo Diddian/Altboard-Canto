@@ -150,12 +150,17 @@ final class KeyboardViewController: UIInputViewController {
   private func syncFullAccessIfChanged() {
     let current = self.hasFullAccess
     self.keyboardState.hasFullAccess = current
+    // Report the real extension state. The parent can read this only when
+    // both signed targets can access the same App Group.
+    let settings = SharedSettings()
+    settings.defaults.set(CFAbsoluteTimeGetCurrent(), forKey: SharedKey.keyboardProbeTimestamp)
+    settings.defaults.set(current, forKey: SharedKey.keyboardProbeFullAccess)
+    settings.defaults.set(AppGroup.containerURL != nil, forKey: SharedKey.keyboardProbeGroupAvailable)
+    settings.hasFullAccess = current
+    settings.synchronize()
     guard !self.hasPerformedInitialFullAccessSync || current != self.lastSyncedFullAccess else { return }
     self.hasPerformedInitialFullAccessSync = true
     self.lastSyncedFullAccess = current
-    let settings = SharedSettings()
-    settings.hasFullAccess = current
-    settings.synchronize()
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.fullAccessChanged)
   }
 
