@@ -82,6 +82,7 @@ final class SpeechRecognitionService: ObservableObject {
     self.settings.lastVoiceOutputProcessed = false
     self.settings.lastDictationOutcome = nil
     TranscriptionBridge.clearTranscription()
+    TranscriptionBridge.clearVoiceProgress()
     self.currentAudioFileName = "\(UUID().uuidString).caf"
 
     guard self.ensureSessionActive() else {
@@ -153,6 +154,7 @@ final class SpeechRecognitionService: ObservableObject {
     }
     self.isRecording = false
     self.isStopping = true
+    TranscriptionBridge.writeVoiceProgress(.stoppingAudio)
 
     self.cancelMaxDurationTimer()
     self.session.deactivateTap()
@@ -177,6 +179,7 @@ final class SpeechRecognitionService: ObservableObject {
     }
 
     if self.activeLoadState != .loaded {
+      TranscriptionBridge.writeVoiceProgress(.loadingRecognizer)
       let _ = String(describing: self.activeLoadState)
       if self.activeLoadState == .loading {
         await self.awaitModelLoad()
@@ -186,6 +189,7 @@ final class SpeechRecognitionService: ObservableObject {
       }
     }
 
+    TranscriptionBridge.writeVoiceProgress(.transcribing)
     await self.runFinalTranscription(samples: savedSamples, stylingHost: stylingHost)
 
     self.saveHistoryRecord()
@@ -194,6 +198,7 @@ final class SpeechRecognitionService: ObservableObject {
     self.settings.isRecording = false
     self.settings.dictationSessionToken = nil
     self.settings.synchronize()
+    TranscriptionBridge.clearVoiceProgress()
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStopped)
   }
 

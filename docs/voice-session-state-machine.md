@@ -66,3 +66,13 @@ flowchart TD
 - Live partial transcription is not implemented. Qwen3 currently uses sherpa-onnx's offline recognizer, so incremental text requires a separate chunked/streaming design with stable partial-result merging.
 - AUTO follows recognized transcript language; a wrongly recognized speech language cannot be reconstructed from text alone.
 - IPA compilation cannot substitute for real-device cold start and background-session testing.
+
+
+## Post-recording status and raw text preview
+
+- The main app publishes processing stages through an App Group JSON file and Darwin notification: stopping audio, loading speech model, transcribing, translating/cleaning up, and finalizing.
+- A muted status **below the keyboard keys** shows the real stage and elapsed seconds. No fabricated percentage appears because the installed Qwen3 ONNX model loader and offline decoder do not expose fractional completion.
+- Once ASR finishes, the raw, unmodified recognized speech appears in a two-line preview **before** optional translation or cleanup completes. The raw preview is not inserted into the host's text field.
+- Progress is scoped by the dictation session token. New recordings clear previous progress; completed sessions clear it. The keyboard ignores stale tokens and old updates.
+- A deterministic formatter converts clearly recognized technical quantities such as "one point seven gigabytes" to "1.7 GB" or "two point five gigahertz" to "2.5 GHz". It distinguishes gigabits (Gb) from gigabytes (GB). It cannot reconstruct any digit the ASR omitted.
+- Real device checks: stop after cold model warmup, return to WhatsApp during transcription, inspect elapsed time, confirm raw preview persists through cleanup, confirm controls fade back when the final text arrives, and repeat with DE output translation and with no offline LLM installed.

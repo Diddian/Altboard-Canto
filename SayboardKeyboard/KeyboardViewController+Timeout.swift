@@ -4,7 +4,7 @@ import UIKit
 extension KeyboardViewController {
 
   static let processingCheckInterval: TimeInterval = 5
-  static let processingHardTimeout: TimeInterval = 60
+  static let processingHardTimeout: TimeInterval = 180
 
   func cancelProcessingTimeout() {
     self.processingTimeoutTimer?.invalidate()
@@ -62,6 +62,7 @@ extension KeyboardViewController {
     self.cancelProcessingTimeout()
     self.keyboardState.stopLevelPolling()
     self.keyboardState.isProcessing = false
+    self.keyboardState.voiceProcessingProgress = nil
     self.keyboardState.isRecording = false
     self.keyboardState.isStartingRecording = false
     self.keyboardState.isSessionActive = false

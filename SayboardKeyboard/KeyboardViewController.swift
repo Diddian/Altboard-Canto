@@ -52,6 +52,7 @@ final class KeyboardViewController: UIInputViewController {
     self.keyboardState.bootstrapLayoutSettings()
     Self.activeInstance = self
     self.setupTranscriptionObserver()
+    self.setupVoiceProgressObserver()
     self.setupSessionObservers()
     self.setupForegroundObserver()
     self.setupLLMObservers()
@@ -124,6 +125,7 @@ final class KeyboardViewController: UIInputViewController {
   private static let staleFallbackTimeout: TimeInterval = 1.0
 
   private static var transcriptionObserver: DarwinNotificationObserver?
+  private static var voiceProgressObserver: DarwinNotificationObserver?
   private static var dictationStartedObserver: DarwinNotificationObserver?
   private static var dictationStoppedObserver: DarwinNotificationObserver?
   private static var sessionStartedObserver: DarwinNotificationObserver?
@@ -178,6 +180,18 @@ final class KeyboardViewController: UIInputViewController {
     }
   }
 
+  private func setupVoiceProgressObserver() {
+    Self.voiceProgressObserver?.stopObserving()
+    Self.voiceProgressObserver = TranscriptionBridge.observeDarwinNotification(
+      DarwinNotificationName.voiceProgressUpdated
+    ) {
+      DispatchQueue.main.async {
+        guard let vc = Self.activeInstance else { return }
+        vc.keyboardState.syncVoiceProcessingProgress()
+      }
+    }
+  }
+
   private func setupForegroundObserver() {
     NotificationCenter.default.addObserver(
       self,
@@ -214,6 +228,7 @@ final class KeyboardViewController: UIInputViewController {
         vc.pingValidator.cancel()
         vc.cancelProcessingTimeout()
         vc.keyboardState.isProcessing = false
+        vc.keyboardState.voiceProcessingProgress = nil
         vc.keyboardState.isRecording = true
         vc.keyboardState.isStartingRecording = false
         if !vc.isPerformingHistoryNavigation {
@@ -247,6 +262,7 @@ final class KeyboardViewController: UIInputViewController {
   }
 
   private func finalizeProcessingPipeline() {
+    self.keyboardState.voiceProcessingProgress = nil
     self.keyboardState.isProcessing = false
     if self.keyboardState.isLLMProcessing {
       self.startProcessingTimeout()
@@ -345,6 +361,7 @@ extension KeyboardViewController {
     let _ = self.keyboardState.isSessionActive
     self.saveHostBundleId()
     self.keyboardState.isProcessing = true
+    self.keyboardState.syncVoiceProcessingProgress()
     self.keyboardState.syncModelLoading()
     self.keyboardState.stopLevelPolling()
     let _ = self.keyboardState.isModelLoading

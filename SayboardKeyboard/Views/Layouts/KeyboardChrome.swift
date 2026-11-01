@@ -57,7 +57,10 @@ struct KeyboardStatusStrip: View {
     Color.clear
       .overlay(alignment: .top) {
         Group {
-          if self.keyboardState.isStartingRecording && !self.keyboardState.isRecording {
+          if self.keyboardState.isProcessing {
+            VoiceProcessingStatusView(progress: self.keyboardState.voiceProcessingProgress)
+              .transition(.opacity)
+          } else if self.keyboardState.isStartingRecording && !self.keyboardState.isRecording {
             Text("Activating microphone…")
               .font(.subheadline.weight(.semibold))
               .foregroundStyle(.secondary)
@@ -99,6 +102,48 @@ struct KeyboardStatusStrip: View {
 
   private var showModelLoading: Bool {
     self.keyboardState.isModelLoading && self.keyboardState.isProcessing
+  }
+}
+
+/// A low-contrast status below the keyboard. Elapsed seconds are real, not a
+/// fabricated ONNX loading percentage; ASR text appears before cleanup.
+private struct VoiceProcessingStatusView: View {
+  let progress: VoiceProcessingProgress?
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 4.kbScaled) {
+      HStack(spacing: 6.kbScaled) {
+        ProgressView()
+          .controlSize(.mini)
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+          let elapsed = max(0, Int(context.date.timeIntervalSinceReferenceDate
+            - (self.progress?.startedAt ?? context.date.timeIntervalSinceReferenceDate)))
+          Text("\(self.stageTitle) · \(elapsed)s elapsed")
+            .font(.caption.weight(.medium))
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+        }
+      }
+      if let preview = self.progress?.rawPreview, !preview.isEmpty {
+        Text("Recognized: \(preview)")
+          .font(.caption2)
+          .foregroundStyle(.tertiary)
+          .lineLimit(2)
+          .truncationMode(.tail)
+          .accessibilityLabel("Raw speech transcript: \(preview)")
+      }
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(.horizontal, 13.kbScaled)
+    .padding(.vertical, 7.kbScaled)
+  }
+
+  private var stageTitle: String {
+    guard let progress else { return "Processing recording" }
+    if progress.stage == .loadingRecognizer {
+      return "Loading \(SharedSettings().selectedVariant.displayName)"
+    }
+    return progress.stage.title
   }
 }
 

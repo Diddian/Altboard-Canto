@@ -36,6 +36,7 @@ final class KeyboardState: ObservableObject {
   @Published var showLLMActions = false
   @Published var llmError: LLMError?
   @Published var dictationOutcome: DictationOutcome?
+  @Published var voiceProcessingProgress: VoiceProcessingProgress?
   @Published var needsInputModeSwitchKey = false
   @Published var showGlobeKey = true
   @Published var keyboardHapticsEnabled = true
@@ -86,6 +87,8 @@ final class KeyboardState: ObservableObject {
       self.settings.isRecording = false
     }
     self.isProcessing = false
+    self.voiceProcessingProgress = nil
+    self.syncVoiceProcessingProgress()
     self.isModelLoading = self.settings.isModelLoading
     self.hasPreparedModelOnce = self.settings.hasPreparedModelOnce
     self.hasUsableModel = self.settings.hasUsableModel
@@ -112,6 +115,24 @@ final class KeyboardState: ObservableObject {
     self.keyboardHapticsEnabled = self.settings.keyboardHapticsEnabled
     self.syncDictationLock()
     self.checkDiskSpace()
+  }
+
+  /// Refresh the main app's local progress file, including when the keyboard
+  /// reappears midway through a slow ASR/translation operation.
+  func syncVoiceProcessingProgress() {
+    self.settings.synchronize()
+    guard let update = TranscriptionBridge.readVoiceProgress(),
+          update.sessionToken != nil,
+          update.sessionToken == self.settings.dictationSessionToken,
+          Date().timeIntervalSinceReferenceDate - update.updatedAt < 180
+    else {
+      self.voiceProcessingProgress = nil
+      return
+    }
+    self.voiceProcessingProgress = update
+    if !self.isRecording {
+      self.isProcessing = true
+    }
   }
 
   func syncModelLoading() {

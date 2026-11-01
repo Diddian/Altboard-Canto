@@ -8,14 +8,14 @@ struct StandardKeyboardLayout: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      KeyboardStatusStrip(
-        keyboardState: self.keyboardState,
-        onContentHeightChange: self.proxy.setStatusStripHeight,
-      )
       VStack(spacing: 8.5.kbScaled) {
         self.micRow
         KeyboardBottomRow(proxy: self.proxy, metrics: self.chrome, keyboardState: self.keyboardState)
       }
+      KeyboardStatusStrip(
+        keyboardState: self.keyboardState,
+        onContentHeightChange: self.proxy.setStatusStripHeight
+      )
     }
   }
 

@@ -186,6 +186,7 @@ enum HistoryRetentionPolicy: String, CaseIterable, Sendable {
 
 enum DarwinNotificationName {
   static let transcriptionReady = "app.sayboard.transcriptionReady"
+  static let voiceProgressUpdated = "app.sayboard.voiceProgressUpdated"
   static let dictationStarted = "app.sayboard.dictationStarted"
   static let dictationStopped = "app.sayboard.dictationStopped"
   static let requestStartDictation = "app.sayboard.requestStartDictation"

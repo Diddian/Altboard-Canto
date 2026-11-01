@@ -68,6 +68,13 @@ extension SpeechRecognitionService {
       }
       self.currentRawTranscription = rawText
 
+      // Preview is the unmodified ASR result. It is not inserted into
+      // the host app before translation/cleanup completes.
+      let target = self.recordingOutputOptions.target
+      let stage: VoiceProcessingStage = target != .original ? .translating
+        : (self.recordingOutputOptions.needsLLM ? .editing : .finalizing)
+      TranscriptionBridge.writeVoiceProgress(stage, rawPreview: rawText)
+
       // Snapshot is taken when the microphone begins capturing.
       let options = self.recordingOutputOptions
       self.settings.lastVoiceOutputProcessed = options.needsLLM
@@ -83,7 +90,11 @@ extension SpeechRecognitionService {
           return
         }
       }
-      let bridgeText = self.styled(CantoneseOutput.normalize(finalText), host: stylingHost)
+      // Apply deterministic technical unit formatting after ASR/optional
+      // translation. Do not guess missing digits the recognizer never heard.
+      let displayText = TechnicalTextFormatter.format(CantoneseOutput.normalize(finalText))
+      let bridgeText = self.styled(displayText, host: stylingHost)
+      TranscriptionBridge.writeVoiceProgress(.finalizing)
       self.currentTranscription = bridgeText
 
       self.settings.chargeFreeWords(WordCounter.count(bridgeText))
