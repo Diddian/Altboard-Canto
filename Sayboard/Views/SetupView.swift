@@ -33,6 +33,15 @@ struct SetupView: View {
         Button("Recheck microphone and keyboard") {
           self.permissionService.refreshAll()
         }
+        if self.permissionService.microphoneState != .granted {
+          Button("Request or repair microphone access") {
+            if self.permissionService.microphoneState == .undetermined {
+              self.permissionService.requestMicrophonePermission()
+            } else if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+              UIApplication.shared.open(settingsURL)
+            }
+          }
+        }
         Text("iOS microphone permission: \(self.permissionService.microphoneState == .granted ? "Granted" : self.permissionService.microphoneState == .denied ? "Denied" : "Not requested")")
           .font(.footnote)
         Text("Detected keyboard: \(self.permissionService.isKeyboardAdded ? "Yes" : "Not confirmed")")

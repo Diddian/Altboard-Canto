@@ -20,6 +20,9 @@ final class PermissionService: ObservableObject {
 
   static func isKeyboardAddedSync() -> Bool {
     let keyboards = UserDefaults.standard.stringArray(forKey: "AppleKeyboards") ?? []
+    if AppGroup.containerURL != nil && SharedSettings().defaults.bool(forKey: "canto.keyboardOpenedAtLeastOnce") {
+      return true
+    }
     let installedIdentifiers = Self.installedExtensionIdentifiers()
     return keyboards.contains { entry in
       installedIdentifiers.contains { id in
