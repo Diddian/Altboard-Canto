@@ -43,7 +43,7 @@ enum VoiceOutputTarget: String, CaseIterable, Identifiable, Codable, Sendable {
     case .original:
       return "Keep the original spoken language or languages. Do not translate."
     case .cantonese:
-      return "Translate into authentic Hong Kong spoken Cantonese, written in Traditional Chinese."
+      return "OUTPUT MUST BE colloquial HONG KONG CANTONESE in Traditional Chinese, even when the input is English or German. Use natural 口語: 我、你、佢、唔、冇、喺、嘅、啲、咗、畀、而家、點解. Avoid Mandarin and 書面語 such as 這、的、沒有、他們、我們. Preserve personal names and essential technical terms."
     case .english:
       return "Translate into natural, idiomatic English."
     case .german:
