@@ -47,9 +47,9 @@ struct KeyboardLayoutPreview: View {
   private static let standardHeight: CGFloat = 240
   private static let extendedHeight: CGFloat = 289.5
   private static let topPadding: CGFloat = 14.5
-  private static let rowSpacing: CGFloat = 8.5
+  private static let rowSpacing: CGFloat = 11
   private static let keyHeight: CGFloat = 45
-  private static let keyRadius: CGFloat = 8.5
+  private static let keyRadius: CGFloat = 8
   private static let keySpacing: CGFloat = 6
   private static let sideKeyWidth: CGFloat = 45
   private static let returnKeyWidth: CGFloat = 96
@@ -132,7 +132,7 @@ struct KeyboardLayoutPreview: View {
       .frame(height: Self.keyHeight)
       self.characterRow(self.letters[0])
       self.characterRow(self.letters[1])
-        .padding(.horizontal, 14)
+        .padding(.horizontal, 21.33)
       HStack(spacing: Self.keySpacing) {
         self.symbolKey("shift", width: 48)
         ForEach(self.letters[2], id: \.self) { key in

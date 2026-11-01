@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feat/cantonese-qwen3-offline-mvp
+      - fix/ios-keyboard-haptics-caps-20261102
   workflow_dispatch:
 
 permissions:
@@ -39,6 +40,12 @@ jobs:
           set -euo pipefail
           bash scripts/bootstrap-llama.sh
 
+      - name: Generate offline Jyutping lexicon
+        run: |
+          set -euo pipefail
+          python3 scripts/build-jyutping-lexicon.py
+          test -s JyutpingResources/jyutping.sqlite3
+
       - name: Generate Xcode project
         run: |
           set -euo pipefail
@@ -68,6 +75,10 @@ jobs:
           set -euo pipefail
           APP="$RUNNER_TEMP/AltboardDerived/Build/Products/Release-iphoneos/Sayboard.app"
           test -d "$APP/PlugIns" || exit 1
+          test -s "$APP/PlugIns/SayboardKeyboard.appex/jyutping.sqlite3" || {
+            echo 'ERROR: offline Jyutping lexicon missing from keyboard extension'
+            exit 1
+          }
 
           # No developer credential is needed. These ad-hoc signatures only
           # carry capability requests for SideStore to re-sign on the device.

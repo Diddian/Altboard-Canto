@@ -122,6 +122,8 @@ targets:
     sources:
       - path: SayboardKeyboard
       - path: Shared
+      - path: JyutpingResources
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.sayboard.keyboard
