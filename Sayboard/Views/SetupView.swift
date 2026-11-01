@@ -29,6 +29,22 @@ struct SetupView: View {
           Text("Altboard won’t work until these settings are configured")
         }
       }
+      Section("Sideloading diagnostics") {
+        Button("Recheck microphone and keyboard") {
+          self.permissionService.refreshAll()
+        }
+        Text("iOS microphone permission: \(self.permissionService.microphoneState == .granted ? "Granted" : self.permissionService.microphoneState == .denied ? "Denied" : "Not requested")")
+          .font(.footnote)
+        Text("Detected keyboard: \(self.permissionService.isKeyboardAdded ? "Yes" : "Not confirmed")")
+          .font(.footnote)
+        if AppGroup.containerURL == nil {
+          Label("Shared App Group storage is unavailable. SideStore may not have preserved the signing entitlement. Keyboard text return cannot be guaranteed.", systemImage: "exclamationmark.triangle")
+            .font(.footnote).foregroundStyle(.orange)
+        } else if !self.permissionService.hasFullAccess {
+          Text("Switch to the Altboard keyboard once, then return here and recheck Full Access.")
+            .font(.footnote).foregroundStyle(.secondary)
+        }
+      }
     }
     .navigationTitle("Setup")
     .navigationBarTitleDisplayMode(.inline)
@@ -40,9 +56,9 @@ struct SetupView: View {
   private static let defaultLanguage = AppLanguageConfig.fallback
 
   @AppStorage(SharedKey.appLanguage) private var selectedAppLanguage = defaultLanguage
-  @AppStorage(SharedKey.hasUsableModel, store: UserDefaults(suiteName: AppGroup.identifier))
+  @AppStorage(SharedKey.hasUsableModel, store: AppGroup.sharedDefaults ?? .standard)
   private var hasUsableModel = false
-  @AppStorage(SharedKey.parakeetV3NeedsRedownload, store: UserDefaults(suiteName: AppGroup.identifier))
+  @AppStorage(SharedKey.parakeetV3NeedsRedownload, store: AppGroup.sharedDefaults ?? .standard)
   private var parakeetV3NeedsRedownload = false
   @SceneStorage(ModelTab.storageKey) private var modelsTab = ModelTab.speechRecognition
   @EnvironmentObject private var permissionService: PermissionService

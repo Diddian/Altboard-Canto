@@ -9,6 +9,7 @@ enum R2DownloadError: LocalizedError {
   case extractionRanOutOfSpace
   case insufficientDiskSpace
   case downloadFailed(Error)
+  case httpStatus(Int)
   case cancelled
 
   var errorDescription: String? {
@@ -27,6 +28,8 @@ enum R2DownloadError: LocalizedError {
       "Not enough free space for the archive and its expanded tree"
     case .downloadFailed(let error):
       "Download failed: \(error.localizedDescription)"
+    case .httpStatus(let code):
+      "Model server returned HTTP \(code)"
     case .cancelled:
       "Download was cancelled"
     }

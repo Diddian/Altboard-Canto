@@ -22,9 +22,32 @@ extension ModelDownloadService {
   }
 
   func enqueueDownload(variant: ModelVariant) async {
+    if variant.engine == .qwen3 {
+      do {
+        try await QwenHubDownloader.download(variant: variant) { [weak self] fraction in
+          self?.variantStates[variant] = .downloading(
+            progress: min(fraction * Self.downloadProgressCeiling, Self.downloadProgressCeiling - 0.01)
+          )
+        }
+        try Task.checkCancellation()
+        guard ModelStorageManager.isDownloaded(variant) else {
+          throw QwenHubDownloader.DownloadError.incompatible("Expected Qwen3 ONNX files were not found after download")
+        }
+        self.variantStates[variant] = .downloaded
+        self.removeVariantFromPersistence(variant)
+        self.autoSelectIfNeeded(variant: variant)
+      } catch {
+        self.variantStates[variant] = Task.isCancelled ? .notDownloaded
+          : .error(message: "Qwen download failed: \(error.localizedDescription)")
+        self.removeVariantFromPersistence(variant)
+      }
+      self.enqueueTasks[variant] = nil
+      return
+    }
+
     do {
-      let manifest = variant == .qwen3ASR17B ? nil : try await self.fetchManifestCached()
-      guard let entry = variant == .qwen3ASR17B ? CustomQwenModelSource.entry() : manifest?.entry(for: variant) else {
+      let manifest = try await self.fetchManifestCached()
+      guard let entry = manifest.entry(for: variant) else {
         throw R2DownloadError.manifestMissingVariant(variant.rawValue)
       }
 
@@ -136,11 +159,11 @@ func localizedDownloadError(_ error: Error) -> LocalizedStringResource {
   if isOutOfSpaceError(error) {
     return "Not enough storage space. Free up space and try again."
   }
-  if error is R2DownloadError {
-    return "Download failed. Tap Retry to try again."
+  if let modelError = error as? R2DownloadError {
+    return "Model download: \(modelError.localizedDescription)"
   }
-  if error is ManifestError {
-    return "Could not reach model server. Check your connection and try again."
+  if let manifestError = error as? ManifestError {
+    return "Model catalog: \(manifestError.localizedDescription)"
   }
   let nsError = error as NSError
   if nsError.domain == NSURLErrorDomain {
@@ -150,7 +173,7 @@ func localizedDownloadError(_ error: Error) -> LocalizedStringResource {
     case NSURLErrorTimedOut:
       return "Download timed out. Try again later."
     default:
-      return "Network error. Check your connection and try again."
+      return "Network error (\(nsError.code)). Check your connection and try again."
     }
   }
   return "Download failed. Tap Retry to try again."

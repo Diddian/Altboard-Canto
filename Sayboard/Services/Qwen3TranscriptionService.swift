@@ -2,7 +2,7 @@ import Foundation
 import SherpaOnnx
 
 enum Qwen3ModelBundle {
-  static let required = ["conv_frontend.onnx", "tokenizer"]
+  static let required = ["conv_frontend.onnx", "tokenizer/vocab.json", "tokenizer/merges.txt", "tokenizer/tokenizer_config.json"]
   static func locate(in root: URL) -> URL? {
     let fm = FileManager.default
     guard fm.fileExists(atPath: root.path) else { return nil }

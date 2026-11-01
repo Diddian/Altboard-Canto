@@ -149,6 +149,11 @@ final class BackgroundDownloadManager: NSObject, URLSessionDownloadDelegate, @un
     }
     self.lock.unlock()
 
+    if let http = downloadTask.response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+      self.completeWithFailure(key: key, metadata: metadata, error: R2DownloadError.httpStatus(http.statusCode))
+      return
+    }
+
     let fm = FileManager.default
     let tempURL = fm.temporaryDirectory
       .appendingPathComponent(UUID().uuidString)

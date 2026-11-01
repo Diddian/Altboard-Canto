@@ -15,12 +15,33 @@ final class PermissionService: ObservableObject {
   @Published private(set) var hasFullAccess = false
 
   static func hasFullAccessSync() -> Bool {
-    UIInputViewController().hasFullAccess
+    AppGroup.containerURL != nil && SharedSettings().hasFullAccess
   }
 
   static func isKeyboardAddedSync() -> Bool {
-    let keyboards = UserDefaults.standard.stringArray(forKey: self.appleKeyboardsKey) ?? []
-    return keyboards.contains(self.sayboardKeyboardId)
+    let keyboards = UserDefaults.standard.stringArray(forKey: "AppleKeyboards") ?? []
+    let installedIdentifiers = Self.installedExtensionIdentifiers()
+    return keyboards.contains { entry in
+      installedIdentifiers.contains { id in
+        entry == id || entry.hasPrefix(id + "@")
+      }
+    }
+  }
+
+  private static func installedExtensionIdentifiers() -> Set<String> {
+    var ids: Set<String> = ["app.sayboard.keyboard"]
+    if let bundleID = Bundle.main.bundleIdentifier {
+      ids.insert(bundleID + ".keyboard")
+    }
+    if let plugIns = Bundle.main.builtInPlugInsURL,
+       let urls = try? FileManager.default.contentsOfDirectory(at: plugIns, includingPropertiesForKeys: nil) {
+      for url in urls where url.pathExtension == "appex" {
+        if let id = Bundle(url: url)?.bundleIdentifier {
+          ids.insert(id)
+        }
+      }
+    }
+    return ids
   }
 
   func refreshAll() {
@@ -33,14 +54,10 @@ final class PermissionService: ObservableObject {
   func refreshMicrophoneState() {
     let permission = AVAudioApplication.shared.recordPermission
     switch permission {
-    case .granted:
-      self.microphoneState = .granted
-    case .denied:
-      self.microphoneState = .denied
-    case .undetermined:
-      self.microphoneState = .undetermined
-    @unknown default:
-      self.microphoneState = .denied
+    case .granted: self.microphoneState = .granted
+    case .denied: self.microphoneState = .denied
+    case .undetermined: self.microphoneState = .undetermined
+    @unknown default: self.microphoneState = .denied
     }
     self.settings.isMicrophoneAuthorized = self.microphoneState == .granted
   }
@@ -56,17 +73,15 @@ final class PermissionService: ObservableObject {
   }
 
   func refreshKeyboardAdded() {
-    let keyboards = UserDefaults.standard.stringArray(forKey: Self.appleKeyboardsKey) ?? []
-    self.isKeyboardAdded = keyboards.contains(Self.sayboardKeyboardId)
+    self.isKeyboardAdded = Self.isKeyboardAddedSync()
   }
 
   func refreshFullAccess() {
-    let value = UIInputViewController().hasFullAccess
-    self.hasFullAccess = value
+    // Only the real keyboard extension may report hasFullAccess.
+    // A newly allocated UIInputViewController is not a meaningful probe.
+    self.settings.synchronize()
+    self.hasFullAccess = AppGroup.containerURL != nil && self.settings.hasFullAccess
   }
-
-  private static let appleKeyboardsKey = "AppleKeyboards"
-  private static let sayboardKeyboardId = "app.sayboard.keyboard"
 
   private let settings = SharedSettings()
   private var fullAccessObserver: DarwinNotificationObserver?
@@ -76,9 +91,7 @@ final class PermissionService: ObservableObject {
     self.fullAccessObserver = TranscriptionBridge.observeDarwinNotification(
       DarwinNotificationName.fullAccessChanged
     ) { [weak self] in
-      DispatchQueue.main.async {
-        self?.refreshFullAccess()
-      }
+      DispatchQueue.main.async { self?.refreshFullAccess() }
     }
   }
 }

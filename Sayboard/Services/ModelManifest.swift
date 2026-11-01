@@ -5,6 +5,7 @@ enum ManifestError: LocalizedError {
   case invalidURL
   case networkError(Error)
   case decodingError(Error)
+  case httpStatus(Int)
 
   var errorDescription: String? {
     switch self {
@@ -14,6 +15,8 @@ enum ManifestError: LocalizedError {
       "Network error fetching manifest: \(error.localizedDescription)"
     case .decodingError(let error):
       "Failed to decode manifest: \(error.localizedDescription)"
+    case .httpStatus(let code):
+      "Model manifest server returned HTTP \(code)"
     }
   }
 }
@@ -92,8 +95,13 @@ enum ManifestFetcher {
     do {
       var request = URLRequest(url: url)
       request.cachePolicy = .reloadIgnoringLocalCacheData
-      let (responseData, _) = try await URLSession.shared.data(for: request)
+      let (responseData, response) = try await URLSession.shared.data(for: request)
+      guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+        throw ManifestError.httpStatus((response as? HTTPURLResponse)?.statusCode ?? -1)
+      }
       data = responseData
+    } catch let error as ManifestError {
+      throw error
     } catch {
       throw ManifestError.networkError(error)
     }
