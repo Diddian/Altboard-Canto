@@ -38,8 +38,8 @@ struct EmojiKeyboardView: View {
 
       ScrollView {
         LazyVGrid(columns: self.columns, spacing: 7) {
-          ForEach(Array(Self.groups.enumerated()), id: \.offset) { _, group in
-            ForEach(group.1.split(separator: " ").map(String.init), id: \.self) { symbol in
+          ForEach(Self.groups.indices, id: \.self) { index in
+            ForEach(Self.groups[index].1.split(separator: " ").map(String.init), id: \.self) { symbol in
               Button {
                 self.proxy.insertText(symbol)
               } label: {
