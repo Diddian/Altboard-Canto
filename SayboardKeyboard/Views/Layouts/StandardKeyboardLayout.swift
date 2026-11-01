@@ -45,10 +45,8 @@ extension StandardKeyboardLayout {
       ) {
         if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
       }
-      if self.keyboardState.selectedVariantSupportsTranslation {
-        TranslateToggleButton(fixedWidth: self.chrome.sideButtonWidth, keyboardState: self.keyboardState)
-          .transition(.opacity.combined(with: .scale))
-      }
+      TranslateToggleButton(fixedWidth: self.chrome.sideButtonWidth, keyboardState: self.keyboardState)
+        .transition(.opacity.combined(with: .scale))
       Spacer()
       VStack(alignment: .trailing, spacing: 8.5.kbScaled) {
         if self.keyboardState.hasLLMHistory {

@@ -30,6 +30,7 @@ final class SpeechRecognitionService: ObservableObject {
   let moonshineService = MoonshineTranscriptionService()
   let qwen3Service = Qwen3TranscriptionService()
   weak var downloadService: ModelDownloadService?
+  weak var llmCoordinator: LLMProcessingCoordinator?
 
   let settings = SharedSettings()
   let accumulator = AudioBufferAccumulator()

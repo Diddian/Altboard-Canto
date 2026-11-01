@@ -75,15 +75,13 @@ extension ExtendedKeyboardLayout {
       ) {
         if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
       }
-      if self.keyboardState.selectedVariantSupportsTranslation {
-        TranslateToggleButton(
-          fixedWidth: self.chrome.sideButtonWidth,
-          shape: .pill,
-          compactStyle: true,
-          keyboardState: self.keyboardState,
-        )
-        .transition(.opacity.combined(with: .scale))
-      }
+      TranslateToggleButton(
+        fixedWidth: self.chrome.sideButtonWidth,
+        shape: .pill,
+        compactStyle: true,
+        keyboardState: self.keyboardState,
+      )
+      .transition(.opacity.combined(with: .scale))
       if self.keyboardState.showsAIButton {
         self.aiButton.transition(.opacity.combined(with: .scale))
       }

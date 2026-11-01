@@ -2,62 +2,56 @@ import SwiftUI
 import UIKit
 
 private struct TranslateKeyStyle: ButtonStyle {
-
   let fixedWidth: CGFloat
   let isActive: Bool
   var shape = KeyShape.rounded
 
   func makeBody(configuration: Configuration) -> some View {
-    let fill = self.backgroundColor(isPressed: configuration.isPressed)
+    let pressed = configuration.isPressed
+    let fill = self.isActive
+      ? Color.accentColor.opacity(pressed ? 0.2 : 0.12)
+      : Color(pressed ? .keyPressedBackground : .keyBackground)
     return configuration.label
       .frame(width: self.fixedWidth, height: 45.kbScaled)
-      .keyBackground(shape: self.shape, fill: fill, isPressed: configuration.isPressed)
+      .keyBackground(shape: self.shape, fill: fill, isPressed: pressed)
       .animation(.easeOut(duration: 0.12), value: self.isActive)
-  }
-
-  private func backgroundColor(isPressed: Bool) -> Color {
-    if self.isActive {
-      return isPressed ? Color.accentColor.opacity(0.2) : Color.accentColor.opacity(0.12)
-    }
-    return Color(isPressed ? .keyPressedBackground : .keyBackground)
   }
 }
 
 struct TranslateToggleButton: View {
-
   let fixedWidth: CGFloat
   var shape = KeyShape.rounded
   var compactStyle = false
 
   @ObservedObject var keyboardState: KeyboardState
 
+  @AppStorage(SharedKey.voiceOutputTarget, store: AppGroup.sharedDefaults ?? .standard)
+  private var targetRawValue = VoiceOutputTarget.original.rawValue
+
+  private var target: VoiceOutputTarget {
+    VoiceOutputTarget(rawValue: self.targetRawValue) ?? .original
+  }
+
   var body: some View {
-    let zAlignment: Alignment = self.compactStyle ? .bottom : .bottomTrailing
-    let enXOffset: CGFloat = self.compactStyle ? 0 : 2.kbScaled
-    let enYOffset: CGFloat = self.compactStyle ? 7.kbScaled : 8.kbScaled
-    return Button {
-      self.keyboardState.toggleTranslationMode()
+    Button {
+      let next = VoiceOutputTarget.nextKeyboardTarget(after: self.target)
+      self.targetRawValue = next.rawValue
+      SharedSettings().isTranslationMode = false
     } label: {
-      ZStack(alignment: zAlignment) {
+      VStack(spacing: 0) {
         Image(systemName: "translate")
-          .font(.system(size: 18.kbScaled))
-          .foregroundStyle(self.keyboardState.isTranslationMode ? Color.accentColor : .primary)
-        Text(verbatim: "EN")
-          .font(.system(size: 7.kbScaled, weight: .bold, design: .rounded))
-          .foregroundStyle(
-            self.keyboardState.isTranslationMode
-              ? Color.accentColor.opacity(0.2)
-              : Color.primary.opacity(0.2)
-          )
-          .offset(x: enXOffset, y: enYOffset)
+          .font(.system(size: 17.kbScaled))
+        Text(verbatim: self.target.keyboardLabel)
+          .font(.system(size: 8.kbScaled, weight: .bold, design: .rounded))
       }
-      .animation(.easeOut(duration: 0.12), value: self.keyboardState.isTranslationMode)
+      .foregroundStyle(self.target == .original ? Color.primary : Color.accentColor)
     }
     .buttonStyle(TranslateKeyStyle(
       fixedWidth: self.fixedWidth,
-      isActive: self.keyboardState.isTranslationMode,
-      shape: self.shape,
+      isActive: self.target != .original,
+      shape: self.shape
     ))
-    .gatedSensoryFeedback(.selection, trigger: self.keyboardState.isTranslationMode)
+    .accessibilityLabel("Dictation output: \(self.target.title). Tap to change language.")
+    .gatedSensoryFeedback(.selection, trigger: self.targetRawValue)
   }
 }

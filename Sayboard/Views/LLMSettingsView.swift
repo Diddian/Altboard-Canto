@@ -6,6 +6,13 @@ struct LLMSettingsView: View {
   var body: some View {
     Form {
       self.enableSection
+      Section {
+        NavigationLink("Voice Output & Auto Cleanup") {
+          VoiceOutputSettingsView()
+        }
+      } footer: {
+        Text("Automatically correct dictation and optionally translate it into another language.")
+      }
       if !self.llmDownloadService.hasUsableModel {
         self.modelsSection
       } else if self.llmEnabled {

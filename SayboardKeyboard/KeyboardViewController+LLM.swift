@@ -41,6 +41,9 @@ extension KeyboardViewController {
 
   @discardableResult
   func autoApplyLLMIfNeeded(directText: String? = nil) -> Bool {
+    // Voice transcription has already been processed by the main app.
+    // Never apply a second, unrelated automatic LLM action.
+    guard !SharedSettings().voiceOutputConfiguration.needsLLM else { return false }
     guard self.keyboardState.llmEnabled else { return false }
     guard self.keyboardState.hasUsableLLMModel else { return false }
     guard !self.keyboardState.isDictationLocked else { return false }

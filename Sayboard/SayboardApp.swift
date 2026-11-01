@@ -345,6 +345,7 @@ private struct SayboardRootView: View {
     self.llmDownloadService.verifyExistingModels()
     self.llmDownloadService.checkForInterruptedDownloadOnLaunch()
     self.llmCoordinator.speechService = self.speechService
+    self.speechService.llmCoordinator = self.llmCoordinator
     self.llmCoordinator.downloadService = self.llmDownloadService
     self.llmCoordinator.setupObservers()
 

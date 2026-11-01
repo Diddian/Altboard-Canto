@@ -215,6 +215,41 @@ struct SharedSettings {
     nonmutating set { defaults.set(newValue, forKey: SharedKey.isTranslationMode) }
   }
 
+  var voiceCleanupEnabled: Bool {
+    get { defaults.object(forKey: SharedKey.voiceCleanupEnabled) as? Bool ?? true }
+    nonmutating set { defaults.set(newValue, forKey: SharedKey.voiceCleanupEnabled) }
+  }
+
+  var voiceOutputTarget: VoiceOutputTarget {
+    get {
+      guard let raw = defaults.string(forKey: SharedKey.voiceOutputTarget) else { return .original }
+      return VoiceOutputTarget(rawValue: raw) ?? .original
+    }
+    nonmutating set { defaults.set(newValue.rawValue, forKey: SharedKey.voiceOutputTarget) }
+  }
+
+  var voiceOutputRegister: VoiceOutputRegister {
+    get {
+      guard let raw = defaults.string(forKey: SharedKey.voiceOutputRegister) else { return .faithful }
+      return VoiceOutputRegister(rawValue: raw) ?? .faithful
+    }
+    nonmutating set { defaults.set(newValue.rawValue, forKey: SharedKey.voiceOutputRegister) }
+  }
+
+  var voiceCustomLanguage: String {
+    get { defaults.string(forKey: SharedKey.voiceCustomLanguage) ?? "" }
+    nonmutating set { defaults.set(newValue, forKey: SharedKey.voiceCustomLanguage) }
+  }
+
+  var voiceOutputConfiguration: VoiceOutputConfiguration {
+    VoiceOutputConfiguration(
+      cleanupEnabled: self.voiceCleanupEnabled,
+      target: self.voiceOutputTarget,
+      register: self.voiceOutputRegister,
+      customLanguage: self.voiceCustomLanguage
+    )
+  }
+
   var defaultWritingStyle: WritingStyle {
     get {
       guard

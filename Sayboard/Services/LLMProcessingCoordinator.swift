@@ -39,6 +39,64 @@ final class LLMProcessingCoordinator: ObservableObject {
 
   private var requestObserver: DarwinNotificationObserver?
 
+  /// Edit the speech transcript in the main app before it reaches the keyboard.
+  /// If the model is unavailable or fails, the original transcription survives.
+  func processVoiceDictation(_ input: String) async -> String? {
+    let settings = SharedSettings()
+    let options = settings.voiceOutputConfiguration
+    guard options.needsLLM, !input.isEmpty else { return nil }
+    guard !self.isProcessing else {
+      DiagnosticLog.write("voice/llm: already processing; use raw transcription")
+      return nil
+    }
+    guard let downloads = self.downloadService, downloads.hasUsableModel else {
+      DiagnosticLog.write("voice/llm: offline LLM not downloaded; use raw transcription")
+      return nil
+    }
+    let variant = settings.selectedLLMVariant
+    guard let modelPath = downloads.modelFileURL(for: variant)?.path else {
+      DiagnosticLog.write("voice/llm: selected model file missing; use raw transcription")
+      return nil
+    }
+
+    self.isProcessing = true
+    settings.isLLMProcessing = true
+    defer {
+      self.inferenceService.unloadModel()
+      settings.isLLMProcessing = false
+      self.isProcessing = false
+    }
+
+    let backgroundTask = self.beginInferenceBackgroundTask()
+    defer { self.endInferenceBackgroundTask(backgroundTask) }
+
+    await self.prepareForInference(variant: variant, modelPath: modelPath)
+    guard self.inferenceService.loadState == .loaded else {
+      DiagnosticLog.write("voice/llm: model failed to load; use raw transcription")
+      return nil
+    }
+
+    let prompt = VoiceOutputPrompt.systemPrompt(for: options)
+    let result = await self.runInferenceWithTimeout(
+      systemPrompt: prompt,
+      userText: input,
+      assistantPrefill: ""
+    )
+
+    guard let result, !result.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+      DiagnosticLog.write("voice/llm: empty or timed out; use raw transcription")
+      return nil
+    }
+
+    let output = result.trimmingCharacters(in: .whitespacesAndNewlines)
+    if input.count >= 30 && output.count > max(input.count * 4, input.count + 200) {
+      DiagnosticLog.write("voice/llm: excessive output; use raw transcription")
+      return nil
+    }
+    DiagnosticLog.write("voice/llm: processed \(input.count) to \(output.count) characters")
+    return output
+  }
+
   private func handleProcessingRequest() async {
     guard !self.isProcessing else {
       DiagnosticLog.write("llm: request ignored, already processing")

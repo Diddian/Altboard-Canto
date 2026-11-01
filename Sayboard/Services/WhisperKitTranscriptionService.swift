@@ -178,7 +178,8 @@ final class WhisperKitTranscriptionService: ObservableObject {
   private func makeDecodingOptions() -> DecodingOptions {
     let settings = SharedSettings()
     settings.synchronize()
-    let task: DecodingTask = settings.isTranslationMode ? .translate : .transcribe
+    // Preserve the source language; optional translation happens after ASR.
+    let task: DecodingTask = .transcribe
 
     let preferred = settings.preferredLanguages(for: settings.selectedVariant)
     let lockedLanguage: String? = preferred.count == 1 ? preferred.first : nil

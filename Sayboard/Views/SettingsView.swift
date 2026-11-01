@@ -87,6 +87,15 @@ struct SettingsView: View, Equatable {
       self.sessionSection
       self.historySection
       TextOutputSection()
+      Section {
+        NavigationLink {
+          VoiceOutputSettingsView()
+        } label: {
+          Label("Voice Output & AI Cleanup", systemImage: "waveform")
+        }
+      } header: {
+        Text("Speech to Text and Translation")
+      }
       self.keyboardSection
       FeedbackSection()
       self.aboutSection
