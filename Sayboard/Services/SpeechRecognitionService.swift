@@ -36,7 +36,7 @@ final class SpeechRecognitionService: ObservableObject {
   let accumulator = AudioBufferAccumulator()
   let audioRecorder = AudioRecorder()
   var currentTranscription = ""
-  @Published private(set) var currentRawTranscription = ""
+  @Published var currentRawTranscription = ""
   var currentAudioFileName: String?
   var currentWordBoundaries: (start: Float, end: Float)?
 
