@@ -7,6 +7,8 @@ import SwiftUI
 final class KeyboardState: ObservableObject {
 
   @Published var isRecording = false
+  @Published var composeMode = false
+  @Published var showsEmojiPicker = false
   @Published var isProcessing = false
   @Published var isSessionActive = false
   @Published var isModelLoading = false
@@ -76,6 +78,7 @@ final class KeyboardState: ObservableObject {
     let prevRec = self.isRecording
     let prevSession = self.isSessionActive
     self.isRecording = self.settings.isRecording
+    self.composeMode = self.settings.voiceComposeMode
     self.isSessionActive = self.settings.isSessionActive
     if self.isRecording, !self.isSessionActive {
       self.isRecording = false
@@ -139,6 +142,19 @@ final class KeyboardState: ObservableObject {
       self.showsMicHint = false
     }
     self.settings.isMicHintDismissed = true
+  }
+
+  func toggleComposeMode() {
+    guard !self.isRecording, !self.isProcessing else { return }
+    self.composeMode.toggle()
+    self.settings.voiceComposeMode = self.composeMode
+    self.showLLMActions = false
+    self.showsEmojiPicker = false
+  }
+
+  func toggleEmojiPicker() {
+    self.showsEmojiPicker.toggle()
+    self.showLLMActions = false
   }
 
   func toggleTranslationMode() {
