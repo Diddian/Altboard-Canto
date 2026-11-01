@@ -45,6 +45,7 @@ struct KeyboardProxy {
   let insertText: (String) -> Void
   let insertSpace: () -> Void
   let deleteBackward: () -> Void
+  let deleteWordBackward: () -> Void
   let deleteAll: () -> Void
   let advanceToNextInputMode: () -> Void
   let openURL: (URL) -> Void
@@ -146,6 +147,9 @@ struct KeyboardView: View {
       }
       .onAppear { self.proxy.setStatusStripHeight(0) }
       .environment(\.keyboardHapticsEnabled, self.keyboardState.keyboardHapticsEnabled)
+    } else if self.keyboardState.showsEmojiPicker {
+      EmojiKeyboardView(proxy: self.proxy, keyboardState: self.keyboardState)
+        .onAppear { self.proxy.setStatusStripHeight(0) }
     } else if let error = self.keyboardState.llmError {
       LLMErrorPrompt(error: error, keyboardState: self.keyboardState)
         .onAppear { self.proxy.setStatusStripHeight(0) }

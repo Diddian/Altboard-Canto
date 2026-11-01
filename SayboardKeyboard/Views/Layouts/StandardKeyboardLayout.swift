@@ -29,6 +29,15 @@ struct StandardKeyboardLayout: View {
       MicButtonWithPulse(sizing: .standard, proxy: self.proxy, keyboardState: self.keyboardState)
         .padding(.bottom, 6.kbScaled)
     }
+    .overlay(alignment: .top) {
+      HStack {
+        KeyButton(content: .systemImage("face.smiling"), fixedWidth: self.chrome.sideButtonWidth) {
+          self.keyboardState.showsEmojiPicker = true
+        }
+        Spacer()
+        ComposeModeButton(keyboardState: self.keyboardState, compact: false)
+      }
+    }
     .padding(.horizontal, 4.kbScaled)
   }
 
@@ -57,13 +66,7 @@ extension StandardKeyboardLayout {
           if self.keyboardState.showsAIButton {
             self.aiButton.transition(.opacity.combined(with: .scale))
           }
-          KeyButton(
-            content: .systemImage("delete.left"),
-            fixedWidth: self.chrome.sideButtonWidth,
-            fillOnPress: true,
-          ) {
-            self.proxy.deleteBackward()
-          }
+          RepeatDeleteButton(proxy: self.proxy, fixedWidth: self.chrome.sideButtonWidth)
         }
       }
     }

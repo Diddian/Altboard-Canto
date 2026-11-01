@@ -256,6 +256,28 @@ final class KeyboardViewController: UIInputViewController {
     }
   }
 
+  private func deletePreviousWord() {
+    self.previousSpaceTap = nil
+    let context = self.textDocumentProxy.documentContextBeforeInput ?? ""
+    guard !context.isEmpty else {
+      self.textDocumentProxy.deleteBackward()
+      return
+    }
+    var chars = Array(context)
+    var count = 0
+    // Unicode Character units preserve composed characters and emoji.
+    while let last = chars.last, last.isWhitespace {
+      chars.removeLast()
+      count += 1
+    }
+    while let last = chars.last, !last.isWhitespace {
+      chars.removeLast()
+      count += 1
+    }
+    for _ in 0..<max(1, count) { self.textDocumentProxy.deleteBackward() }
+    if !self.isPerformingHistoryNavigation { self.keyboardState.clearLLMHistory() }
+  }
+
   private func deleteAllText() {
     while textDocumentProxy.hasText {
       textDocumentProxy.deleteBackward()
@@ -452,6 +474,9 @@ extension KeyboardViewController {
       deleteBackward: { [weak self] in
         self?.previousSpaceTap = nil
         self?.textDocumentProxy.deleteBackward()
+      },
+      deleteWordBackward: { [weak self] in
+        self?.deletePreviousWord()
       },
       deleteAll: { [weak self] in
         self?.previousSpaceTap = nil

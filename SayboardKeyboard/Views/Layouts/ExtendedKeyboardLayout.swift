@@ -75,6 +75,9 @@ extension ExtendedKeyboardLayout {
       ) {
         if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
       }
+      KeyButton(content: .systemImage("face.smiling"), fixedWidth: self.chrome.sideButtonWidth, shape: .pill) {
+        self.keyboardState.showsEmojiPicker = true
+      }
       TranslateToggleButton(
         fixedWidth: self.chrome.sideButtonWidth,
         shape: .pill,
@@ -90,6 +93,7 @@ extension ExtendedKeyboardLayout {
           .transition(.opacity.combined(with: .scale))
       }
       Spacer()
+      ComposeModeButton(keyboardState: self.keyboardState, compact: true)
       self.micButton
     }
     .padding(.leading, 12.kbScaled)
@@ -204,13 +208,7 @@ extension ExtendedKeyboardLayout {
         }
       }
       self.punctRowContent(narrowKeyWidth: narrowKeyWidth)
-      KeyButton(
-        content: .systemImage("delete.left"),
-        fixedWidth: wideKeyWidth,
-        fillOnPress: true,
-      ) {
-        self.proxy.deleteBackward()
-      }
+      RepeatDeleteButton(proxy: self.proxy, fixedWidth: wideKeyWidth)
     }
     .padding(.horizontal, 4.kbScaled)
   }

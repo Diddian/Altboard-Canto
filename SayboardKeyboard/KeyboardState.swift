@@ -17,6 +17,8 @@ final class KeyboardState: ObservableObject {
   @Published var hasFullAccess = false
   @Published var useCustomSpaceBar = false
   @Published var isTranslationMode = false
+  @Published var isComposeMode = false
+  @Published var showsEmojiPicker = false
   @Published var selectedVariantSupportsTranslation = false
   @Published var selectedVariantSpecializesForNeuralEngine = false
   @Published var audioLevel: Float = 0
@@ -87,6 +89,7 @@ final class KeyboardState: ObservableObject {
     self.hasUsableModel = self.settings.hasUsableModel
     self.parakeetV3NeedsRedownload = self.settings.parakeetV3NeedsRedownload
     self.isMicrophoneAuthorized = self.settings.isMicrophoneAuthorized
+    self.isComposeMode = self.settings.voiceComposeMode
     self.useCustomSpaceBar = self.settings.useCustomSpaceBar
     self.keyboardKind = self.settings.keyboardKind
     let selectedVariant = self.settings.selectedVariant
@@ -139,6 +142,11 @@ final class KeyboardState: ObservableObject {
       self.showsMicHint = false
     }
     self.settings.isMicHintDismissed = true
+  }
+
+  func toggleComposeMode() {
+    self.isComposeMode.toggle()
+    self.settings.voiceComposeMode = self.isComposeMode
   }
 
   func toggleTranslationMode() {
