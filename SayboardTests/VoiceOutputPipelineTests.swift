@@ -25,6 +25,7 @@ struct VoiceOutputPipelineTests {
     #expect(prompt.contains("German"))
     #expect(prompt.contains("professional"))
     #expect(prompt.contains("negation"))
+    #expect(prompt.contains("translate the Cantonese content as well"))
   }
 
   @Test

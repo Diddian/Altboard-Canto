@@ -128,8 +128,9 @@ enum VoiceOutputPrompt {
       \(language)
       \(options.register.instruction)
 
-      When the source is Cantonese, use authentic Hong Kong spoken Cantonese in Traditional \
-      Chinese (for example: 唔、喺、嘅、咗、啲、佢、冇), not Mandarin phrasing. \
+      When retaining Cantonese or translating into Cantonese, use authentic Hong Kong spoken \
+      Cantonese in Traditional Chinese (for example: 唔、喺、嘅、咗、啲、佢、冇), not Mandarin. \
+      When the target is another language, translate the Cantonese content as well. \
       When the target is the original language, preserve code-switching between Cantonese, \
       English and German; keep English technical terms and proper names in their source language. \
       When translating, retain established English technical terms if translating them \

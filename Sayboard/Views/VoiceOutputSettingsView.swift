@@ -2,6 +2,7 @@ import SwiftUI
 
 struct VoiceOutputSettingsView: View {
   @EnvironmentObject private var llmDownloadService: LLMDownloadService
+  @EnvironmentObject private var speechModels: ModelDownloadService
 
   @AppStorage(SharedKey.voiceCleanupEnabled, store: AppGroup.sharedDefaults ?? .standard)
   private var cleanupEnabled = true
@@ -45,6 +46,14 @@ struct VoiceOutputSettingsView: View {
       }
 
       Section {
+        NavigationLink {
+          ModelsView()
+        } label: {
+          LabeledContent("Speech recognition model") {
+            Text(self.speechModels.selectedVariant.displayName)
+              .foregroundStyle(.secondary)
+          }
+        }
         NavigationLink {
           LLMModelsScreen()
         } label: {

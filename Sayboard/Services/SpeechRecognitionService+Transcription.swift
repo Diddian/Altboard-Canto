@@ -60,7 +60,7 @@ extension SpeechRecognitionService {
       let cantoneseText = CantoneseOutput.normalize(sanitizedText)
       // Edit in the main app before notifying the keyboard; do not insert twice.
       let finalText = await self.llmCoordinator?.processVoiceDictation(cantoneseText) ?? cantoneseText
-      let bridgeText = self.styled(finalText, host: stylingHost)
+      let bridgeText = self.styled(CantoneseOutput.normalize(finalText), host: stylingHost)
       self.currentTranscription = bridgeText
 
       self.settings.chargeFreeWords(WordCounter.count(bridgeText))
