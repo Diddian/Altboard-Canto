@@ -80,7 +80,7 @@ targets:
       - package: ZIPFoundation
       - package: Moonshine
       - package: sherpa-onnx
-        product: sherpa-onnx
+        product: sherpa-onnx-shared
       - package: LlamaCpp
         product: llama
     postCompileScripts:

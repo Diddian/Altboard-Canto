@@ -1,5 +1,5 @@
 import Foundation
-import SherpaOnnx
+import SherpaOnnxShared
 
 enum Qwen3ModelBundle {
   static let required = [
