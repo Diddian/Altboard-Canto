@@ -37,9 +37,6 @@ struct AlphabeticKeyboardLayout: View {
         self.secondKeyRow
         self.thirdKeyRow
       }
-      .opacity(self.keyboardState.auxiliaryControlsHidden ? 0 : 1)
-      .allowsHitTesting(!self.keyboardState.auxiliaryControlsHidden)
-      .animation(.easeOut(duration: 0.22), value: self.keyboardState.auxiliaryControlsHidden)
 
       KeyboardBottomRow(
         proxy: self.proxy,
@@ -61,7 +58,7 @@ struct AlphabeticKeyboardLayout: View {
         KeyButton(
           content: .systemImage("gearshape"),
           fixedWidth: self.chrome.sideButtonWidth,
-          firesHaptic: false
+          firesHaptic: true
         ) {
           if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
         }
@@ -85,13 +82,6 @@ struct AlphabeticKeyboardLayout: View {
 
       Spacer(minLength: 2.kbScaled)
 
-      if self.keyboardState.isProcessing || self.keyboardState.dictationOutcome != nil
-          || self.keyboardState.finalOutputPreview != nil {
-        KeyboardStatusStrip(keyboardState: self.keyboardState, compact: true)
-          .frame(maxWidth: 150.kbScaled, maxHeight: KeyboardChromeMetrics.keyHeight)
-          .allowsHitTesting(false)
-      }
-
       if self.keyboardState.hasFullAccess && self.keyboardState.isMicrophoneAuthorized
           && self.keyboardState.hasUsableModel {
         MicButtonWithPulse(
@@ -104,7 +94,7 @@ struct AlphabeticKeyboardLayout: View {
         KeyButton(
           content: .systemImage("mic.slash"),
           fixedWidth: 86.kbScaled,
-          firesHaptic: false
+          firesHaptic: true
         ) {
           if let url = DeepLink.setupMicURL ?? DeepLink.settingsURL {
             self.proxy.openURL(url)
@@ -155,8 +145,8 @@ struct AlphabeticKeyboardLayout: View {
         ) { self.tapShift() }
         .accessibilityLabel(self.capsLock ? "Caps Lock" : "Shift")
 
-        ForEach(self.arrangement.rows[2], id: \.self) { letter in
-          self.letterKey(letter)
+        ForEach(Array(self.arrangement.rows[2].enumerated()), id: \.offset) { index, letter in
+          self.letterKey(letter, index: index, count: 7)
         }
 
         RepeatDeleteButton(proxy: self.proxy, fixedWidth: 48.kbScaled)
@@ -187,22 +177,21 @@ struct AlphabeticKeyboardLayout: View {
 
   private func letterRow(_ letters: [String], indent: CGFloat) -> some View {
     HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
-      ForEach(letters, id: \.self) { letter in
-        self.letterKey(letter)
+      ForEach(Array(letters.enumerated()), id: \.offset) { index, letter in
+        self.letterKey(letter, index: index, count: letters.count)
       }
     }
     .padding(.horizontal, 4.kbScaled + indent)
     .frame(height: KeyboardChromeMetrics.keyHeight)
   }
 
-  private func letterKey(_ letter: String) -> some View {
-    KeyButton(
-      content: .symbol((self.shiftActive || self.capsLock) ? letter : letter.lowercased(),
-        fontSize: 20),
-      showsCallout: true,
-      calloutRowSpacing: Self.rowSpacing.kbScaled
-    ) {
-      let typed = (self.shiftActive || self.capsLock) ? letter : letter.lowercased()
+  private func letterKey(_ letter: String, index: Int, count: Int) -> some View {
+    AlphabeticLetterKey(
+      letter: letter,
+      uppercase: self.shiftActive || self.capsLock,
+      column: index,
+      rowCount: count
+    ) { typed in
       self.proxy.insertText(typed)
       if !self.capsLock { self.shiftActive = false }
       self.lastShiftTap = nil

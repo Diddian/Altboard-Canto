@@ -138,6 +138,7 @@ enum SharedKey {
   static let keyboardLetterArrangement = "keyboardLetterArrangement"
   static let keyboardHeightScale = "keyboardHeightScale"
   static let keyboardHapticsEnabled = "keyboardHapticsEnabled"
+  static let keyboardHapticStrength = "keyboardHapticStrength"
   static let periodShortcutEnabled = "periodShortcutEnabled"
   static let entitlementStatus = "entitlementStatus"
   static let entitlementEnvironment = "entitlementEnvironment"

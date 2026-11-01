@@ -42,6 +42,7 @@ struct TranslateToggleButton: View {
 
   var body: some View {
     Button {
+      KeyboardHaptics.key()
       let next = PreferredVoiceLanguages.next(
         target: self.target,
         custom: self.customLanguage,
@@ -65,6 +66,5 @@ struct TranslateToggleButton: View {
       shape: self.shape
     ))
     .accessibilityLabel("Dictation output: \(self.currentLabel). Tap to change language.")
-    .gatedSensoryFeedback(.selection, trigger: self.targetRawValue)
   }
 }

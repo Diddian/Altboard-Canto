@@ -25,7 +25,7 @@ struct AIButton: View {
           },
           perform: {
             self.longPressFired = true
-            self.longPressCount += 1
+            KeyboardHaptics.key(strength: 0.8)
             self.onLongPress()
           },
         )
@@ -33,13 +33,16 @@ struct AIButton: View {
           TapGesture()
             .onEnded {
               if !self.longPressFired {
+                KeyboardHaptics.key()
                 self.onTap()
               }
             }
         )
-        .sensoryFeedback(.impact(weight: .medium), trigger: self.longPressCount)
     } else {
-      Button(action: self.onTap) {
+      Button {
+        KeyboardHaptics.key()
+        self.onTap()
+      } label: {
         self.iconView
       }
       .buttonStyle(RectKeyStyle(fixedWidth: self.fixedWidth, shape: self.shape))
@@ -51,7 +54,6 @@ struct AIButton: View {
 
   @State private var isPressed = false
   @State private var longPressFired = false
-  @State private var longPressCount = 0
 
   private var iconView: some View {
     Image(systemName: self.isActive ? "xmark" : "sparkles")

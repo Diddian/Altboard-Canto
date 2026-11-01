@@ -85,6 +85,21 @@ struct SharedSettingsDefaultsTests {
     #expect(LetterKeyArrangement.qwertz.rows.flatMap { $0 }.count == 26)
   }
 
+  @Test
+  func hapticStrengthIsClampedAndPersists() throws {
+    let suiteName = Self.uniqueSuiteName()
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { Self.cleanup(suiteName: suiteName) }
+    let settings = SharedSettings(defaults: defaults)
+    #expect(settings.keyboardHapticStrength == 0.6)
+    settings.keyboardHapticStrength = 0.01
+    #expect(settings.keyboardHapticStrength == 0.15)
+    settings.keyboardHapticStrength = 1.5
+    #expect(settings.keyboardHapticStrength == 1.0)
+    settings.keyboardHapticStrength = 0.45
+    #expect(SharedSettings(defaults: defaults).keyboardHapticStrength == 0.45)
+  }
+
   private static func uniqueSuiteName() -> String {
     "app.sayboard.tests.\(UUID().uuidString)"
   }

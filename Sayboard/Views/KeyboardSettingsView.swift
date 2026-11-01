@@ -23,6 +23,25 @@ struct KeyboardSettingsView: View {
             .foregroundStyle(.secondary)
         }
         Toggle("Haptic Feedback", isOn: self.$keyboardHapticsEnabled)
+        VStack(alignment: .leading, spacing: 10) {
+          HStack {
+            Text("Haptic strength")
+            Spacer()
+            Text("\(Int(self.hapticStrength * 100))%")
+              .monospacedDigit()
+              .foregroundStyle(.secondary)
+          }
+          Slider(value: self.$hapticStrength, in: 0.15...1, step: 0.05)
+            .accessibilityLabel("Haptic strength")
+          Button("Test haptic") {
+            KeyboardHaptics.key(strength: self.hapticStrength, enabled: self.keyboardHapticsEnabled)
+          }
+          .font(.footnote)
+          Text("Tap the letter keys in the preview below to test haptic feedback at this strength.")
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+        }
+        .disabled(!self.keyboardHapticsEnabled)
         VStack(alignment: .leading, spacing: 12) {
           HStack {
             Text("Keyboard height")
@@ -63,6 +82,8 @@ struct KeyboardSettingsView: View {
 
   @AppStorage(SharedKey.keyboardHapticsEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
   private var keyboardHapticsEnabled = true
+  @AppStorage(SharedKey.keyboardHapticStrength, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var hapticStrength = 0.60
   @AppStorage(SharedKey.periodShortcutEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
   private var periodShortcutEnabled = true
   @AppStorage(SharedKey.keyboardHeightScale, store: UserDefaults(suiteName: AppGroup.identifier))
@@ -76,6 +97,10 @@ private struct KeyboardHeightPreview: View {
   let kind: KeyboardKind
   let heightFactor: Double
   let letterArrangement: LetterKeyArrangement
+  @AppStorage(SharedKey.keyboardHapticsEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var keyboardHapticsEnabled = true
+  @AppStorage(SharedKey.keyboardHapticStrength, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var hapticStrength = 0.60
 
   private var compact: Bool { kind == .standard && heightFactor < 0.90 }
   private var previewHeight: CGFloat {
@@ -119,12 +144,20 @@ private struct KeyboardHeightPreview: View {
           ForEach(0..<3, id: \.self) { rowIndex in
             HStack(spacing: 4) {
               ForEach(self.letterArrangement.rows[rowIndex], id: \.self) { letter in
-                Text(letter)
-                  .font(.system(size: 12))
-                  .frame(maxWidth: .infinity)
-                  .frame(height: 45)
-                  .background(Color(.tertiarySystemFill),
-                    in: RoundedRectangle(cornerRadius: 6))
+                Button {
+                  KeyboardHaptics.key(
+                    strength: self.hapticStrength, enabled: self.keyboardHapticsEnabled
+                  )
+                } label: {
+                  Text(letter)
+                    .font(.system(size: 20, weight: .regular))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 45)
+                    .background(Color(.tertiarySystemFill),
+                      in: RoundedRectangle(cornerRadius: 5.5))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Try \(letter) key haptic")
               }
             }
           }
@@ -189,10 +222,16 @@ private struct KeyboardHeightPreview: View {
   }
 
   private func key(_ name: String, width: CGFloat = 45) -> some View {
-    Image(systemName: name)
-      .font(.system(size: 18))
-      .frame(width: width, height: 45)
-      .background(Color(.tertiarySystemFill),
-        in: RoundedRectangle(cornerRadius: 8.5))
+    Button {
+      KeyboardHaptics.key(strength: self.hapticStrength, enabled: self.keyboardHapticsEnabled)
+    } label: {
+      Image(systemName: name)
+        .font(.system(size: 18))
+        .frame(width: width, height: 45)
+        .background(Color(.tertiarySystemFill),
+          in: RoundedRectangle(cornerRadius: 8.5))
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel("Try \(name) key haptic")
   }
 }

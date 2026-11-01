@@ -22,7 +22,7 @@ struct KeyButton: View {
 
   var body: some View {
     Button {
-      if self.firesHaptic { self.tapCount &+= 1 }
+      if self.firesHaptic { KeyboardHaptics.key() }
       self.action()
     } label: {
       self.contentView
@@ -40,11 +40,9 @@ struct KeyButton: View {
       }
     }
     .zIndex(self.showsCallout && self.isPressed ? 100 : 0)
-    .gatedSensoryFeedback(.selection, trigger: self.tapCount)
   }
 
   @State private var isPressed = false
-  @State private var tapCount = 0
 
   @ViewBuilder
   private var contentView: some View {

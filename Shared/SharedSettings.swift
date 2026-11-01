@@ -223,6 +223,17 @@ struct SharedSettings {
     nonmutating set { defaults.set(newValue, forKey: SharedKey.useCustomSpaceBar) }
   }
 
+  /// Shared per-keystroke impact intensity (the OS determines final output).
+  var keyboardHapticStrength: Double {
+    get {
+      let saved = defaults.object(forKey: SharedKey.keyboardHapticStrength) as? Double ?? 0.6
+      return min(1.0, max(0.15, saved))
+    }
+    nonmutating set {
+      defaults.set(min(1.0, max(0.15, newValue)), forKey: SharedKey.keyboardHapticStrength)
+    }
+  }
+
   var keyboardHapticsEnabled: Bool {
     get { self.defaults.bool(forKey: SharedKey.keyboardHapticsEnabled) }
     nonmutating set { defaults.set(newValue, forKey: SharedKey.keyboardHapticsEnabled) }

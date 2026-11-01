@@ -25,6 +25,7 @@ struct RepeatDeleteButton: View {
           .onChanged { _ in
             guard !self.pressed else { return }
             self.pressed = true
+            KeyboardHaptics.key()
             self.didRepeat = false
             self.deletionTask = Task { @MainActor in
               try? await Task.sleep(for: .milliseconds(420))
@@ -35,6 +36,7 @@ struct RepeatDeleteButton: View {
                 if repeats < 24 {
                   self.proxy.deleteBackward()
                 } else {
+                  if repeats == 24 { KeyboardHaptics.key() }
                   self.proxy.deleteWordBackward()
                 }
                 repeats += 1

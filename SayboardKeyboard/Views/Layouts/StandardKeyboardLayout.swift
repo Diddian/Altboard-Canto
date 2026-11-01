@@ -91,7 +91,7 @@ extension StandardKeyboardLayout {
         content: .systemImage("gearshape"),
         fixedWidth: self.chrome.sideButtonWidth,
         fillOnPress: true,
-        firesHaptic: false
+        firesHaptic: true
       ) {
         if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
       }
@@ -126,7 +126,7 @@ extension StandardKeyboardLayout {
       KeyButton(
         content: .systemImage("arrow.uturn.backward"),
         fixedWidth: self.chrome.sideButtonWidth,
-        firesHaptic: false
+        firesHaptic: true
       ) {
         self.proxy.undoLLM()
       }
@@ -136,7 +136,7 @@ extension StandardKeyboardLayout {
       KeyButton(
         content: .systemImage("arrow.uturn.forward"),
         fixedWidth: self.chrome.sideButtonWidth,
-        firesHaptic: false
+        firesHaptic: true
       ) {
         self.proxy.redoLLM()
       }

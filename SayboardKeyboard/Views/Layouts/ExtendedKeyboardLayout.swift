@@ -73,7 +73,7 @@ extension ExtendedKeyboardLayout {
           fixedWidth: self.chrome.sideButtonWidth,
           shape: .pill,
           fillOnPress: true,
-          firesHaptic: false
+          firesHaptic: true
         ) {
           if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
         }
@@ -93,14 +93,6 @@ extension ExtendedKeyboardLayout {
       self.micButton
     }
     .padding(.leading, 12.kbScaled)
-    .overlay(alignment: .center) {
-      if self.keyboardState.auxiliaryControlsHidden || self.keyboardState.dictationOutcome != nil
-          || self.keyboardState.finalOutputPreview != nil {
-        KeyboardStatusStrip(keyboardState: self.keyboardState, compact: true)
-          .frame(maxWidth: 142.kbScaled, maxHeight: KeyboardChromeMetrics.keyHeight)
-          .allowsHitTesting(false)
-      }
-    }
     .animation(.easeInOut(duration: 0.35), value: self.keyboardState.selectedVariantSupportsTranslation)
     .animation(.easeInOut(duration: 0.35), value: self.keyboardState.showsAIButton)
     .animation(.easeInOut(duration: 0.25), value: self.keyboardState.hasLLMHistory)
@@ -123,7 +115,7 @@ extension ExtendedKeyboardLayout {
         content: .systemImage("arrow.uturn.backward"),
         fixedWidth: self.chrome.sideButtonWidth,
         shape: .pill,
-        firesHaptic: false,
+        firesHaptic: true,
       ) {
         self.proxy.undoLLM()
       }
@@ -134,7 +126,7 @@ extension ExtendedKeyboardLayout {
         content: .systemImage("arrow.uturn.forward"),
         fixedWidth: self.chrome.sideButtonWidth,
         shape: .pill,
-        firesHaptic: false,
+        firesHaptic: true,
       ) {
         self.proxy.redoLLM()
       }

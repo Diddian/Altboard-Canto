@@ -25,8 +25,6 @@ struct SpaceBarKey: View {
             self.handleDragEnded()
           }
       )
-      .sensoryFeedback(.impact(weight: .light), trigger: self.trackpadActivationCount)
-      .gatedSensoryFeedback(.selection, trigger: self.spaceTapCount)
   }
 
   private static let activationDelay: TimeInterval = 0.3
@@ -39,8 +37,6 @@ struct SpaceBarKey: View {
   @State private var pressStartTime: Date?
   @State private var accumulatedOffset: CGFloat = 0
   @State private var lastReportedCharOffset = 0
-  @State private var trackpadActivationCount = 0
-  @State private var spaceTapCount = 0
 
   @ViewBuilder
   private var label: some View {
@@ -83,14 +79,14 @@ struct SpaceBarKey: View {
     {
       self.isTrackpadActive = true
       self.lastReportedCharOffset = 0
-      self.trackpadActivationCount += 1
+      KeyboardHaptics.key(strength: 0.75)
     }
   }
 
   private func handleDragEnded() {
     if !self.isTrackpadActive {
       self.onSpace()
-      self.spaceTapCount &+= 1
+      KeyboardHaptics.key()
     }
 
     self.isPressed = false

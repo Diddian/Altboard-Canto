@@ -86,8 +86,6 @@ struct MicAnimatedButton: View {
       self.keyboardState.isStartingRecording = false
       self.keyboardState.dictationOutcome = .activationFailed
     }
-    .gatedSensoryFeedback(.impact(weight: .medium), trigger: self.recordingStartCount)
-    .gatedSensoryFeedback(.impact(weight: .light), trigger: self.recordingStopCount)
   }
 
   private static let spinnerDelay = Duration.milliseconds(600)
@@ -107,7 +105,8 @@ struct MicAnimatedButton: View {
     let isLoading = self.keyboardState.isModelLoading && !self.keyboardState.isRecording
     let isSpin = self.showSpinner || self.keyboardState.isStartingRecording
       || (isLoading && !self.isSpinnerMorphing && !self.pendingSpinnerMorph)
-    let compactStatus = KeyboardMetrics.isCompactStandard
+    let compactStatus = self.keyboardState.keyboardKind == .standard
+      && KeyboardMetrics.isCompactStandard
       && !self.keyboardState.isRecording
       && (self.keyboardState.isProcessing || self.keyboardState.isStartingRecording
         || self.keyboardState.dictationOutcome != nil
@@ -153,6 +152,7 @@ struct MicAnimatedButton: View {
   }
 
   private func handleTap() {
+    KeyboardHaptics.key()
     self.keyboardState.clearFinalOutputPreview()
     self.keyboardState.dismissMicHint()
     if self.keyboardState.isRecording {

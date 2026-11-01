@@ -51,8 +51,10 @@ final class KeyboardState: ObservableObject {
 
   var appearedAt: CFAbsoluteTime = 0
 
+  /// Keep typing controls visible while recording in every non-mic mode.
   var auxiliaryControlsHidden: Bool {
-    self.isStartingRecording || self.isRecording || self.isProcessing
+    self.keyboardKind == .standard
+      && (self.isStartingRecording || self.isRecording || self.isProcessing)
   }
 
   var canUndoLLM: Bool {

@@ -168,7 +168,7 @@ struct KeyboardBottomRow: View {
           content: .systemImage("trash"),
           fixedWidth: self.metrics.trashWidth,
           fillOnPress: true,
-          firesHaptic: false
+          firesHaptic: true
         ) {
           self.proxy.deleteAll()
         }
