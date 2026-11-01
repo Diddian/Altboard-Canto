@@ -41,12 +41,12 @@ final class LLMProcessingCoordinator: ObservableObject {
 
   /// Edit the speech transcript in the main app before it reaches the keyboard.
   /// If the model is unavailable or fails, the original transcription survives.
-  func processVoiceDictation(_ input: String) async -> String? {
+  func processVoiceDictation(_ input: String, compose: Bool = false) async -> String? {
     let settings = SharedSettings()
     let options = settings.voiceOutputConfiguration
-    guard options.needsLLM, !input.isEmpty else { return nil }
+    guard (options.needsLLM || compose), !input.isEmpty else { return nil }
     let started = CFAbsoluteTimeGetCurrent()
-    DictationBreadcrumb.record("llm: voice cleanup requested")
+    DictationBreadcrumb.record(compose ? "llm: voice composition requested" : "llm: voice cleanup requested")
     guard !self.isProcessing else {
       DiagnosticLog.write("voice/llm: already processing; use raw transcription")
       return nil
@@ -80,12 +80,27 @@ final class LLMProcessingCoordinator: ObservableObject {
       return nil
     }
 
-    let prompt = VoiceOutputPrompt.systemPrompt(for: options)
-    let result = await self.runInferenceWithTimeout(
+    let prompt = compose
+      ? VoiceComposePrompt.systemPrompt(for: options, instruction: input)
+      : VoiceOutputPrompt.systemPrompt(for: options)
+    var result = await self.runInferenceWithTimeout(
       systemPrompt: prompt,
       userText: input,
-      assistantPrefill: ""
+      assistantPrefill: "",
+      forComposition: compose
     )
+    // Repair obviously wrong-language output only; avoid paying for two LLM passes normally.
+    if let first = result, VoiceComposePrompt.needsCantoneseRepair(first, target: options.target) {
+      DictationBreadcrumb.record("llm: retrying incorrect English-only Cantonese output")
+      let repaired = await self.runInferenceWithTimeout(
+        systemPrompt: VoiceComposePrompt.cantoneseRepairPrompt,
+        userText: first,
+        assistantPrefill: ""
+      )
+      if let repaired, !VoiceComposePrompt.needsCantoneseRepair(repaired, target: options.target) {
+        result = repaired
+      }
+    }
     DictationBreadcrumb.record(
       "llm: generation took \(String(format: "%.1f", CFAbsoluteTimeGetCurrent() - started - prepareDuration))s"
     )
@@ -96,7 +111,7 @@ final class LLMProcessingCoordinator: ObservableObject {
     }
 
     let output = result.trimmingCharacters(in: .whitespacesAndNewlines)
-    if input.count >= 30 && output.count > max(input.count * 4, input.count + 200) {
+    if !compose && input.count >= 30 && output.count > max(input.count * 4, input.count + 200) {
       DiagnosticLog.write("voice/llm: excessive output; use raw transcription")
       return nil
     }
@@ -245,6 +260,7 @@ final class LLMProcessingCoordinator: ObservableObject {
     systemPrompt: String,
     userText: String,
     assistantPrefill: String,
+    forComposition: Bool = false,
   ) async -> String? {
     let remaining = UIApplication.shared.backgroundTimeRemaining
     let timeout: TimeInterval =
@@ -260,6 +276,8 @@ final class LLMProcessingCoordinator: ObservableObject {
           systemPrompt: systemPrompt,
           userText: userText,
           assistantPrefill: assistantPrefill,
+          maxOutputTokens: forComposition ? 512 : nil,
+          deadlineSeconds: forComposition ? 40 : 15,
         )
       }
 
