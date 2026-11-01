@@ -7,9 +7,6 @@ struct VoiceOutputSettingsView: View {
   @AppStorage(SharedKey.voiceCleanupEnabled, store: AppGroup.sharedDefaults ?? .standard)
   private var cleanupEnabled = false
 
-  @AppStorage(SharedKey.voiceComposeMode, store: AppGroup.sharedDefaults ?? .standard)
-  private var composeMode = false
-
   @AppStorage(SharedKey.voiceOutputTarget, store: AppGroup.sharedDefaults ?? .standard)
   private var target = VoiceOutputTarget.original.rawValue
 
@@ -49,14 +46,6 @@ struct VoiceOutputSettingsView: View {
       }
 
       Section {
-        Toggle("Voice Compose (WRITE mode)", isOn: self.$composeMode)
-        Text("Compose infers WhatsApp, email, letter or message from Cantonese, Chinese, English and German instructions. The keyboard output language always takes precedence. One LLM pass produces the finished text.")
-          .font(.footnote).foregroundStyle(.secondary)
-      } header: {
-        Text("Voice Compose")
-      }
-
-      Section {
         NavigationLink {
           ModelsView()
         } label: {
@@ -76,7 +65,7 @@ struct VoiceOutputSettingsView: View {
         }
         if !self.llmDownloadService.hasUsableModel {
           Label(
-            "Without a downloaded text model, Altboard returns the raw transcription. Translation and AI corrections require a separate LLM.",
+            "Without a downloaded text model, translation and AI corrections are unavailable. An explicit translation failure leaves the original in history instead of inserting it in the wrong language.",
             systemImage: "exclamationmark.triangle"
           )
           .font(.footnote).foregroundStyle(.orange)

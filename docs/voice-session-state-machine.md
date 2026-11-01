@@ -11,9 +11,15 @@ flowchart TD
  D -->|Activation failed| X[Show error]
  E --> F[Return to previous app or show manual return]
  F -->|Stop| G[Stop audio capture; processing spinner]
- G -->|Cold Qwen| H[Release audio engine, load Qwen3 recognizer]
- G -->|Warm model| I[ASR transcription]
+ E --> P{Qwen3 unloaded and sufficient RAM?}
+ P -->|Yes| W[Warm Qwen3 concurrently while recording]
+ P -->|No| F
+ W --> F
+ G -->|Recognizer still loading| H[Stop capture, release audio engine, await warmup]
+ G -->|Low-memory fallback| J[Load Qwen3 after stop]
+ G -->|Recognizer ready| I[ASR transcription]
  H --> I
+ J --> I
  I --> J{Output language snapshot}
  J -->|AUTO and no processing| K[Insert transcription]
  J -->|Explicit translation or cleanup| L[Offline text LLM]
@@ -27,7 +33,8 @@ flowchart TD
 
 - Keyboard owns immediate Arming feedback and hides auxiliary controls. Only actual audio capture acknowledgment enables the recording waveform.
 - Main app owns AVAudioSession, captured audio, model initialization, ASR, optional translation, final text bridge, and history.
-- Cold Qwen3 recording starts *before* loading the native ONNX model. At stop, release the audio engine before deferred recognizer loading. This reduces startup latency and preserves first words.
+- Cold Qwen3 recording starts *before* loading the native ONNX model. After capture starts, a short delay allows the host-return action to proceed; Qwen3 then warms in a detached native task during recording if at least its declared RAM requirement plus 512 MB is available. Otherwise loading is deferred until stop.
+- If the user stops while a concurrent load is in progress, stop finalization releases the audio engine, joins the existing model-initialization task, then decodes the captured audio. Waiters share one recognizer and complete load state exactly once.
 - The warm Darwin start request falls back to app deep link after one second. Duplicate deep links reuse active recording and attempt host return once per token.
 - Mode is always Dictate. Compose, WRITE, writing presets, their UI, and their processing routines are removed.
 - Output target AUTO / 粵 / EN / DE, cleanup, and register are snapshotted at recording start. Explicit translated output never silently inserts the wrong-language raw ASR result.
@@ -40,12 +47,12 @@ flowchart TD
 
 | Scenario | Expected result |
 | --- | --- |
-| Cold host app + cold Qwen3 | Visible arming, record immediately after AVAudioSession activates, return requested |
+| Cold host app + cold Qwen3 | Visible arming, record immediately after AVAudioSession activates, return requested; Qwen3 warmup starts during speech when memory permits |
 | Warm host app | Darwin recording, deep-link fallback after one second if no ack |
 | Duplicate deep link | No restarted capture; host return attempted once |
 | Silence >2 seconds | Recording continues |
 | Arming and recording | Non-mic controls hidden; mic stays active |
-| Stop and ASR processing | Spinner shown until text or error; controls return |
+| Stop and ASR processing | If Qwen3 is already ready, skip loading; if loading, await the same task; otherwise initialize after stop |
 | AUTO English voice | English when ASR recognizes English |
 | DE selected, Cantonese speech | German translation or error, never raw Cantonese |
 | Missing offline text model | Original captured in history; visible translation error |
@@ -55,6 +62,7 @@ flowchart TD
 
 ## Limits
 - App-to-host activation uses private iOS APIs and cannot be guaranteed. The manual return hint must remain available.
-- iOS can suspend ASR/LLM after returning to another app. Background tasks are finite.
+- iOS can suspend ASR/LLM after returning to another app. The active audio session supports background recording but does not guarantee unrestricted CPU inference or arbitrary background model warmup. Background tasks are finite.
+- Live partial transcription is not implemented. Qwen3 currently uses sherpa-onnx's offline recognizer, so incremental text requires a separate chunked/streaming design with stable partial-result merging.
 - AUTO follows recognized transcript language; a wrongly recognized speech language cannot be reconstructed from text alone.
 - IPA compilation cannot substitute for real-device cold start and background-session testing.

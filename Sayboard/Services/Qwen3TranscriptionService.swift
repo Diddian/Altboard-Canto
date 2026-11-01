@@ -46,7 +46,9 @@ final class Qwen3TranscriptionService: ObservableObject {
 
   func loadModel(from url: URL) async {
     if let existing = self.loadTask {
-      _ = await existing.value
+      let generation = self.loadGeneration
+      let loaded = await existing.value
+      self.finishLoading(loaded, generation: generation)
       return
     }
     self.loadState = .loading
@@ -91,16 +93,26 @@ final class Qwen3TranscriptionService: ObservableObject {
     self.loadTask = task
     let loaded = await task.value
     guard generation == self.loadGeneration else { return }
-    self.recognizer = loaded
-    self.loadTask = nil
-    self.loadState = .loaded
+    self.finishLoading(loaded, generation: generation)
     DictationBreadcrumb.record(
       "qwen: model loaded in \(String(format: "%.1f", CFAbsoluteTimeGetCurrent() - loadStarted))s"
     )
   }
 
+  /// Stop can wait on the detached native initializer before the original
+  /// loadModel task resumes on MainActor. Finalize from either waiter safely.
   func waitForLoad() async {
-    if let loading = self.loadTask { _ = await loading.value }
+    guard let loading = self.loadTask else { return }
+    let generation = self.loadGeneration
+    let loaded = await loading.value
+    self.finishLoading(loaded, generation: generation)
+  }
+
+  private func finishLoading(_ loaded: QwenRecognizerHandle, generation: Int) {
+    guard generation == self.loadGeneration, self.loadState == .loading else { return }
+    self.recognizer = loaded
+    self.loadTask = nil
+    self.loadState = .loaded
   }
 
   func unloadModel() {

@@ -4,6 +4,7 @@ import FluidAudio
 
 import SwiftUI
 import UIKit
+import Darwin
 
 @MainActor
 protocol ModelLoading: AnyObject {
@@ -94,6 +95,49 @@ final class SpeechRecognitionService: ObservableObject {
     self.settings.isRecording = true
     self.armMaxDurationTimer()
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStarted)
+    self.scheduleQwenWarmupAfterCapture()
+  }
+
+  /// Warm the offline recognizer while the user speaks, not before audio
+  /// capture. The first audio buffers and host-return action take priority.
+  /// If the process lacks RAM, finalization still loads Qwen3 after stop.
+  private func scheduleQwenWarmupAfterCapture() {
+    guard self.settings.selectedVariant.engine == .qwen3,
+          self.activeLoadState == .unloaded else { return }
+
+    Task { @MainActor [weak self] in
+      // Give the microphone and host-return task the first scheduling turn.
+      do { try await Task.sleep(for: .milliseconds(200)) }
+      catch { return }
+
+      guard let self, self.isRecording, !self.isStopping,
+            self.settings.selectedVariant.engine == .qwen3,
+            self.activeLoadState == .unloaded,
+            let downloads = self.downloadService
+      else { return }
+
+      // This model's published RAM requirement is an estimate. Keep an extra
+      // 512 MB available for the recording engine and the OS.
+      let variant = self.settings.selectedVariant
+      let availableMB = Int(os_proc_available_memory() / 1_048_576)
+      let minimumMB = variant.ramRequirementMB + 512
+      guard availableMB >= minimumMB else {
+        DictationBreadcrumb.record(
+          "qwen: deferred warmup (available \(availableMB)MB, budget \(minimumMB)MB)"
+        )
+        return
+      }
+
+      DictationBreadcrumb.record(
+        "qwen: warming during active recording (available \(availableMB)MB)"
+      )
+      self.settings.isModelLoading = true
+      defer { self.settings.isModelLoading = false }
+      await self.loadModelIfAvailable(downloadService: downloads)
+      DictationBreadcrumb.record(
+        "qwen: concurrent warmup ended in state \(String(describing: self.activeLoadState))"
+      )
+    }
   }
 
   func stopRecording() async {
