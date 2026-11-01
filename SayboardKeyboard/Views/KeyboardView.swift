@@ -45,6 +45,7 @@ struct KeyboardProxy {
   let insertText: (String) -> Void
   let insertSpace: () -> Void
   let deleteBackward: () -> Void
+  let deleteWordBackward: () -> Void
   let deleteAll: () -> Void
   let advanceToNextInputMode: () -> Void
   let openURL: (URL) -> Void
@@ -151,11 +152,15 @@ struct KeyboardView: View {
         .onAppear { self.proxy.setStatusStripHeight(0) }
     } else {
       Group {
-        switch self.keyboardState.keyboardKind {
+        if self.keyboardState.showsEmojiPicker {
+          EmojiPickerView(proxy: self.proxy, keyboardState: self.keyboardState)
+        } else {
+          switch self.keyboardState.keyboardKind {
         case .standard:
           StandardKeyboardLayout(proxy: self.proxy, keyboardState: self.keyboardState)
-        case .extended:
-          ExtendedKeyboardLayout(proxy: self.proxy, keyboardState: self.keyboardState)
+          case .extended:
+            ExtendedKeyboardLayout(proxy: self.proxy, keyboardState: self.keyboardState)
+          }
         }
       }
       .padding(.top, 14.5.kbScaled)
