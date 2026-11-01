@@ -58,6 +58,9 @@ final class ModelDownloadService: ObservableObject {
     guard ModelStorageManager.isDownloaded(variant) else { return nil }
 
     let fm = FileManager.default
+    if variant.engine == .qwen3 {
+      return Qwen3ModelBundle.locate(in: dir)
+    }
     let targetExtension = variant.engine == .moonshine ? "ort" : "mlmodelc"
 
     if
