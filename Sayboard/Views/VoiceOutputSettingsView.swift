@@ -5,7 +5,10 @@ struct VoiceOutputSettingsView: View {
   @EnvironmentObject private var speechModels: ModelDownloadService
 
   @AppStorage(SharedKey.voiceCleanupEnabled, store: AppGroup.sharedDefaults ?? .standard)
-  private var cleanupEnabled = true
+  private var cleanupEnabled = false
+
+  @AppStorage(SharedKey.voiceComposeMode, store: AppGroup.sharedDefaults ?? .standard)
+  private var composeMode = false
 
   @AppStorage(SharedKey.voiceOutputTarget, store: AppGroup.sharedDefaults ?? .standard)
   private var target = VoiceOutputTarget.original.rawValue
@@ -43,6 +46,16 @@ struct VoiceOutputSettingsView: View {
         Text("Dictation → Edit → Output")
       } footer: {
         Text("Original keeps the language you spoke, including Cantonese-English-German mixing. As spoken preserves your tone; Casual and Formal change only the register.")
+      }
+
+      Section {
+        Toggle("Compose from spoken instructions", isOn: self.$composeMode)
+        Text("Toggle WRITE on the keyboard to turn a spoken instruction into a WhatsApp message, email, letter or other writing. The chosen output language above takes priority. No extra cleanup pass.")
+          .font(.footnote).foregroundStyle(.secondary)
+        Text("The existing Qwen 3.5 2B text model is a strong multilingual option, but needs more RAM and may run more slowly.")
+          .font(.footnote).foregroundStyle(.secondary)
+      } header: {
+        Text("Voice Compose")
       }
 
       Section {
