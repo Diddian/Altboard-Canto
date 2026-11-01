@@ -109,3 +109,11 @@ flowchart TD
 4. Dictate a sentence with cleanup and DE output: gray processing stage and raw preview occupy the middle row while controls fade; the finished translation appears briefly in the same row after insertion.
 5. At 70%, confirm processing state and final output each show one truncated line inside the pill, not in an extra row.
 6. Test 餵，你做乜嘢呀 / 餵食 / 餵你食飯 and a manually saved personal phrase correction.
+
+
+## Correction persistence and matching
+
+- Save is read back from the shared App Group preferences. A failure is displayed instead of falsely claiming success.
+- The settings page has an offline "Test your saved corrections" field with a rule-hit counter and final preview, using the identical processor as dictation.
+- User-defined phrase replacements run before built-in "餵/喂" heuristics and take precedence; commas, spaces and enumeration commas are optional between phrase characters. Single-character blanket substitutions remain disabled to avoid corrupting feeding-related words.
+- ASR processing reads freshly synchronized shared preferences. It logs only rule count and match count, not transcript text. Rules work while AI Cleanup is off. If optional Chinese cleanup reintroduces an error, rules are re-applied after it.

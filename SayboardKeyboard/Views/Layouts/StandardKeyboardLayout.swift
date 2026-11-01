@@ -1,46 +1,78 @@
 import SwiftUI
 
+/// A single, measured canvas handles both heights. The mic is positioned
+/// independently from the fixed key rows so recording can smoothly bring
+/// it to the actual vertical center instead of leaving a large empty void.
 struct StandardKeyboardLayout: View {
   let proxy: KeyboardProxy
   @ObservedObject var keyboardState: KeyboardState
-
-  var body: some View {
-    VStack(spacing: 6.kbScaled) {
-      self.micRow
-      self.controlsRow
-      KeyboardBottomRow(proxy: self.proxy, metrics: self.chrome, keyboardState: self.keyboardState)
-    }
-  }
 
   private var chrome: KeyboardChromeMetrics {
     KeyboardChromeMetrics(keyboardState: self.keyboardState)
   }
 
-  private var micRow: some View {
-    HStack {
-      Spacer(minLength: 0)
-      MicButtonWithPulse(
-        sizing: .standard,
-        proxy: self.proxy,
-        reservesPulseSpace: false,
-        keyboardState: self.keyboardState
-      )
-      Spacer(minLength: 0)
+  var body: some View {
+    GeometryReader { geometry in
+      let compact = KeyboardMetrics.isCompactStandard
+      let gap = KeyboardMetrics.rowGap.kbScaled
+      let normalMic = MicSizing.standard
+      let keyHeight = KeyboardChromeMetrics.keyHeight
+      let rowsHeight = compact
+        ? 2 * keyHeight + gap
+        : normalMic.buttonHeight + 2 * keyHeight + 2 * gap
+      let topInset = compact
+        ? max(0, (geometry.size.height - rowsHeight) / 2)
+        : max(0, geometry.size.height - rowsHeight - 4.kbScaled)
+      let restingY = topInset + (compact ? keyHeight / 2 : normalMic.buttonHeight / 2)
+      let focused = self.keyboardState.auxiliaryControlsHidden
+      let mic = compact
+        ? MicSizing.compact(spaceBarWidth: self.chrome.spaceBarWidth(totalWidth: geometry.size.width))
+        : normalMic
+
+      ZStack(alignment: .top) {
+        VStack(spacing: gap) {
+          if !compact {
+            Color.clear.frame(height: normalMic.buttonHeight)
+          }
+          self.controlsRow
+          KeyboardBottomRow(
+            proxy: self.proxy,
+            metrics: self.chrome,
+            keyboardState: self.keyboardState
+          )
+        }
+        .padding(.top, topInset)
+        .frame(maxWidth: .infinity, alignment: .top)
+
+        MicButtonWithPulse(
+          sizing: mic,
+          proxy: self.proxy,
+          reservesPulseSpace: false,
+          keyboardState: self.keyboardState
+        )
+        .position(
+          x: geometry.size.width / 2,
+          y: focused ? geometry.size.height / 2 : restingY
+        )
+        .zIndex(1)
+        .animation(.spring(response: 0.42, dampingFraction: 0.82), value: focused)
+        .animation(.easeInOut(duration: 0.20), value: compact)
+      }
+      .frame(width: geometry.size.width, height: geometry.size.height)
     }
-    .frame(height: MicSizing.standard.buttonHeight)
   }
 
-  /// Reserves one fixed-height row for four controls and the center status.
-  /// During processing the buttons fade and the status uses the full width.
   private var controlsRow: some View {
     GeometryReader { geometry in
-      let side = self.chrome.sideButtonWidth
-      let reserved = (side * 4) + (KeyboardChromeMetrics.buttonSpacing * 6) + 16.kbScaled
+      let sideWidth = self.chrome.sideButtonWidth
+      let reserved = (sideWidth * 4) + (KeyboardChromeMetrics.buttonSpacing * 6) + 16.kbScaled
       let available = self.keyboardState.auxiliaryControlsHidden
         ? geometry.size.width - 8.kbScaled
-        : max(90.kbScaled, geometry.size.width - reserved)
-      ZStack(alignment: .bottom) {
+        : max(75.kbScaled, geometry.size.width - reserved)
+
+      ZStack(alignment: .center) {
         self.sideButtons
+          .padding(.horizontal, 4.kbScaled)
         if !KeyboardMetrics.isCompactStandard {
           KeyboardStatusStrip(keyboardState: self.keyboardState)
             .frame(width: available, height: KeyboardChromeMetrics.keyHeight)
@@ -59,21 +91,23 @@ extension StandardKeyboardLayout {
         content: .systemImage("gearshape"),
         fixedWidth: self.chrome.sideButtonWidth,
         fillOnPress: true,
-        firesHaptic: false,
+        firesHaptic: false
       ) {
         if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
       }
       TranslateToggleButton(fixedWidth: self.chrome.sideButtonWidth, keyboardState: self.keyboardState)
         .transition(.opacity.combined(with: .scale))
-      Spacer()
+      Spacer(minLength: 0)
       VStack(alignment: .trailing, spacing: 8.5.kbScaled) {
         if self.keyboardState.hasLLMHistory {
-          self.undoRedoRow
-            .transition(.opacity.combined(with: .move(edge: .bottom)))
+          self.undoRedoRow.transition(.opacity.combined(with: .move(edge: .bottom)))
         }
         HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
           if self.keyboardState.showsAIButton {
             self.aiButton.transition(.opacity.combined(with: .scale))
+          } else {
+            // Keep the two right-side slots symmetric even without a local LLM.
+            Color.clear.frame(width: self.chrome.sideButtonWidth)
           }
           RepeatDeleteButton(proxy: self.proxy, fixedWidth: self.chrome.sideButtonWidth)
         }
@@ -92,7 +126,7 @@ extension StandardKeyboardLayout {
       KeyButton(
         content: .systemImage("arrow.uturn.backward"),
         fixedWidth: self.chrome.sideButtonWidth,
-        firesHaptic: false,
+        firesHaptic: false
       ) {
         self.proxy.undoLLM()
       }
@@ -102,7 +136,7 @@ extension StandardKeyboardLayout {
       KeyButton(
         content: .systemImage("arrow.uturn.forward"),
         fixedWidth: self.chrome.sideButtonWidth,
-        firesHaptic: false,
+        firesHaptic: false
       ) {
         self.proxy.redoLLM()
       }
@@ -115,9 +149,9 @@ extension StandardKeyboardLayout {
   private var aiButton: some View {
     if self.keyboardState.isLLMProcessing {
       MetaballSpinner(color: .primary, size: 18.kbScaled)
-        .frame(width: self.chrome.sideButtonWidth, height: 45.kbScaled)
+        .frame(width: self.chrome.sideButtonWidth, height: KeyboardChromeMetrics.keyHeight)
         .background {
-          RoundedRectangle(cornerRadius: 8.5.kbScaled, style: .continuous)
+          RoundedRectangle(cornerRadius: KeyboardChromeMetrics.keyCornerRadius, style: .continuous)
             .fill(Color(.keyBackground))
         }
     } else {
@@ -127,7 +161,7 @@ extension StandardKeyboardLayout {
         onTap: { KeyboardActions.tapLLM(state: self.keyboardState, proxy: self.proxy) },
         onLongPress: { KeyboardActions.longPressLLM(state: self.keyboardState, proxy: self.proxy) },
         longPressEnabled: self.keyboardState.longPressLLMAction.isSet,
-        isActive: self.keyboardState.showLLMActions,
+        isActive: self.keyboardState.showLLMActions
       )
       .opacity(isRecording ? 0.5 : 1)
       .allowsHitTesting(!isRecording)

@@ -158,7 +158,7 @@ struct KeyboardView: View {
           ExtendedKeyboardLayout(proxy: self.proxy, keyboardState: self.keyboardState)
         }
       }
-      .padding(.top, 3.kbScaled)
+      .padding(.top, self.keyboardState.keyboardKind == .standard ? 0 : 3.kbScaled)
       .overlay(alignment: .top) {
         if self.keyboardState.showLLMActions {
           LLMActionBar(

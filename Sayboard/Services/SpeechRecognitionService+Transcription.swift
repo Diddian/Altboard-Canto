@@ -86,8 +86,14 @@ extension SpeechRecognitionService {
 
       // A conservative built-in greeting correction and editable local
       // phrase rules run independently of the optional offline LLM.
-      let correctedText = CantoneseCorrections.apply(
-        rawText, customRules: self.settings.cantoneseCorrectionRules
+      self.settings.synchronize()
+      let savedCorrections = self.settings.cantoneseCorrectionRules
+      let corrections = CantoneseCorrections.applyDetailed(
+        rawText, customRules: savedCorrections
+      )
+      let correctedText = corrections.text
+      DiagnosticLog.write(
+        "voice: saved correction rules=\(savedCorrections.count) matches=\(corrections.matchedRules)"
       )
       let options = self.recordingOutputOptions
       self.settings.lastVoiceOutputProcessed = options.needsLLM
@@ -105,7 +111,18 @@ extension SpeechRecognitionService {
       }
       // Apply deterministic technical unit formatting after ASR/optional
       // translation. Do not guess missing digits the recognizer never heard.
-      let displayText = TechnicalTextFormatter.format(CantoneseOutput.normalize(finalText))
+      // A local text model may reintroduce a homophone. Re-apply
+      // user corrections to Chinese-language output without another LLM pass.
+      let outputWithCorrections: String
+      switch options.target {
+      case .original, .cantonese, .traditionalChinese:
+        outputWithCorrections = CantoneseCorrections.apply(
+          finalText, customRules: savedCorrections
+        )
+      default:
+        outputWithCorrections = finalText
+      }
+      let displayText = TechnicalTextFormatter.format(CantoneseOutput.normalize(outputWithCorrections))
       let bridgeText = self.styled(displayText, host: stylingHost)
       TranscriptionBridge.writeVoiceProgress(.finalizing)
       self.currentTranscription = bridgeText

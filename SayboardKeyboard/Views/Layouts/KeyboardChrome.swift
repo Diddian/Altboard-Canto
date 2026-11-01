@@ -42,6 +42,15 @@ struct KeyboardChromeMetrics {
   let returnWidth: CGFloat
   let showsGlobe: Bool
 
+  /// Exactly the width of SpaceBarKey in KeyboardBottomRow.
+  @MainActor
+  func spaceBarWidth(totalWidth: CGFloat) -> CGFloat {
+    max(
+      44.kbScaled,
+      totalWidth - self.sideButtonWidth - self.trashWidth - self.returnWidth
+        - 3 * Self.buttonSpacing - 8.kbScaled
+    )
+  }
 }
 
 /// Centered status in the existing control row; no extra keyboard height.

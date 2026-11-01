@@ -15,30 +15,31 @@ struct MicSizing {
 extension MicSizing {
   @MainActor
   static var standard: MicSizing {
-    if KeyboardMetrics.isCompactStandard {
-      // A thumb-sized spacebar-like control; maintain the 44pt hit target.
-      let height = max(44, 56.kbScaled)
-      let width = min(220, UIScreen.main.bounds.width * 0.54)
-      return MicSizing(
-        buttonWidth: width,
-        buttonHeight: height,
-        cornerRadius: height / 2,
-        labelWidth: 56.kbScaled,
-        labelHeight: 42.kbScaled,
-        spinnerSize: 34.kbScaled,
-        waveformScale: 0.95,
-        pulseRingSpacing: 10.kbScaled
-      )
-    }
+    let diameter = KeyboardMetrics.standardMicDiameter.kbScaled
     return MicSizing(
-      buttonWidth: 106.kbScaled,
-      buttonHeight: 106.kbScaled,
-      cornerRadius: 53.kbScaled,
-      labelWidth: 56.kbScaled,
-      labelHeight: 42.kbScaled,
-      spinnerSize: 42.kbScaled,
-      waveformScale: 1.0,
-      pulseRingSpacing: 24.kbScaled,
+      buttonWidth: diameter,
+      buttonHeight: diameter,
+      cornerRadius: diameter / 2,
+      labelWidth: 51.kbScaled,
+      labelHeight: 39.kbScaled,
+      spinnerSize: 39.kbScaled,
+      waveformScale: 1,
+      pulseRingSpacing: 19.kbScaled
+    )
+  }
+
+  /// Identical dimensions and continuous-rounded corner to SpaceBarKey.
+  @MainActor
+  static func compact(spaceBarWidth: CGFloat) -> MicSizing {
+    MicSizing(
+      buttonWidth: spaceBarWidth,
+      buttonHeight: KeyboardChromeMetrics.keyHeight,
+      cornerRadius: KeyboardChromeMetrics.keyCornerRadius,
+      labelWidth: 34.kbScaled,
+      labelHeight: 28.kbScaled,
+      spinnerSize: 28.kbScaled,
+      waveformScale: 0.78,
+      pulseRingSpacing: 8.kbScaled
     )
   }
 
@@ -257,7 +258,8 @@ struct MicButtonWithPulse: View {
       cornerRadius: self.sizing.cornerRadius,
       ringSpacing: self.sizing.pulseRingSpacing,
     )
-    let showPulseRings = self.keyboardState.isRecording && !self.keyboardState.isProcessing
+    let showPulseRings = !KeyboardMetrics.isCompactStandard
+      && self.keyboardState.isRecording && !self.keyboardState.isProcessing
     if self.reservesPulseSpace {
       ZStack {
         self.decoratedPulse(pulse: pulse, show: showPulseRings)

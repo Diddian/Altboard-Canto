@@ -60,75 +60,99 @@ private struct KeyboardHeightPreview: View {
 
   private var compact: Bool { kind == .standard && heightFactor < 0.90 }
   private var previewHeight: CGFloat {
-    let base: CGFloat = kind == .standard ? 240 : 289.5
-    let minimum: CGFloat = kind == .standard ? (compact ? 158 : 216) : 284
-    return max(minimum, base * CGFloat(heightFactor))
+    if kind == .extended {
+      return max(284, 289.5 * CGFloat(heightFactor))
+    }
+    let factor = CGFloat(heightFactor)
+    return factor < 0.90
+      ? 150 + (factor - 0.70) * 420
+      : 260 * factor
   }
 
   var body: some View {
-    VStack(spacing: 6) {
-      if kind == .standard {
-        HStack {
-          Spacer()
-          Image(systemName: "mic.fill")
-            .font(.system(size: compact ? 23 : 32))
-            .frame(width: compact ? 205 : 106, height: compact ? 56 : 106)
-            .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: compact ? 28 : 53))
-          Spacer()
-        }
-        self.controlsRow
-      } else {
-        HStack {
-          Image(systemName: "gearshape")
-            .frame(width: 45, height: 45)
-            .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 9))
-          Spacer()
-          Image(systemName: "mic.fill")
-            .frame(width: 100, height: 45)
-            .background(Color(.tertiarySystemFill), in: Capsule())
-        }
-        ForEach(0..<3, id: \.self) { _ in
-          HStack(spacing: 6) {
-            ForEach(0..<8, id: \.self) { _ in
-              RoundedRectangle(cornerRadius: 6)
-                .fill(Color(.tertiarySystemFill))
-                .frame(height: 45)
+    GeometryReader { geo in
+      let gap: CGFloat = 6
+      let rowsHeight: CGFloat = self.compact ? 96 : 198
+      let inset = self.compact
+        ? max(0, (geo.size.height - rowsHeight) / 2)
+        : max(0, geo.size.height - rowsHeight - 4)
+
+      VStack(spacing: gap) {
+        if self.kind == .standard {
+          if !self.compact {
+            Image(systemName: "mic.fill")
+              .font(.system(size: 29))
+              .frame(width: 96, height: 96)
+              .background(Color(.tertiarySystemFill),
+                in: RoundedRectangle(cornerRadius: 48))
+              .frame(maxWidth: .infinity)
+          }
+          self.standardControls(compact: self.compact)
+        } else {
+          self.standardControls(compact: true)
+          ForEach(0..<3, id: \.self) { _ in
+            HStack(spacing: 6) {
+              ForEach(0..<8, id: \.self) { _ in
+                RoundedRectangle(cornerRadius: 6)
+                  .fill(Color(.tertiarySystemFill))
+                  .frame(height: 45)
+              }
             }
           }
         }
+        self.spaceRow
       }
-      HStack(spacing: 6) {
-        Image(systemName: "face.smiling").frame(width: 45)
-        Image(systemName: "trash").frame(width: 45)
-        Image(systemName: "space").frame(maxWidth: .infinity)
-        Image(systemName: "return.left").frame(width: 95)
-      }
-      .font(.system(size: 18))
-      .frame(height: 45)
-      .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 9))
+      .padding(.top, self.kind == .standard ? inset : 0)
+      .frame(maxWidth: .infinity, alignment: .top)
     }
-    .padding(.top, 3)
+    .frame(height: self.previewHeight)
     .padding(.horizontal, 4)
-    .frame(maxWidth: .infinity, alignment: .top)
-    .frame(height: self.previewHeight, alignment: .top)
-    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+    .background(Color(.secondarySystemGroupedBackground),
+      in: RoundedRectangle(cornerRadius: 14))
     .animation(.easeInOut(duration: 0.15), value: self.heightFactor)
-    .accessibilityLabel("Keyboard height preview: key sizes remain unchanged")
+    .accessibilityLabel("Preview of keyboard: every key keeps the same size")
   }
 
-  private var controlsRow: some View {
+  private func standardControls(compact: Bool) -> some View {
     HStack(spacing: 6) {
-      ForEach(["gearshape", "translate"], id: \.self) { name in
-        Image(systemName: name)
-          .frame(width: 45, height: 45)
-          .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 9))
+      self.key("gearshape")
+      self.key("character.bubble")
+      if compact {
+        Image(systemName: "mic.fill")
+          .font(.system(size: 21))
+          .frame(maxWidth: .infinity)
+          .frame(height: 45)
+          .background(Color(.tertiarySystemFill),
+            in: RoundedRectangle(cornerRadius: 8.5))
+      } else {
+        Spacer(minLength: 0)
       }
-      Spacer()
-      ForEach(["sparkles", "delete.left"], id: \.self) { name in
-        Image(systemName: name)
-          .frame(width: 45, height: 45)
-          .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 9))
-      }
+      self.key("sparkles")
+      self.key("delete.left")
     }
+    .frame(height: 45)
+  }
+
+  private var spaceRow: some View {
+    HStack(spacing: 6) {
+      self.key("face.smiling")
+      self.key("trash")
+      Image(systemName: "space")
+        .font(.system(size: 18))
+        .frame(maxWidth: .infinity)
+        .frame(height: 45)
+        .background(Color(.tertiarySystemFill),
+          in: RoundedRectangle(cornerRadius: 8.5))
+      self.key("return.left", width: 96)
+    }
+    .frame(height: 45)
+  }
+
+  private func key(_ name: String, width: CGFloat = 45) -> some View {
+    Image(systemName: name)
+      .font(.system(size: 18))
+      .frame(width: width, height: 45)
+      .background(Color(.tertiarySystemFill),
+        in: RoundedRectangle(cornerRadius: 8.5))
   }
 }
