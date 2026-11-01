@@ -92,11 +92,11 @@ final class JyutpingDictionary {
     defer { sqlite3_finalize(statement) }
     let destructor = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
     let paramCount = sqlite3_bind_parameter_count(statement)
-    argument.withCString { pointer in
+    _ = argument.withCString { pointer in
       sqlite3_bind_text(statement, 1, pointer, -1, destructor)
     }
     if paramCount == 3 {
-      (argument + "{").withCString { pointer in
+      _ = (argument + "{").withCString { pointer in
         sqlite3_bind_text(statement, 2, pointer, -1, destructor)
       }
     }

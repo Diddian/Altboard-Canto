@@ -132,3 +132,13 @@ Altboard is licensed under the [GNU General Public License v3](LICENSE).
     along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 We are publishing the source code in good faith, with transparency being the main goal. By having users pay for the development of the app, we can ensure that our goals sustainably align with the goals of our users: great privacy and security, no ads, no collection of user data.
+
+## Altboard-Canto: offline Cantonese typing and SideStore IPA
+
+The development branch adds a QWERTZ/QWERTY English keyboard with optional 粵拼 candidate input, an offline bundled indexed lexicon, per-key haptic strength and iOS-style key metrics. Microphone dictation remains available.
+
+- [Direct unsigned IPA for SideStore](https://github.com/Diddian/Altboard-Canto/releases/download/altboard-canto-dev/Altboard-Canto-SideStore.ipa). SideStore must re-sign the IPA before installing.
+- [Build runs and downloadable IPA artifacts](https://github.com/Diddian/Altboard-Canto/actions/workflows/build-unsigned-ipa.yml). Choose a successful run and download Altboard-Canto-Unsigned-IPA.
+- [Jyutping implementation and remaining parity plan](docs/jyutping-ime-integration.md).
+
+To build locally, run python3 scripts/build-jyutping-lexicon.py before xcodegen generate to bundle the offline dictionary.

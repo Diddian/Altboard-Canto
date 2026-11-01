@@ -1,42 +1,53 @@
-# Jyutping typing mode integration for Altboard-Canto
+# Altboard-Canto: offline Jyutping typing mode
 
-Status: architecture reviewed, IME integration not yet implemented. The current English Keyboard types Latin characters; it must not be described as a functional Jyutping IME.
+## Implementation
 
-## Source reviewed
+Branch: fix/ios-keyboard-haptics-caps-20261102 (based on feat/cantonese-qwen3-offline-mvp).
 
-- https://github.com/yuetyam/jyutping (CC0-1.0 repository)
-- Modules/CoreIME/Sources/CoreIME/Engine.swift, Lexicon.swift, VirtualInputKey.swift
-- Modules/Preparing (generated offline lexicon)
-- Keyboard/SharedViews/CandidateBar.swift and CandidateBoard.swift
-- Keyboard/SharedModels/InputMemory.swift and InputMethodMode.swift
-- Keyboard/iPhone/GlassKeys/GlassLetterInputKey.swift and LegacyKeys/LetterInputKey.swift
-- Keyboard/SharedModels/HapticFeedback.swift and Keyboard/KeyboardViewController.swift
-- Verify separately the licenses attached to Rime-Cantonese and OpenCC data before bundling any dictionary artifacts.
+### Existing keyboard retained
 
-## Contract
+- Three existing modes: Microphone Only, Symbols, English Keyboard. Jyutping is a language choice inside the English Keyboard's geometry, not another tall keyboard.
+- Default is QWERTZ and English; QWERTY is optional. English sentence capitalization is enabled on an empty field, after Return, and after full stop or question/exclamation punctuation. Users can turn it off.
+- Reference screenshot 1320 x 871 px, inferred 3x: 45 pt key height, 6 pt horizontal gaps, 11 pt row gaps, 8 pt key corners, 23 pt SF regular letters, -1.2 pt visual vertical offset.
+- English row side margins: top 6.67 pt, home row 28 pt, bottom row 6.67 pt; Shift/Delete 50 pt with 14.67 pt gap to adjacent letter. Altboard toolbar retains its mic, LLM and language buttons.
+- Microphone Only mode fades ancillary controls and shows gray dictation status. English and Symbols modes keep the keys visible and rely on the existing microphone animation, with no gray final-preview text.
+- Long press Latin letters to choose accented letters; key haptics are direct UIImpactFeedbackGenerator calls. Adjustable haptic strength and tappable preview are in Settings.
 
-Reuse Altboard's existing key positions, adjustable height, QWERTZ/QWERTY order, shift/delete/space/emoji, mic session, theme and direct haptic feedback. Do not import the reference app's entire keyboard view or controller. English typing stays usable without voice model installation.
+### Actual offline IME
 
-A Jyutping typing mode is an IME, not a transliteration label:
+1. Tap the EN / 粵 key in the alphabetic toolbar. English mode types normally. 粵 mode collects letters and tone digits into an uncommitted pre-edit buffer.
+2. The app reads an indexed SQLite dictionary from the keyboard extension bundle. It does not call a web service, ASR, or the LLM on each key.
+3. The toolbar displays candidates with Traditional Chinese text and tone-marked Jyutping. Tap a candidate or Space to commit; Return commits an active candidate, otherwise inserts a newline.
+4. Backspace edits the composition first. When it is empty, it deletes the host's text. Unsupported characters or punctuation commit the current candidate, then insert the literal.
+5. The input supports tone digits 1–6 from the number page, exact spelling, tone-sensitive matches, tone-free prefix matches, and initials abbreviations.
+6. Local App Group storage records frequently selected candidates for subsequent ranking. If the dictionary has no match, raw romanization is preserved rather than lost.
+7. Mic recordings share the existing dictation path and are independent from the offline typing dictionary. An external text-context change never silently commits the unfinished romanization.
 
-1. Letter taps append to a noncommitted composition buffer rather than immediately insert Latin text.
-2. CoreIME + the bundled offline lexicon produce Traditional Hong Kong Chinese candidates, supporting tones, common habitual spellings, and abbreviated initials.
-3. A candidate strip in the keyboard's upper area displays and selects Chinese characters and Jyutping hints. Space selects the first candidate. A chosen candidate commits its Han characters; Return depends on whether a composition is active.
-4. Backspace edits the composition before touching the host's text. Host app changes and cursor motion must not silently commit incomplete input.
-5. English/Jyutping mode toggle plus a saved startup mode. Microphone dictation keeps its normal path; it must not corrupt an uncommitted composition.
-6. Persist optional personal candidate frequency locally with a reset/export facility.
+### Data source and build
 
-## Build phases
+- Source: https://github.com/yuetyam/jyutping, pinned revision 16bda076094abd63e0961cdc49e2b08ab4e381a3.
+- Input: Modules/Preparing/Sources/Preparing/Resources/jyutping.txt (word TAB romanization; example: 你好 TAB nei5 hou2).
+- Verifies upstream Git blob SHA1 708236a9458ec933aa3d2b70aa372e613a7cc0b6, then generates JyutpingResources/jyutping.sqlite3 with indexes.
+- The generated database is copied into SayboardKeyboard.appex by XcodeGen, and workflow checks its presence before publishing the IPA.
+- The source project is CC0 and credits Rime-Cantonese (primarily CC BY 4.0). See docs/JYUTPING-DATA-NOTICES.md. ODbL maps are not included.
 
-1. Extract minimal CoreIME code and required dependencies into a pinned internal Swift package. Audit licenses and database resources.
-2. Generate the SQLite lexicon offline using upstream Preparing; record its size, schema version and SHA. Either pin the generated artifact or regenerate deterministically in CI.
-3. Implement adapter: append(key), backspace(), candidates(prefix), choose(id), clear(), commit(), plus space/return rules.
-4. Build Altboard-native candidate UI and adapt to all keyboard heights (70–110%), including narrow widths and large text settings.
-5. Regression test: nei5 hou2 → 你好, ngo5 → 我, sik6 → 食, multiword segmentation, tones/no tones, abbreviations, punctuation, cursor, app switching and microphone.
-6. Benchmark memory and latency on iPhone. Do not run ASR/LLM per keystroke; index the local lexicon for bounded lookup.
+### Acceptance and verification
 
-## Current completed/staged scope
+1. Run python3 scripts/build-jyutping-lexicon.py to pin and build the offline dictionary. Test that 你好 (nei5 hou2), 我 (ngo5) and 食 (sik6) are present.
+2. Run swiftc -typecheck Shared/JyutpingComposition.swift Shared/SentenceCapitalization.swift; run the Swift smoke test in scripts/verify-keyboard-core.swift.
+3. Run xcodegen generate and build scheme Sayboard for a generic physical iOS destination. Code signing disabled is acceptable for a SideStore IPA.
+4. Verify the IPA includes Payload/Sayboard.app/PlugIns/SayboardKeyboard.appex/jyutping.sqlite3, keyboard extension and App Group capability request.
+5. On an iPhone verify nei5hou2 -> 你好, ngo5 -> 我, sik6 -> 食; long press, repeat Delete, English case, QWERTZ/QWERTY, symbol keys, haptic slider/preview, voice button transitions and language toggle.
+6. The workflow uploads a downloadable ZIP artifact to each Actions run and publishes an unsigned .ipa directly in the rolling development GitHub release. SideStore must re-sign it.
 
-- English Keyboard and Symbols retain all keys while recording; mic-only retains fade and gray status. Non-mic modes use microphone waveform/loading animation alone, with no additional gray raw/final transcript labels.
-- Native UIKit impact feedback per key with an adjustable shared strength and tappable Settings preview.
-- Alphabetic keys styled with system regular typography, compact key corners and 380ms hold-to-select accented characters.
+## Upstream feature-parity roadmap
+
+The integrated keyboard does not import the full yuetyam CoreIME implementation. Its upstream current toolchain (Xcode 27 / Swift tools 6.4) is above this project's Xcode 26.2 build. The following are separate features, not claims of current parity:
+
+1. Compound segmentation and partial-word commits: integrate the proven upstream segmenter or write test-driven segmentation so multi-syllable mixed input can keep an unconsumed suffix.
+2. More colloquial / fuzzy romanization and habitual spelling, including candidate rank tuning against Hong Kong Cantonese usage.
+3. Candidate grid, reverse lookup (Cangjie/Pinyin/strokes), Hong Kong/Taiwan character variants and simplified conversion with separate data-license checks.
+4. Personal dictionary export/import, reset, context-sensitive learning, and data migration tests.
+5. Benchmark lookup latency, startup memory, accessibility, orientation, iPad and tiny keyboard heights on devices.
+
+These features may improve parity but are not required to type Jyutping offline using the new alphabetic keyboard.

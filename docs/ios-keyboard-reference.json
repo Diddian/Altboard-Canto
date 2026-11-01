@@ -1,0 +1,68 @@
+{
+  "schema": "altboard.ios.keyboard.geometry.v1",
+  "source": "IMG_9658.jpeg",
+  "measurement": "Approximate pixel measurements normalized at inferred 3x; not Apple layout APIs",
+  "reference": {
+    "widthPx": 1320,
+    "heightPx": 871,
+    "inferredScale": 3,
+    "widthPt": 440,
+    "heightPt": 290.33
+  },
+  "key": {
+    "heightPt": 45,
+    "horizontalGapPt": 6,
+    "verticalGapPt": 11,
+    "cornerRadiusPt": 8,
+    "font": "SF System",
+    "fontSizePt": 23,
+    "fontWeight": "regular",
+    "visualOffsetYPt": -1.2
+  },
+  "rows": [
+    {
+      "letters": "QWERTZUIOP",
+      "edgeInsetPt": 6.67
+    },
+    {
+      "letters": "ASDFGHJKL",
+      "edgeInsetPt": 28
+    },
+    {
+      "letters": "YXCVBNM",
+      "edgeInsetPt": 6.67,
+      "specialKeyWidthPt": 50,
+      "specialToLetterGapPt": 14.67
+    },
+    {
+      "controls": [
+        "?123",
+        "emoji",
+        "space",
+        "return"
+      ],
+      "edgeInsetPt": 6.67,
+      "sideKeyWidthPt": 48,
+      "returnKeyWidthPt": 102
+    }
+  ],
+  "behaviors": {
+    "microphoneOnly": {
+      "fadeOnRecording": true,
+      "grayStatus": true
+    },
+    "symbols": {
+      "fadeOnRecording": false,
+      "grayStatus": false
+    },
+    "alphabetic": {
+      "fadeOnRecording": false,
+      "grayStatus": false,
+      "longPressDiacritics": true,
+      "autoCapsFirstCharacter": true,
+      "autoCapsAfterPunctuation": true,
+      "previewHapticTest": true
+    },
+    "defaultLetterArrangement": "qwertz"
+  }
+}

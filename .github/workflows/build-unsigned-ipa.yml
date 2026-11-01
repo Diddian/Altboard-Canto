@@ -46,6 +46,10 @@ jobs:
           python3 scripts/build-jyutping-lexicon.py
           test -s JyutpingResources/jyutping.sqlite3
           swiftc -typecheck Shared/JyutpingComposition.swift Shared/SentenceCapitalization.swift
+          swiftc -o "$RUNNER_TEMP/keyboard-smoke" \
+            Shared/JyutpingComposition.swift Shared/SentenceCapitalization.swift \
+            scripts/verify-keyboard-core.swift
+          "$RUNNER_TEMP/keyboard-smoke"
 
       - name: Generate Xcode project
         run: |
