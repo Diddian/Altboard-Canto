@@ -110,6 +110,7 @@ enum SharedKey {
   static let useCustomSpaceBar = "useCustomSpaceBar"
   static let isTranslationMode = "isTranslationMode"
   static let voiceCleanupEnabled = "voiceCleanupEnabled"
+  static let voiceComposeMode = "canto.voiceComposeMode"
   static let voiceOutputTarget = "voiceOutputTarget"
   static let voiceOutputRegister = "voiceOutputRegister"
   static let voiceCustomLanguage = "voiceCustomLanguage"
