@@ -19,6 +19,8 @@ enum ModelStorageManager {
       return self.containsMLModel(at: dir)
     case .moonshine:
       return self.containsONNXModel(at: dir)
+    case .qwen3:
+      return Qwen3ModelBundle.isValid(directory: dir)
     }
   }
 
