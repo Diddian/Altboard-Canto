@@ -1,58 +1,33 @@
 import SwiftUI
 
+/// Scrolling audio-amplitude history from the real microphone tap.
 struct WaveformBars: View {
-
-  var level: Float
+  var levels: [Float]
   var scale: CGFloat = 1.0
 
   var body: some View {
-    let boosted = CGFloat(sqrt(self.level))
-    let isActive = boosted > 0.01
+    let recent = Array(self.levels.suffix(17))
+    let isSpeaking = recent.suffix(3).contains { $0 > 0.05 }
+    HStack(alignment: .center, spacing: 3 * scale) {
+      Circle()
+        .fill(isSpeaking ? Color.accentColor : Color.secondary.opacity(0.5))
+        .frame(width: 5 * scale, height: 5 * scale)
 
-    TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !isActive)) { timeline in
-      let time = timeline.date.timeIntervalSinceReferenceDate
-
-      HStack(spacing: self.barSpacing) {
-        ForEach(0..<self.barCount, id: \.self) { index in
-          let height = self.barHeight(for: index, time: time, boosted: boosted)
-          RoundedRectangle(cornerRadius: self.barWidth / 2, style: .continuous)
+      HStack(alignment: .center, spacing: 2.1 * scale) {
+        ForEach(recent.indices, id: \.self) { index in
+          RoundedRectangle(cornerRadius: 1.4 * scale, style: .continuous)
             .fill(.primary)
-            .frame(width: self.barWidth, height: height)
+            .frame(width: 2.4 * scale, height: self.barHeight(recent[index]))
         }
       }
-      .frame(height: self.maxBarHeight)
+      .frame(height: 30 * scale)
     }
+    .animation(.linear(duration: 0.045), value: self.levels)
+    .accessibilityLabel(isSpeaking ? "Recording: voice detected" : "Recording: quiet")
   }
 
-  private let barCount = 5
-  private let heightMultipliers: [CGFloat] = [0.6, 0.8, 1.0, 0.8, 0.6]
-  private let omega = 7.8
-  private let phaseOffset: Double = .pi / 2
-
-  private var barWidth: CGFloat {
-    4.kbScaled * self.scale
-  }
-
-  private var barSpacing: CGFloat {
-    4.kbScaled * self.scale
-  }
-
-  private var minBarHeight: CGFloat {
-    4.kbScaled * self.scale
-  }
-
-  private var maxBarHeight: CGFloat {
-    30.kbScaled * self.scale
-  }
-
-  private func barHeight(for index: Int, time: Double, boosted: CGFloat) -> CGFloat {
-    guard boosted > 0.01 else { return self.minBarHeight }
-
-    let phase = time * self.omega - Double(index) * self.phaseOffset
-    let wave = CGFloat(0.5 + 0.5 * sin(phase))
-
-    let amplitude = boosted * self.heightMultipliers[index] * wave
-    let height = self.minBarHeight + amplitude * (self.maxBarHeight - self.minBarHeight)
-    return max(self.minBarHeight, min(self.maxBarHeight, height))
+  private func barHeight(_ level: Float) -> CGFloat {
+    let amplitude = CGFloat(sqrt(max(0, min(1, level))))
+    return (3 + 27 * amplitude) * scale
   }
 }

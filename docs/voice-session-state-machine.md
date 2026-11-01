@@ -76,3 +76,15 @@ flowchart TD
 - Progress is scoped by the dictation session token. New recordings clear previous progress; completed sessions clear it. The keyboard ignores stale tokens and old updates.
 - A deterministic formatter converts clearly recognized technical quantities such as "one point seven gigabytes" to "1.7 GB" or "two point five gigahertz" to "2.5 GHz". It distinguishes gigabits (Gb) from gigabytes (GB). It cannot reconstruct any digit the ASR omitted.
 - Real device checks: stop after cold model warmup, return to WhatsApp during transcription, inspect elapsed time, confirm raw preview persists through cleanup, confirm controls fade back when the final text arrives, and repeat with DE output translation and with no offline LLM installed.
+
+
+## Preferred languages and adaptive keyboard (November 2026)
+
+- The user's chosen spoken languages are persisted globally at first-run onboarding and editable in Voice Output settings; model-specific Whisper/Parakeet preferences remain separate where those engines accept a decoder language hint.
+- The output key cycles AUTO plus the preferred languages. Other preferences map to the existing custom-language translation target without downloading an additional speech model.
+- Qwen3 ONNX auto-detects and has **no native language-lock API** here. A wrong-script guard rejects clearly unexpected Thai or other scripts and preserves the audio in History instead of inserting them; it cannot repair the original audio recognition, and it does not claim to distinguish Cantonese from Mandarin using Han characters alone.
+- The keyboard height can be adjusted in Settings (70–110%); default 92% is slightly shorter than the former layout. Under 82%, the standard microphone changes to a horizontal pill with a minimum 44-point tap target. The setting takes effect when the extension reopens, within iOS layout bounds.
+- The height preview updates while dragging the slider. In both layouts, the processing text is horizontally centered **immediately after the mic row**, before the lower controls return.
+- The recording icon is accompanied by a left-to-right 17-sample audio-level history from the real AVAudioEngine RMS tap (30 Hz source, 20 Hz display), including quiet/speaking indication. Silent input produces a flat line; unlike the previous animation, the trace is not synthesized from a sine wave.
+- Audio polling is rearmed when the keyboard returns from Altboard to the host app, including if the initial Darwin start notification was missed.
+- Removed obsolete custom globe-display state and empty diagnostic reads; essential crash/ASR diagnostics are kept for troubleshooting rather than deleting evidence.

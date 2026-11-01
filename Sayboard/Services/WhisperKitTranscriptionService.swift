@@ -183,7 +183,6 @@ final class WhisperKitTranscriptionService: ObservableObject {
 
     let preferred = settings.preferredLanguages(for: settings.selectedVariant)
     let lockedLanguage: String? = preferred.count == 1 ? preferred.first : nil
-    if !preferred.isEmpty { }
 
     return DecodingOptions(
       task: task,

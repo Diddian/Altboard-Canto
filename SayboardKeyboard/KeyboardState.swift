@@ -22,6 +22,7 @@ final class KeyboardState: ObservableObject {
   @Published var selectedVariantSupportsTranslation = false
   @Published var selectedVariantSpecializesForNeuralEngine = false
   @Published var audioLevel: Float = 0
+  @Published var recentAudioLevels = [Float](repeating: 0, count: 17)
   @Published var isLowDiskSpace = false
   @Published var hasUsableLLMModel = false
   @Published var isLLMProcessing = false
@@ -38,7 +39,6 @@ final class KeyboardState: ObservableObject {
   @Published var dictationOutcome: DictationOutcome?
   @Published var voiceProcessingProgress: VoiceProcessingProgress?
   @Published var needsInputModeSwitchKey = false
-  @Published var showGlobeKey = true
   @Published var keyboardHapticsEnabled = true
   @Published var keyboardKind = KeyboardKind.standard
   @Published var isDictationLocked = false
@@ -110,7 +110,6 @@ final class KeyboardState: ObservableObject {
     self.defaultLLMActionSelection = self.settings.defaultLLMActionSelection
     self.longPressLLMAction = self.settings.longPressLLMAction
     self.disabledLLMActions = self.settings.disabledLLMActions
-    self.showGlobeKey = self.settings.showGlobeKey
     self.needsInputModeSwitchKey = self.settings.needsInputModeSwitchKey
     self.keyboardHapticsEnabled = self.settings.keyboardHapticsEnabled
     self.syncDictationLock()
@@ -171,6 +170,7 @@ final class KeyboardState: ObservableObject {
 
   func startLevelPolling() {
     guard self.displayLink == nil else { return }
+    self.recentAudioLevels = [Float](repeating: 0, count: 17)
     let target = DisplayLinkTarget { [weak self] in
       guard let self else { return false }
       self.pollAudioLevel()
@@ -189,6 +189,7 @@ final class KeyboardState: ObservableObject {
     self.displayLink = nil
     self.displayLinkTarget = nil
     self.audioLevel = 0
+    self.recentAudioLevels = [Float](repeating: 0, count: 17)
   }
 
   private let settings = SharedSettings()
@@ -200,12 +201,11 @@ final class KeyboardState: ObservableObject {
   }
 
   private func pollAudioLevel() {
-    let newLevel = self.levelBridge.readLevel()
-    if newLevel != self.audioLevel {
-      withAnimation(.interpolatingSpring(duration: 0.08, bounce: 0)) {
-        self.audioLevel = newLevel
-      }
-    }
+    // Scrolling levels come from the microphone RMS tap, never a fake sine.
+    let level = max(0, min(1, self.levelBridge.readLevel()))
+    self.audioLevel = level
+    self.recentAudioLevels.removeFirst()
+    self.recentAudioLevels.append(level)
   }
 
 }

@@ -36,6 +36,7 @@ struct DictationOutcomeLabel: View {
     case .engineFailed: "Dictation failed. Try a different speech model in Altboard"
     case .processingFailed: "Translation failed. Original speech saved in Altboard history"
     case .activationFailed: "Microphone did not start. Open Altboard to check mic permission"
+    case .unexpectedLanguage: "Speech model detected a language outside your preferences. No text inserted; adjust Voice Output languages or try again"
     }
   }
 }

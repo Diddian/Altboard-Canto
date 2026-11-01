@@ -63,9 +63,6 @@ final class SpeechRecognitionService: ObservableObject {
 
   func startCapture() {
     let micAuth = self.settings.isMicrophoneAuthorized
-    let _ = self.session.isSessionActive
-    let _ = self.session.audioEngine.isRunning
-    let _ = String(describing: self.activeLoadState)
 
     guard !self.isRecording, !self.isStopping else {
       return
@@ -142,7 +139,6 @@ final class SpeechRecognitionService: ObservableObject {
   }
 
   func stopRecording() async {
-    let _ = String(describing: self.activeLoadState)
 
     guard !self.isStopping else {
       return
@@ -180,8 +176,7 @@ final class SpeechRecognitionService: ObservableObject {
 
     if self.activeLoadState != .loaded {
       TranscriptionBridge.writeVoiceProgress(.loadingRecognizer)
-      let _ = String(describing: self.activeLoadState)
-      if self.activeLoadState == .loading {
+        if self.activeLoadState == .loading {
         await self.awaitModelLoad()
       } else if let downloadService {
         downloadService.verifyExistingModels()
@@ -399,8 +394,7 @@ extension SpeechRecognitionService {
           TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationLockChanged)
           return
         }
-        let _ = String(describing: self.activeLoadState)
-        await self.startRecordingAfterModelLoad()
+            await self.startRecordingAfterModelLoad()
       }
     }
 

@@ -35,9 +35,23 @@ struct SharedSettingsDefaultsTests {
 
     let settings = SharedSettings(defaults: defaults)
 
-    #expect(settings.showGlobeKey)
+    #expect(settings.keyboardHeightScale == 0.92)
     #expect(settings.keyboardHapticsEnabled)
     #expect(settings.periodShortcutEnabled)
+  }
+
+  @Test
+  func keyboardHeightIsClampedAndPersists() throws {
+    let suiteName = Self.uniqueSuiteName()
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { Self.cleanup(suiteName: suiteName) }
+    let settings = SharedSettings(defaults: defaults)
+    settings.keyboardHeightScale = 0.68
+    #expect(settings.keyboardHeightScale == 0.70)
+    settings.keyboardHeightScale = 1.20
+    #expect(settings.keyboardHeightScale == 1.10)
+    settings.keyboardHeightScale = 0.88
+    #expect(SharedSettings(defaults: defaults).keyboardHeightScale == 0.88)
   }
 
   private static func uniqueSuiteName() -> String {

@@ -9,4 +9,6 @@ enum DictationOutcome: String, Sendable {
   case processingFailed
 
   case activationFailed
+
+  case unexpectedLanguage
 }

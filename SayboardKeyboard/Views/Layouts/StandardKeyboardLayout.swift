@@ -10,12 +10,12 @@ struct StandardKeyboardLayout: View {
     VStack(spacing: 0) {
       VStack(spacing: 8.5.kbScaled) {
         self.micRow
+        KeyboardStatusStrip(
+          keyboardState: self.keyboardState,
+          onContentHeightChange: self.proxy.setStatusStripHeight
+        )
         KeyboardBottomRow(proxy: self.proxy, metrics: self.chrome, keyboardState: self.keyboardState)
       }
-      KeyboardStatusStrip(
-        keyboardState: self.keyboardState,
-        onContentHeightChange: self.proxy.setStatusStripHeight
-      )
     }
   }
 
@@ -26,7 +26,11 @@ struct StandardKeyboardLayout: View {
   private var micRow: some View {
     ZStack(alignment: .bottom) {
       self.sideButtons
-      MicButtonWithPulse(sizing: .standard, proxy: self.proxy, keyboardState: self.keyboardState)
+      MicButtonWithPulse(
+        sizing: .standard, proxy: self.proxy,
+        reservesPulseSpace: !KeyboardMetrics.isCompactStandard,
+        keyboardState: self.keyboardState
+      )
         .padding(.bottom, 6.kbScaled)
     }
     .padding(.horizontal, 4.kbScaled)

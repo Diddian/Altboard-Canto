@@ -68,6 +68,11 @@ final class KeyboardViewController: UIInputViewController {
       self.setupKeyboardView()
     }
     self.keyboardState.refresh()
+    if self.keyboardState.isRecording {
+      self.keyboardState.startLevelPolling()
+    } else if !self.keyboardState.isProcessing {
+      self.keyboardState.stopLevelPolling()
+    }
     self.keyboardState.isTranslationMode = SharedSettings().isTranslationMode
     self.updateKeyboardHeight(actionBarVisible: false)
     self.syncFullAccessIfChanged()
@@ -88,7 +93,6 @@ final class KeyboardViewController: UIInputViewController {
 
   func insertTranscribedText() {
     let text = TranscriptionBridge.readTranscription()
-    let _ = text?.isEmpty ?? true
     guard let text, !text.isEmpty else {
       DiagnosticLog.write("keyboard: NO TEXT available to insert")
       let settings = SharedSettings()
@@ -170,8 +174,6 @@ final class KeyboardViewController: UIInputViewController {
         guard let vc = Self.activeInstance else {
           return
         }
-        let _ = vc.keyboardState.isRecording
-        let _ = vc.keyboardState.isProcessing
         vc.cancelProcessingTimeout()
         vc.keyboardState.syncDictationLock()
         vc.insertTranscribedText()
@@ -205,6 +207,9 @@ final class KeyboardViewController: UIInputViewController {
   private func hostDidEnterForeground() {
     self.syncFullAccessIfChanged()
     self.keyboardState.refresh()
+    if self.keyboardState.isRecording {
+      self.keyboardState.startLevelPolling()
+    }
     self.keyboardState.syncOnboardingPractice(hostProcessID: self.hostProcess?.pid)
     self.pingMainAppForSessionStatus()
     self.pingValidator.startIfNeeded(for: self.keyboardState)
@@ -303,7 +308,6 @@ final class KeyboardViewController: UIInputViewController {
   private func startDictationViaDarwin() {
     let processing = self.keyboardState.isProcessing
     let recording = self.keyboardState.isRecording
-    let _ = self.keyboardState.isSessionActive
 
     guard !processing, !recording else {
       return
@@ -357,14 +361,11 @@ final class KeyboardViewController: UIInputViewController {
 extension KeyboardViewController {
 
   func stopDictationViaDarwin() {
-    let _ = self.keyboardState.isRecording
-    let _ = self.keyboardState.isSessionActive
     self.saveHostBundleId()
     self.keyboardState.isProcessing = true
     self.keyboardState.syncVoiceProcessingProgress()
     self.keyboardState.syncModelLoading()
     self.keyboardState.stopLevelPolling()
-    let _ = self.keyboardState.isModelLoading
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.requestStopDictation)
     self.startProcessingTimeout()
   }
@@ -377,7 +378,6 @@ extension KeyboardViewController {
     ) {
       DispatchQueue.main.async {
         guard let vc = Self.activeInstance else { return }
-        let _ = vc.keyboardState.isSessionActive
         let isProc = vc.keyboardState.isProcessing
         vc.pingValidator.cancel()
         vc.keyboardState.isSessionActive = true
@@ -394,7 +394,6 @@ extension KeyboardViewController {
     ) {
       DispatchQueue.main.async {
         guard let vc = Self.activeInstance else { return }
-        let _ = vc.keyboardState.isSessionActive
         let finalizing = vc.keyboardState.isProcessing
         if !finalizing { vc.cancelProcessingTimeout() }
         vc.keyboardState.stopLevelPolling()

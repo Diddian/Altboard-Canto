@@ -71,6 +71,17 @@ struct SharedSettings {
     nonmutating set { defaults.set(newValue.rawValue, forKey: SharedKey.sessionAutoStopPolicy) }
   }
 
+  /// User-controlled height; compact standard mode uses a pill mic.
+  var keyboardHeightScale: Double {
+    get {
+      let stored = defaults.object(forKey: SharedKey.keyboardHeightScale) as? Double ?? 0.92
+      return min(1.10, max(0.70, stored))
+    }
+    nonmutating set {
+      defaults.set(min(1.10, max(0.70, newValue)), forKey: SharedKey.keyboardHeightScale)
+    }
+  }
+
   var keyboardKind: KeyboardKind {
     get {
       guard
@@ -183,11 +194,6 @@ struct SharedSettings {
   var useCustomSpaceBar: Bool {
     get { self.defaults.bool(forKey: SharedKey.useCustomSpaceBar) }
     nonmutating set { defaults.set(newValue, forKey: SharedKey.useCustomSpaceBar) }
-  }
-
-  var showGlobeKey: Bool {
-    get { self.defaults.bool(forKey: SharedKey.showGlobeKey) }
-    nonmutating set { defaults.set(newValue, forKey: SharedKey.showGlobeKey) }
   }
 
   var keyboardHapticsEnabled: Bool {
@@ -474,7 +480,6 @@ struct SharedSettings {
   }
 
   private static let registration: Void = UserDefaults.standard.register(defaults: [
-    SharedKey.showGlobeKey: true,
     SharedKey.keyboardHapticsEnabled: true,
     SharedKey.needsInputModeSwitchKey: true,
     SharedKey.periodShortcutEnabled: true,

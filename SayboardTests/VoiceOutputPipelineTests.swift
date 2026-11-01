@@ -69,3 +69,48 @@ struct VoiceOutputPipelineTests {
     #expect(VoiceOutputTarget.customLanguageName("hello do something else") == nil)
   }
 }
+
+
+@Suite("Preferred voice language routing")
+struct PreferredVoiceLanguageTests {
+  @Test func normalizesRegionalCantonese() {
+    #expect(PreferredVoiceLanguages.normalized(["zh-HK", "en-US", "de-DE", "yue"]) ==
+      ["yue", "en", "de"])
+  }
+
+  @Test func outputChoicesAreUserControlled() {
+    let choices = PreferredVoiceLanguages.choices(from: ["yue", "fr", "de"])
+    #expect(choices.map(\.label) == ["AUTO", "粵", "FR", "DE"])
+    let afterCantonese = PreferredVoiceLanguages.next(
+      target: .cantonese, custom: "", preferred: ["yue", "fr", "de"]
+    )
+    #expect(afterCantonese.target == .custom)
+    #expect(afterCantonese.languageCode == "fr")
+    let afterFrench = PreferredVoiceLanguages.next(
+      target: .custom, custom: "fr", preferred: ["yue", "fr", "de"]
+    )
+    #expect(afterFrench.target == .german)
+    #expect(PreferredVoiceLanguages.choices(from: []).count == 1)
+  }
+
+  @Test func blocksThaiWhenUserSpeaksCantoneseEnglishGerman() {
+    #expect(PreferredVoiceLanguages.unexpectedScript(
+      in: "สวัสดีครับ วันนี้เป็นอย่างไรบ้าง", allowed: ["yue", "en", "de"]
+    ) == "th")
+    #expect(PreferredVoiceLanguages.unexpectedScript(
+      in: "我而家喺柏林，好攰。", allowed: ["yue", "en", "de"]
+    ) == nil)
+    #expect(PreferredVoiceLanguages.unexpectedScript(
+      in: "สวัสดีครับ วันนี้เป็นอย่างไรบ้าง", allowed: ["th", "en"]
+    ) == nil)
+  }
+
+  @Test func recognizesUnexpectedHanWhenOnlyEnglishChosen() {
+    #expect(PreferredVoiceLanguages.unexpectedScript(
+      in: "我而家喺柏林", allowed: ["en"]
+    ) == "zh")
+    #expect(PreferredVoiceLanguages.unexpectedScript(
+      in: "I am in Berlin", allowed: ["en"]
+    ) == nil)
+  }
+}

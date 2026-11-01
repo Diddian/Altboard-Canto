@@ -134,9 +134,11 @@ struct OnboardingLanguagesView: View {
 
   private func choose(_ variant: ModelVariant) {
     self.cancelUnfinishedDownload(of: self.previousChoice, replacedBy: variant)
-    SharedSettings().setPreferredLanguages(
+    let settings = SharedSettings()
+    settings.preferredSpokenLanguages = self.draft.languages
+    settings.setPreferredLanguages(
       SpeechModelRecommendation.preferredLanguages(for: variant, from: self.draft.languages),
-      for: variant,
+      for: variant
     )
     if variant.isSupportedOnCurrentDevice {
       switch self.downloadService.state(for: variant) {
@@ -157,6 +159,12 @@ struct OnboardingLanguagesView: View {
   private func finishSheetChoice() {
     guard let choice = self.sheetChoice else { return }
     self.sheetChoice = nil
+    let settings = SharedSettings()
+    settings.preferredSpokenLanguages = self.draft.languages
+    settings.setPreferredLanguages(
+      SpeechModelRecommendation.preferredLanguages(for: choice, from: self.draft.languages),
+      for: choice
+    )
     self.cancelUnfinishedDownload(of: self.previousChoice, replacedBy: choice)
     self.onChoose(choice)
   }

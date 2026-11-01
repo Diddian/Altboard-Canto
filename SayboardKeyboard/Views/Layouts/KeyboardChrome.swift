@@ -5,9 +5,6 @@ extension KeyboardState {
     self.llmEnabled && self.hasUsableLLMModel
   }
 
-  var showsGlobeButton: Bool {
-    self.needsInputModeSwitchKey || self.showGlobeKey
-  }
 }
 
 struct KeyboardChromeMetrics {
@@ -75,7 +72,7 @@ struct KeyboardStatusStrip: View {
     }
     // The status is the final row in the keyboard. It must contribute its
     // intrinsic height, not overflow a zero-height Color.clear overlay.
-    .frame(maxWidth: .infinity, alignment: .leading)
+    .frame(maxWidth: .infinity, alignment: .center)
     .animation(.easeOut(duration: 0.3), value: self.keyboardState.isStartingRecording)
     .animation(.easeOut(duration: 0.3), value: self.keyboardState.isProcessing)
     .animation(.easeOut(duration: 0.3), value: self.keyboardState.dictationOutcome)
@@ -99,14 +96,14 @@ private struct VoiceProcessingStatusView: View {
   let progress: VoiceProcessingProgress?
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 4.kbScaled) {
+    VStack(alignment: .center, spacing: 4.kbScaled) {
       HStack(spacing: 6.kbScaled) {
         ProgressView()
           .controlSize(.mini)
         TimelineView(.periodic(from: .now, by: 1)) { context in
           let elapsed = max(0, Int(context.date.timeIntervalSinceReferenceDate
             - (self.progress?.startedAt ?? context.date.timeIntervalSinceReferenceDate)))
-          Text("\(self.stageTitle) · \(elapsed)s elapsed")
+          Text("\(self.stageTitle) · \(elapsed)s")
             .font(.caption.weight(.medium))
             .foregroundStyle(.secondary)
             .lineLimit(1)
@@ -115,13 +112,14 @@ private struct VoiceProcessingStatusView: View {
       if let preview = self.progress?.rawPreview, !preview.isEmpty {
         Text("Recognized: \(preview)")
           .font(.caption2)
+          .multilineTextAlignment(.center)
           .foregroundStyle(.tertiary)
           .lineLimit(2)
           .truncationMode(.tail)
           .accessibilityLabel("Raw speech transcript: \(preview)")
       }
     }
-    .frame(maxWidth: .infinity, alignment: .leading)
+    .frame(maxWidth: .infinity, alignment: .center)
     .padding(.horizontal, 13.kbScaled)
     .padding(.vertical, 7.kbScaled)
   }

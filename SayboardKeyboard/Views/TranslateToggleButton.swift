@@ -27,21 +27,36 @@ struct TranslateToggleButton: View {
 
   @AppStorage(SharedKey.voiceOutputTarget, store: AppGroup.sharedDefaults ?? .standard)
   private var targetRawValue = VoiceOutputTarget.original.rawValue
+  @AppStorage(SharedKey.voiceCustomLanguage, store: AppGroup.sharedDefaults ?? .standard)
+  private var customLanguage = ""
+  @AppStorage(SharedKey.preferredSpokenLanguages, store: AppGroup.sharedDefaults ?? .standard)
+  private var preferredSpokenLanguages = [String]()
 
   private var target: VoiceOutputTarget {
     VoiceOutputTarget(rawValue: self.targetRawValue) ?? .original
   }
 
+  private var currentLabel: String {
+    let code = PreferredVoiceLanguages.currentCode(target: self.target, custom: self.customLanguage)
+    return PreferredVoiceLanguages.choices(from: SharedSettings().preferredSpokenLanguages)
+      .first(where: { $0.languageCode == code })?.label ?? self.target.keyboardLabel
+  }
+
   var body: some View {
     Button {
-      let next = VoiceOutputTarget.nextKeyboardTarget(after: self.target)
-      self.targetRawValue = next.rawValue
+      let next = PreferredVoiceLanguages.next(
+        target: self.target,
+        custom: self.customLanguage,
+        preferred: SharedSettings().preferredSpokenLanguages
+      )
+      self.customLanguage = next.languageCode
+      self.targetRawValue = next.target.rawValue
       SharedSettings().isTranslationMode = false
     } label: {
       VStack(spacing: 0) {
         Image(systemName: "translate")
           .font(.system(size: 17.kbScaled))
-        Text(verbatim: self.target.keyboardLabel)
+        Text(verbatim: self.currentLabel)
           .font(.system(size: 8.kbScaled, weight: .bold, design: .rounded))
       }
       .foregroundStyle(self.target == .original ? Color.primary : Color.accentColor)
@@ -51,7 +66,7 @@ struct TranslateToggleButton: View {
       isActive: self.target != .original,
       shape: self.shape
     ))
-    .accessibilityLabel("Dictation output: \(self.target.title). Tap to change language.")
+    .accessibilityLabel("Dictation output: \(self.currentLabel). Tap to change language.")
     .gatedSensoryFeedback(.selection, trigger: self.targetRawValue)
   }
 }

@@ -10,6 +10,10 @@ struct ExtendedKeyboardLayout: View {
     VStack(spacing: 0) {
       VStack(spacing: Self.rowSpacing) {
         self.chromeRow
+        KeyboardStatusStrip(
+          keyboardState: self.keyboardState,
+          onContentHeightChange: self.proxy.setStatusStripHeight
+        )
         Group {
           self.symbolsRow1View
           self.symbolsRow2View
@@ -20,10 +24,6 @@ struct ExtendedKeyboardLayout: View {
         .animation(.easeOut(duration: 0.22), value: self.keyboardState.auxiliaryControlsHidden)
         KeyboardBottomRow(proxy: self.proxy, metrics: self.chrome, keyboardState: self.keyboardState)
       }
-      KeyboardStatusStrip(
-        keyboardState: self.keyboardState,
-        onContentHeightChange: self.proxy.setStatusStripHeight
-      )
     }
   }
 

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct MicSizing {
   let buttonWidth: CGFloat
@@ -14,7 +15,22 @@ struct MicSizing {
 extension MicSizing {
   @MainActor
   static var standard: MicSizing {
-    MicSizing(
+    if KeyboardMetrics.isCompactStandard {
+      // A thumb-sized spacebar-like control; maintain the 44pt hit target.
+      let height = max(44, 56.kbScaled)
+      let width = min(220, UIScreen.main.bounds.width * 0.54)
+      return MicSizing(
+        buttonWidth: width,
+        buttonHeight: height,
+        cornerRadius: height / 2,
+        labelWidth: 56.kbScaled,
+        labelHeight: 42.kbScaled,
+        spinnerSize: 34.kbScaled,
+        waveformScale: 0.95,
+        pulseRingSpacing: 10.kbScaled
+      )
+    }
+    return MicSizing(
       buttonWidth: 106.kbScaled,
       buttonHeight: 106.kbScaled,
       cornerRadius: 53.kbScaled,
@@ -114,7 +130,7 @@ struct MicAnimatedButton: View {
         .transition(.identity)
       }
 
-      WaveformBars(level: self.keyboardState.audioLevel, scale: self.sizing.waveformScale)
+      WaveformBars(levels: self.keyboardState.recentAudioLevels, scale: self.sizing.waveformScale)
         .opacity(
           shouldShowWave && !isSpin && !self.isMorphing
             && !self.isSpinnerMorphing && !self.pendingSpinnerMorph ? 1 : 0

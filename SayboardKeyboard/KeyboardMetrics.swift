@@ -8,11 +8,26 @@ enum KeyboardMetrics {
   static let baseExtendedHeight: CGFloat = 289.5
   static let baseActionBarExtra: CGFloat = 42
 
-  static let height: CGFloat = UIDevice.current.userInterfaceIdiom == .pad ? 293 : baseHeight
+  static var heightFactor: CGFloat {
+    CGFloat(SharedSettings().keyboardHeightScale)
+  }
 
-  static let scale: CGFloat = height / baseHeight
+  static var isCompactStandard: Bool {
+    heightFactor < 0.82
+  }
 
-  static let extendedHeight: CGFloat = baseExtendedHeight * scale
+  static var scale: CGFloat {
+    (UIDevice.current.userInterfaceIdiom == .pad ? 293 / baseHeight : 1)
+      * heightFactor
+  }
+
+  static var height: CGFloat {
+    (isCompactStandard ? 164 : baseHeight) * scale
+  }
+
+  static var extendedHeight: CGFloat {
+    baseExtendedHeight * scale
+  }
 
   static let actionBarExtraHeight: CGFloat = baseActionBarExtra * scale
 

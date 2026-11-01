@@ -67,6 +67,15 @@ extension SpeechRecognitionService {
         return
       }
       self.currentRawTranscription = rawText
+      if let unexpected = PreferredVoiceLanguages.unexpectedScript(
+        in: rawText, allowed: self.recordingSpokenLanguages
+      ) {
+        self.settings.lastDictationOutcome = .unexpectedLanguage
+        DiagnosticLog.write(
+          "asr: refused unexpected script '\(unexpected)' not among user's preferred languages"
+        )
+        return
+      }
 
       // Preview is the unmodified ASR result. It is not inserted into
       // the host app before translation/cleanup completes.
