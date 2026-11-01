@@ -136,7 +136,7 @@ struct LLMSettingsView: View {
 
 }
 
-private struct LLMModelsScreen: View {
+struct LLMModelsScreen: View {
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 16) {
