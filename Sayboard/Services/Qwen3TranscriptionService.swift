@@ -50,6 +50,7 @@ final class Qwen3TranscriptionService: ObservableObject {
       return
     }
     self.loadState = .loading
+    let loadStarted = CFAbsoluteTimeGetCurrent()
     DictationBreadcrumb.record("qwen: validating model files")
     guard let folder = Qwen3ModelBundle.locate(in: url),
           let encoder = Qwen3ModelBundle.file(prefix: "encoder", in: folder),
@@ -72,10 +73,13 @@ final class Qwen3TranscriptionService: ObservableObject {
         decoder: decoder,
         tokenizer: tokenizer,
         maxTotalLen: 512,
-        maxNewTokens: 128
+        // Permit longer Cantonese speech; EOS still stops short answers early.
+        maxNewTokens: 256
       )
       let configuration = sherpaOnnxOfflineModelConfig(
-        tokens: "", numThreads: 2, provider: "cpu", qwen3Asr: model
+        // Four CPU threads on a six-core device; keep two on smaller CPUs.
+        tokens: "", numThreads: max(2, min(ProcessInfo.processInfo.activeProcessorCount - 1, 4)),
+        provider: "cpu", qwen3Asr: model
       )
       var config = sherpaOnnxOfflineRecognizerConfig(
         featConfig: sherpaOnnxFeatureConfig(), modelConfig: configuration
@@ -90,7 +94,9 @@ final class Qwen3TranscriptionService: ObservableObject {
     self.recognizer = loaded
     self.loadTask = nil
     self.loadState = .loaded
-    DictationBreadcrumb.record("qwen: model load state loaded")
+    DictationBreadcrumb.record(
+      "qwen: model loaded in \(String(format: "%.1f", CFAbsoluteTimeGetCurrent() - loadStarted))s"
+    )
   }
 
   func waitForLoad() async {
@@ -109,11 +115,14 @@ final class Qwen3TranscriptionService: ObservableObject {
     guard let recognizer = self.recognizer, !audioSamples.isEmpty else {
       return .failed("Qwen3 speech model is not loaded")
     }
-    DictationBreadcrumb.record("qwen: decode started")
+    let started = CFAbsoluteTimeGetCurrent()
+    DictationBreadcrumb.record("qwen: decode started, \(audioSamples.count / 16_000)s audio")
     let text = await Task.detached(priority: .userInitiated) {
       recognizer.value.decode(samples: audioSamples, sampleRate: 16_000).text
     }.value
-    DictationBreadcrumb.record("qwen: decode completed")
+    DictationBreadcrumb.record(
+      "qwen: decode completed in \(String(format: "%.1f", CFAbsoluteTimeGetCurrent() - started))s, \(text.count) chars"
+    )
     guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return .noSpeech }
     return .text(TranscriptionOutput(text: text, firstWordStart: nil, lastWordEnd: nil))
   }

@@ -45,6 +45,8 @@ final class LLMProcessingCoordinator: ObservableObject {
     let settings = SharedSettings()
     let options = settings.voiceOutputConfiguration
     guard options.needsLLM, !input.isEmpty else { return nil }
+    let started = CFAbsoluteTimeGetCurrent()
+    DictationBreadcrumb.record("llm: voice cleanup requested")
     guard !self.isProcessing else {
       DiagnosticLog.write("voice/llm: already processing; use raw transcription")
       return nil
@@ -71,6 +73,8 @@ final class LLMProcessingCoordinator: ObservableObject {
     defer { self.endInferenceBackgroundTask(backgroundTask) }
 
     await self.prepareForInference(variant: variant, modelPath: modelPath)
+    let prepareDuration = CFAbsoluteTimeGetCurrent() - started
+    DictationBreadcrumb.record("llm: prepare finished in \(String(format: "%.1f", prepareDuration))s")
     guard self.inferenceService.loadState == .loaded else {
       DiagnosticLog.write("voice/llm: model failed to load; use raw transcription")
       return nil
@@ -81,6 +85,9 @@ final class LLMProcessingCoordinator: ObservableObject {
       systemPrompt: prompt,
       userText: input,
       assistantPrefill: ""
+    )
+    DictationBreadcrumb.record(
+      "llm: generation took \(String(format: "%.1f", CFAbsoluteTimeGetCurrent() - started - prepareDuration))s"
     )
 
     guard let result, !result.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
@@ -94,6 +101,7 @@ final class LLMProcessingCoordinator: ObservableObject {
       return nil
     }
     DiagnosticLog.write("voice/llm: processed \(input.count) to \(output.count) characters")
+    DictationBreadcrumb.record("llm: cleanup complete in \(String(format: "%.1f", CFAbsoluteTimeGetCurrent() - started))s; \(input.count) to \(output.count) chars")
     return output
   }
 

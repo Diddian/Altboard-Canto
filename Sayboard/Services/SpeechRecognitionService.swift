@@ -36,6 +36,7 @@ final class SpeechRecognitionService: ObservableObject {
   let accumulator = AudioBufferAccumulator()
   let audioRecorder = AudioRecorder()
   var currentTranscription = ""
+  @Published private(set) var currentRawTranscription = ""
   var currentAudioFileName: String?
   var currentWordBoundaries: (start: Float, end: Float)?
 
@@ -69,6 +70,7 @@ final class SpeechRecognitionService: ObservableObject {
 
     self.errorMessage = nil
     self.currentTranscription = ""
+    self.currentRawTranscription = ""
     self.currentAudioFileName = "\(UUID().uuidString).caf"
 
     guard self.ensureSessionActive() else {
@@ -99,6 +101,7 @@ final class SpeechRecognitionService: ObservableObject {
 
     self.errorMessage = nil
     self.currentTranscription = ""
+    self.currentRawTranscription = ""
     self.currentAudioFileName = "\(UUID().uuidString).caf"
 
     guard self.ensureSessionActive() else {

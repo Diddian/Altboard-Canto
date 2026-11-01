@@ -36,6 +36,7 @@ extension SpeechRecognitionService {
     }
 
     self.reportSignalStats(samples: samples, engine: String(describing: engine), loadState: loadState)
+    let recognitionStarted = CFAbsoluteTimeGetCurrent()
 
     let result: TranscriptionResult =
       switch engine {
@@ -49,6 +50,10 @@ extension SpeechRecognitionService {
         await self.qwen3Service.transcribe(audioSamples: samples)
       }
 
+    DictationBreadcrumb.record(
+      "asr: \(String(describing: engine)) completed in \(String(format: "%.1f", CFAbsoluteTimeGetCurrent() - recognitionStarted))s"
+    )
+
     switch result {
     case .text: self.settings.lastDictationOutcome = nil
     case .noSpeech: self.settings.lastDictationOutcome = .noSpeech
@@ -58,6 +63,7 @@ extension SpeechRecognitionService {
     if case .text(let output) = result {
       let sanitizedText = TextSanitizer.sanitize(output.text)
       let cantoneseText = CantoneseOutput.normalize(sanitizedText)
+      self.currentRawTranscription = cantoneseText
       // Edit in the main app before notifying the keyboard; do not insert twice.
       let finalText = await self.llmCoordinator?.processVoiceDictation(cantoneseText) ?? cantoneseText
       let bridgeText = self.styled(CantoneseOutput.normalize(finalText), host: stylingHost)

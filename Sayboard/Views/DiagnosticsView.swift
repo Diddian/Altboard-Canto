@@ -9,6 +9,7 @@ struct DiagnosticsView: View {
   @EnvironmentObject private var llmModels: LLMDownloadService
 
   @State private var testResult = ""
+  @State private var rawASRResult = ""
   @State private var breadcrumbs = [String]()
 
   var body: some View {
@@ -82,9 +83,17 @@ struct DiagnosticsView: View {
       .disabled(self.speech.isStopping
         || (!self.speech.isRecording
           && (!self.models.hasUsableModel || self.permissions.microphoneState != .granted)))
+      if !self.rawASRResult.isEmpty {
+        VStack(alignment: .leading, spacing: 4) {
+          Text("Raw ASR (before AI cleanup)").font(.caption.weight(.semibold))
+          Text(self.rawASRResult).font(.footnote).textSelection(.enabled)
+        }
+      }
       if !self.testResult.isEmpty {
-        Text(self.testResult)
-          .font(.footnote).textSelection(.enabled)
+        VStack(alignment: .leading, spacing: 4) {
+          Text("Final output (after cleanup)").font(.caption.weight(.semibold))
+          Text(self.testResult).font(.footnote).textSelection(.enabled)
+        }
       }
     } header: {
       Text("Functional Tests")
@@ -159,6 +168,7 @@ struct DiagnosticsView: View {
       self.testResult = "Transcribing and cleaning up..."
       Task {
         await self.speech.stopRecording()
+        self.rawASRResult = self.speech.currentRawTranscription
         self.testResult = self.speech.currentTranscription.isEmpty
           ? "No text produced. Check the last execution steps."
           : self.speech.currentTranscription
@@ -168,6 +178,7 @@ struct DiagnosticsView: View {
     }
 
     self.permissions.refreshMicrophoneState()
+    self.rawASRResult = ""
     self.testResult = "Preparing speech model..."
     Task {
       await self.speech.startRecordingAfterModelLoad()
