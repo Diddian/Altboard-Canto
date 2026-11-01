@@ -1,0 +1,93 @@
+name: Build unsigned iPhone IPA
+
+on:
+  push:
+    branches:
+      - feat/cantonese-qwen3-offline-mvp
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: altboard-unsigned-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Unsigned iOS development build
+    runs-on: macos-26
+    timeout-minutes: 55
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Select Xcode 26.2
+        run: |
+          set -euo pipefail
+          sudo xcode-select -s /Applications/Xcode_26.2.app/Contents/Developer
+          xcodebuild -version
+
+      - name: Install build utilities
+        run: |
+          set -euo pipefail
+          if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
+          if ! command -v swiftlint >/dev/null; then brew install swiftlint; fi
+
+      - name: Bootstrap llama.cpp framework
+        run: |
+          set -euo pipefail
+          bash scripts/bootstrap-llama.sh
+
+      - name: Generate Xcode project
+        run: |
+          set -euo pipefail
+          xcodegen generate
+
+      - name: Compile for physical iPhone without code signing
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project Sayboard.xcodeproj \
+            -scheme Sayboard \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/AltboardDerived" \
+            -jobs 2 \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            'CODE_SIGN_IDENTITY=' \
+            'DEVELOPMENT_TEAM=' \
+            build 2>&1 | tee "$RUNNER_TEMP/xcodebuild.log"
+
+      - name: Create unsigned IPA with keyboard extension
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP="$RUNNER_TEMP/AltboardDerived/Build/Products/Release-iphoneos/Sayboard.app"
+          test -d "$APP" || { echo 'ERROR: Sayboard.app not found'; exit 1; }
+          test -d "$APP/PlugIns" || { echo 'ERROR: keyboard extension not found'; exit 1; }
+          mkdir -p "$RUNNER_TEMP/ipa/Payload" "$GITHUB_WORKSPACE/dist"
+          cp -R "$APP" "$RUNNER_TEMP/ipa/Payload/"
+          (cd "$RUNNER_TEMP/ipa" && zip -q -r "$GITHUB_WORKSPACE/dist/Altboard-Canto-unsigned.ipa" Payload)
+          unzip -t "$GITHUB_WORKSPACE/dist/Altboard-Canto-unsigned.ipa" | tail -n 1
+          ls -lh "$GITHUB_WORKSPACE/dist/Altboard-Canto-unsigned.ipa"
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Altboard-Canto-unsigned-IPA
+          path: dist/Altboard-Canto-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload failure log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Altboard-Canto-build-log
+          path: ${{ runner.temp }}/xcodebuild.log
+          if-no-files-found: ignore
+          retention-days: 7
