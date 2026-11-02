@@ -3,12 +3,25 @@ import SwiftUI
 struct SpaceBarKey: View {
 
   let useCustomSpaceBar: Bool
+  let showsAlphabetIndicator: Bool
   let onSpace: () -> Void
   let onCursorMove: (Int) -> Void
 
   var body: some View {
-    self.label
-      .foregroundStyle(.primary)
+    ZStack(alignment: .bottomTrailing) {
+      self.label
+        .foregroundStyle(.primary)
+        .frame(maxWidth: .infinity)
+        .frame(height: 45.kbScaled)
+      if self.showsAlphabetIndicator && !self.isTrackpadActive {
+        Text("A")
+          .font(.system(size: 10.kbScaled, weight: .medium))
+          .foregroundStyle(.secondary)
+          .padding(.trailing, 6.kbScaled)
+          .padding(.bottom, 4.kbScaled)
+          .allowsHitTesting(false)
+      }
+    }
       .frame(maxWidth: .infinity)
       .frame(height: 45.kbScaled)
       .background {

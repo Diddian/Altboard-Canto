@@ -1,5 +1,5 @@
 {
-  "schema": "altboard.ios.keyboard.geometry.v2",
+  "schema": "altboard.ios.keyboard.geometry.v3",
   "source": "IMG_9658.jpeg, IMG_9659.jpeg (native), IMG_9660.jpeg (previous Altboard), IMG_9669.jpeg (current Altboard screenshot), IMG_9670.jpeg (native 3-column prediction screenshot)",
   "measurement": "Approximate pixel measurements normalized at inferred 3x; not Apple layout APIs",
   "reference": {
@@ -76,7 +76,21 @@
       },
       "microphoneInHistory": "When the History test field is focused, request dictation using the existing in-app Darwin bridge. No deep link or app switch.",
       "keyboardDismissGesture": "No custom edge swipe; removed after real-device test. Host app handles outside taps.",
-      "personalizedCandidates": "Offline dictionary selectionCounts stored in App Group; most frequently chosen candidate within the query results is shown first."
+      "personalizedCandidates": "Offline dictionary selectionCounts stored in App Group; most frequently chosen candidate within the query results is shown first.",
+      "spaceBarIndicator": {
+        "text": "A",
+        "fontSizePt": 10,
+        "position": "bottom trailing",
+        "paddingRightPt": 6,
+        "paddingBottomPt": 4,
+        "color": "UIColor.secondaryLabel",
+        "scope": "Alphabet only"
+      },
+      "emojiKey": {
+        "symbol": "face.smiling.inverse",
+        "sizePt": 28,
+        "style": "filled white face (SF Symbols; native screenshot visual approximation)"
+      }
     },
     "defaultLetterArrangement": "qwertz"
   },
@@ -107,15 +121,17 @@
       "roundedTopCorners": "system-controlled UIInputView",
       "inputFieldMinHeightPt": 76,
       "historyBackdrop": "KeyboardPalette.backdrop",
-      "bottomBlankSpacePt": 11
+      "bottomBlankSpacePt": 20
     },
-    "keyboardRowsHeightPt": 277,
-    "totalTypingCanvasPt": 288,
-    "nativeHeightTarget": "About 288-290 pt based on supplied keyboard reference"
+    "keyboardRowsHeightPt": 270,
+    "totalTypingCanvasPt": 290,
+    "nativeHeightTarget": "290pt screenshot-derived iPhone height (871px / 3 = 290.33pt)",
+    "nativeFirstRowTopPt": 57.33,
+    "runtimeFirstRowTopPt": 57
   },
   "build": {
-    "baseAlphabetHeightPt": 288,
-    "defaultAlphabetHeightPt": 288,
+    "baseAlphabetHeightPt": 290,
+    "defaultAlphabetHeightPt": 290,
     "directIPAArtifact": "actions/upload-artifact@v7 archive:false",
     "releaseAsset": "Altboard-Canto-SideStore.ipa",
     "keyboardHeightUserAdjustable": false,

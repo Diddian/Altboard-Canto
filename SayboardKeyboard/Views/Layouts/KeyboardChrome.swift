@@ -157,8 +157,9 @@ struct KeyboardBottomRow: View {
         }
       }
       KeyButton(
-        content: .systemImage("face.smiling"),
-        fixedWidth: self.metrics.sideButtonWidth
+        content: .systemImage("face.smiling.inverse"),
+        fixedWidth: self.metrics.sideButtonWidth,
+        systemIconSize: 28
       ) {
         self.keyboardState.showsEmojiPicker = true
       }
@@ -181,6 +182,7 @@ struct KeyboardBottomRow: View {
 
       SpaceBarKey(
         useCustomSpaceBar: self.keyboardState.useCustomSpaceBar,
+        showsAlphabetIndicator: self.onAlphabeticModeSwitch != nil,
         onSpace: {
           if let action = self.onSpaceAction { action() } else { self.proxy.insertSpace() }
           self.onTextEdited?()

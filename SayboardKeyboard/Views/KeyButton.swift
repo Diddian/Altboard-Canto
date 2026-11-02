@@ -18,6 +18,7 @@ struct KeyButton: View {
   var calloutRowSpacing: CGFloat = 0
   var calloutAlignment = KeyCalloutAlignment.center
   var firesHaptic = true
+  var systemIconSize: CGFloat = 18
   let action: () -> Void
 
   var body: some View {
@@ -56,7 +57,7 @@ struct KeyButton: View {
 
     case .systemImage(let name):
       Image(systemName: name)
-        .font(.system(size: 18.kbScaled))
+        .font(.system(size: self.systemIconSize.kbScaled))
 
     case .symbol(let symbol, let fontSize):
       self.symbolText(symbol, fontSize: fontSize)
