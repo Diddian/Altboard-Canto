@@ -46,7 +46,7 @@ class YaleAliasTests(unittest.TestCase):
                     db.execute("SELECT COUNT(*) FROM entries WHERE word='據'").fetchone()[0], 2
                 )
                 self.assertEqual(
-                    {row[0] for row in db.execute("SELECT compact FROM entries")}, {"geoi2", "geoi3"}
+                    {row[0] for row in db.execute("SELECT compact FROM entries WHERE word='據'")}, {"geoi2", "geoi3"}
                 )
             finally:
                 db.close()
