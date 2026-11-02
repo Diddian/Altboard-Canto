@@ -18,23 +18,12 @@ struct EmojiKeyboardView: View {
   var body: some View {
     VStack(spacing: 5) {
       HStack {
-        Button {
-          self.keyboardState.showsEmojiPicker = false
-        } label: {
-          Label("ABC", systemImage: "keyboard")
-            .font(.caption.weight(.semibold))
-        }
-        Spacer()
         Text("Emoji").font(.subheadline.weight(.semibold))
         Spacer()
-        Button {
-          self.proxy.deleteBackward()
-        } label: {
-          Image(systemName: "delete.left")
-        }
+        RepeatDeleteButton(proxy: self.proxy, fixedWidth: 50.kbScaled)
       }
-      .padding(.horizontal, 15)
-      .frame(height: 35)
+      .padding(.horizontal, 6.kbScaled)
+      .frame(height: KeyboardChromeMetrics.keyHeight)
 
       ScrollView {
         LazyVGrid(columns: self.columns, spacing: 7) {
@@ -52,6 +41,22 @@ struct EmojiKeyboardView: View {
         }
         .padding(.horizontal, 6)
       }
+
+      KeyboardBottomRow(
+        proxy: self.proxy,
+        metrics: KeyboardChromeMetrics(keyboardState: self.keyboardState),
+        keyboardState: self.keyboardState,
+        alphabeticModeLabel: "ABC",
+        onAlphabeticModeSwitch: {
+          self.keyboardState.showsEmojiPicker = false
+          self.keyboardState.keyboardKind = .alphabetic
+          SharedSettings().keyboardKind = .alphabetic
+          self.proxy.setActionBarVisible(false)
+        },
+        showsAlphabetIndicator: false,
+        onSpaceAction: { self.proxy.insertSpace() },
+        onReturnAction: { self.proxy.insertText("\n") }
+      )
     }
     .frame(height: KeyboardMetrics.totalHeight(actionBarVisible: false, kind: self.keyboardState.keyboardKind))
   }
