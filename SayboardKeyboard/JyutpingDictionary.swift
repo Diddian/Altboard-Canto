@@ -19,6 +19,7 @@ final class JyutpingDictionary {
   private let memoryKey = "canto.jyutping.selectionCounts"
 
   private init() {
+    self.defaults?.set(false, forKey: "canto.ime.offlineDictionaryReady")
     guard let url = Bundle.main.url(forResource: "jyutping", withExtension: "sqlite3") else {
       DiagnosticLog.write("jyutping: offline dictionary resource missing")
       return
@@ -26,6 +27,7 @@ final class JyutpingDictionary {
     var handle: OpaquePointer?
     if sqlite3_open_v2(url.path, &handle, SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX, nil) == SQLITE_OK {
       self.database = handle
+      self.defaults?.set(true, forKey: "canto.ime.offlineDictionaryReady")
     } else {
       sqlite3_close_v2(handle)
       DiagnosticLog.write("jyutping: failed to open offline dictionary")

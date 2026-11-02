@@ -41,6 +41,14 @@ struct DiagnosticsView: View {
       LabeledContent("Keyboard report", value: self.permissions.keyboardProbeSummary)
       LabeledContent("Keyboard Full Access", value: self.report(self.permissions.keyboardReportedFullAccess))
       LabeledContent("Keyboard App Group", value: self.report(self.permissions.keyboardReportedGroupAvailable))
+      LabeledContent("Selected keyboard mode", value: SharedSettings().keyboardKind.displayNameKey)
+      LabeledContent("Key arrangement", value: SharedSettings().keyboardLetterArrangement.rawValue.uppercased())
+      LabeledContent("Keyboard height", value: String(Int(SharedSettings().keyboardHeightScale * 100)) + "%")
+      LabeledContent("Cantonese in preferred languages", value:
+        self.yesNo(SharedSettings().preferredSpokenLanguages.contains("yue")))
+      LabeledContent("Cantonese romanization", value: SharedSettings().keyboardRomanizationScheme.displayName)
+      LabeledContent("IME initialization",
+        value: self.offlineImeStatus)
     } header: {
       Text("Permissions and Signing")
     }
@@ -186,6 +194,13 @@ struct DiagnosticsView: View {
     }
   }
 
+  private var offlineImeStatus: String {
+    guard let stored = AppGroup.sharedDefaults?.object(forKey: "canto.ime.offlineDictionaryReady") as? Bool else {
+      return "Not tested in keyboard"
+    }
+    return stored ? "Offline dictionary ready" : "Unavailable in keyboard"
+  }
+
   private var availableStorage: String {
     guard let bytes = ModelDiskReserve.availableBytes() else { return "Unknown" }
     return ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
@@ -279,6 +294,12 @@ struct DiagnosticsView: View {
       "Keyboard report: \(self.permissions.keyboardProbeSummary)",
       "Keyboard Full Access: \(self.report(self.permissions.keyboardReportedFullAccess))",
       "Keyboard App Group: \(self.report(self.permissions.keyboardReportedGroupAvailable))",
+      "Keyboard mode: \(SharedSettings().keyboardKind.displayNameKey)",
+      "Keyboard order: \(SharedSettings().keyboardLetterArrangement.rawValue)",
+      "Keyboard height: \(SharedSettings().keyboardHeightScale)",
+      "Cantonese enabled: \(SharedSettings().preferredSpokenLanguages.contains("yue"))",
+      "Romanization: \(SharedSettings().keyboardRomanizationScheme.displayName)",
+      "Offline IME: \(self.offlineImeStatus)",
       "Haptic capable: \(CHHapticEngine.capabilitiesForHardware().supportsHaptics)",
       "Haptic enabled: \(SharedSettings().keyboardHapticsEnabled)",
       "Haptic requested count: \(KeyboardHapticTrace.total)",
