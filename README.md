@@ -9,6 +9,17 @@
 
 </div>
 
+## Altboard-Canto: direct iPhone IPA
+
+**[Download the latest Altboard-Canto IPA](https://github.com/Diddian/Altboard-Canto/releases/download/altboard-canto-dev/Altboard-Canto-SideStore.ipa)**
+
+This fork's development IPA is an unsigned build for SideStore. It contains the iPhone app and the custom keyboard extension. SideStore must re-sign it before installation; it is not an App Store-signed IPA. GitHub Actions uses `actions/upload-artifact@v7` with `archive: false`, so the run's artifact is also a direct `.ipa`, not another ZIP wrapper.
+
+The **Alphabet** keyboard always accepts Latin typing. If Cantonese appears in Preferred Languages, it additionally suggests traditional Chinese candidates using offline **Jyutping / Yale / Yuetyam** lookup without a separate EN/粵 key. The History tab contains a keyboard testing field; Settings > Diagnostics records privacy-safe haptic request traces.
+
+[Build workflow](https://github.com/Diddian/Altboard-Canto/actions/workflows/build-unsigned-ipa.yml) · [Current release](https://github.com/Diddian/Altboard-Canto/releases/tag/altboard-canto-dev)
+
+
 <p align="center">
   This repository contains the complete source code of Altboard — privacy-first voice keyboard for iPhone and iPad. All speech recognition runs on-device with no servers, no accounts, and no tracking.
 </p>
