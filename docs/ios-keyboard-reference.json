@@ -1,6 +1,6 @@
 {
   "schema": "altboard.ios.keyboard.geometry.v1",
-  "source": "IMG_9658.jpeg",
+  "source": "IMG_9658.jpeg, IMG_9659.jpeg (native), IMG_9660.jpeg (previous Altboard)",
   "measurement": "Approximate pixel measurements normalized at inferred 3x; not Apple layout APIs",
   "reference": {
     "widthPx": 1320,
@@ -64,5 +64,36 @@
       "previewHapticTest": true
     },
     "defaultLetterArrangement": "qwertz"
+  },
+  "palette": {
+    "dark": {
+      "nativeKeyHex": "#444444",
+      "previousAltboardKeyHex": "#3A3A3C",
+      "targetKeyHex": "#444444",
+      "nativeBackdropHex": "#1F1F1F",
+      "pressedKeyHex": "#5C5C5C"
+    },
+    "light": {
+      "keyColor": "UIColor.white",
+      "glyphColor": "UIColor.label"
+    }
+  },
+  "visualAlignment": {
+    "scaleAssumption": "3x",
+    "nativeFirstRowTopPx": 187,
+    "previousAltboardFirstRowTopPx": 223,
+    "previousVerticalOffsetPx": 36,
+    "targetVerticalShiftPt": -11,
+    "nativeSecondRowTopPx": 355,
+    "nativeThirdRowTopPx": 523,
+    "nativeBottomRowTopPx": 691,
+    "note": "Extracted from screenshot geometry, not an Apple-documented coordinate system; use same runtime spacing in interactive preview"
+  },
+  "build": {
+    "recommendedKeyboardHeightScale": 0.92,
+    "baseAlphabetHeightPt": 312,
+    "defaultAlphabetHeightPt": 287.04,
+    "directIPAArtifact": "actions/upload-artifact@v7 archive:false",
+    "releaseAsset": "Altboard-Canto-SideStore.ipa"
   }
 }
