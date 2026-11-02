@@ -10,6 +10,20 @@ Statuses: [x] implemented in review branch; [ ] pending or not verified.
 Code changes are not considered shipped until a successful iPhone build and
 physical checks, and a deliberate merge/release.
 
+## P0 — Cantonese input enrichment and emoji (T-010 / T-011)
+
+- [x] T-010.1 Add audited colloquial entries and multiple-character conversational phrases, including 喎, 尐, 噤, 或者, 根據, 最多.
+- [x] T-010.2 Add bounded alternate Romanization aliases for Yale/Jyutping mixed habits (yuen/yun, yu/yyu, jui/jeui); do not conflate differing tones or automatically substitute Chinese characters.
+- [x] T-010.3 Present opt-in next-word continuations after candidate commits; never silently insert predictions.
+- [x] T-010.4 Switch alphabetic numeric and symbol punctuation to Chinese forms when yue/zh is in the selected preferred languages; provide manual paired quotes and extended title/bracket keys.
+- [x] T-011.1 Generate full, offline Unicode fully-qualified emoji catalog with category chips, search and ABC return.
+- [ ] T-010.5 Fix high-accuracy multiword *Latin* typo corrections, including merged/unseparated text and transpositions; current OS checker remains word-scoped.
+- [ ] T-010.6 Optional first-run Cantonese orthography variant choice / Skip and per-user preference; do not force replacements.
+- [ ] T-010.7 Independent romanization mapping validation against authoritative syllable lists; confirm chosen source-version discrepancies rather than claim perfect Yale.
+- [ ] T-010.8 Upgrade ranking: currently phrase supplements and corpus-order next-word completions, not a trained language model or proven full phrase/typo coverage.
+- [ ] T-011.2 Verify Unicode data release availability, CLDR names, all skin tone/ZWJ handling, iOS glyph support, native-like search behavior and accessibility on device.
+- [ ] T-010.9 Full Xcode/SideStore build and physical keyboard testing after commit 0dc80fdec1d2.
+
 ## P0 — Immediate interaction and manual AI text rewrite (T-008)
 
 - [x] T-008.1 Manual AI uses UIInputViewController.selectedText instead of cursor prefix; auto AI action remains dictated transcript only.
