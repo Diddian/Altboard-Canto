@@ -10,17 +10,18 @@ Statuses: [x] implemented in review branch; [ ] pending or not verified.
 Code changes are not considered shipped until a successful iPhone build and
 physical checks, and a deliberate merge/release.
 
-## P1 — Common long phrases and segmentation (T-013)
+## Execution order — low-blast-radius queue (no keyboard architecture changes)
 
-- [x] T-013.1 Audit supplemental Cantonese list: 162 entries, just 2 with five or more characters; this excludes the main upstream dictionary.
-- [x] T-013.2 Specify one Traditional Chinese phrase + validated tone-numbered Jyutping reading, deriving Yale and Sidney Lau automatically.
-- [ ] T-013.3 Collect and validate frequency-ranked 3–10 character Hong Kong spoken phrases against upstream and linguistic sources; deduplicate and check tone readings.
-- [ ] T-013.4 Append reviewed entries (not merely proposed examples) and test all three complete spelling forms.
-- [ ] T-013.5 Implement bounded syllable-segmentation / beam search for per-syllable mixed spelling within a long phrase, without 3^n stored combinations.
-- [ ] T-013.6 Measure full-corpus recall, false matches, p95 iPhone latency, memory and English-input interference.
-- [x] T-013.7 Diagnose Action #61: Sidney Lau mapping erroneously converted 'jeung' to 'jung'; correct Yale jy- onset and suffix-only mappings, add regression tests. CI still pending.
+1. **Build gate** — T-006.2/T-006.3/T-012.6: finish CI, verify IPA includes offline dictionaries and emoji assets, preserve last successful download; isolate one failure per patch.
+2. **Data correctness** — T-010.7/T-002.6: expand deterministic pronunciation, tone, sentence-case and long-delete tests against known words; don't change the input engine merely to satisfy a failing test.
+3. **Emoji and punctuation QA** — T-011.2/T-010.4: validate Unicode catalog completeness, category/search keys, paired quotes, resource paths and Chinese punctuation first; restrict any fixes to their existing components.
+4. **Settings/text cleanup** — T-004.6/T-003.8: correct stale labels, help text and haptic reset tests; preserve settings keys and user-stored values.
+5. **iPhone smoke** — T-002.5/T-001.8/T-008.13: check candidate insertion, key hitboxes, haptics, emoji ABC return, voice cancel and AI selection with no sweeping UI rewrite.
+6. **Finish Swipe Typing Beta** — T-005.6/T-005.7; only after a green baseline.
+7. **Later: long Cantonese phrases and per-syllable mixed Romanization** — T-013 (and duplicate T-012.7); after Swipe Typing and before Live Transcription.
+8. **Last: Live Transcription experiment** — T-007, planning-only until all preceding input work is stable.
 
-See `docs/CANTONESE-LONG-PHRASES-PLAN.md`.
+Do not start large-scale app layout rewrites, new streaming ASR, cross-app input replacement or invasive fuzzy matching as part of the bounded queue.
 
 ## P0 — Universal Cantonese Input (T-012)
 
@@ -30,7 +31,7 @@ See `docs/CANTONESE-LONG-PHRASES-PLAN.md`.
 - [x] T-012.4 Include Sidney Lau phonetic boundaries in held-Delete and regression tests for user-entered examples.
 - [x] T-012.5 Fix run 41528118833 Xcode duplicate resource output by excluding `.gitkeep` from keyboard extension resources.
 - [ ] T-012.6 Complete macOS Xcode build, SideStore IPA delivery, and on-device verification after changes.
-- [ ] T-012.7 Per-syllable mixed romanization inside compound phrases, rather than one whole phrase per convention.
+- [ ] T-012.7 Deferred to T-013.5, after Swipe Typing and before Live Transcription: per-syllable mixed romanization inside compound phrases.
 - [ ] T-012.8 Tune candidate ranking, frequency and offline p95 latency/memory for complete corpus.
 - [ ] T-012.9 Context-sensitive lazy-sound aliases and stronger typo recognition without conflating true phonological distinctions.
 
@@ -142,7 +143,7 @@ Files: `SayboardKeyboard/JyutpingDictionary.swift`,
 - [ ] T-004.6 Fix potential duplicate/contradictory comments and docs only after verifying behavior.
 - [ ] T-004.7 CI Swift compiler + focused tests and on-device regressions.
 
-## P2 — Latin-script swipe typing (T-005)
+## P1 — Latin-script swipe typing (T-005)
 
 - [x] T-005.1 Audit Henryikenna/sswipe and update offline English/German plan v2.
 - [x] T-005.2 UIKit per-row touch owner retains finger capture beyond its bounds; global Q/A/Z coordinates and gesture-state gate without installing competing gesture layers.
@@ -154,6 +155,18 @@ Files: `SayboardKeyboard/JyutpingDictionary.swift`,
 - [ ] T-005.8 Enable by default only after iPhone acceptance. Native parity not claimed.
 
 Plan: `docs/swipe-typing-en-de-plan.json`.
+
+## P2 — Common long phrases and segmentation (T-013 · AFTER Swipe Typing, BEFORE Live Transcription)
+
+- [x] T-013.1 Audit supplemental Cantonese list: 162 entries, just 2 with five or more characters; this excludes the main upstream dictionary.
+- [x] T-013.2 Specify one Traditional Chinese phrase + validated tone-numbered Jyutping reading, deriving Yale and Sidney Lau automatically.
+- [ ] T-013.3 Collect and validate frequency-ranked 3–10 character Hong Kong spoken phrases against upstream and linguistic sources; deduplicate and check tone readings.
+- [ ] T-013.4 Append reviewed entries (not merely proposed examples) and test all three complete spelling forms.
+- [ ] T-013.5 (Deferred) Implement bounded syllable-segmentation / beam search for per-syllable mixed spelling within a long phrase, without 3^n stored combinations.
+- [ ] T-013.6 Measure full-corpus recall, false matches, p95 iPhone latency, memory and English-input interference.
+- [x] T-013.7 Diagnose Action #61: Sidney Lau mapping erroneously converted 'jeung' to 'jung'; correct Yale jy- onset and suffix-only mappings, add regression tests. CI still pending.
+
+See `docs/CANTONESE-LONG-PHRASES-PLAN.md`.
 
 ## P3 — Experimental live meeting transcription (T-007, PLAN ONLY)
 
