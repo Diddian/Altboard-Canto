@@ -158,9 +158,8 @@ struct KeyboardBottomRow: View {
         }
       }
       KeyButton(
-        content: .systemImage("face.smiling.inverse"),
-        fixedWidth: self.metrics.sideButtonWidth,
-        systemIconSize: 28
+        content: .nativeEmojiGlyph,
+        fixedWidth: self.metrics.sideButtonWidth
       ) {
         self.keyboardState.showsEmojiPicker = true
       }

@@ -140,7 +140,7 @@ struct KeyboardLayoutPreview: View {
       .padding(.horizontal, KeyboardLayoutGeometry.alphabetSpecialRowInset)
       HStack(spacing: Self.keySpacing) {
         self.textKey("?123", width: 48, size: 16)
-        self.symbolKey("face.smiling.inverse", width: 48, size: 28)
+        self.nativeEmojiKey(width: 48)
         ZStack(alignment: .bottomTrailing) {
           Color.clear
           Text("A")
@@ -177,6 +177,15 @@ struct KeyboardLayoutPreview: View {
       ForEach(characters, id: \.self) { self.textKey($0, width: nil) }
     }
     .padding(.horizontal, inset ?? Self.edgeInset)
+  }
+
+  private func nativeEmojiKey(width: CGFloat) -> some View {
+    NativeEmojiGlyph()
+      .fill(.primary, style: FillStyle(eoFill: true))
+      .frame(width: 18.67, height: 18.67)
+      .frame(width: width, height: Self.keyHeight)
+      .background(Self.keyFill,
+        in: RoundedRectangle(cornerRadius: Self.keyRadius, style: .continuous))
   }
 
   private func textKey(_ text: String, width: CGFloat?, size: CGFloat = Self.characterSize) -> some View {

@@ -4,6 +4,7 @@ import UIKit
 enum KeyContent {
   case text(LocalizedStringKey)
   case systemImage(String)
+  case nativeEmojiGlyph
   case symbol(String, fontSize: CGFloat? = nil)
 }
 
@@ -77,6 +78,11 @@ struct KeyButton: View {
       Image(systemName: name)
         .font(.system(size: self.systemIconSize.kbScaled))
 
+    case .nativeEmojiGlyph:
+      NativeEmojiGlyph()
+        .fill(.primary, style: FillStyle(eoFill: true))
+        .frame(width: 18.67.kbScaled, height: 18.67.kbScaled)
+
     case .symbol(let symbol, let fontSize):
       self.symbolText(symbol, fontSize: fontSize)
     }
@@ -123,6 +129,11 @@ struct KeyButton: View {
       case .systemImage(let name):
         Image(systemName: name)
           .font(.system(size: fontSize))
+
+      case .nativeEmojiGlyph:
+        NativeEmojiGlyph()
+          .fill(.primary, style: FillStyle(eoFill: true))
+          .frame(width: fontSize, height: fontSize)
 
       case .symbol(let symbol, _):
         self.calloutSymbolText(symbol, fontSize: fontSize)
