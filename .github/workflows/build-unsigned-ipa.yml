@@ -8,6 +8,7 @@ on:
       - feat/live-yale-haptics-diagnostics-20261102
       - fix/haptic-core-canto-ime-20261102
       - feat/fixed-keyboard-settings-20261102
+      - fix/keyboard-native-candidates-20261102
   workflow_dispatch:
 
 permissions:
@@ -200,6 +201,8 @@ jobs:
           TAG="altboard-canto-dev"
           if [ "$GITHUB_REF_NAME" = "feat/fixed-keyboard-settings-20261102" ]; then
             TAG="altboard-canto-fixed-preview"
+          elif [ "$GITHUB_REF_NAME" = "fix/keyboard-native-candidates-20261102" ]; then
+            TAG="altboard-canto-native-preview"
           fi
           IPA="dist/Altboard-Canto-SideStore.ipa"
           test -s "$IPA"
