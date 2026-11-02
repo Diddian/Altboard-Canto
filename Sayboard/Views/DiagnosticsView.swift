@@ -14,6 +14,8 @@ struct DiagnosticsView: View {
   @State private var breadcrumbs = [String]()
   @State private var hapticEvents = [String]()
   @State private var hapticTotal = 0
+  @State private var coreHapticStatus = ""
+  @State private var coreHapticEngine: CHHapticEngine?
 
   var body: some View {
     Form {
@@ -81,6 +83,16 @@ struct DiagnosticsView: View {
           KeyboardHaptics.key(enabled: true, technique: technique)
           self.refreshHaptics()
         }
+      }
+      Button("Test Core Haptics (app)") {
+        self.testCoreHaptics()
+      }
+      .disabled(!CHHapticEngine.capabilitiesForHardware().supportsHaptics)
+      if !self.coreHapticStatus.isEmpty {
+        Text(self.coreHapticStatus)
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+          .textSelection(.enabled)
       }
       if !self.hapticEvents.isEmpty {
         Text(self.hapticEvents.suffix(20).joined(separator: "\n"))
@@ -191,6 +203,32 @@ struct DiagnosticsView: View {
     self.models.verifyExistingModels()
     self.refreshBreadcrumbs()
     self.refreshHaptics()
+  }
+
+  private func testCoreHaptics() {
+    guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else {
+      self.coreHapticStatus = "This device has no Core Haptics hardware."
+      return
+    }
+    do {
+      let engine = try CHHapticEngine()
+      self.coreHapticEngine = engine
+      try engine.start()
+      let event = CHHapticEvent(
+        eventType: .hapticTransient,
+        parameters: [
+          CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.85),
+          CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.55)
+        ],
+        relativeTime: 0
+      )
+      let pattern = try CHHapticPattern(events: [event], parameters: [])
+      let player = try engine.makePlayer(with: pattern)
+      try player.start(atTime: 0)
+      self.coreHapticStatus = "Core Haptics started; physically felt vibration still requires confirmation."
+    } catch {
+      self.coreHapticStatus = "Core Haptics error: \(error.localizedDescription)"
+    }
   }
 
   private func refreshHaptics() {

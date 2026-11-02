@@ -222,7 +222,7 @@ private struct KeyboardHeightPreview: View {
     Button { self.tap() } label: {
       Text(verbatim: title)
         .font(.system(size: 23, weight: .regular, design: .default))
-        .foregroundStyle(.white)
+        .foregroundStyle(.primary)
         .offset(y: -1.2)
         .frame(maxWidth: .infinity)
         .frame(height: 45)
@@ -261,7 +261,7 @@ private struct KeyboardHeightPreview: View {
     Button { self.tap() } label: {
       Image(systemName: image)
         .font(.system(size: 18))
-        .foregroundStyle(.white)
+        .foregroundStyle(.primary)
         .frame(width: width, height: height)
         .background(Color(uiColor: KeyboardPalette.keyFill),
                     in: RoundedRectangle(cornerRadius: height == 96 ? 48 : 8, style: .continuous))
@@ -274,7 +274,7 @@ private struct KeyboardHeightPreview: View {
     Button { self.tap() } label: {
       Text(verbatim: title)
         .font(.system(size: 16))
-        .foregroundStyle(.white)
+        .foregroundStyle(.primary)
         .frame(maxWidth: width == nil ? .infinity : nil)
         .frame(width: width, height: height)
         .background(Color(uiColor: KeyboardPalette.keyFill),

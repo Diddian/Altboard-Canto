@@ -106,6 +106,20 @@ struct SharedSettingsDefaultsTests {
   }
 
   @Test
+  func romanizationSchemePersistsAndDoesNotSwitchKeyboards() throws {
+    let suiteName = Self.uniqueSuiteName()
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { Self.cleanup(suiteName: suiteName) }
+    let settings = SharedSettings(defaults: defaults)
+    #expect(settings.keyboardRomanizationScheme == .jyutping)
+    settings.keyboardRomanizationScheme = .yale
+    #expect(SharedSettings(defaults: defaults).keyboardRomanizationScheme == .yale)
+    settings.keyboardRomanizationScheme = .yuetyam
+    #expect(SharedSettings(defaults: defaults).keyboardRomanizationScheme == .yuetyam)
+    #expect(settings.keyboardKind == .standard)
+  }
+
+  @Test
   func hapticStrengthIsClampedAndPersists() throws {
     let suiteName = Self.uniqueSuiteName()
     let defaults = try #require(UserDefaults(suiteName: suiteName))

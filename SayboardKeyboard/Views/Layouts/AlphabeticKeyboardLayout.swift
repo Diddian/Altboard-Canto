@@ -41,10 +41,10 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private var trackedTextMatches: Bool {
-    guard !self.composition.isEmpty,
-          let before = self.proxy.documentContextBeforeInput()
-    else { return false }
-    return before.lowercased().hasSuffix(self.composition.buffer.lowercased())
+    LiveCantoneseSafety.matches(
+      buffer: self.composition.buffer,
+      hostContext: self.proxy.documentContextBeforeInput()
+    )
   }
 
   private var chrome: KeyboardChromeMetrics {

@@ -17,6 +17,10 @@ enum VerifyKeyboardCore {
     precondition(!buffer.append("."))
     buffer.clear()
     precondition(!buffer.backspace() && buffer.isEmpty)
+    precondition(LiveCantoneseSafety.matches(buffer: "gamyat", hostContext: "Hello Gamyat"))
+    precondition(!LiveCantoneseSafety.matches(buffer: "gamyat", hostContext: "Hello gamya"))
+    precondition(!LiveCantoneseSafety.canDeleteAsToken(buffer: "hello", candidateCount: 0, hostContext: "hello"))
+    precondition(LiveCantoneseSafety.canDeleteAsToken(buffer: "gamyat", candidateCount: 1, hostContext: "gamyat"))
     print("Keyboard core smoke test passed")
   }
 }
