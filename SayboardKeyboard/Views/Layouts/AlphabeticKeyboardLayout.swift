@@ -32,6 +32,12 @@ struct AlphabeticKeyboardLayout: View {
   @State private var showsCandidateGrid = false
   @State private var activeLatinWord: String?
   @State private var latinSuggestions = [LatinWordSuggestion]()
+  @State private var swipeAlternatives = [String]()
+  @AppStorage(
+    SharedKey.keyboardSwipeTypingEnabled,
+    store: UserDefaults(suiteName: AppGroup.identifier)
+  )
+  private var swipeTypingEnabled = false
   @State private var latinRefreshTask: Task<Void, Never>?
   @State private var cursorRefreshTask: Task<Void, Never>?
   @State private var isCursorTracking = false
@@ -125,6 +131,12 @@ struct AlphabeticKeyboardLayout: View {
     .onChange(of: self.autoCapitalize) { _, _ in self.refreshAutomaticShift() }
     .onChange(of: self.romanizationRaw) { _, _ in self.updateCandidates() }
     .onChange(of: self.keyboardState.textContextRevision) { _, _ in
+      if !self.swipeAlternatives.isEmpty {
+        let prefix = self.swipeAlternatives[0] + " "
+        if self.proxy.documentContextBeforeInput()?.hasSuffix(prefix) != true {
+          self.swipeAlternatives.removeAll()
+        }
+      }
       // Preserve our own typed buffer; discard only if host text or cursor changed.
       if !self.composition.isEmpty && !self.trackedTextMatches {
         self.clearComposition()
@@ -136,6 +148,7 @@ struct AlphabeticKeyboardLayout: View {
       self.latinRefreshTask?.cancel()
       self.cursorRefreshTask?.cancel()
       self.activeLatinWord = nil
+      self.swipeAlternatives.removeAll()
       self.latinSuggestions.removeAll()
       self.composition.clear()
       self.candidates.removeAll()
@@ -148,6 +161,8 @@ struct AlphabeticKeyboardLayout: View {
     HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
       if self.keyboardState.showLLMActions {
         KeyboardLLMActionsToolbar(proxy: self.proxy, keyboardState: self.keyboardState)
+      } else if self.page == .letters && !self.swipeAlternatives.isEmpty {
+        self.swipeCandidateStrip
       } else if self.page == .letters &&
           ((self.offersCantonese && !self.composition.isEmpty) || self.activeLatinWord != nil) {
         // The full toolbar becomes an iOS-style prediction strip for the
@@ -222,6 +237,46 @@ struct AlphabeticKeyboardLayout: View {
     .padding(.horizontal, Self.edgeInset.kbScaled)
     .frame(height: KeyboardChromeMetrics.keyHeight)
     .animation(.easeOut(duration: 0.16), value: self.composition.isEmpty)
+  }
+
+  private var swipeCandidateStrip: some View {
+    GeometryReader { geometry in
+      let width = geometry.size.width / 3
+      HStack(spacing: 0) {
+        ForEach(Array(self.swipeAlternatives.prefix(3).enumerated()), id: \.offset) { index, value in
+          self.suggestionCell(
+            value, width: width, showDivider: index < 2
+          ) {
+            self.acceptSwipeAlternative(value)
+          }
+        }
+      }
+    }
+    .frame(height: KeyboardChromeMetrics.keyHeight)
+  }
+
+  private func acceptSwipeAlternative(_ value: String) {
+    guard let current = self.swipeAlternatives.first,
+          let host = self.proxy.documentContextBeforeInput(),
+          host.hasSuffix(current + " ") else {
+      self.swipeAlternatives.removeAll()
+      return
+    }
+    for _ in 0..<(current.count + 1) { self.proxy.deleteBackward() }
+    self.proxy.insertText(value + " ")
+    self.swipeAlternatives.removeAll()
+    self.refreshAutomaticShift()
+    self.updateCandidates()
+  }
+
+  private func commitSwipe(_ alternatives: [String]) {
+    guard let chosen = alternatives.first else { return }
+    self.clearComposition()
+    self.swipeAlternatives = alternatives
+    self.proxy.insertText(chosen + " ")
+    self.lastShiftTap = nil
+    if !self.capsLock { self.shiftActive = false }
+    self.updateCandidates()
   }
 
   private var currentLiteral: String {
@@ -365,7 +420,7 @@ struct AlphabeticKeyboardLayout: View {
     switch self.page {
     case .letters:
       self.letterRow(self.arrangement.rows[0], inset: Self.edgeInset,
-                     top: 0, bottom: Self.rowSpacing / 2)
+                     top: 0, bottom: Self.rowSpacing / 2, rowIndex: 0)
     case .numbers: self.characterRow(Self.numbersRow1)
     case .symbols: self.characterRow(Self.symbolsRow1)
     }
@@ -376,7 +431,7 @@ struct AlphabeticKeyboardLayout: View {
     switch self.page {
     case .letters:
       self.letterRow(self.arrangement.rows[1], inset: Self.secondInset,
-                     top: Self.rowSpacing / 2, bottom: Self.rowSpacing / 2)
+                     top: Self.rowSpacing / 2, bottom: Self.rowSpacing / 2, rowIndex: 1)
     case .numbers: self.characterRow(Self.numbersRow2)
     case .symbols: self.characterRow(Self.symbolsRow2)
     }
@@ -396,7 +451,7 @@ struct AlphabeticKeyboardLayout: View {
         .accessibilityLabel(self.capsLock ? "Caps Lock" : "Shift")
 
         self.letterRow(self.arrangement.rows[2], inset: 0,
-                       top: Self.rowSpacing / 2, bottom: 0)
+                       top: Self.rowSpacing / 2, bottom: 0, rowIndex: 2)
         RepeatDeleteButton(
           proxy: self.proxy,
           fixedWidth: 50.kbScaled,
@@ -469,7 +524,8 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private func letterRow(
-    _ letters: [String], inset: CGFloat, top: CGFloat, bottom: CGFloat
+    _ letters: [String], inset: CGFloat, top: CGFloat, bottom: CGFloat,
+    rowIndex: Int
   ) -> some View {
     AlphabeticTouchRow(
       letters: letters,
@@ -479,7 +535,11 @@ struct AlphabeticKeyboardLayout: View {
       bottomHitInset: bottom.kbScaled,
       typedContext: self.touchPredictionPrefix,
       completionWords: self.touchPredictionWords,
-      showTouchDebug: self.showTouchDebug
+      showTouchDebug: self.showTouchDebug,
+      swipeEnabled: self.swipeTypingEnabled,
+      swipeArrangement: self.arrangement,
+      swipeRowIndex: rowIndex,
+      onSwipe: { words in self.commitSwipe(words) }
     ) { typed in
       self.handleCharacter(typed)
       self.lastShiftTap = nil
@@ -508,6 +568,7 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private func handleCharacter(_ character: String) {
+    self.swipeAlternatives.removeAll()
     // All Latin typing reaches the host immediately. The offline IME only
     // suggests; it does not intercept ordinary English text.
     let tracksLetter = self.page == .letters
@@ -573,6 +634,7 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private func beginCursorTracking() {
+    self.swipeAlternatives.removeAll()
     self.cursorRefreshTask?.cancel()
     self.latinRefreshTask?.cancel()
     self.isCursorTracking = true
@@ -673,6 +735,7 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private func handleSpace() {
+    self.swipeAlternatives.removeAll()
     // After punctuation, Space restores the Alphabet page. Digits retain
     // the numeric page to allow quantities and dates.
     let returnToLetters = self.page != .letters && self.lastInputWasSymbol
@@ -686,6 +749,7 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private func handleReturn() {
+    self.swipeAlternatives.removeAll()
     self.lastInputWasSymbol = false
     self.clearComposition()
     self.proxy.insertText("\n")
