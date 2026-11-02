@@ -88,15 +88,23 @@ struct StandardKeyboardLayout: View {
 extension StandardKeyboardLayout {
   private var sideButtons: some View {
     HStack(alignment: .bottom, spacing: KeyboardChromeMetrics.buttonSpacing) {
-      KeyButton(
-        content: .systemImage("gearshape"),
-        fixedWidth: self.chrome.sideButtonWidth,
-        fillOnPress: true,
-        firesHaptic: true
-      ) {
-        if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
+      if self.keyboardState.showSettingsKey {
+        KeyButton(
+          content: .systemImage("gearshape"),
+          fixedWidth: self.chrome.sideButtonWidth,
+          fillOnPress: true,
+          firesHaptic: true
+        ) {
+          if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
+        }
       }
-      TranslateToggleButton(fixedWidth: self.chrome.sideButtonWidth, keyboardState: self.keyboardState)
+      TranslateToggleButton(
+        fixedWidth: self.chrome.sideButtonWidth,
+        keyboardState: self.keyboardState,
+        onHiddenSettings: self.keyboardState.showSettingsKey ? nil : {
+          if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
+        }
+      )
         .transition(.opacity.combined(with: .scale))
       Spacer(minLength: 0)
       VStack(alignment: .trailing, spacing: 8.5.kbScaled) {

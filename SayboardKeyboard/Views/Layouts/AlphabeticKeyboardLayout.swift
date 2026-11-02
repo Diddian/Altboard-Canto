@@ -167,15 +167,20 @@ struct AlphabeticKeyboardLayout: View {
           .accessibilityLabel(self.showsCandidateGrid ? "Collapse candidates" : "Show all Chinese candidates")
         }
       } else {
-        KeyButton(content: .systemImage("gearshape"),
-                  fixedWidth: self.chrome.sideButtonWidth) {
-          if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
+        if self.keyboardState.showSettingsKey {
+          KeyButton(content: .systemImage("gearshape"),
+                    fixedWidth: self.chrome.sideButtonWidth) {
+            if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
+          }
         }
 
         TranslateToggleButton(
           fixedWidth: self.chrome.sideButtonWidth,
           compactStyle: true,
-          keyboardState: self.keyboardState
+          keyboardState: self.keyboardState,
+          onHiddenSettings: self.keyboardState.showSettingsKey ? nil : {
+            if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
+          }
         )
         if self.keyboardState.showsAIButton {
           AIButton(

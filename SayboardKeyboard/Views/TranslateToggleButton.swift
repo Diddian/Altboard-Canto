@@ -28,6 +28,7 @@ struct TranslateToggleButton: View {
   var compactStyle = false
 
   @ObservedObject var keyboardState: KeyboardState
+  var onHiddenSettings: (() -> Void)? = nil
 
   @AppStorage(SharedKey.voiceOutputTarget, store: AppGroup.sharedDefaults ?? .standard)
   private var targetRawValue = VoiceOutputTarget.original.rawValue
@@ -35,6 +36,7 @@ struct TranslateToggleButton: View {
   private var customLanguage = ""
 
   @State private var isPressed = false
+  @State private var lastSettingsHold: Date?
 
   private var target: VoiceOutputTarget {
     VoiceOutputTarget(rawValue: self.targetRawValue) ?? .original
@@ -48,6 +50,9 @@ struct TranslateToggleButton: View {
 
   var body: some View {
     Button {
+      if let held = self.lastSettingsHold, Date().timeIntervalSince(held) < 0.65 {
+        return
+      }
       let next = PreferredVoiceLanguages.next(
         target: self.target,
         custom: self.customLanguage,
@@ -74,6 +79,14 @@ struct TranslateToggleButton: View {
     .onChange(of: self.isPressed) { _, down in
       if down { KeyboardHaptics.key() }
     }
+    .simultaneousGesture(
+      LongPressGesture(minimumDuration: 0.7).onEnded { _ in
+        guard let openSettings = self.onHiddenSettings else { return }
+        self.lastSettingsHold = Date()
+        KeyboardHaptics.key()
+        openSettings()
+      }
+    )
     .accessibilityLabel("Dictation output: \(self.currentLabel). Tap to change language.")
   }
 }

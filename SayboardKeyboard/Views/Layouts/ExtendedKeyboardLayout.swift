@@ -68,20 +68,25 @@ extension ExtendedKeyboardLayout {
   private var chromeRow: some View {
     HStack(alignment: .center, spacing: KeyboardChromeMetrics.buttonSpacing) {
       HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
-        KeyButton(
-          content: .systemImage("gearshape"),
-          fixedWidth: self.chrome.sideButtonWidth,
-          shape: .pill,
-          fillOnPress: true,
-          firesHaptic: true
-        ) {
-          if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
+        if self.keyboardState.showSettingsKey {
+          KeyButton(
+            content: .systemImage("gearshape"),
+            fixedWidth: self.chrome.sideButtonWidth,
+            shape: .pill,
+            fillOnPress: true,
+            firesHaptic: true
+          ) {
+            if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
+          }
         }
         TranslateToggleButton(
           fixedWidth: self.chrome.sideButtonWidth,
           shape: .pill,
           compactStyle: true,
-          keyboardState: self.keyboardState
+          keyboardState: self.keyboardState,
+          onHiddenSettings: self.keyboardState.showSettingsKey ? nil : {
+            if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
+          }
         )
         if self.keyboardState.showsAIButton { self.aiButton }
         if self.keyboardState.hasLLMHistory { self.undoRedoRow }

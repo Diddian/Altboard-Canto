@@ -146,6 +146,8 @@ private struct KeyboardTestPreview: View {
   private var llmEnabled = false
   @AppStorage(SharedKey.hasUsableLLMModel, store: UserDefaults(suiteName: AppGroup.identifier))
   private var hasUsableLLMModel = false
+  @AppStorage(SharedKey.keyboardShowSettingsKey, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var showSettingsKey = true
 
   private var compact: Bool {
     self.kind == .standard && self.microphoneLayout == .compact
@@ -182,7 +184,7 @@ private struct KeyboardTestPreview: View {
         self.alphabetBottomRow.padding(.top, KeyboardLayoutGeometry.alphabetRowSpacing)
       } else if self.kind == .extended {
         HStack(spacing: 6) {
-          self.key("gearshape", width: 45)
+          if self.showSettingsKey { self.key("gearshape", width: 45) }
           self.key("character.bubble", width: 45)
           Spacer()
           self.key("mic.fill", width: 96, capsule: true)
@@ -209,7 +211,7 @@ private struct KeyboardTestPreview: View {
             - (2 * side + 6) - 3 * 6 - 8)
           ZStack {
             HStack(spacing: 6) {
-              self.key("gearshape", width: side)
+              if self.showSettingsKey { self.key("gearshape", width: side) }
               self.key("character.bubble", width: side)
               Spacer(minLength: 0)
               self.key("sparkles", width: side)
@@ -234,7 +236,7 @@ private struct KeyboardTestPreview: View {
 
   private var alphabetToolbar: some View {
     HStack(spacing: 6) {
-      self.key("gearshape", width: 48)
+      if self.showSettingsKey { self.key("gearshape", width: 48) }
       self.translatePreview
       if self.llmEnabled && self.hasUsableLLMModel {
         self.key("sparkles", width: 48)
