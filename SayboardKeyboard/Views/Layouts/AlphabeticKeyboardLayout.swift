@@ -175,9 +175,12 @@ struct AlphabeticKeyboardLayout: View {
   private var candidateStrip: some View {
     GeometryReader { geometry in
       let width = geometry.size.width / 3
+      let corrected = EnglishCaseSuggestion.replacement(for: self.currentLiteral)
+      let firstCantoneseSlot = corrected == nil ? 1 : 2
+
       ScrollView(.horizontal) {
         HStack(spacing: 0) {
-          self.suggestionCell(self.currentLiteral, width: width) {
+          self.suggestionCell(self.currentLiteral, width: width, showDivider: true) {
             self.latinRefreshTask?.cancel()
             self.activeLatinWord = nil
             self.latinSuggestions.removeAll()
@@ -185,22 +188,31 @@ struct AlphabeticKeyboardLayout: View {
             KeyboardInputTrace.record(.latinKept)
           }
 
-          if let corrected = EnglishCaseSuggestion.replacement(for: self.currentLiteral) {
-            self.suggestionCell(corrected, width: width) {
+          if let corrected {
+            self.suggestionCell(corrected, width: width, showDivider: true) {
               self.chooseLatinSuggestion(corrected)
             }
           }
 
-          ForEach(self.candidates) { candidate in
-            self.suggestionCell(candidate.text, width: width) {
+          ForEach(Array(self.candidates.enumerated()), id: \.offset) { index, candidate in
+            self.suggestionCell(
+              candidate.text,
+              width: width,
+              showDivider: (firstCantoneseSlot + index) % 3 != 2
+            ) {
               self.choose(candidate)
             }
           }
 
-          ForEach(self.latinSuggestions) { suggestion in
-            self.suggestionCell(suggestion.text, width: width) {
-              self.chooseLatinSuggestion(suggestion.text)
-              LatinWordSuggestions.shared.remember(suggestion)
+          ForEach(Array(self.latinSuggestions.enumerated()), id: \.offset) { index, suggestion in
+            self.suggestionCell(
+              suggestion.text,
+              width: width,
+              showDivider: (firstCantoneseSlot + self.candidates.count + index) % 3 != 2
+            ) {
+              if self.chooseLatinSuggestion(suggestion.text) {
+                LatinWordSuggestions.shared.remember(suggestion)
+              }
             }
           }
         }
@@ -211,7 +223,10 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private func suggestionCell(
-    _ value: String, width: CGFloat, onSelect: @escaping () -> Void
+    _ value: String,
+    width: CGFloat,
+    showDivider: Bool,
+    onSelect: @escaping () -> Void
   ) -> some View {
     Button {
       KeyboardHaptics.key()
@@ -228,13 +243,16 @@ struct AlphabeticKeyboardLayout: View {
     }
     .buttonStyle(.plain)
     .overlay(alignment: .trailing) {
-      Rectangle()
-        .fill(Color(uiColor: KeyboardPalette.suggestionSeparator))
-        .frame(
-          width: KeyboardPalette.suggestionSeparatorWidth.kbScaled,
-          height: KeyboardPalette.suggestionSeparatorHeight.kbScaled
-        )
-        .allowsHitTesting(false)
+      if showDivider {
+        Rectangle()
+          .fill(Color(uiColor: KeyboardPalette.suggestionSeparator))
+          .frame(
+            width: KeyboardPalette.suggestionSeparatorWidth.kbScaled,
+            height: KeyboardPalette.suggestionSeparatorHeight.kbScaled
+          )
+          .padding(.trailing, 0.67.kbScaled)
+          .allowsHitTesting(false)
+      }
     }
   }
 
@@ -439,14 +457,15 @@ struct AlphabeticKeyboardLayout: View {
     self.refreshAutomaticShift()
   }
 
-  private func chooseLatinSuggestion(_ text: String) {
+  @discardableResult
+  private func chooseLatinSuggestion(_ text: String) -> Bool {
     let typed = self.currentLiteral
     guard LatinWordSuggestionPolicy.canReplace(
       typed, in: self.proxy.documentContextBeforeInput()
     ) else {
       self.clearComposition()
       self.updateCandidates()
-      return
+      return false
     }
     self.latinRefreshTask?.cancel()
     self.clearComposition()
@@ -457,6 +476,7 @@ struct AlphabeticKeyboardLayout: View {
     KeyboardInputTrace.record(.latinSuggestionChosen)
     self.refreshAutomaticShift()
     self.updateCandidates()
+    return true
   }
 
   private func choose(_ candidate: JyutpingCandidate) {
