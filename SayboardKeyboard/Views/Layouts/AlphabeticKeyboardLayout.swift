@@ -27,6 +27,9 @@ struct AlphabeticKeyboardLayout: View {
   @State private var lastShiftTap: Date?
   @State private var composition = JyutpingComposition()
   @State private var candidates = [JyutpingCandidate]()
+  @State private var activeLatinWord: String?
+  @State private var latinSuggestions = [LatinWordSuggestion]()
+  @State private var latinRefreshTask: Task<Void, Never>?
 
   private var arrangement: LetterKeyArrangement {
     LetterKeyArrangement(rawValue: self.arrangementRaw) ?? .qwertz
@@ -94,8 +97,12 @@ struct AlphabeticKeyboardLayout: View {
         self.clearComposition()
       }
       self.refreshAutomaticShift()
+      self.updateCandidates()
     }
     .onDisappear {
+      self.latinRefreshTask?.cancel()
+      self.activeLatinWord = nil
+      self.latinSuggestions.removeAll()
       self.composition.clear()
       self.candidates.removeAll()
     }
@@ -103,9 +110,11 @@ struct AlphabeticKeyboardLayout: View {
 
   private var toolbar: some View {
     HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
-      if self.offersCantonese && !self.composition.isEmpty {
-        // Give the entire toolbar to Cantonese candidates; even the mic
-        // disappears during composition, so long phrases can be read.
+      if self.page == .letters &&
+          ((self.offersCantonese && !self.composition.isEmpty) || self.activeLatinWord != nil) {
+        // The full toolbar becomes an iOS-style prediction strip for the
+        // currently typed word, in Cantonese, German, English or another
+        // available preferred spellchecker language. Hide mic and controls.
         self.candidateStrip
           .transition(.opacity)
       } else {
@@ -153,11 +162,11 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private var currentLiteral: String {
-    guard self.trackedTextMatches,
-          let context = self.proxy.documentContextBeforeInput() else {
-      return self.composition.buffer
+    if self.offersCantonese, !self.composition.isEmpty, self.trackedTextMatches,
+       let context = self.proxy.documentContextBeforeInput() {
+      return String(context.suffix(self.composition.buffer.count))
     }
-    return String(context.suffix(self.composition.buffer.count))
+    return self.activeLatinWord ?? self.composition.buffer
   }
 
   /// Three equally sized iOS-style suggestion slots per screen, with a
@@ -169,6 +178,9 @@ struct AlphabeticKeyboardLayout: View {
       ScrollView(.horizontal) {
         HStack(spacing: 0) {
           self.suggestionCell(self.currentLiteral, width: width) {
+            self.latinRefreshTask?.cancel()
+            self.activeLatinWord = nil
+            self.latinSuggestions.removeAll()
             self.clearComposition()
             KeyboardInputTrace.record(.latinKept)
           }
@@ -182,6 +194,13 @@ struct AlphabeticKeyboardLayout: View {
           ForEach(self.candidates) { candidate in
             self.suggestionCell(candidate.text, width: width) {
               self.choose(candidate)
+            }
+          }
+
+          ForEach(self.latinSuggestions) { suggestion in
+            self.suggestionCell(suggestion.text, width: width) {
+              self.chooseLatinSuggestion(suggestion.text)
+              LatinWordSuggestions.shared.remember(suggestion)
             }
           }
         }
@@ -340,12 +359,12 @@ struct AlphabeticKeyboardLayout: View {
     if self.offersCantonese && (tracksLetter || tracksTone)
       && self.composition.append(character) {
       self.proxy.insertText(character)
-      self.updateCandidates()
     } else {
       self.clearComposition()
       self.proxy.insertText(character)
     }
     self.didInsertLiteral(character)
+    self.updateCandidates()
   }
 
   private func didInsertLiteral(_ character: String) {
@@ -359,6 +378,29 @@ struct AlphabeticKeyboardLayout: View {
     self.candidates = self.offersCantonese && !self.composition.isEmpty
       ? JyutpingDictionary.shared.candidates(for: self.composition.buffer, scheme: self.romanization)
       : []
+
+    let typed = self.page == .letters
+      ? LatinWordSuggestionPolicy.trailingWord(in: self.proxy.documentContextBeforeInput())
+      : nil
+    self.activeLatinWord = typed
+    self.latinRefreshTask?.cancel()
+    self.latinSuggestions.removeAll()
+    guard let typed else { return }
+
+    // Let key-down animation render before asking the installed OS
+    // spellchecker for suggestions. Drop stale work during fast typing.
+    let preferred = SharedSettings().preferredSpokenLanguages
+    self.latinRefreshTask = Task { @MainActor in
+      do { try await Task.sleep(for: .milliseconds(45)) } catch { return }
+      guard !Task.isCancelled,
+            self.activeLatinWord == typed,
+            LatinWordSuggestionPolicy.trailingWord(
+              in: self.proxy.documentContextBeforeInput()
+            ) == typed else { return }
+      let values = LatinWordSuggestions.shared.choices(for: typed, preferred: preferred)
+      guard !Task.isCancelled, self.activeLatinWord == typed else { return }
+      self.latinSuggestions = values
+    }
   }
 
   private func clearComposition() {
@@ -398,16 +440,23 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private func chooseLatinSuggestion(_ text: String) {
-    guard self.trackedTextMatches else {
+    let typed = self.currentLiteral
+    guard LatinWordSuggestionPolicy.canReplace(
+      typed, in: self.proxy.documentContextBeforeInput()
+    ) else {
       self.clearComposition()
+      self.updateCandidates()
       return
     }
-    let count = self.composition.buffer.count
+    self.latinRefreshTask?.cancel()
     self.clearComposition()
-    for _ in 0..<count { self.proxy.deleteBackward() }
+    self.activeLatinWord = nil
+    self.latinSuggestions.removeAll()
+    for _ in 0..<typed.count { self.proxy.deleteBackward() }
     self.proxy.insertText(text)
     KeyboardInputTrace.record(.latinSuggestionChosen)
     self.refreshAutomaticShift()
+    self.updateCandidates()
   }
 
   private func choose(_ candidate: JyutpingCandidate) {
@@ -422,6 +471,7 @@ struct AlphabeticKeyboardLayout: View {
     KeyboardInputTrace.record(.candidateChosen)
     JyutpingDictionary.shared.remember(candidate)
     self.refreshAutomaticShift()
+    self.updateCandidates()
   }
 
   private func handleSpace() {
@@ -431,17 +481,20 @@ struct AlphabeticKeyboardLayout: View {
     self.proxy.insertSpace()
     KeyboardInputTrace.record(.spaceCommitted)
     self.refreshAutomaticShift()
+    self.updateCandidates()
   }
 
   private func handleReturn() {
     self.clearComposition()
     self.proxy.insertText("\n")
     self.refreshAutomaticShift()
+    self.updateCandidates()
   }
 
   private func toggleNumberPage() {
     // Preserve the romanization suffix across ?123 so tone digits still work.
     self.page = self.page == .letters ? .numbers : .letters
+    self.updateCandidates()
   }
 
   private func refreshAutomaticShift() {
