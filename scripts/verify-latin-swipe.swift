@@ -5,7 +5,10 @@ func stroke(_ word: String, order: LetterKeyArrangement) -> [LatinSwipePoint] {
   return word.lowercased().compactMap { centers[String($0)] }
 }
 
-for order in [LetterKeyArrangement.qwerty, .qwertz] {
+@main
+enum SwipeSmoke {
+  static func main() {
+    for order in [LetterKeyArrangement.qwerty, .qwertz] {
   let centers = LatinSwipeDecoder.centers(arrangement: order, fullWidth: 440)
   precondition(centers.count == 26)
   precondition(centers["q"]!.x < centers["w"]!.x)
@@ -34,3 +37,5 @@ precondition(session.isLikelyGlide)
 session.reset()
 precondition(session.points.isEmpty)
 print("Latin swipe geometry, normalization and EN/DE ranking: PASS")
+  }
+}
