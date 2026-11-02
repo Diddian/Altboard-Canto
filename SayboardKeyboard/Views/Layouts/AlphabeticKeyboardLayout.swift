@@ -413,7 +413,10 @@ struct AlphabeticKeyboardLayout: View {
           Color.clear.frame(width: groupGap)
           HStack(spacing: keyGap) {
             ForEach([".", ",", "?", "!", "'"], id: \.self) { value in
-              KeyButton(content: .symbol(value, fontSize: 19), fixedWidth: punctuationWidth) {
+              KeyButton(
+                content: .symbol(self.nativeSymbolFace(value), fontSize: 19),
+                fixedWidth: punctuationWidth
+              ) {
                 self.handleCharacter(value)
               }
             }
@@ -470,7 +473,7 @@ struct AlphabeticKeyboardLayout: View {
   private func characterRow(_ characters: [String]) -> some View {
     HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
       ForEach(characters, id: \.self) { character in
-        KeyButton(content: .symbol(character, fontSize: 19),
+        KeyButton(content: .symbol(self.nativeSymbolFace(character), fontSize: 19),
                   showsCallout: true, calloutRowSpacing: Self.rowSpacing.kbScaled) {
           self.handleCharacter(character)
         }
@@ -478,6 +481,14 @@ struct AlphabeticKeyboardLayout: View {
     }
     .padding(.horizontal, KeyboardLayoutGeometry.alphabetSymbolsRowInset.kbScaled)
     .frame(height: KeyboardChromeMetrics.keyHeight)
+  }
+
+  private func nativeSymbolFace(_ character: String) -> String {
+    switch character {
+    case "\"": "”"
+    case "'": "’"
+    default: character
+    }
   }
 
   private func handleCharacter(_ character: String) {
