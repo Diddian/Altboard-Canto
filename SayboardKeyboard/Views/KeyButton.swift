@@ -50,7 +50,10 @@ struct KeyButton: View {
         }
       }
     }
-    .onDisappear { self.releaseHighlightTask?.cancel() }
+    .onDisappear {
+      self.releaseHighlightTask?.cancel()
+      self.recentlyPressed = false
+    }
     .overlay(alignment: .top) {
       if self.showsCallout {
         self.calloutOverlay
