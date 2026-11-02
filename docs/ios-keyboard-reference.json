@@ -110,12 +110,14 @@
   },
   "palette": {
     "dark": {
-      "nativeKeyHex": "#444444",
+      "nativeKeyHex": "#434343",
       "previousAltboardKeyHex": "#3A3A3C",
       "targetKeyHex": "#434343",
-      "nativeBackdropHex": "Varies by screenshot/host: earlier #1F1F1F; IMG_9688.jpeg #212121",
+      "nativeBackdropHex": "#212121",
       "pressedKeyHex": "#787878",
-      "targetBackdropHex": "#212121"
+      "targetBackdropHex": "#212121",
+      "historicalNativeBackdropHex": "#1F1F1F",
+      "nativeBackdropContextNote": "IMG_9688 JPEG dark numeric keyboard and host lower strip measure #212121; IMG_9674 PNG older native alphabet screenshot measured #1F1F1F."
     },
     "light": {
       "keyColor": "UIColor.white",
@@ -175,7 +177,7 @@
       "idle": "toolbar and microphone visible"
     },
     "dark": {
-      "backgroundHex": "#1F1F1F",
+      "backgroundHex": "#212121",
       "dividerHex": "#323232",
       "glyphHexApprox": "#A2A2A2"
     },
@@ -194,7 +196,7 @@
       "alignment": "center"
     },
     "candidateBehavior": "Latin typed string first, optional OK correction, then ordered offline Cantonese suggestions with user selection frequency ranking",
-    "note": "Glyph median measured around RGB(162,162,162) in IMG_9658 and IMG_9670; keyboard rectangle and glyph metrics are estimates from actual screenshots, not Apple public internals.",
+    "note": "Glyph median measured around RGB(162,162,162) in IMG_9658 and IMG_9670; keyboard rectangle and glyph metrics are estimates from actual screenshots, not Apple public internals. Current shared keyboard backdrop is #212121 from IMG_9688; the earlier IMG_9670 suggestion strip screenshot measured #1F1F1F in a different host context.",
     "locales": {
       "source": "Languages I Speak",
       "automatic": true,

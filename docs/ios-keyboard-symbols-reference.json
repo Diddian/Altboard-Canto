@@ -812,7 +812,7 @@
     "Verify dark and light mode, keyboard app preview and actual extension on iPhone"
   ],
   "status": {
-    "code": "Prepared in separate new Git commit pending push; full Xcode and device tests still required",
+    "code": "Implemented on current review branch. Build and physical iPhone validation pending.",
     "exactAppleLayout": "Not claimed. Screenshot-derived measurement."
   }
 }

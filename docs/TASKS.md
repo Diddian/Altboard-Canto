@@ -1,8 +1,8 @@
 # Altboard-Canto development tasks
 
-Source branch: `fix/keyboard-native-candidates-20261102`
-Reference: `db687a7` (last verified Action #51).
-The `feat/fixed-keyboard-settings-20261102` release branch and its running workflow are not modified.
+Source branch: `fix/instant-touchdown-highlight-20261102`
+Last verified IPA build: `ac34148` (Action #55). The new Emoji/geometry fixes are not yet compiled or tested.
+The historical stable release branch is unchanged. The review branch has its own Preview IPA workflow.
 GitHub Issues are disabled in this repository (GitHub API 410). This file is the
 canonical, versioned ticket board until Issues are enabled.
 
@@ -90,7 +90,7 @@ Plan: `docs/swipe-typing-en-de-plan.json`.
 ## Build / deployment (T-006)
 
 - [x] T-006.1 Current baseline Action #51 succeeded: `db687a7`.
-- [ ] T-006.2 Review branch compile and pure-policy tests (last #54 never started; no Swift compiler result).
+- [ ] T-006.2 Compile the new Emoji/geometry review commit and verify pure-policy tests. The earlier #55 build succeeded at `ac34148`.
 - [x] T-006.2a Switch IPA preview from macos-15 ARM64 to macos-15-intel hosted runner after zero-step cancellations (#52/#54); Xcode 26.2 installation confirmed in GitHub runner-images.
 - [ ] T-006.2b Confirm that the alternate macOS runner actually executes steps and ships an IPA.
 - [ ] T-006.3 Verify SideStore IPA includes all extension resources and matching commit SHA.
