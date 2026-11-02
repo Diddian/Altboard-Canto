@@ -91,7 +91,9 @@ Implementation branch: feat/fixed-keyboard-settings-20261102.
   its first row at 57pt, 1px above IMG_9658's measured 172px start.
 - Native and old visible letter-key rectangles had nearly identical width,
   height and gaps; no arbitrary key scaling was added.
-- Final canvas is fixed at 290pt, near the screenshot-inferred 290.33pt.
+- Review branch reduces the canvas from 290pt to 277pt after new screenshot
+  comparison: bottom-row keys sat ~13pt above native. The baseline 290pt
+  measurement was a container-height estimate, not the final key baseline.
 - Native candidate glyph pixels measured near RGB(162,162,162), replacing
   the previous overly light #C7C7C7 target with #A2A2A2.
 - The emoji icon now uses the filled face.smiling.inverse SF Symbol (~28pt).

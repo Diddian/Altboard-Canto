@@ -112,10 +112,10 @@ Keyboard
 |   +-- Compact: fixed 150 pt iPhone canvas, wide mic above Space
 |
 +-- Symbols
-|   +-- Fixed 290 pt iPhone canvas
+|   +-- Fixed 277 pt iPhone canvas
 |
 +-- Alphabet
-    +-- Fixed 290 pt iPhone canvas
+    +-- Fixed 277 pt iPhone canvas
     +-- Full toolbar inside the keyboard; no negative top offset
     +-- Fixed 45 pt letter keys and 11 pt row spacing
 

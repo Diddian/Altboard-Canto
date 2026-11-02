@@ -31,7 +31,8 @@ struct KeyboardLayoutPreview: View {
       case .alphabetic: self.alphabeticLayout
       }
     }
-    .padding(.top, Self.topPadding)
+    .padding(.top, self.kind == .alphabetic
+      ? KeyboardLayoutGeometry.alphabetToolbarTopInset : Self.topPadding)
     .frame(width: Self.width, height: Self.size(for: self.kind).height, alignment: .top)
     .background(Self.backdrop)
     .accessibilityHidden(true)
@@ -128,9 +129,8 @@ struct KeyboardLayoutPreview: View {
       }
       .padding(.horizontal, Self.edgeInset)
       .frame(height: Self.keyHeight)
-      self.characterRow(self.letters[0])
-      self.characterRow(self.letters[1])
-        .padding(.horizontal, 21.33)
+      self.characterRow(self.letters[0], inset: 6.67)
+      self.characterRow(self.letters[1], inset: 28)
       HStack(spacing: Self.keySpacing) {
         self.symbolKey("shift", width: 48)
         ForEach(self.letters[2], id: \.self) { key in
@@ -138,12 +138,18 @@ struct KeyboardLayoutPreview: View {
         }
         self.symbolKey("delete.left", width: 48)
       }
-      .padding(.horizontal, Self.edgeInset)
+      .padding(.horizontal, KeyboardLayoutGeometry.alphabetSpecialRowInset)
       HStack(spacing: Self.keySpacing) {
         self.textKey("?123", width: 48, size: 16)
-        self.symbolKey("face.smiling", width: 48)
-        Image(systemName: "space")
-          .font(.system(size: Self.characterSize))
+        self.symbolKey("face.smiling.inverse", width: 48, size: 28)
+        ZStack(alignment: .bottomTrailing) {
+          Color.clear
+          Text("A")
+            .font(.system(size: 10, weight: .medium))
+            .foregroundStyle(.secondary)
+            .padding(.trailing, 6)
+            .padding(.bottom, 4)
+        }
           .frame(maxWidth: .infinity)
           .frame(height: Self.keyHeight)
           .background(Self.keyFill,
@@ -158,10 +164,8 @@ struct KeyboardLayoutPreview: View {
     HStack(spacing: Self.keySpacing) {
       self.symbolKey("globe", width: Self.sideKeyWidth)
       self.symbolKey("trash", width: Self.sideKeyWidth)
-      Image(systemName: "space")
-        .font(.system(size: Self.characterSize))
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-        .padding(.bottom, Self.spaceGlyphBottom)
+      Color.clear
+        .frame(maxWidth: .infinity)
         .frame(height: Self.keyHeight)
         .background(Self.keyFill, in: RoundedRectangle(cornerRadius: Self.keyRadius, style: .continuous))
       self.symbolKey("return.left", width: Self.returnKeyWidth)
@@ -169,11 +173,11 @@ struct KeyboardLayoutPreview: View {
     .padding(.horizontal, Self.edgeInset)
   }
 
-  private func characterRow(_ characters: [String]) -> some View {
+  private func characterRow(_ characters: [String], inset: CGFloat? = nil) -> some View {
     HStack(spacing: Self.keySpacing) {
       ForEach(characters, id: \.self) { self.textKey($0, width: nil) }
     }
-    .padding(.horizontal, Self.edgeInset)
+    .padding(.horizontal, inset ?? Self.edgeInset)
   }
 
   private func textKey(_ text: String, width: CGFloat?, size: CGFloat = Self.characterSize) -> some View {
@@ -185,9 +189,12 @@ struct KeyboardLayoutPreview: View {
   }
 
   @ViewBuilder
-  private func symbolKey(_ name: String, width: CGFloat, shape: KeyPreviewShape = .rounded) -> some View {
+  private func symbolKey(
+    _ name: String, width: CGFloat, shape: KeyPreviewShape = .rounded,
+    size: CGFloat = Self.symbolSize
+  ) -> some View {
     let glyph = Image(systemName: name)
-      .font(.system(size: Self.symbolSize))
+      .font(.system(size: size))
       .frame(width: width, height: Self.keyHeight)
     switch shape {
     case .rounded:

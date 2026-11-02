@@ -10,7 +10,9 @@ Reference implementation: [yuetyam/jyutping](https://github.com/yuetyam/jyutping
 4. Selecting a Chinese candidate replaces only the just-typed Latin suffix after verifying that `UITextDocumentProxy.documentContextBeforeInput` still ends with that suffix. Changed cursor, empty, or truncated context means no replacement.
 5. Space inserts a space, Return inserts a newline, and unknown spellings remain Latin. There is no need to switch to an English-only mode.
 6. Backspace deletes a whole phonetic token only when it matches a **complete exact offline entry** and the visible suffix is verified. Prefix-only matches are not sufficient. Other typing uses ordinary character deletion.
-7. Microphone, LLM, emoji, accessibility, and 70–110% height controls keep the current Altboard behavior. No LLM or network request occurs per key.
+7. Microphone, LLM, emoji and accessibility keep their existing behavior. The
+   legacy 70–110% keyboard-height control has been removed; Alphabet and Symbols
+   use fixed height. No LLM or network request occurs per key.
 
 ## Offline indexing
 
@@ -39,3 +41,13 @@ The workflow `.github/workflows/build-unsigned-ipa.yml` uploads `Altboard-Canto-
 - The keyboard input diagnostic trace records only the type of action (space, candidate, syllable deletion), never any typed content.
 
 - The candidate bar offers `OK` as a case correction when the user types `ok` or `Ok`, even after a Chinese character and even without Chinese dictionary matches. The literal typed form remains selectable separately. Pressing Space still keeps literal text.
+
+## November 2 expanded candidate changes (review branch)
+
+- Exact one-character Cantonese readings appear before prefix-only phrases.
+- The candidate bar has a small right-side disclosure control. Its bounded
+  four-column grid shows up to 200 distinct visible Chinese candidates.
+- Untoned `ng` optionally surfaces `唔` as an input convenience; the source
+  remains canonical `m4` and tone-specific lookup is not modified.
+- This is review code only. Check keyboard height, overlay taps and Unicode
+  input in the SideStore build before declaring it implemented on-device.
