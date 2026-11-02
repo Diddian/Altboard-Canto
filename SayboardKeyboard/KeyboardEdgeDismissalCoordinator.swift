@@ -14,7 +14,8 @@ final class KeyboardEdgeDismissalCoordinator: NSObject, UIGestureRecognizerDeleg
     super.init()
     let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
     pan.maximumNumberOfTouches = 1
-    pan.cancelsTouchesInView = false
+    // Once a genuine downward swipe begins, cancel any pressed toolbar key.
+    pan.cancelsTouchesInView = true
     pan.delaysTouchesBegan = false
     pan.delegate = self
     contentView.addGestureRecognizer(pan)
@@ -27,11 +28,15 @@ final class KeyboardEdgeDismissalCoordinator: NSObject, UIGestureRecognizerDeleg
     return KeyboardEdgeDismissalPolicy.acceptsTouch(atTopY: touch.location(in: contentView).y)
   }
 
-  func gestureRecognizer(
-    _ gestureRecognizer: UIGestureRecognizer,
-    shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
-  ) -> Bool {
-    true
+  func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+    guard let contentView, let pan = gestureRecognizer as? UIPanGestureRecognizer else {
+      return false
+    }
+    // Let horizontal candidate selection and ordinary key taps pass through.
+    // Only a deliberate downward gesture takes over the keyboard view.
+    return KeyboardEdgeDismissalPolicy.isDownward(
+      translation: pan.translation(in: contentView)
+    )
   }
 
   @objc private func handlePan(_ pan: UIPanGestureRecognizer) {
