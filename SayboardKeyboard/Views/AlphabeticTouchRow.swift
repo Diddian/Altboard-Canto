@@ -108,7 +108,6 @@ struct AlphabeticTouchRow: View {
       self.alternateIndex = min(max(0, Int(max(0, travel) / 32.kbScaled)), choices.count - 1)
     } else if let newIndex = self.target(at: x, width: width, weights: weights),
               self.activeIndex != newIndex {
-      // Native-feeling slide-to-correct: the touch's current cell wins.
       self.holdTask?.cancel()
       self.activeIndex = newIndex
       self.initialX = x

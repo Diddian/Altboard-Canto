@@ -85,15 +85,6 @@ targets:
         product: llama
     postCompileScripts:
       - script: |
-          export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
-          if command -v swiftlint >/dev/null 2>&1; then
-            echo "SwiftLint runs in the development repo, not here"
-          else
-            echo "warning: SwiftLint not installed. Run: brew install swiftlint"
-          fi
-        name: SwiftLint
-        basedOnDependencyAnalysis: false
-      - script: |
           "${SRCROOT}/scripts/lint-strings.sh"
         name: Lint String Catalogs
         basedOnDependencyAnalysis: false
@@ -132,16 +123,6 @@ targets:
         SWIFT_OBJC_BRIDGING_HEADER: SayboardKeyboard/SayboardKeyboard-Bridging-Header.h
         SKIP_INSTALL: true
     dependencies: []
-    postCompileScripts:
-      - script: |
-          export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
-          if command -v swiftlint >/dev/null 2>&1; then
-            echo "SwiftLint runs in the development repo, not here"
-          else
-            echo "warning: SwiftLint not installed. Run: brew install swiftlint"
-          fi
-        name: SwiftLint
-        basedOnDependencyAnalysis: false
     scheme:
       testTargets: []
 

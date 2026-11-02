@@ -1,8 +1,8 @@
 {
-  "schema": "altboard.keyboard.swipe-typing-plan.v1",
+  "schema": "altboard.keyboard.swipe-typing-plan.v2",
   "state": "planned_only_not_in_ipa",
   "date": "2026-11-02",
-  "goal": "Glide/Swipe type for English and German on the existing Alphabet layout; offline only. Preserve Cantonese tap-to-type, accented-character hold, spacebar trackpad and per-key haptics.",
+  "goal": "Offline glide/swipe typing for Latin-script preferred languages. First release English/German; expand only with licensed, tested per-language corpora. Preserve ordinary taps, accents, Cantonese composition, Space trackpad, and existing microphone.",
   "scope": {
     "languages": [
       "en",
@@ -12,13 +12,27 @@
       "alphabetic"
     ],
     "offNetwork": true,
-    "lexiconSource": "Installed OS text checker for completions; evaluate redistributable licensed word frequency dictionaries for full decoding",
+    "lexiconSource": "A separately licensed offline word-frequency corpus per supported language, bundled in the keyboard extension. UITextChecker completions are insufficient to decode arbitrary glide paths.",
     "withoutFullKeyboardAccess": "Keyboard suggestion access should not rely on network; extension still needs app-group rights for preferences",
     "outOfScope": [
       "claiming Apple QuickPath algorithm parity",
       "Cantonese gesture romanization in first version",
       "cloud language model"
-    ]
+    ],
+    "expansionLanguages": [
+      "fr",
+      "es",
+      "it",
+      "pt",
+      "nl",
+      "sv",
+      "da",
+      "fi",
+      "pl",
+      "cs",
+      "tr"
+    ],
+    "expansionPolicy": "Enable each additional Latin-script language only after its offline licensed dictionary, accents, morphology and test corpus are present. Preferred languages define ordering; no EN/DE mode toggle."
   },
   "phases": [
     {
@@ -39,26 +53,28 @@
       "id": 1,
       "name": "Capture gesture path",
       "tasks": [
-        "Replace per-key gesture recognizers with a shared row/keyboard interaction layer only after a trace test",
-        "Sample touch positions and timings while finger moves across keys",
-        "Map points to visible keys and neighboring hit zones, using actual layout frames",
-        "Disambiguate tap vs long-press diacritics (380ms) vs swipe vs Space cursor (150ms)"
+        "Build one gesture owner covering all three Alphabet letter rows, not another pan over existing row gestures",
+        "Keep key rendering separate from gesture routing; measure real key centers and row offsets",
+        "Capture touch-down/move/up in keyboard coordinates with bounded, transient points",
+        "Distinguish tap, slide correction, 380ms accent hold, word glide and 150ms Space cursor gestures",
+        "Verify cancellation on focus loss, non-letter keys and switch to Cantonese candidates"
       ],
       "exitCriteria": [
-        "Trace logs store no typed content by default",
-        "Continuous stroke across rows is captured",
-        "Normal keys and Space still work"
+        "Continuous route across Q->A->Z is captured with correct coordinates",
+        "Every tap inserts exactly once; haptics and accent popup preserved",
+        "Raw traces neither saved nor emitted to Diagnostics"
       ]
     },
     {
       "id": 2,
       "name": "Decode English and German",
       "tasks": [
-        "Compress repeated key visits into candidate sequences",
-        "Use a compact trie/DAWG word dictionary in the extension bundle",
-        "Beam-search possible candidates with geometric distance, transposition and language-model frequency",
-        "German compounds and accented spellings get explicit tests",
-        "Use preferred-language ordering, switch the active candidate set automatically without a mode key"
+        "Choose individually licensed EN and DE frequency dictionaries; record source, version, license, attribution",
+        "Use endpoint proximity to prefilter dictionary candidates, then compare 64-sample path shapes and key-location errors",
+        "Apply bounded length penalty and frequency/context prior; evaluate beam search only if simple decoder fails accuracy tests",
+        "Normalize German umlauts/ß, compounds and case; contractions and diacritics per supported language",
+        "Use preferred-language ordering; allow future per-language Latin-script bundles without adding language switch buttons",
+        "Move decode off main-thread and cancel stale tasks before writing into a host text field"
       ],
       "exitCriteria": [
         "Top-3 stroke accuracy measured on labeled test cases",
@@ -123,5 +139,117 @@
       "mitigation": "Approximate hit zones from geometry and optimize with physical tests; never claim identical internal algorithms."
     }
   ],
-  "nextDecision": "Implement a gesture-trace prototype behind a disabled-by-default feature flag, after the current IPA is verified on the user's iPhone."
+  "nextDecision": "First establish current IPA baseline and cross-row gesture capture in a separate feature branch; do not implement decoder or alter active build workflow yet.",
+  "sourceReview": [
+    {
+      "repo": "Henryikenna/sswipe",
+      "url": "https://github.com/Henryikenna/sswipe",
+      "platform": "Flutter desktop keyboard for Windows",
+      "inspected": [
+        "lib/engine/swipe_decoder.dart",
+        "lib/engine/geometry.dart",
+        "lib/engine/dictionary.dart",
+        "lib/keyboard/keyboard_widget.dart",
+        "test/widget_test.dart"
+      ],
+      "portableIdeas": [
+        "capture a full path on pointer down/move/up",
+        "split tap vs glide by travel distance",
+        "prefilter by start/end key proximity",
+        "resample paths to 64 evenly spaced points",
+        "rank by absolute location + normalized shape + path length + word frequency",
+        "show ranked alternatives and support word correction"
+      ],
+      "notPortable": [
+        "Flutter widget tree",
+        "Win32 SendInput output",
+        "Windows keyboard geometry and modifiers"
+      ],
+      "licensing": "No LICENSE file found in inspected GitHub tree. Do not copy source or bundled en_words.txt without verified rights."
+    },
+    {
+      "repo": "nkrsn/jboard",
+      "url": "https://github.com/nkrsn/jboard/blob/main/Core/KeyTargeting.swift",
+      "portableIdeas": [
+        "reuse existing bounded touch-cell boundaries as geometric input"
+      ],
+      "licensing": "Check before reproducing code"
+    },
+    {
+      "repo": "jtvargas/SnipKey",
+      "url": "https://github.com/jtvargas/SnipKey/blob/main/V2_KEYBOARD_ARCHITECTURE.md",
+      "portableIdeas": [
+        "one keyboard-wide touch ownership, defer expensive prediction away from touch path"
+      ],
+      "licensing": "Architecture reference only"
+    }
+  ],
+  "architecture": {
+    "current": "AlphabeticTouchRow is one gesture owner per QWERTY/QWERTZ row, so it cannot capture a full gesture across all three rows. A second overlaid pan would compete with the existing tap/hold recognizers.",
+    "next": "Replace the three per-row gesture owners with one AlphabetKeyboardGestureCoordinator across the full letter-key plane, using the same KeyboardLayoutGeometry and KeyTouchMap visual/touch frames.",
+    "suggestedModules": [
+      "Shared/SwipePathGeometry.swift - pure 2D points, arc-length resampling, bounding boxes, normalization",
+      "Shared/LatinSwipeDecoder.swift - pure candidate scoring and top-K ranker",
+      "SayboardKeyboard/LatinSwipeLexicon.swift - licensed per-language word index and frequency",
+      "SayboardKeyboard/Views/AlphabetKeyboardGestureSurface.swift - full keyboard region touch owner, no competing row pan",
+      "SayboardTests/LatinSwipeDecoderTests.swift - synthetic traces, accents, switching, punctuation and regression"
+    ],
+    "interactionStateMachine": [
+      "touchDown on alphabet letter -> pendingTap; capture timestamp and start position",
+      "touchMove below movement threshold -> pressed highlight, no text committed yet",
+      "movement crosses configurable travel plus distinct-key threshold -> glide; cancel accent hold and suppress individual tap commit",
+      "touchMove across rows -> collect keyboard-local position with bounded sample count, show optional transient trail",
+      "touchUp -> if glide decode off main thread with immutable layout snapshot; if tap commit exactly once",
+      "if confident result and field context unchanged -> insert once; otherwise leave input unchanged and show candidates",
+      "selection of alternative -> verify exact committed suffix before replacing, preserving cursor and host text",
+      "cancel/background/keyboard switch -> discard path without insertion and without storing raw locations"
+    ],
+    "gesturePriority": "Space trackpad (150ms), modifier keys, Backspace, Return, emoji and microphone remain separate. Letter hold for diacritics (380ms) applies only until glide begins. Cantonese tap-to-romanization remains unchanged unless an explicit later project enables Cantonese glide.",
+    "keyPositions": "One keyboard-level coordinate system taken from actual rendered QWERTY/QWERTZ key centers, including shifted second/third rows; do not reuse Windows desktop coordinates.",
+    "scoring": {
+      "candidatePrefilter": "Language-specific dictionary index by plausible first/last keys; reduce work before geometry ranking.",
+      "experimentalParameters": {
+        "sampleCount": 64,
+        "minimumGestureLengthKeyWidths": 0.75,
+        "startEndRadiusKeyWidths": 1.2,
+        "maximumStoredPointsPerGesture": 160
+      },
+      "components": [
+        "absolute location error in key-width units",
+        "normalized shape error",
+        "path length mismatch penalty",
+        "language frequency log-prior",
+        "capitalization and preceding-context validation"
+      ],
+      "disclaimer": "Values above are starting hypotheses from sswipe, not verified iPhone parameters. Tune using measured swipe traces."
+    },
+    "languageRouting": "Score across selected and installed Latin-script language packs in preference order. Detect likely words by candidate scores; do not force English/German toggle. Respect QWERTZ layout and German ß/umlauts, and accents and apostrophes for other languages.",
+    "privacy": "All scoring and dictionary lookup offline. Do not upload, log, persist, or learn raw swipe traces. Persist only explicit accepted-word aggregate frequencies, with opt-out.",
+    "performance": "Never decode 50k candidates synchronously on the keyboard view's main actor; use a bounded background task, indexed lexicon and cancellation on stale host context. Measure CPU/memory on an iPhone before setting the default.",
+    "release": "Disabled by default until physical-device tap, long-press, haptic, Space, Cantonese and host text-regression tests pass. Do not ship as a rewrite of the working keyboard."
+  },
+  "testGates": {
+    "safety": [
+      "Tap typing identical to baseline for QWERTY/QWERTZ",
+      "No dead zones or double insertion",
+      "Long-press accents and Space cursor retained",
+      "Cantonese input and candidate frequency unaffected",
+      "No host text corruption on cursor motion or delayed decode"
+    ],
+    "corpus": [
+      "synthetic ideal and noisy paths for both initial languages",
+      "real iPhone traces across all three rows",
+      "short words, German compounds, umlauts, ß, English contractions, mixed-language text",
+      "unknown word falls back to non-destructive user choice"
+    ],
+    "performance": {
+      "p95DecodeMsTarget": 100,
+      "measurement": "real iPhone after warm and cold launches; target not yet measured"
+    },
+    "privacy": [
+      "no persistent raw traces",
+      "no outgoing network requests",
+      "word-frequency data comes from appropriately licensed assets"
+    ]
+  }
 }

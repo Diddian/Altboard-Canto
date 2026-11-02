@@ -48,7 +48,6 @@ struct SpaceBarKey: View {
   @State private var isPressed = false
   @State private var isTrackpadActive = false
   @State private var pressStartTime: Date?
-  @State private var accumulatedOffset: CGFloat = 0
   @State private var lastReportedCharOffset = 0
 
   @ViewBuilder
@@ -70,7 +69,6 @@ struct SpaceBarKey: View {
     if self.pressStartTime == nil {
       self.pressStartTime = value.time
       self.isPressed = true
-      // Touch-down, not touch-up: align the pulse with Apple's keyboard feel.
       KeyboardHaptics.key()
     }
 
@@ -107,7 +105,6 @@ struct SpaceBarKey: View {
     self.isPressed = false
     self.isTrackpadActive = false
     self.pressStartTime = nil
-    self.accumulatedOffset = 0
     self.lastReportedCharOffset = 0
   }
 }
