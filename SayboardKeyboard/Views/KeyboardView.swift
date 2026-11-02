@@ -107,9 +107,10 @@ struct RectKeyStyle: ButtonStyle {
   var pressEffect = true
   var fillOnPress = false
   var pressedBinding: Binding<Bool>?
+  var visualOverride = false
 
   func makeBody(configuration: Configuration) -> some View {
-    let showPressed = configuration.isPressed && self.pressEffect
+    let showPressed = (configuration.isPressed || self.visualOverride) && self.pressEffect
     let fill = Color(showPressed ? .keyPressedBackground : .keyBackground)
     return configuration.label
       .symbolVariant(self.fillOnPress && configuration.isPressed ? .fill : .none)

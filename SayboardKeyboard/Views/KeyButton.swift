@@ -33,11 +33,24 @@ struct KeyButton: View {
       pressEffect: self.pressEffect,
       fillOnPress: self.fillOnPress,
       pressedBinding: self.$isPressed,
+      visualOverride: self.recentlyPressed,
     ))
     .onChange(of: self.isPressed) { _, isDown in
-      // Fire exactly once on touch-down, not again on release.
-      if isDown && self.firesHaptic { KeyboardHaptics.key() }
+      self.releaseHighlightTask?.cancel()
+      if isDown {
+        self.recentlyPressed = false
+        if self.firesHaptic { KeyboardHaptics.key() }
+      } else {
+        // Quick taps can begin/end within one display frame.
+        self.recentlyPressed = self.pressEffect
+        self.releaseHighlightTask = Task { @MainActor in
+          do { try await Task.sleep(for: .milliseconds(80)) } catch { return }
+          guard !Task.isCancelled else { return }
+          self.recentlyPressed = false
+        }
+      }
     }
+    .onDisappear { self.releaseHighlightTask?.cancel() }
     .overlay(alignment: .top) {
       if self.showsCallout {
         self.calloutOverlay
@@ -47,6 +60,8 @@ struct KeyButton: View {
   }
 
   @State private var isPressed = false
+  @State private var recentlyPressed = false
+  @State private var releaseHighlightTask: Task<Void, Never>?
 
   @ViewBuilder
   private var contentView: some View {
