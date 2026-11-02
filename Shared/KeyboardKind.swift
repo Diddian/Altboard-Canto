@@ -48,7 +48,9 @@ enum LetterKeyArrangement: String, CaseIterable, Sendable {
   }
 }
 
-/// Romanization changes the offline candidate search, never Latin typing.
+/// Retained solely for compatibility with already-stored legacy preferences.
+/// Live Cantonese candidates now query Jyutping/Yale/Sidney Lau together.
+/// Do not delete until stored-value migration and references are audited.
 enum CantoneseRomanizationScheme: String, CaseIterable, Sendable {
   case jyutping
   case yale

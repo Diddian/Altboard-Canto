@@ -29,12 +29,12 @@ def parse_catalog(source: str) -> list[tuple[str, str, str]]:
         if status.strip() != "fully-qualified":
             continue
         emoji = "".join(chr(int(item, 16)) for item in codepoints.split())
-        name = EMOJI_NAME.sub("", description.strip().split(" ", 1)[1] if " " in description.strip() else "")
-        # Description format: "😀 E1.0 grinning face".
-        if not name:
-            desc = description.strip()
-            pieces = desc.split(" ", 2)
-            name = pieces[-1] if len(pieces) == 3 else "emoji"
+        # Unicode comments are structured as "😀 E1.0 grinning face".
+        # Strip the glyph and version token without losing multiword names.
+        comment_fields = description.strip().split(maxsplit=2)
+        if len(comment_fields) != 3 or not EMOJI_NAME.match(comment_fields[1] + " "):
+            continue
+        name = comment_fields[2]
         name = name.replace("\t", " ").replace("\n", " ")
         if emoji not in seen:
             rows.append((group, name, emoji))

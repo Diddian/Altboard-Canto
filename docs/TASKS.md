@@ -143,6 +143,22 @@ Files: `SayboardKeyboard/JyutpingDictionary.swift`,
 - [ ] T-004.6 Fix potential duplicate/contradictory comments and docs only after verifying behavior.
 - [ ] T-004.7 CI Swift compiler + focused tests and on-device regressions.
 
+## Low-risk half-wave audit — isolated branch (T-014, review only)
+
+This milestone is deliberately capped at approximately halfway through each of six workstreams, **not** a measured percentage of all code or tests. Percentages below are progress bookkeeping against the scoped acceptance list, not verified completion. No change here is merged into the live IPA build branch.
+
+- [x] T-014.1 CI/IPA 50%: inspect prior run logs and current workflow configuration; preserve active build workflow, CI triggers and release path. [ ] Confirm a fresh IPA, signing and device installation.
+- [x] T-014.2 Romanization tests 50%: reuse existing 21-character cross-system mappings plus Swift/Python smoke checks; isolate generator and tone invariants. [ ] Full corpus/real-input cross-check, benchmarks and iPhone testing.
+- [x] T-014.3 Emoji 50%: correct Unicode emoji-test comment name extraction and add ZWJ/skin-tone fixtures. [ ] Pin/verify complete downloadable Unicode data, actual rendered catalog, all category labels and keyboard heights.
+- [x] T-014.4 Chinese punctuation 50%: inventory Chinese symbols/quote wiring and host text insertion safety; document cases. [ ] Paired-quote state, nested quotes, keyboard toggle and physical insertion verification.
+- [x] T-014.5 Settings 50%: update stale Settings workflow documentation and label legacy romanization enum as compatibility-only. [ ] Verify migration/persistence and navigation on device; no deletion of stored preferences.
+- [x] T-014.6 Latin EN/DE 50%: expand deterministic local fallback vocabulary; bound typo suggestions to one edit, case-preserving and opt-in candidate choice, add Swift tests. [ ] Word frequency/licensing, compounds, full multiword typo correction, latency and false positives.
+- [x] T-014.7 Cleanup 50% audit: identify active touch owner versus visual keys, preserve SwiftUI/Accessibility triggers; avoid deleting code without symbol/gesture ownership evidence. [ ] Repository-wide dead-reference tracing, duplicate-event suppression tests and measured behavior on iPhone.
+
+**Blocking checks:** This isolated branch is outside the workflow push filter and has not received an Xcode/IPA build. Swift isolated tests and Python fixture tests are not independently run on the current review branch; actual device acceptance is outstanding.
+
+See `docs/SAFE-HALF-WAVE-2026-11-02.md` for the detailed audit and new-chat handoff.
+
 ## P1 — Latin-script swipe typing (T-005)
 
 - [x] T-005.1 Audit Henryikenna/sswipe and update offline English/German plan v2.

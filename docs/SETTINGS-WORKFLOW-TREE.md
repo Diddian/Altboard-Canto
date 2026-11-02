@@ -33,10 +33,9 @@ Altboard-Canto
     |   |   +-- Alphabet Options (only in Alphabet)
     |   |       +-- Key Order: QWERTZ or QWERTY
     |   |       +-- Auto-Capitalize Sentences
-    |   |       +-- Cantonese Romanization (only when Cantonese is preferred)
-    |   |           +-- Jyutping
-    |   |           +-- Yale
-    |   |           +-- Yuetyam
+    |   |       +-- Universal Cantonese suggestions (when Cantonese is preferred)
+    |   |           +-- Jyutping, Yale and Sidney Lau indexed together
+    |   |           +-- No separate romanization picker
     |   +-- Feedback
     |   |   +-- Haptic Feedback: On / Off
     |   |   +-- Haptic Strength (Altboard default: 55%)
@@ -175,7 +174,7 @@ Alphabet keyboard
 |   +-- Small offline fallback vocabulary
 |   +-- Accepted words rise in personal local order
 +-- Cantonese
-|   +-- Jyutping / Yale / Yuetyam: existing offline SQLite IME
+|   +-- Jyutping / Yale / Sidney Lau: unified offline SQLite IME
 |   +-- Existing local candidate learning is preserved
 +-- Candidate UI
 |   +-- First item is the literal Latin text already in the host
@@ -188,5 +187,5 @@ Alphabet keyboard
 +-- Emoji
     +-- Filled face.smiling.inverse symbol, approx. 28pt
 
-Future (not in this IPA)
-+-- English / German glide/swipe typing; see docs/swipe-typing-en-de-plan.json
+Swipe Typing (Beta, opt-in; not yet physically verified)
++-- English / German glide typing; see docs/swipe-typing-en-de-plan.json

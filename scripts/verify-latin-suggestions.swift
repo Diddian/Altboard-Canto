@@ -15,6 +15,16 @@ struct VerifyLatinSuggestions {
     precondition(LatinWordSuggestionPolicy.canReplace("Hallo", in: "ja Hallo"))
     precondition(!LatinWordSuggestionPolicy.canReplace("Hallo", in: "ja Hallo "))
     precondition(LatinWordSuggestionPolicy.matchCapitalization("hello", typed: "HEL") == "HELLO")
+    let fallback = LatinWordSuggestionPolicy.fallbackCandidates(
+      for: "recognitjon", dictionary: ["recognition", "recording", "typing"]
+    )
+    precondition(fallback == ["recognition"])
+    precondition(LatinWordSuggestionPolicy.oneEditApart("halol", "hallo"))
+    precondition(LatinWordSuggestionPolicy.oneEditApart("schriben", "schreiben"))
+    precondition(!LatinWordSuggestionPolicy.oneEditApart("hello", "recognition"))
+    precondition(LatinWordSuggestionPolicy.fallbackCandidates(
+      for: "reco", dictionary: ["recognition", "recording", "recovery"]
+    ).count == 3)
     print("Multilingual Latin suggestion safety verified")
   }
 }

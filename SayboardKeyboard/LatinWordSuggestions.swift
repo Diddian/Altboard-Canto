@@ -62,9 +62,9 @@ final class LatinWordSuggestions {
       // iOS's dictionary set varies by device. Keep small deterministic
       // English/German completions, even when the OS has no word lists.
       if code == "en" || code == "de" {
-        collect(Self.commonWords[code]?.filter {
-          $0.lowercased().hasPrefix(typed.lowercased())
-        } ?? [], code: code)
+        collect(LatinWordSuggestionPolicy.fallbackCandidates(
+          for: typed, dictionary: Self.commonWords[code] ?? [], limit: 12
+        ), code: code)
       }
     }
 
@@ -109,7 +109,20 @@ final class LatinWordSuggestions {
       "understand", "until", "very", "want", "water", "week", "well",
       "what", "when", "where", "which", "while", "whole", "why",
       "will", "with", "without", "word", "work", "world", "would",
-      "write", "writing", "year", "yesterday", "your"
+      "write", "writing", "year", "yesterday", "your",
+      "account", "appointment", "appointments", "application", "available", "availability",
+      "calendar", "cancel", "cancellation", "client", "communication", "computer",
+      "confirm", "confirmation", "contract", "correction", "correct", "database",
+      "deadline", "debug", "development", "dictionary", "document", "documents",
+      "download", "draft", "editor", "extension", "feedback", "feature", "file",
+      "files", "function", "github", "grammar", "improve", "improvement", "input",
+      "internet", "meeting", "notifications", "offline", "permission", "permissions",
+      "phrase", "phrases", "predict", "prediction", "privacy", "project", "projects",
+      "record", "recording", "recognition", "release", "replace", "repository",
+      "review", "schedule", "search", "security", "select", "selection", "settings",
+      "software", "source", "speech", "spelling", "suggestion", "suggestions",
+      "support", "system", "testing", "transcription", "translation", "typing",
+      "update", "upload", "version", "voice", "workflow", "yale"
     ],
     "de": [
       "aber", "Abend", "alle", "alles", "also", "andere", "Anfang", "Angst",
@@ -137,7 +150,21 @@ final class LatinWordSuggestions {
       "verstehen", "vielleicht", "viele", "von", "vor", "warum",
       "warten", "weiß", "welche", "wenn", "wer", "werden", "wichtig",
       "wieder", "wie", "wirklich", "wissen", "Woche", "wohnen",
-      "wollen", "wurde", "Zeit", "zeigen", "zusammen", "zwischen"
+      "wollen", "wurde", "Zeit", "zeigen", "zusammen", "zwischen",
+      "absagen", "Abstimmung", "aktuell", "Anfrage", "Angebot", "Anmeldung",
+      "Anwendung", "Aufgabe", "Aufnahme", "ausfüllen", "auswählen", "Bestätigung",
+      "Besprechung", "Buchung", "Büro", "Datei", "Dateien", "Datenschutz",
+      "Dokument", "Dokumente", "Eingabe", "Einstellung", "Einstellungen",
+      "Entwicklung", "Erinnerung", "Erkennung", "Erklärung", "Erlaubnis",
+      "Fehler", "Fehlermeldung", "Fortschritt", "Funktion", "Funktionen",
+      "Genehmigung", "Gespräch", "Handy", "Hinweis", "Informationen",
+      "Kalender", "Korrektur", "Kunde", "Kunden", "Lösung", "Mitteilung",
+      "Möglichkeit", "Nachfrage", "Nachrichten", "Planung", "Prüfung",
+      "Rechnung", "Reparatur", "Rückmeldung", "Sicherheit", "Sitzung",
+      "Sprache", "Sprachen", "Spracherkennung", "Tastatur", "Terminbestätigung",
+      "Termine", "Test", "Texte", "Übersetzung", "verfügbar",
+      "Vereinbarung", "Verständnis", "Vorschlag", "Vorschläge", "Wörterbuch",
+      "Zeitplan", "Zugriff"
     ]
   ]
 }

@@ -66,6 +66,64 @@ enum LatinWordSuggestionPolicy {
     return suggestion.prefix(1).uppercased() + suggestion.dropFirst()
   }
 
+  /// A small offline safety net when UITextChecker is unavailable or does not
+  /// offer a candidate. Keep prefix matches first; only suggest one-edit
+  /// corrections as explicit choices, never automatic replacements.
+  static func fallbackCandidates(
+    for typed: String, dictionary: [String], limit: Int = 12
+  ) -> [String] {
+    guard (2...32).contains(typed.count), limit > 0 else { return [] }
+    let normalized = typed.lowercased()
+    var results: [String] = []
+    var seen = Set<String>()
+    func append(_ word: String) {
+      let lower = word.lowercased()
+      guard word.count <= 36, lower != normalized,
+            seen.insert(lower).inserted else { return }
+      results.append(word)
+    }
+    for word in dictionary where results.count < limit {
+      if word.lowercased().hasPrefix(normalized) { append(word) }
+    }
+    // A short prefix has too many one-edit neighbors to be meaningful.
+    if typed.count >= 4 && results.count < limit {
+      for word in dictionary where results.count < limit {
+        if oneEditApart(normalized, word.lowercased()) { append(word) }
+      }
+    }
+    return results
+  }
+
+  /// Bounded single insertion/deletion/substitution or adjacent transposition.
+  /// Two edits and concatenated phrases are deliberately out of scope.
+  static func oneEditApart(_ input: String, _ candidate: String) -> Bool {
+    let lhs = Array(input), rhs = Array(candidate)
+    guard !lhs.isEmpty, abs(lhs.count - rhs.count) <= 1,
+          lhs != rhs else { return false }
+    if lhs.count == rhs.count {
+      let differences = lhs.indices.filter { lhs[$0] != rhs[$0] }
+      if differences.count == 1 { return true }
+      return differences.count == 2
+        && differences[1] == differences[0] + 1
+        && lhs[differences[0]] == rhs[differences[1]]
+        && lhs[differences[1]] == rhs[differences[0]]
+    }
+    let longer = lhs.count > rhs.count ? lhs : rhs
+    let shorter = lhs.count > rhs.count ? rhs : lhs
+    var i = 0, j = 0, skipped = false
+    while i < longer.count && j < shorter.count {
+      if longer[i] == shorter[j] {
+        i += 1
+        j += 1
+      } else {
+        if skipped { return false }
+        skipped = true
+        i += 1
+      }
+    }
+    return true
+  }
+
   private static func isLatinLetter(_ character: Character) -> Bool {
     !character.unicodeScalars.isEmpty && character.unicodeScalars.allSatisfy { scalar in
       switch scalar.value {

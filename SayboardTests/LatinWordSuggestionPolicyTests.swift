@@ -35,6 +35,34 @@ struct LatinWordSuggestionPolicyTests {
     #expect(!LatinWordSuggestionPolicy.canReplace("gute", in: "Ich suche gute "))
   }
 
+  @Test func offlinePrefixAndSingleEditSuggestionsAreBounded() {
+    let words = ["recognition", "recording", "recovery", "typing", "calendar"]
+    #expect(LatinWordSuggestionPolicy.fallbackCandidates(
+      for: "reco", dictionary: words, limit: 3
+    ) == ["recognition", "recording", "recovery"])
+    #expect(LatinWordSuggestionPolicy.fallbackCandidates(
+      for: "recognitjon", dictionary: words
+    ) == ["recognition"])
+    #expect(LatinWordSuggestionPolicy.fallbackCandidates(
+      for: "calndar", dictionary: words
+    ) == ["calendar"])
+    #expect(LatinWordSuggestionPolicy.fallbackCandidates(
+      for: "typing", dictionary: words
+    ).isEmpty)
+    #expect(LatinWordSuggestionPolicy.fallbackCandidates(
+      for: "ab", dictionary: words
+    ).isEmpty)
+  }
+
+  @Test func oneEditRecognizesTranspositionsWithoutBroadFalseMatches() {
+    #expect(LatinWordSuggestionPolicy.oneEditApart("hallo", "halol"))
+    #expect(LatinWordSuggestionPolicy.oneEditApart("schriben", "schreiben"))
+    #expect(LatinWordSuggestionPolicy.oneEditApart("verfugbar", "verfügbar"))
+    #expect(!LatinWordSuggestionPolicy.oneEditApart("world", "unrelated"))
+    #expect(!LatinWordSuggestionPolicy.oneEditApart("recognition", "recognition"))
+    #expect(!LatinWordSuggestionPolicy.oneEditApart("type", "type recognition"))
+  }
+
   @Test func keepsInputCapitalization() {
     #expect(LatinWordSuggestionPolicy.matchCapitalization("hello", typed: "Hel") == "Hello")
     #expect(LatinWordSuggestionPolicy.matchCapitalization("hello", typed: "HEL") == "HELLO")

@@ -24,6 +24,20 @@ class EmojiCatalogTests(unittest.TestCase):
         self.assertEqual(entries[1][2], "👩‍💻")
         self.assertEqual(entries[2][1], "flag: Hong Kong SAR China")
 
+    def test_keeps_skin_tones_and_zwj_as_distinct_qualified_emoji(self):
+        fixture = """# group: People & Body
+1F44D ; fully-qualified # 👍 E0.6 thumbs up
+1F44D 1F3FD ; fully-qualified # 👍🏽 E1.0 thumbs up: medium skin tone
+1F44D 1F3FD ; minimally-qualified # 👍🏽 E1.0 thumbs up: medium skin tone
+1F469 200D 1F4BB ; fully-qualified # 👩‍💻 E4.0 woman technologist
+"""
+        entries = MOD.parse_catalog(fixture)
+        self.assertEqual(len(entries), 3)
+        self.assertEqual(entries[1][1], "thumbs up: medium skin tone")
+        self.assertEqual(entries[2][2], "👩‍💻")
+        self.assertEqual(len({v[2] for v in entries}), 3)
+
+
 
 if __name__ == "__main__":
     unittest.main()
