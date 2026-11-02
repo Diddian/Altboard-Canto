@@ -105,3 +105,16 @@ Implementation branch: feat/fixed-keyboard-settings-20261102.
   be refactored without breaking long-press accents or Space trackpad.
 - Full 32-key screenshot data: docs/ios-keyboard-native-vs-altboard-pixel-comparison.json.
 - Detailed glide typing plan: docs/swipe-typing-en-de-plan.json.
+
+## Gap-free touch routing (new)
+
+- Native visual key size preserved. A single row gesture owns all letter key taps.
+- First and last touch cells also absorb margins; adjacent cells share boundaries.
+- Touch rows divide the previously blank 11pt vertical gap.
+- Predictive shifts are at most 12% of cell width, 18% combined with calibration.
+- Prediction uses available offline suggestions, with neutral fallbacks.
+- Swipe-to-correct and accent long-press are retained via one gesture handler.
+- Diagnostic overlay: orange routed hit cells, dashed cyan visible keys.
+- Previous 15-minute cancelled macos-26 runs had zero executed steps. Runner changed
+  to macos-15, with explicit Xcode 26.2 availability check.
+- Physical typing tests still required before calling this native-equivalent.

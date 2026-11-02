@@ -20,7 +20,7 @@ concurrency:
 jobs:
   build:
     name: Unsigned iOS development build
-    runs-on: macos-26
+    runs-on: macos-15
     timeout-minutes: 55
     steps:
       - name: Checkout source
@@ -29,7 +29,15 @@ jobs:
       - name: Select Xcode 26.2
         run: |
           set -euo pipefail
-          sudo xcode-select -s /Applications/Xcode_26.2.app/Contents/Developer
+          # macos-26 jobs stalled for 15 minutes with zero executed steps.
+          # macos-15 is generally available; select Xcode 26.2 if installed.
+          XCODE="/Applications/Xcode_26.2.app/Contents/Developer"
+          if [ ! -d "$XCODE" ]; then
+            echo "ERROR: Xcode 26.2 unavailable on this runner"
+            ls -d /Applications/Xcode*.app 2>/dev/null || true
+            exit 1
+          fi
+          sudo xcode-select -s "$XCODE"
           xcodebuild -version
 
       - name: Install build utilities
@@ -63,6 +71,9 @@ jobs:
           swiftc -o "$RUNNER_TEMP/latin-suggestions-smoke" \
             Shared/LatinWordSuggestionPolicy.swift scripts/verify-latin-suggestions.swift
           "$RUNNER_TEMP/latin-suggestions-smoke"
+          swiftc -o "$RUNNER_TEMP/touch-smoke" \
+            Shared/KeyTouchMap.swift scripts/verify-key-touch-map.swift
+          "$RUNNER_TEMP/touch-smoke"
           python3 -m json.tool docs/ios-keyboard-reference.json >/dev/null
           python3 -m json.tool docs/ios-keyboard-native-vs-altboard-pixel-comparison.json >/dev/null
           python3 -m json.tool docs/swipe-typing-en-de-plan.json >/dev/null

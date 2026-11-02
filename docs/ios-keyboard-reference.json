@@ -196,5 +196,23 @@
     "IMG_9669.jpeg",
     "IMG_9670.jpeg"
   ],
-  "preciseComparison": "docs/ios-keyboard-native-vs-altboard-pixel-comparison.json"
+  "preciseComparison": "docs/ios-keyboard-native-vs-altboard-pixel-comparison.json",
+  "touchTargeting": {
+    "status": "implemented pending on-device verification",
+    "rowSurface": "one DragGesture per alphabet row (not one per key)",
+    "hitArea": "contiguous row bands; includes 6pt visual horizontal gaps and half vertical 11pt gaps",
+    "shifts": {
+      "predictiveMaxFractionOfCell": 0.12,
+      "combinedMaxFractionOfCell": 0.18,
+      "calibrationDefault": 0
+    },
+    "sources": [
+      "https://github.com/nkrsn/jboard/blob/main/Core/KeyTargeting.swift",
+      "https://github.com/jtvargas/SnipKey/blob/main/V2_KEYBOARD_ARCHITECTURE.md",
+      "https://github.com/shchnk1103/Universe-Keyboard/blob/main/docs/DEBUGGING.md"
+    ],
+    "debug": "Settings > Help > Diagnostics > Keyboard Touch Diagnostics > Show Key Touch Areas. Orange = touch; dashed cyan = visible",
+    "model": "language-matched offline completion suggestions; Jyutping only when romanization selected is Jyutping; no unverified Yale mapping",
+    "note": "Implementation is inspired by open source, not the native Apple hit-testing algorithm; testing and calibration remain necessary"
+  }
 }
