@@ -15,6 +15,20 @@ enum KeyboardKind: String, CaseIterable, Sendable {
   }
 }
 
+/// Only applies to the Microphone Only keyboard. Alphabet and Symbols
+/// always use the full, fixed-height layout, independent of legacy sliders.
+enum MicrophoneKeyboardLayout: String, CaseIterable, Sendable {
+  case defaultLayout = "default"
+  case compact
+
+  var displayName: String {
+    switch self {
+    case .defaultLayout: "Default"
+    case .compact: "Compact"
+    }
+  }
+}
+
 /// A QWERTZ-first English typing layout, with optional QWERTY ordering.
 enum LetterKeyArrangement: String, CaseIterable, Sendable {
   case qwertz

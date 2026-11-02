@@ -70,15 +70,16 @@ struct SharedSettings {
     nonmutating set { defaults.set(newValue.rawValue, forKey: SharedKey.sessionAutoStopPolicy) }
   }
 
-  /// User-controlled height; compact standard mode uses a pill mic.
-  var keyboardHeightScale: Double {
+  /// Explicit Microphone Only appearance. Old height slider values are
+  /// intentionally ignored; no height preference can resize Alphabet.
+  var microphoneKeyboardLayout: MicrophoneKeyboardLayout {
     get {
-      let stored = defaults.object(forKey: SharedKey.keyboardHeightScale) as? Double ?? 0.92
-      return min(1.10, max(0.70, stored))
+      guard let raw = defaults.string(forKey: SharedKey.microphoneKeyboardLayout),
+            let layout = MicrophoneKeyboardLayout(rawValue: raw)
+      else { return .defaultLayout }
+      return layout
     }
-    nonmutating set {
-      defaults.set(min(1.10, max(0.70, newValue)), forKey: SharedKey.keyboardHeightScale)
-    }
+    nonmutating set { defaults.set(newValue.rawValue, forKey: SharedKey.microphoneKeyboardLayout) }
   }
 
   var keyboardLetterArrangement: LetterKeyArrangement {

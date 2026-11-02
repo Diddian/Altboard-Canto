@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// A single, measured canvas handles both heights. The mic is positioned
+/// A fixed, measured canvas handles the two explicit Microphone Only layouts.
+/// The mic is positioned
 /// independently from the fixed key rows so recording can smoothly bring
 /// it to the actual vertical center instead of leaving a large empty void.
 struct StandardKeyboardLayout: View {

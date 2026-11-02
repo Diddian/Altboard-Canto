@@ -60,7 +60,10 @@ struct AlphabeticKeyboardLayout: View {
   var body: some View {
     VStack(spacing: 0) {
       self.toolbar
-        .offset(y: -8.kbScaled)
+        // Keep every toolbar button completely inside the keyboard's
+        // clipping bounds. A negative offset cut the mic and icons off.
+        .padding(.top, 7.kbScaled)
+        .padding(.bottom, 8.kbScaled)
       VStack(spacing: Self.rowSpacing.kbScaled) {
         self.firstKeyRow
         self.secondKeyRow
@@ -127,10 +130,9 @@ struct AlphabeticKeyboardLayout: View {
 
       if self.keyboardState.hasFullAccess && self.keyboardState.isMicrophoneAuthorized
           && self.keyboardState.hasUsableModel {
-        MicButtonWithPulse(
-          sizing: .extended(width: 86.kbScaled),
+        MicAnimatedButton(
+          sizing: .alphabet,
           proxy: self.proxy,
-          reservesPulseSpace: false,
           keyboardState: self.keyboardState
         )
       } else {
@@ -143,7 +145,7 @@ struct AlphabeticKeyboardLayout: View {
       }
     }
     .padding(.horizontal, Self.edgeInset.kbScaled)
-    .frame(height: 46.33.kbScaled)
+    .frame(height: KeyboardChromeMetrics.keyHeight)
   }
 
   private var currentLiteral: String {

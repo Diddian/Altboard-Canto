@@ -137,7 +137,9 @@ enum SharedKey {
   static let alsoCopyToClipboard = "alsoCopyToClipboard"
   static let keyboardKind = "keyboardKind"
   static let keyboardLetterArrangement = "keyboardLetterArrangement"
+  // Retained only as a legacy identifier. Never read or write for layout.
   static let keyboardHeightScale = "keyboardHeightScale"
+  static let microphoneKeyboardLayout = "microphoneKeyboardLayout"
   static let keyboardHapticsEnabled = "keyboardHapticsEnabled"
   static let keyboardHapticDriver = "keyboardHapticDriver"
   static let keyboardAutoCapitalizationEnabled = "keyboardAutoCapitalizationEnabled"

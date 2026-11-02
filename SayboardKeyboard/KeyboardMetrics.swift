@@ -1,51 +1,38 @@
-
 import UIKit
 
+/// Stable iPhone keyboard canvas. The old height slider caused the host
+/// UIInputView and its SwiftUI rows to negotiate mismatched heights.
 @MainActor
 enum KeyboardMetrics {
 
   static let baseHeight: CGFloat = 260
   static let baseExtendedHeight: CGFloat = 312
-  static let baseActionBarExtra: CGFloat = 42
-
-  static var heightFactor: CGFloat {
-    CGFloat(SharedSettings().keyboardHeightScale)
-  }
-
-  /// Compact mode uses a space-bar-shaped microphone between side keys.
-  static var isCompactStandard: Bool {
-    heightFactor < 0.90
-  }
-
+  static let baseCompactHeight: CGFloat = 150
   static let standardMicDiameter: CGFloat = 96
   static let rowGap: CGFloat = 6
-  static let baseCompactHeight: CGFloat = 150
 
-  /// Height changes whitespace, not key sizes.
+  static var isCompactStandard: Bool {
+    SharedSettings().microphoneKeyboardLayout == .compact
+  }
+
+  /// iPhone keys remain at the native 45pt size. The existing iPad
+  /// accommodation is preserved; it no longer depends on user settings.
   static var scale: CGFloat {
     UIDevice.current.userInterfaceIdiom == .pad ? 293 / baseHeight : 1
   }
 
   static var height: CGFloat {
-    let factor = max(0.70, min(1.10, heightFactor))
-    if factor < 0.90 {
-      // 70% = 150pt; just below 90% = 234pt. All keys remain 45pt.
-      return (baseCompactHeight + (factor - 0.70) * 420) * scale
-    }
-    return baseHeight * factor * scale
+    (isCompactStandard ? baseCompactHeight : baseHeight) * scale
   }
 
   static var extendedHeight: CGFloat {
-    max(284 * scale, baseExtendedHeight * heightFactor * scale)
+    baseExtendedHeight * scale
   }
 
-  static var actionBarExtraHeight: CGFloat {
-    baseActionBarExtra * scale
-  }
-
-  static func totalHeight(actionBarVisible: Bool, kind: KeyboardKind) -> CGFloat {
-    let base = kind == .standard ? self.height : self.extendedHeight
-    return base + (actionBarVisible ? self.actionBarExtraHeight : 0)
+  /// Opening the AI action overlay must not raise or resize the host keyboard.
+  /// Mode changes are the only user-requested height changes.
+  static func totalHeight(actionBarVisible _: Bool, kind: KeyboardKind) -> CGFloat {
+    kind == .standard ? height : extendedHeight
   }
 }
 

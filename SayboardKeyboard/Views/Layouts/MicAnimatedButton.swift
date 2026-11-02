@@ -28,6 +28,22 @@ extension MicSizing {
     )
   }
 
+  /// A fixed iOS-style microphone pill for Alphabet's toolbar. No pulse
+  /// rings extend above the input view or overlap the host text field.
+  @MainActor
+  static var alphabet: MicSizing {
+    MicSizing(
+      buttonWidth: 86.kbScaled,
+      buttonHeight: KeyboardChromeMetrics.keyHeight,
+      cornerRadius: KeyboardChromeMetrics.keyHeight / 2,
+      labelWidth: 33.kbScaled,
+      labelHeight: 27.kbScaled,
+      spinnerSize: 28.kbScaled,
+      waveformScale: 0.78,
+      pulseRingSpacing: 8.kbScaled
+    )
+  }
+
   /// Identical dimensions and continuous-rounded corner to SpaceBarKey.
   @MainActor
   static func compact(spaceBarWidth: CGFloat) -> MicSizing {
@@ -258,7 +274,8 @@ struct MicButtonWithPulse: View {
       cornerRadius: self.sizing.cornerRadius,
       ringSpacing: self.sizing.pulseRingSpacing,
     )
-    let showPulseRings = !KeyboardMetrics.isCompactStandard
+    let showPulseRings = self.keyboardState.keyboardKind == .standard
+      && !KeyboardMetrics.isCompactStandard
       && self.keyboardState.isRecording && !self.keyboardState.isProcessing
     if self.reservesPulseSpace {
       ZStack {
