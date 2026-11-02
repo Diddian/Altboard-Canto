@@ -20,6 +20,13 @@ struct JyutpingCompositionTests {
     #expect(!composition.backspace())
   }
 
+  @Test func syllableDeletionPreservesEarlierLatinComposition() {
+    var composition = JyutpingComposition()
+    for key in "gamyat" { #expect(composition.append(String(key))) }
+    composition.removeLast(3)
+    #expect(composition.buffer == "gam")
+  }
+
   @Test func rejectsInvalidKeysWithoutChangingBuffer() {
     var composition = JyutpingComposition()
     #expect(composition.append("n"))

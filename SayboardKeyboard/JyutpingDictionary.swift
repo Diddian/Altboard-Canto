@@ -91,6 +91,27 @@ final class JyutpingDictionary {
     }.prefix(max(1, limit)).map(\.element))
   }
 
+  /// Canonical syllable boundaries for a fully recognized spelling, used to
+  /// delete only the final phonetic syllable. Prefer phrases over homophonous
+  /// one-syllable entries to avoid deleting more text than requested.
+  func exactRomanization(for rawInput: String) -> String? {
+    let input = rawInput.lowercased()
+    guard !input.isEmpty, input.count <= 48,
+          input.allSatisfy({ $0.isASCII && ($0.isLetter || "123456".contains($0)) })
+    else { return nil }
+
+    let expressions: [String] = input.contains(where: \.isNumber)
+      ? ["SELECT word,romanization FROM entries WHERE compact=? ORDER BY priority LIMIT ?"]
+      : [
+          "SELECT word,romanization FROM entries WHERE plain=? ORDER BY priority LIMIT ?",
+          "SELECT word,romanization FROM entries WHERE yale=? ORDER BY priority LIMIT ?"
+        ]
+    let exact = expressions.flatMap { self.query($0, argument: input, limit: 24) }
+    return exact.max { a, b in
+      a.romanization.split(separator: " ").count < b.romanization.split(separator: " ").count
+    }?.romanization
+  }
+
   /// Exact spelling check prevents prefix-only Chinese suggestions from
   /// turning arbitrary English Backspace operations into whole-word deletes.
   func hasExactEntry(for rawInput: String) -> Bool {

@@ -23,5 +23,12 @@ struct JyutpingComposition: Equatable {
     return true
   }
 
+  /// The host has already inserted these Latin characters. Remove the same
+  /// syllable length from our tracking buffer before deleting host characters.
+  mutating func removeLast(_ length: Int) {
+    guard length > 0, length <= buffer.count else { return }
+    buffer.removeLast(length)
+  }
+
   mutating func clear() { buffer = "" }
 }

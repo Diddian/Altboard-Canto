@@ -1,0 +1,26 @@
+import Foundation
+import Testing
+
+@Suite("Cantonese phonetic syllable deletion")
+struct CantoneseSyllableEditingTests {
+  @Test func deletesFinalYaleSyllableNotWholePhrase() {
+    #expect(CantoneseSyllableEditing.lastSyllableLength(
+      typed: "Gamyat", canonical: "gam1 jat6") == 3)
+    #expect(CantoneseSyllableEditing.lastSyllableLength(
+      typed: "gamjat", canonical: "gam1 jat6") == 3)
+  }
+
+  @Test func supportsToneDigitsAndSingleSyllable() {
+    #expect(CantoneseSyllableEditing.lastSyllableLength(
+      typed: "gam1jat6", canonical: "gam1 jat6") == 4)
+    #expect(CantoneseSyllableEditing.lastSyllableLength(
+      typed: "yat", canonical: "jat6") == 3)
+  }
+
+  @Test func invalidOrEnglishSpellingFallsBackToOneCharacter() {
+    #expect(CantoneseSyllableEditing.lastSyllableLength(
+      typed: "gamyzt", canonical: "gam1 jat6") == nil)
+    #expect(CantoneseSyllableEditing.lastSyllableLength(
+      typed: "hello", canonical: "gam1 jat6") == nil)
+  }
+}

@@ -53,10 +53,11 @@ jobs:
             echo 'ERROR: use parameterless UIKit impactOccurred() in keyboard'
             exit 1
           fi
-          swiftc -typecheck Shared/JyutpingComposition.swift Shared/SentenceCapitalization.swift Shared/LiveCantoneseSafety.swift
+          swiftc -typecheck Shared/JyutpingComposition.swift Shared/SentenceCapitalization.swift Shared/LiveCantoneseSafety.swift Shared/CantoneseSyllableEditing.swift
           swiftc -o "$RUNNER_TEMP/keyboard-smoke" \
             Shared/JyutpingComposition.swift Shared/SentenceCapitalization.swift \
-            Shared/LiveCantoneseSafety.swift scripts/verify-keyboard-core.swift
+            Shared/LiveCantoneseSafety.swift Shared/CantoneseSyllableEditing.swift \
+            scripts/verify-keyboard-core.swift
           "$RUNNER_TEMP/keyboard-smoke"
 
       - name: Generate Xcode project

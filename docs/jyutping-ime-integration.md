@@ -28,3 +28,12 @@ Yale mappings include Jyutping `j → y`, `z → j`, `c → ch`, `oe/eo → eu` 
 ## Deliverable
 
 The workflow `.github/workflows/build-unsigned-ipa.yml` uploads `Altboard-Canto-SideStore.ipa` using `actions/upload-artifact@v7` with `archive: false`, then publishes a direct IPA file in rolling GitHub Releases. This IPA is unsigned for development and requires SideStore re-signing; it is not an App Store-signed distribution.
+
+
+## November 2 interaction correction
+
+- The Latin spelling is always physically inserted into the host field, including English `OK` after Chinese `唔`.
+- While composing, the candidate strip always includes the **actual case-preserved Latin token** (e.g. `OK`), even when no Chinese lookup matches. Tapping that token keeps the already-visible letters and closes suggestions. Pressing Space always clears suggestions and inserts a literal space.
+- The Backspace intercept deletes a **single final romanized syllable** only for an exact dictionary match and a verified suffix. `gamyat` or `gamjat` → `gam` by deleting `yat` or `jat`; `gam1jat6` deletes `jat6`. Misspellings such as `gamyzt` fall through to standard single-letter deletion.
+- After choosing `今日`, the composition is cleared, so the host's normal delete removes one Chinese character (`日`) at a time.
+- The keyboard input diagnostic trace records only the type of action (space, candidate, syllable deletion), never any typed content.

@@ -99,7 +99,7 @@ struct AlphabeticKeyboardLayout: View {
 
   private var toolbar: some View {
     HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
-      if self.offersCantonese && !self.composition.isEmpty && !self.candidates.isEmpty {
+      if self.offersCantonese && !self.composition.isEmpty {
         self.candidateStrip
       } else {
         KeyButton(content: .systemImage("gearshape"),
@@ -145,9 +145,38 @@ struct AlphabeticKeyboardLayout: View {
     .frame(height: 46.33.kbScaled)
   }
 
+  private var currentLiteral: String {
+    guard self.trackedTextMatches,
+          let context = self.proxy.documentContextBeforeInput() else {
+      return self.composition.buffer
+    }
+    // Preserve the user's actual uppercase spelling, e.g. OK instead of ok.
+    return String(context.suffix(self.composition.buffer.count))
+  }
+
   private var candidateStrip: some View {
     ScrollView(.horizontal) {
       HStack(spacing: 5.kbScaled) {
+        Button {
+          KeyboardHaptics.key()
+          // This option leaves the already-inserted Latin text untouched.
+          self.clearComposition()
+          KeyboardInputTrace.record(.latinKept)
+        } label: {
+          Text(verbatim: self.currentLiteral)
+            .font(.system(size: 20.kbScaled, weight: .medium))
+            .foregroundStyle(.primary)
+            .lineLimit(1)
+            .padding(.horizontal, 6.kbScaled)
+            .frame(height: 43.kbScaled)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Keep typed Latin text")
+
+        if !self.candidates.isEmpty {
+          Divider().frame(height: 24.kbScaled)
+        }
+
         ForEach(self.candidates) { candidate in
           Button {
             KeyboardHaptics.key()
@@ -315,16 +344,23 @@ struct AlphabeticKeyboardLayout: View {
     self.candidates.removeAll()
   }
 
-  /// When the suffix is a recognized Cantonese spelling, Backspace erases the
-  /// whole visible token. Never delete guessed text after the cursor has moved.
+  /// Delete the *last syllable* of a verified complete Cantonese spelling.
+  /// gamyat → gam (remove yat), not an entire "gamyat" word. Unknown English
+  /// remains normal character-by-character deletion via RepeatDeleteButton.
   private func deleteCompositionCharacter() -> Bool {
-    guard self.offersCantonese,
-          self.trackedTextMatches,
-          JyutpingDictionary.shared.hasExactEntry(for: self.composition.buffer)
+    guard self.offersCantonese, self.trackedTextMatches,
+      let canonical = JyutpingDictionary.shared.exactRomanization(for: self.composition.buffer),
+      let count = CantoneseSyllableEditing.lastSyllableLength(
+        typed: self.composition.buffer, canonical: canonical
+      )
     else { return false }
-    let count = self.composition.buffer.count
-    self.clearComposition()
+
+    self.composition.removeLast(count)
+    KeyboardInputTrace.record(.syllableDeleted)
+    // Update local state before changing the host; cursor changes can arrive
+    // from the host asynchronously during this multi-character deletion.
     for _ in 0..<count { self.proxy.deleteBackward() }
+    self.updateCandidates()
     self.refreshAutomaticShift()
     return true
   }
@@ -348,13 +384,17 @@ struct AlphabeticKeyboardLayout: View {
     self.clearComposition()
     for _ in 0..<count { self.proxy.deleteBackward() }
     self.proxy.insertText(candidate.text)
+    KeyboardInputTrace.record(.candidateChosen)
     JyutpingDictionary.shared.remember(candidate)
     self.refreshAutomaticShift()
   }
 
   private func handleSpace() {
+    // Space *never* forces a Chinese candidate. Commit the already-visible
+    // Latin spelling and let the next word start a fresh composition.
     self.clearComposition()
     self.proxy.insertSpace()
+    KeyboardInputTrace.record(.spaceCommitted)
     self.refreshAutomaticShift()
   }
 
