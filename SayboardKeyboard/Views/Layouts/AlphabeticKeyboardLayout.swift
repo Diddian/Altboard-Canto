@@ -199,7 +199,9 @@ struct AlphabeticKeyboardLayout: View {
           )
         }
         Spacer(minLength: 2.kbScaled)
-
+        if self.keyboardState.isRecording {
+          LongRecordingNotice(startedAt: self.keyboardState.recordingStartedAt)
+        }
         if self.keyboardState.hasFullAccess && self.keyboardState.isMicrophoneAuthorized
             && self.keyboardState.hasUsableModel {
           MicAnimatedButton(

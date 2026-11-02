@@ -98,6 +98,9 @@ extension ExtendedKeyboardLayout {
       .opacity(self.keyboardState.auxiliaryControlsHidden ? 0 : 1)
       .allowsHitTesting(!self.keyboardState.auxiliaryControlsHidden)
       .animation(.easeOut(duration: 0.22), value: self.keyboardState.auxiliaryControlsHidden)
+      if self.keyboardState.isRecording {
+        LongRecordingNotice(startedAt: self.keyboardState.recordingStartedAt)
+      }
       self.micButton
       }
     }

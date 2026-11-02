@@ -59,6 +59,7 @@ final class SpeechRecognitionService: ObservableObject {
 
   func startRecording() {
     guard self.activeLoadState == .loaded else { return }
+    self.settings.dictationCancellationRequested = false
     self.startCapture()
   }
 

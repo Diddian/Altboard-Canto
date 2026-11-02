@@ -77,7 +77,10 @@ struct StandardKeyboardLayout: View {
         } else {
         self.sideButtons
           .padding(.horizontal, 4.kbScaled)
-        if !KeyboardMetrics.isCompactStandard {
+        if self.keyboardState.isRecording {
+          LongRecordingNotice(startedAt: self.keyboardState.recordingStartedAt)
+            .frame(maxWidth: 110.kbScaled)
+        } else if !KeyboardMetrics.isCompactStandard {
           KeyboardStatusStrip(keyboardState: self.keyboardState)
             .frame(width: available, height: KeyboardChromeMetrics.keyHeight)
             .allowsHitTesting(false)

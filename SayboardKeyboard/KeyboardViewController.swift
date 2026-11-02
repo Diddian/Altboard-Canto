@@ -246,6 +246,7 @@ final class KeyboardViewController: UIInputViewController {
         vc.keyboardState.voiceProcessingProgress = nil
         vc.keyboardState.clearFinalOutputPreview()
         vc.keyboardState.isRecording = true
+        vc.keyboardState.recordingStartedAt = SharedSettings().recordingStartedAt
         vc.keyboardState.isStartingRecording = false
         if !vc.isPerformingHistoryNavigation {
           vc.keyboardState.clearLLMHistory()
@@ -265,6 +266,7 @@ final class KeyboardViewController: UIInputViewController {
         vc.cancelProcessingTimeout()
         vc.keyboardState.stopLevelPolling()
         vc.keyboardState.isRecording = false
+        vc.keyboardState.recordingStartedAt = 0
         vc.keyboardState.isStartingRecording = false
         vc.keyboardState.syncModelLoading()
         vc.keyboardState.syncDictationLock()
@@ -381,6 +383,7 @@ extension KeyboardViewController {
     self.cancelProcessingTimeout()
     self.keyboardState.isStartingRecording = false
     self.keyboardState.isRecording = false
+    self.keyboardState.recordingStartedAt = 0
     self.keyboardState.isProcessing = false
     self.keyboardState.stopLevelPolling()
     let settings = SharedSettings()
@@ -429,6 +432,7 @@ extension KeyboardViewController {
         vc.keyboardState.stopLevelPolling()
         vc.keyboardState.isSessionActive = false
         vc.keyboardState.isRecording = false
+        vc.keyboardState.recordingStartedAt = 0
         vc.keyboardState.isStartingRecording = false
         vc.keyboardState.isProcessing = finalizing
         if finalizing { vc.startProcessingTimeout() }

@@ -7,6 +7,7 @@ import SwiftUI
 final class KeyboardState: ObservableObject {
 
   @Published var isRecording = false
+  @Published var recordingStartedAt: TimeInterval = 0
   @Published var isStartingRecording = false
   @Published var isProcessing = false
   @Published var isSessionActive = false
@@ -107,6 +108,7 @@ final class KeyboardState: ObservableObject {
     self.settings.synchronize()
     self.isStartingRecording = false
     self.isRecording = self.settings.isRecording
+    self.recordingStartedAt = self.settings.recordingStartedAt
     self.isSessionActive = self.settings.isSessionActive
     if self.isRecording, !self.isSessionActive {
       self.isRecording = false
