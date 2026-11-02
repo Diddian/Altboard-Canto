@@ -60,6 +60,12 @@ jobs:
             Shared/LiveCantoneseSafety.swift Shared/CantoneseSyllableEditing.swift Shared/EnglishCaseSuggestion.swift \
             scripts/verify-keyboard-core.swift
           "$RUNNER_TEMP/keyboard-smoke"
+          swiftc -o "$RUNNER_TEMP/latin-suggestions-smoke" \
+            Shared/LatinWordSuggestionPolicy.swift scripts/verify-latin-suggestions.swift
+          "$RUNNER_TEMP/latin-suggestions-smoke"
+          python3 -m json.tool docs/ios-keyboard-reference.json >/dev/null
+          python3 -m json.tool docs/ios-keyboard-native-vs-altboard-pixel-comparison.json >/dev/null
+          python3 -m json.tool docs/swipe-typing-en-de-plan.json >/dev/null
           swiftc -o "$RUNNER_TEMP/layout-smoke" \
             Shared/KeyboardKind.swift Shared/KeyboardLayoutGeometry.swift \
             scripts/verify-keyboard-layout.swift

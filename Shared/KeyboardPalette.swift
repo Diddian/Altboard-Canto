@@ -22,7 +22,7 @@ enum KeyboardPalette {
       : UIColor.separator
   }
   static let suggestionGlyph = UIColor { traits in
-    traits.userInterfaceStyle == .dark ? UIColor(white: 0.78, alpha: 1) : UIColor.darkText
+    traits.userInterfaceStyle == .dark ? UIColor(white: 162.0 / 255.0, alpha: 1) : UIColor.darkText
   }
   static let pressedFill = UIColor { traits in
     traits.userInterfaceStyle == .dark

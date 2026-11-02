@@ -90,7 +90,8 @@
         "symbol": "face.smiling.inverse",
         "sizePt": 28,
         "style": "filled white face (SF Symbols; native screenshot visual approximation)"
-      }
+      },
+      "swipeTyping": "Planned only: docs/swipe-typing-en-de-plan.json"
     },
     "defaultLetterArrangement": "qwertz"
   },
@@ -155,13 +156,14 @@
     "alignment": "equally sized thirds, one row",
     "supportsScrollingAdditionalCandidates": true,
     "compositionBehavior": {
-      "cantonese": "full width candidate row; hide settings/translation/AI/microphone",
-      "english": "preserve existing toolbar when no composition"
+      "cantonese": "full width, hide microphone/settings/translation/AI",
+      "latin": "English/German or another preferred language with an installed UITextChecker locale; full-width predictions during active typing; typed Latin remains in host",
+      "idle": "toolbar and microphone visible"
     },
     "dark": {
       "backgroundHex": "#1F1F1F",
       "dividerHex": "#323232",
-      "glyphHexApprox": "#C7C7C7"
+      "glyphHexApprox": "#A2A2A2"
     },
     "separator": {
       "widthPt": 1,
@@ -178,6 +180,21 @@
       "alignment": "center"
     },
     "candidateBehavior": "Latin typed string first, optional OK correction, then ordered offline Cantonese suggestions with user selection frequency ranking",
-    "note": "Estimated from user-supplied pixels; not an Apple published layout specification"
-  }
+    "note": "Glyph median measured around RGB(162,162,162) in IMG_9658 and IMG_9670; keyboard rectangle and glyph metrics are estimates from actual screenshots, not Apple public internals.",
+    "locales": {
+      "source": "Languages I Speak",
+      "automatic": true,
+      "secondaryPicker": false,
+      "offlineMechanism": "UITextChecker.availableLanguages plus small built-in English/German fallback list",
+      "persistence": "App Group selection frequency, no upload"
+    }
+  },
+  "referenceImages": [
+    "IMG_9658.jpeg",
+    "IMG_9659.jpeg",
+    "IMG_9660.jpeg",
+    "IMG_9669.jpeg",
+    "IMG_9670.jpeg"
+  ],
+  "preciseComparison": "docs/ios-keyboard-native-vs-altboard-pixel-comparison.json"
 }

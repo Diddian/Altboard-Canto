@@ -112,10 +112,10 @@ Keyboard
 |   +-- Compact: fixed 150 pt iPhone canvas, wide mic above Space
 |
 +-- Symbols
-|   +-- Fixed 288 pt iPhone canvas
+|   +-- Fixed 290 pt iPhone canvas
 |
 +-- Alphabet
-    +-- Fixed 288 pt iPhone canvas
+    +-- Fixed 290 pt iPhone canvas
     +-- Full toolbar inside the keyboard; no negative top offset
     +-- Fixed 45 pt letter keys and 11 pt row spacing
 
@@ -164,3 +164,28 @@ History screen
 Other host apps
 +-- Each host app controls its background-tap dismissal
 +-- The experimental top-edge swipe recognizer was removed
+
+## Multilingual prediction strip
+
+Alphabet keyboard
++-- Typing uses the same Languages I Speak preference as dictation
++-- English and German
+|   +-- On-device UITextChecker completions and spelling guesses
+|   +-- Small offline fallback vocabulary
+|   +-- Accepted words rise in personal local order
++-- Cantonese
+|   +-- Jyutping / Yale / Yuetyam: existing offline SQLite IME
+|   +-- Existing local candidate learning is preserved
++-- Candidate UI
+|   +-- First item is the literal Latin text already in the host
+|   +-- Additional options in three equal-width iOS-style cells
+|   +-- Only two 1pt × 24pt separators per set of three cells
+|   +-- Mic, Settings and AI hidden while actively composing
++-- Space
+|   +-- Small A in bottom-right on Alphabet
+|   +-- Hold 150ms, then drag horizontally to move text cursor
++-- Emoji
+    +-- Filled face.smiling.inverse symbol, approx. 28pt
+
+Future (not in this IPA)
++-- English / German glide/swipe typing; see docs/swipe-typing-en-de-plan.json

@@ -83,3 +83,25 @@ Implementation branch: feat/fixed-keyboard-settings-20261102.
 - In-app History dictation uses existing Darwin bridge, not a deep-link bounce.
 - Predictions and input measurements are screenshot approximations, not Apple
   published private geometry.
+
+## Native UI comparison and English/German suggestions
+
+- Old Altboard's first letter row began 51px below IMG_9658's native row
+  (or 36px below the alternate IMG_9659 layout). The updated runtime places
+  its first row at 57pt, 1px above IMG_9658's measured 172px start.
+- Native and old visible letter-key rectangles had nearly identical width,
+  height and gaps; no arbitrary key scaling was added.
+- Final canvas is fixed at 290pt, near the screenshot-inferred 290.33pt.
+- Native candidate glyph pixels measured near RGB(162,162,162), replacing
+  the previous overly light #C7C7C7 target with #A2A2A2.
+- The emoji icon now uses the filled face.smiling.inverse SF Symbol (~28pt).
+- The Alphabet Space key gets a small A at bottom-right without changing
+  its 150ms drag-to-cursor mode.
+- English and German suggestions use the phone's offline UITextChecker and
+  a deterministic fallback list; current host word is verified before editing.
+- Latin selection frequencies are stored locally and separately from the
+  Cantonese candidate counts.
+- Swipe typing is intentionally NOT implemented yet: gesture capture must
+  be refactored without breaking long-press accents or Space trackpad.
+- Full 32-key screenshot data: docs/ios-keyboard-native-vs-altboard-pixel-comparison.json.
+- Detailed glide typing plan: docs/swipe-typing-en-de-plan.json.
