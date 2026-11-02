@@ -245,12 +245,12 @@ struct SharedSettings {
     nonmutating set { defaults.set(newValue, forKey: SharedKey.keyboardAutoCapitalizationEnabled) }
   }
 
-  var keyboardTypingLanguage: KeyboardTypingLanguage {
+  var keyboardRomanizationScheme: CantoneseRomanizationScheme {
     get {
-      guard let value = defaults.string(forKey: SharedKey.keyboardTypingLanguage) else { return .english }
-      return KeyboardTypingLanguage(rawValue: value) ?? .english
+      guard let value = defaults.string(forKey: SharedKey.keyboardRomanizationScheme) else { return .jyutping }
+      return CantoneseRomanizationScheme(rawValue: value) ?? .jyutping
     }
-    nonmutating set { defaults.set(newValue.rawValue, forKey: SharedKey.keyboardTypingLanguage) }
+    nonmutating set { defaults.set(newValue.rawValue, forKey: SharedKey.keyboardRomanizationScheme) }
   }
 
   var periodShortcutEnabled: Bool {

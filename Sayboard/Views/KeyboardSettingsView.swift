@@ -19,7 +19,17 @@ struct KeyboardSettingsView: View {
           }
           .pickerStyle(.segmented)
           Toggle("Auto-capitalize sentences", isOn: self.$autoCapitalizationEnabled)
-          Text("Alphabet always types Latin characters; Cantonese candidates appear automatically if Cantonese is preferred.")
+          if SharedSettings().preferredSpokenLanguages.contains("yue") {
+            Picker("Cantonese romanization", selection: self.$romanizationRaw) {
+              ForEach(CantoneseRomanizationScheme.allCases, id: \.self) { scheme in
+                Text(scheme.displayName).tag(scheme.rawValue)
+              }
+            }
+            Text("Chinese candidates appear while you type Latin characters. Tap a candidate to replace its romanization.")
+              .font(.footnote)
+              .foregroundStyle(.secondary)
+          }
+          Text("QWERTZ is the default. Both arrangements keep the same iOS-style keys and microphone.")
             .font(.footnote)
             .foregroundStyle(.secondary)
         }
@@ -105,6 +115,8 @@ struct KeyboardSettingsView: View {
   private var letterArrangementRaw = LetterKeyArrangement.qwertz.rawValue
   @AppStorage(SharedKey.keyboardAutoCapitalizationEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
   private var autoCapitalizationEnabled = true
+  @AppStorage(SharedKey.keyboardRomanizationScheme, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var romanizationRaw = CantoneseRomanizationScheme.jyutping.rawValue
 }
 
 

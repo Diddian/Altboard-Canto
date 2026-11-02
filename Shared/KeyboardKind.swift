@@ -34,7 +34,17 @@ enum LetterKeyArrangement: String, CaseIterable, Sendable {
   }
 }
 
-enum KeyboardTypingLanguage: String, CaseIterable, Sendable {
-  case english
+/// Romanization changes the offline candidate search, never Latin typing.
+enum CantoneseRomanizationScheme: String, CaseIterable, Sendable {
   case jyutping
+  case yale
+  case yuetyam
+
+  var displayName: String {
+    switch self {
+    case .jyutping: "Jyutping"
+    case .yale: "Yale"
+    case .yuetyam: "Yuetyam"
+    }
+  }
 }

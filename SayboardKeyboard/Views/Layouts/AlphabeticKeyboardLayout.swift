@@ -11,10 +11,10 @@ struct AlphabeticKeyboardLayout: View {
   )
   private var arrangementRaw = LetterKeyArrangement.qwertz.rawValue
   @AppStorage(
-    SharedKey.keyboardTypingLanguage,
+    SharedKey.keyboardRomanizationScheme,
     store: UserDefaults(suiteName: AppGroup.identifier)
   )
-  private var typingLanguageRaw = KeyboardTypingLanguage.english.rawValue
+  private var romanizationRaw = CantoneseRomanizationScheme.jyutping.rawValue
   @AppStorage(
     SharedKey.keyboardAutoCapitalizationEnabled,
     store: UserDefaults(suiteName: AppGroup.identifier)
@@ -32,8 +32,19 @@ struct AlphabeticKeyboardLayout: View {
     LetterKeyArrangement(rawValue: self.arrangementRaw) ?? .qwertz
   }
 
-  private var isJyutping: Bool {
-    self.typingLanguageRaw == KeyboardTypingLanguage.jyutping.rawValue
+  private var offersCantonese: Bool {
+    SharedSettings().preferredSpokenLanguages.contains("yue")
+  }
+
+  private var romanization: CantoneseRomanizationScheme {
+    CantoneseRomanizationScheme(rawValue: self.romanizationRaw) ?? .jyutping
+  }
+
+  private var trackedTextMatches: Bool {
+    guard !self.composition.isEmpty,
+          let before = self.proxy.documentContextBeforeInput()
+    else { return false }
+    return before.lowercased().hasSuffix(self.composition.buffer.lowercased())
   }
 
   private var chrome: KeyboardChromeMetrics {
@@ -47,7 +58,7 @@ struct AlphabeticKeyboardLayout: View {
   private static let specialGap: CGFloat = 14.67
 
   var body: some View {
-    VStack(spacing: Self.rowSpacing.kbScaled) {
+    VStack(spacing: 0) {
       self.toolbar
       VStack(spacing: Self.rowSpacing.kbScaled) {
         self.firstKeyRow
@@ -64,22 +75,19 @@ struct AlphabeticKeyboardLayout: View {
         onSpaceAction: { self.handleSpace() },
         onReturnAction: { self.handleReturn() }
       )
+      .padding(.top, Self.rowSpacing.kbScaled)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-    .onAppear { self.refreshAutomaticShift() }
-    .onChange(of: self.autoCapitalize) { _, _ in self.refreshAutomaticShift() }
-    .onChange(of: self.typingLanguageRaw) { _, _ in
-      // Settings may change the active input mode while the keyboard is visible.
-      self.composition.clear()
-      self.candidates.removeAll()
-      self.page = .letters
+    .onAppear {
       self.refreshAutomaticShift()
+      self.updateCandidates()
     }
+    .onChange(of: self.autoCapitalize) { _, _ in self.refreshAutomaticShift() }
+    .onChange(of: self.romanizationRaw) { _, _ in self.updateCandidates() }
     .onChange(of: self.keyboardState.textContextRevision) { _, _ in
-      // An external cursor / host edit must never commit unconfirmed text.
-      if !self.keyboardState.isRecording && !self.keyboardState.isProcessing {
-        self.composition.clear()
-        self.candidates.removeAll()
+      // Preserve our own typed buffer; discard only if host text or cursor changed.
+      if !self.composition.isEmpty && !self.trackedTextMatches {
+        self.clearComposition()
       }
       self.refreshAutomaticShift()
     }
@@ -91,16 +99,13 @@ struct AlphabeticKeyboardLayout: View {
 
   private var toolbar: some View {
     HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
-      if self.isJyutping && !self.composition.isEmpty {
-        self.languageToggle
+      if self.offersCantonese && !self.composition.isEmpty && !self.candidates.isEmpty {
         self.candidateStrip
       } else {
         KeyButton(content: .systemImage("gearshape"),
                   fixedWidth: self.chrome.sideButtonWidth) {
           if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
         }
-
-        self.languageToggle
 
         TranslateToggleButton(
           fixedWidth: self.chrome.sideButtonWidth,
@@ -140,52 +145,23 @@ struct AlphabeticKeyboardLayout: View {
     .frame(height: 46.33.kbScaled)
   }
 
-  private var languageToggle: some View {
-    KeyButton(
-      content: .symbol(self.isJyutping ? "粵" : "EN", fontSize: 15),
-      fixedWidth: self.chrome.sideButtonWidth
-    ) {
-      if self.isJyutping { self.commitCompositionIfNeeded() }
-      self.typingLanguageRaw = self.isJyutping
-        ? KeyboardTypingLanguage.english.rawValue
-        : KeyboardTypingLanguage.jyutping.rawValue
-      self.page = .letters
-      self.refreshAutomaticShift()
-    }
-    .accessibilityLabel(self.isJyutping ? "Switch to English" : "Switch to Jyutping")
-  }
-
   private var candidateStrip: some View {
     ScrollView(.horizontal) {
       HStack(spacing: 5.kbScaled) {
-        Text(self.composition.buffer)
-          .font(.system(size: 12.kbScaled, weight: .medium))
-          .foregroundStyle(.secondary)
-          .padding(.trailing, 3.kbScaled)
         ForEach(self.candidates) { candidate in
           Button {
             KeyboardHaptics.key()
             self.choose(candidate)
           } label: {
-            VStack(spacing: 1.kbScaled) {
-              Text(verbatim: candidate.text)
-                .font(.system(size: 19.kbScaled))
-                .lineLimit(1)
-              Text(verbatim: candidate.romanization)
-                .font(.system(size: 9.kbScaled))
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-            }
-            .frame(minWidth: 36.kbScaled)
+            Text(verbatim: candidate.text)
+              .font(.system(size: 20.kbScaled, weight: .regular))
+              .foregroundStyle(.primary)
+              .lineLimit(1)
+              .frame(minWidth: 36.kbScaled)
             .padding(.horizontal, 4.kbScaled)
             .frame(height: 43.kbScaled)
           }
           .buttonStyle(.plain)
-        }
-        if self.candidates.isEmpty {
-          Text("無候選字")
-            .font(.system(size: 12.kbScaled))
-            .foregroundStyle(.secondary)
         }
       }
     }
@@ -218,7 +194,7 @@ struct AlphabeticKeyboardLayout: View {
       HStack(spacing: Self.specialGap.kbScaled) {
         KeyButton(
           content: .systemImage(self.capsLock ? "capslock.fill"
-            : self.shiftActive && !self.isJyutping ? "shift.fill" : "shift"),
+            : self.shiftActive ? "shift.fill" : "shift"),
           fixedWidth: 50.kbScaled,
           fillOnPress: self.shiftActive || self.capsLock
         ) { self.tapShift() }
@@ -233,7 +209,7 @@ struct AlphabeticKeyboardLayout: View {
           proxy: self.proxy,
           fixedWidth: 50.kbScaled,
           onDeleteIntercept: { self.deleteCompositionCharacter() },
-          onHostDeletion: { self.refreshAutomaticShift() }
+          onHostDeletion: { self.handleHostDeletion() }
         )
       }
       .padding(.horizontal, Self.edgeInset.kbScaled)
@@ -258,7 +234,7 @@ struct AlphabeticKeyboardLayout: View {
           proxy: self.proxy,
           fixedWidth: 48.kbScaled,
           onDeleteIntercept: { self.deleteCompositionCharacter() },
-          onHostDeletion: { self.refreshAutomaticShift() }
+          onHostDeletion: { self.handleHostDeletion() }
         )
       }
       .padding(.horizontal, Self.edgeInset.kbScaled)
@@ -278,7 +254,7 @@ struct AlphabeticKeyboardLayout: View {
   private func letterKey(_ letter: String, index: Int, count: Int) -> some View {
     AlphabeticLetterKey(
       letter: letter,
-      uppercase: !self.isJyutping && (self.shiftActive || self.capsLock),
+      uppercase: self.shiftActive || self.capsLock,
       column: index,
       rowCount: count
     ) { typed in
@@ -301,12 +277,16 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private func handleCharacter(_ character: String) {
-    if self.isJyutping && self.composition.append(character) {
+    // All Latin typing reaches the host immediately. The offline IME only
+    // suggests; it does not intercept ordinary English text.
+    if self.offersCantonese && self.page == .letters
+      && self.composition.append(character) {
+      self.proxy.insertText(character)
       self.updateCandidates()
-      return
+    } else {
+      self.clearComposition()
+      self.proxy.insertText(character)
     }
-    self.commitCompositionIfNeeded()
-    self.proxy.insertText(character)
     self.didInsertLiteral(character)
   }
 
@@ -318,53 +298,65 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private func updateCandidates() {
-    self.candidates = self.composition.isEmpty
-      ? [] : JyutpingDictionary.shared.candidates(for: self.composition.buffer)
+    self.candidates = self.offersCantonese && !self.composition.isEmpty
+      ? JyutpingDictionary.shared.candidates(for: self.composition.buffer, scheme: self.romanization)
+      : []
   }
 
-  private func deleteCompositionCharacter() -> Bool {
-    guard self.isJyutping && self.composition.backspace() else { return false }
-    self.updateCandidates()
-    return true
-  }
-
-  private func choose(_ candidate: JyutpingCandidate) {
-    self.proxy.insertText(candidate.text)
-    JyutpingDictionary.shared.remember(candidate)
+  private func clearComposition() {
     self.composition.clear()
     self.candidates.removeAll()
   }
 
-  private func commitCompositionIfNeeded() {
-    guard !self.composition.isEmpty else { return }
-    if let first = self.candidates.first {
-      self.choose(first)
+  /// When the suffix is a recognized Cantonese spelling, Backspace erases the
+  /// whole visible token. Never delete guessed text after the cursor has moved.
+  private func deleteCompositionCharacter() -> Bool {
+    guard self.offersCantonese,
+          !self.candidates.isEmpty, self.trackedTextMatches else { return false }
+    let count = self.composition.buffer.count
+    self.clearComposition()
+    for _ in 0..<count { self.proxy.deleteBackward() }
+    self.refreshAutomaticShift()
+    return true
+  }
+
+  private func handleHostDeletion() {
+    if !self.composition.isEmpty { _ = self.composition.backspace() }
+    if !self.composition.isEmpty && !self.trackedTextMatches {
+      self.clearComposition()
     } else {
-      self.proxy.insertText(self.composition.buffer)
-      self.composition.clear()
-      self.candidates.removeAll()
+      self.updateCandidates()
     }
+    self.refreshAutomaticShift()
+  }
+
+  private func choose(_ candidate: JyutpingCandidate) {
+    guard self.trackedTextMatches else {
+      self.clearComposition()
+      return
+    }
+    let count = self.composition.buffer.count
+    self.clearComposition()
+    for _ in 0..<count { self.proxy.deleteBackward() }
+    self.proxy.insertText(candidate.text)
+    JyutpingDictionary.shared.remember(candidate)
+    self.refreshAutomaticShift()
   }
 
   private func handleSpace() {
-    if self.isJyutping && !self.composition.isEmpty {
-      self.commitCompositionIfNeeded()
-    } else {
-      self.proxy.insertSpace()
-      self.refreshAutomaticShift()
-    }
+    self.clearComposition()
+    self.proxy.insertSpace()
+    self.refreshAutomaticShift()
   }
 
   private func handleReturn() {
-    if self.isJyutping && !self.composition.isEmpty {
-      self.commitCompositionIfNeeded()
-    } else {
-      self.proxy.insertText("\n")
-      self.refreshAutomaticShift()
-    }
+    self.clearComposition()
+    self.proxy.insertText("\n")
+    self.refreshAutomaticShift()
   }
 
   private func toggleNumberPage() {
+    self.clearComposition()
     self.page = self.page == .letters ? .numbers : .letters
   }
 
@@ -375,7 +367,6 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private func tapShift() {
-    guard !self.isJyutping else { return }
     let now = Date()
     if let lastShiftTap, now.timeIntervalSince(lastShiftTap) < 0.38 {
       self.capsLock = !self.capsLock
