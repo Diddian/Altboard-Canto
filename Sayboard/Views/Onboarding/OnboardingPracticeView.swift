@@ -132,6 +132,17 @@ private struct OnboardingPracticeFieldView: View {
       self.awaitsDictatedText = false
       self.isFieldFocused = false
     }
+    .confirmationDialog(
+      "Choose Keyboard Type",
+      isPresented: self.$showsKeyboardTypeChooser,
+      titleVisibility: .visible,
+    ) {
+      ForEach(KeyboardKind.allCases, id: \.self) { kind in
+        Button(LocalizedStringKey(kind.displayNameKey)) {
+          self.switchKeyboardType(to: kind)
+        }
+      }
+    }
   }
 
   private static let horizontalPadding: CGFloat = 20
@@ -147,6 +158,7 @@ private struct OnboardingPracticeFieldView: View {
   @State private var screenHeight = CGFloat.infinity
   @State private var text = ""
   @State private var awaitsDictatedText = false
+  @State private var showsKeyboardTypeChooser = false
   @FocusState private var isFieldFocused: Bool
 
   private var switchScreen: some View {
@@ -182,7 +194,9 @@ private struct OnboardingPracticeFieldView: View {
       if self.didSucceed || !self.isCompact {
         OnboardingPrimaryButton(label: Text("Done"), isEnabled: self.didSucceed, action: self.onContinue)
       }
-      OnboardingSecondaryButton(title: "Change Keyboard Type", action: self.switchKeyboardType)
+      OnboardingSecondaryButton(title: "Change Keyboard Type") {
+        self.showsKeyboardTypeChooser = true
+      }
     }
     .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { self.screenHeight = $0 }
     .animation(OnboardingView.stepAnimation, value: self.isCompact)
@@ -222,9 +236,9 @@ private struct OnboardingPracticeFieldView: View {
     }
   }
 
-  private func switchKeyboardType() {
-    let settings = SharedSettings()
-    settings.keyboardKind = settings.keyboardKind == .standard ? .extended : .standard
+  private func switchKeyboardType(to kind: KeyboardKind) {
+    // Never silently replace a chosen Alphabet keyboard with Microphone Only.
+    SharedSettings().keyboardKind = kind
     self.isFieldFocused = false
     Task {
       try? await Task.sleep(for: Self.focusDelay)
