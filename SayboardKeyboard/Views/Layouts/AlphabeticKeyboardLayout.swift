@@ -551,17 +551,17 @@ struct AlphabeticKeyboardLayout: View {
 
   private var touchPredictionPrefix: String? {
     if self.offersCantonese && !self.composition.isEmpty {
-      // Existing candidate romanization stores Jyutping. Do not apply the
-      // wrong alphabet model to Yale or Yuetyam spellings.
-      return self.romanization == .jyutping ? self.composition.buffer : nil
+      // Candidate pronunciations use canonical Jyutping, but the live input
+      // may mix Jyutping, Yale and Sidney Lau. Neutral hit cells are safer
+      // than predicting the next key using a mismatched romanization.
+      return nil
     }
     return self.activeLatinWord
   }
 
   private var touchPredictionWords: [String] {
     if self.offersCantonese && !self.composition.isEmpty {
-      return self.romanization == .jyutping
-        ? self.candidates.map(\.romanization) : []
+      return []
     }
     return self.latinSuggestions.map(\.text)
   }
