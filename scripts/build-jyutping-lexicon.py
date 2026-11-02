@@ -23,7 +23,10 @@ VALID_ROMANIZATION = re.compile(r"^[a-z]+[1-6](?: [a-z]+[1-6])*$")
 def yale_syllable(jyutping: str) -> str:
     """Unmarked Yale typing alias for a single Jyutping syllable."""
     plain = jyutping.rstrip("123456")
-    if plain.startswith("j"):
+    # jy- is one Jyutping onset; converting j->y must not yield yyu/yyun.
+    if plain.startswith("jy"):
+        plain = "y" + plain[2:]
+    elif plain.startswith("j"):
         plain = "y" + plain[1:]
     elif plain.startswith("z"):
         plain = "j" + plain[1:]
@@ -41,13 +44,17 @@ def yale_spelling(jyutping: str) -> str:
 def sidney_lau_syllable(jyutping: str) -> str:
     """Unmarked Sidney Lau typing alias derived from canonical Jyutping."""
     yale = yale_syllable(jyutping)
-    if yale.startswith("yu"):
-        return "yue" + yale[2:]
-    return (yale.replace("eui", "ui")
-                .replace("eun", "un")
-                .replace("eut", "ut")
-                .replace("yu", "ue")
-                .replace("ou", "o"))
+    # Convert only complete syllable finals. 'jeung' has -eung, NOT -eun:
+    # the previous global replacement incorrectly produced 'jung'.
+    if yale in ("yu", "yun", "yut"):
+        return {"yu": "yue", "yun": "yuen", "yut": "yuet"}[yale]
+    for old, new in (
+        ("eui", "ui"), ("eun", "un"), ("eut", "ut"),
+        ("yun", "uen"), ("yut", "uet"), ("yu", "ue"), ("ou", "o"),
+    ):
+        if yale.endswith(old):
+            return yale[:-len(old)] + new
+    return yale
 
 
 def sidney_lau_spelling(jyutping: str) -> str:

@@ -3,6 +3,11 @@ import Foundation
 @main
 enum UniversalCantoneseSmoke {
   static func main() {
+    precondition(CantoneseSyllableEditing.yaleAlias("jyu5") == "yu")
+    precondition(CantoneseSyllableEditing.yaleAlias("jyun4") == "yun")
+    precondition(CantoneseSyllableEditing.yaleAlias("jyut6") == "yut")
+    precondition(CantoneseSyllableEditing.sidneyLauAlias("zoeng1") == "jeung")
+    precondition(CantoneseSyllableEditing.sidneyLauAlias("goeng1") == "geung")
     precondition(CantoneseRomanizationVariants.variants(for: "mm") == ["mm", "m"])
     precondition(CantoneseRomanizationVariants.variants(for: "ng") == ["ng", "m"])
     precondition(CantoneseRomanizationVariants.variants(for: "yyu") == ["yyu", "yu"])

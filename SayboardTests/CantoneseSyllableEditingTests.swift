@@ -17,6 +17,14 @@ struct CantoneseSyllableEditingTests {
       typed: "yat", canonical: "jat6") == 3)
   }
 
+  @Test func yaleOnsetAndSidneyFinalsDoNotLoseLetters() {
+    #expect(CantoneseSyllableEditing.yaleAlias("jyu5") == "yu")
+    #expect(CantoneseSyllableEditing.yaleAlias("jyun4") == "yun")
+    #expect(CantoneseSyllableEditing.yaleAlias("jyut6") == "yut")
+    #expect(CantoneseSyllableEditing.sidneyLauAlias("zoeng1") == "jeung")
+    #expect(CantoneseSyllableEditing.sidneyLauAlias("goeng1") == "geung")
+  }
+
   @Test func supportsSidneyLauSyllableDeletion() {
     #expect(CantoneseSyllableEditing.lastSyllableLength(
       typed: "gamyuen", canonical: "gam1 jyun4") == 4)

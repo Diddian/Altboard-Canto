@@ -16,6 +16,10 @@ class YaleAliasTests(unittest.TestCase):
         self.assertEqual(MOD.yale_syllable("zi1"), "ji")
         self.assertEqual(MOD.yale_syllable("ce1"), "che")
         self.assertEqual(MOD.yale_syllable("goeng1"), "geung")
+        self.assertEqual(MOD.yale_syllable("zoeng1"), "jeung")
+        self.assertEqual(MOD.yale_syllable("jyu5"), "yu")
+        self.assertEqual(MOD.yale_syllable("jyun4"), "yun")
+        self.assertEqual(MOD.yale_syllable("jyut6"), "yut")
 
     def test_sidney_lau_spelling(self):
         cases = {
@@ -26,6 +30,7 @@ class YaleAliasTests(unittest.TestCase):
             "zeoi3": "jui", "jyun4": "yuen", "jyu5": "yue",
             "zeoi1": "jui", "ceot1": "chut", "jyut6": "yuet",
             "ce1": "che", "zi1": "ji", "zoeng1": "jeung",
+            "goeng1": "geung", "soeng2": "seung",
         }
         for jyutping, expected in cases.items():
             with self.subTest(jyutping=jyutping):

@@ -10,6 +10,18 @@ Statuses: [x] implemented in review branch; [ ] pending or not verified.
 Code changes are not considered shipped until a successful iPhone build and
 physical checks, and a deliberate merge/release.
 
+## P1 — Common long phrases and segmentation (T-013)
+
+- [x] T-013.1 Audit supplemental Cantonese list: 162 entries, just 2 with five or more characters; this excludes the main upstream dictionary.
+- [x] T-013.2 Specify one Traditional Chinese phrase + validated tone-numbered Jyutping reading, deriving Yale and Sidney Lau automatically.
+- [ ] T-013.3 Collect and validate frequency-ranked 3–10 character Hong Kong spoken phrases against upstream and linguistic sources; deduplicate and check tone readings.
+- [ ] T-013.4 Append reviewed entries (not merely proposed examples) and test all three complete spelling forms.
+- [ ] T-013.5 Implement bounded syllable-segmentation / beam search for per-syllable mixed spelling within a long phrase, without 3^n stored combinations.
+- [ ] T-013.6 Measure full-corpus recall, false matches, p95 iPhone latency, memory and English-input interference.
+- [x] T-013.7 Diagnose Action #61: Sidney Lau mapping erroneously converted 'jeung' to 'jung'; correct Yale jy- onset and suffix-only mappings, add regression tests. CI still pending.
+
+See `docs/CANTONESE-LONG-PHRASES-PLAN.md`.
+
 ## P0 — Universal Cantonese Input (T-012)
 
 - [x] T-012.1 Build indexed Jyutping, Yale and Sidney Lau spellings in the same SQLite dictionary; users never select a scheme.
@@ -166,6 +178,6 @@ See docs/live-meeting-transcription-experiment.json.
 ## Ticketing migration
 
 When the repository's GitHub Settings > General > Features > Issues checkbox is
-enabled, create one Issue per T-001…T-012, linking this file and retaining
+enabled, create one Issue per T-001…T-013, linking this file and retaining
 subtask checkboxes. Until then, this Markdown file plus the draft PR review
 serve as the issue board; do not claim that GitHub Issues were created.

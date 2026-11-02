@@ -20,17 +20,22 @@ enum CantoneseSyllableEditing {
 
   static func sidneyLauAlias(_ syllable: String) -> String {
     let yale = yaleAlias(syllable)
-    if yale.hasPrefix("yu") { return "yue" + yale.dropFirst(2) }
-    return yale.replacingOccurrences(of: "eui", with: "ui")
-      .replacingOccurrences(of: "eun", with: "un")
-      .replacingOccurrences(of: "eut", with: "ut")
-      .replacingOccurrences(of: "yu", with: "ue")
-      .replacingOccurrences(of: "ou", with: "o")
+    if yale == "yu" { return "yue" }
+    if yale == "yun" { return "yuen" }
+    if yale == "yut" { return "yuet" }
+    for (old, new) in [
+      ("eui", "ui"), ("eun", "un"), ("eut", "ut"),
+      ("yun", "uen"), ("yut", "uet"), ("yu", "ue"), ("ou", "o")
+    ] {
+      if yale.hasSuffix(old) { return String(yale.dropLast(old.count)) + new }
+    }
+    return yale
   }
 
   static func yaleAlias(_ syllable: String) -> String {
     var base = syllable.trimmingCharacters(in: CharacterSet(charactersIn: "123456"))
-    if base.hasPrefix("j") { base = "y" + base.dropFirst() }
+    if base.hasPrefix("jy") { base = "y" + base.dropFirst(2) }
+    else if base.hasPrefix("j") { base = "y" + base.dropFirst() }
     else if base.hasPrefix("z") { base = "j" + base.dropFirst() }
     else if base.hasPrefix("c") { base = "ch" + base.dropFirst() }
     return base.replacingOccurrences(of: "oe", with: "eu")
