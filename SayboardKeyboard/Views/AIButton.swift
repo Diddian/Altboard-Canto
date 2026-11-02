@@ -21,6 +21,7 @@ struct AIButton: View {
             self.isPressed = pressing
             if pressing {
               self.longPressFired = false
+              KeyboardHaptics.key()
             }
           },
           perform: {
@@ -33,19 +34,24 @@ struct AIButton: View {
           TapGesture()
             .onEnded {
               if !self.longPressFired {
-                KeyboardHaptics.key()
                 self.onTap()
               }
             }
         )
     } else {
       Button {
-        KeyboardHaptics.key()
         self.onTap()
       } label: {
         self.iconView
       }
-      .buttonStyle(RectKeyStyle(fixedWidth: self.fixedWidth, shape: self.shape))
+      .buttonStyle(RectKeyStyle(
+        fixedWidth: self.fixedWidth,
+        shape: self.shape,
+        pressedBinding: self.$isPressed
+      ))
+      .onChange(of: self.isPressed) { _, pressed in
+        if pressed { KeyboardHaptics.key() }
+      }
     }
   }
 

@@ -69,6 +69,7 @@ final class KeyboardViewController: UIInputViewController {
       self.setupKeyboardView()
     }
     self.keyboardState.refresh()
+    KeyboardHaptics.prepare()
     if self.keyboardState.isRecording {
       self.keyboardState.startLevelPolling()
     } else if !self.keyboardState.isProcessing {
@@ -210,6 +211,7 @@ final class KeyboardViewController: UIInputViewController {
   private func hostDidEnterForeground() {
     self.syncFullAccessIfChanged()
     self.keyboardState.refresh()
+    KeyboardHaptics.prepare()
     if self.keyboardState.isRecording {
       self.keyboardState.startLevelPolling()
     }

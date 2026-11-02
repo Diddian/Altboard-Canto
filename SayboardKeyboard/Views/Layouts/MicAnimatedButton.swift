@@ -91,7 +91,11 @@ struct MicAnimatedButton: View {
       width: self.sizing.buttonWidth,
       height: self.sizing.buttonHeight,
       cornerRadius: self.sizing.cornerRadius,
+      pressedBinding: self.$isPressed,
     ))
+    .onChange(of: self.isPressed) { _, isDown in
+      if isDown { KeyboardHaptics.key() }
+    }
     .allowsHitTesting(!self.keyboardState.isProcessing)
     .onChange(of: self.keyboardState.isRecording, self.handleRecordingChanged)
     .task(id: self.keyboardState.isProcessing, self.observeProcessing)
@@ -106,6 +110,7 @@ struct MicAnimatedButton: View {
 
   private static let spinnerDelay = Duration.milliseconds(600)
 
+  @State private var isPressed = false
   @State private var showSpinner = false
   @State private var isMorphing = false
   @State private var isSpinnerMorphing = false
@@ -168,7 +173,6 @@ struct MicAnimatedButton: View {
   }
 
   private func handleTap() {
-    KeyboardHaptics.key()
     self.keyboardState.clearFinalOutputPreview()
     self.keyboardState.dismissMicHint()
     if self.keyboardState.isRecording {
@@ -314,13 +318,18 @@ struct MicButtonStyle: ButtonStyle {
   let width: CGFloat
   let height: CGFloat
   let cornerRadius: CGFloat
+  var pressedBinding: Binding<Bool>?
 
   func makeBody(configuration: Configuration) -> some View {
     configuration.label
       .foregroundStyle(.primary)
       .frame(width: self.width, height: self.height)
       .background {
-        RoundedRectangle(cornerRadius: self.cornerRadius, style: .continuous).fill(Color(.keyBackground))
+        RoundedRectangle(cornerRadius: self.cornerRadius, style: .continuous)
+          .fill(Color(configuration.isPressed ? .keyPressedBackground : .keyBackground))
+      }
+      .onChange(of: configuration.isPressed) { _, pressed in
+        self.pressedBinding?.wrappedValue = pressed
       }
   }
 }

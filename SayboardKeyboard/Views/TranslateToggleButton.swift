@@ -5,6 +5,7 @@ private struct TranslateKeyStyle: ButtonStyle {
   let fixedWidth: CGFloat
   let isActive: Bool
   var shape = KeyShape.rounded
+  var pressedBinding: Binding<Bool>?
 
   func makeBody(configuration: Configuration) -> some View {
     let pressed = configuration.isPressed
@@ -15,6 +16,9 @@ private struct TranslateKeyStyle: ButtonStyle {
       .frame(width: self.fixedWidth, height: 45.kbScaled)
       .keyBackground(shape: self.shape, fill: fill, isPressed: pressed)
       .animation(.easeOut(duration: 0.12), value: self.isActive)
+      .onChange(of: configuration.isPressed) { _, down in
+        self.pressedBinding?.wrappedValue = down
+      }
   }
 }
 
@@ -30,6 +34,8 @@ struct TranslateToggleButton: View {
   @AppStorage(SharedKey.voiceCustomLanguage, store: AppGroup.sharedDefaults ?? .standard)
   private var customLanguage = ""
 
+  @State private var isPressed = false
+
   private var target: VoiceOutputTarget {
     VoiceOutputTarget(rawValue: self.targetRawValue) ?? .original
   }
@@ -42,7 +48,6 @@ struct TranslateToggleButton: View {
 
   var body: some View {
     Button {
-      KeyboardHaptics.key()
       let next = PreferredVoiceLanguages.next(
         target: self.target,
         custom: self.customLanguage,
@@ -63,8 +68,12 @@ struct TranslateToggleButton: View {
     .buttonStyle(TranslateKeyStyle(
       fixedWidth: self.fixedWidth,
       isActive: self.target != .original,
-      shape: self.shape
+      shape: self.shape,
+      pressedBinding: self.$isPressed
     ))
+    .onChange(of: self.isPressed) { _, down in
+      if down { KeyboardHaptics.key() }
+    }
     .accessibilityLabel("Dictation output: \(self.currentLabel). Tap to change language.")
   }
 }

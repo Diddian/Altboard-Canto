@@ -57,6 +57,8 @@ struct SpaceBarKey: View {
     if self.pressStartTime == nil {
       self.pressStartTime = value.time
       self.isPressed = true
+      // Touch-down, not touch-up: align the pulse with Apple's keyboard feel.
+      KeyboardHaptics.key()
     }
 
     guard let startTime = self.pressStartTime else { return }
@@ -87,7 +89,6 @@ struct SpaceBarKey: View {
     if !self.isTrackpadActive {
       KeyboardInputTrace.record(.spaceTouched)
       self.onSpace()
-      KeyboardHaptics.key()
     }
 
     self.isPressed = false

@@ -23,6 +23,38 @@ private enum KeyboardCoreHaptic {
   private static var playerIntensity: Float?
   private static var unavailableError: String?
 
+  /// Prepare the engine and pattern before any key is pressed. Startup is
+  /// considerably more expensive than playing an already-compiled transient.
+  static func prewarm(strength: Double) {
+    guard engine == nil, unavailableError == nil,
+          CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
+    do {
+      let newEngine = try CHHapticEngine()
+      newEngine.playsHapticsOnly = true
+      newEngine.isAutoShutdownEnabled = false
+      try newEngine.start()
+      engine = newEngine
+      let intensity = Float(max(0.15, min(1.0, strength)))
+      let event = CHHapticEvent(
+        eventType: .hapticTransient,
+        parameters: [
+          CHHapticEventParameter(parameterID: .hapticIntensity, value: intensity),
+          CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.52)
+        ],
+        relativeTime: 0
+      )
+      let pattern = try CHHapticPattern(events: [event], parameters: [])
+      player = try newEngine.makePlayer(with: pattern)
+      playerIntensity = intensity
+    } catch {
+      // A keyboard extension can reject engine startup; preserve the existing
+      // SwiftUI fallback on the first key rather than blocking view creation.
+      engine = nil
+      player = nil
+      playerIntensity = nil
+    }
+  }
+
   static func play(strength: Double) -> String? {
     if let unavailableError { return unavailableError }
     guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else {
@@ -171,6 +203,9 @@ enum KeyboardHaptics {
   }
 
   static func prepare() {
+    if SharedSettings().keyboardHapticDriver == .coreHaptics {
+      KeyboardCoreHaptic.prewarm(strength: SharedSettings().keyboardHapticStrength)
+    }
     selection.prepare()
     soft.prepare()
     light.prepare()
