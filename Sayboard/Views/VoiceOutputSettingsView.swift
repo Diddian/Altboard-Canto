@@ -69,7 +69,7 @@ struct VoiceOutputSettingsView: View {
               .font(.footnote).foregroundStyle(.orange)
           }
         }
-        Picker("Writing style", selection: self.$register) {
+        Picker("Dictation tone", selection: self.$register) {
           ForEach(VoiceOutputRegister.allCases) { option in
             Text(option.title).tag(option.rawValue)
           }

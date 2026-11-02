@@ -73,7 +73,6 @@ struct SettingsView: View, Equatable {
     let shared = SharedSettings()
     _selectedRetentionPolicy = State(initialValue: shared.retentionPolicy)
     _selectedAutoStopPolicy = State(initialValue: shared.sessionAutoStopPolicy)
-    _selectedKeyboardKind = State(initialValue: shared.keyboardKind)
   }
 
   var body: some View {
@@ -86,6 +85,7 @@ struct SettingsView: View, Equatable {
       #endif
       self.sessionSection
       self.historySection
+      self.storageSection
       TextOutputSection()
       Section {
         NavigationLink {
@@ -102,6 +102,9 @@ struct SettingsView: View, Equatable {
           DiagnosticsView()
         } label: {
           Label("Diagnostics", systemImage: "stethoscope")
+        }
+        if self.setupChecklist.isComplete {
+          self.setupRow
         }
       } header: {
         Text("Troubleshooting")
@@ -131,9 +134,6 @@ struct SettingsView: View, Equatable {
         self.speechService.session.updateTimeout()
       }
     }
-    .onChange(of: self.selectedKeyboardKind) { _, newValue in
-      self.settings.keyboardKind = newValue
-    }
   }
 
   nonisolated static func ==(_: Self, _: Self) -> Bool {
@@ -155,7 +155,21 @@ struct SettingsView: View, Equatable {
   @State private var settings = SharedSettings()
   @State private var selectedRetentionPolicy: HistoryRetentionPolicy
   @State private var selectedAutoStopPolicy: SessionAutoStopPolicy
-  @State private var selectedKeyboardKind: KeyboardKind
+  // Read the shared keyboard type live. A @State snapshot could show a stale
+  // type after onboarding or an extension-side preference change.
+  @AppStorage(SharedKey.keyboardKind, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var keyboardKindRaw = KeyboardKind.standard.rawValue
+
+  private var selectedKeyboardKind: KeyboardKind {
+    KeyboardKind(rawValue: self.keyboardKindRaw) ?? .standard
+  }
+
+  private var keyboardKindBinding: Binding<KeyboardKind> {
+    Binding(
+      get: { self.selectedKeyboardKind },
+      set: { self.keyboardKindRaw = $0.rawValue },
+    )
+  }
   @State private var showClearHistoryConfirmation = false
   @State private var showClearCacheConfirmation = false
   @State private var historyInfoText = ""
@@ -305,7 +319,7 @@ struct SettingsView: View, Equatable {
   private var keyboardSection: some View {
     Section {
       NavigationLink {
-        KeyboardSettingsView(selectedKind: self.$selectedKeyboardKind)
+        KeyboardSettingsView(selectedKind: self.keyboardKindBinding)
       } label: {
         HStack {
           Text("Keyboard")
@@ -317,18 +331,8 @@ struct SettingsView: View, Equatable {
     }
   }
 
-  private var aboutSection: some View {
-    Section("About") {
-      self.appLanguageRow
-
-      if self.setupChecklist.isComplete {
-        self.setupRow
-      }
-
-      #if APPSTORE
-      FullVersionRow()
-      #endif
-
+  private var storageSection: some View {
+    Section("Storage") {
       Button(role: .destructive) {
         self.showClearCacheConfirmation = true
       } label: {
@@ -352,6 +356,16 @@ struct SettingsView: View, Equatable {
       } message: {
         Text(self.clearCacheMessage)
       }
+    }
+  }
+
+  private var aboutSection: some View {
+    Section("About") {
+      self.appLanguageRow
+
+      #if APPSTORE
+      FullVersionRow()
+      #endif
 
       HStack {
         Text("Version")

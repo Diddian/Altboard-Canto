@@ -17,7 +17,7 @@ struct OnboardingKeyboardTypeView: View {
           self.option(.standard, subtitle: "Large microphone for dictation")
           self.option(.extended, subtitle: "Numbers, symbols and a microphone")
         }
-        self.option(.alphabetic, subtitle: "Type in English using QWERTZ or QWERTY, with built-in dictation")
+        self.option(.alphabetic, subtitle: "Type with QWERTZ or QWERTY, plus voice dictation")
       }
       .fixedSize(horizontal: false, vertical: true)
       .padding(.horizontal, 16)
