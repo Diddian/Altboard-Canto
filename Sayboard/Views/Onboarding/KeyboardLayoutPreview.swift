@@ -65,7 +65,6 @@ struct KeyboardLayoutPreview: View {
   private static let punctuationKeyWidth: CGFloat = 44.87
   private static let wideKeyWidth: CGFloat = 54.84
   private static let groupGap: CGFloat = 12
-  private static let spaceGlyphBottom: CGFloat = 10
   private static let numbersRow = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
   private static let symbolsRow = ["-", "/", ":", ";", "(", ")", "$", "&", "@", "\""]
   private static let punctuationRow = [".", ",", "?", "!", "'"]

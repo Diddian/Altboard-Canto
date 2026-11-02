@@ -19,6 +19,7 @@ physical checks, and a deliberate merge/release.
 - [x] T-001.5 Numeric/symbol third row: remove duplicate ABC, keep #+=/123 toggle and bottom-row ABC.
 - [x] T-001.6 Space after punctuation returns to letters; numbers stay on numbers.
 - [x] T-001.7 Make the pressed key fill visibly different on touch, including brief quick-tap highlight.
+- [x] T-001.7a Synchronize the onboarding preview's blank Space, small A, filled Emoji and row insets; remove its unused Space glyph position.
 - [ ] T-001.8 Confirm no clipping or unexpected keyboard height with iPhone 17 Pro Max; both QWERTZ and QWERTY.
 - [ ] T-001.9 Compare dark/light palette and host rounded corners with native keyboard in ChatGPT, History and Notes.
 
