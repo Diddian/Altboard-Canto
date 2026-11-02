@@ -4,6 +4,10 @@ import Foundation
 enum VerifyKeyboardCore {
   static func main() {
     precondition(SentenceCapitalization.shouldUseUppercase(after: nil))
+    precondition(EnglishCaseSuggestion.replacement(for: "ok") == "OK")
+    precondition(EnglishCaseSuggestion.replacement(for: "Ok") == "OK")
+    precondition(EnglishCaseSuggestion.replacement(for: "OK") == nil)
+    precondition(EnglishCaseSuggestion.replacement(for: "okay") == nil)
     precondition(SentenceCapitalization.shouldUseUppercase(after: "Hello. "))
     precondition(SentenceCapitalization.shouldUseUppercase(after: "Hello\n  "))
     precondition(!SentenceCapitalization.shouldUseUppercase(after: "Hello there"))

@@ -37,3 +37,5 @@ The workflow `.github/workflows/build-unsigned-ipa.yml` uploads `Altboard-Canto-
 - The Backspace intercept deletes a **single final romanized syllable** only for an exact dictionary match and a verified suffix. `gamyat` or `gamjat` → `gam` by deleting `yat` or `jat`; `gam1jat6` deletes `jat6`. Misspellings such as `gamyzt` fall through to standard single-letter deletion.
 - After choosing `今日`, the composition is cleared, so the host's normal delete removes one Chinese character (`日`) at a time.
 - The keyboard input diagnostic trace records only the type of action (space, candidate, syllable deletion), never any typed content.
+
+- The candidate bar offers `OK` as a case correction when the user types `ok` or `Ok`, even after a Chinese character and even without Chinese dictionary matches. The literal typed form remains selectable separately. Pressing Space still keeps literal text.

@@ -162,6 +162,7 @@ private struct KeyboardHeightPreview: View {
     VStack(spacing: 0) {
       if self.kind == .alphabetic {
         self.alphabetToolbar
+          .offset(y: -8)
         VStack(spacing: 11) {
           self.letterRow(self.letterArrangement.rows[0], inset: 6.67)
           self.letterRow(self.letterArrangement.rows[1], inset: 28)

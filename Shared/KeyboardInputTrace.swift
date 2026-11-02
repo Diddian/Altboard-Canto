@@ -8,6 +8,7 @@ enum KeyboardInputTrace {
     case spaceTouched
     case spaceCommitted
     case latinKept
+    case latinSuggestionChosen
     case candidateChosen
     case syllableDeleted
     case ordinaryDelete

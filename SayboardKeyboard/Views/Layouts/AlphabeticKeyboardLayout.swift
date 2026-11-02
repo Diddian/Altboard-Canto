@@ -174,6 +174,21 @@ struct AlphabeticKeyboardLayout: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Keep typed Latin text")
 
+        if let suggested = EnglishCaseSuggestion.replacement(for: self.currentLiteral) {
+          Button {
+            KeyboardHaptics.key()
+            self.chooseLatinSuggestion(suggested)
+          } label: {
+            Text(verbatim: suggested)
+              .font(.system(size: 20.kbScaled, weight: .medium))
+              .foregroundStyle(.primary)
+              .padding(.horizontal, 6.kbScaled)
+              .frame(height: 43.kbScaled)
+          }
+          .buttonStyle(.plain)
+          .accessibilityLabel("Replace with " + suggested)
+        }
+
         if !self.candidates.isEmpty {
           Divider().frame(height: 24.kbScaled)
         }
@@ -373,6 +388,19 @@ struct AlphabeticKeyboardLayout: View {
     } else {
       self.updateCandidates()
     }
+    self.refreshAutomaticShift()
+  }
+
+  private func chooseLatinSuggestion(_ text: String) {
+    guard self.trackedTextMatches else {
+      self.clearComposition()
+      return
+    }
+    let count = self.composition.buffer.count
+    self.clearComposition()
+    for _ in 0..<count { self.proxy.deleteBackward() }
+    self.proxy.insertText(text)
+    KeyboardInputTrace.record(.latinSuggestionChosen)
     self.refreshAutomaticShift()
   }
 
