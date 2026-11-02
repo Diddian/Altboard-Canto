@@ -141,7 +141,9 @@ struct AlphabeticKeyboardLayout: View {
 
   private var toolbar: some View {
     HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
-      if self.page == .letters &&
+      if self.keyboardState.showLLMActions {
+        KeyboardLLMActionsToolbar(proxy: self.proxy, keyboardState: self.keyboardState)
+      } else if self.page == .letters &&
           ((self.offersCantonese && !self.composition.isEmpty) || self.activeLatinWord != nil) {
         // The full toolbar becomes an iOS-style prediction strip for the
         // currently typed word, in Cantonese, German, English or another

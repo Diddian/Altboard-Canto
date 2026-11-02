@@ -67,6 +67,9 @@ struct ExtendedKeyboardLayout: View {
 extension ExtendedKeyboardLayout {
   private var chromeRow: some View {
     HStack(alignment: .center, spacing: KeyboardChromeMetrics.buttonSpacing) {
+      if self.keyboardState.showLLMActions {
+        KeyboardLLMActionsToolbar(proxy: self.proxy, keyboardState: self.keyboardState)
+      } else {
       HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
         if self.keyboardState.showSettingsKey {
           KeyButton(
@@ -96,8 +99,9 @@ extension ExtendedKeyboardLayout {
       .allowsHitTesting(!self.keyboardState.auxiliaryControlsHidden)
       .animation(.easeOut(duration: 0.22), value: self.keyboardState.auxiliaryControlsHidden)
       self.micButton
+      }
     }
-    .padding(.leading, 12.kbScaled)
+    .padding(.leading, self.keyboardState.showLLMActions ? 4.kbScaled : 12.kbScaled)
     .animation(.easeInOut(duration: 0.35), value: self.keyboardState.selectedVariantSupportsTranslation)
     .animation(.easeInOut(duration: 0.35), value: self.keyboardState.showsAIButton)
     .animation(.easeInOut(duration: 0.25), value: self.keyboardState.hasLLMHistory)

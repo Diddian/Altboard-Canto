@@ -72,12 +72,16 @@ struct StandardKeyboardLayout: View {
         : max(75.kbScaled, geometry.size.width - reserved)
 
       ZStack(alignment: .center) {
+        if self.keyboardState.showLLMActions {
+          KeyboardLLMActionsToolbar(proxy: self.proxy, keyboardState: self.keyboardState)
+        } else {
         self.sideButtons
           .padding(.horizontal, 4.kbScaled)
         if !KeyboardMetrics.isCompactStandard {
           KeyboardStatusStrip(keyboardState: self.keyboardState)
             .frame(width: available, height: KeyboardChromeMetrics.keyHeight)
             .allowsHitTesting(false)
+        }
         }
       }
     }

@@ -31,7 +31,7 @@ struct LLMActionBar: View {
           .frame(width: 24.kbScaled)
       }
     }
-    .onAppear { UIScrollView.appearance().delaysContentTouches = false }
+    .frame(height: KeyboardChromeMetrics.keyHeight)
   }
 
   @ViewBuilder

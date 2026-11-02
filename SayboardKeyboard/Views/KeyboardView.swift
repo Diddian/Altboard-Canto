@@ -165,20 +165,8 @@ struct KeyboardView: View {
         }
       }
       .padding(.top, self.keyboardState.keyboardKind == .extended ? 3.kbScaled : 0)
-      .overlay(alignment: .top) {
-        if self.keyboardState.showLLMActions {
-          LLMActionBar(
-            onSelectAction: { action, customId in
-              self.keyboardState.showLLMActions = false
-              self.proxy.requestLLMProcessing(action, customId)
-            },
-            keyboardState: self.keyboardState,
-          )
-          .padding(.top, 8.kbScaled)
-          .transition(.identity)
-        }
-      }
       .onChange(of: self.keyboardState.showLLMActions) { _, visible in
+        // The action picker REPLACES the toolbar; it never overlays active keys.
         self.proxy.setActionBarVisible(visible)
       }
       .onChange(of: self.keyboardState.isRecording) { _, isRecording in
