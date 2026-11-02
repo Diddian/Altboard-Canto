@@ -12,6 +12,7 @@ struct KeyboardSettingsView: View {
             Text(LocalizedStringKey(kind.displayNameKey)).tag(kind)
           }
         }
+        Toggle("Show Settings Key", isOn: self.$showSettingsKey)
 
         if self.selectedKind == .standard {
           Picker("Microphone Layout", selection: self.$microphoneLayoutRaw) {
@@ -111,6 +112,8 @@ struct KeyboardSettingsView: View {
   }
 
   @StateObject private var sensoryPulse = KeyboardSensoryPulse.shared
+  @AppStorage(SharedKey.keyboardShowSettingsKey, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var showSettingsKey = true
 
   @AppStorage(SharedKey.microphoneKeyboardLayout, store: UserDefaults(suiteName: AppGroup.identifier))
   private var microphoneLayoutRaw = MicrophoneKeyboardLayout.defaultLayout.rawValue

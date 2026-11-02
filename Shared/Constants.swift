@@ -139,6 +139,7 @@ enum SharedKey {
   static let keyboardLetterArrangement = "keyboardLetterArrangement"
   static let microphoneKeyboardLayout = "microphoneKeyboardLayout"
   static let keyboardHapticsEnabled = "keyboardHapticsEnabled"
+  static let keyboardShowSettingsKey = "keyboardShowSettingsKey"
   static let keyboardTouchDebugOverlay = "keyboardTouchDebugOverlay"
   static let keyboardHapticDriver = "keyboardHapticDriver"
   static let keyboardAutoCapitalizationEnabled = "keyboardAutoCapitalizationEnabled"

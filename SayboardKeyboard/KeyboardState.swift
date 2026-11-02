@@ -17,6 +17,7 @@ final class KeyboardState: ObservableObject {
   @Published var isMicrophoneAuthorized = false
   @Published var hasFullAccess = false
   @Published var useCustomSpaceBar = false
+  @Published var showSettingsKey = true
   @Published var isTranslationMode = false
   @Published var showsEmojiPicker = false
   @Published var selectedVariantSupportsTranslation = false
@@ -120,6 +121,7 @@ final class KeyboardState: ObservableObject {
     self.parakeetV3NeedsRedownload = self.settings.parakeetV3NeedsRedownload
     self.isMicrophoneAuthorized = self.settings.isMicrophoneAuthorized
     self.useCustomSpaceBar = self.settings.useCustomSpaceBar
+    self.showSettingsKey = self.settings.keyboardShowSettingsKey
     self.keyboardKind = self.settings.keyboardKind
     let selectedVariant = self.settings.selectedVariant
     self.selectedVariantSupportsTranslation = selectedVariant.supportsTranslation

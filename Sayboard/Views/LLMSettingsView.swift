@@ -89,7 +89,7 @@ struct LLMSettingsView: View {
         SharedSettings().defaultLLMActionSelection = newValue
       }
     } footer: {
-      Text("This action will run automatically after every dictated text.")
+      Text("Automatic actions affect dictated transcripts. Manual AI actions are separate and can process text selected in any input field.")
     }
   }
 
