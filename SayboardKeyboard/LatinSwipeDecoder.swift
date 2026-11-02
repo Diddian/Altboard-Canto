@@ -145,10 +145,14 @@ enum LatinSwipeDecoder {
 final class LatinSwipeSession {
   private(set) var points = [LatinSwipePoint]()
   private(set) var visited = Set<String>()
+  private var cachedCenters = [String: LatinSwipePoint]()
 
   func begin(_ point: LatinSwipePoint, arrangement: LetterKeyArrangement, width: Double) {
     points = []
     visited = []
+    cachedCenters = LatinSwipeDecoder.centers(
+      arrangement: arrangement, fullWidth: width
+    )
     append(point, arrangement: arrangement, width: width)
   }
 
@@ -169,9 +173,9 @@ final class LatinSwipeSession {
         )
       } ?? point
       points.append(next)
-      if let key = LatinSwipeDecoder.nearestLetter(
-        to: next, arrangement: arrangement, fullWidth: width
-      ) {
+      if let key = cachedCenters.min(by: {
+        $0.value.distance(to: next) < $1.value.distance(to: next)
+      })?.key {
         visited.insert(key)
       }
     }
@@ -184,5 +188,6 @@ final class LatinSwipeSession {
   func reset() {
     points.removeAll(keepingCapacity: true)
     visited.removeAll(keepingCapacity: true)
+    cachedCenters.removeAll(keepingCapacity: true)
   }
 }

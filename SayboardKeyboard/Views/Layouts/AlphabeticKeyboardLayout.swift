@@ -39,6 +39,7 @@ struct AlphabeticKeyboardLayout: View {
   )
   private var swipeTypingEnabled = false
   @State private var latinRefreshTask: Task<Void, Never>?
+  @State private var cantoneseRefreshTask: Task<Void, Never>?
   @State private var cursorRefreshTask: Task<Void, Never>?
   @State private var isCursorTracking = false
   @AppStorage(
@@ -600,13 +601,28 @@ struct AlphabeticKeyboardLayout: View {
 
   private func updateCandidates() {
     guard !self.isCursorTracking else { return }
-    self.candidates = self.offersCantonese && !self.composition.isEmpty
-      ? JyutpingDictionary.shared.candidates(for: self.composition.buffer, scheme: self.romanization)
-      : []
-    if self.showsCandidateGrid {
-      self.expandedCandidates = self.candidates.isEmpty ? [] : JyutpingDictionary.shared.candidates(
-        for: self.composition.buffer, scheme: self.romanization, limit: 200
-      )
+    self.cantoneseRefreshTask?.cancel()
+    self.candidates.removeAll()
+    self.expandedCandidates.removeAll()
+    if self.offersCantonese && !self.composition.isEmpty {
+      let prefix = self.composition.buffer
+      let scheme = self.romanization
+      self.cantoneseRefreshTask = Task { @MainActor in
+        // Yield a frame before the SQLite query so finger-down highlights and
+        // host text insertion are not delayed by synchronous candidate search.
+        do { try await Task.sleep(for: .milliseconds(24)) } catch { return }
+        guard !Task.isCancelled, !self.isCursorTracking,
+              self.composition.buffer == prefix,
+              self.romanization == scheme else { return }
+        let newCandidates = JyutpingDictionary.shared.candidates(for: prefix, scheme: scheme)
+        guard !Task.isCancelled, self.composition.buffer == prefix else { return }
+        self.candidates = newCandidates
+        if self.showsCandidateGrid && !newCandidates.isEmpty {
+          self.expandedCandidates = JyutpingDictionary.shared.candidates(
+            for: prefix, scheme: scheme, limit: 200
+          )
+        }
+      }
     }
 
     let typed = self.page == .letters
@@ -637,6 +653,7 @@ struct AlphabeticKeyboardLayout: View {
     self.swipeAlternatives.removeAll()
     self.cursorRefreshTask?.cancel()
     self.latinRefreshTask?.cancel()
+    self.cantoneseRefreshTask?.cancel()
     self.isCursorTracking = true
     self.activeLatinWord = nil
     self.latinSuggestions.removeAll()
@@ -661,6 +678,7 @@ struct AlphabeticKeyboardLayout: View {
 
   private func clearComposition() {
     self.composition.clear()
+    self.cantoneseRefreshTask?.cancel()
     self.candidates.removeAll()
     self.expandedCandidates.removeAll()
     self.showsCandidateGrid = false
