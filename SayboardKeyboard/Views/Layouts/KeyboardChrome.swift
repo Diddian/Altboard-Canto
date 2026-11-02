@@ -142,6 +142,7 @@ struct KeyboardBottomRow: View {
   @ObservedObject var keyboardState: KeyboardState
   var alphabeticModeLabel: String? = nil
   var onAlphabeticModeSwitch: (() -> Void)? = nil
+  var showsAlphabetIndicator = true
   var onSpaceAction: (() -> Void)? = nil
   var onReturnAction: (() -> Void)? = nil
   var onTextEdited: (() -> Void)? = nil
@@ -182,7 +183,7 @@ struct KeyboardBottomRow: View {
 
       SpaceBarKey(
         useCustomSpaceBar: self.keyboardState.useCustomSpaceBar,
-        showsAlphabetIndicator: self.onAlphabeticModeSwitch != nil,
+        showsAlphabetIndicator: self.onAlphabeticModeSwitch != nil && self.showsAlphabetIndicator,
         onSpace: {
           if let action = self.onSpaceAction { action() } else { self.proxy.insertSpace() }
           self.onTextEdited?()

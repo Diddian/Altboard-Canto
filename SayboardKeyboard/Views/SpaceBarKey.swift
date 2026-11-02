@@ -58,10 +58,7 @@ struct SpaceBarKey: View {
         .opacity(self.isTrackpadActive ? 0.05 : 0.2)
         .frame(height: 21.36.kbScaled)
     } else {
-      Image(systemName: "space")
-        .font(.system(size: 22.kbScaled))
-        .frame(maxHeight: .infinity, alignment: .bottom)
-        .padding(.bottom, 10.kbScaled)
+      Color.clear
     }
   }
 

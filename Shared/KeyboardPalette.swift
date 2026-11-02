@@ -9,7 +9,7 @@ enum KeyboardPalette {
   }
   static let keyFill = UIColor { traits in
     traits.userInterfaceStyle == .dark
-      ? UIColor(red: 68 / 255, green: 68 / 255, blue: 68 / 255, alpha: 1)
+      ? UIColor(red: 67 / 255, green: 67 / 255, blue: 67 / 255, alpha: 1)
       : .white
   }
   // Measured from the supplied native prediction-strip screenshot
@@ -26,7 +26,7 @@ enum KeyboardPalette {
   }
   static let pressedFill = UIColor { traits in
     traits.userInterfaceStyle == .dark
-      ? UIColor(red: 92 / 255, green: 92 / 255, blue: 92 / 255, alpha: 1)
+      ? UIColor(red: 120 / 255, green: 120 / 255, blue: 120 / 255, alpha: 1)
       : UIColor(white: 0.78, alpha: 1)
   }
 }

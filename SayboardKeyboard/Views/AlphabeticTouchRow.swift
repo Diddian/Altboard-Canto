@@ -15,6 +15,8 @@ struct AlphabeticTouchRow: View {
   let onInsert: (String) -> Void
 
   @State private var activeIndex: Int?
+  @State private var releasedHighlightIndex: Int?
+  @State private var releaseHighlightTask: Task<Void, Never>?
   @State private var showingAlternates = false
   @State private var alternateIndex = 0
   @State private var initialX: CGFloat = 0
@@ -36,7 +38,7 @@ struct AlphabeticTouchRow: View {
             uppercase: self.uppercase,
             column: index,
             rowCount: self.letters.count,
-            pressed: self.activeIndex == index,
+            pressed: self.activeIndex == index || self.releasedHighlightIndex == index,
             choosing: self.activeIndex == index && self.showingAlternates,
             selected: self.alternateIndex
           )
@@ -74,7 +76,11 @@ struct AlphabeticTouchRow: View {
     }
     .frame(height: self.bandHeight)
     .zIndex(self.activeIndex == nil ? 0 : 10)
-    .onDisappear { self.reset() }
+    .onDisappear {
+      self.releaseHighlightTask?.cancel()
+      self.releasedHighlightIndex = nil
+      self.reset()
+    }
   }
 
   private func target(at x: CGFloat, width: CGFloat, weights: [Double]) -> Int? {
@@ -93,6 +99,8 @@ struct AlphabeticTouchRow: View {
     guard !self.letters.isEmpty else { return }
     if self.activeIndex == nil {
       guard let index = self.target(at: start, width: width, weights: weights) else { return }
+      self.releaseHighlightTask?.cancel()
+      self.releasedHighlightIndex = nil
       self.activeIndex = index
       self.initialX = start
       self.showingAlternates = false
@@ -126,6 +134,15 @@ struct AlphabeticTouchRow: View {
     let option = self.showingAlternates ? min(self.alternateIndex, options.count - 1) : 0
     let output = options[option]
     self.reset()
+    // Keep a very short highlight after quick taps, so SwiftUI can display
+    // the pressed face even when down and up occur in the same frame.
+    self.releasedHighlightIndex = index
+    self.releaseHighlightTask?.cancel()
+    self.releaseHighlightTask = Task { @MainActor in
+      do { try await Task.sleep(for: .milliseconds(80)) } catch { return }
+      guard !Task.isCancelled else { return }
+      self.releasedHighlightIndex = nil
+    }
     self.onInsert(output)
   }
 

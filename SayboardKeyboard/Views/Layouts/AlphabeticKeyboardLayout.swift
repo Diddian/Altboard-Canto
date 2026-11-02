@@ -22,6 +22,7 @@ struct AlphabeticKeyboardLayout: View {
   private var autoCapitalize = true
 
   @State private var page = AlphabeticPage.letters
+  @State private var lastInputWasSymbol = false
   @State private var shiftActive = true
   @State private var capsLock = false
   @State private var lastShiftTap: Date?
@@ -92,6 +93,7 @@ struct AlphabeticKeyboardLayout: View {
         keyboardState: self.keyboardState,
         alphabeticModeLabel: self.page == .letters ? "?123" : "ABC",
         onAlphabeticModeSwitch: { self.toggleNumberPage() },
+        showsAlphabetIndicator: self.page == .letters,
         onSpaceAction: { self.handleSpace() },
         onReturnAction: { self.handleReturn() }
       )
@@ -313,16 +315,13 @@ struct AlphabeticKeyboardLayout: View {
           onHostDeletion: { self.handleHostDeletion() }
         )
       }
-      .padding(.horizontal, Self.edgeInset.kbScaled)
+      .padding(.horizontal, KeyboardLayoutGeometry.alphabetSpecialRowInset.kbScaled)
 
     case .numbers, .symbols:
       HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
-        KeyButton(content: .symbol("ABC", fontSize: 15), fixedWidth: 51.kbScaled) {
-          self.page = .letters
-        }
         KeyButton(
           content: .symbol(self.page == .numbers ? "#+=" : "123", fontSize: 15),
-          fixedWidth: 49.kbScaled
+          fixedWidth: 50.kbScaled
         ) {
           self.page = self.page == .numbers ? .symbols : .numbers
         }
@@ -407,6 +406,8 @@ struct AlphabeticKeyboardLayout: View {
       self.clearComposition()
       self.proxy.insertText(character)
     }
+    self.lastInputWasSymbol = self.page != .letters
+      && !character.allSatisfy({ $0.isNumber })
     self.didInsertLiteral(character)
     self.updateCandidates()
   }
@@ -521,16 +522,20 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private func handleSpace() {
-    // Space *never* forces a Chinese candidate. Commit the already-visible
-    // Latin spelling and let the next word start a fresh composition.
+    // After punctuation, Space restores the Alphabet page. Digits retain
+    // the numeric page to allow quantities and dates.
+    let returnToLetters = self.page != .letters && self.lastInputWasSymbol
     self.clearComposition()
     self.proxy.insertSpace()
+    if returnToLetters { self.page = .letters }
+    self.lastInputWasSymbol = false
     KeyboardInputTrace.record(.spaceCommitted)
     self.refreshAutomaticShift()
     self.updateCandidates()
   }
 
   private func handleReturn() {
+    self.lastInputWasSymbol = false
     self.clearComposition()
     self.proxy.insertText("\n")
     self.refreshAutomaticShift()
@@ -539,6 +544,7 @@ struct AlphabeticKeyboardLayout: View {
 
   private func toggleNumberPage() {
     // Preserve the romanization suffix across ?123 so tone digits still work.
+    self.lastInputWasSymbol = false
     self.page = self.page == .letters ? .numbers : .letters
     self.updateCandidates()
   }

@@ -5,15 +5,16 @@ import Foundation
 enum KeyboardLayoutGeometry {
   static let microphoneDefaultHeight: CGFloat = 260
   static let microphoneCompactHeight: CGFloat = 150
-  // 1320x871 native reference at inferred 3x = 290.33pt, including a
-  // 20pt bottom inset after the visible fourth key row.
-  static let fullTypingHeight: CGFloat = 290
+  // In the supplied iPhone screenshots the Altboard keys end about 13pt
+  // above Apple's keys. Keep the 274pt measured content and a 3pt inset.
+  static let fullTypingHeight: CGFloat = 277
 
   static let keyHeight: CGFloat = 45
   static let keySpacing: CGFloat = 6
   static let alphabetRowSpacing: CGFloat = 11
-  static let alphabetEdgeInset: CGFloat = 6.67
-  static let alphabetSecondInset: CGFloat = 28
+  static let alphabetEdgeInset: CGFloat = 3.67
+  static let alphabetSecondInset: CGFloat = 25
+  static let alphabetSpecialRowInset: CGFloat = 6.67
   static let alphabetSpecialGap: CGFloat = 14.67
   static let alphabetToolbarTopInset: CGFloat = 4
   static let alphabetToolbarBottomInset: CGFloat = 8
