@@ -39,6 +39,18 @@ for order in [LetterKeyArrangement.qwerty, .qwertz] {
 precondition(LatinSwipeDecoder.rank(
   path: [LatinSwipePoint(x: 100, y: 20), LatinSwipePoint(x: 105, y: 20)],
   arrangement: .qwerty, fullWidth: 440, words: ["to"]).isEmpty)
+// Regression: repeated letters and returning to a previously used key must
+// preserve each geometric segment, rather than deduplicating visited keys.
+for order in [LetterKeyArrangement.qwerty, .qwertz] {
+  for word in ["become", "evermore"] {
+    let path = stroke(word, order: order)
+    let decoded = LatinSwipeDecoder.rank(
+      path: path, arrangement: order, fullWidth: 440,
+      words: ["hello", "world", word]
+    )
+    precondition(decoded.first == word, "revisited letters: \\(word) -> \\(decoded)")
+  }
+}
 precondition(LatinSwipeDecoder.normalizedSpelling("Grüße") == "grusse")
 let session = LatinSwipeSession()
 let points = stroke("hello", order: .qwerty)

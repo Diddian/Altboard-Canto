@@ -142,34 +142,21 @@ struct KeyButton: View {
     .foregroundStyle(.primary)
   }
 
-  @ViewBuilder
+  /// Draw all symbols with font fallback. CoreText glyph paths can be empty
+  /// for Traditional Chinese brackets and punctuation, leaving blank keys
+  /// even though the underlying button continues to accept touches.
   private func symbolText(_ symbol: String, fontSize: CGFloat?) -> some View {
-    let size = (fontSize ?? 22).kbScaled
-    if GlyphPath.canRender(symbol) {
-      GlyphPath(
-        character: symbol,
-        font: UIFont.systemFont(ofSize: size, weight: .regular),
-      )
-      .fill(.primary)
-      .frame(width: size, height: size)
-    } else {
-      Text(verbatim: symbol)
-        .font(.system(size: size, weight: .regular))
-    }
+    Text(verbatim: symbol)
+      .font(.system(size: (fontSize ?? 22).kbScaled, weight: .regular))
+      .foregroundStyle(.primary)
+      .lineLimit(1)
+      .minimumScaleFactor(0.65)
   }
 
-  @ViewBuilder
   private func calloutSymbolText(_ symbol: String, fontSize: CGFloat) -> some View {
-    if GlyphPath.canRender(symbol) {
-      GlyphPath(
-        character: symbol,
-        font: UIFont.systemFont(ofSize: fontSize, weight: .regular),
-      )
-      .fill(.primary)
-      .frame(width: fontSize, height: fontSize)
-    } else {
-      Text(verbatim: symbol)
-        .font(.system(size: fontSize, weight: .regular))
-    }
+    Text(verbatim: symbol)
+      .font(.system(size: fontSize, weight: .regular))
+      .foregroundStyle(.primary)
+      .lineLimit(1)
   }
 }

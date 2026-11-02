@@ -65,6 +65,9 @@ jobs:
           test -s JyutpingResources/jyutping.sqlite3
           python3 -m unittest discover -s scripts -p 'test_jyutping_*.py'
           python3 -m unittest discover -s scripts -p 'test_universal_cantonese.py'
+          # Regression for blank keycap rows seen on physical iPhone.
+          python3 -m unittest discover -s scripts -p 'test_symbol_visibility.py'
+          python3 -m unittest discover -s scripts -p 'test_ipa_bundle.py'
           swiftc -o "$RUNNER_TEMP/punctuation-smoke" \
             Shared/ChinesePunctuationPolicy.swift scripts/verify-chinese-punctuation.swift
           "$RUNNER_TEMP/punctuation-smoke"
@@ -203,6 +206,12 @@ jobs:
           (cd "$RUNNER_TEMP/ipa" && zip -q -r "$GITHUB_WORKSPACE/dist/Altboard-Canto-SideStore.ipa" Payload)
           unzip -t "$GITHUB_WORKSPACE/dist/Altboard-Canto-SideStore.ipa" | tail -n 1
           ls -lh "$GITHUB_WORKSPACE/dist/Altboard-Canto-SideStore.ipa"
+
+      - name: Verify the single physical-iPhone IPA artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/verify-ipa-bundle.py             dist/Altboard-Canto-SideStore.ipa             --expected-sha "$GITHUB_SHA"             --expect-native-emoji
 
       - name: Upload IPA to this Actions run
         uses: actions/upload-artifact@v7

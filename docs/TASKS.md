@@ -38,6 +38,24 @@ User-reported iPhone feedback from successful IPA #63 (`8c1d6b2`). Work isolated
 - [ ] T-016.9 Reassess corpus vs MIT-licensed `nkrsn/jboard` and `isaced/ISEmojiView` only after iPhone test; do not copy GPL iSwipe or unlicensed sswipe source.
 - [ ] T-016.10 Merge T-016 only with reviewed passing IPA and user device feedback. T-014/T-015 QA work remains separate until then.
 
+## P0 — Visible Numbers and Symbols glyphs (T-018)
+
+Physical iPhone screenshots IMG_9698.jpg and IMG_9699.jpg show widespread
+empty keycaps on number/symbol rows. This regression already existed in #64.
+Cause: `KeyButton.symbolText` delegated punctuation to `GlyphPath` and
+returned a blank path for unhandled font fallback, especially Traditional
+Chinese symbols. Restore all direct and callout labels with
+`Text(verbatim:)` while preserving key targets and inserting original glyphs.
+
+- [x] Change KeyButton symbol and callout rendering to platform font fallback.
+- [x] Add source regression tests for 10/10/5 key rows across Alphabet/Symbols.
+- [x] Integrate offline unit tests and exact-SHA IPA bundle inspection into the
+  existing single unsigned-IPA build workflow, before artifact publishing.
+- [ ] Verify final IPA actually compiles and passes full package checks.
+- [ ] Test every symbol layer on physical iPhone, including Chinese brackets.
+- [ ] Test iPhone globe switching, swipe loops, Cantonese adaptive preference.
+- [ ] Do not mark device verified until the screenshots match visible labels.
+
 ## P0 — Combined iPhone Preview (T-017)
 
 - [x] #64 base kept intact; targeted QA fixes and tests combined.

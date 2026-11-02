@@ -16,13 +16,18 @@ A green Action confirms compilation and packaging, not iPhone input behavior.
 1. Install with SideStore. Enable Altboard and Apple's Emoji keyboard under
    Settings > General > Keyboard > Keyboards. Hold the Globe key to choose
    system Emoji (no more Altboard-specific Emoji view).
-2. Enable Swipe Typing (Beta), test **to, become, evermore, hello, world** in
-   QWERTZ and QWERTY. Check tapered brush ink and finger-up cleanup.
-3. Test Cantonese **kui/keui/keoi**, **gui/geui/geoi**, **jui/jeui/zeoi**.
+2. **Numbers/Symbols P0 regression:** open 123 and #+= in both Alphabet and
+   Symbols layouts. Confirm every key caption is visible: 0–9, - / : ; ( ),
+   《》【】「」『』, . , ? ! ', £ € ¥ •. Type at least one character from
+   every row. No empty keycaps or misplaced touch zones.
+3. Enable Swipe Typing (Beta), test **to, become, evermore, hello, world** in
+   QWERTZ and QWERTY. Check tapered brush ink, returning to an earlier key,
+   and finger-up cleanup.
+4. Test Cantonese **kui/keui/keoi**, **gui/geui/geoi**, **jui/jeui/zeoi**.
    Explicitly choose candidates repeatedly to test gradual scheme preference.
-4. Test 「」『』《》【】, EN/DE corrections, Haptic Reset, Delete hold,
+5. Test EN/DE corrections, Haptic Reset, Delete hold,
    trackpad cursor, mic cancel and manual AI Rewrite.
-5. Log build SHA, iOS version, expected vs actual, and screenshot in
+6. Log build SHA, iOS version, expected vs actual, and screenshot in
    `docs/IPA-DEVICE-TEST-REPORT.md`.
 
 The system input-mode switch does not guarantee jumping directly to Emoji;
