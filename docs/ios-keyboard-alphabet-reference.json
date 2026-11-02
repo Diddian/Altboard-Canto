@@ -1,0 +1,913 @@
+{
+  "schema": "altboard.ios.keyboard.alphabet.native-reference.v1",
+  "reference": {
+    "source": "IMG_9674.png",
+    "altboardSource": "IMG_9687.jpeg",
+    "widthPx": 1320,
+    "fullNativeHeightPx": 2868,
+    "altboardCropHeightPx": 1107,
+    "nativeCropOffsetYPx": 1761,
+    "scalePxPerPt": 3,
+    "note": "The 1107px crop begins at native full-image y=1761; per-key Y coordinates match after subtracting that offset. Images are from different app states, but the visual key lattice is comparable."
+  },
+  "appearance": {
+    "native2016DarkBackdropHex": "#1F1F1F",
+    "currentHostNativeBottomHex": "#212121",
+    "keyboardDarkFaceTargetHex": "#212121",
+    "nativeKeyFillHex": "#434343",
+    "pressedFillPrototype": "#787878",
+    "keyText": "SF System",
+    "glyphSizePtFromCode": 23,
+    "cornerRadiusPtFromCode": 8.5,
+    "disclaimer": "Keyboard background varies by host context. Earlier native dark crop #1F1F1F, latest iOS numeric crop #212121. The patch removes the observed #1F/#21 seam on the current device; test in more apps."
+  },
+  "geometry": {
+    "widthPt": 440,
+    "heightPerKeyPt": 45,
+    "verticalGapPt": 11,
+    "horizontalLetterGapPt": 6,
+    "topRowInsetPt": 3.67,
+    "secondRowInsetPt": 25,
+    "thirdRowWholeInsetPt": 6.67,
+    "thirdRowShiftAndDeleteWidthPt": 50,
+    "thirdRowCellToSpecialGapPt": 11.67,
+    "thirdRowVisibleGapPt": 14.67,
+    "thirdRowInternalLetterPaddingPt": 3,
+    "bottomRowInsetPt": 6.67,
+    "bottomRowGapsPt": [
+      6,
+      6,
+      6
+    ],
+    "bottomRowWidthsPt": [
+      48,
+      48,
+      210.667,
+      102
+    ],
+    "bottomRowComparison": "All four visible key widths and horizontal positions match native to 1px in the supplied screenshots. Do not shrink bottom row."
+  },
+  "rows": [
+    {
+      "id": "letter-top",
+      "originalNativeYPx": 1983,
+      "relativeCroppedNativeYPx": 222,
+      "keys": [
+        {
+          "index": 0,
+          "label": "Q",
+          "nativeRectPx": {
+            "x": 20,
+            "y": 1983,
+            "width": 111,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 6.667,
+            "y": 661,
+            "width": 37,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 20,
+            "y": 222,
+            "width": 112,
+            "height": 135
+          },
+          "observedDeltaXPx": 0,
+          "observedDeltaWidthPx": 1,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 1,
+          "label": "W",
+          "nativeRectPx": {
+            "x": 149,
+            "y": 1983,
+            "width": 112,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 49.667,
+            "y": 661,
+            "width": 37.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 150,
+            "y": 222,
+            "width": 112,
+            "height": 135
+          },
+          "observedDeltaXPx": 1,
+          "observedDeltaWidthPx": 0,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 2,
+          "label": "E",
+          "nativeRectPx": {
+            "x": 279,
+            "y": 1983,
+            "width": 112,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 93,
+            "y": 661,
+            "width": 37.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 280,
+            "y": 222,
+            "width": 111,
+            "height": 135
+          },
+          "observedDeltaXPx": 1,
+          "observedDeltaWidthPx": -1,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 3,
+          "label": "R",
+          "nativeRectPx": {
+            "x": 409,
+            "y": 1983,
+            "width": 112,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 136.333,
+            "y": 661,
+            "width": 37.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 409,
+            "y": 222,
+            "width": 112,
+            "height": 135
+          },
+          "observedDeltaXPx": 0,
+          "observedDeltaWidthPx": 0,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 4,
+          "label": "T",
+          "nativeRectPx": {
+            "x": 539,
+            "y": 1983,
+            "width": 112,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 179.667,
+            "y": 661,
+            "width": 37.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 539,
+            "y": 222,
+            "width": 112,
+            "height": 135
+          },
+          "observedDeltaXPx": 0,
+          "observedDeltaWidthPx": 0,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 5,
+          "label": "Z",
+          "nativeRectPx": {
+            "x": 669,
+            "y": 1983,
+            "width": 112,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 223,
+            "y": 661,
+            "width": 37.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 669,
+            "y": 222,
+            "width": 112,
+            "height": 135
+          },
+          "observedDeltaXPx": 0,
+          "observedDeltaWidthPx": 0,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 6,
+          "label": "U",
+          "nativeRectPx": {
+            "x": 799,
+            "y": 1983,
+            "width": 112,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 266.333,
+            "y": 661,
+            "width": 37.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 799,
+            "y": 222,
+            "width": 112,
+            "height": 135
+          },
+          "observedDeltaXPx": 0,
+          "observedDeltaWidthPx": 0,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 7,
+          "label": "I",
+          "nativeRectPx": {
+            "x": 929,
+            "y": 1983,
+            "width": 112,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 309.667,
+            "y": 661,
+            "width": 37.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 929,
+            "y": 222,
+            "width": 111,
+            "height": 135
+          },
+          "observedDeltaXPx": 0,
+          "observedDeltaWidthPx": -1,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 8,
+          "label": "O",
+          "nativeRectPx": {
+            "x": 1059,
+            "y": 1983,
+            "width": 112,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 353,
+            "y": 661,
+            "width": 37.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 1058,
+            "y": 222,
+            "width": 112,
+            "height": 135
+          },
+          "observedDeltaXPx": -1,
+          "observedDeltaWidthPx": 0,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 9,
+          "label": "P",
+          "nativeRectPx": {
+            "x": 1189,
+            "y": 1983,
+            "width": 112,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 396.333,
+            "y": 661,
+            "width": 37.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 1188,
+            "y": 222,
+            "width": 112,
+            "height": 135
+          },
+          "observedDeltaXPx": -1,
+          "observedDeltaWidthPx": 0,
+          "gapToNextNativePx": null
+        }
+      ]
+    },
+    {
+      "id": "letter-home",
+      "originalNativeYPx": 2151,
+      "relativeCroppedNativeYPx": 390,
+      "keys": [
+        {
+          "index": 0,
+          "label": "A",
+          "nativeRectPx": {
+            "x": 84,
+            "y": 2151,
+            "width": 112,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 28,
+            "y": 717,
+            "width": 37.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 84,
+            "y": 390,
+            "width": 112,
+            "height": 135
+          },
+          "observedDeltaXPx": 0,
+          "observedDeltaWidthPx": 0,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 1,
+          "label": "S",
+          "nativeRectPx": {
+            "x": 214,
+            "y": 2151,
+            "width": 112,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 71.333,
+            "y": 717,
+            "width": 37.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 214,
+            "y": 390,
+            "width": 112,
+            "height": 135
+          },
+          "observedDeltaXPx": 0,
+          "observedDeltaWidthPx": 0,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 2,
+          "label": "D",
+          "nativeRectPx": {
+            "x": 344,
+            "y": 2151,
+            "width": 112,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 114.667,
+            "y": 717,
+            "width": 37.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 344,
+            "y": 390,
+            "width": 112,
+            "height": 135
+          },
+          "observedDeltaXPx": 0,
+          "observedDeltaWidthPx": 0,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 3,
+          "label": "F",
+          "nativeRectPx": {
+            "x": 474,
+            "y": 2151,
+            "width": 112,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 158,
+            "y": 717,
+            "width": 37.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 474,
+            "y": 390,
+            "width": 112,
+            "height": 135
+          },
+          "observedDeltaXPx": 0,
+          "observedDeltaWidthPx": 0,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 4,
+          "label": "G",
+          "nativeRectPx": {
+            "x": 604,
+            "y": 2151,
+            "width": 112,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 201.333,
+            "y": 717,
+            "width": 37.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 604,
+            "y": 390,
+            "width": 112,
+            "height": 135
+          },
+          "observedDeltaXPx": 0,
+          "observedDeltaWidthPx": 0,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 5,
+          "label": "H",
+          "nativeRectPx": {
+            "x": 734,
+            "y": 2151,
+            "width": 112,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 244.667,
+            "y": 717,
+            "width": 37.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 734,
+            "y": 390,
+            "width": 112,
+            "height": 135
+          },
+          "observedDeltaXPx": 0,
+          "observedDeltaWidthPx": 0,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 6,
+          "label": "J",
+          "nativeRectPx": {
+            "x": 864,
+            "y": 2151,
+            "width": 112,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 288,
+            "y": 717,
+            "width": 37.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 864,
+            "y": 390,
+            "width": 112,
+            "height": 135
+          },
+          "observedDeltaXPx": 0,
+          "observedDeltaWidthPx": 0,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 7,
+          "label": "K",
+          "nativeRectPx": {
+            "x": 994,
+            "y": 2151,
+            "width": 112,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 331.333,
+            "y": 717,
+            "width": 37.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 994,
+            "y": 390,
+            "width": 112,
+            "height": 135
+          },
+          "observedDeltaXPx": 0,
+          "observedDeltaWidthPx": 0,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 8,
+          "label": "L",
+          "nativeRectPx": {
+            "x": 1124,
+            "y": 2151,
+            "width": 112,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 374.667,
+            "y": 717,
+            "width": 37.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 1124,
+            "y": 390,
+            "width": 112,
+            "height": 135
+          },
+          "observedDeltaXPx": 0,
+          "observedDeltaWidthPx": 0,
+          "gapToNextNativePx": null
+        }
+      ]
+    },
+    {
+      "id": "letter-lower",
+      "originalNativeYPx": 2319,
+      "relativeCroppedNativeYPx": 558,
+      "keys": [
+        {
+          "index": 0,
+          "label": "Shift",
+          "nativeRectPx": {
+            "x": 20,
+            "y": 2319,
+            "width": 150,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 6.667,
+            "y": 773,
+            "width": 50,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 20,
+            "y": 558,
+            "width": 150,
+            "height": 135
+          },
+          "observedDeltaXPx": 0,
+          "observedDeltaWidthPx": 0,
+          "gapToNextNativePx": 44
+        },
+        {
+          "index": 1,
+          "label": "Y",
+          "nativeRectPx": {
+            "x": 214,
+            "y": 2319,
+            "width": 112,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 71.333,
+            "y": 773,
+            "width": 37.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 223,
+            "y": 558,
+            "width": 109,
+            "height": 135
+          },
+          "observedDeltaXPx": 9,
+          "observedDeltaWidthPx": -3,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 2,
+          "label": "X",
+          "nativeRectPx": {
+            "x": 344,
+            "y": 2319,
+            "width": 112,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 114.667,
+            "y": 773,
+            "width": 37.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 350,
+            "y": 558,
+            "width": 110,
+            "height": 135
+          },
+          "observedDeltaXPx": 6,
+          "observedDeltaWidthPx": -2,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 3,
+          "label": "C",
+          "nativeRectPx": {
+            "x": 474,
+            "y": 2319,
+            "width": 112,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 158,
+            "y": 773,
+            "width": 37.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 478,
+            "y": 558,
+            "width": 109,
+            "height": 135
+          },
+          "observedDeltaXPx": 4,
+          "observedDeltaWidthPx": -3,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 4,
+          "label": "V",
+          "nativeRectPx": {
+            "x": 604,
+            "y": 2319,
+            "width": 112,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 201.333,
+            "y": 773,
+            "width": 37.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 605,
+            "y": 558,
+            "width": 110,
+            "height": 135
+          },
+          "observedDeltaXPx": 1,
+          "observedDeltaWidthPx": -2,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 5,
+          "label": "B",
+          "nativeRectPx": {
+            "x": 734,
+            "y": 2319,
+            "width": 112,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 244.667,
+            "y": 773,
+            "width": 37.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 733,
+            "y": 558,
+            "width": 109,
+            "height": 135
+          },
+          "observedDeltaXPx": -1,
+          "observedDeltaWidthPx": -3,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 6,
+          "label": "N",
+          "nativeRectPx": {
+            "x": 864,
+            "y": 2319,
+            "width": 112,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 288,
+            "y": 773,
+            "width": 37.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 860,
+            "y": 558,
+            "width": 110,
+            "height": 135
+          },
+          "observedDeltaXPx": -4,
+          "observedDeltaWidthPx": -2,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 7,
+          "label": "M",
+          "nativeRectPx": {
+            "x": 994,
+            "y": 2319,
+            "width": 112,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 331.333,
+            "y": 773,
+            "width": 37.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 988,
+            "y": 558,
+            "width": 109,
+            "height": 135
+          },
+          "observedDeltaXPx": -6,
+          "observedDeltaWidthPx": -3,
+          "gapToNextNativePx": 44
+        },
+        {
+          "index": 8,
+          "label": "Delete",
+          "nativeRectPx": {
+            "x": 1150,
+            "y": 2319,
+            "width": 151,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 383.333,
+            "y": 773,
+            "width": 50.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 1150,
+            "y": 558,
+            "width": 150,
+            "height": 135
+          },
+          "observedDeltaXPx": 0,
+          "observedDeltaWidthPx": -1,
+          "gapToNextNativePx": null
+        }
+      ]
+    },
+    {
+      "id": "letter-bottom",
+      "originalNativeYPx": 2487,
+      "relativeCroppedNativeYPx": 726,
+      "keys": [
+        {
+          "index": 0,
+          "label": "?123",
+          "nativeRectPx": {
+            "x": 20,
+            "y": 2487,
+            "width": 144,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 6.667,
+            "y": 829,
+            "width": 48,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 20,
+            "y": 726,
+            "width": 144,
+            "height": 135
+          },
+          "observedDeltaXPx": 0,
+          "observedDeltaWidthPx": 0,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 1,
+          "label": "Emoji",
+          "nativeRectPx": {
+            "x": 182,
+            "y": 2487,
+            "width": 144,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 60.667,
+            "y": 829,
+            "width": 48,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 182,
+            "y": 726,
+            "width": 144,
+            "height": 135
+          },
+          "observedDeltaXPx": 0,
+          "observedDeltaWidthPx": 0,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 2,
+          "label": "Space",
+          "nativeRectPx": {
+            "x": 344,
+            "y": 2487,
+            "width": 632,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 114.667,
+            "y": 829,
+            "width": 210.667,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 344,
+            "y": 726,
+            "width": 632,
+            "height": 135
+          },
+          "observedDeltaXPx": 0,
+          "observedDeltaWidthPx": 0,
+          "gapToNextNativePx": 18
+        },
+        {
+          "index": 3,
+          "label": "Return",
+          "nativeRectPx": {
+            "x": 994,
+            "y": 2487,
+            "width": 307,
+            "height": 135
+          },
+          "nativeRectPt": {
+            "x": 331.333,
+            "y": 829,
+            "width": 102.333,
+            "height": 45
+          },
+          "previousAltboardRectPx": {
+            "x": 994,
+            "y": 726,
+            "width": 306,
+            "height": 135
+          },
+          "observedDeltaXPx": 0,
+          "observedDeltaWidthPx": -1,
+          "gapToNextNativePx": null
+        }
+      ]
+    }
+  ],
+  "everyVisibleKeyCount": 32,
+  "comparisonSummary": {
+    "topRowMaxAbsDeltaXPx": 1,
+    "secondRowMaxAbsDeltaXPx": 0,
+    "thirdRowBefore": {
+      "firstYDeltaXPx": 9,
+      "lastMDeltaXPx": -6,
+      "letterWidthDeltaPxApprox": -2
+    },
+    "thirdRowAfterCodeTarget": {
+      "firstYDeltaXPx": 0,
+      "lastMDeltaXPx": 0,
+      "remaining": "Device check required"
+    },
+    "bottomRowMaxAbsDeltaXPx": 0,
+    "bottomRowReturnWidthPxDelta": -1
+  },
+  "interactiveHitCells": "Per-key actual touch cells are wider than visual fill. KeyTouchMap and AlphabeticTouchRow map horizontal gaps and part of vertical gaps. Hitboxes should not be tightened when visual geometry is corrected.",
+  "acceptance": [
+    "Every 10-key top-row visual rectangle within 1–2 px native at 1320px width",
+    "Every 9-key home-row rectangle within 1–2 px",
+    "Y begins at 214px (not previous 223px), M at 994px (not previous 988px)",
+    "Shift starts 20px wide 150px; Delete starts 1150px wide 150–151px",
+    "Bottom row key rectangles unchanged: x=20,182,344,994; widths=144,144,632,307",
+    "Native Emoji glyph visible width 56px rather than old outlined 83px",
+    "Press highlights fire on contact; haptic and long-press accents preserved",
+    "Dark top keyboard face joins system bottom strip without RGB seam",
+    "No input truncation or UI clipping in host apps"
+  ],
+  "footnotes": [
+    "Native iOS numeric and alternate Symbol pages are specified separately in docs/ios-keyboard-symbols-reference.json",
+    "Output remains user preference QWERTY/QWERTZ; screenshot shows QWERTZ."
+  ]
+}

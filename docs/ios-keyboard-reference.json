@@ -39,7 +39,8 @@
       "letters": "YXCVBNM",
       "edgeInsetPt": 6.67,
       "specialKeyWidthPt": 50,
-      "specialToLetterGapPt": 14.67
+      "specialToLetterGapPt": 14.67,
+      "HStackSpecialGapPt": 11.67
     },
     {
       "controls": [
@@ -358,5 +359,30 @@
     "emoji": "NativeEmojiGlyph 18.67pt drawn from screenshot-traced vector cutouts",
     "keyWidths": "Bottom row matches native to 1px; do not change",
     "symbolThirdRow": "native 50pt/54.67pt/50pt separated by 14.67pt outer and 6pt inner gaps"
+  },
+  "alphabet": {
+    "referenceDocument": "docs/ios-keyboard-alphabet-reference.json",
+    "source": "IMG_9674.png",
+    "comparison": "IMG_9687.jpeg",
+    "measuredVisibleKeys": 32,
+    "thirdRow": {
+      "previousFirstLetterXPx": 223,
+      "nativeFirstLetterXPx": 214,
+      "previousLastLetterXPx": 988,
+      "nativeLastLetterXPx": 994,
+      "HStackGapPt": 11.67,
+      "ownVisualKeyInsetPt": 3,
+      "resultingShiftToFirstVisibleLetterGapPt": 14.67
+    },
+    "bottomRow": {
+      "nativeXPositionsPx": [
+        20,
+        182,
+        344,
+        994
+      ],
+      "retained": true,
+      "reason": "Pixel-measured previous Altboard and native bottom positions differ no more than 1px."
+    }
   }
 }
