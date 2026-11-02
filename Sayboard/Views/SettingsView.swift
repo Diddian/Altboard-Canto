@@ -91,12 +91,13 @@ struct SettingsView: View, Equatable {
         NavigationLink {
           VoiceOutputSettingsView()
         } label: {
-          Label("Voice Output & AI Cleanup", systemImage: "waveform")
+          Label("Voice Output & Translation", systemImage: "waveform")
         }
       } header: {
-        Text("Speech to Text and Translation")
+        Text("Speech & Languages")
       }
       self.keyboardSection
+      self.generalSection
       Section {
         NavigationLink {
           DiagnosticsView()
@@ -359,10 +360,14 @@ struct SettingsView: View, Equatable {
     }
   }
 
+  private var generalSection: some View {
+    Section("General") {
+      self.appLanguageRow
+    }
+  }
+
   private var aboutSection: some View {
     Section("About") {
-      self.appLanguageRow
-
       #if APPSTORE
       FullVersionRow()
       #endif
