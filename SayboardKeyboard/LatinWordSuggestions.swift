@@ -92,9 +92,9 @@ final class LatinWordSuggestions {
     "en": [
       "about", "above", "after", "again", "also", "always", "another", "answer",
       "anything", "apple", "around", "because", "before", "Berlin", "better",
-      "book", "business", "can", "change", "check", "city", "come", "company",
+      "book", "business", "can", "change", "check", "city", "come", "company", "become", "becoming",
       "could", "day", "different", "doing", "done", "each", "email", "English",
-      "enough", "even", "every", "example", "feel", "find", "first", "food",
+      "enough", "even", "ever", "evermore", "every", "example", "feel", "find", "first", "food",
       "friend", "from", "German", "Germany", "give", "good", "great", "have",
       "hello", "help", "here", "history", "home", "hope", "how", "idea",
       "important", "information", "into", "just", "keyboard", "know", "language",

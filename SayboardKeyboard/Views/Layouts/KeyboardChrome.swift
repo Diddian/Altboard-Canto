@@ -14,7 +14,7 @@ struct KeyboardChromeMetrics {
     let compact = keyboardState.selectedVariantSupportsTranslation || keyboardState.showsAIButton
     let side: CGFloat = (keyboardState.keyboardKind == .alphabetic ? 48 : (compact ? 43 : 45)).kbScaled
     let wide: CGFloat = 92.kbScaled
-    let showsGlobe = true // Reserve leading Emoji key.
+    let showsGlobe = true // Reserve the required system keyboard-switch key.
 
     self.sideButtonWidth = side
     self.showsGlobe = showsGlobe
@@ -159,17 +159,10 @@ struct KeyboardBottomRow: View {
           action()
         }
       }
-      KeyButton(
-        content: .nativeEmojiGlyph,
-        fixedWidth: self.metrics.sideButtonWidth
-      ) {
-        self.keyboardState.showsEmojiPicker = true
-      }
-      .onLongPressGesture(minimumDuration: 0.55) {
-        if self.keyboardState.needsInputModeSwitchKey {
-          self.proxy.advanceToNextInputMode()
-        }
-      }
+      NativeInputModeSwitchKey(
+        configure: self.keyboardState.configureInputModeListButton
+      )
+      .frame(width: self.metrics.sideButtonWidth, height: KeyboardChromeMetrics.keyHeight)
 
       if self.onAlphabeticModeSwitch == nil {
         KeyButton(

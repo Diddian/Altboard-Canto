@@ -9,13 +9,32 @@
 
 </div>
 
+## Test every successful IPA on iPhone
+
+A green Action confirms compilation and packaging, not iPhone input behavior.
+
+1. Install with SideStore. Enable Altboard and Apple's Emoji keyboard under
+   Settings > General > Keyboard > Keyboards. Hold the Globe key to choose
+   system Emoji (no more Altboard-specific Emoji view).
+2. Enable Swipe Typing (Beta), test **to, become, evermore, hello, world** in
+   QWERTZ and QWERTY. Check tapered brush ink and finger-up cleanup.
+3. Test Cantonese **kui/keui/keoi**, **gui/geui/geoi**, **jui/jeui/zeoi**.
+   Explicitly choose candidates repeatedly to test gradual scheme preference.
+4. Test 「」『』《》【】, EN/DE corrections, Haptic Reset, Delete hold,
+   trackpad cursor, mic cancel and manual AI Rewrite.
+5. Log build SHA, iOS version, expected vs actual, and screenshot in
+   `docs/IPA-DEVICE-TEST-REPORT.md`.
+
+The system input-mode switch does not guarantee jumping directly to Emoji;
+choose it from the native keyboard menu.
+
 ## Altboard-Canto: direct iPhone IPA
 
 **[Download the latest Altboard-Canto IPA](https://github.com/Diddian/Altboard-Canto/releases/download/altboard-canto-dev/Altboard-Canto-SideStore.ipa)**
 
 This fork's development IPA is an unsigned build for SideStore. It contains the iPhone app and the custom keyboard extension. SideStore must re-sign it before installation; it is not an App Store-signed IPA. GitHub Actions uses `actions/upload-artifact@v7` with `archive: false`, so the run's artifact is also a direct `.ipa`, not another ZIP wrapper.
 
-The **Alphabet** keyboard always accepts Latin typing. If Cantonese appears in Preferred Languages, it additionally suggests traditional Chinese candidates using offline **Jyutping / Yale / Yuetyam** lookup without a separate EN/粵 key. The History tab contains a keyboard testing field; Settings > Diagnostics records privacy-safe haptic request traces.
+The **Alphabet** keyboard always accepts Latin typing. If Cantonese appears in Preferred Languages, it additionally suggests traditional Chinese candidates using offline **Jyutping / Yale / Sidney Lau** lookup without a separate EN/粵 key. The History tab contains a keyboard testing field; Settings > Diagnostics records privacy-safe haptic request traces.
 
 [Build workflow](https://github.com/Diddian/Altboard-Canto/actions/workflows/build-unsigned-ipa.yml) · [Current release](https://github.com/Diddian/Altboard-Canto/releases/tag/altboard-canto-dev) · [Development task tracker](docs/TASKS.md)
 

@@ -44,6 +44,39 @@ CASES = {
 }
 
 class UniversalCantoneseTests(unittest.TestCase):
+    def test_structural_aliases_and_collisions(self):
+        # Each scheme must be an alias for the same canonical spelling, not
+        # a separately translated dictionary or a second tone reading.
+        for word, readings in CASES.items():
+            plain, yale, sidney = readings
+            with self.subTest(word=word):
+                self.assertEqual(BUILDER.yale_spelling(ENTRIES[word]), yale)
+                self.assertEqual(BUILDER.sidney_lau_spelling(ENTRIES[word]), sidney)
+                self.assertNotIn("yyu", yale)
+                self.assertNotIn("yyun", yale)
+                self.assertNotIn("yyut", yale)
+        self.assertEqual(BUILDER.sidney_lau_syllable("zoeng1"), "jeung")
+        self.assertEqual(BUILDER.sidney_lau_syllable("goeng1"), "geung")
+        self.assertEqual(BUILDER.yale_syllable("jyun4"), "yun")
+
+    def test_sqlite_index_used_for_all_three_spelling_systems(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            dest = pathlib.Path(tmp) / "indexed.sqlite3"
+            source = "".join(f"{word}\t{reading}\n" for word, reading in ENTRIES.items())
+            BUILDER.compile_database(source.encode("utf-8"), dest, verify_upstream=False)
+            db = sqlite3.connect(dest)
+            try:
+                for col in ("plain", "yale", "sidney"):
+                    plan = " ".join(str(row) for row in db.execute(
+                        f"EXPLAIN QUERY PLAN SELECT word FROM entries WHERE {col}=?",
+                        ("kui",),
+                    ).fetchall())
+                    with self.subTest(column=col):
+                        self.assertIn("INDEX", plan.upper())
+                self.assertEqual(db.execute("PRAGMA quick_check").fetchone(), ("ok",))
+            finally:
+                db.close()
+
     def test_all_three_indexes_and_tones(self):
         with tempfile.TemporaryDirectory() as tmp:
             dest = pathlib.Path(tmp) / "jyutping.sqlite3"

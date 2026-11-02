@@ -147,9 +147,7 @@ struct KeyboardView: View {
         )
       }
       .environment(\.keyboardHapticsEnabled, self.keyboardState.keyboardHapticsEnabled)
-    } else if self.keyboardState.showsEmojiPicker {
-      EmojiKeyboardView(proxy: self.proxy, keyboardState: self.keyboardState)
-      } else if let error = self.keyboardState.llmError {
+    } else if let error = self.keyboardState.llmError {
       LLMErrorPrompt(
         error: error, keyboardState: self.keyboardState,
         onUseClipboard: { self.proxy.requestLLMClipboard() }
@@ -184,11 +182,6 @@ struct KeyboardView: View {
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
       .environment(\.keyboardHapticsEnabled, self.keyboardState.keyboardHapticsEnabled)
     }
-    }
-    .onChange(of: self.keyboardState.showsEmojiPicker) { _, _ in
-      // Resize the host UIInputView to the emoji-specific canvas, then restore
-      // the normal height when ABC closes it. No competing layout constraint.
-      self.proxy.setActionBarVisible(false)
     }
     .background(Color(uiColor: KeyboardPalette.backdrop))
     .sensoryFeedback(.selection, trigger: self.sensoryPulse.count)

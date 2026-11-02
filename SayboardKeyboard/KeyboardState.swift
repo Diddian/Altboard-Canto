@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 import QuartzCore
 import SwiftUI
@@ -20,7 +21,6 @@ final class KeyboardState: ObservableObject {
   @Published var useCustomSpaceBar = false
   @Published var showSettingsKey = true
   @Published var isTranslationMode = false
-  @Published var showsEmojiPicker = false
   @Published var selectedVariantSupportsTranslation = false
   @Published var selectedVariantSpecializesForNeuralEngine = false
   @Published var audioLevel: Float = 0
@@ -51,6 +51,11 @@ final class KeyboardState: ObservableObject {
 
 
   var openURLAction: ((URL) -> Void)?
+
+  /// Installed by UIInputViewController; configure the real UIKit globe key
+  /// with Apple's handleInputModeList(from:with:) on all touch events.
+  /// The callback captures the controller weakly to avoid a retain cycle.
+  var configureInputModeListButton: ((UIButton) -> Void)?
 
   var appearedAt: CFAbsoluteTime = 0
 

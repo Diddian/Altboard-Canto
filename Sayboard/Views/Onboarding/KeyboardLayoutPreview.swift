@@ -140,7 +140,7 @@ struct KeyboardLayoutPreview: View {
       .padding(.horizontal, KeyboardLayoutGeometry.alphabetSpecialRowInset)
       HStack(spacing: Self.keySpacing) {
         self.textKey("?123", width: 48, size: 16)
-        self.nativeEmojiKey(width: 48)
+        self.nativeGlobeKey(width: 48)
         ZStack(alignment: .bottomTrailing) {
           Color.clear
           Text("A")
@@ -179,10 +179,10 @@ struct KeyboardLayoutPreview: View {
     .padding(.horizontal, inset ?? Self.edgeInset)
   }
 
-  private func nativeEmojiKey(width: CGFloat) -> some View {
-    NativeEmojiGlyph()
-      .fill(.primary, style: FillStyle(eoFill: true))
-      .frame(width: 18.67, height: 18.67)
+  private func nativeGlobeKey(width: CGFloat) -> some View {
+    Image(systemName: "globe")
+      .font(.system(size: 19, weight: .regular))
+      .foregroundStyle(.primary)
       .frame(width: width, height: Self.keyHeight)
       .background(Self.keyFill,
         in: RoundedRectangle(cornerRadius: Self.keyRadius, style: .continuous))

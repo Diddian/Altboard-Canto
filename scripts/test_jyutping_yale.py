@@ -36,6 +36,21 @@ class YaleAliasTests(unittest.TestCase):
             with self.subTest(jyutping=jyutping):
                 self.assertEqual(MOD.sidney_lau_syllable(jyutping), expected)
 
+    def test_canonical_tones_remain_distinct_in_index(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = pathlib.Path(tmp) / "tones.sqlite3"
+            MOD.compile_database("據\tgeoi3\n據\tgeoi2\n".encode(), output, verify_upstream=False)
+            db = sqlite3.connect(output)
+            try:
+                self.assertEqual(
+                    db.execute("SELECT COUNT(*) FROM entries WHERE word='據'").fetchone()[0], 2
+                )
+                self.assertEqual(
+                    {row[0] for row in db.execute("SELECT compact FROM entries")}, {"geoi2", "geoi3"}
+                )
+            finally:
+                db.close()
+
     def test_today(self):
         self.assertEqual(MOD.yale_spelling("gam1 jat6"), "gamyat")
 

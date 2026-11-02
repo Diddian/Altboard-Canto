@@ -38,6 +38,16 @@ User-reported iPhone feedback from successful IPA #63 (`8c1d6b2`). Work isolated
 - [ ] T-016.9 Reassess corpus vs MIT-licensed `nkrsn/jboard` and `isaced/ISEmojiView` only after iPhone test; do not copy GPL iSwipe or unlicensed sswipe source.
 - [ ] T-016.10 Merge T-016 only with reviewed passing IPA and user device feedback. T-014/T-015 QA work remains separate until then.
 
+## P0 — Combined iPhone Preview (T-017)
+
+- [x] #64 base kept intact; targeted QA fixes and tests combined.
+- [x] Replace custom Emoji UI with system Globe input-mode selector.
+- [x] Theme-aware tapered swipe brush; add "become"/"evermore".
+- [x] Bounded explicit-choice Cantonese scheme-preference learning.
+- [x] Add README iPhone testing checklist for each workflow.
+- [ ] Confirm combined IPA passes Xcode and artifact integrity checks.
+- [ ] iPhone swipe looping/repeated-letter path quality and Globe menu acceptance.
+
 ## P0 — Universal Cantonese Input (T-012)
 
 - [x] T-012.1 Build indexed Jyutping, Yale and Sidney Lau spellings in the same SQLite dictionary; users never select a scheme.

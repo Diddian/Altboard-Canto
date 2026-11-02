@@ -136,6 +136,8 @@ enum LatinSwipeDecoder {
       let endpointPenalty = 0.2 * (first.distance(to: a) + last.distance(to: z))
       // Corpus order is a small frequency prior, never stronger than geometry.
       let prior = log1p(Double(frequencyOrder)) * 0.25
+      // A path that turns back on itself may revisit an earlier letter;
+      // compare its full ordered geometry instead of its unique-key set.
       let score = locationCost + lengthPenalty + endpointPenalty + prior
       let isShortWord = normalized.count == 2
       if isShortWord {

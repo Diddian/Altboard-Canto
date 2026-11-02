@@ -12,6 +12,7 @@ on:
       - fix/instant-touchdown-highlight-20261102
       - feat/instant-input-ai-swipe-20261102
       - feat/swipe-trail-emoji-native-parity-20261102
+      - feat/combined-qa-system-emoji-swipe-20261102
   workflow_dispatch:
 
 permissions:
@@ -64,9 +65,13 @@ jobs:
           test -s JyutpingResources/jyutping.sqlite3
           python3 -m unittest discover -s scripts -p 'test_jyutping_*.py'
           python3 -m unittest discover -s scripts -p 'test_universal_cantonese.py'
-          python3 scripts/build-emoji-catalog.py
-          test -s EmojiResources/emoji_catalog.tsv
-          python3 -m unittest discover -s scripts -p 'test_emoji_catalog.py'
+          swiftc -o "$RUNNER_TEMP/punctuation-smoke" \
+            Shared/ChinesePunctuationPolicy.swift scripts/verify-chinese-punctuation.swift
+          "$RUNNER_TEMP/punctuation-smoke"
+          swiftc -o "$RUNNER_TEMP/scheme-smoke" \
+            Shared/CantoneseSyllableEditing.swift Shared/CantoneseSchemePreference.swift \
+            scripts/verify-scheme-preference.swift
+          "$RUNNER_TEMP/scheme-smoke"
           # impactOccurred(intensity:) may silently fail in the extension sandbox.
           if grep -E '^      generator[.]impactOccurred[(]intensity:' Shared/KeyboardHaptics.swift; then
             echo 'ERROR: use parameterless UIKit impactOccurred() in keyboard'
@@ -155,10 +160,7 @@ jobs:
             echo 'ERROR: offline Jyutping lexicon missing from keyboard extension'
             exit 1
           }
-          test -s "$APP/PlugIns/SayboardKeyboard.appex/emoji_catalog.tsv" || {
-            echo 'ERROR: offline emoji catalogue missing from keyboard extension'
-            exit 1
-          }
+          test ! -e "$APP/PlugIns/SayboardKeyboard.appex/emoji_catalog.tsv" || exit 1
 
           # No developer credential is needed. These ad-hoc signatures only
           # carry capability requests for SideStore to re-sign on the device.
@@ -223,7 +225,9 @@ jobs:
         run: |
           set -euo pipefail
           TAG="altboard-canto-dev"
-          if [ "$GITHUB_REF_NAME" = "feat/fixed-keyboard-settings-20261102" ]; then
+          if [ "$GITHUB_REF_NAME" = "feat/combined-qa-system-emoji-swipe-20261102" ]; then
+            TAG="altboard-canto-combined-preview"
+          elif [ "$GITHUB_REF_NAME" = "feat/fixed-keyboard-settings-20261102" ]; then
             TAG="altboard-canto-fixed-preview"
           elif [ "$GITHUB_REF_NAME" = "fix/keyboard-native-candidates-20261102" ]; then
             TAG="altboard-canto-native-preview"

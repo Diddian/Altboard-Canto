@@ -56,6 +56,13 @@ final class KeyboardViewController: UIInputViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
     self.keyboardState.bootstrapLayoutSettings()
+    self.keyboardState.configureInputModeListButton = { [weak self] button in
+      guard let self else { return }
+      button.addTarget(
+        self, action: #selector(handleInputModeList(from:with:)),
+        for: .allTouchEvents
+      )
+    }
     KeyboardHaptics.prepare()
     Self.activeInstance = self
     self.setupTranscriptionObserver()
@@ -491,8 +498,7 @@ extension KeyboardViewController {
     guard let hc = self.heightConstraint else { return }
     let base = KeyboardMetrics.totalHeight(
       actionBarVisible: self.actionBarVisible,
-      kind: self.keyboardState.keyboardKind,
-      emojiVisible: self.keyboardState.showsEmojiPicker
+      kind: self.keyboardState.keyboardKind
     )
     let target = base
     guard hc.constant != target else { return }

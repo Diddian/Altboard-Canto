@@ -122,6 +122,49 @@ struct SharedSettingsDefaultsTests {
   }
 
   @Test
+  func settingsKeyVisibilityCanBeDisabledAndRestored() throws {
+    let suiteName = Self.uniqueSuiteName()
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { Self.cleanup(suiteName: suiteName) }
+    let settings = SharedSettings(defaults: defaults)
+    #expect(settings.keyboardShowSettingsKey)
+    settings.keyboardShowSettingsKey = false
+    #expect(!SharedSettings(defaults: defaults).keyboardShowSettingsKey)
+    settings.keyboardShowSettingsKey = true
+    #expect(SharedSettings(defaults: defaults).keyboardShowSettingsKey)
+  }
+
+  @Test
+  func swipeTypingRemainsOptInAndKeepsStoredUserChoice() throws {
+    let suiteName = Self.uniqueSuiteName()
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { Self.cleanup(suiteName: suiteName) }
+    #expect(defaults.object(forKey: SharedKey.keyboardSwipeTypingEnabled) == nil)
+    defaults.set(true, forKey: SharedKey.keyboardSwipeTypingEnabled)
+    #expect(defaults.bool(forKey: SharedKey.keyboardSwipeTypingEnabled))
+    defaults.set(false, forKey: SharedKey.keyboardSwipeTypingEnabled)
+    #expect(!defaults.bool(forKey: SharedKey.keyboardSwipeTypingEnabled))
+  }
+
+  @Test
+  func periodShortcutAndLegacyRomanizationDoNotResetOtherOptions() throws {
+    let suiteName = Self.uniqueSuiteName()
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { Self.cleanup(suiteName: suiteName) }
+    let settings = SharedSettings(defaults: defaults)
+    settings.keyboardShowSettingsKey = false
+    settings.periodShortcutEnabled = false
+    settings.keyboardAutoCapitalizationEnabled = false
+    settings.keyboardRomanizationScheme = .yale
+    let reopened = SharedSettings(defaults: defaults)
+    #expect(reopened.keyboardRomanizationScheme == .yale)
+    #expect(!reopened.keyboardShowSettingsKey)
+    #expect(!reopened.periodShortcutEnabled)
+    #expect(!reopened.keyboardAutoCapitalizationEnabled)
+    #expect(reopened.keyboardKind == .standard)
+  }
+
+  @Test
   func hapticDriverDefaultsToCoreAndPersists() throws {
     let suiteName = Self.uniqueSuiteName()
     let defaults = try #require(UserDefaults(suiteName: suiteName))

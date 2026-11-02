@@ -17,6 +17,7 @@ final class JyutpingDictionary {
   private var database: OpaquePointer?
   private let defaults = UserDefaults(suiteName: AppGroup.identifier)
   private let memoryKey = "canto.jyutping.selectionCounts"
+  private let schemeKey = "canto.ime.schemePreferenceCounts.v1"
 
   private init() {
     self.defaults?.set(false, forKey: "canto.ime.offlineDictionaryReady")
@@ -70,7 +71,13 @@ final class JyutpingDictionary {
       gather("SELECT word,romanization FROM entries WHERE compact=? ORDER BY priority LIMIT ?", input, rank: 0)
       gather("SELECT word,romanization FROM entries WHERE compact>=? AND compact<? ORDER BY priority LIMIT ?", input, rank: 2)
     } else {
-      let columns = ["plain", "yale", "sidney"]
+      let preferenceCounts = self.defaults?.dictionary(forKey: self.schemeKey) as? [String: Int] ?? [:]
+      let preferred = CantoneseSchemePreference.preferred(preferenceCounts)
+      let columns = ["plain", "yale", "sidney"].sorted {
+        if $0 == preferred { return true }
+        if $1 == preferred { return false }
+        return false
+      }
       for column in columns {
         gather("SELECT word,romanization FROM entries WHERE \(column)=? ORDER BY priority LIMIT ?", plain, rank: 0)
       }
@@ -213,7 +220,21 @@ final class JyutpingDictionary {
     "冇": ["問題", "咩", "嘢", "所謂"]
   ]
 
-  func remember(_ candidate: JyutpingCandidate) {
+  func remember(_ candidate: JyutpingCandidate, typed: String? = nil) {
+    if let typed,
+       let scheme = CantoneseSchemePreference.inferredScheme(
+         input: typed, canonical: candidate.romanization
+       ) {
+      var counts = self.defaults?.dictionary(forKey: self.schemeKey) as? [String: Int] ?? [:]
+      // Gradual aging prevents long-term preference from locking forever.
+      if counts.values.reduce(0, +) >= 120 {
+        for key in CantoneseSchemePreference.keys {
+          counts[key] = (counts[key] ?? 0) / 2
+        }
+      }
+      counts[scheme] = min(120, (counts[scheme] ?? 0) + 1)
+      self.defaults?.set(counts, forKey: self.schemeKey)
+    }
     var counts = self.defaults?.dictionary(forKey: self.memoryKey) as? [String: Int] ?? [:]
     counts[candidate.id] = min(10000, (counts[candidate.id] ?? 0) + 1)
     if counts.count > 1000 {

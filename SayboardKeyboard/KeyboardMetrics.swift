@@ -8,8 +8,6 @@ enum KeyboardMetrics {
   static let baseHeight = KeyboardLayoutGeometry.microphoneDefaultHeight
   static let baseExtendedHeight = KeyboardLayoutGeometry.fullTypingHeight
   static let baseCompactHeight = KeyboardLayoutGeometry.microphoneCompactHeight
-  /// Reference IMG_9692 (1320x983), 3x screen: 328pt native emoji canvas.
-  static let emojiReferenceHeight: CGFloat = 328
   static let standardMicDiameter: CGFloat = 96
   static let rowGap: CGFloat = 6
 
@@ -34,15 +32,10 @@ enum KeyboardMetrics {
     KeyboardLayoutGeometry.fullTypingHeight * scale
   }
 
-  static var emojiHeight: CGFloat { emojiReferenceHeight * scale }
-
   /// Opening the AI action overlay must not raise or resize the host keyboard.
   /// Mode changes are the only user-requested height changes.
-  static func totalHeight(
-    actionBarVisible _: Bool, kind: KeyboardKind, emojiVisible: Bool = false
-  ) -> CGFloat {
-    if emojiVisible { return emojiHeight }
-    return kind == .standard ? height : extendedHeight
+  static func totalHeight(actionBarVisible _: Bool, kind: KeyboardKind) -> CGFloat {
+    kind == .standard ? height : extendedHeight
   }
 }
 

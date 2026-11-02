@@ -800,14 +800,15 @@ struct AlphabeticKeyboardLayout: View {
       self.clearComposition()
       return
     }
-    let count = self.composition.buffer.count
+    let typedSpelling = self.composition.buffer
+    let count = typedSpelling.count
     self.clearComposition()
     for _ in 0..<count { self.proxy.deleteBackward() }
     self.proxy.insertText(candidate.text)
     self.predictionAnchor = candidate.text
     self.nextCantoneseWords = JyutpingDictionary.shared.continuations(after: candidate.text)
     KeyboardInputTrace.record(.candidateChosen)
-    JyutpingDictionary.shared.remember(candidate)
+    JyutpingDictionary.shared.remember(candidate, typed: typedSpelling)
     self.refreshAutomaticShift()
     self.updateCandidates()
   }
@@ -886,27 +887,30 @@ private enum AlphabeticPage {
 }
 
 
-/// Visual-only trail for the gesture already owned by AlphabeticTouchRow.
+/// Theme-aware variable-width swipe ink. The tip tapers like a brush,
+/// rather than drawing a static neon line or duplicating a touch surface.
 private struct SwipeTrailOverlay: View {
   let points: [LatinSwipePoint]
 
   var body: some View {
     Canvas { context, _ in
-      guard let first = points.first, points.count > 1 else { return }
-      var route = Path()
-      route.move(to: CGPoint(x: first.x, y: first.y))
-      for point in points.dropFirst() {
-        route.addLine(to: CGPoint(x: point.x, y: point.y))
-      }
-      let style = StrokeStyle(lineWidth: 3.3, lineCap: .round, lineJoin: .round)
-      let tint = Color(red: 0.34, green: 0.76, blue: 0.98)
-      context.stroke(route, with: .color(tint.opacity(0.18)),
-                     style: StrokeStyle(lineWidth: 9, lineCap: .round, lineJoin: .round))
-      context.stroke(route, with: .color(tint.opacity(0.96)), style: style)
-      if let last = points.last {
-        let dot = CGRect(x: last.x - 3, y: last.y - 3, width: 6, height: 6)
-        context.fill(Path(ellipseIn: dot), with: .color(.white.opacity(0.9)))
+      guard points.count >= 2 else { return }
+      let last = points.count - 1
+      let ink = Color.primary.opacity(0.46)
+      for index in 1..<points.count {
+        let a = points[index - 1], b = points[index]
+        let progress = Double(index) / Double(last)
+        let width = 11.5 * (1 - progress) + 1.1
+        var stroke = Path()
+        stroke.move(to: CGPoint(x: a.x, y: a.y))
+        stroke.addLine(to: CGPoint(x: b.x, y: b.y))
+        context.stroke(
+          stroke, with: .color(ink.opacity(0.78 - 0.30 * progress)),
+          style: StrokeStyle(lineWidth: width, lineCap: .round, lineJoin: .round)
+        )
       }
     }
+    .allowsHitTesting(false)
+    .accessibilityHidden(true)
   }
 }
