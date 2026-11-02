@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// A single touch surface for one QWERTY/QWERTZ letter row. The drawn keys
 /// have 6pt gaps, but the row has no uncovered touch locations. Press, slide
