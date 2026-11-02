@@ -1,0 +1,47 @@
+{
+  "schema": "altboard.experimental.live-meeting-transcription.v1",
+  "state": "planned_only_not_implemented",
+  "productGoal": "Test-only, on-device live speech-to-text for meetings with fast provisional words and reliably corrected final sentences; never enable by default.",
+  "dependency": "Complete native-feel typing repairs and Swipe Typing acceptance before implementing live ASR.",
+  "principle": "Immediate recording and UI feedback; provisional recognition may lag and revise; text must never pretend to be final until a verified segment completes.",
+  "architecture": {
+    "audio": "Existing AVAudioEngine audio tap and session bridge. Do not run duplicate taps; preserve standard recording mode.",
+    "segments": "Propose 2–4 second speech chunks plus 300–700ms overlap, gated by VAD and acoustic continuity; parameters to benchmark.",
+    "model": "Evaluate current Qwen3 ASR ONNX against chunked incremental calls; native streaming API not verified. Keep existing batch finalization intact.",
+    "states": [
+      "idle",
+      "capture active",
+      "provisional segment decoding",
+      "stabilized segment",
+      "final output",
+      "cancelled"
+    ],
+    "transcript": "Maintain provisional and committed spans with timestamps, atomic file changes and one clearly marked tentative region.",
+    "feedback": "Visible recording consent and explicit stop/cancel, tiny latency status, no network or invisible background listening.",
+    "meetingFeatures": "Test-only timeline with text and timestamps; diarization and summaries are future research, not promised.",
+    "privacy": "On-device first; do not upload speech; configurable retention, clear-on-cancel, user-initiated session.",
+    "performance": "Benchmark cold/warm latency, 5/20/60 minute sessions, memory pressure, battery and thermal throttling on iPhone 17 Pro Max."
+  },
+  "phases": [
+    {
+      "step": 1,
+      "task": "Record real Cantonese colloquial/code-switch corpus and user-approved spellings",
+      "acceptance": "No unverified forced particle normalization"
+    },
+    {
+      "step": 2,
+      "task": "Evaluate model chunking/VAD and rolling stable-text quality",
+      "acceptance": "No duplicate or lost words at chunk boundaries"
+    },
+    {
+      "step": 3,
+      "task": "Add hidden experimental switch in a later isolated branch",
+      "acceptance": "Existing dictation remains unaffected"
+    },
+    {
+      "step": 4,
+      "task": "Measure meeting-use reliability, privacy and battery",
+      "acceptance": "Explicit approval before any default exposure"
+    }
+  ]
+}

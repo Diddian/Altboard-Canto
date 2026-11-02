@@ -1,6 +1,6 @@
 {
-  "schema": "altboard.keyboard.swipe-typing-plan.v2",
-  "state": "planned_only_not_in_ipa",
+  "schema": "altboard.keyboard.swipe-typing-plan.v3",
+  "state": "offline_beta_implemented_feature_flag_default_off_pending_swift_and_iphone_validation",
   "date": "2026-11-02",
   "goal": "Offline glide/swipe typing for Latin-script preferred languages. First release English/German; expand only with licensed, tested per-language corpora. Preserve ordinary taps, accents, Cantonese composition, Space trackpad, and existing microphone.",
   "scope": {
@@ -139,7 +139,7 @@
       "mitigation": "Approximate hit zones from geometry and optimize with physical tests; never claim identical internal algorithms."
     }
   ],
-  "nextDecision": "First establish current IPA baseline and cross-row gesture capture in a separate feature branch; do not implement decoder or alter active build workflow yet.",
+  "nextDecision": "Verify Swift smoke and macOS build, collect physical glide traces for offline accuracy calibration, obtain larger licensed EN/DE corpus, then consider enabling by default.",
   "sourceReview": [
     {
       "repo": "Henryikenna/sswipe",
@@ -251,5 +251,15 @@
       "no outgoing network requests",
       "word-frequency data comes from appropriately licensed assets"
     ]
+  },
+  "currentImplementation": {
+    "userControl": "Settings > Keyboard > Swipe Typing (English / German · Beta), disabled by default",
+    "decoder": "SayboardKeyboard/LatinSwipeDecoder.swift",
+    "gesture": "Existing UIKit touch receiver retains a single touch after leaving its initial row. Converts to keyboard-local coordinates with row offsets, no competing recognizer.",
+    "path": "Transient max 160 points, sparse samples interpolated, 32 arc-length interpolation samples",
+    "corpus": "Existing small built-in English/German words in LatinWordSuggestions.commonWords; deliberately not a full dictionary",
+    "ranking": "Start/end proximity <=68pt, location cost, 18% path length penalty, small corpus-order prior",
+    "compose": "Top result inserted with trailing space; top three candidates appear in toolbar and alternative replaces verified host suffix",
+    "remainingRisks": "Quality is limited by starter dictionary and untuned thresholds. No physical-device tests or native compile yet. Off by default."
   }
 }

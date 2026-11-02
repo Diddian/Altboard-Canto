@@ -10,6 +10,32 @@ Statuses: [x] implemented in review branch; [ ] pending or not verified.
 Code changes are not considered shipped until a successful iPhone build and
 physical checks, and a deliberate merge/release.
 
+## P0 — Immediate interaction and manual AI text rewrite (T-008)
+
+- [x] T-008.1 Manual AI uses UIInputViewController.selectedText instead of cursor prefix; auto AI action remains dictated transcript only.
+- [x] T-008.2 Selection changed during inference: copy result without overwriting a different host field.
+- [x] T-008.3 Explicit Use Clipboard fallback (requires Full Access and iOS permission), process selected copied text, return output to clipboard for manual paste; never silently replace.
+- [x] T-008.4 AI action picker REPLACES gear/output/mic toolbar, not a floating overlay; no global UIScrollView.appearance() mutation.
+- [x] T-008.5 Optional Show Settings Key, default on; when hidden, long hold Output Language (0.7s) to open Settings.
+- [x] T-008.6 Double-tap newly activated microphone quickly (within 1.3s) or retap during Starting to cancel without ASR finalization. Preserve ordinary Stop after the cancel window.
+- [x] T-008.7 Single Backspace tap deletes one host character; fast Cantonese syllable deletion after 310ms hold; regular hold 420ms.
+- [x] T-008.8 Space trackpad movement suppresses IME/Latin suggestions; refresh 500ms after release.
+- [x] T-008.9 Delay synchronous Cantonese SQLite suggestions by 24ms beyond key-down UI path and cache swipe key centers.
+- [x] T-008.10 Warn once when recording exceeds 40s, then compact triangle + elapsed seconds at mic's left.
+- [x] T-008.11 Emoji picker retains ABC, Emoji, Space, Return and repeat Delete.
+- [ ] T-008.12 Xcode compile / SideStore IPA, host-selection rewrite and clipboard entitlement tests.
+- [ ] T-008.13 Device test immediate haptic/pressed states, no accidental recording after cancelled start, mic start/stop race, privacy and no dropped input.
+- [ ] T-008.14 Test quick text cursor drag with both Cantonese and Latin suggestions, including focus loss/cancel.
+
+## P1 — Cantonese conversational ASR vocabulary review (T-009)
+
+- [x] T-009.1 Create review-only vocabulary and normalization notes.
+- [ ] T-009.2 User confirms preferred traditional spellings and which alternatives to preserve.
+- [ ] T-009.3 Add confirmed mappings to non-destructive ASR postprocessing (never conflate particles or English letters).
+- [ ] T-009.4 Test code-switching and short filler noises against real recordings before enabling.
+
+See docs/CANTONESE-COLLOQUIAL-ASR-REVIEW.md.
+
 ## P0 — Native keyboard parity (T-001)
 
 - [x] T-001.1 Measure native versus Altboard key positions, width, spacing and RGB color.
@@ -79,13 +105,25 @@ Files: `SayboardKeyboard/JyutpingDictionary.swift`,
 ## P2 — Latin-script swipe typing (T-005)
 
 - [x] T-005.1 Audit Henryikenna/sswipe and update offline English/German plan v2.
-- [ ] T-005.2 Keyboard-wide gesture state machine across Q/A/Z rows; no competing gestures.
-- [ ] T-005.3 Licensed offline language frequency lexicons, memory and performance budget.
-- [ ] T-005.4 Resample path and rank location, shape, length, language frequency.
-- [ ] T-005.5 Test swipe versus tap/diacritics/Space/Cantonese and safe host insertion.
-- [ ] T-005.6 Enable via feature flag only after physical QA.
+- [x] T-005.2 UIKit per-row touch owner retains finger capture beyond its bounds; global Q/A/Z coordinates and gesture-state gate without installing competing gesture layers.
+- [x] T-005.3 Initial offline English/German lexicons reuse existing built-in common words only; no unlicensed sswipe or dictionary code copied.
+- [x] T-005.4 Prototype resamples 32 points, endpoint prefilter, location + length + corpus-order ranking; smoke tests added.
+- [x] T-005.5 Swipe Typing (Beta) keyboard setting, default off; inserts top result plus space, top-3 alternate candidates can replace verified suffix.
+- [ ] T-005.6 Run pure Swift smoke and native build; physical-device accuracy, long-press accents, and keyboard hitbox regression tests.
+- [ ] T-005.7 Expand from small starter corpus to adequately licensed frequency-ranked EN/DE dictionaries; measure p95 and top-3 accuracy.
+- [ ] T-005.8 Enable by default only after iPhone acceptance. Native parity not claimed.
 
 Plan: `docs/swipe-typing-en-de-plan.json`.
+
+## P3 — Experimental live meeting transcription (T-007, PLAN ONLY)
+
+- [x] T-007.1 Outline incremental offline transcription and meeting-assistant prototype architecture.
+- [ ] T-007.2 Select ASR engine and measure real streaming/chunked decoder support (Qwen3 ONNX streaming not assumed).
+- [ ] T-007.3 Prototype VAD, overlapping 2–4s segments, provisional vs final text, timestamps, diarization feasibility and corrections.
+- [ ] T-007.4 Document consent, on-device file handling, recording visibility, retention, battery and thermal constraints.
+- [ ] T-007.5 Add test-only flag after Swipe Typing is stable. Not coded or released now.
+
+See docs/live-meeting-transcription-experiment.json.
 
 ## Build / deployment (T-006)
 

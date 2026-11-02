@@ -10,6 +10,7 @@ on:
       - feat/fixed-keyboard-settings-20261102
       - fix/keyboard-native-candidates-20261102
       - fix/instant-touchdown-highlight-20261102
+      - feat/instant-input-ai-swipe-20261102
   workflow_dispatch:
 
 permissions:
@@ -78,6 +79,10 @@ jobs:
           swiftc -o "$RUNNER_TEMP/touch-smoke" \
             Shared/KeyTouchMap.swift scripts/verify-key-touch-map.swift
           "$RUNNER_TEMP/touch-smoke"
+          swiftc -o "$RUNNER_TEMP/swipe-smoke" \
+            Shared/KeyboardKind.swift SayboardKeyboard/LatinSwipeDecoder.swift \
+            scripts/verify-latin-swipe.swift
+          "$RUNNER_TEMP/swipe-smoke"
           python3 -m json.tool docs/ios-keyboard-reference.json >/dev/null
           python3 -m json.tool docs/ios-keyboard-native-vs-altboard-pixel-comparison.json >/dev/null
           python3 -m json.tool docs/swipe-typing-en-de-plan.json >/dev/null
@@ -208,6 +213,8 @@ jobs:
             TAG="altboard-canto-native-preview"
           elif [ "$GITHUB_REF_NAME" = "fix/instant-touchdown-highlight-20261102" ]; then
             TAG="altboard-canto-instant-touch-preview"
+          elif [ "$GITHUB_REF_NAME" = "feat/instant-input-ai-swipe-20261102" ]; then
+            TAG="altboard-canto-swipe-beta"
           fi
           IPA="dist/Altboard-Canto-SideStore.ipa"
           test -s "$IPA"
