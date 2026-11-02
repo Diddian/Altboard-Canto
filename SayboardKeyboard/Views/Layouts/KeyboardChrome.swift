@@ -146,6 +146,8 @@ struct KeyboardBottomRow: View {
   var onSpaceAction: (() -> Void)? = nil
   var onReturnAction: (() -> Void)? = nil
   var onTextEdited: (() -> Void)? = nil
+  var onCursorTrackingBegan: (() -> Void)? = nil
+  var onCursorTrackingEnded: (() -> Void)? = nil
 
   var body: some View {
     HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
@@ -188,6 +190,8 @@ struct KeyboardBottomRow: View {
           self.onTextEdited?()
         },
         onCursorMove: { self.proxy.adjustTextPosition($0) },
+        onTrackingBegan: self.onCursorTrackingBegan,
+        onTrackingEnded: self.onCursorTrackingEnded
       )
 
       KeyButton(content: .systemImage("return.left"), fixedWidth: self.metrics.returnWidth) {

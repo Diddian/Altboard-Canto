@@ -33,6 +33,8 @@ struct AlphabeticKeyboardLayout: View {
   @State private var activeLatinWord: String?
   @State private var latinSuggestions = [LatinWordSuggestion]()
   @State private var latinRefreshTask: Task<Void, Never>?
+  @State private var cursorRefreshTask: Task<Void, Never>?
+  @State private var isCursorTracking = false
   @AppStorage(
     SharedKey.keyboardTouchDebugOverlay,
     store: UserDefaults(suiteName: AppGroup.identifier)
@@ -97,7 +99,9 @@ struct AlphabeticKeyboardLayout: View {
         onAlphabeticModeSwitch: { self.toggleNumberPage() },
         showsAlphabetIndicator: self.page == .letters,
         onSpaceAction: { self.handleSpace() },
-        onReturnAction: { self.handleReturn() }
+        onReturnAction: { self.handleReturn() },
+        onCursorTrackingBegan: { self.beginCursorTracking() },
+        onCursorTrackingEnded: { self.endCursorTracking() }
       )
       .padding(.top, Self.rowSpacing.kbScaled)
     }
@@ -130,6 +134,7 @@ struct AlphabeticKeyboardLayout: View {
     }
     .onDisappear {
       self.latinRefreshTask?.cancel()
+      self.cursorRefreshTask?.cancel()
       self.activeLatinWord = nil
       self.latinSuggestions.removeAll()
       self.composition.clear()
@@ -394,7 +399,8 @@ struct AlphabeticKeyboardLayout: View {
           proxy: self.proxy,
           fixedWidth: 50.kbScaled,
           onDeleteIntercept: { self.deleteCompositionCharacter() },
-          onHostDeletion: { self.handleHostDeletion() }
+          onHostDeletion: { self.handleHostDeletion() },
+          fastCompositionRepeat: self.offersCantonese && !self.composition.isEmpty
         )
       }
       .padding(.horizontal, KeyboardLayoutGeometry.alphabetSpecialRowInset.kbScaled)
@@ -433,7 +439,8 @@ struct AlphabeticKeyboardLayout: View {
             proxy: self.proxy,
             fixedWidth: wideWidth,
             onDeleteIntercept: { self.deleteCompositionCharacter() },
-            onHostDeletion: { self.handleHostDeletion() }
+            onHostDeletion: { self.handleHostDeletion() },
+          fastCompositionRepeat: self.offersCantonese && !self.composition.isEmpty
           )
         }
         .padding(.horizontal, inset)
@@ -529,6 +536,7 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private func updateCandidates() {
+    guard !self.isCursorTracking else { return }
     self.candidates = self.offersCantonese && !self.composition.isEmpty
       ? JyutpingDictionary.shared.candidates(for: self.composition.buffer, scheme: self.romanization)
       : []
@@ -559,6 +567,31 @@ struct AlphabeticKeyboardLayout: View {
       let values = LatinWordSuggestions.shared.choices(for: typed, preferred: preferred)
       guard !Task.isCancelled, self.activeLatinWord == typed else { return }
       self.latinSuggestions = values
+    }
+  }
+
+  private func beginCursorTracking() {
+    self.cursorRefreshTask?.cancel()
+    self.latinRefreshTask?.cancel()
+    self.isCursorTracking = true
+    self.activeLatinWord = nil
+    self.latinSuggestions.removeAll()
+    self.candidates.removeAll()
+    self.expandedCandidates.removeAll()
+    self.showsCandidateGrid = false
+  }
+
+  private func endCursorTracking() {
+    self.isCursorTracking = false
+    self.cursorRefreshTask?.cancel()
+    self.cursorRefreshTask = Task { @MainActor in
+      do { try await Task.sleep(for: .milliseconds(500)) } catch { return }
+      guard !Task.isCancelled, !self.isCursorTracking else { return }
+      if !self.composition.isEmpty && !self.trackedTextMatches {
+        self.clearComposition()
+      }
+      self.refreshAutomaticShift()
+      self.updateCandidates()
     }
   }
 

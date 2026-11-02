@@ -6,6 +6,8 @@ struct SpaceBarKey: View {
   let showsAlphabetIndicator: Bool
   let onSpace: () -> Void
   let onCursorMove: (Int) -> Void
+  var onTrackingBegan: (() -> Void)? = nil
+  var onTrackingEnded: (() -> Void)? = nil
 
   var body: some View {
     ZStack(alignment: .bottomTrailing) {
@@ -88,12 +90,14 @@ struct SpaceBarKey: View {
       abs(value.translation.width) > Self.minimumHorizontalMovement
     {
       self.isTrackpadActive = true
+      self.onTrackingBegan?()
       self.lastReportedCharOffset = 0
       KeyboardHaptics.key(strength: 0.75)
     }
   }
 
   private func handleDragEnded() {
+    let wasTracking = self.isTrackpadActive
     if !self.isTrackpadActive {
       KeyboardInputTrace.record(.spaceTouched)
       self.onSpace()
@@ -103,5 +107,6 @@ struct SpaceBarKey: View {
     self.isTrackpadActive = false
     self.pressStartTime = nil
     self.lastReportedCharOffset = 0
+    if wasTracking { self.onTrackingEnded?() }
   }
 }

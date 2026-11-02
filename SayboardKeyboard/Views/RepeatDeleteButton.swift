@@ -8,6 +8,7 @@ struct RepeatDeleteButton: View {
   /// Return true when a composition absorbed this delete.
   var onDeleteIntercept: (() -> Bool)? = nil
   var onHostDeletion: (() -> Void)? = nil
+  var fastCompositionRepeat = false
 
   @State private var deletionTask: Task<Void, Never>?
   @State private var didRepeat = false
@@ -31,7 +32,7 @@ struct RepeatDeleteButton: View {
             KeyboardHaptics.key()
             self.didRepeat = false
             self.deletionTask = Task { @MainActor in
-              try? await Task.sleep(for: .milliseconds(420))
+              try? await Task.sleep(for: .milliseconds(self.fastCompositionRepeat ? 310 : 420))
               guard !Task.isCancelled else { return }
               self.didRepeat = true
               var repeats = 0
@@ -54,7 +55,8 @@ struct RepeatDeleteButton: View {
           .onEnded { _ in
             self.deletionTask?.cancel()
             self.deletionTask = nil
-            if !self.didRepeat, !(self.onDeleteIntercept?() ?? false) {
+            if !self.didRepeat {
+              // Tap removes a character; faster syllable deletion requires a hold.
               self.proxy.deleteBackward()
               self.onHostDeletion?()
             }
