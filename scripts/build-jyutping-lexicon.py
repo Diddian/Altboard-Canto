@@ -38,6 +38,22 @@ def yale_spelling(jyutping: str) -> str:
     return "".join(yale_syllable(syl) for syl in jyutping.split())
 
 
+def sidney_lau_syllable(jyutping: str) -> str:
+    """Unmarked Sidney Lau typing alias derived from canonical Jyutping."""
+    yale = yale_syllable(jyutping)
+    if yale.startswith("yu"):
+        return "yue" + yale[2:]
+    return (yale.replace("eui", "ui")
+                .replace("eun", "un")
+                .replace("eut", "ut")
+                .replace("yu", "ue")
+                .replace("ou", "o"))
+
+
+def sidney_lau_spelling(jyutping: str) -> str:
+    return "".join(sidney_lau_syllable(syl) for syl in jyutping.split())
+
+
 def read_source(input_file: str | None) -> bytes:
     if input_file:
         return pathlib.Path(input_file).read_bytes()
@@ -64,6 +80,7 @@ def compile_database(source: bytes, output: pathlib.Path, verify_upstream: bool)
             plain TEXT NOT NULL,
             compact TEXT NOT NULL,
             yale TEXT NOT NULL,
+            sidney TEXT NOT NULL,
             initials TEXT NOT NULL,
             priority INTEGER NOT NULL
         )""")
@@ -91,13 +108,14 @@ def compile_database(source: bytes, output: pathlib.Path, verify_upstream: bool)
             compact = romanization.replace(" ", "")
             initials = "".join(s[0] for s in syllables)
             yale = yale_spelling(romanization)
-            batch.append((word, romanization, plain, compact, yale, initials, count))
+            sidney = sidney_lau_spelling(romanization)
+            batch.append((word, romanization, plain, compact, yale, sidney, initials, count))
             count += 1
             if len(batch) >= 15000:
-                db.executemany("INSERT INTO entries VALUES (?,?,?,?,?,?,?)", batch)
+                db.executemany("INSERT INTO entries VALUES (?,?,?,?,?,?,?,?)", batch)
                 batch.clear()
         if batch:
-            db.executemany("INSERT INTO entries VALUES (?,?,?,?,?,?,?)", batch)
+            db.executemany("INSERT INTO entries VALUES (?,?,?,?,?,?,?,?)", batch)
         if count < 10000 and verify_upstream:
             raise ValueError(f"Lexicon unexpectedly small: {count} entries")
         db.executescript("""
@@ -105,6 +123,7 @@ def compile_database(source: bytes, output: pathlib.Path, verify_upstream: bool)
             CREATE INDEX idx_entries_plain ON entries(plain, priority);
             CREATE INDEX idx_entries_compact ON entries(compact, priority);
             CREATE INDEX idx_entries_yale ON entries(yale, priority);
+            CREATE INDEX idx_entries_sidney ON entries(sidney, priority);
             CREATE INDEX idx_entries_initials ON entries(initials, priority);
         """)
         db.commit()
@@ -119,6 +138,9 @@ def compile_database(source: bytes, output: pathlib.Path, verify_upstream: bool)
             assert db.execute(
                 "SELECT 1 FROM entries WHERE yale=? AND word='今日' LIMIT 1", ("gamyat",)
             ).fetchone(), "Yale gamyat must suggest 今日"
+            assert db.execute(
+                "SELECT 1 FROM entries WHERE sidney=? AND word='今日' LIMIT 1", ("gamyat",)
+            ).fetchone(), "Sidney Lau gamyat must suggest 今日"
         print(f"Compiled {count} unique entries to {output} ({output.stat().st_size} bytes)")
         return count
     finally:

@@ -5,7 +5,7 @@ Reference implementation: [yuetyam/jyutping](https://github.com/yuetyam/jyutping
 ## Keyboard behavior
 
 1. In **Preferred Languages**, selecting **Cantonese** (`yue`) enables Chinese candidate suggestions. Selecting generic Chinese (`zh`) alone does not. There is no EN/粵 typing switch on the keyboard.
-2. **Keyboard Type:** Microphone Only, Symbols, Alphabet. When Alphabet and Cantonese are enabled, Settings offers three lookups: **Jyutping**, **Yale**, **Yuetyam**. "Yuetyam" denotes the upstream keyboard's Jyutping spelling convention; it is not a third independent romanization standard.
+2. **Keyboard Type:** Microphone Only, Symbols, Alphabet. When Cantonese is enabled, one indexed lookup accepts **Jyutping**, **Yale**, and **Sidney Lau** together without a romanization selector. Legacy stored scheme values are ignored.
 3. Every letter is inserted immediately into the application's actual text field, with iOS-like Shift and auto-capitalization. Chinese suggestions appear above the keyboard when recognized. Suggestions display **Chinese text only**, never tone digits or phonetic captions.
 4. Selecting a Chinese candidate replaces only the just-typed Latin suffix after verifying that `UITextDocumentProxy.documentContextBeforeInput` still ends with that suffix. Changed cursor, empty, or truncated context means no replacement.
 5. Space inserts a space, Return inserts a newline, and unknown spellings remain Latin. There is no need to switch to an English-only mode.
@@ -16,7 +16,7 @@ Reference implementation: [yuetyam/jyutping](https://github.com/yuetyam/jyutping
 
 ## Offline indexing
 
-`scripts/build-jyutping-lexicon.py` pins `Modules/Preparing/Sources/Preparing/Resources/jyutping.txt` with a Git blob SHA. The builder indexes exact Jyutping without tones (`plain`), with tones (`compact`), unmarked Yale aliases (`yale`), abbreviated initials, and stable priority. No runtime model download or server is necessary for typing.
+`scripts/build-jyutping-lexicon.py` pins `Modules/Preparing/Sources/Preparing/Resources/jyutping.txt` with a Git blob SHA. The builder indexes exact Jyutping without tones (`plain`), with tones (`compact`), unmarked Yale aliases (`yale`), unmarked Sidney Lau aliases (`sidney`), abbreviated initials, and stable priority. No runtime model download or server is necessary for typing.
 
 Yale mappings include Jyutping `j → y`, `z → j`, `c → ch`, `oe/eo → eu` and the long `aa` search alias `a`. These aliases support ordinary phonetic typing; they do not claim to render scholarly Yale tone diacritics. Example: 今日 (`gam1 jat6`) matches both `gamjat` and `gamyat` with the same Chinese candidate.
 

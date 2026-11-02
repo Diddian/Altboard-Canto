@@ -9,12 +9,23 @@ enum CantoneseSyllableEditing {
     guard !input.isEmpty, !syllables.isEmpty else { return nil }
     let jyutping = syllables.map { $0.trimmingCharacters(in: CharacterSet(charactersIn: "123456")) }
     let yale = syllables.map(yaleAlias)
-    let spellings = [syllables, jyutping, yale]
+    let sidneyLau = syllables.map(sidneyLauAlias)
+    let spellings = [syllables, jyutping, yale, sidneyLau]
     for parts in spellings where parts.joined() == input {
       guard let last = parts.last, !last.isEmpty else { return nil }
       return last.count
     }
     return nil
+  }
+
+  static func sidneyLauAlias(_ syllable: String) -> String {
+    let yale = yaleAlias(syllable)
+    if yale.hasPrefix("yu") { return "yue" + yale.dropFirst(2) }
+    return yale.replacingOccurrences(of: "eui", with: "ui")
+      .replacingOccurrences(of: "eun", with: "un")
+      .replacingOccurrences(of: "eut", with: "ut")
+      .replacingOccurrences(of: "yu", with: "ue")
+      .replacingOccurrences(of: "ou", with: "o")
   }
 
   static func yaleAlias(_ syllable: String) -> String {

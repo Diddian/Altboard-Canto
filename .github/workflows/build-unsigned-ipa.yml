@@ -62,6 +62,7 @@ jobs:
           python3 scripts/build-jyutping-lexicon.py
           test -s JyutpingResources/jyutping.sqlite3
           python3 -m unittest discover -s scripts -p 'test_jyutping_*.py'
+          python3 -m unittest discover -s scripts -p 'test_universal_cantonese.py'
           python3 scripts/build-emoji-catalog.py
           test -s EmojiResources/emoji_catalog.tsv
           python3 -m unittest discover -s scripts -p 'test_emoji_catalog.py'
@@ -71,6 +72,10 @@ jobs:
             exit 1
           fi
           swiftc -typecheck Shared/JyutpingComposition.swift Shared/SentenceCapitalization.swift Shared/LiveCantoneseSafety.swift Shared/CantoneseSyllableEditing.swift Shared/EnglishCaseSuggestion.swift
+          swiftc -o "$RUNNER_TEMP/universal-canto-smoke" \
+            Shared/CantoneseRomanizationVariants.swift Shared/CantoneseSyllableEditing.swift \
+            scripts/verify-universal-cantonese.swift
+          "$RUNNER_TEMP/universal-canto-smoke"
           swiftc -o "$RUNNER_TEMP/keyboard-smoke" \
             Shared/JyutpingComposition.swift Shared/SentenceCapitalization.swift \
             Shared/LiveCantoneseSafety.swift Shared/CantoneseSyllableEditing.swift Shared/EnglishCaseSuggestion.swift \

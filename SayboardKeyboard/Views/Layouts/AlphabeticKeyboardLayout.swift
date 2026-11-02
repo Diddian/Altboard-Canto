@@ -11,11 +11,6 @@ struct AlphabeticKeyboardLayout: View {
   )
   private var arrangementRaw = LetterKeyArrangement.qwertz.rawValue
   @AppStorage(
-    SharedKey.keyboardRomanizationScheme,
-    store: UserDefaults(suiteName: AppGroup.identifier)
-  )
-  private var romanizationRaw = CantoneseRomanizationScheme.jyutping.rawValue
-  @AppStorage(
     SharedKey.keyboardAutoCapitalizationEnabled,
     store: UserDefaults(suiteName: AppGroup.identifier)
   )
@@ -65,10 +60,6 @@ struct AlphabeticKeyboardLayout: View {
 
   private var smartChineseQuote: String {
     self.nextChineseQuoteCloses ? "」" : "「"
-  }
-
-  private var romanization: CantoneseRomanizationScheme {
-    CantoneseRomanizationScheme(rawValue: self.romanizationRaw) ?? .jyutping
   }
 
   private var trackedTextMatches: Bool {
@@ -141,7 +132,6 @@ struct AlphabeticKeyboardLayout: View {
       self.updateCandidates()
     }
     .onChange(of: self.autoCapitalize) { _, _ in self.refreshAutomaticShift() }
-    .onChange(of: self.romanizationRaw) { _, _ in self.updateCandidates() }
     .onChange(of: self.keyboardState.textContextRevision) { _, _ in
       if !self.swipeAlternatives.isEmpty {
         let prefix = self.swipeAlternatives[0] + " "
@@ -189,7 +179,7 @@ struct AlphabeticKeyboardLayout: View {
             self.showsCandidateGrid.toggle()
             if self.showsCandidateGrid {
               self.expandedCandidates = JyutpingDictionary.shared.candidates(
-                for: self.composition.buffer, scheme: self.romanization, limit: 200
+                for: self.composition.buffer, limit: 200
               )
             }
           } label: {
@@ -664,20 +654,18 @@ struct AlphabeticKeyboardLayout: View {
     self.expandedCandidates.removeAll()
     if self.offersCantonese && !self.composition.isEmpty {
       let prefix = self.composition.buffer
-      let scheme = self.romanization
       self.cantoneseRefreshTask = Task { @MainActor in
         // Yield a frame before the SQLite query so finger-down highlights and
         // host text insertion are not delayed by synchronous candidate search.
         do { try await Task.sleep(for: .milliseconds(24)) } catch { return }
         guard !Task.isCancelled, !self.isCursorTracking,
-              self.composition.buffer == prefix,
-              self.romanization == scheme else { return }
-        let newCandidates = JyutpingDictionary.shared.candidates(for: prefix, scheme: scheme)
+              self.composition.buffer == prefix else { return }
+        let newCandidates = JyutpingDictionary.shared.candidates(for: prefix)
         guard !Task.isCancelled, self.composition.buffer == prefix else { return }
         self.candidates = newCandidates
         if self.showsCandidateGrid && !newCandidates.isEmpty {
           self.expandedCandidates = JyutpingDictionary.shared.candidates(
-            for: prefix, scheme: scheme, limit: 200
+            for: prefix, limit: 200
           )
         }
       }

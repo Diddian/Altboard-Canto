@@ -1,7 +1,7 @@
 # Altboard-Canto development tasks
 
 Source branch: `feat/instant-input-ai-swipe-20261102`
-Last independently verified IPA: Action #57 (`471ffed`). This new feature-branch commit is pending macOS build and physical iPhone verification.
+Last successful beta IPA: run 41522770022 (`e0c1901`). Run 41528118833 failed on duplicate `.gitkeep` resource outputs. The universal-input changes are not yet built or iPhone-verified.
 The existing successful release branch and IPA remain unchanged. This branch publishes to its own beta Release tag.
 GitHub Issues are disabled in this repository (GitHub API 410). This file is the
 canonical, versioned ticket board until Issues are enabled.
@@ -10,10 +10,24 @@ Statuses: [x] implemented in review branch; [ ] pending or not verified.
 Code changes are not considered shipped until a successful iPhone build and
 physical checks, and a deliberate merge/release.
 
+## P0 — Universal Cantonese Input (T-012)
+
+- [x] T-012.1 Build indexed Jyutping, Yale and Sidney Lau spellings in the same SQLite dictionary; users never select a scheme.
+- [x] T-012.2 Remove the Cantonese Romanization picker; keep legacy saved values ignored.
+- [x] T-012.3 Provide narrow `mm → m` and `ng → m` input aliases. Genuine `ng` candidates remain, with 唔 offered as a separate candidate. Preserve tone-digit strictness.
+- [x] T-012.4 Include Sidney Lau phonetic boundaries in held-Delete and regression tests for user-entered examples.
+- [x] T-012.5 Fix run 41528118833 Xcode duplicate resource output by excluding `.gitkeep` from keyboard extension resources.
+- [ ] T-012.6 Complete macOS Xcode build, SideStore IPA delivery, and on-device verification after changes.
+- [ ] T-012.7 Per-syllable mixed romanization inside compound phrases, rather than one whole phrase per convention.
+- [ ] T-012.8 Tune candidate ranking, frequency and offline p95 latency/memory for complete corpus.
+- [ ] T-012.9 Context-sensitive lazy-sound aliases and stronger typo recognition without conflating true phonological distinctions.
+
+See `docs/CANTONESE-UNIVERSAL-IME-ACCEPTANCE.md`.
+
 ## P0 — Cantonese input enrichment and emoji (T-010 / T-011)
 
 - [x] T-010.1 Add audited colloquial entries and multiple-character conversational phrases, including 喎, 尐, 噤, 或者, 根據, 最多.
-- [x] T-010.2 Add bounded alternate Romanization aliases for Yale/Jyutping mixed habits (yuen/yun, yu/yyu, jui/jeui); do not conflate differing tones or automatically substitute Chinese characters.
+- [x] T-010.2 Replace broad string substitutions with three indexed romanization systems plus narrow informal aliases. Full mixed-phrase fuzzy input remains T-012.7.
 - [x] T-010.3 Present opt-in next-word continuations after candidate commits; never silently insert predictions.
 - [x] T-010.4 Switch alphabetic numeric and symbol punctuation to Chinese forms when yue/zh is in the selected preferred languages; provide manual paired quotes and extended title/bracket keys.
 - [x] T-011.1 Generate full, offline Unicode fully-qualified emoji catalog with category chips, search and ABC return.
@@ -142,7 +156,8 @@ See docs/live-meeting-transcription-experiment.json.
 ## Build / deployment (T-006)
 
 - [x] T-006.1 Current baseline Action #51 succeeded: `db687a7`.
-- [ ] T-006.2 Compile this exact new feature branch and run all pure-policy tests, including the offline EN/DE swipe smoke. Last verified baseline: Action #57 at `471ffed`.
+- [ ] T-006.2 Compile the latest branch and run all policy tests; most recent prior successful beta was run 41522770022 at `e0c1901`.
+- [x] T-006.2c Diagnose run 41528118833: duplicate `.gitkeep` extension resource. The project exclusion fix is committed for CI verification.
 - [x] T-006.2a Switch IPA preview from macos-15 ARM64 to macos-15-intel hosted runner after zero-step cancellations (#52/#54); Xcode 26.2 installation confirmed in GitHub runner-images.
 - [x] T-006.2b The macOS Intel runner previously compiled and shipped a SideStore IPA at Action #57; new branch still requires its own build.
 - [ ] T-006.3 Verify SideStore IPA includes all extension resources and matching commit SHA.
@@ -151,6 +166,6 @@ See docs/live-meeting-transcription-experiment.json.
 ## Ticketing migration
 
 When the repository's GitHub Settings > General > Features > Issues checkbox is
-enabled, create one Issue per T-001…T-009, linking this file and retaining
+enabled, create one Issue per T-001…T-012, linking this file and retaining
 subtask checkboxes. Until then, this Markdown file plus the draft PR review
 serve as the issue board; do not claim that GitHub Issues were created.

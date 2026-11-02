@@ -63,40 +63,29 @@ final class JyutpingDictionary {
       }
     }
 
-    // Tone-digit input must honor tones, not silently ignore them.
+    // Tone digits remain strict Jyutping readings. Untoned input searches
+    // all three indexed spellings; the legacy scheme argument is ignored.
+    _ = scheme
     if hasTone {
       gather("SELECT word,romanization FROM entries WHERE compact=? ORDER BY priority LIMIT ?", input, rank: 0)
       gather("SELECT word,romanization FROM entries WHERE compact>=? AND compact<? ORDER BY priority LIMIT ?", input, rank: 2)
     } else {
-      // Candidate aliases cover both systems, with selected scheme first.
-      if scheme == .yale {
-        gather("SELECT word,romanization FROM entries WHERE yale=? ORDER BY priority LIMIT ?", plain, rank: 0)
+      let columns = ["plain", "yale", "sidney"]
+      for column in columns {
+        gather("SELECT word,romanization FROM entries WHERE \(column)=? ORDER BY priority LIMIT ?", plain, rank: 0)
       }
-      gather("SELECT word,romanization FROM entries WHERE plain=? ORDER BY priority LIMIT ?", plain, rank: 0)
-      if scheme != .yale {
-        gather("SELECT word,romanization FROM entries WHERE yale=? ORDER BY priority LIMIT ?", plain, rank: 0)
-      }
-      if scheme == .yale {
-        gather("SELECT word,romanization FROM entries WHERE yale>=? AND yale<? ORDER BY priority LIMIT ?", plain, rank: 2)
-      }
-      gather("SELECT word,romanization FROM entries WHERE plain>=? AND plain<? ORDER BY priority LIMIT ?", plain, rank: 2)
-      if scheme != .yale {
-        gather("SELECT word,romanization FROM entries WHERE yale>=? AND yale<? ORDER BY priority LIMIT ?", plain, rank: 2)
-      }
-      // Lower-ranked alternate Yale/old Hong Kong romanizations:
-      // yuen/yun/yyun, yu/yyu, jui/jeui, gui/geui.
-      if results.count < 12 {
-        let alternates = CantoneseRomanizationVariants.variants(for: plain).dropFirst()
-        for alternate in alternates.prefix(10) {
-          gather("SELECT word,romanization FROM entries WHERE yale=? ORDER BY priority LIMIT ?", alternate, rank: 1)
-          gather("SELECT word,romanization FROM entries WHERE plain=? ORDER BY priority LIMIT ?", alternate, rank: 1)
+      // A few bounded convenience aliases. Broad vowel substitutions create
+      // false homophones; they do not belong in a keyboard's exact index.
+      for alias in CantoneseRomanizationVariants.variants(for: plain).dropFirst().prefix(3) {
+        for column in columns {
+          gather("SELECT word,romanization FROM entries WHERE \(column)=? ORDER BY priority LIMIT ?", alias, rank: 1)
         }
-        if results.isEmpty {
-          for alternate in alternates.prefix(5) {
-            gather("SELECT word,romanization FROM entries WHERE yale>=? AND yale<? ORDER BY priority LIMIT ?", alternate, rank: 4)
-            gather("SELECT word,romanization FROM entries WHERE plain>=? AND plain<? ORDER BY priority LIMIT ?", alternate, rank: 4)
-          }
-        }
+      }
+      for column in columns {
+        gather(
+          "SELECT word,romanization FROM entries WHERE \(column)>=? AND \(column)<? ORDER BY priority LIMIT ?",
+          plain, rank: 2
+        )
       }
       if plain.count >= 2 {
         gather("SELECT word,romanization FROM entries WHERE initials=? ORDER BY priority LIMIT ?", plain, rank: 3)
@@ -117,9 +106,8 @@ final class JyutpingDictionary {
       return lhs.offset < rhs.offset
     }.map(\.element)
 
-    // A convenience spelling for users who enter "ng" for the negative
-    // 唔. Its dictionary reading remains m4, not a fabricated ng reading.
-    // Leave the genuine ng candidates first and place 唔 immediately after.
+    // Keep authentic ng syllable candidates first, then optionally offer 唔
+    // for users who type ng as shorthand for the canonical m4 negative.
     if !hasTone, plain == "ng",
        let negative = self.query(
          "SELECT word,romanization FROM entries WHERE plain=? AND word='唔' ORDER BY priority LIMIT ?",
@@ -144,7 +132,8 @@ final class JyutpingDictionary {
       ? ["SELECT word,romanization FROM entries WHERE compact=? ORDER BY priority LIMIT ?"]
       : [
           "SELECT word,romanization FROM entries WHERE plain=? ORDER BY priority LIMIT ?",
-          "SELECT word,romanization FROM entries WHERE yale=? ORDER BY priority LIMIT ?"
+          "SELECT word,romanization FROM entries WHERE yale=? ORDER BY priority LIMIT ?",
+          "SELECT word,romanization FROM entries WHERE sidney=? ORDER BY priority LIMIT ?"
         ]
     let spellings = input.contains(where: \.isNumber)
       ? [input] : CantoneseRomanizationVariants.variants(for: input)
@@ -165,7 +154,8 @@ final class JyutpingDictionary {
       ? ["SELECT word,romanization FROM entries WHERE compact=? LIMIT ?"]
       : [
           "SELECT word,romanization FROM entries WHERE plain=? LIMIT ?",
-          "SELECT word,romanization FROM entries WHERE yale=? LIMIT ?"
+          "SELECT word,romanization FROM entries WHERE yale=? LIMIT ?",
+          "SELECT word,romanization FROM entries WHERE sidney=? LIMIT ?"
         ]
     let spellings = input.contains(where: \.isNumber)
       ? [input] : CantoneseRomanizationVariants.variants(for: input)

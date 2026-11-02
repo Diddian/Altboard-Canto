@@ -38,12 +38,7 @@ struct KeyboardSettingsView: View {
             .font(.footnote)
             .foregroundStyle(.secondary)
           if SharedSettings().preferredSpokenLanguages.contains("yue") {
-            Picker("Cantonese Romanization", selection: self.$romanizationRaw) {
-              ForEach(CantoneseRomanizationScheme.allCases, id: \.self) { scheme in
-                Text(scheme.displayName).tag(scheme.rawValue)
-              }
-            }
-            Text("Latin typing stays active. Chinese suggestions appear automatically.")
+            Text("Cantonese candidates automatically recognize Sidney Lau, Yale and Jyutping spellings together. No scheme switch is needed.")
               .font(.footnote)
               .foregroundStyle(.secondary)
           }
@@ -135,8 +130,6 @@ struct KeyboardSettingsView: View {
   private var autoCapitalizationEnabled = true
   @AppStorage(SharedKey.keyboardSwipeTypingEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
   private var swipeTypingEnabled = false
-  @AppStorage(SharedKey.keyboardRomanizationScheme, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var romanizationRaw = CantoneseRomanizationScheme.jyutping.rawValue
 }
 
 private struct KeyboardTestPreview: View {

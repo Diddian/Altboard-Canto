@@ -17,6 +17,20 @@ class YaleAliasTests(unittest.TestCase):
         self.assertEqual(MOD.yale_syllable("ce1"), "che")
         self.assertEqual(MOD.yale_syllable("goeng1"), "geung")
 
+    def test_sidney_lau_spelling(self):
+        cases = {
+            "keoi5": "kui", "seoi2": "sui", "neoi5": "nui",
+            "deoi3": "dui", "heoi3": "hui", "ceon1": "chun",
+            "syu1": "sue", "hyut3": "huet", "gou1": "go",
+            "hou2": "ho", "lou6": "lo", "geoi3": "gui",
+            "zeoi3": "jui", "jyun4": "yuen", "jyu5": "yue",
+            "zeoi1": "jui", "ceot1": "chut", "jyut6": "yuet",
+            "ce1": "che", "zi1": "ji", "zoeng1": "jeung",
+        }
+        for jyutping, expected in cases.items():
+            with self.subTest(jyutping=jyutping):
+                self.assertEqual(MOD.sidney_lau_syllable(jyutping), expected)
+
     def test_today(self):
         self.assertEqual(MOD.yale_spelling("gam1 jat6"), "gamyat")
 
@@ -29,6 +43,7 @@ class YaleAliasTests(unittest.TestCase):
                 self.assertEqual(db.execute("SELECT word FROM entries WHERE yale=?", ("gamyat",)).fetchone(), ("今日",))
                 self.assertEqual(db.execute("SELECT word FROM entries WHERE plain=?", ("gamjat",)).fetchone(), ("今日",))
                 self.assertIsNotNone(db.execute("SELECT name FROM sqlite_master WHERE name='idx_entries_yale'").fetchone())
+                self.assertIsNotNone(db.execute("SELECT name FROM sqlite_master WHERE name='idx_entries_sidney'").fetchone())
             finally:
                 db.close()
 

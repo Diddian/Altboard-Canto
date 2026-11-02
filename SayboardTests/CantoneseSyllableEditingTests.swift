@@ -17,6 +17,17 @@ struct CantoneseSyllableEditingTests {
       typed: "yat", canonical: "jat6") == 3)
   }
 
+  @Test func supportsSidneyLauSyllableDeletion() {
+    #expect(CantoneseSyllableEditing.lastSyllableLength(
+      typed: "gamyuen", canonical: "gam1 jyun4") == 4)
+    #expect(CantoneseSyllableEditing.lastSyllableLength(
+      typed: "seui", canonical: "seoi2") == 4)
+    #expect(CantoneseSyllableEditing.lastSyllableLength(
+      typed: "sui", canonical: "seoi2") == 3)
+    #expect(CantoneseSyllableEditing.lastSyllableLength(
+      typed: "jui", canonical: "zeoi3") == 3)
+  }
+
   @Test func invalidOrEnglishSpellingFallsBackToOneCharacter() {
     #expect(CantoneseSyllableEditing.lastSyllableLength(
       typed: "gamyzt", canonical: "gam1 jat6") == nil)
