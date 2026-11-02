@@ -105,6 +105,8 @@ final class LatinWordSuggestions {
       "question", "really", "right", "same", "school", "sentence", "should",
       "some", "someone", "something", "start", "still", "story", "such",
       "talk", "thank", "thanks", "their", "there", "these", "thing", "think",
+      "to", "of", "in", "on", "it", "is", "at", "as", "be", "by", "we", "he",
+      "me", "my", "do", "go", "so", "up", "us", "an", "am", "or", "if", "no", "hi",
       "this", "those", "through", "time", "today", "tomorrow", "under",
       "understand", "until", "very", "want", "water", "week", "well",
       "what", "when", "where", "which", "while", "whole", "why",
@@ -137,7 +139,8 @@ final class LatinWordSuggestions {
       "verstehen", "vielleicht", "viele", "von", "vor", "warum",
       "warten", "weiß", "welche", "wenn", "wer", "werden", "wichtig",
       "wieder", "wie", "wirklich", "wissen", "Woche", "wohnen",
-      "wollen", "wurde", "Zeit", "zeigen", "zusammen", "zwischen"
+      "wollen", "wurde", "Zeit", "zeigen", "zusammen", "zwischen",
+      "zu", "im", "in", "an", "am", "es", "er", "du", "ob", "um", "da", "ab",
     ]
   ]
 }

@@ -11,6 +11,7 @@ on:
       - fix/keyboard-native-candidates-20261102
       - fix/instant-touchdown-highlight-20261102
       - feat/instant-input-ai-swipe-20261102
+      - feat/swipe-trail-emoji-native-parity-20261102
   workflow_dispatch:
 
 permissions:
@@ -213,6 +214,9 @@ jobs:
       # Artifact v7 with archive:false downloads the .ipa directly.
       # Also publish the same .ipa as a Release asset for a stable direct URL.
       - name: Publish direct IPA to rolling development release
+        # This review branch gets its own Actions artifact. Never overwrite
+        # the last successful swipe-beta release until physical iPhone QA.
+        if: github.ref_name != 'feat/swipe-trail-emoji-native-parity-20261102'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash

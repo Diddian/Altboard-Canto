@@ -17,6 +17,8 @@ struct AlphabeticTouchRow: View {
   let swipeArrangement: LetterKeyArrangement
   let swipeRowIndex: Int
   let onSwipe: ([String]) -> Void
+  /// Render-only path callback; UIKit stays the sole touch owner.
+  let onSwipePath: ([LatinSwipePoint]) -> Void
   let onInsert: (String) -> Void
 
   @State private var activeIndex: Int?
@@ -90,6 +92,7 @@ struct AlphabeticTouchRow: View {
             self.finishTouch(at: point, width: geometry.size.width, weights: weights)
           },
           onCancelled: {
+            self.onSwipePath([])
             self.reset()
           }
         )
@@ -100,6 +103,7 @@ struct AlphabeticTouchRow: View {
     .frame(height: self.bandHeight)
     .zIndex(self.activeIndex == nil ? 0 : 10)
     .onDisappear {
+      self.onSwipePath([])
       self.releaseHighlightTask?.cancel()
       self.releasedHighlightIndex = nil
       self.reset()
@@ -139,6 +143,7 @@ struct AlphabeticTouchRow: View {
   }
 
   private func beginTouch(at point: CGPoint, width: CGFloat, weights: [Double]) {
+    self.onSwipePath([])
     self.reset()
     if self.swipeEnabled {
       self.swipeSession.begin(
@@ -158,6 +163,11 @@ struct AlphabeticTouchRow: View {
         self.swipePoint(point), arrangement: self.swipeArrangement,
         width: self.swipeWidth(for: width)
       )
+      if LatinSwipeDecoder.gestureLength(self.swipeSession.points) >= 16 {
+        // No new gesture recognizer. The already captured UIKit points draw
+        // into a noninteractive Canvas above the three letter rows.
+        self.onSwipePath(self.swipeSession.points)
+      }
       if self.isGliding || self.swipeSession.isLikelyGlide {
         self.isGliding = true
         self.holdTask?.cancel()
@@ -169,6 +179,7 @@ struct AlphabeticTouchRow: View {
   }
 
   private func finishTouch(at point: CGPoint, width: CGFloat, weights: [Double]) {
+    self.onSwipePath([])
     if self.isGliding {
       self.swipeSession.append(
         self.swipePoint(point), arrangement: self.swipeArrangement,

@@ -22,6 +22,22 @@ physical checks, and a deliberate merge/release.
 
 See `docs/CANTONESE-LONG-PHRASES-PLAN.md`.
 
+## P0 — Swipe trail + native Emoji parity (T-016, BEFORE QA fork merge)
+
+User-reported iPhone feedback from successful IPA #63 (`8c1d6b2`). Work isolated on
+`feat/swipe-trail-emoji-native-parity-20261102`. Do not merge the separate T-014/T-015 QA branch.
+
+- [x] T-016.1 Diagnose "to" rejected: 3-point decoder gate, 3-key glide gate, tiny dictionary missing `to`. Add bounded two-letter path support and baseline EN/DE short words.
+- [x] T-016.2 Draw an ephemeral visible swipe trail from existing UIKit `AlphabeticTouchRow` touch callbacks into a noninteractive Canvas across letter rows. Do not add a gesture recognizer.
+- [x] T-016.3 Record measured pixel/point screenshot reconstruction in `docs/ios-emoji-native-parity-IMG_9692.json` (full 10kB user-download version also provided).
+- [x] T-016.4 Replace Emoji vertical scroll + top text chips with 8x4 horizontal pages + bottom category-icon rail, full-width search, ABC and repeat Delete. Remove Genmoji, duplicate emoji key and space/return keys from Emoji mode.
+- [x] T-016.5 Add local frequent emoji ordering (usage count then recency), 96-entry cap; never collect host text or raw gesture data.
+- [x] T-016.6 Retain Unicode Emoji 18 source with version metadata and conservatively filter likely unsupported glyphs on the installed iOS version to avoid missing-glyph squares.
+- [ ] T-016.7 CI branch build success and IPA artifact inspection; binary must include the versioned catalog and keyboard extension.
+- [ ] T-016.8 Real iPhone screenshot overlay comparison, 2-letter glide traces, hitbox and gesture cancellation, no false glide on quick correction, frequent use persistence, Emoji search/ABC and Delete verification.
+- [ ] T-016.9 Reassess corpus vs MIT-licensed `nkrsn/jboard` and `isaced/ISEmojiView` only after iPhone test; do not copy GPL iSwipe or unlicensed sswipe source.
+- [ ] T-016.10 Merge T-016 only with reviewed passing IPA and user device feedback. T-014/T-015 QA work remains separate until then.
+
 ## P0 — Universal Cantonese Input (T-012)
 
 - [x] T-012.1 Build indexed Jyutping, Yale and Sidney Lau spellings in the same SQLite dictionary; users never select a scheme.

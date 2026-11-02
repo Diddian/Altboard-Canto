@@ -185,6 +185,11 @@ struct KeyboardView: View {
       .environment(\.keyboardHapticsEnabled, self.keyboardState.keyboardHapticsEnabled)
     }
     }
+    .onChange(of: self.keyboardState.showsEmojiPicker) { _, _ in
+      // Resize the host UIInputView to the emoji-specific canvas, then restore
+      // the normal height when ABC closes it. No competing layout constraint.
+      self.proxy.setActionBarVisible(false)
+    }
     .background(Color(uiColor: KeyboardPalette.backdrop))
     .sensoryFeedback(.selection, trigger: self.sensoryPulse.count)
   }

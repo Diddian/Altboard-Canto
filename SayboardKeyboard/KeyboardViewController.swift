@@ -492,6 +492,7 @@ extension KeyboardViewController {
     let base = KeyboardMetrics.totalHeight(
       actionBarVisible: self.actionBarVisible,
       kind: self.keyboardState.keyboardKind,
+      emojiVisible: self.keyboardState.showsEmojiPicker
     )
     let target = base
     guard hc.constant != target else { return }

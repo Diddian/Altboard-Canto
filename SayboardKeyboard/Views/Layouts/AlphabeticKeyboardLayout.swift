@@ -28,6 +28,7 @@ struct AlphabeticKeyboardLayout: View {
   @State private var activeLatinWord: String?
   @State private var latinSuggestions = [LatinWordSuggestion]()
   @State private var swipeAlternatives = [String]()
+  @State private var liveSwipePath = [LatinSwipePoint]()
   @State private var nextCantoneseWords = [String]()
   @State private var predictionAnchor: String?
   @State private var nextChineseQuoteCloses = false
@@ -99,6 +100,13 @@ struct AlphabeticKeyboardLayout: View {
           .frame(height: KeyboardChromeMetrics.keyHeight + Self.rowSpacing.kbScaled / 2,
                  alignment: .bottom)
       }
+      .overlay {
+        if self.page == .letters && self.swipeTypingEnabled && self.liveSwipePath.count > 1 {
+          SwipeTrailOverlay(points: self.liveSwipePath)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+        }
+      }
 
       KeyboardBottomRow(
         proxy: self.proxy,
@@ -147,6 +155,7 @@ struct AlphabeticKeyboardLayout: View {
       self.updateCandidates()
     }
     .onDisappear {
+      self.liveSwipePath.removeAll()
       self.latinRefreshTask?.cancel()
       self.cursorRefreshTask?.cancel()
       self.activeLatinWord = nil
@@ -582,7 +591,8 @@ struct AlphabeticKeyboardLayout: View {
       swipeEnabled: self.swipeTypingEnabled,
       swipeArrangement: self.arrangement,
       swipeRowIndex: rowIndex,
-      onSwipe: { words in self.commitSwipe(words) }
+      onSwipe: { words in self.commitSwipe(words) },
+      onSwipePath: { path in self.liveSwipePath = path }
     ) { typed in
       self.handleCharacter(typed)
       self.lastShiftTap = nil
@@ -873,4 +883,30 @@ private enum AlphabeticPage {
   case letters
   case numbers
   case symbols
+}
+
+
+/// Visual-only trail for the gesture already owned by AlphabeticTouchRow.
+private struct SwipeTrailOverlay: View {
+  let points: [LatinSwipePoint]
+
+  var body: some View {
+    Canvas { context, _ in
+      guard let first = points.first, points.count > 1 else { return }
+      var route = Path()
+      route.move(to: CGPoint(x: first.x, y: first.y))
+      for point in points.dropFirst() {
+        route.addLine(to: CGPoint(x: point.x, y: point.y))
+      }
+      let style = StrokeStyle(lineWidth: 3.3, lineCap: .round, lineJoin: .round)
+      let tint = Color(red: 0.34, green: 0.76, blue: 0.98)
+      context.stroke(route, with: .color(tint.opacity(0.18)),
+                     style: StrokeStyle(lineWidth: 9, lineCap: .round, lineJoin: .round))
+      context.stroke(route, with: .color(tint.opacity(0.96)), style: style)
+      if let last = points.last {
+        let dot = CGRect(x: last.x - 3, y: last.y - 3, width: 6, height: 6)
+        context.fill(Path(ellipseIn: dot), with: .color(.white.opacity(0.9)))
+      }
+    }
+  }
 }

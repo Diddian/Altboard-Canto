@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Create the keyboard's offline, searchable RGI emoji catalogue (Unicode Emoji 18.0).
+"""Build one offline Unicode RGI catalogue with per-sequence Emoji versions.
+
+iOS device support lags new Unicode releases. Retaining 'introduced' metadata
+allows the keyboard to hide unsupported glyphs instead of showing '?' boxes.
 Source: https://www.unicode.org/Public/18.0.0/emoji/emoji-test.txt
-Unicode data license: https://www.unicode.org/license.txt
-The extension never downloads emoji data or sends emoji searches to a server.
+License: https://www.unicode.org/license.txt
 """
 import argparse
 import pathlib
@@ -11,10 +13,10 @@ import urllib.request
 
 SOURCE = "https://www.unicode.org/Public/18.0.0/emoji/emoji-test.txt"
 VERSION = "# Version: 18.0"
-EMOJI_NAME = re.compile(r"^E[0-9]+(?:\.[0-9]+)?\s+")
+VERSION_TOKEN = re.compile(r"^E[0-9]+(?:\.[0-9]+)?$")
 
 
-def parse_catalog(source: str) -> list[tuple[str, str, str]]:
+def parse_catalog(source: str) -> list[tuple[str, str, str, str]]:
     group = ""
     rows = []
     seen = set()
@@ -28,16 +30,17 @@ def parse_catalog(source: str) -> list[tuple[str, str, str]]:
         status, description = rest.split("#", 1)
         if status.strip() != "fully-qualified":
             continue
-        emoji = "".join(chr(int(item, 16)) for item in codepoints.split())
-        name = EMOJI_NAME.sub("", description.strip().split(" ", 1)[1] if " " in description.strip() else "")
-        # Description format: "😀 E1.0 grinning face".
-        if not name:
-            desc = description.strip()
-            pieces = desc.split(" ", 2)
-            name = pieces[-1] if len(pieces) == 3 else "emoji"
-        name = name.replace("\t", " ").replace("\n", " ")
+        try:
+            emoji = "".join(chr(int(item, 16)) for item in codepoints.split())
+        except ValueError:
+            continue
+        parts = description.strip().split(maxsplit=2)
+        if len(parts) != 3 or not VERSION_TOKEN.fullmatch(parts[1]):
+            continue
+        name = parts[2].replace("\t", " ").replace("\n", " ")
+        introduced = parts[1][1:]
         if emoji not in seen:
-            rows.append((group, name, emoji))
+            rows.append((group, name, emoji, introduced))
             seen.add(emoji)
     return rows
 
@@ -60,7 +63,11 @@ def main() -> None:
         raise ValueError(f"Incomplete emoji catalogue: {len(entries)} entries")
     output = pathlib.Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text("group\tname\temoji\n" + "\n".join("\t".join(row) for row in entries) + "\n", encoding="utf-8")
+    output.write_text(
+        "group\tname\temoji\tversion\n"
+        + "\n".join("\t".join(row) for row in entries) + "\n",
+        encoding="utf-8"
+    )
     print(f"Emoji catalogue: {len(entries)} fully-qualified RGI entries")
 
 

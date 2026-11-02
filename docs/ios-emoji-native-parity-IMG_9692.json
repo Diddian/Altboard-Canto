@@ -1,0 +1,332 @@
+{
+  "schema": "altboard-emoji-native-parity-20261102",
+  "sourceScreenshots": [
+    {
+      "name": "IMG_9692.jpg",
+      "role": "Native iOS reference",
+      "resolutionPx": [
+        1320,
+        983
+      ]
+    },
+    {
+      "name": "IMG_9695.jpg",
+      "role": "Altboard current",
+      "resolutionPx": [
+        1320,
+        861
+      ]
+    }
+  ],
+  "measurement": {
+    "method": "Pixel sampling + visual bounding-box estimates of user-provided JPGs",
+    "uncertaintyPx": 6,
+    "assumedScalePxPerPt": 3,
+    "coordinateOrigin": "top-left",
+    "note": "Screenshot pixel measurements are a visual target, not official private Apple keyboard constants."
+  },
+  "nativeReferencePx": {
+    "backgroundRGB": [
+      31,
+      31,
+      31
+    ],
+    "search": {
+      "x": 27,
+      "y": 30,
+      "w": 918,
+      "h": 120,
+      "r": 60,
+      "fillRGB": [
+        57,
+        57,
+        57
+      ]
+    },
+    "excludedGenmoji": {
+      "x": 972,
+      "y": 30,
+      "w": 321,
+      "h": 120
+    },
+    "emojiViewport": {
+      "x": 0,
+      "y": 182,
+      "w": 1320,
+      "h": 644,
+      "axis": "horizontal",
+      "columns": 8,
+      "rows": 4,
+      "centersX": [
+        115,
+        280,
+        445,
+        610,
+        775,
+        940,
+        1105,
+        1270
+      ],
+      "centersY": [
+        250,
+        417,
+        584,
+        751
+      ]
+    },
+    "footer": {
+      "x": 0,
+      "y": 837,
+      "w": 1320,
+      "h": 126,
+      "iconCentersX": [
+        224,
+        302,
+        385,
+        465,
+        542,
+        622,
+        701,
+        781,
+        859,
+        937,
+        1016,
+        1094
+      ],
+      "iconCenterY": 899,
+      "deleteCenter": [
+        1231,
+        897
+      ]
+    }
+  },
+  "oldAltboardPx": {
+    "search": {
+      "x": 18,
+      "y": 28,
+      "w": 1128,
+      "h": 92
+    },
+    "topDelete": {
+      "x": 1161,
+      "y": 28,
+      "w": 141,
+      "h": 104
+    },
+    "textChipY": [
+      136,
+      206
+    ],
+    "grid": "vertical, eight columns",
+    "firstEmojiCenterX": 89,
+    "bottomRowY": [
+      706,
+      841
+    ],
+    "redundantButtons": [
+      "Emoji",
+      "Space",
+      "Return"
+    ],
+    "questionMarkGlyphCenter": [
+      579,
+      397
+    ]
+  },
+  "targetPointGeometry": {
+    "canvas": {
+      "w": 440,
+      "h": 328,
+      "backgroundRGB": [
+        31,
+        31,
+        31
+      ]
+    },
+    "search": {
+      "x": 9,
+      "y": 10,
+      "w": 422,
+      "h": 40,
+      "r": 20,
+      "font": 18,
+      "iconFont": 19,
+      "iconGap": 11,
+      "placeholder": "Search Emoji",
+      "genmoji": false
+    },
+    "headerHeight": 52,
+    "gallery": {
+      "leftOffset": 11,
+      "topInset": 4,
+      "columns": 8,
+      "rows": 4,
+      "itemsPerPage": 32,
+      "cellWidthNominal": 55,
+      "cellHeight": 55.5,
+      "glyphFont": 33,
+      "axis": "horizontal",
+      "paging": true,
+      "verticalScroll": false
+    },
+    "footer": {
+      "height": 47,
+      "visualYShift": -5,
+      "abcWidth": 57,
+      "deleteWidth": 45,
+      "iconFont": 18,
+      "icons": [
+        [
+          "Frequently Used",
+          "clock"
+        ],
+        [
+          "Smileys & Emotion",
+          "face.smiling"
+        ],
+        [
+          "People & Body",
+          "person.2"
+        ],
+        [
+          "Animals & Nature",
+          "pawprint"
+        ],
+        [
+          "Food & Drink",
+          "carrot"
+        ],
+        [
+          "Travel & Places",
+          "car"
+        ],
+        [
+          "Activities",
+          "soccerball"
+        ],
+        [
+          "Objects",
+          "lightbulb"
+        ],
+        [
+          "Symbols",
+          "heart"
+        ],
+        [
+          "Flags",
+          "flag"
+        ]
+      ],
+      "noExtraEmojiKey": true,
+      "noSpaceBar": true,
+      "noReturnKey": true,
+      "noGenmoji": true
+    },
+    "searchKeypad": {
+      "whenActive": true,
+      "height": 87,
+      "rows": [
+        "qwertyuiop",
+        "asdfghjkl",
+        "zxcvbnm"
+      ],
+      "deletion": "search only"
+    }
+  },
+  "behavior": {
+    "gallery": "32 items/page, horizontal swipe snapping; bottom category icon highlight follows page",
+    "frequent": "Local explicit usage counts and recency sorted, cap 96 emoji; no fabricated recent items",
+    "selection": "one tap inserts one emoji exactly once",
+    "delete": "reuse existing keyboard repeat-delete owner, no additional gesture layer",
+    "abc": "exit emoji and restore normal alphabetic keyboard height",
+    "search": "search Unicode English names and bounded Chinese aliases, not cloud",
+    "noPersistence": [
+      "host text",
+      "swipe traces",
+      "search query history"
+    ]
+  },
+  "glyphCompatibility": {
+    "source": "Unicode Emoji 18.0",
+    "storedFields": [
+      "group",
+      "name",
+      "emoji",
+      "version"
+    ],
+    "issue": "New Emoji 18 can show as unsupported white question square on installed Apple font",
+    "solution": "Conservatively filter by installed iOS major/minor; do not delete canonical source data.",
+    "targetMajorVersionCaps": {
+      "17.0-17.3": 15,
+      "17.4+": 15.1,
+      "18.0-18.3": 15.1,
+      "18.4+": 16,
+      "26.x": 16,
+      "27+": 17
+    }
+  },
+  "swipe": {
+    "trail": {
+      "owner": "existing UIKit letter row (no new recognizer)",
+      "capture": "bounded transient points 160",
+      "rgb": [
+        87,
+        194,
+        250
+      ],
+      "coreWidthPt": 3.3,
+      "haloWidthPt": 9,
+      "haloOpacity": 0.18,
+      "terminalDotPt": 6,
+      "minimumVisibleMovementPt": 16,
+      "clears": [
+        "end",
+        "cancel",
+        "disappear"
+      ]
+    },
+    "shortWord": {
+      "example": "to",
+      "priorRootCauses": [
+        "not in starter wordlist",
+        "3-point decoder gate",
+        "3-key gesture gate"
+      ],
+      "newRankMinimumPoints": 2,
+      "newRankMinLength": 45,
+      "twoKeyGlideMinLength": 70,
+      "shortWordEndpointRadius": 30,
+      "shortWordScoreThreshold": 29
+    }
+  },
+  "acceptanceChecks": [
+    "Swift smoke: to on both QWERTY and QWERTZ",
+    "Do not mistake minor slide correction for glide",
+    "4 visible emoji rows, 8 columns",
+    "No square-? on same iPhone",
+    "Horizontal scroll and bottom icon category updates",
+    "Frequently Used records only selected emojis, persists",
+    "Search keypad/ABC/deletion",
+    "iOS host emoji height restores after exit",
+    "No duplicate touch event",
+    "Pass unsigned IPA branch build before any merge"
+  ],
+  "scope": "Dedicated feature branch only. Keep successful Action #63 IPA and 50% QA fork unchanged.",
+  "externalReferences": [
+    {
+      "repo": "nkrsn/jboard",
+      "license": "MIT",
+      "copied": false
+    },
+    {
+      "repo": "Henryikenna/sswipe",
+      "license": "No license file discovered",
+      "copied": false
+    },
+    {
+      "repo": "isaced/ISEmojiView",
+      "license": "MIT",
+      "copied": false
+    }
+  ]
+}

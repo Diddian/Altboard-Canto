@@ -25,9 +25,20 @@ enum SwipeSmoke {
     fullWidth: 440, words: ["danach", "danke", "denken", "dann"])
   precondition(german.first == "danke", "danke path: \(german)")
 }
+for order in [LetterKeyArrangement.qwerty, .qwertz] {
+  let path = stroke("to", order: order)
+  let candidates = LatinSwipeDecoder.rank(
+    path: path, arrangement: order,
+    fullWidth: 440, words: ["to", "today", "too", "top"])
+  precondition(candidates.first == "to", "two-letter 'to' must be swipable: \\(candidates)")
+  let shortSession = LatinSwipeSession()
+  shortSession.begin(path[0], arrangement: order, width: 440)
+  shortSession.append(path[1], arrangement: order, width: 440)
+  precondition(shortSession.isLikelyGlide, "short 'to' stroke should be recognized as glide")
+}
 precondition(LatinSwipeDecoder.rank(
-  path: stroke("hi", order: .qwerty), arrangement: .qwerty,
-  fullWidth: 440, words: ["hi"]).isEmpty)
+  path: [LatinSwipePoint(x: 100, y: 20), LatinSwipePoint(x: 105, y: 20)],
+  arrangement: .qwerty, fullWidth: 440, words: ["to"]).isEmpty)
 precondition(LatinSwipeDecoder.normalizedSpelling("Grüße") == "grusse")
 let session = LatinSwipeSession()
 let points = stroke("hello", order: .qwerty)

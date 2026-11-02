@@ -9,6 +9,8 @@ struct RepeatDeleteButton: View {
   var onDeleteIntercept: (() -> Bool)? = nil
   var onHostDeletion: (() -> Void)? = nil
   var fastCompositionRepeat = false
+  /// Emoji category rail is icon-only, unlike the rectangular text keys.
+  var nativeEmojiStyle = false
 
   @State private var deletionTask: Task<Void, Never>?
   @State private var didRepeat = false
@@ -20,8 +22,10 @@ struct RepeatDeleteButton: View {
       .foregroundStyle(.primary)
       .frame(width: self.fixedWidth, height: 45.kbScaled)
       .background {
-        RoundedRectangle(cornerRadius: 8.5.kbScaled)
-          .fill(Color(self.pressed ? .keyPressedBackground : .keyBackground))
+        if !self.nativeEmojiStyle {
+          RoundedRectangle(cornerRadius: 8.5.kbScaled)
+            .fill(Color(self.pressed ? .keyPressedBackground : .keyBackground))
+        }
       }
       .contentShape(Rectangle())
       .gesture(

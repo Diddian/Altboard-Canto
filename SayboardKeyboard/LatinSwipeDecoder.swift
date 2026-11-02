@@ -100,7 +100,10 @@ enum LatinSwipeDecoder {
     path: [LatinSwipePoint], arrangement: LetterKeyArrangement,
     fullWidth: Double, words: [String], limit: Int = 3
   ) -> [String] {
-    guard path.count >= 3, gestureLength(path) >= 65, limit > 0 else { return [] }
+    // Two-letter words such as "to" have just two meaningful key centers.
+    // Require a real stroke, then score very strictly to avoid a sliding
+    // correction being misread as a two-letter swipe.
+    guard path.count >= 2, gestureLength(path) >= 45, limit > 0 else { return [] }
     let centers = centers(arrangement: arrangement, fullWidth: fullWidth)
     guard let first = path.first, let last = path.last else { return [] }
     let sampled = resample(path)
@@ -134,7 +137,17 @@ enum LatinSwipeDecoder {
       // Corpus order is a small frequency prior, never stronger than geometry.
       let prior = log1p(Double(frequencyOrder)) * 0.25
       let score = locationCost + lengthPenalty + endpointPenalty + prior
-      if score < 68 { ranked.append((raw, score)) }
+      let isShortWord = normalized.count == 2
+      if isShortWord {
+        let startError = first.distance(to: a)
+        let endError = last.distance(to: z)
+        if startError <= 30 && endError <= 30
+          && abs(measuredLength - templateLength) <= 42 && score < 29 {
+          ranked.append((raw, score))
+        }
+      } else if score < 68 {
+        ranked.append((raw, score))
+      }
     }
     return ranked.sorted { $0.score < $1.score }
       .prefix(limit).map(\.word)
@@ -182,7 +195,11 @@ final class LatinSwipeSession {
   }
 
   var isLikelyGlide: Bool {
-    visited.count >= 3 && LatinSwipeDecoder.gestureLength(points) >= 78
+    // Short two-letter swipes cannot visit three distinct letters reliably.
+    // Require longer physical travel for two-key gestures than for a
+    // conventional tap-to-neighbor correction.
+    (visited.count >= 3 && LatinSwipeDecoder.gestureLength(points) >= 78)
+      || (visited.count >= 2 && LatinSwipeDecoder.gestureLength(points) >= 70)
   }
 
   func reset() {
