@@ -42,8 +42,8 @@ struct KeyboardLayoutPreview: View {
   }
 
   private static let width: CGFloat = 390
-  private static let standardHeight: CGFloat = 240
-  private static let extendedHeight: CGFloat = 287
+  private static let standardHeight: CGFloat = KeyboardLayoutGeometry.microphoneDefaultHeight
+  private static let extendedHeight: CGFloat = KeyboardLayoutGeometry.fullTypingHeight
   private static let topPadding: CGFloat = 14.5
   private static let rowSpacing: CGFloat = 11
   private static let keyHeight: CGFloat = 45

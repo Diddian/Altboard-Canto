@@ -52,18 +52,18 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   /// Reference: IMG_9658.jpeg at inferred 3x scale (45pt keys, 11pt row gaps).
-  private static let rowSpacing: CGFloat = 11
-  private static let edgeInset: CGFloat = 6.67
-  private static let secondInset: CGFloat = 28
-  private static let specialGap: CGFloat = 14.67
+  private static let rowSpacing = KeyboardLayoutGeometry.alphabetRowSpacing
+  private static let edgeInset = KeyboardLayoutGeometry.alphabetEdgeInset
+  private static let secondInset = KeyboardLayoutGeometry.alphabetSecondInset
+  private static let specialGap = KeyboardLayoutGeometry.alphabetSpecialGap
 
   var body: some View {
     VStack(spacing: 0) {
       self.toolbar
         // Keep every toolbar button completely inside the keyboard's
         // clipping bounds. A negative offset cut the mic and icons off.
-        .padding(.top, 7.kbScaled)
-        .padding(.bottom, 8.kbScaled)
+        .padding(.top, KeyboardLayoutGeometry.alphabetToolbarTopInset.kbScaled)
+        .padding(.bottom, KeyboardLayoutGeometry.alphabetToolbarBottomInset.kbScaled)
       VStack(spacing: Self.rowSpacing.kbScaled) {
         self.firstKeyRow
         self.secondKeyRow

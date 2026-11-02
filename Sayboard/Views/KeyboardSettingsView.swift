@@ -142,8 +142,10 @@ private struct KeyboardTestPreview: View {
 
   private var previewHeight: CGFloat {
     switch self.kind {
-    case .standard: self.compact ? 150 : 260
-    case .extended, .alphabetic: 312
+    case .standard: self.compact
+      ? KeyboardLayoutGeometry.microphoneCompactHeight
+      : KeyboardLayoutGeometry.microphoneDefaultHeight
+    case .extended, .alphabetic: KeyboardLayoutGeometry.fullTypingHeight
     }
   }
 
@@ -151,12 +153,12 @@ private struct KeyboardTestPreview: View {
     VStack(spacing: 0) {
       if self.kind == .alphabetic {
         self.alphabetToolbar
-          .padding(.top, 7)
-          .padding(.bottom, 8)
-        VStack(spacing: 11) {
-          self.letterRow(self.letterArrangement.rows[0], inset: 6.67)
-          self.letterRow(self.letterArrangement.rows[1], inset: 28)
-          HStack(spacing: 14.67) {
+          .padding(.top, KeyboardLayoutGeometry.alphabetToolbarTopInset)
+          .padding(.bottom, KeyboardLayoutGeometry.alphabetToolbarBottomInset)
+        VStack(spacing: KeyboardLayoutGeometry.alphabetRowSpacing) {
+          self.letterRow(self.letterArrangement.rows[0], inset: KeyboardLayoutGeometry.alphabetEdgeInset)
+          self.letterRow(self.letterArrangement.rows[1], inset: KeyboardLayoutGeometry.alphabetSecondInset)
+          HStack(spacing: KeyboardLayoutGeometry.alphabetSpecialGap) {
             self.key("shift.fill", width: 50)
             HStack(spacing: 6) {
               ForEach(self.letterArrangement.rows[2], id: \.self) { self.letter($0) }
@@ -166,7 +168,7 @@ private struct KeyboardTestPreview: View {
           .padding(.horizontal, 6.67)
         }
         .padding(.top, 0)
-        self.alphabetBottomRow.padding(.top, 11)
+        self.alphabetBottomRow.padding(.top, KeyboardLayoutGeometry.alphabetRowSpacing)
       } else if self.kind == .extended {
         HStack(spacing: 6) {
           self.key("gearshape", width: 45)
@@ -227,7 +229,7 @@ private struct KeyboardTestPreview: View {
         self.key("sparkles", width: 48)
       }
       Spacer(minLength: 2)
-      self.key("mic.fill", width: 86, capsule: true)
+      self.key("mic.fill", width: KeyboardLayoutGeometry.alphabetMicWidth, capsule: true)
     }
     .padding(.horizontal, 6.67)
     .frame(height: 45)

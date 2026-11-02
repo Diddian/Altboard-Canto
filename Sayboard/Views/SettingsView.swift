@@ -3,7 +3,7 @@ import UIKit
 
 /// The Settings home is a navigation hub. Detailed controls live in one
 /// destination each; this keeps the first screen short and predictable.
-struct SettingsView: View, Equatable {
+struct SettingsView: View {
   var body: some View {
     Form {
       if !self.setupChecklist.isComplete || self.showsLowStorageWarning {
@@ -72,8 +72,6 @@ struct SettingsView: View, Equatable {
         && !OperatingSystem.isBackgroundNeuralEngineBlocked
     }
   }
-
-  nonisolated static func ==(_: Self, _: Self) -> Bool { true }
 
   private enum Route: Hashable { case setup }
 
