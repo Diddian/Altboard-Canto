@@ -13,6 +13,10 @@ struct AlphabeticTouchRow: View {
   let typedContext: String?
   let completionWords: [String]
   let showTouchDebug: Bool
+  let swipeEnabled: Bool
+  let swipeArrangement: LetterKeyArrangement
+  let swipeRowIndex: Int
+  let onSwipe: ([String]) -> Void
   let onInsert: (String) -> Void
 
   @State private var activeIndex: Int?
@@ -22,6 +26,8 @@ struct AlphabeticTouchRow: View {
   @State private var alternateIndex = 0
   @State private var initialX: CGFloat = 0
   @State private var holdTask: Task<Void, Never>?
+  @State private var swipeSession = LatinSwipeSession()
+  @State private var isGliding = false
 
   private var bandHeight: CGFloat {
     KeyboardChromeMetrics.keyHeight + self.topHitInset + self.bottomHitInset
@@ -73,16 +79,15 @@ struct AlphabeticTouchRow: View {
         // UIKit reports finger-down immediately; SwiftUI DragGesture.onChanged
         // can wait for gesture recognition, making quick taps feel unpressed.
         ImmediateKeyTouchSurface(
-          onBegan: { x in
-            self.handleTouch(at: x, startingAt: x,
-                             width: geometry.size.width, weights: weights)
+          onBegan: { point in
+            self.beginTouch(at: point, width: geometry.size.width, weights: weights)
           },
-          onMoved: { x, startX in
-            self.handleTouch(at: x, startingAt: startX,
-                             width: geometry.size.width, weights: weights)
+          onMoved: { point, start in
+            self.moveTouch(at: point, startingAt: start,
+                           width: geometry.size.width, weights: weights)
           },
-          onEnded: { x in
-            self.endTouch(at: x, width: geometry.size.width, weights: weights)
+          onEnded: { point in
+            self.finishTouch(at: point, width: geometry.size.width, weights: weights)
           },
           onCancelled: {
             self.reset()
@@ -109,6 +114,84 @@ struct AlphabeticTouchRow: View {
       horizontalInset: Double(self.horizontalInset),
       weights: weights
     )
+  }
+
+  private func swipeWidth(for rowWidth: CGFloat) -> Double {
+    if self.swipeRowIndex == 2 {
+      return Double(rowWidth
+        + (2 * (KeyboardLayoutGeometry.alphabetSpecialRowInset + 50
+          + KeyboardLayoutGeometry.alphabetSpecialGap)).kbScaled)
+    }
+    return Double(rowWidth)
+  }
+
+  private func swipePoint(_ local: CGPoint) -> LatinSwipePoint {
+    let xOffset: CGFloat = self.swipeRowIndex == 2
+      ? (KeyboardLayoutGeometry.alphabetSpecialRowInset + 50
+        + KeyboardLayoutGeometry.alphabetSpecialGap).kbScaled : 0
+    let key = KeyboardChromeMetrics.keyHeight
+    let gap = KeyboardLayoutGeometry.alphabetRowSpacing.kbScaled
+    let yOffset: CGFloat = self.swipeRowIndex == 0 ? 0
+      : self.swipeRowIndex == 1 ? key + gap / 2
+      : 2 * key + 1.5 * gap
+    return LatinSwipePoint(x: Double(local.x + xOffset),
+                           y: Double(local.y + yOffset))
+  }
+
+  private func beginTouch(at point: CGPoint, width: CGFloat, weights: [Double]) {
+    self.reset()
+    if self.swipeEnabled {
+      self.swipeSession.begin(
+        self.swipePoint(point), arrangement: self.swipeArrangement,
+        width: self.swipeWidth(for: width)
+      )
+    }
+    self.handleTouch(at: point.x, startingAt: point.x, width: width, weights: weights)
+  }
+
+  private func moveTouch(
+    at point: CGPoint, startingAt start: CGPoint,
+    width: CGFloat, weights: [Double]
+  ) {
+    if self.swipeEnabled && !self.showingAlternates {
+      self.swipeSession.append(
+        self.swipePoint(point), arrangement: self.swipeArrangement,
+        width: self.swipeWidth(for: width)
+      )
+      if self.isGliding || self.swipeSession.isLikelyGlide {
+        self.isGliding = true
+        self.holdTask?.cancel()
+        self.activeIndex = nil
+        return
+      }
+    }
+    self.handleTouch(at: point.x, startingAt: start.x, width: width, weights: weights)
+  }
+
+  private func finishTouch(at point: CGPoint, width: CGFloat, weights: [Double]) {
+    if self.isGliding {
+      self.swipeSession.append(
+        self.swipePoint(point), arrangement: self.swipeArrangement,
+        width: self.swipeWidth(for: width)
+      )
+      let preferred = LatinWordSuggestionPolicy.preferredCodes(
+        SharedSettings().preferredSpokenLanguages
+      )
+      let codes = preferred.filter { $0 == "en" || $0 == "de" }
+      let languages = codes.isEmpty ? ["en", "de"] : codes
+      let dictionary = languages.flatMap { LatinWordSuggestions.commonWords[$0] ?? [] }
+      let matches = LatinSwipeDecoder.rank(
+        path: self.swipeSession.points, arrangement: self.swipeArrangement,
+        fullWidth: self.swipeWidth(for: width), words: dictionary
+      )
+      self.reset()
+      if !matches.isEmpty {
+        self.onSwipe(matches)
+      }
+      return
+    }
+    self.endTouch(at: point.x, width: width, weights: weights)
+    self.swipeSession.reset()
   }
 
   private func handleTouch(
@@ -184,6 +267,8 @@ struct AlphabeticTouchRow: View {
     self.activeIndex = nil
     self.showingAlternates = false
     self.alternateIndex = 0
+    self.isGliding = false
+    self.swipeSession.reset()
   }
 }
 
@@ -233,9 +318,9 @@ private struct KeyboardTouchDebugOverlay: View {
 /// touchesBegan arrives on initial contact, before the finger moves or holds.
 /// This has no animations, timers or delayed state transitions.
 private struct ImmediateKeyTouchSurface: UIViewRepresentable {
-  let onBegan: (CGFloat) -> Void
-  let onMoved: (CGFloat, CGFloat) -> Void
-  let onEnded: (CGFloat) -> Void
+  let onBegan: (CGPoint) -> Void
+  let onMoved: (CGPoint, CGPoint) -> Void
+  let onEnded: (CGPoint) -> Void
   let onCancelled: () -> Void
 
   func makeUIView(context: Context) -> ImmediateKeyTouchView {
@@ -257,31 +342,31 @@ private struct ImmediateKeyTouchSurface: UIViewRepresentable {
 }
 
 private final class ImmediateKeyTouchView: UIView {
-  var onBegan: ((CGFloat) -> Void)?
-  var onMoved: ((CGFloat, CGFloat) -> Void)?
-  var onEnded: ((CGFloat) -> Void)?
+  var onBegan: ((CGPoint) -> Void)?
+  var onMoved: ((CGPoint, CGPoint) -> Void)?
+  var onEnded: ((CGPoint) -> Void)?
   var onCancelled: (() -> Void)?
 
   private var activeTouch: UITouch?
-  private var initialX: CGFloat = 0
+  private var initialPoint: CGPoint = .zero
 
   override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
     guard self.activeTouch == nil, let touch = touches.first else { return }
     self.activeTouch = touch
-    self.initialX = touch.location(in: self).x
-    self.onBegan?(self.initialX)
+    self.initialPoint = touch.location(in: self)
+    self.onBegan?(self.initialPoint)
   }
 
   override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
     guard let active = self.activeTouch, touches.contains(active) else { return }
-    self.onMoved?(active.location(in: self).x, self.initialX)
+    self.onMoved?(active.location(in: self), self.initialPoint)
   }
 
   override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
     guard let active = self.activeTouch, touches.contains(active) else { return }
-    let x = active.location(in: self).x
+    let point = active.location(in: self)
     self.activeTouch = nil
-    self.onEnded?(x)
+    self.onEnded?(point)
   }
 
   override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {

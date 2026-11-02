@@ -33,6 +33,10 @@ struct KeyboardSettingsView: View {
           }
           .pickerStyle(.segmented)
           Toggle("Auto-capitalize Sentences", isOn: self.$autoCapitalizationEnabled)
+          Toggle("Swipe Typing (English / German · Beta)", isOn: self.$swipeTypingEnabled)
+          Text("Glide through letters to insert a word. Uses an offline starter vocabulary. Disabled by default until tested on your iPhone.")
+            .font(.footnote)
+            .foregroundStyle(.secondary)
           if SharedSettings().preferredSpokenLanguages.contains("yue") {
             Picker("Cantonese Romanization", selection: self.$romanizationRaw) {
               ForEach(CantoneseRomanizationScheme.allCases, id: \.self) { scheme in
@@ -129,6 +133,8 @@ struct KeyboardSettingsView: View {
   private var letterArrangementRaw = LetterKeyArrangement.qwertz.rawValue
   @AppStorage(SharedKey.keyboardAutoCapitalizationEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
   private var autoCapitalizationEnabled = true
+  @AppStorage(SharedKey.keyboardSwipeTypingEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var swipeTypingEnabled = false
   @AppStorage(SharedKey.keyboardRomanizationScheme, store: UserDefaults(suiteName: AppGroup.identifier))
   private var romanizationRaw = CantoneseRomanizationScheme.jyutping.rawValue
 }

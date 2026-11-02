@@ -154,12 +154,26 @@ final class LatinSwipeSession {
 
   func append(_ point: LatinSwipePoint, arrangement: LetterKeyArrangement, width: Double) {
     guard points.count < 160 else { return }
-    if let previous = points.last, previous.distance(to: point) < 4 { return }
-    points.append(point)
-    if let key = LatinSwipeDecoder.nearestLetter(
-      to: point, arrangement: arrangement, fullWidth: width
-    ) {
-      visited.insert(key)
+    let previous = points.last
+    if let previous, previous.distance(to: point) < 4 { return }
+    // Fill sparse UIKit events so fast cross-row swipes still visit keys.
+    let distance = previous?.distance(to: point) ?? 0
+    let segments = max(1, Int(ceil(distance / 18)))
+    for index in 1...segments {
+      guard points.count < 160 else { break }
+      let step = Double(index) / Double(segments)
+      let next = previous.map {
+        LatinSwipePoint(
+          x: $0.x + (point.x - $0.x) * step,
+          y: $0.y + (point.y - $0.y) * step
+        )
+      } ?? point
+      points.append(next)
+      if let key = LatinSwipeDecoder.nearestLetter(
+        to: next, arrangement: arrangement, fullWidth: width
+      ) {
+        visited.insert(key)
+      }
     }
   }
 

@@ -88,7 +88,7 @@ final class LatinWordSuggestions {
     defaults?.set(counts, forKey: storageKey)
   }
 
-  private static let commonWords: [String: [String]] = [
+  static let commonWords: [String: [String]] = [
     "en": [
       "about", "above", "after", "again", "also", "always", "another", "answer",
       "anything", "apple", "around", "because", "before", "Berlin", "better",
