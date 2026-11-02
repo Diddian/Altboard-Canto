@@ -22,7 +22,9 @@ concurrency:
 jobs:
   build:
     name: Unsigned iOS development build
-    runs-on: macos-15
+    # macOS 15 ARM64 jobs #52/#54 cancelled before executing a step (0ms billed).
+    # The Intel image also carries Xcode 26.2; use this alternate hosted pool.
+    runs-on: macos-15-intel
     timeout-minutes: 55
     steps:
       - name: Checkout source

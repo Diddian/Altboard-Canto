@@ -81,7 +81,9 @@ Plan: `docs/swipe-typing-en-de-plan.json`.
 ## Build / deployment (T-006)
 
 - [x] T-006.1 Current baseline Action #51 succeeded: `db687a7`.
-- [ ] T-006.2 Review branch compile and pure-policy tests (no build has run for these new edits).
+- [ ] T-006.2 Review branch compile and pure-policy tests (last #54 never started; no Swift compiler result).
+- [x] T-006.2a Switch IPA preview from macos-15 ARM64 to macos-15-intel hosted runner after zero-step cancellations (#52/#54); Xcode 26.2 installation confirmed in GitHub runner-images.
+- [ ] T-006.2b Confirm that the alternate macOS runner actually executes steps and ships an IPA.
 - [ ] T-006.3 Verify SideStore IPA includes all extension resources and matching commit SHA.
 - [ ] T-006.4 Physical iPhone confirmation before merging and publishing.
 
