@@ -83,6 +83,21 @@ final class JyutpingDictionary {
       if scheme != .yale {
         gather("SELECT word,romanization FROM entries WHERE yale>=? AND yale<? ORDER BY priority LIMIT ?", plain, rank: 2)
       }
+      // Lower-ranked alternate Yale/old Hong Kong romanizations:
+      // yuen/yun/yyun, yu/yyu, jui/jeui, gui/geui.
+      if results.count < 12 {
+        let alternates = CantoneseRomanizationVariants.variants(for: plain).dropFirst()
+        for alternate in alternates.prefix(10) {
+          gather("SELECT word,romanization FROM entries WHERE yale=? ORDER BY priority LIMIT ?", alternate, rank: 1)
+          gather("SELECT word,romanization FROM entries WHERE plain=? ORDER BY priority LIMIT ?", alternate, rank: 1)
+        }
+        if results.isEmpty {
+          for alternate in alternates.prefix(5) {
+            gather("SELECT word,romanization FROM entries WHERE yale>=? AND yale<? ORDER BY priority LIMIT ?", alternate, rank: 4)
+            gather("SELECT word,romanization FROM entries WHERE plain>=? AND plain<? ORDER BY priority LIMIT ?", alternate, rank: 4)
+          }
+        }
+      }
       if plain.count >= 2 {
         gather("SELECT word,romanization FROM entries WHERE initials=? ORDER BY priority LIMIT ?", plain, rank: 3)
       }
@@ -131,7 +146,11 @@ final class JyutpingDictionary {
           "SELECT word,romanization FROM entries WHERE plain=? ORDER BY priority LIMIT ?",
           "SELECT word,romanization FROM entries WHERE yale=? ORDER BY priority LIMIT ?"
         ]
-    let exact = expressions.flatMap { self.query($0, argument: input, limit: 24) }
+    let spellings = input.contains(where: \.isNumber)
+      ? [input] : CantoneseRomanizationVariants.variants(for: input)
+    let exact = spellings.flatMap { key in
+      expressions.flatMap { self.query($0, argument: key, limit: 24) }
+    }
     return exact.max { a, b in
       a.romanization.split(separator: " ").count < b.romanization.split(separator: " ").count
     }?.romanization
@@ -148,8 +167,61 @@ final class JyutpingDictionary {
           "SELECT word,romanization FROM entries WHERE plain=? LIMIT ?",
           "SELECT word,romanization FROM entries WHERE yale=? LIMIT ?"
         ]
-    return sqls.contains { !self.query($0, argument: input, limit: 1).isEmpty }
+    let spellings = input.contains(where: \.isNumber)
+      ? [input] : CantoneseRomanizationVariants.variants(for: input)
+    return spellings.contains { key in
+      sqls.contains { !self.query($0, argument: key, limit: 1).isEmpty }
+    }
   }
+
+  /// Offer offline, corpus-derived words immediately after a Chinese commit.
+  func continuations(after text: String, limit: Int = 9) -> [String] {
+    guard !text.isEmpty else { return [] }
+    let bounded = max(1, min(limit, 24))
+    var words: [String] = []
+    var seen = Set<String>()
+    func collect(_ value: String) {
+      guard !value.isEmpty, value.count <= 10, seen.insert(value).inserted else { return }
+      words.append(value)
+    }
+    for value in Self.commonContinuations[text] ?? [] { collect(value) }
+    for prefix in [text, String(text.suffix(2)), String(text.suffix(1))] {
+      guard !prefix.isEmpty, words.count < bounded else { break }
+      for candidate in self.query(
+        "SELECT word,romanization FROM entries WHERE word>=? AND word<? ORDER BY priority LIMIT ?",
+        argument: prefix, limit: 48, upperBound: prefix + "\u{10FFFF}"
+      ) {
+        guard candidate.text.hasPrefix(prefix), candidate.text != prefix else { continue }
+        collect(String(candidate.text.dropFirst(prefix.count)))
+      }
+    }
+    if words.count < 3 {
+      for fallback in ["嘅", "都", "啦", "喎"] { collect(fallback) }
+    }
+    return Array(words.prefix(bounded))
+  }
+
+  private static let commonContinuations: [String: [String]] = [
+    "我": ["覺得", "哋", "都", "想", "唔係"],
+    "你": ["係咪", "覺得", "知唔知", "想", "哋"],
+    "佢": ["哋", "係", "話", "都"],
+    "今日": ["我", "有", "要", "點"],
+    "聽日": ["我", "要", "再", "見"],
+    "因為": ["我", "你", "佢", "呢個"],
+    "所以": ["我", "你", "就", "佢"],
+    "但係": ["我", "你", "佢", "都"],
+    "不過": ["我", "你", "佢", "都"],
+    "或者": ["我", "你", "可以", "係"],
+    "根據": ["呢個", "佢", "我", "你"],
+    "最": ["多", "少", "好", "緊要"],
+    "真係": ["唔知", "好", "冇", "唔係"],
+    "即係": ["我", "你", "話", "咁"],
+    "點解": ["會", "你", "佢", "咁"],
+    "可以": ["唔", "再", "一齊", "試"],
+    "唔係": ["咁", "好", "我", "呢個"],
+    "咁": ["樣", "難", "好", "多"],
+    "冇": ["問題", "咩", "嘢", "所謂"]
+  ]
 
   func remember(_ candidate: JyutpingCandidate) {
     var counts = self.defaults?.dictionary(forKey: self.memoryKey) as? [String: Int] ?? [:]
@@ -161,7 +233,9 @@ final class JyutpingDictionary {
     self.defaults?.set(counts, forKey: self.memoryKey)
   }
 
-  private func query(_ sql: String, argument: String, limit: Int) -> [JyutpingCandidate] {
+  private func query(
+    _ sql: String, argument: String, limit: Int, upperBound: String? = nil
+  ) -> [JyutpingCandidate] {
     guard let database = self.database else { return [] }
     var statement: OpaquePointer?
     guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
@@ -175,7 +249,7 @@ final class JyutpingDictionary {
       sqlite3_bind_text(statement, 1, pointer, -1, destructor)
     }
     if paramCount == 3 {
-      _ = (argument + "{").withCString { pointer in
+      _ = (upperBound ?? (argument + "{")).withCString { pointer in
         sqlite3_bind_text(statement, 2, pointer, -1, destructor)
       }
     }

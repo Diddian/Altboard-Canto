@@ -33,6 +33,9 @@ struct AlphabeticKeyboardLayout: View {
   @State private var activeLatinWord: String?
   @State private var latinSuggestions = [LatinWordSuggestion]()
   @State private var swipeAlternatives = [String]()
+  @State private var nextCantoneseWords = [String]()
+  @State private var predictionAnchor: String?
+  @State private var nextChineseQuoteCloses = false
   @AppStorage(
     SharedKey.keyboardSwipeTypingEnabled,
     store: UserDefaults(suiteName: AppGroup.identifier)
@@ -54,6 +57,14 @@ struct AlphabeticKeyboardLayout: View {
 
   private var offersCantonese: Bool {
     SharedSettings().preferredSpokenLanguages.contains("yue")
+  }
+
+  private var usesChinesePunctuation: Bool {
+    !Set(SharedSettings().preferredSpokenLanguages).isDisjoint(with: ["yue", "zh"])
+  }
+
+  private var smartChineseQuote: String {
+    self.nextChineseQuoteCloses ? "」" : "「"
   }
 
   private var romanization: CantoneseRomanizationScheme {
@@ -164,6 +175,8 @@ struct AlphabeticKeyboardLayout: View {
         KeyboardLLMActionsToolbar(proxy: self.proxy, keyboardState: self.keyboardState)
       } else if self.page == .letters && !self.swipeAlternatives.isEmpty {
         self.swipeCandidateStrip
+      } else if self.page == .letters && !self.nextCantoneseWords.isEmpty {
+        self.nextCantoneseCandidateStrip
       } else if self.page == .letters &&
           ((self.offersCantonese && !self.composition.isEmpty) || self.activeLatinWord != nil) {
         // The full toolbar becomes an iOS-style prediction strip for the
@@ -282,6 +295,37 @@ struct AlphabeticKeyboardLayout: View {
     self.proxy.insertText(chosen + " ")
     self.lastShiftTap = nil
     if !self.capsLock { self.shiftActive = false }
+    self.updateCandidates()
+  }
+
+  private var nextCantoneseCandidateStrip: some View {
+    GeometryReader { geometry in
+      ScrollView(.horizontal) {
+        HStack(spacing: 0) {
+          ForEach(Array(self.nextCantoneseWords.enumerated()), id: \.offset) { index, word in
+            self.suggestionCell(
+              word, width: geometry.size.width / 3, showDivider: index % 3 != 2
+            ) {
+              self.chooseContinuation(word)
+            }
+          }
+        }
+      }
+      .scrollIndicators(.hidden)
+    }
+    .frame(height: KeyboardChromeMetrics.keyHeight)
+  }
+
+  private func chooseContinuation(_ text: String) {
+    guard let anchor = self.predictionAnchor,
+          self.proxy.documentContextBeforeInput()?.hasSuffix(anchor) == true else {
+      self.nextCantoneseWords.removeAll()
+      self.predictionAnchor = nil
+      return
+    }
+    self.proxy.insertText(text)
+    self.predictionAnchor = text
+    self.nextCantoneseWords = JyutpingDictionary.shared.continuations(after: text)
     self.updateCandidates()
   }
 
@@ -428,7 +472,7 @@ struct AlphabeticKeyboardLayout: View {
       self.letterRow(self.arrangement.rows[0], inset: Self.edgeInset,
                      top: 0, bottom: Self.rowSpacing / 2, rowIndex: 0)
     case .numbers: self.characterRow(Self.numbersRow1)
-    case .symbols: self.characterRow(Self.symbolsRow1)
+    case .symbols: self.characterRow(self.usesChinesePunctuation ? Self.chineseSymbolsRow1 : Self.symbolsRow1)
     }
   }
 
@@ -438,8 +482,8 @@ struct AlphabeticKeyboardLayout: View {
     case .letters:
       self.letterRow(self.arrangement.rows[1], inset: Self.secondInset,
                      top: Self.rowSpacing / 2, bottom: Self.rowSpacing / 2, rowIndex: 1)
-    case .numbers: self.characterRow(Self.numbersRow2)
-    case .symbols: self.characterRow(Self.symbolsRow2)
+    case .numbers: self.characterRow(self.usesChinesePunctuation ? Self.chineseNumbersRow2 : Self.numbersRow2)
+    case .symbols: self.characterRow(self.usesChinesePunctuation ? Self.chineseSymbolsRow2 : Self.symbolsRow2)
     }
   }
 
@@ -488,7 +532,10 @@ struct AlphabeticKeyboardLayout: View {
           }
           Color.clear.frame(width: groupGap)
           HStack(spacing: keyGap) {
-            ForEach([".", ",", "?", "!", "'"], id: \.self) { value in
+            ForEach(0..<5, id: \.self) { index in
+              let value = self.usesChinesePunctuation
+                ? ["。", "，", "？", "！", self.smartChineseQuote][index]
+                : [".", ",", "?", "!", "'"][index]
               KeyButton(
                 content: .symbol(self.nativeSymbolFace(value), fontSize: 19),
                 fixedWidth: punctuationWidth
@@ -575,6 +622,12 @@ struct AlphabeticKeyboardLayout: View {
 
   private func handleCharacter(_ character: String) {
     self.swipeAlternatives.removeAll()
+    self.nextCantoneseWords.removeAll()
+    self.predictionAnchor = nil
+    if self.usesChinesePunctuation {
+      if character == "「" || character == "『" { self.nextChineseQuoteCloses = true }
+      if character == "」" || character == "』" { self.nextChineseQuoteCloses = false }
+    }
     // All Latin typing reaches the host immediately. The offline IME only
     // suggests; it does not intercept ordinary English text.
     let tracksLetter = self.page == .letters
@@ -711,6 +764,8 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private func handleHostDeletion() {
+    self.nextCantoneseWords.removeAll()
+    self.predictionAnchor = nil
     if !self.composition.isEmpty { _ = self.composition.backspace() }
     if !self.composition.isEmpty && !self.trackedTextMatches {
       self.clearComposition()
@@ -751,6 +806,8 @@ struct AlphabeticKeyboardLayout: View {
     self.clearComposition()
     for _ in 0..<count { self.proxy.deleteBackward() }
     self.proxy.insertText(candidate.text)
+    self.predictionAnchor = candidate.text
+    self.nextCantoneseWords = JyutpingDictionary.shared.continuations(after: candidate.text)
     KeyboardInputTrace.record(.candidateChosen)
     JyutpingDictionary.shared.remember(candidate)
     self.refreshAutomaticShift()
@@ -759,6 +816,8 @@ struct AlphabeticKeyboardLayout: View {
 
   private func handleSpace() {
     self.swipeAlternatives.removeAll()
+    self.nextCantoneseWords.removeAll()
+    self.predictionAnchor = nil
     // After punctuation, Space restores the Alphabet page. Digits retain
     // the numeric page to allow quantities and dates.
     let returnToLetters = self.page != .letters && self.lastInputWasSymbol
@@ -773,6 +832,8 @@ struct AlphabeticKeyboardLayout: View {
 
   private func handleReturn() {
     self.swipeAlternatives.removeAll()
+    self.nextCantoneseWords.removeAll()
+    self.predictionAnchor = nil
     self.lastInputWasSymbol = false
     self.clearComposition()
     self.proxy.insertText("\n")
@@ -809,6 +870,10 @@ struct AlphabeticKeyboardLayout: View {
       self.lastShiftTap = now
     }
   }
+
+  private static let chineseNumbersRow2 = ["－","／","：","；","（","）","【","】","《","》"]
+  private static let chineseSymbolsRow1 = ["〈","〉","〖","〗","〔","〕","「","」","『","』"]
+  private static let chineseSymbolsRow2 = ["_","\\","|","～","…","、","€","£","¥","•"]
 
   private static let numbersRow1 = ["1","2","3","4","5","6","7","8","9","0"]
   private static let numbersRow2 = ["-","/",":",";","(",")","$","&","@","\""]

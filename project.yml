@@ -115,6 +115,8 @@ targets:
       - path: Shared
       - path: JyutpingResources
         buildPhase: resources
+      - path: EmojiResources
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.sayboard.keyboard

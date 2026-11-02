@@ -62,6 +62,9 @@ jobs:
           python3 scripts/build-jyutping-lexicon.py
           test -s JyutpingResources/jyutping.sqlite3
           python3 -m unittest discover -s scripts -p 'test_jyutping_*.py'
+          python3 scripts/build-emoji-catalog.py
+          test -s EmojiResources/emoji_catalog.tsv
+          python3 -m unittest discover -s scripts -p 'test_emoji_catalog.py'
           # impactOccurred(intensity:) may silently fail in the extension sandbox.
           if grep -E '^      generator[.]impactOccurred[(]intensity:' Shared/KeyboardHaptics.swift; then
             echo 'ERROR: use parameterless UIKit impactOccurred() in keyboard'
@@ -144,6 +147,10 @@ jobs:
           test -d "$APP/PlugIns" || exit 1
           test -s "$APP/PlugIns/SayboardKeyboard.appex/jyutping.sqlite3" || {
             echo 'ERROR: offline Jyutping lexicon missing from keyboard extension'
+            exit 1
+          }
+          test -s "$APP/PlugIns/SayboardKeyboard.appex/emoji_catalog.tsv" || {
+            echo 'ERROR: offline emoji catalogue missing from keyboard extension'
             exit 1
           }
 

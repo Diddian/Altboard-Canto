@@ -70,7 +70,11 @@ def compile_database(source: bytes, output: pathlib.Path, verify_upstream: bool)
         batch = []
         seen = set()
         count = 0
-        for raw in source.decode("utf-8").splitlines():
+        # Reviewed common Cantonese phrases rank before the upstream lexicon.
+        # Keep the upstream bytes/hash unchanged and additions auditable.
+        supplemental = pathlib.Path(__file__).with_name("cantonese-phrases.tsv")
+        lines = supplemental.read_text(encoding="utf-8").splitlines() + source.decode("utf-8").splitlines()
+        for raw in lines:
             fields = raw.strip().split("\t")
             if len(fields) != 2:
                 continue
@@ -97,6 +101,7 @@ def compile_database(source: bytes, output: pathlib.Path, verify_upstream: bool)
         if count < 10000 and verify_upstream:
             raise ValueError(f"Lexicon unexpectedly small: {count} entries")
         db.executescript("""
+            CREATE INDEX idx_entries_word ON entries(word, priority);
             CREATE INDEX idx_entries_plain ON entries(plain, priority);
             CREATE INDEX idx_entries_compact ON entries(compact, priority);
             CREATE INDEX idx_entries_yale ON entries(yale, priority);
