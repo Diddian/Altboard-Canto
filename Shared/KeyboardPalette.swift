@@ -3,7 +3,9 @@ import UIKit
 /// Sampled from the supplied iOS reference screenshot (IMG_9659; dark keys #444).
 /// One source of truth for both real keyboard and tappable Settings previews.
 enum KeyboardPalette {
-  static let darkBackdrop = UIColor(red: 31 / 255, green: 31 / 255, blue: 31 / 255, alpha: 1)
+  // Current numeric iOS keyboard and the host's lower keyboard surface
+  // both sample at RGB(33,33,33) in IMG_9688 and IMG_9687.
+  static let darkBackdrop = UIColor(red: 33 / 255, green: 33 / 255, blue: 33 / 255, alpha: 1)
   static let backdrop = UIColor { traits in
     traits.userInterfaceStyle == .dark ? darkBackdrop : UIColor(red: 0.875, green: 0.878, blue: 0.902, alpha: 1)
   }

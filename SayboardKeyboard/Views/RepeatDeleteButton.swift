@@ -15,7 +15,7 @@ struct RepeatDeleteButton: View {
 
   var body: some View {
     Image(systemName: "delete.left")
-      .font(.system(size: 18.kbScaled))
+      .font(.system(size: 19.25.kbScaled))
       .foregroundStyle(.primary)
       .frame(width: self.fixedWidth, height: 45.kbScaled)
       .background {

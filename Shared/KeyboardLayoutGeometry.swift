@@ -16,6 +16,9 @@ enum KeyboardLayoutGeometry {
   static let alphabetSecondInset: CGFloat = 25
   static let alphabetSpecialRowInset: CGFloat = 6.67
   static let alphabetSpecialGap: CGFloat = 14.67
+  static let alphabetSymbolsRowInset: CGFloat = 6.67
+  static let alphabetSymbolsWideKeyWidth: CGFloat = 50
+  static let alphabetSymbolsGroupGap: CGFloat = 14.67
   static let alphabetToolbarTopInset: CGFloat = 4
   static let alphabetToolbarBottomInset: CGFloat = 8
   static let alphabetMicWidth: CGFloat = 86

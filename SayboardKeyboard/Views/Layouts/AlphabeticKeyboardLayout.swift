@@ -393,26 +393,42 @@ struct AlphabeticKeyboardLayout: View {
       .padding(.horizontal, KeyboardLayoutGeometry.alphabetSpecialRowInset.kbScaled)
 
     case .numbers, .symbols:
-      HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
-        KeyButton(
-          content: .symbol(self.page == .numbers ? "#+=" : "123", fontSize: 15),
-          fixedWidth: 50.kbScaled
-        ) {
-          self.page = self.page == .numbers ? .symbols : .numbers
-        }
-        ForEach([".", ",", "?", "!", "'"], id: \.self) { value in
-          KeyButton(content: .symbol(value, fontSize: 19)) {
-            self.handleCharacter(value)
-          }
-        }
-        RepeatDeleteButton(
-          proxy: self.proxy,
-          fixedWidth: 48.kbScaled,
-          onDeleteIntercept: { self.deleteCompositionCharacter() },
-          onHostDeletion: { self.handleHostDeletion() }
+      GeometryReader { geometry in
+        let inset = KeyboardLayoutGeometry.alphabetSymbolsRowInset.kbScaled
+        let wideWidth = KeyboardLayoutGeometry.alphabetSymbolsWideKeyWidth.kbScaled
+        let groupGap = KeyboardLayoutGeometry.alphabetSymbolsGroupGap.kbScaled
+        let keyGap = KeyboardChromeMetrics.buttonSpacing
+        let punctuationWidth = max(
+          10.kbScaled,
+          (geometry.size.width - 2 * inset - 2 * wideWidth
+            - 2 * groupGap - 4 * keyGap) / 5
         )
+        HStack(spacing: 0) {
+          KeyButton(
+            content: .symbol(self.page == .numbers ? "#+=" : "123", fontSize: 15),
+            fixedWidth: wideWidth
+          ) {
+            self.page = self.page == .numbers ? .symbols : .numbers
+          }
+          Color.clear.frame(width: groupGap)
+          HStack(spacing: keyGap) {
+            ForEach([".", ",", "?", "!", "'"], id: \.self) { value in
+              KeyButton(content: .symbol(value, fontSize: 19), fixedWidth: punctuationWidth) {
+                self.handleCharacter(value)
+              }
+            }
+          }
+          Color.clear.frame(width: groupGap)
+          RepeatDeleteButton(
+            proxy: self.proxy,
+            fixedWidth: wideWidth,
+            onDeleteIntercept: { self.deleteCompositionCharacter() },
+            onHostDeletion: { self.handleHostDeletion() }
+          )
+        }
+        .padding(.horizontal, inset)
       }
-      .padding(.horizontal, Self.edgeInset.kbScaled)
+      .frame(height: KeyboardChromeMetrics.keyHeight)
     }
   }
 
@@ -460,7 +476,7 @@ struct AlphabeticKeyboardLayout: View {
         }
       }
     }
-    .padding(.horizontal, Self.edgeInset.kbScaled)
+    .padding(.horizontal, KeyboardLayoutGeometry.alphabetSymbolsRowInset.kbScaled)
     .frame(height: KeyboardChromeMetrics.keyHeight)
   }
 
