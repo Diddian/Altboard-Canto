@@ -30,6 +30,11 @@ struct AlphabeticKeyboardLayout: View {
   @State private var activeLatinWord: String?
   @State private var latinSuggestions = [LatinWordSuggestion]()
   @State private var latinRefreshTask: Task<Void, Never>?
+  @AppStorage(
+    SharedKey.keyboardTouchDebugOverlay,
+    store: UserDefaults(suiteName: AppGroup.identifier)
+  )
+  private var showTouchDebug = false
 
   private var arrangement: LetterKeyArrangement {
     LetterKeyArrangement(rawValue: self.arrangementRaw) ?? .qwertz
@@ -67,10 +72,18 @@ struct AlphabeticKeyboardLayout: View {
         // clipping bounds. A negative offset cut the mic and icons off.
         .padding(.top, KeyboardLayoutGeometry.alphabetToolbarTopInset.kbScaled)
         .padding(.bottom, KeyboardLayoutGeometry.alphabetToolbarBottomInset.kbScaled)
-      VStack(spacing: Self.rowSpacing.kbScaled) {
+      // The 11pt visual row gaps become two 5.5pt touch bands. All letter
+      // space is routed, while key graphics keep their exact positions.
+      VStack(spacing: 0) {
         self.firstKeyRow
+          .frame(height: KeyboardChromeMetrics.keyHeight + Self.rowSpacing.kbScaled / 2,
+                 alignment: .top)
         self.secondKeyRow
+          .frame(height: KeyboardChromeMetrics.keyHeight + Self.rowSpacing.kbScaled,
+                 alignment: .center)
         self.thirdKeyRow
+          .frame(height: KeyboardChromeMetrics.keyHeight + Self.rowSpacing.kbScaled / 2,
+                 alignment: .bottom)
       }
 
       KeyboardBottomRow(
@@ -259,7 +272,9 @@ struct AlphabeticKeyboardLayout: View {
   @ViewBuilder
   private var firstKeyRow: some View {
     switch self.page {
-    case .letters: self.letterRow(self.arrangement.rows[0], inset: Self.edgeInset)
+    case .letters:
+      self.letterRow(self.arrangement.rows[0], inset: Self.edgeInset,
+                     top: 0, bottom: Self.rowSpacing / 2)
     case .numbers: self.characterRow(Self.numbersRow1)
     case .symbols: self.characterRow(Self.symbolsRow1)
     }
@@ -268,7 +283,9 @@ struct AlphabeticKeyboardLayout: View {
   @ViewBuilder
   private var secondKeyRow: some View {
     switch self.page {
-    case .letters: self.letterRow(self.arrangement.rows[1], inset: Self.secondInset)
+    case .letters:
+      self.letterRow(self.arrangement.rows[1], inset: Self.secondInset,
+                     top: Self.rowSpacing / 2, bottom: Self.rowSpacing / 2)
     case .numbers: self.characterRow(Self.numbersRow2)
     case .symbols: self.characterRow(Self.symbolsRow2)
     }
@@ -278,7 +295,7 @@ struct AlphabeticKeyboardLayout: View {
   private var thirdKeyRow: some View {
     switch self.page {
     case .letters:
-      HStack(spacing: Self.specialGap.kbScaled) {
+      HStack(alignment: .bottom, spacing: Self.specialGap.kbScaled) {
         KeyButton(
           content: .systemImage(self.capsLock ? "capslock.fill"
             : self.shiftActive ? "shift.fill" : "shift"),
@@ -287,11 +304,8 @@ struct AlphabeticKeyboardLayout: View {
         ) { self.tapShift() }
         .accessibilityLabel(self.capsLock ? "Caps Lock" : "Shift")
 
-        HStack(spacing: 0) {
-          ForEach(Array(self.arrangement.rows[2].enumerated()), id: \.offset) { index, letter in
-            self.letterKey(letter, index: index, count: 7)
-          }
-        }
+        self.letterRow(self.arrangement.rows[2], inset: 0,
+                       top: Self.rowSpacing / 2, bottom: 0)
         RepeatDeleteButton(
           proxy: self.proxy,
           fixedWidth: 50.kbScaled,
@@ -328,23 +342,35 @@ struct AlphabeticKeyboardLayout: View {
     }
   }
 
-  private func letterRow(_ letters: [String], inset: CGFloat) -> some View {
-    // Gesture hitboxes extend into the visual gaps without enlarging keys.
-    HStack(spacing: 0) {
-      ForEach(Array(letters.enumerated()), id: \.offset) { index, letter in
-        self.letterKey(letter, index: index, count: letters.count)
-      }
+  private var touchPredictionPrefix: String? {
+    if self.offersCantonese && !self.composition.isEmpty {
+      // Existing candidate romanization stores Jyutping. Do not apply the
+      // wrong alphabet model to Yale or Yuetyam spellings.
+      return self.romanization == .jyutping ? self.composition.buffer : nil
     }
-    .padding(.horizontal, inset.kbScaled)
-    .frame(height: KeyboardChromeMetrics.keyHeight)
+    return self.activeLatinWord
   }
 
-  private func letterKey(_ letter: String, index: Int, count: Int) -> some View {
-    AlphabeticLetterKey(
-      letter: letter,
+  private var touchPredictionWords: [String] {
+    if self.offersCantonese && !self.composition.isEmpty {
+      return self.romanization == .jyutping
+        ? self.candidates.map(\.romanization) : []
+    }
+    return self.latinSuggestions.map(\.text)
+  }
+
+  private func letterRow(
+    _ letters: [String], inset: CGFloat, top: CGFloat, bottom: CGFloat
+  ) -> some View {
+    AlphabeticTouchRow(
+      letters: letters,
       uppercase: self.shiftActive || self.capsLock,
-      column: index,
-      rowCount: count
+      horizontalInset: inset.kbScaled,
+      topHitInset: top.kbScaled,
+      bottomHitInset: bottom.kbScaled,
+      typedContext: self.touchPredictionPrefix,
+      completionWords: self.touchPredictionWords,
+      showTouchDebug: self.showTouchDebug
     ) { typed in
       self.handleCharacter(typed)
       self.lastShiftTap = nil

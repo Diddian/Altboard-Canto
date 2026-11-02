@@ -14,6 +14,9 @@ struct DiagnosticsView: View {
   @State private var breadcrumbs = [String]()
   @State private var hapticEvents = [String]()
   @State private var hapticTotal = 0
+  @AppStorage(SharedKey.keyboardTouchDebugOverlay,
+              store: UserDefaults(suiteName: AppGroup.identifier))
+  private var showTouchTargets = false
   @State private var coreHapticStatus = ""
   @State private var coreHapticEngine: CHHapticEngine?
   @StateObject private var sensoryPulse = KeyboardSensoryPulse.shared
@@ -24,6 +27,7 @@ struct DiagnosticsView: View {
       self.modelsSection
       self.audioSection
       self.hapticsSection
+      self.touchTargetSection
       self.testSection
       self.crashSection
       self.exportSection
@@ -132,6 +136,18 @@ struct DiagnosticsView: View {
       Text("Haptic Diagnostics")
     } footer: {
       Text("Events record calls, not confirmed physical vibration. Core Haptics errors are recorded separately. App and keyboard extension use separate processes; compare both in this trace.")
+    }
+  }
+
+  private var touchTargetSection: some View {
+    Section {
+      Toggle("Show Key Touch Areas", isOn: self.$showTouchTargets)
+      Text("In the Alphabet keyboard: orange outlines show the actual contiguous touch cells, teal dashed outlines show the visible keys. Switch off after testing. No typed words or raw touch coordinates are saved.")
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+      LabeledContent("Boundary adjustment limit", value: "12% predictive, 18% combined")
+    } header: {
+      Text("Keyboard Touch Diagnostics")
     }
   }
 
