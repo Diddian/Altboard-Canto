@@ -155,7 +155,6 @@ struct MainTabView: View {
       Tab("Settings", image: "tab-settings", value: TabID.settings.rawValue) {
         NavigationStack {
           SettingsView()
-            .equatable()
         }
         .id(self.settingsStackID)
       }
@@ -183,7 +182,6 @@ struct MainTabView: View {
 
       NavigationStack {
         SettingsView()
-          .equatable()
       }
       .id(self.settingsStackID)
       .tabItem {

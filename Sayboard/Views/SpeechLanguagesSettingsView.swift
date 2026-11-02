@@ -84,7 +84,6 @@ struct SpeechLanguagesSettingsView: View {
       )
     }
     .onAppear { self.spokenLanguages = SharedSettings().preferredSpokenLanguages }
-    .onAppear { self.spokenLanguages = SharedSettings().preferredSpokenLanguages }
   }
 
   @EnvironmentObject private var speechModels: ModelDownloadService

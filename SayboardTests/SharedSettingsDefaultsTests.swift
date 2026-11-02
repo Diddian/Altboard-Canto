@@ -35,26 +35,30 @@ struct SharedSettingsDefaultsTests {
 
     let settings = SharedSettings(defaults: defaults)
 
-    #expect(settings.keyboardHeightScale == 0.92)
+    #expect(settings.microphoneKeyboardLayout == .defaultLayout)
     #expect(settings.keyboardHapticsEnabled)
     #expect(settings.periodShortcutEnabled)
     #expect(settings.keyboardAutoCapitalizationEnabled)
-    #expect(settings.keyboardTypingLanguage == .english)
+    #expect(settings.keyboardKind == .standard)
     #expect(settings.needsInputModeSwitchKey)
   }
 
   @Test
-  func keyboardHeightIsClampedAndPersists() throws {
+  func microphoneLayoutDefaultsAndPersistsIndependentlyOfLegacyHeight() throws {
     let suiteName = Self.uniqueSuiteName()
     let defaults = try #require(UserDefaults(suiteName: suiteName))
     defer { Self.cleanup(suiteName: suiteName) }
     let settings = SharedSettings(defaults: defaults)
-    settings.keyboardHeightScale = 0.68
-    #expect(settings.keyboardHeightScale == 0.70)
-    settings.keyboardHeightScale = 1.20
-    #expect(settings.keyboardHeightScale == 1.10)
-    settings.keyboardHeightScale = 0.88
-    #expect(SharedSettings(defaults: defaults).keyboardHeightScale == 0.88)
+    #expect(settings.microphoneKeyboardLayout == .defaultLayout)
+    // Old stored slider values must never switch the layout automatically.
+    defaults.set(0.70, forKey: "keyboardHeightScale")
+    #expect(settings.microphoneKeyboardLayout == .defaultLayout)
+    settings.microphoneKeyboardLayout = .compact
+    #expect(SharedSettings(defaults: defaults).microphoneKeyboardLayout == .compact)
+    defaults.set(1.10, forKey: "keyboardHeightScale")
+    #expect(settings.microphoneKeyboardLayout == .compact)
+    settings.microphoneKeyboardLayout = .defaultLayout
+    #expect(settings.microphoneKeyboardLayout == .defaultLayout)
   }
 
   @Test
@@ -101,8 +105,6 @@ struct SharedSettingsDefaultsTests {
     settings.keyboardAutoCapitalizationEnabled = false
     #expect(!SharedSettings(defaults: defaults).keyboardHapticsEnabled)
     #expect(!SharedSettings(defaults: defaults).keyboardAutoCapitalizationEnabled)
-    settings.keyboardTypingLanguage = .jyutping
-    #expect(SharedSettings(defaults: defaults).keyboardTypingLanguage == .jyutping)
   }
 
   @Test
