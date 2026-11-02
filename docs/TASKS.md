@@ -1,8 +1,8 @@
 # Altboard-Canto development tasks
 
-Source branch: `fix/instant-touchdown-highlight-20261102`
-Last verified IPA build: `ac34148` (Action #55). The new Emoji/geometry fixes are not yet compiled or tested.
-The historical stable release branch is unchanged. The review branch has its own Preview IPA workflow.
+Source branch: `feat/instant-input-ai-swipe-20261102`
+Last independently verified IPA: Action #57 (`471ffed`). This new feature-branch commit is pending macOS build and physical iPhone verification.
+The existing successful release branch and IPA remain unchanged. This branch publishes to its own beta Release tag.
 GitHub Issues are disabled in this repository (GitHub API 410). This file is the
 canonical, versioned ticket board until Issues are enabled.
 
@@ -128,15 +128,15 @@ See docs/live-meeting-transcription-experiment.json.
 ## Build / deployment (T-006)
 
 - [x] T-006.1 Current baseline Action #51 succeeded: `db687a7`.
-- [ ] T-006.2 Compile the new Emoji/geometry review commit and verify pure-policy tests. The earlier #55 build succeeded at `ac34148`.
+- [ ] T-006.2 Compile this exact new feature branch and run all pure-policy tests, including the offline EN/DE swipe smoke. Last verified baseline: Action #57 at `471ffed`.
 - [x] T-006.2a Switch IPA preview from macos-15 ARM64 to macos-15-intel hosted runner after zero-step cancellations (#52/#54); Xcode 26.2 installation confirmed in GitHub runner-images.
-- [ ] T-006.2b Confirm that the alternate macOS runner actually executes steps and ships an IPA.
+- [x] T-006.2b The macOS Intel runner previously compiled and shipped a SideStore IPA at Action #57; new branch still requires its own build.
 - [ ] T-006.3 Verify SideStore IPA includes all extension resources and matching commit SHA.
 - [ ] T-006.4 Physical iPhone confirmation before merging and publishing.
 
 ## Ticketing migration
 
 When the repository's GitHub Settings > General > Features > Issues checkbox is
-enabled, create one Issue per T-001…T-006, linking this file and retaining
+enabled, create one Issue per T-001…T-009, linking this file and retaining
 subtask checkboxes. Until then, this Markdown file plus the draft PR review
 serve as the issue board; do not claim that GitHub Issues were created.

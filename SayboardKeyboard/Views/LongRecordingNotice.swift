@@ -16,7 +16,7 @@ struct LongRecordingNotice: View {
         HStack(spacing: 3.kbScaled) {
           Image(systemName: "exclamationmark.triangle")
           if self.showFirstHint {
-            Text("Long audio takes longer to transcribe").lineLimit(2)
+            Text("Long audio may take longer on this device").lineLimit(2)
           } else {
             Text("\(seconds)s").monospacedDigit()
           }

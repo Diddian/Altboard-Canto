@@ -78,6 +78,7 @@ extension KeyboardViewController {
 
     let inputText: String
     self.llmSelectedText = nil
+    self.llmDocumentIdentifier = nil
     self.llmSelectionContextBefore = nil
     self.llmSelectionContextAfter = nil
     self.llmClipboardOnly = clipboardOnly
@@ -97,6 +98,7 @@ extension KeyboardViewController {
       }
       inputText = selected
       self.llmSelectedText = selected
+      self.llmDocumentIdentifier = self.textDocumentProxy.documentIdentifier
       self.llmSelectionContextBefore = self.textDocumentProxy.documentContextBeforeInput
       self.llmSelectionContextAfter = self.textDocumentProxy.documentContextAfterInput
       self.llmOriginalText = ""
@@ -189,7 +191,8 @@ extension KeyboardViewController {
     }
     if let originalSelection = self.llmSelectedText {
       // Never overwrite a changed selection after asynchronous inference.
-      let matches = textDocumentProxy.selectedText == originalSelection
+      let matches = textDocumentProxy.documentIdentifier == self.llmDocumentIdentifier
+        && textDocumentProxy.selectedText == originalSelection
         && textDocumentProxy.documentContextBeforeInput == self.llmSelectionContextBefore
         && textDocumentProxy.documentContextAfterInput == self.llmSelectionContextAfter
       if matches {
@@ -244,6 +247,7 @@ extension KeyboardViewController {
     self.pendingAutoActionText = nil
     self.llmOriginalText = ""
     self.llmSelectedText = nil
+    self.llmDocumentIdentifier = nil
     self.llmSelectionContextBefore = nil
     self.llmSelectionContextAfter = nil
     self.llmClipboardOnly = false

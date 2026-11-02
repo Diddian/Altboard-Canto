@@ -15,6 +15,7 @@ final class KeyboardViewController: UIInputViewController {
   var isPerformingHistoryNavigation = false
   var pendingAutoActionText: String?
   var llmSelectedText: String?
+  var llmDocumentIdentifier: UUID?
   var llmSelectionContextBefore: String?
   var llmSelectionContextAfter: String?
   var llmClipboardOnly = false

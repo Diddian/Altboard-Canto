@@ -271,9 +271,14 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private func commitSwipe(_ alternatives: [String]) {
-    guard let chosen = alternatives.first else { return }
+    guard !alternatives.isEmpty else { return }
+    let shouldCapitalize = self.shiftActive || self.capsLock
+    let adjusted = alternatives.map { word in
+      shouldCapitalize ? word.prefix(1).uppercased() + word.dropFirst() : word
+    }
+    guard let chosen = adjusted.first else { return }
     self.clearComposition()
-    self.swipeAlternatives = alternatives
+    self.swipeAlternatives = adjusted
     self.proxy.insertText(chosen + " ")
     self.lastShiftTap = nil
     if !self.capsLock { self.shiftActive = false }
