@@ -27,8 +27,8 @@ struct SpaceBarKey: View {
       )
   }
 
-  private static let activationDelay: TimeInterval = 0.3
-  private static let pointsPerCharacter: CGFloat = 8
+  private static let activationDelay: TimeInterval = 0.15
+  private static let pointsPerCharacter: CGFloat = 7.5
   private static let verticalDeadZone: CGFloat = 50
   private static let minimumHorizontalMovement: CGFloat = 2
 

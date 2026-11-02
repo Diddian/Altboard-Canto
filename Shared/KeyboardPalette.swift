@@ -12,6 +12,18 @@ enum KeyboardPalette {
       ? UIColor(red: 68 / 255, green: 68 / 255, blue: 68 / 255, alpha: 1)
       : .white
   }
+  // Measured from the supplied native prediction-strip screenshot
+  // IMG_9670.jpeg at approximately 3x display scale.
+  static let suggestionSeparatorWidth: CGFloat = 1
+  static let suggestionSeparatorHeight: CGFloat = 24
+  static let suggestionSeparator = UIColor { traits in
+    traits.userInterfaceStyle == .dark
+      ? UIColor(red: 50 / 255, green: 50 / 255, blue: 50 / 255, alpha: 1)
+      : UIColor.separator
+  }
+  static let suggestionGlyph = UIColor { traits in
+    traits.userInterfaceStyle == .dark ? UIColor(white: 0.78, alpha: 1) : UIColor.darkText
+  }
   static let pressedFill = UIColor { traits in
     traits.userInterfaceStyle == .dark
       ? UIColor(red: 92 / 255, green: 92 / 255, blue: 92 / 255, alpha: 1)

@@ -69,3 +69,17 @@ Implementation branch: feat/fixed-keyboard-settings-20261102.
 - Remove it and its policy/smoke tests, avoiding gesture interference with typing.
 - Keep host-owned History tap and interactive scroll dismissal.
 - External host applications own their own background-tap behavior.
+
+## 2026-11-02 native suggestion and typing adjustments
+
+- Native screenshot IMG_9670: three equal suggestion columns, muted SF text,
+  centered 1pt #323232 separators 24pt high, #1F1F1F background.
+- During Cantonese composition, remove microphone and other toolbar controls
+  completely so suggestions can use the entire width; extra candidates scroll.
+- Latin typing remains live. Usage-based candidate ranking already persists in
+  the App Group using canto.jyutping.selectionCounts.
+- Spacebar trackpad activation reduced from 300ms to 150ms.
+- Alphabet letter hit areas cover 3pt into each side of the visual 6pt gap.
+- In-app History dictation uses existing Darwin bridge, not a deep-link bounce.
+- Predictions and input measurements are screenshot approximations, not Apple
+  published private geometry.

@@ -36,6 +36,9 @@ struct AlphabeticLetterKey: View {
           .fill(Color(self.pressed ? .keyPressedBackground : .keyBackground))
           .shadow(color: .black.opacity(0.13), radius: 0.5, y: 0.5)
       }
+      // The rendered key stays 6pt away from its neighbours, while its
+      // invisible gesture target extends 3pt into each side of that gap.
+      .padding(.horizontal, 3.kbScaled)
       .contentShape(Rectangle())
       .overlay(alignment: self.popupAlignment) {
         if self.choosing {

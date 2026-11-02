@@ -1,6 +1,6 @@
 {
-  "schema": "altboard.ios.keyboard.geometry.v1",
-  "source": "IMG_9658.jpeg, IMG_9659.jpeg (native), IMG_9660.jpeg (previous Altboard)",
+  "schema": "altboard.ios.keyboard.geometry.v2",
+  "source": "IMG_9658.jpeg, IMG_9659.jpeg (native), IMG_9660.jpeg (previous Altboard), IMG_9669.jpeg (current Altboard screenshot), IMG_9670.jpeg (native 3-column prediction screenshot)",
   "measurement": "Approximate pixel measurements normalized at inferred 3x; not Apple layout APIs",
   "reference": {
     "widthPx": 1320,
@@ -14,10 +14,17 @@
     "horizontalGapPt": 6,
     "verticalGapPt": 11,
     "cornerRadiusPt": 8,
-    "font": "SF System",
+    "font": "iOS SF system (dynamic .system font)",
     "fontSizePt": 23,
     "fontWeight": "regular",
-    "visualOffsetYPt": -1.2
+    "visualOffsetYPt": -1.2,
+    "touchTarget": {
+      "horizontalExtensionIntoVisualGapPt": 3,
+      "verticalExtensionIntoVisualGapPt": 0,
+      "letterRowHStackSpacingPt": 0,
+      "visibleHorizontalKeyInsetPt": 3,
+      "reason": "Each letter key has a larger, contiguous hitbox while the key graphics retain visible 6pt spacing. This is an approximation of native iOS behavior, not a private UIKit algorithm."
+    }
   },
   "rows": [
     {
@@ -61,7 +68,15 @@
       "longPressDiacritics": true,
       "autoCapsFirstCharacter": true,
       "autoCapsAfterPunctuation": true,
-      "previewHapticTest": true
+      "previewHapticTest": true,
+      "spaceTrackpad": {
+        "holdDelaySeconds": 0.15,
+        "pointsPerCharacter": 7.5,
+        "dragAxis": "horizontal"
+      },
+      "microphoneInHistory": "When the History test field is focused, request dictation using the existing in-app Darwin bridge. No deep link or app switch.",
+      "keyboardDismissGesture": "No custom edge swipe; removed after real-device test. Host app handles outside taps.",
+      "personalizedCandidates": "Offline dictionary selectionCounts stored in App Group; most frequently chosen candidate within the query results is shown first."
     },
     "defaultLetterArrangement": "qwertz"
   },
@@ -87,13 +102,64 @@
     "nativeSecondRowTopPx": 355,
     "nativeThirdRowTopPx": 523,
     "nativeBottomRowTopPx": 691,
-    "note": "Extracted from screenshot geometry, not an Apple-documented coordinate system; use same runtime spacing in interactive preview"
+    "note": "Extracted from screenshot geometry, not an Apple-documented coordinate system; use same runtime spacing in interactive preview",
+    "keyboardContainer": {
+      "roundedTopCorners": "system-controlled UIInputView",
+      "inputFieldMinHeightPt": 76,
+      "historyBackdrop": "KeyboardPalette.backdrop",
+      "bottomBlankSpacePt": 11
+    }
   },
   "build": {
-    "recommendedKeyboardHeightScale": 0.92,
-    "baseAlphabetHeightPt": 312,
-    "defaultAlphabetHeightPt": 287.04,
+    "recommendedKeyboardHeightScale": null,
+    "baseAlphabetHeightPt": 288,
+    "defaultAlphabetHeightPt": 288,
     "directIPAArtifact": "actions/upload-artifact@v7 archive:false",
-    "releaseAsset": "Altboard-Canto-SideStore.ipa"
+    "releaseAsset": "Altboard-Canto-SideStore.ipa",
+    "keyboardHeightUserAdjustable": false,
+    "microphoneOnlyLayouts": {
+      "defaultPt": 260,
+      "compactPt": 150
+    }
+  },
+  "predictionStrip": {
+    "reference": "IMG_9670.jpeg",
+    "measuredFromScreenshot": {
+      "widthPx": 1320,
+      "scaleAssumption": 3,
+      "dividerCenterXPx": [
+        438,
+        878
+      ],
+      "dividerHeightPxApprox": 74
+    },
+    "columnsVisible": 3,
+    "alignment": "equally sized thirds, one row",
+    "supportsScrollingAdditionalCandidates": true,
+    "compositionBehavior": {
+      "cantonese": "full width candidate row; hide settings/translation/AI/microphone",
+      "english": "preserve existing toolbar when no composition"
+    },
+    "dark": {
+      "backgroundHex": "#1F1F1F",
+      "dividerHex": "#323232",
+      "glyphHexApprox": "#C7C7C7"
+    },
+    "separator": {
+      "widthPt": 1,
+      "heightPt": 24,
+      "verticalAlignment": "center",
+      "offsetFromKeyboardSidePt": 0
+    },
+    "text": {
+      "font": "SF System",
+      "fontSizePt": 19,
+      "weight": "regular",
+      "lineLimit": 1,
+      "minimumScaleFactor": 0.72,
+      "alignment": "center"
+    },
+    "candidateBehavior": "Latin typed string first, optional OK correction, then ordered offline Cantonese suggestions with user selection frequency ranking",
+    "note": "Estimated from user-supplied pixels; not an Apple published layout specification"
   }
 }

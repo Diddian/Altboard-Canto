@@ -181,7 +181,9 @@ struct MicAnimatedButton: View {
       return
     } else if self.keyboardState.isDictationLocked {
       if let url = DeepLink.unlockURL { self.proxy.openURL(url) }
-    } else if self.keyboardState.isSessionActive {
+    } else if self.keyboardState.isSessionActive || HistoryKeyboardTestSession.isFocused {
+      // The containing app is already foregrounded in its History test field.
+      // Use the existing Darwin bridge directly; do not open Altboard again.
       self.keyboardState.isStartingRecording = true
       self.proxy.startDictation()
     } else if let url = DeepLink.dictateURL {

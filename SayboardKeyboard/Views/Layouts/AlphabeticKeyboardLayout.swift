@@ -104,7 +104,10 @@ struct AlphabeticKeyboardLayout: View {
   private var toolbar: some View {
     HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
       if self.offersCantonese && !self.composition.isEmpty {
+        // Give the entire toolbar to Cantonese candidates; even the mic
+        // disappears during composition, so long phrases can be read.
         self.candidateStrip
+          .transition(.opacity)
       } else {
         KeyButton(content: .systemImage("gearshape"),
                   fixedWidth: self.chrome.sideButtonWidth) {
@@ -126,26 +129,27 @@ struct AlphabeticKeyboardLayout: View {
           )
         }
         Spacer(minLength: 2.kbScaled)
-      }
 
-      if self.keyboardState.hasFullAccess && self.keyboardState.isMicrophoneAuthorized
-          && self.keyboardState.hasUsableModel {
-        MicAnimatedButton(
-          sizing: .alphabet,
-          proxy: self.proxy,
-          keyboardState: self.keyboardState
-        )
-      } else {
-        KeyButton(content: .systemImage("mic.slash"), fixedWidth: 86.kbScaled) {
-          if let url = DeepLink.setupMicURL ?? DeepLink.settingsURL {
-            self.proxy.openURL(url)
+        if self.keyboardState.hasFullAccess && self.keyboardState.isMicrophoneAuthorized
+            && self.keyboardState.hasUsableModel {
+          MicAnimatedButton(
+            sizing: .alphabet,
+            proxy: self.proxy,
+            keyboardState: self.keyboardState
+          )
+        } else {
+          KeyButton(content: .systemImage("mic.slash"), fixedWidth: 86.kbScaled) {
+            if let url = DeepLink.setupMicURL ?? DeepLink.settingsURL {
+              self.proxy.openURL(url)
+            }
           }
+          .accessibilityLabel("Open Altboard to enable speech recognition")
         }
-        .accessibilityLabel("Open Altboard to enable speech recognition")
       }
     }
     .padding(.horizontal, Self.edgeInset.kbScaled)
     .frame(height: KeyboardChromeMetrics.keyHeight)
+    .animation(.easeOut(duration: 0.16), value: self.composition.isEmpty)
   }
 
   private var currentLiteral: String {
@@ -153,67 +157,66 @@ struct AlphabeticKeyboardLayout: View {
           let context = self.proxy.documentContextBeforeInput() else {
       return self.composition.buffer
     }
-    // Preserve the user's actual uppercase spelling, e.g. OK instead of ok.
     return String(context.suffix(self.composition.buffer.count))
   }
 
+  /// Three equally sized iOS-style suggestion slots per screen, with a
+  /// scrolling continuation for additional Chinese phrases. Each separator
+  /// is 1pt wide and 24pt tall, not a full-height list divider.
   private var candidateStrip: some View {
-    ScrollView(.horizontal) {
-      HStack(spacing: 5.kbScaled) {
-        Button {
-          KeyboardHaptics.key()
-          // This option leaves the already-inserted Latin text untouched.
-          self.clearComposition()
-          KeyboardInputTrace.record(.latinKept)
-        } label: {
-          Text(verbatim: self.currentLiteral)
-            .font(.system(size: 20.kbScaled, weight: .medium))
-            .foregroundStyle(.primary)
-            .lineLimit(1)
-            .padding(.horizontal, 6.kbScaled)
-            .frame(height: 43.kbScaled)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Keep typed Latin text")
-
-        if let suggested = EnglishCaseSuggestion.replacement(for: self.currentLiteral) {
-          Button {
-            KeyboardHaptics.key()
-            self.chooseLatinSuggestion(suggested)
-          } label: {
-            Text(verbatim: suggested)
-              .font(.system(size: 20.kbScaled, weight: .medium))
-              .foregroundStyle(.primary)
-              .padding(.horizontal, 6.kbScaled)
-              .frame(height: 43.kbScaled)
+    GeometryReader { geometry in
+      let width = geometry.size.width / 3
+      ScrollView(.horizontal) {
+        HStack(spacing: 0) {
+          self.suggestionCell(self.currentLiteral, width: width) {
+            self.clearComposition()
+            KeyboardInputTrace.record(.latinKept)
           }
-          .buttonStyle(.plain)
-          .accessibilityLabel("Replace with " + suggested)
-        }
 
-        if !self.candidates.isEmpty {
-          Divider().frame(height: 24.kbScaled)
-        }
-
-        ForEach(self.candidates) { candidate in
-          Button {
-            KeyboardHaptics.key()
-            self.choose(candidate)
-          } label: {
-            Text(verbatim: candidate.text)
-              .font(.system(size: 20.kbScaled, weight: .regular))
-              .foregroundStyle(.primary)
-              .lineLimit(1)
-              .frame(minWidth: 36.kbScaled)
-            .padding(.horizontal, 4.kbScaled)
-            .frame(height: 43.kbScaled)
+          if let corrected = EnglishCaseSuggestion.replacement(for: self.currentLiteral) {
+            self.suggestionCell(corrected, width: width) {
+              self.chooseLatinSuggestion(corrected)
+            }
           }
-          .buttonStyle(.plain)
+
+          ForEach(self.candidates) { candidate in
+            self.suggestionCell(candidate.text, width: width) {
+              self.choose(candidate)
+            }
+          }
         }
       }
+      .scrollIndicators(.hidden)
     }
-    .scrollIndicators(.hidden)
-    .frame(maxWidth: .infinity, alignment: .leading)
+    .frame(height: KeyboardChromeMetrics.keyHeight)
+  }
+
+  private func suggestionCell(
+    _ value: String, width: CGFloat, onSelect: @escaping () -> Void
+  ) -> some View {
+    Button {
+      KeyboardHaptics.key()
+      onSelect()
+    } label: {
+      Text(verbatim: value)
+        .font(.system(size: 19.kbScaled, weight: .regular))
+        .foregroundStyle(Color(uiColor: KeyboardPalette.suggestionGlyph))
+        .lineLimit(1)
+        .minimumScaleFactor(0.72)
+        .padding(.horizontal, 6.kbScaled)
+        .frame(width: width, height: KeyboardChromeMetrics.keyHeight)
+        .contentShape(Rectangle())
+    }
+    .buttonStyle(.plain)
+    .overlay(alignment: .trailing) {
+      Rectangle()
+        .fill(Color(uiColor: KeyboardPalette.suggestionSeparator))
+        .frame(
+          width: KeyboardPalette.suggestionSeparatorWidth.kbScaled,
+          height: KeyboardPalette.suggestionSeparatorHeight.kbScaled
+        )
+        .allowsHitTesting(false)
+    }
   }
 
   @ViewBuilder
@@ -247,7 +250,7 @@ struct AlphabeticKeyboardLayout: View {
         ) { self.tapShift() }
         .accessibilityLabel(self.capsLock ? "Caps Lock" : "Shift")
 
-        HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
+        HStack(spacing: 0) {
           ForEach(Array(self.arrangement.rows[2].enumerated()), id: \.offset) { index, letter in
             self.letterKey(letter, index: index, count: 7)
           }
@@ -289,7 +292,8 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private func letterRow(_ letters: [String], inset: CGFloat) -> some View {
-    HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
+    // Gesture hitboxes extend into the visual gaps without enlarging keys.
+    HStack(spacing: 0) {
       ForEach(Array(letters.enumerated()), id: \.offset) { index, letter in
         self.letterKey(letter, index: index, count: letters.count)
       }
