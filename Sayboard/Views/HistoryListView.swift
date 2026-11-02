@@ -4,6 +4,9 @@ struct HistoryListView: View {
 
   var body: some View {
     self.recordsList
+      .safeAreaInset(edge: .bottom, spacing: 0) {
+        self.keyboardTestingField
+      }
       .overlay {
         if self.records.isEmpty, !self.showsSetupCard, !self.showsAIOffer { self.emptyState }
       }
@@ -27,6 +30,7 @@ struct HistoryListView: View {
   @AppStorage(AIButtonOffer.closedKey) private var isAIOfferClosed = false
   @State private var records = [HistoryRecord]()
   @State private var loadedModificationDate: Date?
+  @State private var keyboardTestingText = ""
 
   private let store = HistoryStore.shared
 
@@ -84,6 +88,32 @@ struct HistoryListView: View {
     .padding(.horizontal)
     .padding(.top, 12)
     .padding(.bottom, 4)
+  }
+
+  /// Always available directly above the tab bar, including empty History.
+  /// Text stays in memory and is never added to history or sent for analysis.
+  private var keyboardTestingField: some View {
+    HStack(spacing: 10) {
+      Image(systemName: "keyboard")
+        .foregroundStyle(.secondary)
+      TextField("Try your keyboard here", text: self.$keyboardTestingText, axis: .vertical)
+        .lineLimit(1...3)
+        .textInputAutocapitalization(.sentences)
+        .accessibilityLabel("Keyboard test input")
+      if !self.keyboardTestingText.isEmpty {
+        Button {
+          self.keyboardTestingText = ""
+        } label: {
+          Image(systemName: "xmark.circle.fill")
+            .foregroundStyle(.secondary)
+        }
+        .accessibilityLabel("Clear keyboard test")
+      }
+    }
+    .padding(.horizontal, 16)
+    .padding(.vertical, 11)
+    .background(.regularMaterial)
+    .overlay(alignment: .top) { Divider() }
   }
 
   private var recordsList: some View {

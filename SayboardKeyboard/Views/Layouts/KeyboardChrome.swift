@@ -19,7 +19,8 @@ struct KeyboardChromeMetrics {
     self.sideButtonWidth = side
     self.showsGlobe = showsGlobe
     self.trashWidth = showsGlobe ? side : wide
-    self.returnWidth = showsGlobe ? (side + Self.buttonSpacing + side) : wide
+    self.returnWidth = keyboardState.keyboardKind == .alphabetic
+      ? 102.kbScaled : (showsGlobe ? (side + Self.buttonSpacing + side) : wide)
   }
 
   @MainActor
@@ -147,6 +148,14 @@ struct KeyboardBottomRow: View {
 
   var body: some View {
     HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
+      if let action = self.onAlphabeticModeSwitch {
+        KeyButton(
+          content: .symbol(self.alphabeticModeLabel ?? "?123", fontSize: 16),
+          fixedWidth: self.metrics.trashWidth
+        ) {
+          action()
+        }
+      }
       KeyButton(
         content: .systemImage("face.smiling"),
         fixedWidth: self.metrics.sideButtonWidth
@@ -159,14 +168,7 @@ struct KeyboardBottomRow: View {
         }
       }
 
-      if let action = self.onAlphabeticModeSwitch {
-        KeyButton(
-          content: .symbol(self.alphabeticModeLabel ?? "?123", fontSize: 14),
-          fixedWidth: self.metrics.trashWidth
-        ) {
-          action()
-        }
-      } else {
+      if self.onAlphabeticModeSwitch == nil {
         KeyButton(
           content: .systemImage("trash"),
           fixedWidth: self.metrics.trashWidth,

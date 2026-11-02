@@ -2,13 +2,9 @@ import SwiftUI
 import UIKit
 
 extension UIColor {
-  static let keyBackground = UIColor { traits in
-    traits.userInterfaceStyle == .dark ? .systemGray4 : .white
-  }
+  static let keyBackground = KeyboardPalette.keyFill
 
-  static let keyPressedBackground = UIColor { traits in
-    traits.userInterfaceStyle == .dark ? .systemGray2 : .systemGray4
-  }
+  static let keyPressedBackground = KeyboardPalette.pressedFill
 }
 
 extension View {

@@ -5,6 +5,7 @@ on:
     branches:
       - feat/cantonese-qwen3-offline-mvp
       - fix/ios-keyboard-haptics-caps-20261102
+      - feat/live-yale-haptics-diagnostics-20261102
   workflow_dispatch:
 
 permissions:
@@ -128,15 +129,16 @@ jobs:
           ls -lh "$GITHUB_WORKSPACE/dist/Altboard-Canto-SideStore.ipa"
 
       - name: Upload IPA to this Actions run
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Altboard-Canto-Unsigned-IPA
           path: dist/Altboard-Canto-SideStore.ipa
+          archive: false
           if-no-files-found: error
           retention-days: 14
 
-      # GitHub Actions artifacts always download as a ZIP wrapper. Publishing the
-      # IPA as a Release asset provides a real, direct .ipa download instead.
+      # Artifact v7 with archive:false downloads the .ipa directly.
+      # Also publish the same .ipa as a Release asset for a stable direct URL.
       - name: Publish direct IPA to rolling development release
         env:
           GH_TOKEN: ${{ github.token }}

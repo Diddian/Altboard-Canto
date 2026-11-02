@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import CoreHaptics
 
 /// Persistent Settings destination; independent of initial setup/onboarding.
 struct DiagnosticsView: View {
@@ -11,12 +12,15 @@ struct DiagnosticsView: View {
   @State private var testResult = ""
   @State private var rawASRResult = ""
   @State private var breadcrumbs = [String]()
+  @State private var hapticEvents = [String]()
+  @State private var hapticTotal = 0
 
   var body: some View {
     Form {
       self.permissionsSection
       self.modelsSection
       self.audioSection
+      self.hapticsSection
       self.testSection
       self.crashSection
       self.exportSection
@@ -63,6 +67,35 @@ struct DiagnosticsView: View {
       LabeledContent("iOS", value: UIDevice.current.systemVersion)
     } header: {
       Text("Audio and Device")
+    }
+  }
+
+  private var hapticsSection: some View {
+    Section {
+      LabeledContent("Hardware haptics", value: self.yesNo(CHHapticEngine.capabilitiesForHardware().supportsHaptics))
+      LabeledContent("App Group haptics enabled", value: self.yesNo(SharedSettings().keyboardHapticsEnabled))
+      LabeledContent("Requested events", value: String(self.hapticTotal))
+      LabeledContent("Keyboard Full Access", value: self.report(self.permissions.keyboardReportedFullAccess))
+      ForEach(KeyboardHaptics.Technique.allCases, id: \.rawValue) { technique in
+        Button("Test " + technique.displayName + " haptic") {
+          KeyboardHaptics.key(enabled: true, technique: technique)
+          self.refreshHaptics()
+        }
+      }
+      if !self.hapticEvents.isEmpty {
+        Text(self.hapticEvents.suffix(20).joined(separator: "\n"))
+          .font(.system(.caption2, design: .monospaced))
+          .textSelection(.enabled)
+      }
+      Button("Clear haptic trace") {
+        KeyboardHapticTrace.clear()
+        self.refreshHaptics()
+      }
+      Button("Refresh haptic trace", action: self.refreshHaptics)
+    } header: {
+      Text("Haptic Diagnostics")
+    } footer: {
+      Text("Entries record UIKit feedback requests, not a verified vibration. If all tests are silent, verify Settings > Accessibility > Touch > Vibration and keyboard Full Access; compare the system keyboard on the same device.")
     }
   }
 
@@ -157,6 +190,12 @@ struct DiagnosticsView: View {
     self.permissions.refreshAll()
     self.models.verifyExistingModels()
     self.refreshBreadcrumbs()
+    self.refreshHaptics()
+  }
+
+  private func refreshHaptics() {
+    self.hapticEvents = KeyboardHapticTrace.events
+    self.hapticTotal = KeyboardHapticTrace.total
   }
 
   private func refreshBreadcrumbs() {
@@ -202,6 +241,11 @@ struct DiagnosticsView: View {
       "Keyboard report: \(self.permissions.keyboardProbeSummary)",
       "Keyboard Full Access: \(self.report(self.permissions.keyboardReportedFullAccess))",
       "Keyboard App Group: \(self.report(self.permissions.keyboardReportedGroupAvailable))",
+      "Haptic capable: \(CHHapticEngine.capabilitiesForHardware().supportsHaptics)",
+      "Haptic enabled: \(SharedSettings().keyboardHapticsEnabled)",
+      "Haptic requested count: \(KeyboardHapticTrace.total)",
+      "Haptic request trace (no typed characters):",
+      KeyboardHapticTrace.events.joined(separator: "\n"),
       "Audio engine: \(self.speech.session.audioEngine.isRunning)",
       "Audio test: \(self.permissions.audioInputTestResult)",
       "Speech model: \(self.models.selectedVariant.displayName)",

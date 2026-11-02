@@ -6,13 +6,11 @@ struct KeyboardLayoutPreview: View {
 
   static let backdrop = Color(uiColor: UIColor { traits in
     traits.userInterfaceStyle == .dark
-      ? UIColor(red: 0.106, green: 0.106, blue: 0.114, alpha: 1)
+      ? KeyboardPalette.darkBackdrop
       : UIColor(red: 0.875, green: 0.878, blue: 0.902, alpha: 1)
   })
 
-  static let keyFill = Color(uiColor: UIColor { traits in
-    traits.userInterfaceStyle == .dark ? .systemGray4 : .white
-  })
+  static let keyFill = Color(uiColor: KeyboardPalette.keyFill)
 
   let kind: KeyboardKind
   @AppStorage(
@@ -45,7 +43,7 @@ struct KeyboardLayoutPreview: View {
 
   private static let width: CGFloat = 390
   private static let standardHeight: CGFloat = 240
-  private static let extendedHeight: CGFloat = 289.5
+  private static let extendedHeight: CGFloat = 287
   private static let topPadding: CGFloat = 14.5
   private static let rowSpacing: CGFloat = 11
   private static let keyHeight: CGFloat = 45
@@ -142,17 +140,17 @@ struct KeyboardLayoutPreview: View {
       }
       .padding(.horizontal, Self.edgeInset)
       HStack(spacing: Self.keySpacing) {
-        self.symbolKey("face.smiling", width: Self.sideKeyWidth)
-        self.textKey("?123", width: Self.sideKeyWidth, size: 15)
+        self.textKey("?123", width: 48, size: 16)
+        self.symbolKey("face.smiling", width: 48)
         Image(systemName: "space")
           .font(.system(size: Self.characterSize))
           .frame(maxWidth: .infinity)
           .frame(height: Self.keyHeight)
           .background(Self.keyFill,
             in: RoundedRectangle(cornerRadius: Self.keyRadius, style: .continuous))
-        self.symbolKey("return.left", width: Self.returnKeyWidth)
+        self.symbolKey("return.left", width: 102)
       }
-      .padding(.horizontal, Self.edgeInset)
+      .padding(.horizontal, 6.67)
     }
   }
 

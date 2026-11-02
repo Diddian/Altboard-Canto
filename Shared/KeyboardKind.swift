@@ -10,7 +10,7 @@ enum KeyboardKind: String, CaseIterable, Sendable {
     switch self {
     case .standard: "Microphone Only"
     case .extended: "Symbols"
-    case .alphabetic: "English Keyboard"
+    case .alphabetic: "Alphabet"
     }
   }
 }

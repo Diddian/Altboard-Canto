@@ -18,13 +18,8 @@ struct KeyboardSettingsView: View {
             Text("QWERTY").tag(LetterKeyArrangement.qwerty.rawValue)
           }
           .pickerStyle(.segmented)
-          Picker("Typing language", selection: self.$typingLanguageRaw) {
-            Text("English").tag(KeyboardTypingLanguage.english.rawValue)
-            Text("粵拼").tag(KeyboardTypingLanguage.jyutping.rawValue)
-          }
-          .pickerStyle(.segmented)
           Toggle("Auto-capitalize sentences", isOn: self.$autoCapitalizationEnabled)
-          Text("QWERTZ is the default. Both arrangements keep the same iOS-style keys and microphone.")
+          Text("Alphabet always types Latin characters; Cantonese candidates appear automatically if Cantonese is preferred.")
             .font(.footnote)
             .foregroundStyle(.secondary)
         }
@@ -48,6 +43,18 @@ struct KeyboardSettingsView: View {
             .foregroundStyle(.secondary)
         }
         .disabled(!self.keyboardHapticsEnabled)
+        VStack(alignment: .leading, spacing: 6) {
+          Text("Compare haptic engines").font(.footnote.weight(.medium))
+          HStack {
+            Button("Selection") { KeyboardHaptics.key(enabled: true, technique: .selection) }
+            Button("Soft") { KeyboardHaptics.key(enabled: true, technique: .soft) }
+            Button("Heavy") { KeyboardHaptics.key(enabled: true, technique: .heavy) }
+          }
+          .buttonStyle(.bordered)
+          Text("The diagnostic log records requests even if the system produces no vibration.")
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+        }
         VStack(alignment: .leading, spacing: 12) {
           HStack {
             Text("Keyboard height")
@@ -98,8 +105,6 @@ struct KeyboardSettingsView: View {
   private var letterArrangementRaw = LetterKeyArrangement.qwertz.rawValue
   @AppStorage(SharedKey.keyboardAutoCapitalizationEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
   private var autoCapitalizationEnabled = true
-  @AppStorage(SharedKey.keyboardTypingLanguage, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var typingLanguageRaw = KeyboardTypingLanguage.english.rawValue
 }
 
 
@@ -107,191 +112,167 @@ private struct KeyboardHeightPreview: View {
   let kind: KeyboardKind
   let heightFactor: Double
   let letterArrangement: LetterKeyArrangement
+
   @AppStorage(SharedKey.keyboardHapticsEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
   private var keyboardHapticsEnabled = true
   @AppStorage(SharedKey.keyboardHapticStrength, store: UserDefaults(suiteName: AppGroup.identifier))
   private var hapticStrength = 0.60
 
-  private var compact: Bool { kind == .standard && heightFactor < 0.90 }
+  private var compact: Bool { self.kind == .standard && self.heightFactor < 0.90 }
   private var previewHeight: CGFloat {
-    if kind != .standard {
-      return max(284, 289.5 * CGFloat(heightFactor))
-    }
-    let factor = CGFloat(heightFactor)
-    return factor < 0.90
-      ? 150 + (factor - 0.70) * 420
-      : 260 * factor
+    let factor = CGFloat(self.heightFactor)
+    if self.kind != .standard { return max(284, 312 * factor) }
+    return factor < 0.90 ? 150 + (factor - 0.70) * 420 : 260 * factor
   }
 
   var body: some View {
-    GeometryReader { geo in
-      let gap: CGFloat = self.kind == .alphabetic ? 11 : 6
-      let rowsHeight: CGFloat = self.compact ? 96 : 198
-      let inset = self.compact
-        ? max(0, (geo.size.height - rowsHeight) / 2)
-        : max(0, geo.size.height - rowsHeight - 4)
-
-      VStack(spacing: gap) {
-        if self.kind == .standard {
-          if !self.compact {
-            Image(systemName: "mic.fill")
-              .font(.system(size: 29))
-              .frame(width: 96, height: 96)
-              .background(Color(.tertiarySystemFill),
-                in: RoundedRectangle(cornerRadius: 48))
-              .frame(maxWidth: .infinity)
-          }
-          self.standardControls(compact: self.compact)
-        } else if self.kind == .alphabetic {
-          HStack(spacing: 6) {
-            self.key("gearshape", width: 48)
-            Text("EN / 粵").font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
-            Spacer()
-            self.key("mic", width: 86)
-          }
-          .padding(.horizontal, 6.67)
-          .frame(height: 46.33)
-          self.previewLetterRow(self.letterArrangement.rows[0], inset: 6.67)
-          self.previewLetterRow(self.letterArrangement.rows[1], inset: 28)
+    VStack(spacing: 0) {
+      if self.kind == .alphabetic {
+        self.alphabetToolbar
+        VStack(spacing: 11) {
+          self.letterRow(self.letterArrangement.rows[0], inset: 6.67)
+          self.letterRow(self.letterArrangement.rows[1], inset: 28)
           HStack(spacing: 14.67) {
             self.key("shift.fill", width: 50)
             HStack(spacing: 6) {
-              ForEach(self.letterArrangement.rows[2], id: \.self) { letter in
-                self.previewLetterKey(letter)
-              }
+              ForEach(self.letterArrangement.rows[2], id: \.self) { self.letter($0) }
             }
             self.key("delete.left", width: 50)
           }
           .padding(.horizontal, 6.67)
-        } else {
-          self.standardControls(compact: true)
-          ForEach(0..<3, id: \.self) { _ in
-            HStack(spacing: 6) {
-              ForEach(0..<8, id: \.self) { _ in
-                RoundedRectangle(cornerRadius: 6)
-                  .fill(Color(.tertiarySystemFill))
-                  .frame(height: 45)
-              }
-            }
-          }
         }
-        if self.kind == .alphabetic { self.alphabeticSpaceRow } else { self.spaceRow }
+        .padding(.top, 0)
+        self.alphabetBottomRow.padding(.top, 11)
+      } else if self.kind == .extended {
+        HStack(spacing: 6) {
+          self.key("gearshape", width: 45)
+          self.key("character.bubble", width: 45)
+          Spacer()
+          self.key("mic.fill", width: 96)
+        }.padding(.horizontal, 6.67).frame(height: 57)
+        VStack(spacing: 8.5) {
+          self.previewTextRow(["1","2","3","4","5","6","7","8","9","0"])
+          self.previewTextRow(["-","/",":",";","(",")","$","&","@","\""])
+          HStack(spacing: 6) {
+            self.labelKey("#+=", width: 53)
+            ForEach([".",",","?","!","'"], id: \.self) { self.labelKey($0) }
+            self.key("delete.left", width: 53)
+          }.padding(.horizontal, 4)
+        }
+        self.standardBottomRow.padding(.top, 8.5)
+      } else {
+        Spacer(minLength: 0)
+        if !self.compact {
+          self.key("mic.fill", width: 96, height: 96)
+            .padding(.bottom, 8)
+        }
+        HStack(spacing: 6) {
+          self.key("gearshape", width: 45)
+          self.key("character.bubble", width: 45)
+          Spacer(minLength: 0)
+          if self.compact { self.key("mic.fill", width: 96) }
+          self.key("sparkles", width: 45)
+          self.key("delete.left", width: 45)
+        }.padding(.horizontal, 4)
+        self.standardBottomRow.padding(.top, 6)
+        Spacer(minLength: 0)
       }
-      .padding(.top, self.kind == .standard ? inset : 0)
-      .frame(maxWidth: .infinity, alignment: .top)
     }
-    .frame(height: self.previewHeight)
-    .padding(.horizontal, 4)
-    .background(Color(.secondarySystemGroupedBackground),
-      in: RoundedRectangle(cornerRadius: 14))
+    .padding(.top, self.kind == .standard ? 0 : 0)
+    .frame(height: self.previewHeight, alignment: .top)
+    .frame(maxWidth: .infinity)
+    .background(Color(uiColor: KeyboardPalette.backdrop), in: RoundedRectangle(cornerRadius: 14))
     .animation(.easeInOut(duration: 0.15), value: self.heightFactor)
+    .accessibilityLabel("Interactive keyboard layout preview")
   }
 
-  private func previewLetterRow(_ letters: [String], inset: CGFloat) -> some View {
+  private var alphabetToolbar: some View {
     HStack(spacing: 6) {
-      ForEach(letters, id: \.self) { self.previewLetterKey($0) }
+      self.key("gearshape", width: 43)
+      self.key("character.bubble", width: 43)
+      self.key("translate", width: 43)
+      self.key("sparkles", width: 43)
+      Spacer(minLength: 2)
+      self.key("mic.fill", width: 86)
+    }
+    .padding(.horizontal, 6.67)
+    .frame(height: 46.33)
+  }
+
+  private func letterRow(_ letters: [String], inset: CGFloat) -> some View {
+    HStack(spacing: 6) {
+      ForEach(letters, id: \.self) { self.letter($0) }
     }
     .padding(.horizontal, inset)
-    .frame(height: 45)
   }
 
-  private func previewLetterKey(_ letter: String) -> some View {
-    Button {
-      KeyboardHaptics.key(strength: self.hapticStrength, enabled: self.keyboardHapticsEnabled)
-    } label: {
-      Text(verbatim: letter)
-        .font(.system(size: 23, weight: .regular))
-        .foregroundStyle(.primary)
+  private func letter(_ title: String) -> some View {
+    Button { self.tap() } label: {
+      Text(verbatim: title)
+        .font(.system(size: 23, weight: .regular, design: .default))
+        .foregroundStyle(.white)
         .offset(y: -1.2)
         .frame(maxWidth: .infinity)
         .frame(height: 45)
-        .background(Color(.tertiarySystemFill),
-          in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(Color(uiColor: KeyboardPalette.keyFill),
+                    in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
     .buttonStyle(.plain)
-    .accessibilityLabel("Test \(letter) key haptic")
+    .accessibilityLabel("Test " + title + " key haptic")
   }
 
-  private var alphabeticSpaceRow: some View {
+  private func previewTextRow(_ titles: [String]) -> some View {
     HStack(spacing: 6) {
-      self.previewTextKey("?123", width: 48)
+      ForEach(titles, id: \.self) { self.labelKey($0) }
+    }.padding(.horizontal, 4)
+  }
+
+  private var alphabetBottomRow: some View {
+    HStack(spacing: 6) {
+      self.labelKey("?123", width: 48)
       self.key("face.smiling", width: 48)
-      Button {
-        KeyboardHaptics.key(strength: self.hapticStrength, enabled: self.keyboardHapticsEnabled)
-      } label: {
-        Rectangle().fill(Color(.tertiarySystemFill))
-          .frame(maxWidth: .infinity)
-          .frame(height: 45)
-          .clipShape(RoundedRectangle(cornerRadius: 8))
-      }
-      .buttonStyle(.plain)
-      .accessibilityLabel("Test space bar haptic")
+      self.labelKey("", height: 45)
       self.key("return.left", width: 102)
-    }
-    .padding(.horizontal, 6.67)
-    .frame(height: 45)
+    }.padding(.horizontal, 6.67)
   }
 
-  private func previewTextKey(_ text: String, width: CGFloat) -> some View {
-    Button {
-      KeyboardHaptics.key(strength: self.hapticStrength, enabled: self.keyboardHapticsEnabled)
-    } label: {
-      Text(verbatim: text)
-        .font(.system(size: 16))
-        .foregroundStyle(.primary)
-        .frame(width: width, height: 45)
-        .background(Color(.tertiarySystemFill),
-          in: RoundedRectangle(cornerRadius: 8))
-    }
-    .buttonStyle(.plain)
-  }
-
-  private func standardControls(compact: Bool) -> some View {
+  private var standardBottomRow: some View {
     HStack(spacing: 6) {
-      self.key("gearshape")
-      self.key("character.bubble")
-      if compact {
-        Image(systemName: "mic.fill")
-          .font(.system(size: 21))
-          .frame(maxWidth: .infinity)
-          .frame(height: 45)
-          .background(Color(.tertiarySystemFill),
-            in: RoundedRectangle(cornerRadius: 8.5))
-      } else {
-        Spacer(minLength: 0)
-      }
-      self.key("sparkles")
-      self.key("delete.left")
-    }
-    .frame(height: 45)
-  }
-
-  private var spaceRow: some View {
-    HStack(spacing: 6) {
-      self.key("face.smiling")
-      self.key("trash")
-      Image(systemName: "space")
-        .font(.system(size: 18))
-        .frame(maxWidth: .infinity)
-        .frame(height: 45)
-        .background(Color(.tertiarySystemFill),
-          in: RoundedRectangle(cornerRadius: 8.5))
+      self.key("face.smiling", width: 45)
+      self.key("trash", width: 45)
+      self.labelKey("", height: 45)
       self.key("return.left", width: 96)
-    }
-    .frame(height: 45)
+    }.padding(.horizontal, 4)
   }
 
-  private func key(_ name: String, width: CGFloat = 45) -> some View {
-    Button {
-      KeyboardHaptics.key(strength: self.hapticStrength, enabled: self.keyboardHapticsEnabled)
-    } label: {
-      Image(systemName: name)
+  private func key(_ image: String, width: CGFloat, height: CGFloat = 45) -> some View {
+    Button { self.tap() } label: {
+      Image(systemName: image)
         .font(.system(size: 18))
-        .frame(width: width, height: 45)
-        .background(Color(.tertiarySystemFill),
-          in: RoundedRectangle(cornerRadius: 8.5))
+        .foregroundStyle(.white)
+        .frame(width: width, height: height)
+        .background(Color(uiColor: KeyboardPalette.keyFill),
+                    in: RoundedRectangle(cornerRadius: height == 96 ? 48 : 8, style: .continuous))
     }
     .buttonStyle(.plain)
-    .accessibilityLabel("Try \(name) key haptic")
+    .accessibilityLabel("Test " + image + " key haptic")
+  }
+
+  private func labelKey(_ title: String, width: CGFloat? = nil, height: CGFloat = 45) -> some View {
+    Button { self.tap() } label: {
+      Text(verbatim: title)
+        .font(.system(size: 16))
+        .foregroundStyle(.white)
+        .frame(maxWidth: width == nil ? .infinity : nil)
+        .frame(width: width, height: height)
+        .background(Color(uiColor: KeyboardPalette.keyFill),
+                    in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel("Test " + (title.isEmpty ? "space" : title) + " haptic")
+  }
+
+  private func tap() {
+    KeyboardHaptics.key(strength: self.hapticStrength, enabled: self.keyboardHapticsEnabled)
   }
 }
