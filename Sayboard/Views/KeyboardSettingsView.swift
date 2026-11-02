@@ -48,7 +48,10 @@ struct KeyboardSettingsView: View {
             KeyboardHaptics.key(strength: self.hapticStrength, enabled: self.keyboardHapticsEnabled)
           }
           .font(.footnote)
-          Text("Tap the letter keys in the preview below to test haptic feedback at this strength.")
+          Text("Strength chooses a discrete Taptic pulse: Tick, Soft, Light, Medium or Heavy. Tap keys in the preview to compare.")
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+          Text("Test the app and keyboard extension separately; Full Access may be needed.")
             .font(.footnote)
             .foregroundStyle(.secondary)
         }

@@ -18,7 +18,11 @@ References:
 4. Compare **main-app trace** against **keyboard extension trace**. If app tests vibrate but the extension does not, the problem is not letter-button layout or keyboard setting; extension-context haptic delivery is the likely cause.
 5. Verify iOS Settings > Accessibility > Touch > Vibration. Compare with Apple's system keyboard feedback Settings > Sounds & Haptics > Keyboard Feedback.
 6. If trace shows no keyboard attempts, test whether the extension has App Group access and Full Access, whether your SideStore install preserved entitlements and whether the keyboard view actually receives touch events.
-7. If requests are logged but still silent, UIKit does not report physical output. Do not claim that changing intensity fixes iOS extension restrictions. Do not use private Taptic Engine APIs or undocumented system sounds.
+7. Compare a discrete UIKit impact style (parameterless `impactOccurred()`) against selection. Modern open-source keyboard Wurstfinger reports that the `impactOccurred(intensity:)` overload may require `CHHapticEngine`, which a keyboard sandbox blocks. Key feedback is fired exactly once on touch-down.
+8. If requests are logged but still silent, UIKit does not report physical output. Do not claim that changing intensity fixes iOS extension restrictions. Do not use private Taptic Engine APIs or undocumented system sounds.
+
+Modern haptic implementation: https://github.com/cl445/wurstfinger/blob/develop/wurstfingerKeyboard/Settings/HapticFeedbackPlayer.swift
+Feedback library: https://github.com/KeyboardKit/KeyboardKit
 
 ## Acceptance
 

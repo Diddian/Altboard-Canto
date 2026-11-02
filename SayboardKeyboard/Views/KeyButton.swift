@@ -22,7 +22,6 @@ struct KeyButton: View {
 
   var body: some View {
     Button {
-      if self.firesHaptic { KeyboardHaptics.key() }
       self.action()
     } label: {
       self.contentView
@@ -32,8 +31,12 @@ struct KeyButton: View {
       shape: self.shape,
       pressEffect: self.pressEffect,
       fillOnPress: self.fillOnPress,
-      pressedBinding: self.showsCallout ? self.$isPressed : nil,
+      pressedBinding: self.$isPressed,
     ))
+    .onChange(of: self.isPressed) { _, isDown in
+      // Fire exactly once on touch-down, not again on release.
+      if isDown && self.firesHaptic { KeyboardHaptics.key() }
+    }
     .overlay(alignment: .top) {
       if self.showsCallout {
         self.calloutOverlay

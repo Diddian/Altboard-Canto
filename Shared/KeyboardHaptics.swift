@@ -48,7 +48,9 @@ enum KeyboardHaptics {
       case .heavy: heavy
       case .selection, .automatic: light
       }
-      generator.impactOccurred(intensity: CGFloat(strength))
+      // The intensity overload may depend on Core Haptics, blocked in the
+      // custom keyboard sandbox. Use a discrete style with plain UIKit.
+      generator.impactOccurred()
       generator.prepare()
     }
     // UIKit returns no success status. This records attempts, not physical vibration.
