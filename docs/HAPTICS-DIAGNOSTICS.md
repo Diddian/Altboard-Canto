@@ -27,3 +27,12 @@ References:
 Trace stores only attempt count, driver, process origin, Full Access and error category. No typed characters, host bundle IDs, transcript or clipboard content.
 
 On Core Haptics setup failure, trace includes the NSError domain and integer code, never user input. Distinguish `operationNotPermitted`, `notSupported` and server interruption before assuming Full Access is the cause.
+
+## User-defined reference strength
+
+Apple publishes a Keyboard Feedback Haptic on/off toggle, not an API that
+exposes the built-in keyboard's numeric haptic intensity. Core Haptics uses
+an independent normalized 0–1 amplitude. Altboard uses a **55%** default and
+provides **Reset to Default (55%)** under Settings > Keyboard > Feedback.
+Reset changes only the stored intensity, not the selected haptic driver or
+whether keyboard haptics are enabled. Existing personal values are retained.

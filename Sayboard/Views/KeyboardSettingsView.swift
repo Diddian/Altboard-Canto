@@ -62,6 +62,14 @@ struct KeyboardSettingsView: View {
             }
             Slider(value: self.$hapticStrength, in: 0.15...1, step: 0.05)
               .accessibilityLabel("Haptic Strength")
+            Button("Reset to Default (55%)") {
+              self.hapticStrength = SharedSettings.defaultKeyboardHapticStrength
+            }
+            .font(.subheadline)
+            .disabled(abs(self.hapticStrength - SharedSettings.defaultKeyboardHapticStrength) < 0.001)
+            Text("55% is Altboard’s default, not a measured iOS keyboard strength.")
+              .font(.footnote)
+              .foregroundStyle(.secondary)
           }
           Button("Test Haptic") {
             KeyboardHaptics.key(strength: self.hapticStrength, enabled: true)
@@ -111,7 +119,7 @@ struct KeyboardSettingsView: View {
   @AppStorage(SharedKey.keyboardHapticsEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
   private var keyboardHapticsEnabled = true
   @AppStorage(SharedKey.keyboardHapticStrength, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var hapticStrength = 0.60
+  private var hapticStrength = SharedSettings.defaultKeyboardHapticStrength
   @AppStorage(SharedKey.periodShortcutEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
   private var periodShortcutEnabled = true
   @AppStorage(SharedKey.keyboardLetterArrangement, store: UserDefaults(suiteName: AppGroup.identifier))
@@ -130,7 +138,7 @@ private struct KeyboardTestPreview: View {
   @AppStorage(SharedKey.keyboardHapticsEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
   private var keyboardHapticsEnabled = true
   @AppStorage(SharedKey.keyboardHapticStrength, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var hapticStrength = 0.60
+  private var hapticStrength = SharedSettings.defaultKeyboardHapticStrength
   @AppStorage(SharedKey.llmEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
   private var llmEnabled = false
   @AppStorage(SharedKey.hasUsableLLMModel, store: UserDefaults(suiteName: AppGroup.identifier))

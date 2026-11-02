@@ -18,7 +18,9 @@ struct SettingsView: View {
         NavigationLink {
           KeyboardSettingsView(selectedKind: self.keyboardKindBinding)
         } label: {
-          LabeledContent("Keyboard") {
+          HStack {
+            Label("Keyboard", systemImage: "keyboard")
+            Spacer()
             Text(LocalizedStringKey(self.selectedKeyboardKind.displayNameKey))
               .foregroundStyle(.secondary)
           }

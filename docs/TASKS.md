@@ -44,6 +44,11 @@ Files: `SayboardKeyboard/JyutpingDictionary.swift`,
 
 ## P1 — Touch targets and feedback (T-003)
 
+- [x] T-003.6 Restore Settings > Keyboard navigation icon (SF Symbol: keyboard).
+- [x] T-003.7 Set unified default Core Haptics strength to 55%, retain existing stored values, add Reset button and regression test.
+- [ ] T-003.8 Verify Reset to Default and test pulse at 55% on physical iPhone. Apple's built-in keyboard strength cannot be read.
+
+
 - [x] T-003.1 Preserve contiguous key touch cells and 12%/18% bounded predictor.
 - [x] T-003.2 Retain overlay showing visible keys and hit cells, without recording typed text.
 - [x] T-003.3 Key-down/quick-release pressed highlight prototype.

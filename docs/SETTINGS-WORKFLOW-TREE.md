@@ -39,7 +39,8 @@ Altboard-Canto
     |   |           +-- Yuetyam
     |   +-- Feedback
     |   |   +-- Haptic Feedback: On / Off
-    |   |   +-- Haptic Strength
+    |   |   +-- Haptic Strength (Altboard default: 55%)
+    |   |   +-- Reset to Default (55%)
     |   |   +-- Test Haptic
     |   |   +-- Haptic Method
     |   |   +-- Advanced Haptic Diagnostics

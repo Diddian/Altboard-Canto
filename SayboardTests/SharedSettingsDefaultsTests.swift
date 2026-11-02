@@ -140,13 +140,16 @@ struct SharedSettingsDefaultsTests {
     let defaults = try #require(UserDefaults(suiteName: suiteName))
     defer { Self.cleanup(suiteName: suiteName) }
     let settings = SharedSettings(defaults: defaults)
-    #expect(settings.keyboardHapticStrength == 0.6)
+    #expect(settings.keyboardHapticStrength == SharedSettings.defaultKeyboardHapticStrength)
+    #expect(settings.keyboardHapticStrength == 0.55)
     settings.keyboardHapticStrength = 0.01
     #expect(settings.keyboardHapticStrength == 0.15)
     settings.keyboardHapticStrength = 1.5
     #expect(settings.keyboardHapticStrength == 1.0)
     settings.keyboardHapticStrength = 0.45
     #expect(SharedSettings(defaults: defaults).keyboardHapticStrength == 0.45)
+    settings.keyboardHapticStrength = SharedSettings.defaultKeyboardHapticStrength
+    #expect(SharedSettings(defaults: defaults).keyboardHapticStrength == 0.55)
   }
 
   private static func uniqueSuiteName() -> String {

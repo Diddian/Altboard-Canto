@@ -11,6 +11,7 @@ struct SharedSettings {
   }
 
   static let keyboardRequestTTL: TimeInterval = 15.0
+  static let defaultKeyboardHapticStrength: Double = 0.55
 
   let defaults: UserDefaults
 
@@ -223,10 +224,10 @@ struct SharedSettings {
     nonmutating set { defaults.set(newValue, forKey: SharedKey.useCustomSpaceBar) }
   }
 
-  /// Shared per-keystroke impact intensity (the OS determines final output).
+  /// App Core Haptics intensity; Apple's native keyboard strength is not exposed.
   var keyboardHapticStrength: Double {
     get {
-      let saved = defaults.object(forKey: SharedKey.keyboardHapticStrength) as? Double ?? 0.6
+      let saved = defaults.object(forKey: SharedKey.keyboardHapticStrength) as? Double ?? Self.defaultKeyboardHapticStrength
       return min(1.0, max(0.15, saved))
     }
     nonmutating set {
