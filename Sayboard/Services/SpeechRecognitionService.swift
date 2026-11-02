@@ -63,6 +63,8 @@ final class SpeechRecognitionService: ObservableObject {
   }
 
   func startCapture() {
+    self.settings.synchronize()
+    guard !self.settings.dictationCancellationRequested else { return }
     let micAuth = self.settings.isMicrophoneAuthorized
 
     guard !self.isRecording, !self.isStopping else {
@@ -93,6 +95,7 @@ final class SpeechRecognitionService: ObservableObject {
 
     self.isRecording = true
     self.settings.isRecording = true
+    self.settings.recordingStartedAt = Date().timeIntervalSinceReferenceDate
     self.armMaxDurationTimer()
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStarted)
     self.scheduleQwenWarmupAfterCapture()
@@ -151,6 +154,7 @@ final class SpeechRecognitionService: ObservableObject {
       return
     }
     self.isRecording = false
+    self.settings.recordingStartedAt = 0
     self.isStopping = true
     TranscriptionBridge.writeVoiceProgress(.stoppingAudio)
 
@@ -199,6 +203,30 @@ final class SpeechRecognitionService: ObservableObject {
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStopped)
   }
 
+  func cancelRecording() {
+    self.cancelMaxDurationTimer()
+    self.session.deactivateTap()
+    if let recording = self.audioRecorder.stopRecording() {
+      try? FileManager.default.removeItem(at: recording.url)
+    }
+    self.session.endSession()
+    self.accumulator.reset()
+    self.isRecording = false
+    self.isStopping = false
+    self.settings.isRecording = false
+    self.settings.recordingStartedAt = 0
+    self.settings.keyboardRequestedDictation = false
+    self.settings.dictationCancellationRequested = true
+    self.settings.dictationSessionToken = nil
+    self.settings.synchronize()
+    self.currentTranscription = ""
+    self.currentRawTranscription = ""
+    self.currentAudioFileName = nil
+    TranscriptionBridge.clearTranscription()
+    TranscriptionBridge.clearVoiceProgress()
+    TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStopped)
+  }
+
   func loadModelIfAvailable(downloadService: ModelDownloadService) async {
     let selected = self.settings.selectedVariant
     guard let url = downloadService.activeModelFolderURL else { return }
@@ -228,7 +256,9 @@ final class SpeechRecognitionService: ObservableObject {
   }
 
   func startRecordingAfterModelLoad() async {
-    guard !self.isRecording, !self.isStopping else { return }
+    self.settings.synchronize()
+    guard !self.settings.dictationCancellationRequested,
+          !self.isRecording, !self.isStopping else { return }
     if self.settings.selectedVariant.engine == .qwen3 {
       // Qwen3 loads after capture ends to avoid delaying microphone startup.
       self.startCapture()
@@ -256,6 +286,7 @@ final class SpeechRecognitionService: ObservableObject {
 
   private var requestStartObserver: DarwinNotificationObserver?
   private var requestStopObserver: DarwinNotificationObserver?
+  private var requestCancelObserver: DarwinNotificationObserver?
   private var sessionStatusObserver: DarwinNotificationObserver?
 
   private var maxDurationTimer: Timer?
@@ -392,11 +423,21 @@ extension SpeechRecognitionService {
           return
         }
         guard self.hasValidSessionToken(caller: "requestStartDictation") else { return }
+        self.settings.synchronize()
+        guard !self.settings.dictationCancellationRequested else { return }
         guard !self.settings.isDictationLocked else {
           TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationLockChanged)
           return
         }
             await self.startRecordingAfterModelLoad()
+      }
+    }
+
+    self.requestCancelObserver = TranscriptionBridge.observeDarwinNotification(
+      DarwinNotificationName.requestCancelDictation
+    ) { [weak self] in
+      Task { @MainActor [weak self] in
+        self?.cancelRecording()
       }
     }
 

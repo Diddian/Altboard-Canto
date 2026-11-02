@@ -28,6 +28,16 @@ struct SharedSettings {
     nonmutating set { defaults.set(newValue.rawValue, forKey: SharedKey.selectedVariant) }
   }
 
+  var dictationCancellationRequested: Bool {
+    get { defaults.bool(forKey: SharedKey.dictationCancellationRequested) }
+    nonmutating set { defaults.set(newValue, forKey: SharedKey.dictationCancellationRequested) }
+  }
+
+  var recordingStartedAt: TimeInterval {
+    get { defaults.double(forKey: SharedKey.recordingStartedAt) }
+    nonmutating set { defaults.set(newValue, forKey: SharedKey.recordingStartedAt) }
+  }
+
   var isRecording: Bool {
     get { self.defaults.bool(forKey: SharedKey.isRecording) }
     nonmutating set { defaults.set(newValue, forKey: SharedKey.isRecording) }

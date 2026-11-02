@@ -111,6 +111,7 @@ struct MicAnimatedButton: View {
   private static let spinnerDelay = Duration.milliseconds(600)
 
   @State private var isPressed = false
+  @State private var lastStartTapAt: Date?
   @State private var showSpinner = false
   @State private var isMorphing = false
   @State private var isSpinnerMorphing = false
@@ -176,22 +177,34 @@ struct MicAnimatedButton: View {
     self.keyboardState.clearFinalOutputPreview()
     self.keyboardState.dismissMicHint()
     if self.keyboardState.isRecording {
-      self.proxy.stopDictation()
+      // A second quick tap cancels an accidental capture. A later tap
+      // remains the normal Stop & Transcribe action.
+      if let tapAt = self.lastStartTapAt, Date().timeIntervalSince(tapAt) < 1.3 {
+        self.lastStartTapAt = nil
+        self.proxy.cancelDictation()
+      } else {
+        self.proxy.stopDictation()
+      }
     } else if self.keyboardState.isStartingRecording {
-      return
+      self.lastStartTapAt = nil
+      self.keyboardState.isStartingRecording = false
+      self.proxy.cancelDictation()
     } else if self.keyboardState.isDictationLocked {
       if let url = DeepLink.unlockURL { self.proxy.openURL(url) }
     } else if self.keyboardState.isSessionActive || HistoryKeyboardTestSession.isFocused {
       // The containing app is already foregrounded in its History test field.
       // Use the existing Darwin bridge directly; do not open Altboard again.
       self.keyboardState.isStartingRecording = true
+      self.lastStartTapAt = Date()
       self.proxy.startDictation()
     } else if let url = DeepLink.dictateURL {
       self.keyboardState.isStartingRecording = true
+      self.lastStartTapAt = Date()
       let settings = SharedSettings()
       if OperatingSystem.isHostBundleIdBroken {
         self.proxy.resolveHost()
       }
+      settings.dictationCancellationRequested = false
       settings.keyboardRequestedDictationAt = CFAbsoluteTimeGetCurrent()
       settings.keyboardRequestedDictation = true
       settings.dictationSessionToken = UUID().uuidString

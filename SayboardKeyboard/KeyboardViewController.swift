@@ -328,6 +328,7 @@ final class KeyboardViewController: UIInputViewController {
     settings.synchronize()
 
     settings.dictationSessionToken = UUID().uuidString
+    settings.dictationCancellationRequested = false
     settings.synchronize()
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.requestStartDictation)
 
@@ -373,6 +374,21 @@ final class KeyboardViewController: UIInputViewController {
 }
 
 extension KeyboardViewController {
+
+  func cancelDictationViaDarwin() {
+    self.staleFallbackTimer?.invalidate()
+    self.staleFallbackTimer = nil
+    self.cancelProcessingTimeout()
+    self.keyboardState.isStartingRecording = false
+    self.keyboardState.isRecording = false
+    self.keyboardState.isProcessing = false
+    self.keyboardState.stopLevelPolling()
+    let settings = SharedSettings()
+    settings.keyboardRequestedDictation = false
+    settings.dictationCancellationRequested = true
+    settings.synchronize()
+    TranscriptionBridge.postDarwinNotification(DarwinNotificationName.requestCancelDictation)
+  }
 
   func stopDictationViaDarwin() {
     self.saveHostBundleId()
@@ -516,6 +532,9 @@ extension KeyboardViewController {
       },
       stopDictation: { [weak self] in
         self?.stopDictationViaDarwin()
+      },
+      cancelDictation: { [weak self] in
+        self?.cancelDictationViaDarwin()
       },
       resolveHost: { [weak self] in
         self?.saveHostBundleId()
