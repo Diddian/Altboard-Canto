@@ -24,7 +24,7 @@ final class KeyboardViewController: UIInputViewController {
 
   override func loadView() {
     super.loadView()
-    view.backgroundColor = .clear
+    view.backgroundColor = KeyboardPalette.backdrop
     view.clipsToBounds = true
 
     if let inputView = view as? UIInputView {
@@ -62,7 +62,6 @@ final class KeyboardViewController: UIInputViewController {
 
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-    self.edgeDismissal?.resetVisuals(animated: false)
     Self.activeInstance = self
     SharedSettings().defaults.set(true, forKey: "canto.keyboardOpenedAtLeastOnce")
     SharedSettings().synchronize()
@@ -92,11 +91,6 @@ final class KeyboardViewController: UIInputViewController {
     if !self.keyboardState.isRecording, !self.keyboardState.isProcessing {
       self.keyboardState.stopLevelPolling()
     }
-  }
-
-  override func viewDidDisappear(_ animated: Bool) {
-    super.viewDidDisappear(animated)
-    self.edgeDismissal?.resetVisuals(animated: false)
   }
 
   func insertTranscribedText() {
@@ -150,7 +144,6 @@ final class KeyboardViewController: UIInputViewController {
   private var actionBarVisible = false
 
   private var hostingController: UIHostingController<KeyboardView>?
-  private var edgeDismissal: KeyboardEdgeDismissalCoordinator?
   private var staleFallbackTimer: Timer?
   private var lastSyncedFullAccess = false
   private var hasPerformedInitialFullAccessSync = false
@@ -334,6 +327,9 @@ final class KeyboardViewController: UIInputViewController {
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.requestStartDictation)
 
     self.staleFallbackTimer?.invalidate()
+    // The History test field is already in the foreground app. Never redirect
+    // out of that field merely because model startup takes longer than 1s.
+    if HistoryKeyboardTestSession.isFocused { return }
     self.staleFallbackTimer = Timer.scheduledTimer(
       withTimeInterval: Self.staleFallbackTimeout,
       repeats: false,
@@ -444,7 +440,7 @@ extension KeyboardViewController {
     let keyboardView = KeyboardView(proxy: proxy, keyboardState: self.keyboardState)
     let hosting = UIHostingController(rootView: keyboardView)
     hosting.safeAreaRegions = []
-    hosting.view.backgroundColor = .clear
+    hosting.view.backgroundColor = KeyboardPalette.backdrop
     hosting.view.translatesAutoresizingMaskIntoConstraints = false
 
     self.addChild(hosting)
@@ -463,9 +459,6 @@ extension KeyboardViewController {
     self.hostingHeightConstraint = hostingHeight
 
     self.hostingController = hosting
-    self.edgeDismissal = KeyboardEdgeDismissalCoordinator(
-      keyboardController: self, contentView: hosting.view
-    )
   }
 
   private func applyKeyboardHeight() {

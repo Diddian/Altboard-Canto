@@ -9,7 +9,7 @@ struct VerifyKeyboardLayout {
       if kind == .standard {
         precondition(normal == 260 && compact == 150)
       } else {
-        precondition(normal == 312 && compact == 312)
+        precondition(normal == 288 && compact == 288)
       }
     }
     // The first row starts below the toolbar, never above its clipping area.
@@ -23,6 +23,7 @@ struct VerifyKeyboardLayout {
       + KeyboardLayoutGeometry.alphabetRowSpacing
       + KeyboardLayoutGeometry.keyHeight + 4
     precondition(lastRowBottom < KeyboardLayoutGeometry.fullTypingHeight)
+    precondition(KeyboardLayoutGeometry.fullTypingHeight - lastRowBottom <= 12)
     print("Fixed keyboard geometry verified")
   }
 }

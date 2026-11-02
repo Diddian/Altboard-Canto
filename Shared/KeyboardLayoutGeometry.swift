@@ -5,7 +5,8 @@ import Foundation
 enum KeyboardLayoutGeometry {
   static let microphoneDefaultHeight: CGFloat = 260
   static let microphoneCompactHeight: CGFloat = 150
-  static let fullTypingHeight: CGFloat = 312
+  // 277pt occupied rows + 11pt bottom inset; matches native screenshot height.
+  static let fullTypingHeight: CGFloat = 288
 
   static let keyHeight: CGFloat = 45
   static let keySpacing: CGFloat = 6

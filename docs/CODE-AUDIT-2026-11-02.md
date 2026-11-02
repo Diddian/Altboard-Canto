@@ -63,10 +63,9 @@ Implementation branch: feat/fixed-keyboard-settings-20261102.
 - Confirm voice processing/LLM and history controls still operate.
 - Test each Settings navigation row and verify preferences survive relaunch.
 
-## Added keyboard dismissal
+## Removed unverified top-edge gesture
 
-- A top-edge-only UIKit pan recognizer calls UIInputViewController.dismissKeyboard().
-- Pure policy checks vertical movement and quick flicks; horizontal drags stay active.
-- History focus clears on outside taps and interactive scroll; record actions remain active.
-- KeyboardInputTrace records a text-free keyboardDismissRequested event.
-- Third-party apps own their own outside-tap behavior and cannot be patched by a keyboard extension.
+- The experimental keyboard-edge recognizer did not dismiss reliably on iOS 27.2.
+- Remove it and its policy/smoke tests, avoiding gesture interference with typing.
+- Keep host-owned History tap and interactive scroll dismissal.
+- External host applications own their own background-tap behavior.

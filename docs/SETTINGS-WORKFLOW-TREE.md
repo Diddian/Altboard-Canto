@@ -112,10 +112,10 @@ Keyboard
 |   +-- Compact: fixed 150 pt iPhone canvas, wide mic above Space
 |
 +-- Symbols
-|   +-- Fixed 312 pt iPhone canvas
+|   +-- Fixed 288 pt iPhone canvas
 |
 +-- Alphabet
-    +-- Fixed 312 pt iPhone canvas
+    +-- Fixed 288 pt iPhone canvas
     +-- Full toolbar inside the keyboard; no negative top offset
     +-- Fixed 45 pt letter keys and 11 pt row spacing
 
@@ -153,20 +153,14 @@ Alphabet keyboard
 - Not changed: the offline speech engine, model storage, AI inference, history
   retention policy, and direct IPA packaging.
 
-## Dismissing the keyboard
-
-Custom keyboard
-+-- Start downward swipe in top 22 pt
-+-- Follow touch with slide and fade
-+-- Dismiss at 56 pt, or quick 28 pt flick
-+-- Cancel / sideways drag: restore layout
-+-- Keep key taps, suggestions and spacebar cursor control intact
+## Closing the keyboard
 
 History screen
-+-- Tap outside keyboard test field: dismiss
-+-- Drag History list: interactive dismissal
-+-- Switch tabs: keyboard test loses focus
++-- Tap another part of History to dismiss the test keyboard
++-- Scroll the History list to dismiss interactively
++-- Switching tabs clears the text input focus
++-- Tap the microphone while testing: record directly in Altboard
 
 Other host apps
-+-- Host app decides what background taps do
-+-- Altboard top-edge swipe works through Apple's dismissKeyboard() API
++-- Each host app controls its background-tap dismissal
++-- The experimental top-edge swipe recognizer was removed

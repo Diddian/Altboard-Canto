@@ -15,8 +15,20 @@ struct HistoryListView: View {
         }
       }
       .navigationTitle("History")
-      .onAppear { self.loadRecordsIfChanged() }
-      .onDisappear { self.isKeyboardTestFocused = false }
+      .onAppear {
+        self.loadRecordsIfChanged()
+        HistoryKeyboardTestSession.setFocused(self.isKeyboardTestFocused && self.scenePhase == .active)
+      }
+      .onDisappear {
+        self.isKeyboardTestFocused = false
+        HistoryKeyboardTestSession.setFocused(false)
+      }
+      .onChange(of: self.isKeyboardTestFocused) { _, focused in
+        HistoryKeyboardTestSession.setFocused(focused && self.scenePhase == .active)
+      }
+      .onChange(of: self.scenePhase) { _, phase in
+        HistoryKeyboardTestSession.setFocused(self.isKeyboardTestFocused && phase == .active)
+      }
       .onChange(of: self.setupChecklist) { OnboardingRecordStore().forgetFinishedPostponements(self.setupChecklist) }
       .onChange(of: self.speechService.historySaveGeneration) {
         self.loadRecords()
@@ -37,6 +49,7 @@ struct HistoryListView: View {
   @State private var loadedModificationDate: Date?
   @State private var keyboardTestingText = ""
   @FocusState private var isKeyboardTestFocused: Bool
+  @Environment(\.scenePhase) private var scenePhase
 
   private let store = HistoryStore.shared
 
@@ -103,7 +116,9 @@ struct HistoryListView: View {
       Image(systemName: "keyboard")
         .foregroundStyle(.secondary)
       TextField("Try your keyboard here", text: self.$keyboardTestingText, axis: .vertical)
-        .lineLimit(1...3)
+        .font(.system(size: 18))
+        .lineLimit(1...4)
+        .frame(minHeight: 52, alignment: .leading)
         .focused(self.$isKeyboardTestFocused)
         .textInputAutocapitalization(.sentences)
         .accessibilityLabel("Keyboard test input")
@@ -118,8 +133,13 @@ struct HistoryListView: View {
       }
     }
     .padding(.horizontal, 16)
-    .padding(.vertical, 11)
-    .background(.regularMaterial)
+    .padding(.vertical, 10)
+    .frame(minHeight: 76)
+    // Fill under the system-rounded keyboard corners using one shared color.
+    .background {
+      Color(uiColor: KeyboardPalette.backdrop)
+        .ignoresSafeArea(edges: .bottom)
+    }
     .overlay(alignment: .top) { Divider() }
   }
 

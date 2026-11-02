@@ -64,9 +64,6 @@ jobs:
             Shared/KeyboardKind.swift Shared/KeyboardLayoutGeometry.swift \
             scripts/verify-keyboard-layout.swift
           "$RUNNER_TEMP/layout-smoke"
-          swiftc -o "$RUNNER_TEMP/dismissal-smoke" \
-            Shared/KeyboardEdgeDismissalPolicy.swift scripts/verify-keyboard-dismissal.swift
-          "$RUNNER_TEMP/dismissal-smoke"
           if grep -R -n -E '[.]keyboardHeightScale|SharedKey[.]keyboardHeightScale' \
               --include='*.swift' Sayboard SayboardKeyboard Shared; then
             echo 'ERROR: active code still references the removed height preference'
