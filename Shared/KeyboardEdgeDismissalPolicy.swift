@@ -25,3 +25,4 @@ enum KeyboardEdgeDismissalPolicy {
     return translation.y >= minimumDistance
       || (translation.y >= quickFlickDistance && verticalVelocity >= quickFlickVelocity)
   }
+}
