@@ -60,6 +60,7 @@ struct AlphabeticKeyboardLayout: View {
   var body: some View {
     VStack(spacing: 0) {
       self.toolbar
+        .offset(y: -8.kbScaled)
       VStack(spacing: Self.rowSpacing.kbScaled) {
         self.firstKeyRow
         self.secondKeyRow

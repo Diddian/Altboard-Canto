@@ -110,8 +110,16 @@ struct DiagnosticsView: View {
           .font(.system(.caption2, design: .monospaced))
           .textSelection(.enabled)
       }
+      if !KeyboardInputTrace.events.isEmpty {
+        Text("Keyboard interactions (event names only)")
+          .font(.caption.weight(.medium))
+        Text(KeyboardInputTrace.events.suffix(12).joined(separator: "\n"))
+          .font(.system(.caption2, design: .monospaced))
+          .textSelection(.enabled)
+      }
       Button("Clear haptic trace") {
         KeyboardHapticTrace.clear()
+        KeyboardInputTrace.clear()
         self.refreshHaptics()
       }
       Button("Refresh haptic trace", action: self.refreshHaptics)
@@ -309,6 +317,8 @@ struct DiagnosticsView: View {
       "Haptic requested count: \(KeyboardHapticTrace.total)",
       "Haptic request trace (no typed characters):",
       KeyboardHapticTrace.events.joined(separator: "\n"),
+      "Keyboard interaction trace (no text):",
+      KeyboardInputTrace.events.joined(separator: "\n"),
       "Audio engine: \(self.speech.session.audioEngine.isRunning)",
       "Audio test: \(self.permissions.audioInputTestResult)",
       "Speech model: \(self.models.selectedVariant.displayName)",

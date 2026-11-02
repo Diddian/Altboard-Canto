@@ -85,6 +85,7 @@ struct SpaceBarKey: View {
 
   private func handleDragEnded() {
     if !self.isTrackpadActive {
+      KeyboardInputTrace.record(.spaceTouched)
       self.onSpace()
       KeyboardHaptics.key()
     }
