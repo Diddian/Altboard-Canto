@@ -19,6 +19,25 @@ UPSTREAM_FILE = "Modules/Preparing/Sources/Preparing/Resources/jyutping.txt"
 DOWNLOAD_URL = f"https://raw.githubusercontent.com/yuetyam/jyutping/{REVISION}/{UPSTREAM_FILE}"
 VALID_ROMANIZATION = re.compile(r"^[a-z]+[1-6](?: [a-z]+[1-6])*$")
 
+
+def yale_syllable(jyutping: str) -> str:
+    """Unmarked Yale typing alias for a single Jyutping syllable."""
+    plain = jyutping.rstrip("123456")
+    if plain.startswith("j"):
+        plain = "y" + plain[1:]
+    elif plain.startswith("z"):
+        plain = "j" + plain[1:]
+    elif plain.startswith("c"):
+        plain = "ch" + plain[1:]
+    plain = plain.replace("oe", "eu").replace("eo", "eu")
+    plain = plain.replace("aa", "a")
+    return plain
+
+
+def yale_spelling(jyutping: str) -> str:
+    return "".join(yale_syllable(syl) for syl in jyutping.split())
+
+
 def read_source(input_file: str | None) -> bytes:
     if input_file:
         return pathlib.Path(input_file).read_bytes()
@@ -44,6 +63,7 @@ def compile_database(source: bytes, output: pathlib.Path, verify_upstream: bool)
             romanization TEXT NOT NULL,
             plain TEXT NOT NULL,
             compact TEXT NOT NULL,
+            yale TEXT NOT NULL,
             initials TEXT NOT NULL,
             priority INTEGER NOT NULL
         )""")
@@ -66,28 +86,34 @@ def compile_database(source: bytes, output: pathlib.Path, verify_upstream: bool)
             plain = "".join(c for c in romanization if "a" <= c <= "z")
             compact = romanization.replace(" ", "")
             initials = "".join(s[0] for s in syllables)
-            batch.append((word, romanization, plain, compact, initials, count))
+            yale = yale_spelling(romanization)
+            batch.append((word, romanization, plain, compact, yale, initials, count))
             count += 1
             if len(batch) >= 15000:
-                db.executemany("INSERT INTO entries VALUES (?,?,?,?,?,?)", batch)
+                db.executemany("INSERT INTO entries VALUES (?,?,?,?,?,?,?)", batch)
                 batch.clear()
         if batch:
-            db.executemany("INSERT INTO entries VALUES (?,?,?,?,?,?)", batch)
+            db.executemany("INSERT INTO entries VALUES (?,?,?,?,?,?,?)", batch)
         if count < 10000 and verify_upstream:
             raise ValueError(f"Lexicon unexpectedly small: {count} entries")
         db.executescript("""
             CREATE INDEX idx_entries_plain ON entries(plain, priority);
             CREATE INDEX idx_entries_compact ON entries(compact, priority);
+            CREATE INDEX idx_entries_yale ON entries(yale, priority);
             CREATE INDEX idx_entries_initials ON entries(initials, priority);
         """)
         db.commit()
         db.execute("VACUUM")
         db.execute("PRAGMA optimize")
         db.commit()
-        for word, romanization in [("你好", "nei5 hou2"), ("我", "ngo5"), ("食", "sik6")]:
+        for word, romanization in [("你好", "nei5 hou2"), ("我", "ngo5"), ("食", "sik6"), ("今日", "gam1 jat6")]:
             found = db.execute("SELECT 1 FROM entries WHERE word=? AND romanization=? LIMIT 1", (word, romanization)).fetchone()
             if not found and verify_upstream:
                 raise ValueError(f"Missing essential entry {word} ({romanization})")
+        if verify_upstream:
+            assert db.execute(
+                "SELECT 1 FROM entries WHERE yale=? AND word='今日' LIMIT 1", ("gamyat",)
+            ).fetchone(), "Yale gamyat must suggest 今日"
         print(f"Compiled {count} unique entries to {output} ({output.stat().st_size} bytes)")
         return count
     finally:

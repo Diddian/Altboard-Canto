@@ -34,7 +34,11 @@ final class JyutpingDictionary {
 
   var isAvailable: Bool { self.database != nil }
 
-  func candidates(for rawInput: String, limit: Int = 12) -> [JyutpingCandidate] {
+  func candidates(
+    for rawInput: String,
+    scheme: CantoneseRomanizationScheme = .jyutping,
+    limit: Int = 12
+  ) -> [JyutpingCandidate] {
     let input = rawInput.lowercased().filter { $0.isASCII && ($0.isLetter || $0.isNumber) }
     guard self.database != nil, !input.isEmpty, input.count <= 48 else { return [] }
     let hasTone = input.contains(where: \.isNumber)
@@ -56,8 +60,21 @@ final class JyutpingDictionary {
       gather("SELECT word,romanization FROM entries WHERE compact=? ORDER BY priority LIMIT ?", input)
       gather("SELECT word,romanization FROM entries WHERE compact>=? AND compact<? ORDER BY priority LIMIT ?", input)
     } else {
+      // Candidate aliases cover both systems, with selected scheme first.
+      if scheme == .yale {
+        gather("SELECT word,romanization FROM entries WHERE yale=? ORDER BY priority LIMIT ?", plain)
+      }
       gather("SELECT word,romanization FROM entries WHERE plain=? ORDER BY priority LIMIT ?", plain)
+      if scheme != .yale {
+        gather("SELECT word,romanization FROM entries WHERE yale=? ORDER BY priority LIMIT ?", plain)
+      }
+      if scheme == .yale {
+        gather("SELECT word,romanization FROM entries WHERE yale>=? AND yale<? ORDER BY priority LIMIT ?", plain)
+      }
       gather("SELECT word,romanization FROM entries WHERE plain>=? AND plain<? ORDER BY priority LIMIT ?", plain)
+      if scheme != .yale {
+        gather("SELECT word,romanization FROM entries WHERE yale>=? AND yale<? ORDER BY priority LIMIT ?", plain)
+      }
       if plain.count >= 2 {
         gather("SELECT word,romanization FROM entries WHERE initials=? ORDER BY priority LIMIT ?", plain)
       }
