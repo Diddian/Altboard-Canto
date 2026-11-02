@@ -80,6 +80,7 @@ struct AlphabeticTouchRow: View {
             self.reset()
           }
         )
+        .frame(width: geometry.size.width, height: self.bandHeight)
         .accessibilityHidden(true)
       }
     }
