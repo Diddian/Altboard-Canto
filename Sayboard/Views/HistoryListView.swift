@@ -8,10 +8,15 @@ struct HistoryListView: View {
         self.keyboardTestingField
       }
       .overlay {
-        if self.records.isEmpty, !self.showsSetupCard, !self.showsAIOffer { self.emptyState }
+        if self.records.isEmpty, !self.showsSetupCard, !self.showsAIOffer {
+          self.emptyState
+            .contentShape(Rectangle())
+            .onTapGesture { self.isKeyboardTestFocused = false }
+        }
       }
       .navigationTitle("History")
       .onAppear { self.loadRecordsIfChanged() }
+      .onDisappear { self.isKeyboardTestFocused = false }
       .onChange(of: self.setupChecklist) { OnboardingRecordStore().forgetFinishedPostponements(self.setupChecklist) }
       .onChange(of: self.speechService.historySaveGeneration) {
         self.loadRecords()
@@ -31,6 +36,7 @@ struct HistoryListView: View {
   @State private var records = [HistoryRecord]()
   @State private var loadedModificationDate: Date?
   @State private var keyboardTestingText = ""
+  @FocusState private var isKeyboardTestFocused: Bool
 
   private let store = HistoryStore.shared
 
@@ -98,6 +104,7 @@ struct HistoryListView: View {
         .foregroundStyle(.secondary)
       TextField("Try your keyboard here", text: self.$keyboardTestingText, axis: .vertical)
         .lineLimit(1...3)
+        .focused(self.$isKeyboardTestFocused)
         .textInputAutocapitalization(.sentences)
         .accessibilityLabel("Keyboard test input")
       if !self.keyboardTestingText.isEmpty {
@@ -144,6 +151,12 @@ struct HistoryListView: View {
         }
       }
     }
+    .scrollDismissesKeyboard(.interactively)
+    .simultaneousGesture(
+      TapGesture().onEnded {
+        if self.isKeyboardTestFocused { self.isKeyboardTestFocused = false }
+      }
+    )
   }
 
   private func loadRecordsIfChanged() {

@@ -62,6 +62,7 @@ final class KeyboardViewController: UIInputViewController {
 
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
+    self.edgeDismissal?.resetVisuals(animated: false)
     Self.activeInstance = self
     SharedSettings().defaults.set(true, forKey: "canto.keyboardOpenedAtLeastOnce")
     SharedSettings().synchronize()
@@ -91,6 +92,11 @@ final class KeyboardViewController: UIInputViewController {
     if !self.keyboardState.isRecording, !self.keyboardState.isProcessing {
       self.keyboardState.stopLevelPolling()
     }
+  }
+
+  override func viewDidDisappear(_ animated: Bool) {
+    super.viewDidDisappear(animated)
+    self.edgeDismissal?.resetVisuals(animated: false)
   }
 
   func insertTranscribedText() {
@@ -144,6 +150,7 @@ final class KeyboardViewController: UIInputViewController {
   private var actionBarVisible = false
 
   private var hostingController: UIHostingController<KeyboardView>?
+  private var edgeDismissal: KeyboardEdgeDismissalCoordinator?
   private var staleFallbackTimer: Timer?
   private var lastSyncedFullAccess = false
   private var hasPerformedInitialFullAccessSync = false
@@ -456,6 +463,9 @@ extension KeyboardViewController {
     self.hostingHeightConstraint = hostingHeight
 
     self.hostingController = hosting
+    self.edgeDismissal = KeyboardEdgeDismissalCoordinator(
+      keyboardController: self, contentView: hosting.view
+    )
   }
 
   private func applyKeyboardHeight() {

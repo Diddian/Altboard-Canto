@@ -62,3 +62,11 @@ Implementation branch: feat/fixed-keyboard-settings-20261102.
   Notes, WhatsApp, and when changing the selected typing mode.
 - Confirm voice processing/LLM and history controls still operate.
 - Test each Settings navigation row and verify preferences survive relaunch.
+
+## Added keyboard dismissal
+
+- A top-edge-only UIKit pan recognizer calls UIInputViewController.dismissKeyboard().
+- Pure policy checks vertical movement and quick flicks; horizontal drags stay active.
+- History focus clears on outside taps and interactive scroll; record actions remain active.
+- KeyboardInputTrace records a text-free keyboardDismissRequested event.
+- Third-party apps own their own outside-tap behavior and cannot be patched by a keyboard extension.

@@ -152,3 +152,21 @@ Alphabet keyboard
   bounds in every host, and exact microphone feel.
 - Not changed: the offline speech engine, model storage, AI inference, history
   retention policy, and direct IPA packaging.
+
+## Dismissing the keyboard
+
+Custom keyboard
++-- Start downward swipe in top 22 pt
++-- Follow touch with slide and fade
++-- Dismiss at 56 pt, or quick 28 pt flick
++-- Cancel / sideways drag: restore layout
++-- Keep key taps, suggestions and spacebar cursor control intact
+
+History screen
++-- Tap outside keyboard test field: dismiss
++-- Drag History list: interactive dismissal
++-- Switch tabs: keyboard test loses focus
+
+Other host apps
++-- Host app decides what background taps do
++-- Altboard top-edge swipe works through Apple's dismissKeyboard() API

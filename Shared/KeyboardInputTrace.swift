@@ -12,6 +12,7 @@ enum KeyboardInputTrace {
     case candidateChosen
     case syllableDeleted
     case ordinaryDelete
+    case keyboardDismissRequested
   }
 
   private static let key = "canto.keyboard.inputTrace"
