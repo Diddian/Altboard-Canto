@@ -43,6 +43,13 @@ struct AlphabeticTouchRow: View {
             selected: self.alternateIndex
           )
           .frame(maxWidth: .infinity)
+          // The UIKit touch surface owns physical taps; VoiceOver needs its
+          // own activation path for each underlying visual letter.
+          .accessibilityAddTraits(.isButton)
+          .accessibilityAction {
+            KeyboardHaptics.key()
+            self.onInsert(self.uppercase ? letter.uppercased() : letter.lowercased())
+          }
         }
       }
       .padding(.horizontal, self.horizontalInset)
