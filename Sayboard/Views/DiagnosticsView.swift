@@ -40,6 +40,8 @@ struct DiagnosticsView: View {
       LabeledContent("Keyboard detected", value: self.yesNo(self.permissions.isKeyboardAdded))
       LabeledContent("Main App Group", value: self.permissions.mainGroupTestResult)
       LabeledContent("App Group ID", value: AppGroup.resolutionDescription)
+      LabeledContent("App build", value: self.appBuild)
+      LabeledContent("Keyboard build", value: self.keyboardBuild)
       LabeledContent("Keyboard report", value: self.permissions.keyboardProbeSummary)
       LabeledContent("Keyboard Full Access", value: self.report(self.permissions.keyboardReportedFullAccess))
       LabeledContent("Keyboard App Group", value: self.report(self.permissions.keyboardReportedGroupAvailable))
@@ -205,6 +207,14 @@ struct DiagnosticsView: View {
     }
   }
 
+  private var appBuild: String {
+    String((Bundle.main.infoDictionary?["AltboardBuildSHA"] as? String ?? "unstamped").prefix(12))
+  }
+
+  private var keyboardBuild: String {
+    String((AppGroup.sharedDefaults?.string(forKey: SharedKey.keyboardBuildSHA) ?? "not reported").prefix(12))
+  }
+
   private var offlineImeStatus: String {
     guard let stored = AppGroup.sharedDefaults?.object(forKey: "canto.ime.offlineDictionaryReady") as? Bool else {
       return "Not tested in keyboard"
@@ -296,6 +306,8 @@ struct DiagnosticsView: View {
     [
       "Altboard-Canto Diagnostics",
       "Version: \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown")",
+      "App build SHA: \(self.appBuild)",
+      "Keyboard build SHA: \(self.keyboardBuild)",
       "App: \(Bundle.main.bundleIdentifier ?? "unknown")",
       "iOS: \(UIDevice.current.systemVersion)",
       "Microphone: \(self.micStatus)",

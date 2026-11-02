@@ -60,6 +60,15 @@ jobs:
             scripts/verify-keyboard-core.swift
           "$RUNNER_TEMP/keyboard-smoke"
 
+      - name: Stamp matching build SHA into app and keyboard
+        shell: bash
+        run: |
+          set -euo pipefail
+          for plist in Sayboard/Info.plist SayboardKeyboard/Info.plist; do
+            /usr/libexec/PlistBuddy -c "Add :AltboardBuildSHA string $GITHUB_SHA" "$plist" ||
+              /usr/libexec/PlistBuddy -c "Set :AltboardBuildSHA $GITHUB_SHA" "$plist"
+          done
+
       - name: Generate Xcode project
         run: |
           set -euo pipefail

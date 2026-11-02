@@ -158,6 +158,8 @@ final class KeyboardViewController: UIInputViewController {
     settings.defaults.set(CFAbsoluteTimeGetCurrent(), forKey: SharedKey.keyboardProbeTimestamp)
     settings.defaults.set(current, forKey: SharedKey.keyboardProbeFullAccess)
     settings.defaults.set(AppGroup.containerURL != nil, forKey: SharedKey.keyboardProbeGroupAvailable)
+    settings.defaults.set(Bundle.main.infoDictionary?["AltboardBuildSHA"] as? String ?? "unstamped",
+      forKey: SharedKey.keyboardBuildSHA)
     settings.hasFullAccess = current
     settings.synchronize()
     guard !self.hasPerformedInitialFullAccessSync || current != self.lastSyncedFullAccess else { return }

@@ -108,6 +108,7 @@ enum SharedKey {
   static let keyboardProbeTimestamp = "canto.keyboardProbeTimestamp"
   static let keyboardProbeFullAccess = "canto.keyboardProbeFullAccess"
   static let keyboardProbeGroupAvailable = "canto.keyboardProbeGroupAvailable"
+  static let keyboardBuildSHA = "canto.keyboardBuildSHA"
   static let isModelLoading = "isModelLoading"
   static let hasPreparedModelOnce = "hasPreparedModelOnce"
   static let useCustomSpaceBar = "useCustomSpaceBar"
