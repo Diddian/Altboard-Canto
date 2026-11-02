@@ -1,5 +1,5 @@
 {
-  "schema": "altboard.ios.keyboard.geometry.v3",
+  "schema": "altboard.ios.keyboard.geometry.v4",
   "source": "IMG_9658.jpeg, IMG_9659.jpeg (native), IMG_9660.jpeg (previous Altboard), IMG_9669.jpeg (current Altboard screenshot), IMG_9670.jpeg (native 3-column prediction screenshot)",
   "measurement": "Approximate pixel measurements normalized at inferred 3x; not Apple layout APIs",
   "reference": {
@@ -111,9 +111,10 @@
     "dark": {
       "nativeKeyHex": "#444444",
       "previousAltboardKeyHex": "#3A3A3C",
-      "targetKeyHex": "#444444",
-      "nativeBackdropHex": "#1F1F1F",
-      "pressedKeyHex": "#5C5C5C"
+      "targetKeyHex": "#434343",
+      "nativeBackdropHex": "Varies by screenshot/host: earlier #1F1F1F; IMG_9688.jpeg #212121",
+      "pressedKeyHex": "#787878",
+      "targetBackdropHex": "#212121"
     },
     "light": {
       "keyColor": "UIColor.white",
@@ -211,7 +212,9 @@
     "IMG_9675.png",
     "IMG_9676.jpeg",
     "IMG_9677.jpeg",
-    "IMG_9678.jpeg"
+    "IMG_9678.jpeg",
+    "IMG_9687.jpeg",
+    "IMG_9688.jpeg"
   ],
   "preciseComparison": "docs/ios-keyboard-native-vs-altboard-pixel-comparison.json",
   "touchTargeting": {
@@ -327,6 +330,33 @@
       ]
     },
     "symbolReference": "IMG_9676.jpeg native numeric keyboard: top 1-0, second punctuation, third #+= punctuation backspace, bottom ABC Emoji Space Return",
-    "visualReliability": "Approximate geometry from screenshots; no claim of 100% Apple private parity"
+    "visualReliability": "Approximate geometry from screenshots; no claim of 100% Apple private parity",
+    "updatedWithSymbols": {
+      "source": "IMG_9688.jpeg",
+      "nativeDarkBackdropHex": "#212121",
+      "altboardTopBeforeHex": "#1F1F1F",
+      "systemBottomHex": "#212121",
+      "deltaRGB": [
+        2,
+        2,
+        2
+      ],
+      "newNativeEmojiGlyph": 18.67,
+      "numericRowHorizontalInsetPt": 6.67,
+      "thirdRowPunctuationWidthPt": 54.66400000000001,
+      "iconDeleteFontPt": 19.25,
+      "bottomRowVisibleWidthsUnchanged": true
+    }
+  },
+  "symbols": {
+    "referenceDocument": "docs/ios-keyboard-symbols-reference.json",
+    "source": "IMG_9688.jpeg",
+    "codeCommit": "new native emoji/symbol geometry changes",
+    "perKeyCount": 31,
+    "keyBackground": "RGB(33,33,33) matches latest host lower bar",
+    "keyFill": "RGB(67,67,67) PNG; JPEG screenshot reads close to RGB(69,69,69)",
+    "emoji": "NativeEmojiGlyph 18.67pt drawn from screenshot-traced vector cutouts",
+    "keyWidths": "Bottom row matches native to 1px; do not change",
+    "symbolThirdRow": "native 50pt/54.67pt/50pt separated by 14.67pt outer and 6pt inner gaps"
   }
 }

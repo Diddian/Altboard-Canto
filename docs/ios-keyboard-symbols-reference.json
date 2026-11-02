@@ -1,0 +1,818 @@
+{
+  "schema": "altboard.ios.keyboard.symbols.native-reference.v1",
+  "title": "Native iOS dark-mode numeric-symbol keyboard — complete per-key measurement and integration",
+  "screenshot": {
+    "source": "IMG_9688.jpeg",
+    "widthPx": 1320,
+    "heightPx": 1041,
+    "scalePxPerPt": 3,
+    "coordinateOrigin": "top left of supplied crop",
+    "quality": "JPEG; borders and colors may vary 1–2 pixels due to antialiasing/compression",
+    "captureType": "native Apple iOS keyboard in dark appearance"
+  },
+  "comparison": {
+    "appSource": "IMG_9687.jpeg",
+    "appMode": "Altboard Alphabet screenshot; its numeric page was not shown in the same image",
+    "oldGeometry": "Source-code-derived rather than falsely claiming pixel measurement of Altboard numeric page",
+    "oldBackgroundTopRGB": [
+      31,
+      31,
+      31
+    ],
+    "systemLowerBackdropRGB": [
+      33,
+      33,
+      33
+    ],
+    "nativeNumericBackdropRGB": [
+      33,
+      33,
+      33
+    ],
+    "targetBackgroundRGB": [
+      33,
+      33,
+      33
+    ],
+    "targetKeyRGB": [
+      67,
+      67,
+      67
+    ],
+    "jpegKeySampleApproxRGB": [
+      69,
+      69,
+      69
+    ],
+    "darkRGBDeltaTopToSystem": [
+      2,
+      2,
+      2
+    ],
+    "statement": "Unify Altboard's background with native lower extension strip; preserve key fill at sampled PNG RGB(67,67,67)."
+  },
+  "canvas": {
+    "widthPt": 440,
+    "visibleRowHeightPt": 45,
+    "verticalRowSpacingPt": 11,
+    "rowTopPx": [
+      156,
+      324,
+      492,
+      660
+    ],
+    "rowTopPt": [
+      52,
+      108,
+      164,
+      220
+    ],
+    "horizontalKeyGapPt": 6,
+    "cornerRadiusPtEstimatedRange": [
+      7.3,
+      8.5
+    ],
+    "foreground": "Dynamic UIColor.label; native white in dark mode",
+    "keyFillDarkHex": "#434343",
+    "keyboardBackdropHex": "#212121",
+    "lowerNativeControlStrip": "System-owned globe/microphone area; not part of custom symbol row"
+  },
+  "geometrySettings": {
+    "firstSecondRowOuterInsetPt": 6.67,
+    "firstSecondRowKeyCount": 10,
+    "firstSecondRowSpacingPt": 6,
+    "firstSecondRowCalculatedKeyWidthPt": 37.266000000000005,
+    "thirdRowOuterInsetPt": 6.67,
+    "thirdRowWideKeyWidthPt": 50,
+    "thirdRowOuterGroupGapPt": 14.67,
+    "thirdRowPunctuationKeyCount": 5,
+    "thirdRowInnerPunctuationGapPt": 6,
+    "thirdRowPunctuationWidthPt": 54.66400000000001,
+    "bottomRowOuterInsetPt": 6.67,
+    "bottomRowWidthsPt": [
+      48,
+      48,
+      210.67,
+      102
+    ],
+    "bottomRowGapsPt": [
+      6,
+      6,
+      6
+    ],
+    "observedBottomRowDifferenceFromAltboard": "Within 1px; do not shrink the four bottom keys without a new on-device reference"
+  },
+  "rows": [
+    {
+      "id": "digits",
+      "yPx": 156,
+      "yPt": 52,
+      "keyHeightPx": 135,
+      "keyHeightPt": 45,
+      "keys": [
+        {
+          "id": "digits-1",
+          "index": 0,
+          "label": "1",
+          "output": "1",
+          "rect": {
+            "xPx": 20,
+            "yPx": 156,
+            "widthPx": 111,
+            "heightPx": 135,
+            "xPt": 6.667,
+            "yPt": 52,
+            "widthPt": 37,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 18,
+          "semantic": "text"
+        },
+        {
+          "id": "digits-2",
+          "index": 1,
+          "label": "2",
+          "output": "2",
+          "rect": {
+            "xPx": 149,
+            "yPx": 156,
+            "widthPx": 112,
+            "heightPx": 135,
+            "xPt": 49.667,
+            "yPt": 52,
+            "widthPt": 37.333,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 18,
+          "semantic": "text"
+        },
+        {
+          "id": "digits-3",
+          "index": 2,
+          "label": "3",
+          "output": "3",
+          "rect": {
+            "xPx": 279,
+            "yPx": 156,
+            "widthPx": 112,
+            "heightPx": 135,
+            "xPt": 93,
+            "yPt": 52,
+            "widthPt": 37.333,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 18,
+          "semantic": "text"
+        },
+        {
+          "id": "digits-4",
+          "index": 3,
+          "label": "4",
+          "output": "4",
+          "rect": {
+            "xPx": 409,
+            "yPx": 156,
+            "widthPx": 112,
+            "heightPx": 135,
+            "xPt": 136.333,
+            "yPt": 52,
+            "widthPt": 37.333,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 18,
+          "semantic": "text"
+        },
+        {
+          "id": "digits-5",
+          "index": 4,
+          "label": "5",
+          "output": "5",
+          "rect": {
+            "xPx": 539,
+            "yPx": 156,
+            "widthPx": 112,
+            "heightPx": 135,
+            "xPt": 179.667,
+            "yPt": 52,
+            "widthPt": 37.333,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 18,
+          "semantic": "text"
+        },
+        {
+          "id": "digits-6",
+          "index": 5,
+          "label": "6",
+          "output": "6",
+          "rect": {
+            "xPx": 669,
+            "yPx": 156,
+            "widthPx": 112,
+            "heightPx": 135,
+            "xPt": 223,
+            "yPt": 52,
+            "widthPt": 37.333,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 18,
+          "semantic": "text"
+        },
+        {
+          "id": "digits-7",
+          "index": 6,
+          "label": "7",
+          "output": "7",
+          "rect": {
+            "xPx": 799,
+            "yPx": 156,
+            "widthPx": 112,
+            "heightPx": 135,
+            "xPt": 266.333,
+            "yPt": 52,
+            "widthPt": 37.333,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 18,
+          "semantic": "text"
+        },
+        {
+          "id": "digits-8",
+          "index": 7,
+          "label": "8",
+          "output": "8",
+          "rect": {
+            "xPx": 929,
+            "yPx": 156,
+            "widthPx": 112,
+            "heightPx": 135,
+            "xPt": 309.667,
+            "yPt": 52,
+            "widthPt": 37.333,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 18,
+          "semantic": "text"
+        },
+        {
+          "id": "digits-9",
+          "index": 8,
+          "label": "9",
+          "output": "9",
+          "rect": {
+            "xPx": 1059,
+            "yPx": 156,
+            "widthPx": 112,
+            "heightPx": 135,
+            "xPt": 353,
+            "yPt": 52,
+            "widthPt": 37.333,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 18,
+          "semantic": "text"
+        },
+        {
+          "id": "digits-10",
+          "index": 9,
+          "label": "0",
+          "output": "0",
+          "rect": {
+            "xPx": 1189,
+            "yPx": 156,
+            "widthPx": 112,
+            "heightPx": 135,
+            "xPt": 396.333,
+            "yPt": 52,
+            "widthPt": 37.333,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": null,
+          "semantic": "text"
+        }
+      ]
+    },
+    {
+      "id": "punctuation",
+      "yPx": 324,
+      "yPt": 108,
+      "keyHeightPx": 135,
+      "keyHeightPt": 45,
+      "keys": [
+        {
+          "id": "punctuation-1",
+          "index": 0,
+          "label": "-",
+          "output": "-",
+          "rect": {
+            "xPx": 20,
+            "yPx": 324,
+            "widthPx": 111,
+            "heightPx": 135,
+            "xPt": 6.667,
+            "yPt": 108,
+            "widthPt": 37,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 18,
+          "semantic": "text"
+        },
+        {
+          "id": "punctuation-2",
+          "index": 1,
+          "label": "/",
+          "output": "/",
+          "rect": {
+            "xPx": 149,
+            "yPx": 324,
+            "widthPx": 112,
+            "heightPx": 135,
+            "xPt": 49.667,
+            "yPt": 108,
+            "widthPt": 37.333,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 18,
+          "semantic": "text"
+        },
+        {
+          "id": "punctuation-3",
+          "index": 2,
+          "label": ":",
+          "output": ":",
+          "rect": {
+            "xPx": 279,
+            "yPx": 324,
+            "widthPx": 112,
+            "heightPx": 135,
+            "xPt": 93,
+            "yPt": 108,
+            "widthPt": 37.333,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 18,
+          "semantic": "text"
+        },
+        {
+          "id": "punctuation-4",
+          "index": 3,
+          "label": ";",
+          "output": ";",
+          "rect": {
+            "xPx": 409,
+            "yPx": 324,
+            "widthPx": 112,
+            "heightPx": 135,
+            "xPt": 136.333,
+            "yPt": 108,
+            "widthPt": 37.333,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 18,
+          "semantic": "text"
+        },
+        {
+          "id": "punctuation-5",
+          "index": 4,
+          "label": "(",
+          "output": "(",
+          "rect": {
+            "xPx": 539,
+            "yPx": 324,
+            "widthPx": 112,
+            "heightPx": 135,
+            "xPt": 179.667,
+            "yPt": 108,
+            "widthPt": 37.333,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 18,
+          "semantic": "text"
+        },
+        {
+          "id": "punctuation-6",
+          "index": 5,
+          "label": ")",
+          "output": ")",
+          "rect": {
+            "xPx": 669,
+            "yPx": 324,
+            "widthPx": 112,
+            "heightPx": 135,
+            "xPt": 223,
+            "yPt": 108,
+            "widthPt": 37.333,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 18,
+          "semantic": "text"
+        },
+        {
+          "id": "punctuation-7",
+          "index": 6,
+          "label": "$",
+          "output": "$",
+          "rect": {
+            "xPx": 799,
+            "yPx": 324,
+            "widthPx": 112,
+            "heightPx": 135,
+            "xPt": 266.333,
+            "yPt": 108,
+            "widthPt": 37.333,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 18,
+          "semantic": "text"
+        },
+        {
+          "id": "punctuation-8",
+          "index": 7,
+          "label": "&",
+          "output": "&",
+          "rect": {
+            "xPx": 929,
+            "yPx": 324,
+            "widthPx": 112,
+            "heightPx": 135,
+            "xPt": 309.667,
+            "yPt": 108,
+            "widthPt": 37.333,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 18,
+          "semantic": "text"
+        },
+        {
+          "id": "punctuation-9",
+          "index": 8,
+          "label": "@",
+          "output": "@",
+          "rect": {
+            "xPx": 1059,
+            "yPx": 324,
+            "widthPx": 112,
+            "heightPx": 135,
+            "xPt": 353,
+            "yPt": 108,
+            "widthPt": 37.333,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 18,
+          "semantic": "text"
+        },
+        {
+          "id": "punctuation-10",
+          "index": 9,
+          "label": "”",
+          "output": "\"",
+          "rect": {
+            "xPx": 1189,
+            "yPx": 324,
+            "widthPx": 112,
+            "heightPx": 135,
+            "xPt": 396.333,
+            "yPt": 108,
+            "widthPt": 37.333,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": null,
+          "semantic": "text"
+        }
+      ]
+    },
+    {
+      "id": "modifiers",
+      "yPx": 492,
+      "yPt": 164,
+      "keyHeightPx": 135,
+      "keyHeightPt": 45,
+      "keys": [
+        {
+          "id": "modifiers-1",
+          "index": 0,
+          "label": "#+=",
+          "output": null,
+          "rect": {
+            "xPx": 20,
+            "yPx": 492,
+            "widthPx": 150,
+            "heightPx": 135,
+            "xPt": 6.667,
+            "yPt": 164,
+            "widthPt": 50,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 44,
+          "semantic": "symbols-switch"
+        },
+        {
+          "id": "modifiers-2",
+          "index": 1,
+          "label": ".",
+          "output": ".",
+          "rect": {
+            "xPx": 214,
+            "yPx": 492,
+            "widthPx": 164,
+            "heightPx": 135,
+            "xPt": 71.333,
+            "yPt": 164,
+            "widthPt": 54.667,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 18,
+          "semantic": "text"
+        },
+        {
+          "id": "modifiers-3",
+          "index": 2,
+          "label": ",",
+          "output": ",",
+          "rect": {
+            "xPx": 396,
+            "yPx": 492,
+            "widthPx": 164,
+            "heightPx": 135,
+            "xPt": 132,
+            "yPt": 164,
+            "widthPt": 54.667,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 18,
+          "semantic": "text"
+        },
+        {
+          "id": "modifiers-4",
+          "index": 3,
+          "label": "?",
+          "output": "?",
+          "rect": {
+            "xPx": 578,
+            "yPx": 492,
+            "widthPx": 164,
+            "heightPx": 135,
+            "xPt": 192.667,
+            "yPt": 164,
+            "widthPt": 54.667,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 18,
+          "semantic": "text"
+        },
+        {
+          "id": "modifiers-5",
+          "index": 4,
+          "label": "!",
+          "output": "!",
+          "rect": {
+            "xPx": 760,
+            "yPx": 492,
+            "widthPx": 164,
+            "heightPx": 135,
+            "xPt": 253.333,
+            "yPt": 164,
+            "widthPt": 54.667,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 18,
+          "semantic": "text"
+        },
+        {
+          "id": "modifiers-6",
+          "index": 5,
+          "label": "’",
+          "output": "'",
+          "rect": {
+            "xPx": 942,
+            "yPx": 492,
+            "widthPx": 164,
+            "heightPx": 135,
+            "xPt": 314,
+            "yPt": 164,
+            "widthPt": 54.667,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 44,
+          "semantic": "text"
+        },
+        {
+          "id": "modifiers-7",
+          "index": 6,
+          "label": "delete",
+          "output": null,
+          "rect": {
+            "xPx": 1150,
+            "yPx": 492,
+            "widthPx": 151,
+            "heightPx": 135,
+            "xPt": 383.333,
+            "yPt": 164,
+            "widthPt": 50.333,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": null,
+          "semantic": "repeat-delete"
+        }
+      ]
+    },
+    {
+      "id": "bottom",
+      "yPx": 660,
+      "yPt": 220,
+      "keyHeightPx": 135,
+      "keyHeightPt": 45,
+      "keys": [
+        {
+          "id": "bottom-1",
+          "index": 0,
+          "label": "ABC",
+          "output": null,
+          "rect": {
+            "xPx": 20,
+            "yPx": 660,
+            "widthPx": 144,
+            "heightPx": 135,
+            "xPt": 6.667,
+            "yPt": 220,
+            "widthPt": 48,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 18,
+          "semantic": "alphabet-switch"
+        },
+        {
+          "id": "bottom-2",
+          "index": 1,
+          "label": "emoji",
+          "output": null,
+          "rect": {
+            "xPx": 182,
+            "yPx": 660,
+            "widthPx": 144,
+            "heightPx": 135,
+            "xPt": 60.667,
+            "yPt": 220,
+            "widthPt": 48,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 18,
+          "semantic": "emoji-selector"
+        },
+        {
+          "id": "bottom-3",
+          "index": 2,
+          "label": "space",
+          "output": null,
+          "rect": {
+            "xPx": 344,
+            "yPx": 660,
+            "widthPx": 632,
+            "heightPx": 135,
+            "xPt": 114.667,
+            "yPt": 220,
+            "widthPt": 210.667,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": 18,
+          "semantic": "cursor-trackpad-and-space"
+        },
+        {
+          "id": "bottom-4",
+          "index": 3,
+          "label": "return",
+          "output": null,
+          "rect": {
+            "xPx": 994,
+            "yPx": 660,
+            "widthPx": 307,
+            "heightPx": 135,
+            "xPt": 331.333,
+            "yPt": 220,
+            "widthPt": 102.333,
+            "heightPt": 45
+          },
+          "horizontalGapAfterPx": null,
+          "semantic": "newline"
+        }
+      ]
+    }
+  ],
+  "glyphs": {
+    "numericKeyFont": "SF system. Current app font 19pt; native optical font size requires real-device validation.",
+    "specialToggleFontPt": 15,
+    "space": "Blank centered; no space-outline glyph; no bottom-right A in number/symbol pages.",
+    "emoji": {
+      "kind": "NativeEmojiGlyph",
+      "widthPt": 18.67,
+      "heightPt": 18.67,
+      "locationWithinKeyPx": {
+        "x": 44,
+        "y": 38
+      },
+      "foreground": "template monochrome",
+      "provenance": "Screenshot traced; not a proprietary SF Symbol export."
+    },
+    "delete": {
+      "systemSymbol": "delete.left",
+      "nativeVisibleBoundsPx": {
+        "x": 1193,
+        "y": 536,
+        "width": 61,
+        "height": 51
+      },
+      "previousAltboardAlphabetBoundsPx": {
+        "x": 1195,
+        "y": 602,
+        "width": 57,
+        "height": 48
+      },
+      "nativeGlyphCenterWithinKeyPt": {
+        "x": 24.5,
+        "y": 23.166666666666668
+      },
+      "oldFontPt": 18,
+      "targetFontPt": 19.25
+    },
+    "smartQuoteLabels": [
+      {
+        "display": "”",
+        "insert": "\"",
+        "reason": "Keep ASCII typing semantics while matching native visual curved double quote."
+      },
+      {
+        "display": "’",
+        "insert": "'",
+        "reason": "Native appearance; host text remains conventional apostrophe."
+      }
+    ],
+    "keyPress": "Pressed fill distinct during touch-down; quick tap flash is 80ms. Digit and punctuation actions still use existing KeyButton.",
+    "cornerRadiusBehavior": "Keep existing rounded rectangle radius until measured physical shadow/corners are validated."
+  },
+  "interactions": {
+    "numbersAfterSpace": "Numbers page remains after a numeric entry followed by Space.",
+    "punctuationAfterSpace": "Return to Alphabet after punctuation then Space.",
+    "alphabetButton": "ABC at bottom left; no duplicate ABC on third row.",
+    "symbolShiftToggle": "#+= switches numeric page to additional symbols, 123 switches back.",
+    "repeatedDelete": "Continue to delete on hold; no separate text glyph.",
+    "touchTarget": "Visual key rectangles are not actual hitboxes; align gap-sharing with KeyTouchMap when numeric/symbol page supports touch policy."
+  },
+  "alternateSymbolsPage": {
+    "source": "Current Altboard source arrays; no native alternate-symbol screenshot was supplied, so these are not claimed as Apple-exact.",
+    "firstRow": [
+      "[",
+      "]",
+      "{",
+      "}",
+      "#",
+      "%",
+      "^",
+      "*",
+      "+",
+      "="
+    ],
+    "secondRow": [
+      "_",
+      "\\",
+      "|",
+      "~",
+      "<",
+      ">",
+      "€",
+      "£",
+      "¥",
+      "•"
+    ],
+    "thirdRow": [
+      "123",
+      ".",
+      ",",
+      "?",
+      "!",
+      "’",
+      "delete"
+    ],
+    "fourthRow": [
+      "ABC",
+      "emoji",
+      "space",
+      "return"
+    ],
+    "sameGeometryAsNumericPage": true
+  },
+  "validation": [
+    "No x-axis overflow at 440pt, QWERTZ and QWERTY layouts",
+    "Each of 31 visible native numeric-key rectangles is matched within 1–2px at inferred 3x scale",
+    "No symbol rows grow to fill an unintended width after switching pages",
+    "Rightmost Delete uses a 50pt wide visual key and approximately 61×51px glyph",
+    "Bottom row remains 48pt / 48pt / 210.67pt / 102pt, visually blank Space",
+    "Keyboard background joins host's lower RGB(33,33,33) strip without hard seam",
+    "Emoji glyph is filled grinning face, 18.67pt; eye and grin cutouts are transparent",
+    "Change numeric pages and enter punctuation then Space without changing characters unexpectedly",
+    "Verify dark and light mode, keyboard app preview and actual extension on iPhone"
+  ],
+  "status": {
+    "code": "Prepared in separate new Git commit pending push; full Xcode and device tests still required",
+    "exactAppleLayout": "Not claimed. Screenshot-derived measurement."
+  }
+}
