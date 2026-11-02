@@ -6,6 +6,7 @@ on:
       - feat/cantonese-qwen3-offline-mvp
       - fix/ios-keyboard-haptics-caps-20261102
       - feat/live-yale-haptics-diagnostics-20261102
+      - fix/haptic-core-canto-ime-20261102
   workflow_dispatch:
 
 permissions:

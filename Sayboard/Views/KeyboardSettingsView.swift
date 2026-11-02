@@ -34,6 +34,14 @@ struct KeyboardSettingsView: View {
             .foregroundStyle(.secondary)
         }
         Toggle("Haptic Feedback", isOn: self.$keyboardHapticsEnabled)
+        Picker("Haptic engine", selection: self.$hapticDriverRaw) {
+          ForEach(KeyboardHapticDriver.allCases, id: \.self) { driver in
+            Text(driver.displayName).tag(driver.rawValue)
+          }
+        }
+        Text("Core Haptics is the default because UIKit feedback was silent in the diagnostic test. The keyboard falls back to original Altboard's SwiftUI sensory feedback if iOS rejects Core Haptics.")
+          .font(.footnote)
+          .foregroundStyle(.secondary)
         VStack(alignment: .leading, spacing: 10) {
           HStack {
             Text("Haptic strength")
@@ -59,6 +67,7 @@ struct KeyboardSettingsView: View {
         VStack(alignment: .leading, spacing: 6) {
           Text("Compare haptic engines").font(.footnote.weight(.medium))
           HStack {
+            Button("SwiftUI") { KeyboardHaptics.key(enabled: true, technique: .sensory) }
             Button("Selection") { KeyboardHaptics.key(enabled: true, technique: .selection) }
             Button("Soft") { KeyboardHaptics.key(enabled: true, technique: .soft) }
             Button("Heavy") { KeyboardHaptics.key(enabled: true, technique: .heavy) }
@@ -104,7 +113,12 @@ struct KeyboardSettingsView: View {
     }
     .navigationTitle("Keyboard")
     .navigationBarTitleDisplayMode(.inline)
+    .sensoryFeedback(.selection, trigger: self.sensoryPulse.count)
   }
+
+  @StateObject private var sensoryPulse = KeyboardSensoryPulse.shared
+  @AppStorage(SharedKey.keyboardHapticDriver, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var hapticDriverRaw = KeyboardHapticDriver.coreHaptics.rawValue
 
   @AppStorage(SharedKey.keyboardHapticsEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
   private var keyboardHapticsEnabled = true

@@ -120,6 +120,19 @@ struct SharedSettingsDefaultsTests {
   }
 
   @Test
+  func hapticDriverDefaultsToCoreAndPersists() throws {
+    let suiteName = Self.uniqueSuiteName()
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { Self.cleanup(suiteName: suiteName) }
+    let settings = SharedSettings(defaults: defaults)
+    #expect(settings.keyboardHapticDriver == .coreHaptics)
+    settings.keyboardHapticDriver = .sensoryFeedback
+    #expect(SharedSettings(defaults: defaults).keyboardHapticDriver == .sensoryFeedback)
+    settings.keyboardHapticDriver = .uiKit
+    #expect(SharedSettings(defaults: defaults).keyboardHapticDriver == .uiKit)
+  }
+
+  @Test
   func hapticStrengthIsClampedAndPersists() throws {
     let suiteName = Self.uniqueSuiteName()
     let defaults = try #require(UserDefaults(suiteName: suiteName))

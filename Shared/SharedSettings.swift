@@ -240,6 +240,18 @@ struct SharedSettings {
     nonmutating set { defaults.set(newValue, forKey: SharedKey.keyboardHapticsEnabled) }
   }
 
+  var keyboardHapticDriver: KeyboardHapticDriver {
+    get {
+      guard let saved = defaults.string(forKey: SharedKey.keyboardHapticDriver) else {
+        return .coreHaptics
+      }
+      return KeyboardHapticDriver(rawValue: saved) ?? .coreHaptics
+    }
+    nonmutating set {
+      defaults.set(newValue.rawValue, forKey: SharedKey.keyboardHapticDriver)
+    }
+  }
+
   var keyboardAutoCapitalizationEnabled: Bool {
     get { defaults.object(forKey: SharedKey.keyboardAutoCapitalizationEnabled) as? Bool ?? true }
     nonmutating set { defaults.set(newValue, forKey: SharedKey.keyboardAutoCapitalizationEnabled) }

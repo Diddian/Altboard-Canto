@@ -1,32 +1,27 @@
-# Haptic troubleshooting (iOS custom keyboard)
+# Haptic diagnosis: iOS 27.2 / SideStore
 
-## What the app actually measures
+## Grounded device observation
+- Full Access = Yes and keyboard App Group = Yes.
+- Core Haptics from the *containing app* produces real vibration.
+- `UIImpactFeedbackGenerator` and `UISelectionFeedbackGenerator` were invoked in the app but did not cause felt vibration.
+- The old diagnostic trace has only `app heavy` records. Keyboard extension calls have not been proven by it.
 
-Altboard-Canto calls public UIKit `UISelectionFeedbackGenerator` and `UIImpactFeedbackGenerator` APIs. Requests from the keyboard extension and main Settings app are recorded into an App Group `UserDefaults` ring buffer (max 40 events). The log stores **no characters, content, host application names, or transcription**. The system does not return a "vibration succeeded" result; event counts only establish attempted API calls.
+## Why this implementation changed
+Original Altboard uses SwiftUI `.sensoryFeedback(.selection, trigger:)` from `KeyButton` and `SpaceBarKey`; the fork substituted UIKit generators, which are silent on the reported device. This branch makes **Core Haptics** the default (confirmed to vibrate in containing app), with a per-process engine reused between keys. If the extension cannot create/start Core Haptics, it falls back to the upstream SwiftUI `.sensoryFeedback` path. **UIKit** stays as an explicitly selectable comparison.
+
+The public Core Haptics API returns an error when engine setup or playback fails. A successful API call does *not* prove a physical pulse. The app and extension have separate processes, so Core Haptics success in the app cannot prove it works in the extension.
 
 References:
-- Apple: https://developer.apple.com/documentation/uikit/uifeedbackgenerator
-- Apple's custom keyboard limitations: https://developer.apple.com/documentation/uikit/creating-a-custom-keyboard
-- Open-source keyboard reference: https://github.com/JoeManto/Haptic-Feedback-Keyboard (legacy iOS <13; its README documents Taptic Engine restrictions in extensions).
-- SwiftKey/Gboard provide user-facing haptic controls, but their private implementation is not a public API to copy.
+- https://github.com/Altboard/Altboard
+- https://developer.apple.com/documentation/corehaptics
+- https://developer.apple.com/documentation/uikit/uifeedbackgenerator
+- https://jyutping.app/en/faq/
 
-## Reproduce
+## Diagnostic sequence
+1. Leave Settings > Keyboard > Haptic engine set to Core Haptics, tap **Test haptic** and preview letter keys. Confirm physical response.
+2. Open History test input, switch to Altboard and type 10 letters. Do **not** clear the trace first unless you want a fresh experiment.
+3. Return to Settings > Diagnostics and tap Refresh haptic trace. Look for `extension core`, `extension core->sensory` or `extension swiftui`; `app` alone is not evidence the extension attempted feedback.
+4. Try `SwiftUI (original Altboard)` from Keyboard Settings and repeat to test the fallback independently.
+5. If extension feedback remains silent, compare the user's system keyboard haptics, iOS vibration setting, SideStore entitlements and extension logs. Avoid private vibration/audio system sound IDs.
 
-1. On an actual iPhone (not simulator), open Altboard > Settings > Keyboard and tap Test haptic and its interactive preview.
-2. Open Settings > Diagnostics > Haptic Diagnostics. Tap Selection, Soft, Light, Medium, Heavy and Core Haptics (app) tests.
-3. In History, focus the new keyboard-testing field, switch to Altboard, type 10 letters. Return to Diagnostics, refresh haptic trace and copy the diagnostics.
-4. Compare **main-app trace** against **keyboard extension trace**. If app tests vibrate but the extension does not, the problem is not letter-button layout or keyboard setting; extension-context haptic delivery is the likely cause.
-5. Verify iOS Settings > Accessibility > Touch > Vibration. Compare with Apple's system keyboard feedback Settings > Sounds & Haptics > Keyboard Feedback.
-6. If trace shows no keyboard attempts, test whether the extension has App Group access and Full Access, whether your SideStore install preserved entitlements and whether the keyboard view actually receives touch events.
-7. Compare a discrete UIKit impact style (parameterless `impactOccurred()`) against selection. Modern open-source keyboard Wurstfinger reports that the `impactOccurred(intensity:)` overload may require `CHHapticEngine`, which a keyboard sandbox blocks. Key feedback is fired exactly once on touch-down.
-8. If requests are logged but still silent, UIKit does not report physical output. Do not claim that changing intensity fixes iOS extension restrictions. Do not use private Taptic Engine APIs or undocumented system sounds.
-
-Modern haptic implementation: https://github.com/cl445/wurstfinger/blob/develop/wurstfingerKeyboard/Settings/HapticFeedbackPlayer.swift
-Feedback library: https://github.com/KeyboardKit/KeyboardKit
-
-## Acceptance
-
-- Each keyboard press sends exactly one public UIKit request (subject to long-press behavior).
-- Preview and the main-app diagnostic use the same shared haptic settings as the extension.
-- Main app reports hardware Core Haptics support and errors; trace includes timestamp, request count, request type, app/extension origin, and Full Access status.
-- Normal typing stays responsive; haptic traces never store typed input.
+Trace stores only attempt count, driver, process origin, Full Access and error category. No typed characters, host bundle IDs, transcript or clipboard content.

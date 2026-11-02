@@ -130,8 +130,10 @@ struct KeyboardView: View {
   let proxy: KeyboardProxy
 
   @ObservedObject var keyboardState: KeyboardState
+  @StateObject private var sensoryPulse = KeyboardSensoryPulse.shared
 
   var body: some View {
+    Group {
     if let blocker = self.activeBlocker, self.keyboardState.keyboardKind != .alphabetic {
       VStack(spacing: 0) {
         BlockerPrompt(blocker: blocker)
@@ -188,6 +190,8 @@ struct KeyboardView: View {
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
       .environment(\.keyboardHapticsEnabled, self.keyboardState.keyboardHapticsEnabled)
     }
+    }
+    .sensoryFeedback(.selection, trigger: self.sensoryPulse.count)
   }
 
   @Environment(\.openURL) private var openURL

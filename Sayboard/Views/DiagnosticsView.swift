@@ -16,6 +16,7 @@ struct DiagnosticsView: View {
   @State private var hapticTotal = 0
   @State private var coreHapticStatus = ""
   @State private var coreHapticEngine: CHHapticEngine?
+  @StateObject private var sensoryPulse = KeyboardSensoryPulse.shared
 
   var body: some View {
     Form {
@@ -30,6 +31,7 @@ struct DiagnosticsView: View {
     .navigationTitle("Diagnostics")
     .navigationBarTitleDisplayMode(.inline)
     .onAppear(perform: self.refresh)
+    .sensoryFeedback(.selection, trigger: self.sensoryPulse.count)
   }
 
   private var permissionsSection: some View {
@@ -86,6 +88,7 @@ struct DiagnosticsView: View {
       LabeledContent("App Group haptics enabled", value: self.yesNo(SharedSettings().keyboardHapticsEnabled))
       LabeledContent("Requested events", value: String(self.hapticTotal))
       LabeledContent("Keyboard Full Access", value: self.report(self.permissions.keyboardReportedFullAccess))
+      LabeledContent("Configured haptic engine", value: SharedSettings().keyboardHapticDriver.displayName)
       ForEach(KeyboardHaptics.Technique.allCases, id: \.rawValue) { technique in
         Button("Test " + technique.displayName + " haptic") {
           KeyboardHaptics.key(enabled: true, technique: technique)
@@ -115,7 +118,7 @@ struct DiagnosticsView: View {
     } header: {
       Text("Haptic Diagnostics")
     } footer: {
-      Text("Entries record UIKit feedback requests, not a verified vibration. If all tests are silent, verify Settings > Accessibility > Touch > Vibration and keyboard Full Access; compare the system keyboard on the same device.")
+      Text("Events record calls, not confirmed physical vibration. Core Haptics errors are recorded separately. App and keyboard extension use separate processes; compare both in this trace.")
     }
   }
 
@@ -302,6 +305,7 @@ struct DiagnosticsView: View {
       "Offline IME: \(self.offlineImeStatus)",
       "Haptic capable: \(CHHapticEngine.capabilitiesForHardware().supportsHaptics)",
       "Haptic enabled: \(SharedSettings().keyboardHapticsEnabled)",
+      "Haptic engine: \(SharedSettings().keyboardHapticDriver.displayName)",
       "Haptic requested count: \(KeyboardHapticTrace.total)",
       "Haptic request trace (no typed characters):",
       KeyboardHapticTrace.events.joined(separator: "\n"),

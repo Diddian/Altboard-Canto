@@ -138,6 +138,7 @@ enum SharedKey {
   static let keyboardLetterArrangement = "keyboardLetterArrangement"
   static let keyboardHeightScale = "keyboardHeightScale"
   static let keyboardHapticsEnabled = "keyboardHapticsEnabled"
+  static let keyboardHapticDriver = "keyboardHapticDriver"
   static let keyboardAutoCapitalizationEnabled = "keyboardAutoCapitalizationEnabled"
   static let keyboardTypingLanguage = "keyboardTypingLanguage" // Legacy: ignored by Alphabet.
   static let keyboardRomanizationScheme = "keyboardRomanizationScheme"
