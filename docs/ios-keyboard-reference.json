@@ -29,11 +29,11 @@
   "rows": [
     {
       "letters": "QWERTZUIOP",
-      "edgeInsetPt": 6.67
+      "edgeInsetPt": 3.67
     },
     {
       "letters": "ASDFGHJKL",
-      "edgeInsetPt": 28
+      "edgeInsetPt": 25
     },
     {
       "letters": "YXCVBNM",
@@ -84,14 +84,26 @@
         "paddingRightPt": 6,
         "paddingBottomPt": 4,
         "color": "UIColor.secondaryLabel",
-        "scope": "Alphabet only"
+        "scope": "Only Alphabet letter page; hidden on numeric/symbol pages",
+        "emptyCenter": true
       },
       "emojiKey": {
         "symbol": "face.smiling.inverse",
         "sizePt": 28,
         "style": "filled white face (SF Symbols; native screenshot visual approximation)"
       },
-      "swipeTyping": "Planned only: docs/swipe-typing-en-de-plan.json"
+      "swipeTyping": "Planned only: docs/swipe-typing-en-de-plan.json",
+      "keyPressVisual": "Touch-down and quick-release highlight; dark pressed #787878 (120/255) vs default #434343 (67/255), currently a visual prototype",
+      "symbolSpaceReturn": "After typing a nonnumber symbol in the Alphabet numeric/symbol subpage, Space inserts one space and returns to Alphabet letters; digits keep the numeric page.",
+      "cantoneseExpandedCandidates": {
+        "disclosure": "29pt right-side chevron toggles a 4-column, vertically scrolling candidate grid",
+        "limit": 200,
+        "heightPt": 159,
+        "ranking": "exact single-character readings -> exact phrases -> prefix candidates; local selection frequency within group",
+        "alias": "Untoned ng may offer 唔 as extra user-friendly alias for standard m4; canonical stored romanization remains m4",
+        "toneDigits": "Strict tone-aware search retained; no alias when tone digit typed",
+        "editing": "Host text suffix verified before replacement, no raw typed-content trace"
+      }
     },
     "defaultLetterArrangement": "qwertz"
   },
@@ -117,22 +129,22 @@
     "nativeSecondRowTopPx": 355,
     "nativeThirdRowTopPx": 523,
     "nativeBottomRowTopPx": 691,
-    "note": "Native screenshot measurements are approximate; runtime keys use shared layout geometry with fixed canvas height, not a fractional height slider.",
+    "note": "IMG_9674 and IMG_9675 have matching 1320px widths and 3x inferred scale; these measurements are observed pixels, not an Apple published spec. Host presentation can affect absolute keyboard position.",
     "keyboardContainer": {
       "roundedTopCorners": "system-controlled UIInputView",
       "inputFieldMinHeightPt": 76,
       "historyBackdrop": "KeyboardPalette.backdrop",
-      "bottomBlankSpacePt": 20
+      "bottomBlankSpacePt": 3
     },
-    "keyboardRowsHeightPt": 270,
-    "totalTypingCanvasPt": 290,
-    "nativeHeightTarget": "290pt screenshot-derived iPhone height (871px / 3 = 290.33pt)",
+    "keyboardRowsHeightPt": 274,
+    "totalTypingCanvasPt": 277,
+    "nativeHeightTarget": "Screenshot-relative goal: remove extra 39px (~13pt) bottom gap; keep content at 274pt",
     "nativeFirstRowTopPt": 57.33,
     "runtimeFirstRowTopPt": 57
   },
   "build": {
-    "baseAlphabetHeightPt": 290,
-    "defaultAlphabetHeightPt": 290,
+    "baseAlphabetHeightPt": 277,
+    "defaultAlphabetHeightPt": 277,
     "directIPAArtifact": "actions/upload-artifact@v7 archive:false",
     "releaseAsset": "Altboard-Canto-SideStore.ipa",
     "keyboardHeightUserAdjustable": false,
@@ -194,7 +206,12 @@
     "IMG_9659.jpeg",
     "IMG_9660.jpeg",
     "IMG_9669.jpeg",
-    "IMG_9670.jpeg"
+    "IMG_9670.jpeg",
+    "IMG_9674.png",
+    "IMG_9675.png",
+    "IMG_9676.jpeg",
+    "IMG_9677.jpeg",
+    "IMG_9678.jpeg"
   ],
   "preciseComparison": "docs/ios-keyboard-native-vs-altboard-pixel-comparison.json",
   "touchTargeting": {
@@ -214,5 +231,102 @@
     "debug": "Settings > Help > Diagnostics > Keyboard Touch Diagnostics > Show Key Touch Areas. Orange = touch; dashed cyan = visible",
     "model": "language-matched offline completion suggestions; Jyutping only when romanization selected is Jyutping; no unverified Yale mapping",
     "note": "Implementation is inspired by open source, not the native Apple hit-testing algorithm; testing and calibration remain necessary"
+  },
+  "latestScreenshotComparison": {
+    "imagePair": [
+      "IMG_9674.png native QWERTY keyboard",
+      "IMG_9675.png Altboard Alphabet"
+    ],
+    "imageSizePx": [
+      1320,
+      2868
+    ],
+    "scaleAssumption": "3 pixels per logical point",
+    "keyboardBackdropObservedRGB": {
+      "native": [
+        31,
+        31,
+        31
+      ],
+      "altboard": [
+        31,
+        31,
+        31
+      ],
+      "conclusion": "Same dominant base backdrop sampled from screenshots. Do not arbitrarily change #1F1F1F; adjust key fill/insets and test host corner blending."
+    },
+    "visibleKeyFillObservedRGB": {
+      "native": [
+        67,
+        67,
+        67
+      ],
+      "altboard": [
+        68,
+        68,
+        68
+      ]
+    },
+    "topRowQRectPx": {
+      "native": {
+        "x": 20,
+        "y": 1983,
+        "width": 111,
+        "height": 135
+      },
+      "altboardBefore": {
+        "x": 29,
+        "y": 1944,
+        "width": 110,
+        "height": 135
+      }
+    },
+    "topRowPLeftPx": {
+      "native": 1189,
+      "altboardBefore": 1181
+    },
+    "secondRowALeftPx": {
+      "native": 84,
+      "altboardBefore": 93
+    },
+    "thirdRowShiftLeftPx": {
+      "native": 20,
+      "altboardBefore": 20
+    },
+    "bottomRowSpaceTopPx": {
+      "native": 2487,
+      "altboardBefore": 2448
+    },
+    "measuredDeltasPt": {
+      "firstRowLeftGap": 3,
+      "secondRowLeftGap": 3,
+      "bottomRowVerticalOffset": 13,
+      "nativeFirstAndLastKeysSymmetric": "Yes within approx. 1px after correcting inset"
+    },
+    "changes": {
+      "topRowInsetPt": {
+        "before": 6.67,
+        "after": 3.67
+      },
+      "secondRowInsetPt": {
+        "before": 28,
+        "after": 25
+      },
+      "thirdRowShiftInsetPt": 6.67,
+      "canvasHeightPt": {
+        "before": 290,
+        "after": 277
+      },
+      "defaultSpaceBarGlyph": "none",
+      "smallAIndicator": "letters only",
+      "numericThirdRow": "#+= or 123; no duplicated ABC, ABC remains bottom-left",
+      "pressedFillRGB": [
+        120,
+        120,
+        120
+      ]
+    },
+    "symbolReference": "IMG_9676.jpeg native numeric keyboard: top 1-0, second punctuation, third #+= punctuation backspace, bottom ABC Emoji Space Return",
+    "visualReliability": "Approximate geometry from screenshots; no claim of 100% Apple private parity"
   }
 }

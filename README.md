@@ -17,7 +17,7 @@ This fork's development IPA is an unsigned build for SideStore. It contains the 
 
 The **Alphabet** keyboard always accepts Latin typing. If Cantonese appears in Preferred Languages, it additionally suggests traditional Chinese candidates using offline **Jyutping / Yale / Yuetyam** lookup without a separate EN/粵 key. The History tab contains a keyboard testing field; Settings > Diagnostics records privacy-safe haptic request traces.
 
-[Build workflow](https://github.com/Diddian/Altboard-Canto/actions/workflows/build-unsigned-ipa.yml) · [Current release](https://github.com/Diddian/Altboard-Canto/releases/tag/altboard-canto-dev)
+[Build workflow](https://github.com/Diddian/Altboard-Canto/actions/workflows/build-unsigned-ipa.yml) · [Current release](https://github.com/Diddian/Altboard-Canto/releases/tag/altboard-canto-dev) · [Development task tracker](docs/TASKS.md)
 
 
 <p align="center">

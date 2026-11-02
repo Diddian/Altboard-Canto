@@ -1418,5 +1418,65 @@
     "release": "Unsigned IPA including custom keyboard and App Group uploaded directly; no ZIP as the user-visible asset",
     "visual": "Overlay new iPhone screenshots on reference to confirm alignment within 3px; target is not guaranteed until verified",
     "interaction": "Verify spelling, cursor tracking, long-press accents, swipe gestures, Cantonese suggestions, and mic routing without native crashes"
+  },
+  "latestReview": {
+    "source": [
+      "IMG_9674.png",
+      "IMG_9675.png",
+      "IMG_9676.jpeg",
+      "IMG_9677.jpeg",
+      "IMG_9678.jpeg"
+    ],
+    "scaleAssumption": 3,
+    "topRowReference": [
+      {
+        "source": "native",
+        "firstKeyLeft": 20,
+        "lastKeyLeft": 1189,
+        "topY": 1983
+      },
+      {
+        "source": "Altboard previous",
+        "firstKeyLeft": 29,
+        "lastKeyLeft": 1181,
+        "topY": 1944
+      }
+    ],
+    "secondRowReference": [
+      {
+        "source": "native",
+        "firstKeyLeft": 84
+      },
+      {
+        "source": "Altboard previous",
+        "firstKeyLeft": 93
+      }
+    ],
+    "bottomRowReference": [
+      {
+        "source": "native",
+        "spaceTopY": 2487
+      },
+      {
+        "source": "Altboard previous",
+        "spaceTopY": 2448
+      }
+    ],
+    "colors": {
+      "backdropNative": "#1F1F1F",
+      "backdropAltboard": "#1F1F1F",
+      "idleFillNative": "#434343",
+      "idleFillAltboardPrevious": "#444444",
+      "newPressedColorPrototype": "#787878"
+    },
+    "behavior": {
+      "symbolThirdRow": "No extra ABC on numeric row; ABC only bottom left",
+      "spaceAfterSymbol": "Return to Alphabet after nonnumeric symbol and space",
+      "spaceCenter": "Leave blank, small bottom right A only on letters",
+      "candidateGrid": "Right disclosure expands 4-column Chinese grid",
+      "singleSyllable": "Exact Chinese characters prioritized",
+      "negativeAlias": "ng includes 唔 user convenience alias, canonical m4"
+    },
+    "caveat": "User supplied screenshots; one common scale but differing input-host composition may change keyboard absolute location. Verify on physical iPhone."
   }
 }
