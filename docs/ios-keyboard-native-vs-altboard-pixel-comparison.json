@@ -1,0 +1,1422 @@
+{
+  "schema": "altboard.ios.keyboard.pixel-comparison.v4",
+  "created": "2026-11-02",
+  "purpose": "Screenshot-grounded comparison of native iOS (user-supplied) against old Altboard, with current target. Keep implementation values and measurement uncertainties separate.",
+  "imageSources": [
+    {
+      "file": "IMG_9658.jpeg",
+      "role": "native iOS dark QWERTZ keyboard + suggestions",
+      "sizePx": [
+        1320,
+        871
+      ],
+      "keyRowsStartYPx": [
+        172,
+        340,
+        508,
+        676
+      ],
+      "confidence": "segmented from user image"
+    },
+    {
+      "file": "IMG_9659.jpeg",
+      "role": "native iOS dark QWERTZ keyboard alternate header offset",
+      "sizePx": [
+        1320,
+        861
+      ],
+      "keyRowsStartYPx": [
+        187,
+        355,
+        523,
+        691
+      ],
+      "keyShiftRelativeToPrimaryPx": 15,
+      "confidence": "segmented from user image"
+    },
+    {
+      "file": "IMG_9660.jpeg",
+      "role": "old Altboard dark QWERTZ before geometry correction",
+      "sizePx": [
+        1320,
+        899
+      ],
+      "keyRowsStartYPx": [
+        223,
+        391,
+        559,
+        727
+      ],
+      "keyShiftRelativeToPrimaryPx": 51,
+      "confidence": "segmented against RGB(58,58,60)"
+    },
+    {
+      "file": "IMG_9669.jpeg",
+      "role": "History test-field and toolbar edge screenshot, cropped",
+      "sizePx": [
+        1320,
+        486
+      ],
+      "confidence": "visual inspection only"
+    },
+    {
+      "file": "IMG_9670.jpeg",
+      "role": "native prediction strip, cropped",
+      "sizePx": [
+        1320,
+        200
+      ],
+      "confidence": "visual inspection and grayscale text sampling"
+    }
+  ],
+  "measurement": {
+    "methods": [
+      "RGB connected-component segmentation of key fills at ±6 color tolerance",
+      "Pixel-coordinate key boxes, visually inspected",
+      "Grayscale histogram of prediction glyph pixels"
+    ],
+    "tools": "Python Pillow and OpenCV, no image-generation or private Apple keyboard APIs",
+    "inferredDeviceScale": 3,
+    "nativeKeyHeight": {
+      "pixels": 135,
+      "pointsApprox": 45
+    },
+    "warning": "100% behavioral parity cannot be inferred or verified from screenshots: Apple's key hit-testing, gesture disambiguation, predictive language models and dynamic safe-area rendering are private."
+  },
+  "nativeRowGeometry": {
+    "referenceCanvasPx": {
+      "width": 1320,
+      "height": 871
+    },
+    "widthPointsAssuming3x": 440,
+    "heightPointsAssuming3x": 290.33,
+    "rowTopPx": [
+      172,
+      340,
+      508,
+      676
+    ],
+    "rowTopPointsApprox": [
+      57.33,
+      113.33,
+      169.33,
+      225.33
+    ],
+    "rowStridePixels": 168,
+    "rowStridePoints": 56,
+    "keyHeightPx": 135,
+    "keyHeightPt": 45,
+    "visibleRowGapPx": 33,
+    "visibleRowGapPt": 11,
+    "horizontalLetterGapPx": 18,
+    "horizontalLetterGapPt": 6,
+    "standardLetterWidthPxRange": [
+      111,
+      112
+    ],
+    "standardLetterWidthPtRange": [
+      37,
+      37.33
+    ],
+    "outerInsetPx": 20,
+    "outerInsetPt": 6.67,
+    "homeRowInsetPx": 84,
+    "homeRowInsetPt": 28,
+    "thirdRowShiftKeyWidthPx": 150,
+    "bottomRowKeySizesPx": {
+      "numbers": [
+        144,
+        135
+      ],
+      "emoji": [
+        144,
+        135
+      ],
+      "space": [
+        632,
+        135
+      ],
+      "return": [
+        307,
+        135
+      ]
+    },
+    "bottomWhitespacePx": 60,
+    "bottomWhitespacePt": 20
+  },
+  "comparisons": {
+    "nativePrimaryVsOldAltboard": {
+      "differenceFirstRowYPx": 51,
+      "differenceFirstRowYPt": 17,
+      "differenceForAlternateNativeScreenshotYPx": 36,
+      "visualKeySizeDifference": "Approximately 0-1px across native and older Altboard; matching outer key geometry was already close.",
+      "keyFillRGB": {
+        "nativeApprox": [
+          68,
+          68,
+          68
+        ],
+        "oldAltboardApprox": [
+          58,
+          58,
+          60
+        ],
+        "newTarget": [
+          68,
+          68,
+          68
+        ]
+      },
+      "backdropRGB": {
+        "nativeApprox": [
+          31,
+          31,
+          31
+        ],
+        "newTarget": [
+          31,
+          31,
+          31
+        ]
+      },
+      "gapDifferencePx": {
+        "horizontal": 0,
+        "vertical": 0
+      },
+      "labelDifference": {
+        "native": "SF system regular, approx 23pt; uppercase first letter depending on text context",
+        "oldAltboard": "SF system regular, lower-case shown by default in prior screenshot",
+        "newTarget": "SF system regular 23pt; -1.2pt optical upward offset"
+      },
+      "emojiDifference": {
+        "native": "white filled circular smiling-face key icon",
+        "oldAltboard": "outline smiling-face icon",
+        "newTarget": "face.smiling.inverse, 28pt; verify on physical phone"
+      },
+      "spaceIndicatorDifference": {
+        "native": "small low-contrast A at bottom-right of Space",
+        "oldAltboard": "A missing",
+        "newTarget": "A at bottom trailing: 10pt, trailing 6pt, bottom 4pt"
+      },
+      "predictBarDifference": {
+        "native": "three equal columns with two vertical dividers",
+        "oldAltboard": "settings/translate/AI and separate microphone controls",
+        "newTarget": "predictions replace toolbar while composing in the selected languages"
+      },
+      "bottomWhitespaceDifferencePx": {
+        "native": 60,
+        "oldAltboard": 37,
+        "warning": "Screenshot vertical crops differ; do not infer live safe-area sizing solely from these images"
+      }
+    },
+    "newTargetVsNativePrimary": {
+      "calculatedRowTopPt": [
+        57,
+        113,
+        169,
+        225
+      ],
+      "calculatedRowTopPxAt3x": [
+        171,
+        339,
+        507,
+        675
+      ],
+      "expectedRowTopDifferencePx": [
+        -1,
+        -1,
+        -1,
+        -1
+      ],
+      "canvasHeightTargetPt": 290,
+      "keyHeightPt": 45,
+      "keyGapXPt": 6,
+      "keyGapYPt": 11,
+      "keyCornerRadiusPt": 8,
+      "keyFont": "SF System 23pt regular",
+      "predictionFont": "SF System 19pt regular",
+      "remainingUnverified": [
+        "exact optical glyph shaping",
+        "emoji SF Symbol variants on iOS 27.2",
+        "rounded keyboard upper border gradient",
+        "tap targets under native Apple's internal keyboard",
+        "press-to-input latency",
+        "safe-area rendering in other host apps"
+      ]
+    }
+  },
+  "keyRects": [
+    {
+      "name": "Q",
+      "row": "lettersTop",
+      "position": 0,
+      "referencePx": {
+        "x": 20,
+        "y": 172,
+        "width": 111,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 20,
+        "y": 223,
+        "width": 111,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 20,
+        "y": 171,
+        "width": 111,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "W",
+      "row": "lettersTop",
+      "position": 1,
+      "referencePx": {
+        "x": 149,
+        "y": 172,
+        "width": 112,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 149,
+        "y": 223,
+        "width": 112,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 149,
+        "y": 171,
+        "width": 112,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "E",
+      "row": "lettersTop",
+      "position": 2,
+      "referencePx": {
+        "x": 279,
+        "y": 172,
+        "width": 112,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 279,
+        "y": 223,
+        "width": 112,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 279,
+        "y": 171,
+        "width": 112,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "R",
+      "row": "lettersTop",
+      "position": 3,
+      "referencePx": {
+        "x": 409,
+        "y": 172,
+        "width": 112,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 409,
+        "y": 223,
+        "width": 112,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 409,
+        "y": 171,
+        "width": 112,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "T",
+      "row": "lettersTop",
+      "position": 4,
+      "referencePx": {
+        "x": 539,
+        "y": 172,
+        "width": 112,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 539,
+        "y": 223,
+        "width": 112,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 539,
+        "y": 171,
+        "width": 112,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "Z",
+      "row": "lettersTop",
+      "position": 5,
+      "referencePx": {
+        "x": 669,
+        "y": 172,
+        "width": 112,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 669,
+        "y": 223,
+        "width": 112,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 669,
+        "y": 171,
+        "width": 112,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "U",
+      "row": "lettersTop",
+      "position": 6,
+      "referencePx": {
+        "x": 799,
+        "y": 172,
+        "width": 112,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 799,
+        "y": 223,
+        "width": 112,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 799,
+        "y": 171,
+        "width": 112,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "I",
+      "row": "lettersTop",
+      "position": 7,
+      "referencePx": {
+        "x": 929,
+        "y": 172,
+        "width": 112,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 929,
+        "y": 223,
+        "width": 112,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 929,
+        "y": 171,
+        "width": 112,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "O",
+      "row": "lettersTop",
+      "position": 8,
+      "referencePx": {
+        "x": 1059,
+        "y": 172,
+        "width": 112,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 1059,
+        "y": 223,
+        "width": 112,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 1059,
+        "y": 171,
+        "width": 112,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "P",
+      "row": "lettersTop",
+      "position": 9,
+      "referencePx": {
+        "x": 1189,
+        "y": 172,
+        "width": 112,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 1189,
+        "y": 223,
+        "width": 112,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 1189,
+        "y": 171,
+        "width": 112,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "A",
+      "row": "lettersHome",
+      "position": 0,
+      "referencePx": {
+        "x": 84,
+        "y": 340,
+        "width": 112,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 84,
+        "y": 391,
+        "width": 112,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 84,
+        "y": 339,
+        "width": 112,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "S",
+      "row": "lettersHome",
+      "position": 1,
+      "referencePx": {
+        "x": 214,
+        "y": 340,
+        "width": 112,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 214,
+        "y": 391,
+        "width": 112,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 214,
+        "y": 339,
+        "width": 112,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "D",
+      "row": "lettersHome",
+      "position": 2,
+      "referencePx": {
+        "x": 344,
+        "y": 340,
+        "width": 112,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 344,
+        "y": 391,
+        "width": 112,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 344,
+        "y": 339,
+        "width": 112,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "F",
+      "row": "lettersHome",
+      "position": 3,
+      "referencePx": {
+        "x": 474,
+        "y": 340,
+        "width": 112,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 474,
+        "y": 391,
+        "width": 112,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 474,
+        "y": 339,
+        "width": 112,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "G",
+      "row": "lettersHome",
+      "position": 4,
+      "referencePx": {
+        "x": 604,
+        "y": 340,
+        "width": 112,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 604,
+        "y": 391,
+        "width": 112,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 604,
+        "y": 339,
+        "width": 112,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "H",
+      "row": "lettersHome",
+      "position": 5,
+      "referencePx": {
+        "x": 734,
+        "y": 340,
+        "width": 112,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 734,
+        "y": 391,
+        "width": 112,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 734,
+        "y": 339,
+        "width": 112,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "J",
+      "row": "lettersHome",
+      "position": 6,
+      "referencePx": {
+        "x": 864,
+        "y": 340,
+        "width": 112,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 864,
+        "y": 391,
+        "width": 112,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 864,
+        "y": 339,
+        "width": 112,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "K",
+      "row": "lettersHome",
+      "position": 7,
+      "referencePx": {
+        "x": 994,
+        "y": 340,
+        "width": 112,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 994,
+        "y": 391,
+        "width": 112,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 994,
+        "y": 339,
+        "width": 112,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "L",
+      "row": "lettersHome",
+      "position": 8,
+      "referencePx": {
+        "x": 1124,
+        "y": 340,
+        "width": 112,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 1124,
+        "y": 391,
+        "width": 112,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 1124,
+        "y": 339,
+        "width": 112,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "shift",
+      "row": "lettersBottom",
+      "position": 0,
+      "referencePx": {
+        "x": 20,
+        "y": 508,
+        "width": 150,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 20,
+        "y": 559,
+        "width": 150,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 20,
+        "y": 507,
+        "width": 150,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "Y",
+      "row": "lettersBottom",
+      "position": 1,
+      "referencePx": {
+        "x": 214,
+        "y": 508,
+        "width": 112,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 214,
+        "y": 559,
+        "width": 112,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 214,
+        "y": 507,
+        "width": 112,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "X",
+      "row": "lettersBottom",
+      "position": 2,
+      "referencePx": {
+        "x": 344,
+        "y": 508,
+        "width": 112,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 344,
+        "y": 559,
+        "width": 112,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 344,
+        "y": 507,
+        "width": 112,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "C",
+      "row": "lettersBottom",
+      "position": 3,
+      "referencePx": {
+        "x": 474,
+        "y": 508,
+        "width": 112,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 474,
+        "y": 559,
+        "width": 112,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 474,
+        "y": 507,
+        "width": 112,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "V",
+      "row": "lettersBottom",
+      "position": 4,
+      "referencePx": {
+        "x": 604,
+        "y": 508,
+        "width": 112,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 604,
+        "y": 559,
+        "width": 112,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 604,
+        "y": 507,
+        "width": 112,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "B",
+      "row": "lettersBottom",
+      "position": 5,
+      "referencePx": {
+        "x": 734,
+        "y": 508,
+        "width": 112,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 734,
+        "y": 559,
+        "width": 112,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 734,
+        "y": 507,
+        "width": 112,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "N",
+      "row": "lettersBottom",
+      "position": 6,
+      "referencePx": {
+        "x": 864,
+        "y": 508,
+        "width": 112,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 864,
+        "y": 559,
+        "width": 112,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 864,
+        "y": 507,
+        "width": 112,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "M",
+      "row": "lettersBottom",
+      "position": 7,
+      "referencePx": {
+        "x": 994,
+        "y": 508,
+        "width": 112,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 994,
+        "y": 559,
+        "width": 112,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 994,
+        "y": 507,
+        "width": 112,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "delete",
+      "row": "lettersBottom",
+      "position": 8,
+      "referencePx": {
+        "x": 1150,
+        "y": 508,
+        "width": 151,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 1150,
+        "y": 559,
+        "width": 151,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 1150,
+        "y": 507,
+        "width": 151,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "?123",
+      "row": "controlsBottom",
+      "position": 0,
+      "referencePx": {
+        "x": 20,
+        "y": 676,
+        "width": 144,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 20,
+        "y": 727,
+        "width": 144,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 20,
+        "y": 675,
+        "width": 144,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "emoji",
+      "row": "controlsBottom",
+      "position": 1,
+      "referencePx": {
+        "x": 182,
+        "y": 676,
+        "width": 144,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 182,
+        "y": 727,
+        "width": 144,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 182,
+        "y": 675,
+        "width": 144,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "space",
+      "row": "controlsBottom",
+      "position": 2,
+      "referencePx": {
+        "x": 344,
+        "y": 676,
+        "width": 632,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 344,
+        "y": 727,
+        "width": 632,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 344,
+        "y": 675,
+        "width": 632,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    },
+    {
+      "name": "return",
+      "row": "controlsBottom",
+      "position": 3,
+      "referencePx": {
+        "x": 994,
+        "y": 676,
+        "width": 307,
+        "height": 135
+      },
+      "oldAltboardPx": {
+        "x": 994,
+        "y": 727,
+        "width": 307,
+        "height": 135
+      },
+      "observedDeltaPx": {
+        "x": 0,
+        "y": 51,
+        "width": 0,
+        "height": 0
+      },
+      "newTargetPxApprox": {
+        "x": 994,
+        "y": 675,
+        "width": 307,
+        "height": 135
+      },
+      "targetVsNativePx": {
+        "x": 0,
+        "y": -1
+      },
+      "confidence": "high for key rectangle edges; rounded corner edge may vary 1-2 px with JPEG compression"
+    }
+  ],
+  "iOSPredictionStrip": {
+    "nativeImage": "IMG_9670.jpeg",
+    "columns": 3,
+    "widthsPxApprox": [
+      440,
+      440,
+      440
+    ],
+    "verticalSeparatorsPxApprox": {
+      "centers": [
+        438,
+        878
+      ],
+      "height": 72,
+      "startY": 55,
+      "endY": 127,
+      "widthPxApprox": 3
+    },
+    "targetSeparator": {
+      "heightPt": 24,
+      "widthPt": 1,
+      "rightInsetPt": 0.67,
+      "colorHex": "#323232",
+      "onlyAfterFirstTwoInEachThreeSlotGroup": true
+    },
+    "nativeTextRGBApprox": [
+      162,
+      162,
+      162
+    ],
+    "targetTextHex": "#A2A2A2",
+    "targetFontFamily": "SF Pro (via UIFont / SwiftUI .system)",
+    "targetFontSizePtApprox": 19,
+    "weight": "regular",
+    "alignment": "center",
+    "lineLimit": 1,
+    "minScaleFactor": 0.72,
+    "displayBehavior": [
+      "typed Latin stays in host while candidates show",
+      "Chinese: offline Cantonese candidates plus Latin selected-language suggestions",
+      "English/German: UITextChecker completions and guesses, with offline fallback",
+      "scroll horizontally for additional suggestions beyond the first three",
+      "hide toolbar mic/settings/translate/AI while actively composing"
+    ],
+    "confidence": "medium visual, high geometry; OCR not used"
+  },
+  "touchArea": {
+    "observableFromScreenshots": false,
+    "intendedHitbox": {
+      "visibleLetterWidthPtApprox": 37.33,
+      "visualHorizontalGapPt": 6,
+      "hitExpansionIntoGapEachSidePt": 3,
+      "hitboxWidthPtApprox": 43.33
+    },
+    "method": "SwiftUI letter cell uses zero-spaced layout slots, visible key padding 3pt horizontally, and rectangular full-slot hit shape",
+    "limitation": "Exact Apple keyboard predictive hit-area adaptation is not public; target must be confirmed with mis-tap tests on device.",
+    "acceptanceTest": "At least 30 taps near each key's left/right visual edge in English and German; check no skipped or duplicated characters."
+  },
+  "typingBehaviors": {
+    "cursorTrackpad": {
+      "trigger": "Space hold 150ms and drag horizontally",
+      "charactersPerMovementPoints": 7.5,
+      "spaceGlyphBehavior": "Hide/fade while trackpad active"
+    },
+    "diacritics": {
+      "trigger": "Letter hold 380ms",
+      "popupStyle": "iOS-like horizontal alternatives"
+    },
+    "capitalization": {
+      "firstLetter": true,
+      "afterSentenceEnd": true
+    },
+    "localPreferredLanguages": "Use Languages I Speak, not a second keyboard mode",
+    "cantonesePersonalization": "App Group counts per selected candidate",
+    "latinPersonalization": "App Group counts for selected English/German completions",
+    "emoji": "SF Symbols face.smiling.inverse approximation",
+    "swipeTyping": "future only; see docs/swipe-typing-en-de-plan.json"
+  },
+  "acceptance": {
+    "compile": "Physical iPhone Release build succeeds on GitHub Actions",
+    "release": "Unsigned IPA including custom keyboard and App Group uploaded directly; no ZIP as the user-visible asset",
+    "visual": "Overlay new iPhone screenshots on reference to confirm alignment within 3px; target is not guaranteed until verified",
+    "interaction": "Verify spelling, cursor tracking, long-press accents, swipe gestures, Cantonese suggestions, and mic routing without native crashes"
+  }
+}

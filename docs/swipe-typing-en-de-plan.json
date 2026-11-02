@@ -1,0 +1,127 @@
+{
+  "schema": "altboard.keyboard.swipe-typing-plan.v1",
+  "state": "planned_only_not_in_ipa",
+  "date": "2026-11-02",
+  "goal": "Glide/Swipe type for English and German on the existing Alphabet layout; offline only. Preserve Cantonese tap-to-type, accented-character hold, spacebar trackpad and per-key haptics.",
+  "scope": {
+    "languages": [
+      "en",
+      "de"
+    ],
+    "keyboardKinds": [
+      "alphabetic"
+    ],
+    "offNetwork": true,
+    "lexiconSource": "Installed OS text checker for completions; evaluate redistributable licensed word frequency dictionaries for full decoding",
+    "withoutFullKeyboardAccess": "Keyboard suggestion access should not rely on network; extension still needs app-group rights for preferences",
+    "outOfScope": [
+      "claiming Apple QuickPath algorithm parity",
+      "Cantonese gesture romanization in first version",
+      "cloud language model"
+    ]
+  },
+  "phases": [
+    {
+      "id": 0,
+      "name": "Verify inputs and license",
+      "tasks": [
+        "Inspect current key geometry and touch stack",
+        "Select and license an offline English/German word list and frequency data",
+        "Normalize capitalization, German umlauts, ß and compounds",
+        "Add tests that no word is uploaded"
+      ],
+      "exitCriteria": [
+        "Documented offline corpus",
+        "No touch regression for tapped keys"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "Capture gesture path",
+      "tasks": [
+        "Replace per-key gesture recognizers with a shared row/keyboard interaction layer only after a trace test",
+        "Sample touch positions and timings while finger moves across keys",
+        "Map points to visible keys and neighboring hit zones, using actual layout frames",
+        "Disambiguate tap vs long-press diacritics (380ms) vs swipe vs Space cursor (150ms)"
+      ],
+      "exitCriteria": [
+        "Trace logs store no typed content by default",
+        "Continuous stroke across rows is captured",
+        "Normal keys and Space still work"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Decode English and German",
+      "tasks": [
+        "Compress repeated key visits into candidate sequences",
+        "Use a compact trie/DAWG word dictionary in the extension bundle",
+        "Beam-search possible candidates with geometric distance, transposition and language-model frequency",
+        "German compounds and accented spellings get explicit tests",
+        "Use preferred-language ordering, switch the active candidate set automatically without a mode key"
+      ],
+      "exitCriteria": [
+        "Top-3 stroke accuracy measured on labeled test cases",
+        "Decoder runs locally",
+        "Candidate selection respects preferred languages"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Compose and commit",
+      "tasks": [
+        "Show top three predicted words in the shared iOS-style prediction strip",
+        "Commit only on explicit completion of the stroke",
+        "Allow quick correction by tapping another candidate",
+        "Verify source word immediately before host cursor before replacement",
+        "Learn selection counts per language on device"
+      ],
+      "exitCriteria": [
+        "No unintended replacement when cursor moves",
+        "Cantonese candidates and literal Latin input preserved"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Physical-device performance",
+      "tasks": [
+        "Compare iPhone 17 Pro Max swipe test against iOS QuickPath or SwiftKey behavior on the same sentence corpus",
+        "Check haptic cadence and visible key highlight",
+        "Use Keychain/App Group only for authorized preferences; no network or analytics",
+        "Measure and cap decode CPU/memory/time in keyboard extension"
+      ],
+      "targets": {
+        "p95DecodeMs": "<=100 (design target, not measured)",
+        "unexpectedInsertions": 0
+      },
+      "exitCriteria": [
+        "Passing iPhone regression checklist",
+        "Documented accuracy versus native keyboard",
+        "Explicit user acceptance before enabling by default"
+      ]
+    }
+  ],
+  "risks": [
+    {
+      "issue": "SwiftUI per-key DragGesture already consumes touch sequences",
+      "mitigation": "Refactor interaction at a single keyboard surface; do not layer a competing global pan on top."
+    },
+    {
+      "issue": "Language models are not part of UITextChecker's public APIs",
+      "mitigation": "Bundle a licensed offline corpus and decode paths; UITextChecker remains for tap spelling suggestions only."
+    },
+    {
+      "issue": "User has Cantonese and Latin active simultaneously",
+      "mitigation": "Keep phonetic IME choice and glide decoder separated by gesture type; avoid toggling language."
+    },
+    {
+      "issue": "German compounds and umlaut variants increase search space",
+      "mitigation": "Language-specific morphology and test corpus, strict memory budget."
+    },
+    {
+      "issue": "Native Apple's touch-area adaptation is proprietary",
+      "mitigation": "Approximate hit zones from geometry and optimize with physical tests; never claim identical internal algorithms."
+    }
+  ],
+  "nextDecision": "Implement a gesture-trace prototype behind a disabled-by-default feature flag, after the current IPA is verified on the user's iPhone."
+}
