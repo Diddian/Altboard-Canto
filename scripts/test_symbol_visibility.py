@@ -5,6 +5,7 @@ choice and all 10/10/5 keys from accidental empty SwiftUI GlyphPath shapes.
 """
 import json
 import pathlib
+import re
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -13,14 +14,26 @@ ALPHABET = ROOT / "SayboardKeyboard" / "Views" / "Layouts" / "AlphabeticKeyboard
 EXTENDED = ROOT / "SayboardKeyboard" / "Views" / "Layouts" / "ExtendedKeyboardLayout.swift"
 
 def row(source: str, name: str) -> list[str]:
-    prefix = f"private static let {name} = "
-    found = [line.strip().split(prefix, 1)[1] for line in source.splitlines() if prefix in line]
+    # Swift allows either "let row = [...]" or "let row: [String] = [...]".
+    # ExtendedKeyboardLayout deliberately uses the typed form; the previous
+    # parser rejected every typed declaration and blocked the IPA before Xcode.
+    pattern = (
+        r"^[ \t]*private static let " + re.escape(name)
+        + r"(?:[ \t]*:[ \t]*\[String\])?[ \t]*=[ \t]*(\[[^\r\n]*\])[ \t]*$"
+    )
+    found = re.findall(pattern, source, flags=re.MULTILINE)
     if len(found) != 1:
         raise AssertionError(f"Expected one declared {name}, got {len(found)}")
     return json.loads(found[0])
 
 
 class SymbolVisibilityTests(unittest.TestCase):
+    def test_accepts_typed_and_untyped_swift_constant_rows(self):
+        untyped = 'private static let probe = ["1", "2"]'
+        typed = 'private static let probe: [String] = ["1", "2"]'
+        self.assertEqual(row(untyped, "probe"), ["1", "2"])
+        self.assertEqual(row(typed, "probe"), ["1", "2"])
+
     def test_key_label_and_callout_use_font_fallback(self):
         code = KEY_BUTTON.read_text()
         self.assertGreaterEqual(code.count("Text(verbatim: symbol)"), 2)
