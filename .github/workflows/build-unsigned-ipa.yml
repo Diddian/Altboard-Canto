@@ -64,6 +64,11 @@ jobs:
             Shared/KeyboardKind.swift Shared/KeyboardLayoutGeometry.swift \
             scripts/verify-keyboard-layout.swift
           "$RUNNER_TEMP/layout-smoke"
+          if grep -R -n -E '[.]keyboardHeightScale|SharedKey[.]keyboardHeightScale' \
+              --include='*.swift' Sayboard SayboardKeyboard Shared; then
+            echo 'ERROR: active code still references the removed height preference'
+            exit 1
+          fi
           if grep -q 'Slider(value: self.\$heightScale' Sayboard/Views/KeyboardSettingsView.swift; then
             echo 'ERROR: legacy height slider is still exposed'
             exit 1

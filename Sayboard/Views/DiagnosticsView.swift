@@ -47,7 +47,10 @@ struct DiagnosticsView: View {
       LabeledContent("Keyboard App Group", value: self.report(self.permissions.keyboardReportedGroupAvailable))
       LabeledContent("Selected keyboard mode", value: SharedSettings().keyboardKind.displayNameKey)
       LabeledContent("Key arrangement", value: SharedSettings().keyboardLetterArrangement.rawValue.uppercased())
-      LabeledContent("Keyboard height", value: String(Int(SharedSettings().keyboardHeightScale * 100)) + "%")
+      LabeledContent("Keyboard canvas", value: self.fixedKeyboardHeight)
+      if SharedSettings().keyboardKind == .standard {
+        LabeledContent("Microphone layout", value: SharedSettings().microphoneKeyboardLayout.displayName)
+      }
       LabeledContent("Cantonese in preferred languages", value:
         self.yesNo(SharedSettings().preferredSpokenLanguages.contains("yue")))
       LabeledContent("Cantonese romanization", value: SharedSettings().keyboardRomanizationScheme.displayName)
@@ -302,6 +305,15 @@ struct DiagnosticsView: View {
     }
   }
 
+  private var fixedKeyboardHeight: String {
+    let settings = SharedSettings()
+    let height = KeyboardLayoutGeometry.height(
+      kind: settings.keyboardKind,
+      microphoneLayout: settings.microphoneKeyboardLayout
+    )
+    return "\(Int(height)) pt (fixed iPhone layout)"
+  }
+
   private var summary: String {
     [
       "Altboard-Canto Diagnostics",
@@ -319,7 +331,8 @@ struct DiagnosticsView: View {
       "Keyboard App Group: \(self.report(self.permissions.keyboardReportedGroupAvailable))",
       "Keyboard mode: \(SharedSettings().keyboardKind.displayNameKey)",
       "Keyboard order: \(SharedSettings().keyboardLetterArrangement.rawValue)",
-      "Keyboard height: \(SharedSettings().keyboardHeightScale)",
+      "Keyboard canvas: \(self.fixedKeyboardHeight)",
+      "Microphone layout: \(SharedSettings().microphoneKeyboardLayout.displayName)",
       "Cantonese enabled: \(SharedSettings().preferredSpokenLanguages.contains("yue"))",
       "Romanization: \(SharedSettings().keyboardRomanizationScheme.displayName)",
       "Offline IME: \(self.offlineImeStatus)",
