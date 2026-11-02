@@ -36,7 +36,9 @@ enum KeyboardHapticTrace {
   }
 
   static func clear() {
-    queue.async {
+    // Clear is initiated from Diagnostics, not a key press. Wait for earlier
+    // queued samples so Refresh does not redisplay stale events.
+    queue.sync {
       guard let defaults = UserDefaults(suiteName: AppGroup.identifier) else { return }
       defaults.removeObject(forKey: countKey)
       defaults.removeObject(forKey: eventsKey)

@@ -7,6 +7,7 @@ on:
       - fix/ios-keyboard-haptics-caps-20261102
       - feat/live-yale-haptics-diagnostics-20261102
       - fix/haptic-core-canto-ime-20261102
+      - feat/fixed-keyboard-settings-20261102
   workflow_dispatch:
 
 permissions:
@@ -59,6 +60,14 @@ jobs:
             Shared/LiveCantoneseSafety.swift Shared/CantoneseSyllableEditing.swift Shared/EnglishCaseSuggestion.swift \
             scripts/verify-keyboard-core.swift
           "$RUNNER_TEMP/keyboard-smoke"
+          swiftc -o "$RUNNER_TEMP/layout-smoke" \
+            Shared/KeyboardKind.swift Shared/KeyboardLayoutGeometry.swift \
+            scripts/verify-keyboard-layout.swift
+          "$RUNNER_TEMP/layout-smoke"
+          if grep -q 'Slider(value: self.\$heightScale' Sayboard/Views/KeyboardSettingsView.swift; then
+            echo 'ERROR: legacy height slider is still exposed'
+            exit 1
+          fi
 
       - name: Stamp matching build SHA into app and keyboard
         shell: bash
@@ -163,6 +172,9 @@ jobs:
         run: |
           set -euo pipefail
           TAG="altboard-canto-dev"
+          if [ "$GITHUB_REF_NAME" = "feat/fixed-keyboard-settings-20261102" ]; then
+            TAG="altboard-canto-fixed-preview"
+          fi
           IPA="dist/Altboard-Canto-SideStore.ipa"
           test -s "$IPA"
           NOTES="Unsigned SideStore IPA built from commit $GITHUB_SHA on branch $GITHUB_REF_NAME. Install using SideStore, which must re-sign the IPA."

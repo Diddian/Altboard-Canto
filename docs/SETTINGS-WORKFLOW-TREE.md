@@ -1,205 +1,154 @@
-# Altboard-Canto: Settings and Workflow Tree
+# Altboard-Canto: Settings and App Workflow
 
-Source reviewed: fix/haptic-core-canto-ime-20261102 at c6673851b63b.
-Repair branch: chore/settings-audit-tree-20261102.
-This is a navigation proposal, NOT a claim that the proposed hierarchy is implemented.
+Implemented branch: feat/fixed-keyboard-settings-20261102
+Base: chore/settings-audit-tree-20261102
 
-## 1. Current app workflow (what the code does)
+This tree describes the settings screens in the new review build. It is
+plain English; indentation means a child screen or control.
+
+## Main navigation
 
 Altboard-Canto
 |
-+-- History tab
-|   +-- Saved transcriptions and audio
-|   +-- Play, review, and manage records
-|   +-- Input field: test the installed keyboard
-|   +-- Setup banner, when something is missing
-|   +-- AI offer, when eligible
++-- History
+|   +-- Saved transcriptions and recordings
+|   +-- Playback, copy and delete
+|   +-- Try Your Keyboard input (stays above the bottom navigation bar)
 |
-+-- Models tab
-|   +-- Speech Recognition
-|   |   +-- Select and download an offline speech model
-|   |   +-- Filter models by language
-|   |   +-- Set language preferences for a model
-|   |   +-- Advanced Qwen model source
-|   +-- Text Processing
-|       +-- Download and manage an offline text model
++-- Models
+|   +-- Speech Recognition (offline ASR)
+|   +-- Text Processing (offline LLM)
 |
-+-- Settings tab
-    +-- Setup warning (only when needed)
-    +-- Purchase option (App Store builds only)
++-- Settings
+    |
+    +-- Keyboard
+    |   +-- Layout
+    |   |   +-- Keyboard Type
+    |   |   |   +-- Microphone Only
+    |   |   |   +-- Symbols
+    |   |   |   +-- Alphabet
+    |   |   +-- Microphone Layout (only in Microphone Only)
+    |   |   |   +-- Default: large round microphone
+    |   |   |   +-- Compact: microphone bar above Space
+    |   |   +-- Alphabet Options (only in Alphabet)
+    |   |       +-- Key Order: QWERTZ or QWERTY
+    |   |       +-- Auto-Capitalize Sentences
+    |   |       +-- Cantonese Romanization (only when Cantonese is preferred)
+    |   |           +-- Jyutping
+    |   |           +-- Yale
+    |   |           +-- Yuetyam
+    |   +-- Feedback
+    |   |   +-- Haptic Feedback: On / Off
+    |   |   +-- Haptic Strength
+    |   |   +-- Test Haptic
+    |   |   +-- Haptic Method
+    |   |   +-- Advanced Haptic Diagnostics
+    |   +-- Typing Shortcuts
+    |   |   +-- Double-Space Period
+    |   +-- Keyboard Preview
+    |       +-- Tap keys to test haptics
+    |
     +-- Dictation
     |   +-- Active Session
     |   +-- Auto-Stop
     |   +-- Active Session Info
-    +-- History
-    |   +-- Keep History
-    |   +-- Clear All History
-    +-- Storage
-    |   +-- Clear Model Cache
-    +-- Text
-    |   +-- Writing Style
+    |
+    +-- Speech & Languages
+    |   +-- Languages I Speak
+    |   |   +-- Preferred spoken languages
+    |   |   +-- Cantonese also enables Alphabet Chinese candidates
+    |   +-- Voice Output & Translation
+    |   |   +-- Clean Up Transcription
+    |   |   +-- Output Language
+    |   |   +-- Dictation Tone
+    |   |   +-- Speech Recognition Model shortcut
+    |   |   +-- Offline Cleanup / Translation Model shortcut
+    |   |   +-- Cantonese Word Corrections
+    |   +-- Speech Recognition Model shortcut
+    |
+    +-- Text & AI
+    |   +-- Writing Style (ordinary text formatting)
     |   +-- AI Text Processing
+    |   |   +-- Enable / Disable
+    |   |   +-- Prompts
+    |   |   |   +-- Standard Prompts
+    |   |   |   +-- Custom Prompts
+    |   |   +-- Auto Action
+    |   |   +-- Long Press Action
     |   +-- Snippets
     |   +-- Auto-Copy to Clipboard
-    +-- Speech & Languages
-    |   +-- Voice Output & Translation
-    |       +-- Languages I Speak
-    |       +-- Clean Up Transcription
-    |       +-- Output Language
-    |       +-- Dictation Tone
-    |       +-- Speech Model shortcut
-    |       +-- Text Model shortcut
-    |       +-- Cantonese Word Corrections
-    +-- Keyboard
-    |   +-- Keyboard Type: Microphone Only / Symbols / Alphabet
-    |   +-- Alphabet: QWERTZ / QWERTY
-    |   +-- Alphabet: Auto-Capitalize
-    |   +-- Alphabet: Cantonese scheme (only with Cantonese enabled)
-    |   +-- Haptic Feedback, Driver, Strength, Tests
-    |   +-- Keyboard Height and Interactive Preview
-    |   +-- Double-Space Period
+    |
+    +-- History & Storage
+    |   +-- Keep History
+    |   +-- Clear All History (confirmation required)
+    |   +-- Clear Compiled Model Cache (confirmation required)
+    |
+    +-- Help
+    |   +-- Setup & Permissions
+    |   +-- Diagnostics
+    |   |   +-- Permissions and Signing
+    |   |   +-- Offline Models
+    |   |   +-- Haptic Tests
+    |   |   +-- Microphone and Speech Tests
+    |   |   +-- Execution Logs
+    |   |   +-- Copy Diagnostics
+    |   +-- Report a Problem
+    |       +-- GitHub Issue
+    |       +-- Email
+    |
     +-- General
     |   +-- App Language
-    +-- Troubleshooting
-    |   +-- Diagnostics
-    |   +-- Setup (when setup is already complete)
-    +-- Report a Problem
-    |   +-- GitHub Issue (currently points to upstream Altboard)
-    |   +-- Support Email (currently points to upstream Altboard)
+    |
     +-- About
-        +-- App Version
+        +-- Version
+        +-- Full Version (App Store builds only)
 
-## 2. Suggested Settings structure
+## Keyboard sizing rules
 
-Keep the existing three main tabs. Do not turn Models into a Settings subpage.
-Keep Keyboard mostly as it is. Group settings by what the user wants to do.
+Keyboard
+|
++-- Microphone Only
+|   +-- Default: fixed 260 pt iPhone canvas, large round microphone
+|   +-- Compact: fixed 150 pt iPhone canvas, wide mic above Space
+|
++-- Symbols
+|   +-- Fixed 312 pt iPhone canvas
+|
++-- Alphabet
+    +-- Fixed 312 pt iPhone canvas
+    +-- Full toolbar inside the keyboard; no negative top offset
+    +-- Fixed 45 pt letter keys and 11 pt row spacing
 
-Settings
-|
-+-- Keyboard
-|   +-- Keyboard Type
-|   |   +-- Microphone Only
-|   |   +-- Symbols
-|   |   +-- Alphabet
-|   +-- Alphabet Options (only when Alphabet is selected)
-|   |   +-- QWERTZ / QWERTY
-|   |   +-- Auto-Capitalize Sentences
-|   |   +-- Cantonese Romanization (only when Cantonese is preferred)
-|   |       +-- Jyutping
-|   |       +-- Yale
-|   |       +-- Yuetyam
-|   +-- Keyboard Height
-|   |   +-- Height Slider
-|   |   +-- Interactive Keyboard Preview
-|   |   +-- Reset to Recommended Height
-|   +-- Haptic Feedback
-|   |   +-- On / Off
-|   |   +-- Strength
-|   |   +-- Test Haptic
-|   |   +-- Advanced Haptic Tests (link to Diagnostics)
-|   +-- Typing Shortcuts
-|       +-- Double-Space Period
-|
-+-- Dictation
-|   +-- Active Session
-|   +-- Auto-Stop
-|   +-- Active Session Info
-|
-+-- Speech & Languages
-|   +-- Languages I Speak
-|   |   +-- Choose Cantonese, English, German, or other supported languages
-|   |   +-- Cantonese choice also enables Alphabet Chinese suggestions
-|   +-- Voice Output & Translation
-|       +-- Clean Up Transcription with Offline AI
-|       +-- Output Language
-|       +-- Dictation Tone
-|       +-- Cantonese Word Corrections
-|       +-- Speech Model (shortcut to Models tab)
-|       +-- Text Model (shortcut to Models tab)
-|
-+-- Text & AI
-|   +-- Writing Style (text formatting)
-|   +-- AI Text Processing
-|   |   +-- Enable / Disable
-|   |   +-- Prompts and Custom Prompts
-|   |   +-- Auto Action
-|   |   +-- Long Press Action
-|   +-- Snippets
-|   +-- Auto-Copy to Clipboard
-|
-+-- History & Storage
-|   +-- Keep History
-|   +-- Clear All History
-|   +-- Clear Compiled Model Cache
-|
-+-- Help
-|   +-- Setup and Permissions
-|   +-- Diagnostics
-|   |   +-- Device and Permissions
-|   |   +-- Keyboard Full Access and App Group
-|   |   +-- Haptic Tests and Events
-|   |   +-- Microphone and Speech Tests
-|   |   +-- Execution Logs
-|   |   +-- Copy Diagnostic Report
-|   +-- Report a Problem
-|       +-- GitHub
-|       +-- Email
-|
-+-- General
-|   +-- App Language
-|
-+-- About
-    +-- Version
-    +-- Source Code and Licenses (possible future addition)
+The previous 70%-110% keyboard-height setting has been removed from Settings.
+Old height values stored on the device are ignored. This is not a value
+migration: only Microphone Only has a new explicit Default/Compact preference.
 
-## 3. Speech processing workflow
+## Voice and text workflow
 
-Voice Dictation
-+-- Keyboard microphone button
-+-- Audio session and microphone capture
-+-- Offline speech recognition
-+-- Check allowed language or unexpected script
-+-- Apply saved Cantonese corrections
-+-- Optional offline AI cleanup, translation, and dictation tone
-+-- Format final text and expand snippets
-+-- Apply final Cantonese corrections where relevant
-+-- Send text through App Group bridge to the host input field
-+-- Save history and audio using the retention policy
+Keyboard microphone
++-- Start recording
++-- Offline speech recognizer
++-- Check allowed languages
++-- Offline Cantonese corrections
++-- Optional offline AI cleanup or translation
++-- Format, apply snippets and final corrections
++-- Insert into host app
++-- Save history according to retention policy
 
-Alphabet Typing
-+-- Insert Latin letters directly into the host input field
-+-- If Cantonese is preferred, look up offline Chinese candidates
-+-- Offer the original Latin text and suitable English corrections
-+-- If a Chinese candidate is selected, replace only the verified suffix
+Alphabet keyboard
++-- Send Latin keys directly to the host
++-- Show Cantonese candidates if Cantonese is preferred
++-- Keep raw English as a candidate
++-- Replace only the verified typed suffix when a Chinese candidate is chosen
 +-- Space keeps Latin and starts a new word
-+-- Delete a recognized final romanized syllable when safe
-+-- Otherwise use ordinary character deletion
++-- Backspace deletes the last complete Cantonese syllable when safe
 
-Haptic Feedback
-+-- Read one shared enabled/driver/strength preference
-+-- Try Core Haptics
-+-- Fall back to original SwiftUI sensory feedback if engine setup fails
-+-- Keep UIKit as a comparison driver
-+-- Save private-data-free attempt and error details in Diagnostics
+## Change status
 
-## 4. Implementation order (proposal only)
-
-1. Keep the small repairs already committed on the audit branch.
-2. Move advanced haptic engine comparisons out of the everyday Keyboard page.
-3. Put "Languages I Speak" one level above Voice Output, but retain ONE shared preference.
-4. Let the main Models tab remain the only full model-management screen.
-5. Share one set of keyboard geometry and colors across runtime and previews.
-6. Share one microphone/ASR test engine between Setup and Diagnostics.
-7. Move History and compiled model cache controls under History & Storage.
-8. Verify navigation, Voice Output, keyboard preferences, onboarding, and SideStore persistence on device.
-
-## 5. Naming rules
-
-- "App Language" changes the app interface only.
-- "Languages I Speak" controls speech recognition preferences and Cantonese typing suggestions.
-- "Cantonese Romanization" controls candidate lookup, not a keyboard language switch.
-- "Writing Style" formats text. "Dictation Tone" edits spoken transcription with AI.
-- "AI Text Processing" controls keyboard AI actions and prompts.
-- "Voice Output & Translation" controls the spoken-text pipeline.
-- "Clear Compiled Model Cache" does not mean deleting downloaded models.
-- Keep warnings and advanced troubleshooting outside everyday settings where possible.
+- Implemented in the review branch: fixed keyboard sizing, compact mic selection,
+  Settings grouping, shared keyboard geometry, touch-down haptic triggers,
+  and asynchronous haptic diagnostics.
+- Not proven until real iPhone testing: perceived haptic latency, toolbar safe
+  bounds in every host, and exact microphone feel.
+- Not changed: the offline speech engine, model storage, AI inference, history
+  retention policy, and direct IPA packaging.

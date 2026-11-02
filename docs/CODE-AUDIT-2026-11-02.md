@@ -1,119 +1,64 @@
-# Altboard-Canto: Focused Code and Settings Audit
+# Altboard-Canto: Settings and Redundancy Audit
 
-Baseline: fix/haptic-core-canto-ime-20261102, c6673851b63b.
-Review: 2026-11-02.
-Scope: Settings navigation, related workflows, keyboard previews, onboarding, App Group preferences, and build/release structure.
+Reviewed baseline: c6673851b63b (2026-11-02).
+Implementation branch: feat/fixed-keyboard-settings-20261102.
 
-This is a targeted source review, not a full call-graph proof for every Swift symbol.
-Do not delete migration or compatibility code just because newer iOS disables a feature.
+## Findings repaired in this branch
 
-## Applied as small repairs on chore/settings-audit-tree-20261102
+1. The 70%-110% keyboard height setting changed the extension view height
+   without giving all rows enough vertical space. Removed the slider and made
+   all typing modes fixed-height. Added Default/Compact only for Microphone Only.
+2. Alphabet toolbar used a negative vertical offset. It clipped the top
+   buttons and mic. Use measured positive insets; remove alphabet pulse rings.
+3. Runtime, settings preview and onboarding preview had different sizing
+   constants. Shared/KeyboardLayoutGeometry.swift owns the fixed dimensions.
+4. Space and microphone haptics triggered when the touch was released.
+   They now trigger on touch-down; the Core Haptics engine is prepared earlier.
+5. Each haptic wrote synchronously to App Group defaults on the input thread.
+   Trace sampling is now queued on a utility queue.
+6. Settings controls previously mixed speech, history, model cache, AI actions,
+   keyboard layout and language settings on the first page. They are grouped
+   into seven primary destinations plus About.
+7. Preferred spoken languages had a dedicated picker embedded inside Voice
+   Output, making it hard to find. It now sits on Speech & Languages.
+8. Cleared outdated SharedSettings tests for the old height and typing-language
+   switches. Added a fixed-layout policy smoke check in Actions.
+9. Removed an empty onboarding source and the accidental Standard/Extended
+   toggling that skipped the Alphabet keyboard.
 
-- SettingsView.swift:
-  - Read keyboard type from shared App Group @AppStorage instead of a one-time @State snapshot.
-  - Keep the existing KeyboardSettingsView binding and stored raw values.
-  - Move Clear Model Cache from About into Storage.
-  - Move App Language out of About into General.
-  - Show Setup under Troubleshooting when onboarding is complete.
-  - Rename "Speech to Text and Translation" to "Speech & Languages".
-  - Rename the destination row "Voice Output & Translation".
-- VoiceOutputSettingsView.swift:
-  - Rename its "Writing style" picker to "Dictation tone".
-  - This is a label fix. It does not merge it with Text > Writing Style.
-- OnboardingKeyboardTypeView.swift:
-  - Stop describing Alphabet as English-only; it also supports Cantonese suggestions.
-- OnboardingPracticeView.swift:
-  - Replace the hidden Standard/Extended toggle with an explicit choice of all three keyboard types.
-  - This prevents selecting Alphabet earlier and then silently being switched to Microphone Only.
-- Remove the zero-byte OnboardingDebugMenu.swift placeholder.
+## Preserved to prevent regressions
 
-These changes do not rename UserDefaults keys, reconfigure the offline speech models,
-remove features, or change the runtime keyboard's key geometry.
+- History record and audio deletion confirmation.
+- Compiled model cache deletion confirmation (downloaded models untouched).
+- Cantonese romanization choice, live Latin input and offline suggestions.
+- Single preferred spoken-language setting shared across voice and keyboard.
+- Existing haptic engine selection for troubleshooting.
+- Main Models tab (no duplicated model catalogue data).
+- App Group sharing and SideStore signing/IPA packaging.
+- Legacy per-app writing style compatibility data (not proven safe to delete).
 
-## Confirmed overlapping implementations; not removed yet
+## Remaining cleanup opportunities
 
-- Three separate keyboard representations:
-  - SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift is real input.
-  - Sayboard/Views/KeyboardSettingsView.swift has an interactive height preview.
-  - Sayboard/Views/Onboarding/KeyboardLayoutPreview.swift draws onboarding previews.
-  - The previews have hard-coded spacing and control positions. Share a small metrics
-    and palette model instead of pretending the three full views are interchangeable.
-- Setup and Diagnostics both implement microphone and ASR test interactions:
-  - Sayboard/Views/SetupView.swift
-  - Sayboard/Views/DiagnosticsView.swift
-  - Keep two destinations for user purpose, but reuse one test service and one report format.
-- Multiple ways to reach model management:
-  - ModelsView.swift is the main Models tab with Speech and Text segments.
-  - LLMSettingsView.swift also defines LLMModelsScreen.
-  - VoiceOutputSettingsView.swift links to both model screens.
-  - Use one canonical model-management destination with shortcuts from Settings.
-- Output and AI cross-links:
-  - SettingsView.swift links to VoiceOutputSettingsView.
-  - TextOutputSection.swift links to LLMSettingsView.
-  - LLMSettingsView.swift links back to VoiceOutputSettingsView.
-  - These links are not unused code, but make navigation harder to understand.
+- The runtime Alphabet keyboard and the Settings interactive preview still
+  render different SwiftUI components, but both use shared dimensions. Fully
+  sharing an interactive keyboard view requires injecting a mock text proxy
+  and should be done only with UI tests.
+- Setup and Diagnostics still implement similar microphone/ASR test flows.
+  They can share one service without removing either entrypoint.
+- App-specific writing styles are no longer reliable on modern iOS. Keep
+  legacy data until migration and minimum OS support are verified.
+- A hidden seven-tap Settings tab gesture still changes a custom spacebar.
+  It is live, not dead; needs a separate user-facing decision.
+- The fork's Report a Problem links still point to upstream Altboard. Do not
+  silently redirect until a working fork support destination is established.
 
-## Legacy and potentially dead code; verify before deletion
+## Verification
 
-- Per-app writing styles:
-  - WritingStyleListView.swift and AppSearchService.swift handle app-specific styles.
-  - DefaultStylePickerView.swift still exposes archived per-app choices.
-  - SharedSettings.canResolveHostApplication and OperatingSystem.isHostBundleIdBroken
-    guard older or constrained iOS behavior.
-  - This is compatibility/migration logic, not proven dead. Verify the minimum
-    supported iOS and user data migration before removing it.
-- MainTabView.swift installs TabBarTapInterceptor with an empty callback.
-  - It is NOT dead: seven Settings tab taps toggle useCustomSpaceBar as a hidden
-    side effect. Consider moving the control to a developer/debug page, with a
-    clear name and normal accessibility semantics.
-- MainTabView.swift uses .equatable() on SettingsView and ModelsView, each of
-  which returns true for equality. This may be intentional for performance.
-  - Check whether externally updated App Group settings cause the screen to
-    refresh. Do not remove the optimization without an observable regression.
-- SupportLinks.swift currently reports to Altboard/Altboard upstream and uses
-  upstream support@altboard.app. The fork's GitHub Issues are currently disabled.
-  - Do not silently redirect reports until this fork has a working support path.
-  - Label the destination clearly if it is meant to remain upstream.
-
-## Source-to-output workflow
-
-- Main tab navigation: Sayboard/Views/MainTabView.swift
-- Settings root: Sayboard/Views/SettingsView.swift
-- Text settings: Sayboard/Views/TextOutputSection.swift
-- Voice settings: Sayboard/Views/VoiceOutputSettingsView.swift
-- AI settings: Sayboard/Views/LLMSettingsView.swift
-- Keyboard settings: Sayboard/Views/KeyboardSettingsView.swift
-- Canonical persistent preferences: Shared/SharedSettings.swift and Shared/Constants.swift
-- Speech finalization: Sayboard/Services/SpeechRecognitionService+Transcription.swift
-- Keyboard literal input and offline suggestions:
-  SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift and
-  SayboardKeyboard/JyutpingDictionary.swift
-- Keyboard haptics: Shared/KeyboardHaptics.swift and
-  Shared/KeyboardHapticTrace.swift
-- Diagnostics: Sayboard/Views/DiagnosticsView.swift
-- SideStore IPA build: .github/workflows/build-unsigned-ipa.yml
-
-## Build and validation
-
-- Baseline CI run 41371506646 passed on c6673851b63b.
-- No new iPhone build has been run for this audit branch.
-- Build workflow currently triggers on four named development branches only.
-  This audit branch is not included, avoiding a costly unattended IPA rebuild.
-- This audit has reviewed the Settings and related source, not all 429 tree
-  entries as a complete semantic symbol-use scan.
-- Before merging the code repairs, run the existing iOS build and verify:
-  - Settings keyboard type updates after choosing a type elsewhere.
-  - Storage cache clear remains confirmed and only clears compiled cache.
-  - History retention and clear confirmation still work.
-  - App Language selection persists.
-  - The new onboarding type chooser preserves Alphabet.
-  - Voice Output and AI settings remain accessible.
-  - SideStore App Group and keyboard extension build match.
-
-## Follow-up order
-
-1. Build and test this small review branch once before merge.
-2. Merge only when settings and onboarding tests pass.
-3. Refactor preview geometry and microphone tests in separate changes.
-4. Do not delete historical host-app style data until migration tests exist.
-5. Implement the proposed navigation tree after agreeing on labels.
+- CI checks basic fixed geometry and the absence of the height slider.
+- The physical iPhone build must compile both app and custom keyboard.
+- A successful CI build does not prove the iPhone physically vibrates.
+- Confirm Alphabet/Symbols height is fixed; Default/Compact only on Mic Only.
+- Confirm toolbar buttons never clip when the keyboard appears in History,
+  Notes, WhatsApp, and when changing the selected typing mode.
+- Confirm voice processing/LLM and history controls still operate.
+- Test each Settings navigation row and verify preferences survive relaunch.
