@@ -74,6 +74,9 @@ enum LatinWordSuggestionPolicy {
   ) -> [String] {
     guard (2...32).contains(typed.count), limit > 0 else { return [] }
     let normalized = typed.lowercased()
+    // Once a complete word is already in the offline vocabulary, the fallback
+    // must not invent a typo correction. OS spell checker remains independent.
+    if dictionary.contains(where: { $0.lowercased() == normalized }) { return [] }
     var results: [String] = []
     var seen = Set<String>()
     func append(_ word: String) {

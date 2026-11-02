@@ -1,0 +1,57 @@
+name: Offline QA regression checks (no IPA)
+
+on:
+  push:
+    branches:
+      - review/qa-half-wave1-20261102
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: altboard-offline-qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pure-policy-smoke:
+    name: Offline Python and Swift regression checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Confirm test toolchain
+        run: |
+          set -euo pipefail
+          python3 --version
+          swiftc --version
+      - name: Test offline corpus, package, emoji, settings and touch contracts
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s scripts -p 'test_jyutping_*.py'
+          python3 -m unittest discover -s scripts -p 'test_universal_cantonese.py'
+          python3 -m unittest discover -s scripts -p 'test_emoji_catalog.py'
+          python3 -m unittest discover -s scripts -p 'test_ipa_bundle.py'
+          python3 -m unittest discover -s scripts -p 'test_settings_contract.py'
+          python3 -m unittest discover -s scripts -p 'test_keyboard_contract.py'
+      - name: Test pure-Swift Cantonese and Latin policies
+        run: |
+          set -euo pipefail
+          swiftc -o "$RUNNER_TEMP/cantonese-smoke" \
+            Shared/CantoneseRomanizationVariants.swift \
+            Shared/CantoneseSyllableEditing.swift \
+            scripts/verify-universal-cantonese.swift
+          "$RUNNER_TEMP/cantonese-smoke"
+          swiftc -o "$RUNNER_TEMP/latin-smoke" \
+            Shared/LatinWordSuggestionPolicy.swift \
+            scripts/verify-latin-suggestions.swift
+          "$RUNNER_TEMP/latin-smoke"
+          swiftc -o "$RUNNER_TEMP/punctuation-smoke" \
+            Shared/ChinesePunctuationPolicy.swift \
+            scripts/verify-chinese-punctuation.swift
+          "$RUNNER_TEMP/punctuation-smoke"
+      - name: Assert no IPA release is produced
+        run: |
+          set -euo pipefail
+          test ! -e dist/Altboard-Canto-SideStore.ipa
+          echo 'QA only: no iOS builds, code signing, artifact upload or release publish.'

@@ -54,6 +54,25 @@ struct LatinWordSuggestionPolicyTests {
     ).isEmpty)
   }
 
+  @Test func existingDictionaryWordsDoNotReceiveSpuriousFallbackCorrections() {
+    let words = ["hello", "help", "hallo", "HalLo", "verfügbar"]
+    #expect(LatinWordSuggestionPolicy.fallbackCandidates(
+      for: "hello", dictionary: words
+    ).isEmpty)
+    #expect(LatinWordSuggestionPolicy.fallbackCandidates(
+      for: "HALLO", dictionary: words
+    ).isEmpty)
+    #expect(LatinWordSuggestionPolicy.fallbackCandidates(
+      for: "verfügbar", dictionary: words
+    ).isEmpty)
+    #expect(LatinWordSuggestionPolicy.fallbackCandidates(
+      for: "verfugbar", dictionary: words
+    ) == ["verfügbar"])
+    #expect(LatinWordSuggestionPolicy.fallbackCandidates(
+      for: "hello", dictionary: ["hello"], limit: 0
+    ).isEmpty)
+  }
+
   @Test func oneEditRecognizesTranspositionsWithoutBroadFalseMatches() {
     #expect(LatinWordSuggestionPolicy.oneEditApart("hallo", "halol"))
     #expect(LatinWordSuggestionPolicy.oneEditApart("schriben", "schreiben"))

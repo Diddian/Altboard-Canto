@@ -24,6 +24,26 @@ class EmojiCatalogTests(unittest.TestCase):
         self.assertEqual(entries[1][2], "👩‍💻")
         self.assertEqual(entries[2][1], "flag: Hong Kong SAR China")
 
+    def test_includes_only_fully_qualified_sequences(self):
+        fixture = """# group: Smileys & Emotion
+1F600 ; fully-qualified # 😀 E1.0 grinning face
+1F600 ; fully-qualified # 😀 E1.0 grinning face
+1F600 ; unqualified # 😀 E1.0 grinning face
+1F601 ; minimally-qualified # 😁 E0.6 beaming face with smiling eyes
+# group: Animals & Nature
+1F431 ; fully-qualified # 🐱 E0.6 cat face
+"""
+        self.assertEqual(MOD.parse_catalog(fixture), [
+            ("Smileys & Emotion", "grinning face", "😀"),
+            ("Animals & Nature", "cat face", "🐱"),
+        ])
+
+    def test_version_stamp_cannot_be_omitted_in_source_fixture(self):
+        # Parser itself is independent of version header, but the production
+        # fetch validates version before creating a release bundle.
+        self.assertEqual(MOD.VERSION, "# Version: 18.0")
+        self.assertIn("/18.0.0/", MOD.SOURCE)
+
     def test_keeps_skin_tones_and_zwj_as_distinct_qualified_emoji(self):
         fixture = """# group: People & Body
 1F44D ; fully-qualified # 👍 E0.6 thumbs up

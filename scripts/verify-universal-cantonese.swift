@@ -12,6 +12,12 @@ enum UniversalCantoneseSmoke {
     precondition(CantoneseRomanizationVariants.variants(for: "ng") == ["ng", "m"])
     precondition(CantoneseRomanizationVariants.variants(for: "yyu") == ["yyu", "yu"])
     precondition(CantoneseRomanizationVariants.variants(for: "gamyuen") == ["gamyuen"])
+    // Regression: accidental string substitution may corrupt a real final.
+    precondition(CantoneseSyllableEditing.sidneyLauAlias("soeng2") == "seung")
+    precondition(CantoneseSyllableEditing.sidneyLauAlias("ceon1") == "chun")
+    precondition(CantoneseSyllableEditing.sidneyLauAlias("keoi5") == "kui")
+    precondition(CantoneseSyllableEditing.sidneyLauAlias("jyun4") == "yuen")
+    precondition(CantoneseSyllableEditing.sidneyLauAlias("jyut6") == "yuet")
     precondition(CantoneseRomanizationVariants.variants(for: String(repeating: "a", count: 49)).isEmpty)
     let cases: [(String, String, Int)] = [
       ("jui", "zeoi3", 3), ("sui", "seoi2", 3), ("yuen", "jyun4", 4),

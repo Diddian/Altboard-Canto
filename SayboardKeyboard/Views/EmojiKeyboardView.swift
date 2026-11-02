@@ -44,6 +44,7 @@ struct EmojiKeyboardView: View {
                       in: RoundedRectangle(cornerRadius: 8.kbScaled))
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(self.search.isEmpty ? "Search Emoji" : "Emoji search: " + self.search)
 
         if self.searchActive {
           if !self.search.isEmpty {
@@ -54,6 +55,7 @@ struct EmojiKeyboardView: View {
                 .frame(width: 25.kbScaled, height: 31.kbScaled)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Clear emoji search")
           }
           Button("Done") { self.searchActive = false }
             .font(.system(size: 13.kbScaled, weight: .medium))
@@ -85,6 +87,7 @@ struct EmojiKeyboardView: View {
                 )
             }
             .buttonStyle(.plain)
+            .accessibilityAddTraits(self.selectedGroup == group ? .isSelected : [])
           }
         }
         .padding(.horizontal, 6.kbScaled)
@@ -149,6 +152,7 @@ struct EmojiKeyboardView: View {
                         in: RoundedRectangle(cornerRadius: 5.kbScaled))
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("Delete emoji search character")
       }
     }
   }

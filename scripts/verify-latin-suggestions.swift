@@ -23,6 +23,12 @@ struct VerifyLatinSuggestions {
     precondition(LatinWordSuggestionPolicy.oneEditApart("schriben", "schreiben"))
     precondition(!LatinWordSuggestionPolicy.oneEditApart("hello", "recognition"))
     precondition(LatinWordSuggestionPolicy.fallbackCandidates(
+      for: "hello", dictionary: ["hello", "help"]
+    ).isEmpty)
+    precondition(LatinWordSuggestionPolicy.fallbackCandidates(
+      for: "verfugbar", dictionary: ["verfügbar", "Vertrag"]
+    ) == ["verfügbar"])
+    precondition(LatinWordSuggestionPolicy.fallbackCandidates(
       for: "reco", dictionary: ["recognition", "recording", "recovery"]
     ).count == 3)
     print("Multilingual Latin suggestion safety verified")

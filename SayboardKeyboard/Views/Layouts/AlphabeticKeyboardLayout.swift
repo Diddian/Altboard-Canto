@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// QWERTZ / QWERTY keyboard with the existing mic and a built-in offline Jyutping IME.
+/// QWERTZ / QWERTY keyboard with mic and universal offline Cantonese suggestions.
 struct AlphabeticKeyboardLayout: View {
   let proxy: KeyboardProxy
   @ObservedObject var keyboardState: KeyboardState
@@ -59,7 +59,12 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private var smartChineseQuote: String {
-    self.nextChineseQuoteCloses ? "」" : "「"
+    // The cursor may move in the host app without the keyboard seeing a
+    // matching key event. Prefer actual preceding text over a stale toggle.
+    if let context = self.proxy.documentContextBeforeInput() {
+      return ChinesePunctuationPolicy.nextCornerQuote(after: context)
+    }
+    return self.nextChineseQuoteCloses ? "」" : "「"
   }
 
   private var trackedTextMatches: Bool {
@@ -551,17 +556,17 @@ struct AlphabeticKeyboardLayout: View {
 
   private var touchPredictionPrefix: String? {
     if self.offersCantonese && !self.composition.isEmpty {
-      // Existing candidate romanization stores Jyutping. Do not apply the
-      // wrong alphabet model to Yale or Yuetyam spellings.
-      return self.romanization == .jyutping ? self.composition.buffer : nil
+      // Candidate pronunciations use canonical Jyutping, but the live input
+      // may mix Jyutping, Yale and Sidney Lau. Neutral hit cells are safer
+      // than predicting the next key using a mismatched romanization.
+      return nil
     }
     return self.activeLatinWord
   }
 
   private var touchPredictionWords: [String] {
     if self.offersCantonese && !self.composition.isEmpty {
-      return self.romanization == .jyutping
-        ? self.candidates.map(\.romanization) : []
+      return []
     }
     return self.latinSuggestions.map(\.text)
   }

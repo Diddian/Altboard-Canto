@@ -1,7 +1,7 @@
 # Altboard-Canto development tasks
 
 Source branch: `feat/instant-input-ai-swipe-20261102`
-Last successful beta IPA: run 41522770022 (`e0c1901`). Run 41528118833 failed on duplicate `.gitkeep` resource outputs. The universal-input changes are not yet built or iPhone-verified.
+Last independently inspected successful IPA: Action #63 (`8c1d6b22ef55b30e7c52940374fc0f377924a37e`). Its app and keyboard stamps, SQLite, Emoji catalogue and archive CRC pass; iPhone installation remains unverified. Action #64 builds in a separate feature branch.
 The existing successful release branch and IPA remain unchanged. This branch publishes to its own beta Release tag.
 GitHub Issues are disabled in this repository (GitHub API 410). This file is the
 canonical, versioned ticket board until Issues are enabled.
@@ -142,6 +142,46 @@ Files: `SayboardKeyboard/JyutpingDictionary.swift`,
 - [ ] T-004.5 Scan reference usage before deleting legacy persistence, unused animation parser or compatibility helpers.
 - [ ] T-004.6 Fix potential duplicate/contradictory comments and docs only after verifying behavior.
 - [ ] T-004.7 CI Swift compiler + focused tests and on-device regressions.
+
+## T-015 — QA second half (six workstreams, isolated from IPA #64)
+
+Source: `review/qa-half-wave1-20261102`. Changes are staged and tested by the
+**Offline QA regression checks (no IPA)** GitHub workflow. This branch is NOT in
+the unsigned-IPA push allowlist and must not publish or overwrite Release assets.
+
+1. **IPA/build** — [x] Independently inspect #63 IPA (`8c1d6b2`), verify app/extension SHA
+   and bundle IDs, SQLite quick_check and six indexes; count **185,717** offline
+   entries and **3,963** unique emoji; ZIP CRC check passes. [x] Add generic IPA
+   verification CLI and synthetic positive/negative unit tests. [ ] Install
+   #63/#64 on iPhone and confirm SideStore/host app.
+2. **Cantonese** — [x] Expand direct Jyutping/Yale/Sidney indexed mapping
+   assertions, query plan verification and tone isolation. [x] Port #63's
+   proven touch-prediction compiler fix to the QA fork without changing
+   lexicon data. [ ] Verify CI smoke and actual bilingual typing/latency.
+3. **Emoji** — [x] Add fully-qualified RGI duplicate, skin-tone and ZWJ
+   fixtures; #63 contains 3,963 deduplicated Unicode records.
+   [ ] iPhone glyph, category and horizontal paging are owned by **#64's
+   separate feature branch**: do not merge obsolete QA Emoji view code.
+4. **Chinese punctuation** — [x] Add read-only cursor-context quote policy
+   for 「」, paragraph and nested quote cases; Swift smoke + unit cases.
+   [ ] iPhone host cursor and full Symbols keyboard tests.
+5. **Settings** — [x] Add static Settings contracts + UserDefaults persistence
+   tests for haptic reset, legacy Romanization storage, selected layout and
+   opt-in Swipe Typing. [ ] Native iOS Settings toggles and feedback test.
+6. **English/German** — [x] Exempt exact known offline words from one-edit
+   fallback corrections; add German umlaut/false-positive Swift cases.
+   [ ] Native real-language dictionary accuracy, timing and compounds.
+
+**Cleanup evidence** — [x] Static guard for one UIKit letter-row touch owner,
+VoiceOver activation preservation, and no extra recognizer; remove stale
+`self.romanization` references in QA (the #63 proven fix). [ ] Actual
+double-insertion/haptic traces and repository-wide dead-symbol census before
+any destructive deletion.
+
+**Verification semantics:** A GitHub QA workflow runs *pure* Python and Swift
+policy tests. It does not compile an iOS extension, sign an IPA, prove native
+glyph rendering or replace physical iPhone confirmation. See
+`docs/QA-SECOND-WAVE-2026-11-02.md`.
 
 ## Low-risk half-wave audit — isolated branch (T-014, review only)
 
