@@ -312,7 +312,9 @@ struct AlphabeticKeyboardLayout: View {
   /// whole visible token. Never delete guessed text after the cursor has moved.
   private func deleteCompositionCharacter() -> Bool {
     guard self.offersCantonese,
-          !self.candidates.isEmpty, self.trackedTextMatches else { return false }
+          self.trackedTextMatches,
+          JyutpingDictionary.shared.hasExactEntry(for: self.composition.buffer)
+    else { return false }
     let count = self.composition.buffer.count
     self.clearComposition()
     for _ in 0..<count { self.proxy.deleteBackward() }

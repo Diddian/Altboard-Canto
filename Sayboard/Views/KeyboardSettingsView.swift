@@ -129,6 +129,10 @@ private struct KeyboardHeightPreview: View {
   private var keyboardHapticsEnabled = true
   @AppStorage(SharedKey.keyboardHapticStrength, store: UserDefaults(suiteName: AppGroup.identifier))
   private var hapticStrength = 0.60
+  @AppStorage(SharedKey.llmEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var llmEnabled = false
+  @AppStorage(SharedKey.hasUsableLLMModel, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var hasUsableLLMModel = false
 
   private var compact: Bool { self.kind == .standard && self.heightFactor < 0.90 }
   private var previewHeight: CGFloat {
@@ -200,15 +204,31 @@ private struct KeyboardHeightPreview: View {
 
   private var alphabetToolbar: some View {
     HStack(spacing: 6) {
-      self.key("gearshape", width: 43)
-      self.key("character.bubble", width: 43)
-      self.key("translate", width: 43)
-      self.key("sparkles", width: 43)
+      self.key("gearshape", width: 48)
+      self.translatePreview
+      if self.llmEnabled && self.hasUsableLLMModel {
+        self.key("sparkles", width: 48)
+      }
       Spacer(minLength: 2)
       self.key("mic.fill", width: 86)
     }
     .padding(.horizontal, 6.67)
     .frame(height: 46.33)
+  }
+
+  private var translatePreview: some View {
+    Button { self.tap() } label: {
+      VStack(spacing: 0) {
+        Image(systemName: "translate").font(.system(size: 17))
+        Text("AUTO").font(.system(size: 8, weight: .bold, design: .rounded))
+      }
+      .foregroundStyle(.primary)
+      .frame(width: 48, height: 45)
+      .background(Color(uiColor: KeyboardPalette.keyFill),
+                  in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel("Test translation key haptic")
   }
 
   private func letterRow(_ letters: [String], inset: CGFloat) -> some View {

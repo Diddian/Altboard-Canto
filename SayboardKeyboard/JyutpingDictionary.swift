@@ -89,6 +89,20 @@ final class JyutpingDictionary {
     }.prefix(max(1, limit)).map(\.element))
   }
 
+  /// Exact spelling check prevents prefix-only Chinese suggestions from
+  /// turning arbitrary English Backspace operations into whole-word deletes.
+  func hasExactEntry(for rawInput: String) -> Bool {
+    let input = rawInput.lowercased().filter { $0.isASCII && ($0.isLetter || $0.isNumber) }
+    guard !input.isEmpty, input.count <= 48 else { return false }
+    let sqls: [String] = input.contains(where: \.isNumber)
+      ? ["SELECT word,romanization FROM entries WHERE compact=? LIMIT ?"]
+      : [
+          "SELECT word,romanization FROM entries WHERE plain=? LIMIT ?",
+          "SELECT word,romanization FROM entries WHERE yale=? LIMIT ?"
+        ]
+    return sqls.contains { !self.query($0, argument: input, limit: 1).isEmpty }
+  }
+
   func remember(_ candidate: JyutpingCandidate) {
     var counts = self.defaults?.dictionary(forKey: self.memoryKey) as? [String: Int] ?? [:]
     counts[candidate.id] = min(10000, (counts[candidate.id] ?? 0) + 1)
