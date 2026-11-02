@@ -24,7 +24,8 @@ struct KeyboardLLMActionsToolbar: View {
       )
       .frame(maxWidth: .infinity)
     }
-    .frame(maxWidth: .infinity, height: KeyboardChromeMetrics.keyHeight)
+    .frame(maxWidth: .infinity)
+    .frame(height: KeyboardChromeMetrics.keyHeight)
     .background(Color(uiColor: KeyboardPalette.backdrop))
   }
 }

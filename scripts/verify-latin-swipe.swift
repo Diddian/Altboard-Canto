@@ -29,7 +29,7 @@ precondition(LatinSwipeDecoder.rank(
   path: stroke("hi", order: .qwerty), arrangement: .qwerty,
   fullWidth: 440, words: ["hi"]).isEmpty)
 precondition(LatinSwipeDecoder.normalizedSpelling("Grüße") == "grusse")
-var session = LatinSwipeSession()
+let session = LatinSwipeSession()
 let points = stroke("hello", order: .qwerty)
 session.begin(points[0], arrangement: .qwerty, width: 440)
 for p in points.dropFirst() { session.append(p, arrangement: .qwerty, width: 440) }
