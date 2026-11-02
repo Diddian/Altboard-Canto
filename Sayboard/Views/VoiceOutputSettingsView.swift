@@ -15,44 +15,9 @@ struct VoiceOutputSettingsView: View {
 
   @AppStorage(SharedKey.voiceCustomLanguage, store: AppGroup.sharedDefaults ?? .standard)
   private var customLanguage = ""
-  @State private var spokenLanguages = SharedSettings().preferredSpokenLanguages
-  @State private var showPreferredLanguagePicker = false
-  @Environment(\.locale) private var locale
-
-  private var unsupportedSpokenLanguages: [String] {
-    self.spokenLanguages.filter { !self.speechModels.selectedVariant.supportedLanguages.contains($0) }
-      .map { self.locale.capitalizedLanguageName(forLanguageCode: $0) }
-  }
 
   var body: some View {
     Form {
-      Section {
-        Button {
-          self.showPreferredLanguagePicker = true
-        } label: {
-          LabeledContent("Languages I speak") {
-            Text(self.spokenLanguages.isEmpty
-              ? "Any language"
-              : self.spokenLanguages.map { self.locale.capitalizedLanguageName(forLanguageCode: $0) }
-                .joined(separator: ", "))
-              .multilineTextAlignment(.trailing)
-              .lineLimit(2)
-          }
-        }
-        if !self.unsupportedSpokenLanguages.isEmpty {
-          Label(
-            "The selected speech model may not recognize: \(self.unsupportedSpokenLanguages.joined(separator: ", "))",
-            systemImage: "exclamationmark.triangle"
-          )
-          .font(.footnote)
-          .foregroundStyle(.orange)
-        }
-      } header: {
-        Text("Preferred Languages")
-      } footer: {
-        Text("Your keyboard cycles AUTO plus these languages. Whisper can lock a single language. Qwen3 only supports auto-detection here; an unexpected script is blocked rather than inserted.")
-      }
-
       Section {
         Toggle("Clean up transcription with offline AI", isOn: self.$cleanupEnabled)
         Picker("Output language", selection: self.$target) {
@@ -106,9 +71,9 @@ struct VoiceOutputSettingsView: View {
           .font(.footnote).foregroundStyle(.orange)
         }
       } header: {
-        Text("On-device LLM")
+        Text("Offline Models")
       } footer: {
-        Text("The keyboard language key cycles AUTO and your preferred languages. Translation runs locally, when a text model is installed.")
+        Text("Speech recognition uses the selected speech model. Cleanup and translation need an installed offline text model.")
       }
 
       Section {
@@ -124,40 +89,12 @@ struct VoiceOutputSettingsView: View {
       }
 
       Section {
-        Text("ASR detects spoken languages where supported. An LLM edits the transcript, not the original audio. It can correct likely errors but cannot recover words it never heard.")
+        Text("Offline AI can edit a transcript but cannot recover words missing from the recording.")
           .font(.footnote).foregroundStyle(.secondary)
       }
     }
-    .navigationTitle("Voice Output")
+    .navigationTitle("Voice Output & Translation")
     .navigationBarTitleDisplayMode(.inline)
-    .sheet(isPresented: self.$showPreferredLanguagePicker) {
-      LanguagePickerView(
-        mode: .multi(Binding(
-          get: { Set(self.spokenLanguages) },
-          set: { updated in
-            let kept = self.spokenLanguages.filter { updated.contains($0) }
-            self.spokenLanguages = kept + updated.subtracting(kept).sorted()
-            let settings = SharedSettings()
-            settings.preferredSpokenLanguages = self.spokenLanguages
-            settings.setPreferredLanguages(
-              SpeechModelRecommendation.preferredLanguages(
-                for: settings.selectedVariant, from: self.spokenLanguages
-              ),
-              for: settings.selectedVariant
-            )
-            let old = PreferredVoiceLanguages.currentCode(
-              target: settings.voiceOutputTarget, custom: settings.voiceCustomLanguage
-            )
-            if !old.isEmpty && !self.spokenLanguages.contains(old) {
-              settings.voiceOutputTarget = .original
-            }
-          }
-        )),
-        availableLanguages: SpeechLanguages.all,
-        titleKey: "Preferred Languages",
-        autoDetectKey: "Any language"
-      )
-    }
-    .onAppear { self.spokenLanguages = SharedSettings().preferredSpokenLanguages }
+
   }
 }
