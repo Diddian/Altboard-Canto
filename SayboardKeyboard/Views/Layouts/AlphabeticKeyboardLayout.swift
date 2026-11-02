@@ -28,6 +28,8 @@ struct AlphabeticKeyboardLayout: View {
   @State private var lastShiftTap: Date?
   @State private var composition = JyutpingComposition()
   @State private var candidates = [JyutpingCandidate]()
+  @State private var expandedCandidates = [JyutpingCandidate]()
+  @State private var showsCandidateGrid = false
   @State private var activeLatinWord: String?
   @State private var latinSuggestions = [LatinWordSuggestion]()
   @State private var latinRefreshTask: Task<Void, Never>?
@@ -100,6 +102,18 @@ struct AlphabeticKeyboardLayout: View {
       .padding(.top, Self.rowSpacing.kbScaled)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    .overlay(alignment: .top) {
+      if self.showsCandidateGrid, !self.expandedCandidates.isEmpty,
+         self.page == .letters {
+        self.expandedCandidateGrid
+          .padding(.top, (
+            KeyboardLayoutGeometry.alphabetToolbarTopInset
+            + KeyboardLayoutGeometry.keyHeight
+            + KeyboardLayoutGeometry.alphabetToolbarBottomInset
+          ).kbScaled)
+          .zIndex(10)
+      }
+    }
     .onAppear {
       self.refreshAutomaticShift()
       self.updateCandidates()
@@ -120,6 +134,8 @@ struct AlphabeticKeyboardLayout: View {
       self.latinSuggestions.removeAll()
       self.composition.clear()
       self.candidates.removeAll()
+      self.expandedCandidates.removeAll()
+      self.showsCandidateGrid = false
     }
   }
 
@@ -132,6 +148,24 @@ struct AlphabeticKeyboardLayout: View {
         // available preferred spellchecker language. Hide mic and controls.
         self.candidateStrip
           .transition(.opacity)
+        if self.offersCantonese && !self.composition.isEmpty {
+          Button {
+            self.showsCandidateGrid.toggle()
+            if self.showsCandidateGrid {
+              self.expandedCandidates = JyutpingDictionary.shared.candidates(
+                for: self.composition.buffer, scheme: self.romanization, limit: 200
+              )
+            }
+          } label: {
+            Image(systemName: self.showsCandidateGrid ? "chevron.up" : "chevron.down")
+              .font(.system(size: 12.kbScaled, weight: .semibold))
+              .foregroundStyle(.secondary)
+              .frame(width: 29.kbScaled, height: KeyboardChromeMetrics.keyHeight)
+              .contentShape(Rectangle())
+          }
+          .buttonStyle(.plain)
+          .accessibilityLabel(self.showsCandidateGrid ? "Collapse candidates" : "Show all Chinese candidates")
+        }
       } else {
         KeyButton(content: .systemImage("gearshape"),
                   fixedWidth: self.chrome.sideButtonWidth) {
@@ -235,6 +269,47 @@ struct AlphabeticKeyboardLayout: View {
       .scrollIndicators(.hidden)
     }
     .frame(height: KeyboardChromeMetrics.keyHeight)
+  }
+
+  private var expandedCandidateGrid: some View {
+    ScrollView(.vertical) {
+      LazyVGrid(
+        columns: Array(repeating: GridItem(.flexible(), spacing: 3.kbScaled), count: 4),
+        spacing: 3.kbScaled
+      ) {
+        ForEach(self.expandedCandidates) { candidate in
+          Button {
+            KeyboardHaptics.key()
+            self.choose(candidate)
+          } label: {
+            Text(verbatim: candidate.text)
+              .font(.system(size: 20.kbScaled))
+              .foregroundStyle(.primary)
+              .lineLimit(1)
+              .minimumScaleFactor(0.7)
+              .frame(maxWidth: .infinity, minHeight: 39.kbScaled)
+              .background(
+                RoundedRectangle(cornerRadius: 6.kbScaled)
+                  .fill(Color(uiColor: KeyboardPalette.keyFill))
+              )
+          }
+          .buttonStyle(.plain)
+        }
+      }
+      .padding(6.kbScaled)
+    }
+    .scrollIndicators(.visible)
+    .frame(height: 159.kbScaled)
+    .background(
+      Color(uiColor: KeyboardPalette.backdrop),
+      in: RoundedRectangle(cornerRadius: 9.kbScaled, style: .continuous)
+    )
+    .overlay {
+      RoundedRectangle(cornerRadius: 9.kbScaled, style: .continuous)
+        .stroke(Color(uiColor: KeyboardPalette.suggestionSeparator), lineWidth: 1)
+    }
+    .padding(.horizontal, KeyboardLayoutGeometry.alphabetEdgeInset.kbScaled)
+    .shadow(color: .black.opacity(0.20), radius: 4, y: 2)
   }
 
   private func suggestionCell(
@@ -423,6 +498,11 @@ struct AlphabeticKeyboardLayout: View {
     self.candidates = self.offersCantonese && !self.composition.isEmpty
       ? JyutpingDictionary.shared.candidates(for: self.composition.buffer, scheme: self.romanization)
       : []
+    if self.showsCandidateGrid {
+      self.expandedCandidates = self.candidates.isEmpty ? [] : JyutpingDictionary.shared.candidates(
+        for: self.composition.buffer, scheme: self.romanization, limit: 200
+      )
+    }
 
     let typed = self.page == .letters
       ? LatinWordSuggestionPolicy.trailingWord(in: self.proxy.documentContextBeforeInput())
@@ -451,6 +531,8 @@ struct AlphabeticKeyboardLayout: View {
   private func clearComposition() {
     self.composition.clear()
     self.candidates.removeAll()
+    self.expandedCandidates.removeAll()
+    self.showsCandidateGrid = false
   }
 
   /// Delete the *last syllable* of a verified complete Cantonese spelling.

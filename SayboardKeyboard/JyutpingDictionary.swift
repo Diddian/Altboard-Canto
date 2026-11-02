@@ -47,48 +47,73 @@ final class JyutpingDictionary {
     let plain = input.filter(\.isLetter)
     guard !plain.isEmpty else { return [] }
 
+    let boundedLimit = min(200, max(1, limit))
+    let queryLimit = max(24, boundedLimit)
     var results: [JyutpingCandidate] = []
-    var used = Set<String>()
-    func gather(_ sql: String, _ argument: String) {
-      for candidate in self.query(sql, argument: argument, limit: 24) {
-        if used.insert(candidate.id).inserted {
+    var usedWords = Set<String>()
+    var originRank = [String: Int]()
+    func gather(_ sql: String, _ argument: String, rank: Int) {
+      for candidate in self.query(sql, argument: argument, limit: queryLimit) {
+        // The candidate UI shows Chinese glyphs, not romanizations: avoid
+        // duplicate glyphs with different tone variants in the same list.
+        if usedWords.insert(candidate.text).inserted {
           results.append(candidate)
+          originRank[candidate.id] = rank
         }
       }
     }
 
     // Tone-digit input must honor tones, not silently ignore them.
     if hasTone {
-      gather("SELECT word,romanization FROM entries WHERE compact=? ORDER BY priority LIMIT ?", input)
-      gather("SELECT word,romanization FROM entries WHERE compact>=? AND compact<? ORDER BY priority LIMIT ?", input)
+      gather("SELECT word,romanization FROM entries WHERE compact=? ORDER BY priority LIMIT ?", input, rank: 0)
+      gather("SELECT word,romanization FROM entries WHERE compact>=? AND compact<? ORDER BY priority LIMIT ?", input, rank: 2)
     } else {
       // Candidate aliases cover both systems, with selected scheme first.
       if scheme == .yale {
-        gather("SELECT word,romanization FROM entries WHERE yale=? ORDER BY priority LIMIT ?", plain)
+        gather("SELECT word,romanization FROM entries WHERE yale=? ORDER BY priority LIMIT ?", plain, rank: 0)
       }
-      gather("SELECT word,romanization FROM entries WHERE plain=? ORDER BY priority LIMIT ?", plain)
+      gather("SELECT word,romanization FROM entries WHERE plain=? ORDER BY priority LIMIT ?", plain, rank: 0)
       if scheme != .yale {
-        gather("SELECT word,romanization FROM entries WHERE yale=? ORDER BY priority LIMIT ?", plain)
+        gather("SELECT word,romanization FROM entries WHERE yale=? ORDER BY priority LIMIT ?", plain, rank: 0)
       }
       if scheme == .yale {
-        gather("SELECT word,romanization FROM entries WHERE yale>=? AND yale<? ORDER BY priority LIMIT ?", plain)
+        gather("SELECT word,romanization FROM entries WHERE yale>=? AND yale<? ORDER BY priority LIMIT ?", plain, rank: 2)
       }
-      gather("SELECT word,romanization FROM entries WHERE plain>=? AND plain<? ORDER BY priority LIMIT ?", plain)
+      gather("SELECT word,romanization FROM entries WHERE plain>=? AND plain<? ORDER BY priority LIMIT ?", plain, rank: 2)
       if scheme != .yale {
-        gather("SELECT word,romanization FROM entries WHERE yale>=? AND yale<? ORDER BY priority LIMIT ?", plain)
+        gather("SELECT word,romanization FROM entries WHERE yale>=? AND yale<? ORDER BY priority LIMIT ?", plain, rank: 2)
       }
       if plain.count >= 2 {
-        gather("SELECT word,romanization FROM entries WHERE initials=? ORDER BY priority LIMIT ?", plain)
+        gather("SELECT word,romanization FROM entries WHERE initials=? ORDER BY priority LIMIT ?", plain, rank: 3)
       }
     }
-    // Personal choices affect order only within the current candidate set.
+    // Exact single-character readings precede prefix phrases. Personal
+    // selection counts still rank candidates within each result class.
     let counts = self.defaults?.dictionary(forKey: self.memoryKey) as? [String: Int] ?? [:]
-    return Array(results.enumerated().sorted { lhs, rhs in
+    var ordered = results.enumerated().sorted { lhs, rhs in
+      func group(_ c: JyutpingCandidate) -> Int {
+        (originRank[c.id] ?? 3) * 2 + (c.text.count == 1 ? 0 : 1)
+      }
+      let aGroup = group(lhs.element), bGroup = group(rhs.element)
+      if aGroup != bGroup { return aGroup < bGroup }
       let a = counts[lhs.element.id] ?? 0
       let b = counts[rhs.element.id] ?? 0
       if a != b { return a > b }
       return lhs.offset < rhs.offset
-    }.prefix(max(1, limit)).map(\.element))
+    }.map(\.element)
+
+    // A convenience spelling for users who enter "ng" for the negative
+    // 唔. Its dictionary reading remains m4, not a fabricated ng reading.
+    // Leave the genuine ng candidates first and place 唔 immediately after.
+    if !hasTone, plain == "ng",
+       let negative = self.query(
+         "SELECT word,romanization FROM entries WHERE plain=? AND word='唔' ORDER BY priority LIMIT ?",
+         argument: "m", limit: 1
+       ).first {
+      ordered.removeAll { $0.text == negative.text }
+      ordered.insert(negative, at: min(1, ordered.count))
+    }
+    return Array(ordered.prefix(boundedLimit))
   }
 
   /// Canonical syllable boundaries for a fully recognized spelling, used to
