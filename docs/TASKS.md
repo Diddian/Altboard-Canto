@@ -47,6 +47,8 @@ Files: `SayboardKeyboard/JyutpingDictionary.swift`,
 - [x] T-003.1 Preserve contiguous key touch cells and 12%/18% bounded predictor.
 - [x] T-003.2 Retain overlay showing visible keys and hit cells, without recording typed text.
 - [x] T-003.3 Key-down/quick-release pressed highlight prototype.
+- [x] T-003.3a Replaced delayed SwiftUI alphabet DragGesture with direct UIKit touchesBegan/moved/ended/cancelled in isolated review branch; quick-tap flash and accents retained.
+- [ ] T-003.3b Verify pressed highlight is visible on the **initial touch-down**, including a very short stationary tap, on the physical iPhone.
 - [ ] T-003.4 Real-device haptic latency, long-press accent popup, swipe-to-correct, trackpad cursor, boundary/dead-zone tests.
 - [ ] T-003.5 Inspect both regular symbols and isolated Symbols keyboard kind.
 
