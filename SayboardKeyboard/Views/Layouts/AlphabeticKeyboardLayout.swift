@@ -279,7 +279,14 @@ struct AlphabeticKeyboardLayout: View {
   private func handleCharacter(_ character: String) {
     // All Latin typing reaches the host immediately. The offline IME only
     // suggests; it does not intercept ordinary English text.
-    if self.offersCantonese && self.page == .letters
+    let tracksLetter = self.page == .letters
+      && character.count == 1
+      && character.allSatisfy { $0.isASCII && $0.isLetter }
+    let tracksTone = self.page == .numbers
+      && !self.composition.isEmpty
+      && character.count == 1
+      && character.allSatisfy { "123456".contains($0) }
+    if self.offersCantonese && (tracksLetter || tracksTone)
       && self.composition.append(character) {
       self.proxy.insertText(character)
       self.updateCandidates()
@@ -358,7 +365,7 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private func toggleNumberPage() {
-    self.clearComposition()
+    // Preserve the romanization suffix across ?123 so tone digits still work.
     self.page = self.page == .letters ? .numbers : .letters
   }
 
