@@ -41,6 +41,15 @@ struct VerifyKeyboardLayout {
     precondition(abs(punctuation * 3 - 164) < 0.1)
     let backspaceX = width - inset - wide
     precondition(abs(backspaceX * 3 - 1150) < 0.1)
+    let letterCell = (width - 2 * KeyboardLayoutGeometry.alphabetSpecialRowInset
+      - 2 * KeyboardLayoutGeometry.alphabetSymbolsWideKeyWidth
+      - 2 * KeyboardLayoutGeometry.alphabetSpecialGap) / 7
+    let firstY = KeyboardLayoutGeometry.alphabetSpecialRowInset
+      + KeyboardLayoutGeometry.alphabetSymbolsWideKeyWidth
+      + KeyboardLayoutGeometry.alphabetSpecialGap + 3
+    let lastM = firstY + 6 * letterCell
+    precondition(abs(firstY * 3 - 214) < 0.1)
+    precondition(abs(lastM * 3 - 994) < 0.2)
     // The bottom row already matches the native reference within 1px:
     // ?123 48pt; Emoji 48pt; Space 210.67pt; Return 102pt.
     print("Fixed keyboard geometry verified")

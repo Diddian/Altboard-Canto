@@ -15,7 +15,9 @@ enum KeyboardLayoutGeometry {
   static let alphabetEdgeInset: CGFloat = 3.67
   static let alphabetSecondInset: CGFloat = 25
   static let alphabetSpecialRowInset: CGFloat = 6.67
-  static let alphabetSpecialGap: CGFloat = 14.67
+  // The visual letter keys add 3pt of their own side padding, so 11.67pt
+  // between key cells produces the native 14.67pt Shift/letter gap.
+  static let alphabetSpecialGap: CGFloat = 11.67
   static let alphabetSymbolsRowInset: CGFloat = 6.67
   static let alphabetSymbolsWideKeyWidth: CGFloat = 50
   static let alphabetSymbolsGroupGap: CGFloat = 14.67
