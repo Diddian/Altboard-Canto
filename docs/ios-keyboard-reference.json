@@ -98,20 +98,22 @@
     "nativeFirstRowTopPx": 187,
     "previousAltboardFirstRowTopPx": 223,
     "previousVerticalOffsetPx": 36,
-    "targetVerticalShiftPt": -11,
+    "targetVerticalShiftPt": 0,
     "nativeSecondRowTopPx": 355,
     "nativeThirdRowTopPx": 523,
     "nativeBottomRowTopPx": 691,
-    "note": "Extracted from screenshot geometry, not an Apple-documented coordinate system; use same runtime spacing in interactive preview",
+    "note": "Native screenshot measurements are approximate; runtime keys use shared layout geometry with fixed canvas height, not a fractional height slider.",
     "keyboardContainer": {
       "roundedTopCorners": "system-controlled UIInputView",
       "inputFieldMinHeightPt": 76,
       "historyBackdrop": "KeyboardPalette.backdrop",
       "bottomBlankSpacePt": 11
-    }
+    },
+    "keyboardRowsHeightPt": 277,
+    "totalTypingCanvasPt": 288,
+    "nativeHeightTarget": "About 288-290 pt based on supplied keyboard reference"
   },
   "build": {
-    "recommendedKeyboardHeightScale": null,
     "baseAlphabetHeightPt": 288,
     "defaultAlphabetHeightPt": 288,
     "directIPAArtifact": "actions/upload-artifact@v7 archive:false",

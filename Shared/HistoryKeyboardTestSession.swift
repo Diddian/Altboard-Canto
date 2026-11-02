@@ -11,11 +11,14 @@ enum HistoryKeyboardTestSession {
     guard let defaults = AppGroup.sharedDefaults else { return }
     defaults.set(focused, forKey: focusKey)
     defaults.set(focused ? Date().timeIntervalSince1970 : 0, forKey: timestampKey)
+    // The focus transition is rare, but the keyboard is another process.
+    defaults.synchronize()
   }
 
   static var isFocused: Bool {
-    guard let defaults = AppGroup.sharedDefaults,
-          defaults.bool(forKey: focusKey) else { return false }
+    guard let defaults = AppGroup.sharedDefaults else { return false }
+    defaults.synchronize()
+    guard defaults.bool(forKey: focusKey) else { return false }
     let at = defaults.double(forKey: timestampKey)
     let elapsed = Date().timeIntervalSince1970 - at
     return elapsed >= 0 && elapsed < validity

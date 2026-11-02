@@ -64,6 +64,10 @@ jobs:
             Shared/KeyboardKind.swift Shared/KeyboardLayoutGeometry.swift \
             scripts/verify-keyboard-layout.swift
           "$RUNNER_TEMP/layout-smoke"
+          if grep -R -n -F 'KeyboardEdgeDismissalCoordinator(' --include='*.swift' SayboardKeyboard; then
+            echo 'ERROR: removed experimental top-edge gesture was reintroduced'
+            exit 1
+          fi
           if grep -R -n -E '[.]keyboardHeightScale|SharedKey[.]keyboardHeightScale' \
               --include='*.swift' Sayboard SayboardKeyboard Shared; then
             echo 'ERROR: active code still references the removed height preference'
