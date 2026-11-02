@@ -25,3 +25,5 @@ References:
 5. If extension feedback remains silent, compare the user's system keyboard haptics, iOS vibration setting, SideStore entitlements and extension logs. Avoid private vibration/audio system sound IDs.
 
 Trace stores only attempt count, driver, process origin, Full Access and error category. No typed characters, host bundle IDs, transcript or clipboard content.
+
+On Core Haptics setup failure, trace includes the NSError domain and integer code, never user input. Distinguish `operationNotPermitted`, `notSupported` and server interruption before assuming Full Access is the cause.

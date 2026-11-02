@@ -61,16 +61,20 @@ private enum KeyboardCoreHaptic {
           try engine.start()
           try player?.start(atTime: 0)
           return nil
-        } catch {
+        } catch let retryError {
           self.engine = nil
           self.player = nil
           self.playerIntensity = nil
-          self.unavailableError = "engine-start-failed"
-          return "engine-start-failed"
+          let ns = retryError as NSError
+          let detail = "engine-start-failed:\(ns.domain):\(ns.code)"
+          self.unavailableError = detail
+          return detail
         }
       }
-      self.unavailableError = "engine-creation-failed"
-      return "engine-creation-failed"
+      let ns = error as NSError
+      let detail = "engine-creation-failed:\(ns.domain):\(ns.code)"
+      self.unavailableError = detail
+      return detail
     }
   }
 }
