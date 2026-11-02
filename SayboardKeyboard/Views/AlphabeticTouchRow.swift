@@ -61,18 +61,27 @@ struct AlphabeticTouchRow: View {
           .allowsHitTesting(false)
         }
       }
-      .gesture(
-        DragGesture(minimumDistance: 0)
-          .onChanged { value in
-            self.handleTouch(at: value.location.x,
-                             startingAt: value.startLocation.x,
-                             width: geometry.size.width,
-                             weights: weights)
+      .overlay {
+        // UIKit reports finger-down immediately; SwiftUI DragGesture.onChanged
+        // can wait for gesture recognition, making quick taps feel unpressed.
+        ImmediateKeyTouchSurface(
+          onBegan: { x in
+            self.handleTouch(at: x, startingAt: x,
+                             width: geometry.size.width, weights: weights)
+          },
+          onMoved: { x, startX in
+            self.handleTouch(at: x, startingAt: startX,
+                             width: geometry.size.width, weights: weights)
+          },
+          onEnded: { x in
+            self.endTouch(at: x, width: geometry.size.width, weights: weights)
+          },
+          onCancelled: {
+            self.reset()
           }
-          .onEnded { value in
-            self.endTouch(at: value.location.x, width: geometry.size.width, weights: weights)
-          }
-      )
+        )
+        .accessibilityHidden(true)
+      }
     }
     .frame(height: self.bandHeight)
     .zIndex(self.activeIndex == nil ? 0 : 10)
@@ -207,5 +216,68 @@ private struct KeyboardTouchDebugOverlay: View {
         }
       }
     }
+  }
+}
+
+
+/// A direct UIKit touch surface for letter keys. Unlike a drag recognizer,
+/// touchesBegan arrives on initial contact, before the finger moves or holds.
+/// This has no animations, timers or delayed state transitions.
+private struct ImmediateKeyTouchSurface: UIViewRepresentable {
+  let onBegan: (CGFloat) -> Void
+  let onMoved: (CGFloat, CGFloat) -> Void
+  let onEnded: (CGFloat) -> Void
+  let onCancelled: () -> Void
+
+  func makeUIView(context: Context) -> ImmediateKeyTouchView {
+    let view = ImmediateKeyTouchView()
+    view.backgroundColor = .clear
+    view.isOpaque = false
+    view.isMultipleTouchEnabled = false
+    view.isAccessibilityElement = false
+    self.updateUIView(view, context: context)
+    return view
+  }
+
+  func updateUIView(_ uiView: ImmediateKeyTouchView, context: Context) {
+    uiView.onBegan = self.onBegan
+    uiView.onMoved = self.onMoved
+    uiView.onEnded = self.onEnded
+    uiView.onCancelled = self.onCancelled
+  }
+}
+
+private final class ImmediateKeyTouchView: UIView {
+  var onBegan: ((CGFloat) -> Void)?
+  var onMoved: ((CGFloat, CGFloat) -> Void)?
+  var onEnded: ((CGFloat) -> Void)?
+  var onCancelled: (() -> Void)?
+
+  private var activeTouch: UITouch?
+  private var initialX: CGFloat = 0
+
+  override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+    guard self.activeTouch == nil, let touch = touches.first else { return }
+    self.activeTouch = touch
+    self.initialX = touch.location(in: self).x
+    self.onBegan?(self.initialX)
+  }
+
+  override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+    guard let active = self.activeTouch, touches.contains(active) else { return }
+    self.onMoved?(active.location(in: self).x, self.initialX)
+  }
+
+  override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+    guard let active = self.activeTouch, touches.contains(active) else { return }
+    let x = active.location(in: self).x
+    self.activeTouch = nil
+    self.onEnded?(x)
+  }
+
+  override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+    guard let active = self.activeTouch, touches.contains(active) else { return }
+    self.activeTouch = nil
+    self.onCancelled?()
   }
 }
