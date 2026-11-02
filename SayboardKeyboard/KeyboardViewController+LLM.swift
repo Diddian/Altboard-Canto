@@ -68,26 +68,38 @@ extension KeyboardViewController {
     return true
   }
 
-  func requestLLMProcessing(action: LLMAction, customPromptId: UUID?, directText: String? = nil) {
+  func requestLLMProcessing(
+    action: LLMAction, customPromptId: UUID?,
+    directText: String? = nil, clipboardOnly: Bool = false
+  ) {
     guard !self.keyboardState.isLLMProcessing else {
       return
     }
 
     let inputText: String
+    self.llmSelectedText = nil
+    self.llmSelectionContextBefore = nil
+    self.llmSelectionContextAfter = nil
+    self.llmClipboardOnly = clipboardOnly
+    self.pendingManualLLMAction = nil
+    self.keyboardState.llmError = nil
     if let directText {
       inputText = directText
       self.llmOriginalText = ""
-      self.pendingAutoActionText = directText
+      self.pendingAutoActionText = clipboardOnly ? nil : directText
     } else {
-      let beforeText = textDocumentProxy.documentContextBeforeInput ?? ""
-      let trimmedText = beforeText.trimmingCharacters(in: .whitespacesAndNewlines)
-      guard !trimmedText.isEmpty else {
-        self.keyboardState.llmError = .noTextBeforeCursor
-        self.updateKeyboardHeight(actionBarVisible: false)
+      // The proxy can expose selected text, not arbitrary host-field contents.
+      guard let selected = self.textDocumentProxy.selectedText,
+            !selected.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+        self.keyboardState.llmError = .selectText
+        self.pendingManualLLMAction = (action, customPromptId)
         return
       }
-      inputText = beforeText
-      self.llmOriginalText = beforeText
+      inputText = selected
+      self.llmSelectedText = selected
+      self.llmSelectionContextBefore = self.textDocumentProxy.documentContextBeforeInput
+      self.llmSelectionContextAfter = self.textDocumentProxy.documentContextAfterInput
+      self.llmOriginalText = ""
       self.pendingAutoActionText = nil
     }
 
@@ -121,6 +133,24 @@ extension KeyboardViewController {
     DiagnosticLog.write("llm/kb: requested \(action.rawValue), text=\(inputText.count) chars")
   }
 
+  func requestLLMClipboardProcessing() {
+    guard let pending = self.pendingManualLLMAction else {
+      self.keyboardState.llmError = .selectText
+      return
+    }
+    // Explicit user action: iOS may display a paste permission prompt.
+    guard self.keyboardState.hasFullAccess,
+          let copied = UIPasteboard.general.string,
+          !copied.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+      self.keyboardState.llmError = .clipboardUnavailable
+      return
+    }
+    self.requestLLMProcessing(
+      action: pending.action, customPromptId: pending.customPromptId,
+      directText: copied, clipboardOnly: true
+    )
+  }
+
   func checkForPendingLLMResult() {
     guard let result = LLMBridge.readResult(), !result.isEmpty else { return }
     self.insertLLMResult()
@@ -149,6 +179,30 @@ extension KeyboardViewController {
       return
     }
     DiagnosticLog.write("llm/kb: inserting \(result.count) chars")
+
+    if self.llmClipboardOnly {
+      UIPasteboard.general.string = result
+      self.keyboardState.showFinalOutputPreview("Rewrite copied. Paste to replace.")
+      self.keyboardState.clearLLMHistory()
+      self.finishLLMInsertion()
+      return
+    }
+    if let originalSelection = self.llmSelectedText {
+      // Never overwrite a changed selection after asynchronous inference.
+      let matches = textDocumentProxy.selectedText == originalSelection
+        && textDocumentProxy.documentContextBeforeInput == self.llmSelectionContextBefore
+        && textDocumentProxy.documentContextAfterInput == self.llmSelectionContextAfter
+      if matches {
+        textDocumentProxy.insertText(result)
+        self.keyboardState.showFinalOutputPreview("Selected text rewritten")
+      } else {
+        UIPasteboard.general.string = result
+        self.keyboardState.showFinalOutputPreview("Selection changed. Rewrite copied.")
+      }
+      self.keyboardState.clearLLMHistory()
+      self.finishLLMInsertion()
+      return
+    }
 
     let currentBeforeText = textDocumentProxy.documentContextBeforeInput ?? ""
     let expected = self.llmOriginalText
@@ -189,6 +243,11 @@ extension KeyboardViewController {
     self.keyboardState.isProcessing = false
     self.pendingAutoActionText = nil
     self.llmOriginalText = ""
+    self.llmSelectedText = nil
+    self.llmSelectionContextBefore = nil
+    self.llmSelectionContextAfter = nil
+    self.llmClipboardOnly = false
+    self.pendingManualLLMAction = nil
   }
 
   private func navigateLLMHistory(to targetIndex: Int) {

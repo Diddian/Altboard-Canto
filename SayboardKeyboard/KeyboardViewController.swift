@@ -14,6 +14,11 @@ final class KeyboardViewController: UIInputViewController {
   var llmOriginalText = ""
   var isPerformingHistoryNavigation = false
   var pendingAutoActionText: String?
+  var llmSelectedText: String?
+  var llmSelectionContextBefore: String?
+  var llmSelectionContextAfter: String?
+  var llmClipboardOnly = false
+  var pendingManualLLMAction: (action: LLMAction, customPromptId: UUID?)?
   var previousSpaceTap: PeriodShortcut.Tap?
 
   let keyboardState = KeyboardState()
@@ -517,6 +522,9 @@ extension KeyboardViewController {
       },
       requestLLMProcessing: { [weak self] action, customPromptId in
         self?.requestLLMProcessing(action: action, customPromptId: customPromptId)
+      },
+      requestLLMClipboard: { [weak self] in
+        self?.requestLLMClipboardProcessing()
       },
       adjustTextPosition: { [weak self] offset in
         self?.previousSpaceTap = nil

@@ -3,10 +3,13 @@ import SwiftUI
 
 enum LLMError {
   case noTextBeforeCursor
+  case selectText
+  case clipboardUnavailable
 
   var icon: String {
     switch self {
-    case .noTextBeforeCursor: "character.cursor.ibeam"
+    case .noTextBeforeCursor, .selectText: "character.cursor.ibeam"
+    case .clipboardUnavailable: "doc.on.clipboard"
     }
   }
 
@@ -14,12 +17,16 @@ enum LLMError {
     switch self {
     case .noTextBeforeCursor:
       "To use AI actions, make sure the text field has text and the cursor is after it"
+    case .selectText:
+      "Select text to rewrite, then tap AI again. If selection is unavailable, copy the text and choose Use Clipboard."
+    case .clipboardUnavailable:
+      "Clipboard text is unavailable. Copy the text first and retry."
     }
   }
 
   var buttonTitle: LocalizedStringKey {
     switch self {
-    case .noTextBeforeCursor: "OK"
+    case .noTextBeforeCursor, .selectText, .clipboardUnavailable: "OK"
     }
   }
 }
@@ -29,6 +36,7 @@ struct LLMErrorPrompt: View {
   let error: LLMError
 
   @ObservedObject var keyboardState: KeyboardState
+  var onUseClipboard: (() -> Void)? = nil
 
   var body: some View {
     VStack(spacing: 12.kbScaled) {
@@ -52,6 +60,12 @@ struct LLMErrorPrompt: View {
           .background(.blue, in: Capsule())
       }
       .padding(.horizontal, 32.kbScaled)
+      if case .selectText = self.error, let useClipboard = self.onUseClipboard {
+        Button("Use Clipboard") { useClipboard() }
+          .font(.subheadline.weight(.medium))
+          .foregroundStyle(.blue)
+          .frame(minHeight: 36.kbScaled)
+      }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
   }

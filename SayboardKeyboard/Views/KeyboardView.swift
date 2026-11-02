@@ -50,6 +50,7 @@ struct KeyboardProxy {
   let stopDictation: () -> Void
   let resolveHost: () -> Void
   let requestLLMProcessing: (LLMAction, UUID?) -> Void
+  let requestLLMClipboard: () -> Void
   let adjustTextPosition: (Int) -> Void
   let undoLLM: () -> Void
   let redoLLM: () -> Void
@@ -148,7 +149,10 @@ struct KeyboardView: View {
     } else if self.keyboardState.showsEmojiPicker {
       EmojiKeyboardView(proxy: self.proxy, keyboardState: self.keyboardState)
       } else if let error = self.keyboardState.llmError {
-      LLMErrorPrompt(error: error, keyboardState: self.keyboardState)
+      LLMErrorPrompt(
+        error: error, keyboardState: self.keyboardState,
+        onUseClipboard: { self.proxy.requestLLMClipboard() }
+      )
       } else {
       Group {
         switch self.keyboardState.keyboardKind {
