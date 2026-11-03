@@ -117,6 +117,8 @@ targets:
         buildPhase: resources
         excludes:
           - .gitkeep
+      - path: EmojiResources
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.sayboard.keyboard

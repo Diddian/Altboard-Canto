@@ -89,9 +89,15 @@ enum ChineseStrokeKeys {
     Key(glyph: "丶", code: ".", accessibilityName: "點"),
     Key(glyph: "乛", code: "n", accessibilityName: "折")
   ]
-  static let punctuation = [
-    "1", "2", "3", "4", "，", "。", "？", "！", "、", "：",
-    "；", "「", "」", "（", "）", "-", "/", "@"
+  /// Long-press symbols follow the matching part of the number/symbol
+  /// keyboard: a two-row, four-column strip for each upper stroke key.
+  /// The lower keys expose Chinese punctuation in the same touch gesture.
+  static let alternates: [[String]] = [
+    ["1", "2", "3", "4", "-", "/", ":", ";"],
+    ["4", "5", "6", "7", ";", "(", ")", "$"],
+    ["7", "8", "9", "0", "$", "&", "@", "\""],
+    ["。", "，", "？"],
+    ["？", "！", "「", "」"]
   ]
   static func glyphs(for code: String) -> String {
     let values = Dictionary(uniqueKeysWithValues: keys.map { ($0.code, $0.glyph) })

@@ -37,6 +37,17 @@ final class SwipeWordLexicon {
 
   var wordCount: Int { self.sorted.count }
 
+  func contains(_ word: String) -> Bool {
+    let query = word.lowercased()
+    guard (2...32).contains(query.count) else { return false }
+    var low = 0, high = self.sorted.count
+    while low < high {
+      let mid = (low + high) / 2
+      if self.sorted[mid].word < query { low = mid + 1 } else { high = mid }
+    }
+    return low < self.sorted.count && self.sorted[low].word == query
+  }
+
   /// A bounded lexical prefix lookup for the suggestion bar.
   func prefixMatches(_ prefix: String, limit: Int = 10) -> [String] {
     let query = prefix.lowercased()

@@ -17,7 +17,15 @@ enum ChineseInputSmoke {
     precondition(ChineseShapeKeys.hint(for: "J", mode: .phonetic) == nil)
     precondition(ChineseStrokeKeys.keys.map(\.code) == ["m", "/", ",", ".", "n"])
     precondition(ChineseStrokeKeys.glyphs(for: "m/,n") == "一丨丿乛")
-    precondition(ChineseStrokeKeys.punctuation.prefix(4) == ["1", "2", "3", "4"])
+    precondition(ChineseStrokeKeys.alternates.map(\.count) == [8, 8, 8, 3, 4])
+    precondition(ChineseStrokeKeys.alternates[0] ==
+      ["1", "2", "3", "4", "-", "/", ":", ";"])
+    precondition(ChineseStrokeKeys.alternates[1] ==
+      ["4", "5", "6", "7", ";", "(", ")", "$"])
+    precondition(ChineseStrokeKeys.alternates[2] ==
+      ["7", "8", "9", "0", "$", "&", "@", "\""])
+    precondition(ChineseStrokeKeys.alternates[3] == ["。", "，", "？"])
+    precondition(ChineseStrokeKeys.alternates[4] == ["？", "！", "「", "」"])
     precondition(ChineseShapeRanking.strokeChoiceBonus(0) == 0)
     precondition(ChineseShapeRanking.strokeChoiceBonus(2) == 16_000)
     precondition(ChineseShapeRanking.preferredVariant([:], mode: .quick) == 3)

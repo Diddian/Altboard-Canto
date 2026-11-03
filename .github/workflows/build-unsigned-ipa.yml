@@ -57,6 +57,9 @@ jobs:
           set -euo pipefail
           python3 scripts/build-jyutping-lexicon.py
           python3 scripts/build-chinese-shapes.py
+          python3 scripts/build-emoji-catalog.py
+          test -s EmojiResources/emoji_catalog.tsv
+          test -s EmojiResources/UnicodeLicense.txt
           test -s JyutpingResources/jyutping.sqlite3
           test -s JyutpingResources/chinese-shapes.sqlite3
           test -s JyutpingResources/RimeStrokeLicense.txt
@@ -67,6 +70,7 @@ jobs:
           python3 -m unittest discover -s scripts -p 'test_universal_cantonese.py'
           # Regression for blank keycap rows seen on physical iPhone.
           python3 -m unittest discover -s scripts -p 'test_symbol_visibility.py'
+          python3 -m unittest discover -s scripts -p 'test_emoji_catalog.py'
           python3 -m unittest discover -s scripts -p 'test_ipa_bundle.py'
           swiftc -o "$RUNNER_TEMP/punctuation-smoke" \
             Shared/ChinesePunctuationPolicy.swift scripts/verify-chinese-punctuation.swift
@@ -206,7 +210,14 @@ jobs:
             echo 'ERROR: required English lexicon attribution missing from keyboard extension'
             exit 1
           }
-          test ! -e "$APP/PlugIns/SayboardKeyboard.appex/emoji_catalog.tsv" || exit 1
+          test -s "$APP/PlugIns/SayboardKeyboard.appex/emoji_catalog.tsv" || {
+            echo 'ERROR: offline Emoji catalog missing from keyboard extension'
+            exit 1
+          }
+          test -s "$APP/PlugIns/SayboardKeyboard.appex/UnicodeLicense.txt" || {
+            echo 'ERROR: Unicode Emoji license missing from keyboard extension'
+            exit 1
+          }
 
           # No developer credential is needed. These ad-hoc signatures only
           # carry capability requests for SideStore to re-sign on the device.
@@ -254,7 +265,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 scripts/verify-ipa-bundle.py             dist/Altboard-Canto-SideStore.ipa             --expected-sha "$GITHUB_SHA"             --expect-native-emoji --expect-merged-shapes
+          python3 scripts/verify-ipa-bundle.py             dist/Altboard-Canto-SideStore.ipa             --expected-sha "$GITHUB_SHA"             --expect-emoji-catalog --expect-merged-shapes
 
       - name: Upload IPA to this Actions run
         uses: actions/upload-artifact@v7

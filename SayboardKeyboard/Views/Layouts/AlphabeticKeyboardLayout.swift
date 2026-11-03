@@ -28,6 +28,8 @@ struct AlphabeticKeyboardLayout: View {
   )
   private var chineseModeRaw = ChineseInputMode.phonetic.rawValue
   @State private var shapeBuffer = ""
+  @State private var shapeLatinBuffer = ""
+  @State private var showsEmojiPage = false
   @State private var shapeCandidates = [ChineseShapeCandidate]()
   @State private var expandedShapeCandidates = [ChineseShapeCandidate]()
   @State private var shapeHostAnchor: String?
@@ -123,6 +125,22 @@ struct AlphabeticKeyboardLayout: View {
 
   var body: some View {
     VStack(spacing: 0) {
+      if self.showsEmojiPage {
+        EmojiKeyboardView(
+          proxy: self.proxy,
+          keyboardState: self.keyboardState,
+          onAlphabet: {
+            self.showsEmojiPage = false
+            self.page = .letters
+            self.updateCandidates()
+          },
+          onNumbers: {
+            self.showsEmojiPage = false
+            self.page = .numbers
+            self.updateCandidates()
+          }
+        )
+      } else {
       self.toolbar
         // Keep every toolbar button completely inside the keyboard's
         // clipping bounds. A negative offset cut the mic and icons off.
@@ -131,9 +149,15 @@ struct AlphabeticKeyboardLayout: View {
       Group {
         if self.usesShapeMode && self.chineseMode == .stroke {
           ChineseStrokeGrid(
+            proxy: self.proxy,
             onStroke: { self.appendShapeCode($0) },
             onPunctuation: { self.insertShapePunctuation($0) },
-            onDelete: { self.deleteShapeStroke() }
+            onDelete: {
+              guard !self.shapeBuffer.isEmpty else { return false }
+              self.deleteShapeStroke()
+              return true
+            },
+            onHostDeletion: { self.handleHostDeletion() }
           )
         } else {
           // Keep the three-row touch bands under one UIKit touch owner.
@@ -170,6 +194,7 @@ struct AlphabeticKeyboardLayout: View {
         keyboardState: self.keyboardState,
         alphabeticModeLabel: self.page == .letters ? "?123" : "ABC",
         onAlphabeticModeSwitch: { self.toggleNumberPage() },
+        onEmojiAction: { self.openEmojiPage() },
         showsAlphabetIndicator: self.page == .letters,
         onSpaceAction: { self.handleSpace() },
         onReturnAction: { self.handleReturn() },
@@ -177,10 +202,11 @@ struct AlphabeticKeyboardLayout: View {
         onCursorTrackingEnded: { self.endCursorTracking() }
       )
       .padding(.top, Self.rowSpacing.kbScaled)
+      }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     .overlay(alignment: .top) {
-      if self.showsCandidateGrid,
+      if !self.showsEmojiPage, self.showsCandidateGrid,
          (!self.expandedCandidates.isEmpty || !self.expandedShapeCandidates.isEmpty),
          self.page == .letters {
         Group {
@@ -292,6 +318,11 @@ struct AlphabeticKeyboardLayout: View {
           }
         }
 
+        NativeInputModeSwitchKey(
+          configure: self.keyboardState.configureInputModeListButton
+        )
+        .frame(width: 28.kbScaled, height: KeyboardChromeMetrics.keyHeight)
+
         if self.offersChineseInput {
           KeyButton(
             content: .symbol(self.chineseMode.shortTitle, fontSize: 20),
@@ -400,7 +431,7 @@ struct AlphabeticKeyboardLayout: View {
         HStack(spacing: 0) {
           ForEach(Array(self.nextCantoneseWords.enumerated()), id: \.offset) { index, word in
             self.suggestionCell(
-              word, width: geometry.size.width / 3, showDivider: index % 3 != 2
+              word, width: nil, showDivider: true
             ) {
               self.chooseContinuation(word)
             }
@@ -434,27 +465,27 @@ struct AlphabeticKeyboardLayout: View {
     return self.activeLatinWord ?? self.composition.buffer
   }
 
-  /// Three equally sized iOS-style suggestion slots per screen, with a
-  /// scrolling continuation for additional Chinese phrases. Each separator
-  /// is 1pt wide and 24pt tall, not a full-height list divider.
+  /// Cantonese candidates use content-sized slots; Latin-only keyboards
+  /// retain the native-looking three equal-width suggestion cells.
   private var candidateStrip: some View {
     GeometryReader { geometry in
-      let width = geometry.size.width / 3
-      // Keep Latin fallbacks out of a pending or populated Cantonese row.
-      // They remain available once the current spelling has no Canto hits.
+      let width: CGFloat? = self.offersCantonese ? nil : geometry.size.width / 3
       let prioritizesChinese = self.offersCantonese && !self.composition.isEmpty
         && (self.candidateLookupSpelling != self.composition.buffer
           || !self.candidates.isEmpty)
       let corrected = self.usesShapeMode || prioritizesChinese ? nil
         : EnglishCaseSuggestion.replacement(for: self.currentLiteral)
-      let firstCantoneseSlot = corrected == nil ? 1 : 2
 
       ScrollView(.horizontal) {
         HStack(spacing: 0) {
-          self.suggestionCell(self.currentLiteral, width: width, showDivider: true) {
-            if self.usesShapeMode {
-              self.insertShapeLiteral()
-            } else {
+          if self.usesShapeMode {
+            if self.chineseMode != .stroke && !self.shapeLatinBuffer.isEmpty {
+              self.suggestionCell(self.shapeLatinBuffer, width: width, showDivider: true) {
+                self.commitShapeLatin(self.shapeLatinBuffer, addSpace: false)
+              }
+            }
+          } else {
+            self.suggestionCell(self.currentLiteral, width: width, showDivider: true) {
               self.latinRefreshTask?.cancel()
               self.activeLatinWord = nil
               self.latinSuggestions.removeAll()
@@ -469,32 +500,25 @@ struct AlphabeticKeyboardLayout: View {
             }
           }
 
-          ForEach(Array(self.shapeCandidates.enumerated()), id: \.offset) { index, candidate in
-            self.suggestionCell(
-              candidate.text, width: width, showDivider: (firstCantoneseSlot + index) % 3 != 2
-            ) {
+          ForEach(Array(self.shapeCandidates.enumerated()), id: \.offset) { _, candidate in
+            self.suggestionCell(candidate.text, width: width, showDivider: true) {
               self.chooseShape(candidate)
             }
           }
 
-          ForEach(Array(self.candidates.enumerated()), id: \.offset) { index, candidate in
-            self.suggestionCell(
-              candidate.text,
-              width: width,
-              showDivider: (firstCantoneseSlot + index) % 3 != 2
-            ) {
+          ForEach(Array(self.candidates.enumerated()), id: \.offset) { _, candidate in
+            self.suggestionCell(candidate.text, width: width, showDivider: true) {
               self.choose(candidate)
             }
           }
 
-          if !prioritizesChinese {
-            ForEach(Array(self.latinSuggestions.enumerated()), id: \.offset) { index, suggestion in
-              self.suggestionCell(
-                suggestion.text,
-                width: width,
-                showDivider: (firstCantoneseSlot + self.candidates.count + index) % 3 != 2
-              ) {
-                if self.chooseLatinSuggestion(suggestion.text) {
+          if !prioritizesChinese && self.chineseMode != .stroke {
+            ForEach(Array(self.latinSuggestions.enumerated()), id: \.offset) { _, suggestion in
+              self.suggestionCell(suggestion.text, width: width, showDivider: true) {
+                if self.usesShapeMode {
+                  self.commitShapeLatin(suggestion.text, addSpace: false)
+                  LatinWordSuggestions.shared.remember(suggestion)
+                } else if self.chooseLatinSuggestion(suggestion.text) {
                   LatinWordSuggestions.shared.remember(suggestion)
                 }
               }
@@ -585,7 +609,7 @@ struct AlphabeticKeyboardLayout: View {
 
   private func suggestionCell(
     _ value: String,
-    width: CGFloat,
+    width: CGFloat?,
     showDivider: Bool,
     onSelect: @escaping () -> Void
   ) -> some View {
@@ -598,7 +622,8 @@ struct AlphabeticKeyboardLayout: View {
         .foregroundStyle(Color(uiColor: KeyboardPalette.suggestionGlyph))
         .lineLimit(1)
         .minimumScaleFactor(0.72)
-        .padding(.horizontal, 6.kbScaled)
+        .padding(.horizontal, self.offersCantonese ? 10.kbScaled : 6.kbScaled)
+        .frame(minWidth: self.offersCantonese ? 28.kbScaled : nil)
         .frame(width: width, height: KeyboardChromeMetrics.keyHeight)
         .contentShape(Rectangle())
     }
@@ -781,12 +806,12 @@ struct AlphabeticKeyboardLayout: View {
   private func handleCharacter(_ character: String) {
     if self.usesShapeMode,
        character.count == 1, character.allSatisfy({ $0.isASCII && $0.isLetter }) {
-      self.appendShapeCode(character.lowercased())
+      self.appendShapeCode(character)
       return
     }
     if self.usesShapeMode && !self.shapeBuffer.isEmpty {
-      if let first = self.shapeCandidates.first { self.chooseShape(first) }
-      else { self.clearShapeComposition() }
+      // Punctuation never silently commits an unrelated Chinese candidate.
+      self.clearShapeComposition()
     }
     self.swipeAlternatives.removeAll()
     self.nextCantoneseWords.removeAll()
@@ -831,18 +856,45 @@ struct AlphabeticKeyboardLayout: View {
       self.candidates.removeAll()
       self.expandedCandidates.removeAll()
       self.latinRefreshTask?.cancel()
-      self.latinSuggestions.removeAll()
       self.activeLatinWord = nil
-      self.shapeCandidates = self.shapeBuffer.isEmpty ? []
-        : ChineseShapeDictionary.shared.candidates(
+      let shapeLimit = self.chineseMode == .quick ? 2 : 6
+      let canLookupShape = !self.shapeBuffer.isEmpty
+        && (self.chineseMode == .stroke || self.shapeBuffer.count <= shapeLimit)
+      let found = canLookupShape
+        ? ChineseShapeDictionary.shared.candidates(
             for: self.shapeBuffer, mode: self.chineseMode
-          )
-      if self.showsCandidateGrid && !self.shapeBuffer.isEmpty {
+          ) : []
+      if self.shapeCandidates != found { self.shapeCandidates = found }
+      if self.showsCandidateGrid && canLookupShape {
         self.expandedShapeCandidates = ChineseShapeDictionary.shared.candidates(
           for: self.shapeBuffer, mode: self.chineseMode, limit: 200
         )
       } else {
         self.expandedShapeCandidates.removeAll()
+      }
+      guard self.chineseMode != .stroke, !self.shapeLatinBuffer.isEmpty else {
+        self.latinSuggestions.removeAll()
+        return
+      }
+      let typed = self.shapeLatinBuffer
+      let preferred = SharedSettings().preferredSpokenLanguages
+      let immediate = LatinWordSuggestions.shared.fastChoices(
+        for: typed, preferred: preferred
+      )
+      if self.latinSuggestions != immediate { self.latinSuggestions = immediate }
+      self.latinRefreshTask = Task { @MainActor in
+        do { try await Task.sleep(for: .milliseconds(45)) } catch { return }
+        guard !Task.isCancelled, self.shapeLatinBuffer == typed,
+              self.usesShapeMode else { return }
+        let values = LatinWordSuggestions.shared.choices(
+          for: typed, preferred: preferred
+        )
+        guard !Task.isCancelled, self.shapeLatinBuffer == typed else { return }
+        if self.latinSuggestions != values {
+          var transaction = Transaction(animation: nil)
+          transaction.disablesAnimations = true
+          withTransaction(transaction) { self.latinSuggestions = values }
+        }
       }
       return
     }
@@ -955,6 +1007,7 @@ struct AlphabeticKeyboardLayout: View {
   private func interceptAlphabeticDelete() -> Bool {
     if self.usesShapeMode && !self.shapeBuffer.isEmpty {
       self.shapeBuffer.removeLast()
+      if !self.shapeLatinBuffer.isEmpty { self.shapeLatinBuffer.removeLast() }
       self.updateCandidates()
       return true
     }
@@ -973,6 +1026,7 @@ struct AlphabeticKeyboardLayout: View {
   private func deleteCompositionCharacter() -> Bool {
     if self.usesShapeMode && !self.shapeBuffer.isEmpty {
       self.shapeBuffer.removeLast()
+      if !self.shapeLatinBuffer.isEmpty { self.shapeLatinBuffer.removeLast() }
       self.updateCandidates()
       return true
     }
@@ -1051,6 +1105,14 @@ struct AlphabeticKeyboardLayout: View {
 
   /// Input-method selection is independent from pronunciation schemes. Both
   /// Cangjie generations and both Quick generations are searched together.
+  private func openEmojiPage() {
+    self.clearShapeComposition()
+    self.clearComposition()
+    self.swipeAlternatives.removeAll()
+    self.liveSwipePath.removeAll()
+    self.showsEmojiPage = true
+  }
+
   private func cycleChineseMode() {
     let next = self.chineseMode.next
     self.clearComposition()
@@ -1067,19 +1129,14 @@ struct AlphabeticKeyboardLayout: View {
     let code = raw.lowercased()
     let allowed = self.chineseMode == .stroke ? "nm,./"
       : "abcdefghijklmnopqrstuvwxyz"
-    let maximum = self.chineseMode == .quick ? 2
-      : self.chineseMode == .stroke ? 64 : 6
-    guard code.count == 1, code.allSatisfy({ allowed.contains($0) }) else { return }
-    if self.shapeBuffer.count >= maximum {
-      // A long Rime stroke sequence must never silently choose the first word.
-      if self.chineseMode == .stroke { return }
-      if let first = self.shapeCandidates.first { self.chooseShape(first) }
-      else { self.insertShapeLiteral() }
-    }
+    let maximum = self.chineseMode == .stroke ? 64 : 32
+    guard code.count == 1, code.allSatisfy({ allowed.contains($0) }),
+          self.shapeBuffer.count < maximum else { return }
     if self.shapeBuffer.isEmpty {
       self.shapeHostAnchor = self.proxy.documentContextBeforeInput()
     }
     self.shapeBuffer += code
+    if self.chineseMode != .stroke { self.shapeLatinBuffer += raw }
     self.nextCantoneseWords.removeAll()
     self.swipeAlternatives.removeAll()
     self.lastShiftTap = nil
@@ -1092,31 +1149,41 @@ struct AlphabeticKeyboardLayout: View {
       self.proxy.deleteBackward()
     } else {
       self.shapeBuffer.removeLast()
+      if !self.shapeLatinBuffer.isEmpty { self.shapeLatinBuffer.removeLast() }
       self.updateCandidates()
     }
   }
 
   private func clearShapeComposition() {
     self.shapeBuffer = ""
+    self.shapeLatinBuffer = ""
+    self.latinRefreshTask?.cancel()
+    self.latinSuggestions.removeAll()
     self.shapeHostAnchor = nil
     self.shapeCandidates.removeAll()
     self.expandedShapeCandidates.removeAll()
     self.showsCandidateGrid = false
   }
 
-  private func insertShapeLiteral() {
-    guard !self.shapeBuffer.isEmpty else { return }
-    let text = self.shapeBuffer
+  private func commitShapeLatin(_ text: String, addSpace: Bool) {
+    guard self.usesShapeMode, self.chineseMode != .stroke,
+          !self.shapeLatinBuffer.isEmpty,
+          self.shapeHostAnchor == self.proxy.documentContextBeforeInput() else {
+      self.clearShapeComposition()
+      return
+    }
     self.clearShapeComposition()
-    self.proxy.insertText(text)
+    self.proxy.insertText(text + (addSpace ? " " : ""))
+    self.nextCantoneseWords.removeAll()
+    self.predictionAnchor = nil
+    KeyboardInputTrace.record(.latinKept)
+    self.refreshAutomaticShift()
     self.updateCandidates()
   }
 
   private func insertShapePunctuation(_ symbol: String) {
-    if !self.shapeBuffer.isEmpty {
-      if let first = self.shapeCandidates.first { self.chooseShape(first) }
-      else { self.clearShapeComposition() }
-    }
+    // A held stroke inserts only the chosen symbol; it never auto-commits.
+    self.clearShapeComposition()
     self.handleCharacter(symbol)
   }
 
@@ -1142,8 +1209,20 @@ struct AlphabeticKeyboardLayout: View {
 
   private func handleSpace() {
     if self.usesShapeMode && !self.shapeBuffer.isEmpty {
-      if let first = self.shapeCandidates.first { self.chooseShape(first) }
-      else { self.insertShapeLiteral() }
+      let isLatin = self.chineseMode != .stroke
+        && LatinWordSuggestions.shared.recognizesWholeWord(
+          self.shapeLatinBuffer,
+          preferred: SharedSettings().preferredSpokenLanguages
+        )
+      if isLatin {
+        self.commitShapeLatin(self.shapeLatinBuffer, addSpace: true)
+      } else if let first = self.shapeCandidates.first {
+        self.chooseShape(first)
+      } else {
+        // Invalid codes do not leak internal letters into host text.
+        self.clearShapeComposition()
+        self.updateCandidates()
+      }
       return
     }
     self.swipeAlternatives.removeAll()
@@ -1163,8 +1242,17 @@ struct AlphabeticKeyboardLayout: View {
 
   private func handleReturn() {
     if self.usesShapeMode && !self.shapeBuffer.isEmpty {
-      if let first = self.shapeCandidates.first { self.chooseShape(first) }
-      else { self.insertShapeLiteral() }
+      if self.chineseMode != .stroke
+        && LatinWordSuggestions.shared.recognizesWholeWord(
+          self.shapeLatinBuffer,
+          preferred: SharedSettings().preferredSpokenLanguages
+        ) {
+        self.commitShapeLatin(self.shapeLatinBuffer, addSpace: false)
+      } else if let first = self.shapeCandidates.first {
+        self.chooseShape(first)
+      } else {
+        self.clearShapeComposition()
+      }
     }
     self.swipeAlternatives.removeAll()
     self.nextCantoneseWords.removeAll()
@@ -1178,8 +1266,8 @@ struct AlphabeticKeyboardLayout: View {
 
   private func toggleNumberPage() {
     if self.usesShapeMode && !self.shapeBuffer.isEmpty {
-      if let first = self.shapeCandidates.first { self.chooseShape(first) }
-      else { self.clearShapeComposition() }
+      // Page navigation is not a candidate selection.
+      self.clearShapeComposition()
     }
     // Preserve the romanization suffix across ?123 so tone digits still work.
     self.lastInputWasSymbol = false

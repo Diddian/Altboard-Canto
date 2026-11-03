@@ -21,6 +21,7 @@ class BundleValidationError(ValueError):
 APP = "Payload/Sayboard.app/"
 KEYBOARD = APP + "PlugIns/SayboardKeyboard.appex/"
 EMOJI = KEYBOARD + "emoji_catalog.tsv"
+UNICODE_LICENSE = KEYBOARD + "UnicodeLicense.txt"
 SHAPES = KEYBOARD + "chinese-shapes.sqlite3"
 MERGED_NOTICES = (
     KEYBOARD + "RimeStrokeLicense.txt",
@@ -40,6 +41,7 @@ def inspect_ipa(
     *,
     expected_sha: str | None = None,
     expect_native_emoji: bool = False,
+    expect_emoji_catalog: bool = False,
     min_entries: int = 10_000,
     min_emoji: int = 3_000,
     expect_merged_shapes: bool = False,
@@ -66,6 +68,12 @@ def inspect_ipa(
                 raise BundleValidationError("Offline SQLite resource unexpectedly large")
             if expect_native_emoji and EMOJI in names:
                 raise BundleValidationError("Obsolete custom Emoji catalog present in native-Emoji IPA")
+            if expect_emoji_catalog:
+                absent_emoji = {EMOJI, UNICODE_LICENSE} - names
+                if absent_emoji:
+                    raise BundleValidationError("Emoji resources missing: " + ", ".join(sorted(absent_emoji)))
+                if ipa.getinfo(UNICODE_LICENSE).file_size == 0:
+                    raise BundleValidationError("Unicode Emoji license is empty")
             app = plistlib.loads(ipa.read(APP + "Info.plist"))
             extension = plistlib.loads(ipa.read(KEYBOARD + "Info.plist"))
             sha = app.get("AltboardBuildSHA")
@@ -158,7 +166,8 @@ def inspect_ipa(
                 "keyboard_bundle": keyboard_id,
                 "sqlite_entries": count,
                 "sqlite_indexes": len(indexes),
-                "emoji_mode": "system" if EMOJI not in names else "legacy_extension",
+                "emoji_mode": ("custom_extension" if expect_emoji_catalog else
+                               ("system" if EMOJI not in names else "legacy_extension")),
                 "emoji_entries": emoji_count,
                 "stroke_sources": stroke_sources,
                 "ipa_bytes": path.stat().st_size,
@@ -172,12 +181,14 @@ def main() -> None:
     parser.add_argument("ipa", type=pathlib.Path)
     parser.add_argument("--expected-sha", help="Exact 40-character GitHub commit SHA")
     parser.add_argument("--expect-native-emoji", action="store_true")
+    parser.add_argument("--expect-emoji-catalog", action="store_true")
     parser.add_argument("--expect-merged-shapes", action="store_true")
     args = parser.parse_args()
     try:
         result = inspect_ipa(
             args.ipa, expected_sha=args.expected_sha,
             expect_native_emoji=args.expect_native_emoji,
+            expect_emoji_catalog=args.expect_emoji_catalog,
             expect_merged_shapes=args.expect_merged_shapes
         )
     except BundleValidationError as error:

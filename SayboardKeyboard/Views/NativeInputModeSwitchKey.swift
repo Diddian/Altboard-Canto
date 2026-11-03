@@ -1,9 +1,8 @@
 import SwiftUI
 import UIKit
 
-/// Draws the project's original vector Emoji glyph on the system keyboard
-/// selector. UIKit still owns the native picker gesture: public iOS APIs
-/// cannot select the Emoji input mode by identifier.
+/// Native system Globe picker. The separate Emoji key opens Altboard's
+/// offline Emoji page; UIKit owns the OS keyboard-switch touch events.
 struct NativeInputModeSwitchKey: UIViewRepresentable {
   @Environment(\.colorScheme) private var colorScheme
   let configure: ((UIButton) -> Void)?
@@ -28,8 +27,8 @@ struct NativeInputModeSwitchKey: UIViewRepresentable {
     button.backgroundColor = KeyboardPalette.keyFill
     button.layer.cornerRadius = KeyboardChromeMetrics.keyCornerRadius
     button.isAccessibilityElement = true
-    button.accessibilityLabel = "Emoji and keyboard picker"
-    button.accessibilityHint = "Tap to switch keyboards. Touch and hold to select the system Emoji keyboard."
+    button.accessibilityLabel = "System keyboard picker"
+    button.accessibilityHint = "Tap or hold to switch between installed keyboards."
     // Keep only Apple's selector for tap/hold, without a competing recognizer.
     configure?(button)
     updateUIView(button, context: context)
@@ -46,14 +45,11 @@ struct NativeInputModeSwitchKey: UIViewRepresentable {
   }
 
   private static func glyphImage(colorScheme: ColorScheme) -> UIImage {
-    let side = Self.iconSize
-    let size = CGSize(width: side, height: side)
     let ink: UIColor = colorScheme == .dark ? .white : .black
-    return UIGraphicsImageRenderer(size: size).image { renderer in
-      let path = NativeEmojiGlyph().path(in: CGRect(origin: .zero, size: size))
-      renderer.cgContext.addPath(path.cgPath)
-      renderer.cgContext.setFillColor(ink.cgColor)
-      renderer.cgContext.drawPath(using: .eoFill)
-    }
+    let configuration = UIImage.SymbolConfiguration(
+      pointSize: Self.iconSize, weight: .regular
+    )
+    return (UIImage(systemName: "globe", withConfiguration: configuration)
+      ?? UIImage()).withTintColor(ink, renderingMode: .alwaysOriginal)
   }
 }

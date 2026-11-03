@@ -106,6 +106,34 @@ final class LatinWordSuggestions {
     }.prefix(max(1, limit)).map(\.element))
   }
 
+  /// A buffered shape spelling is kept as Latin only after an actual word
+  /// check, not merely because it resembles the start of a Chinese code.
+  func recognizesWholeWord(_ typed: String, preferred: [String]) -> Bool {
+    guard (1...32).contains(typed.count) else { return false }
+    let lower = typed.lowercased()
+    let codes = LatinWordSuggestionPolicy.preferredCodes(preferred)
+      .filter { $0 == "en" || $0 == "de" }
+    guard !codes.isEmpty else { return false }
+    if codes.contains("en") && (lower == "i" || lower == "a") { return true }
+    if codes.contains("en") && SwipeWordLexicon.shared.contains(lower) { return true }
+    for code in codes {
+      if Self.commonWords[code]?.contains(where: { $0.lowercased() == lower }) == true {
+        return true
+      }
+    }
+    let range = NSRange(location: 0, length: typed.utf16.count)
+    for locale in LatinWordSuggestionPolicy.checkerLocales(
+      preferred: preferred, available: UITextChecker.availableLanguages
+    ) where codes.contains(locale.preference) {
+      let error = self.checker.rangeOfMisspelledWord(
+        in: typed, range: range, startingAt: 0, wrap: false,
+        language: locale.identifier
+      )
+      if error.location == NSNotFound { return true }
+    }
+    return false
+  }
+
   func remember(_ suggestion: LatinWordSuggestion) {
     var counts = defaults?.dictionary(forKey: storageKey) as? [String: Int] ?? [:]
     counts[suggestion.id] = min(10_000, (counts[suggestion.id] ?? 0) + 1)

@@ -17,7 +17,7 @@ SHA = "a" * 40
 
 
 def fixture(directory, *, legacy=False, extension_sha=SHA, missing=None,
-            merged_shapes=False):
+            merged_shapes=False, unicode_license=False):
     directory = pathlib.Path(directory)
     sqlite_file = directory / "jyutping.sqlite3"
     db = sqlite3.connect(sqlite_file)
@@ -60,6 +60,8 @@ def fixture(directory, *, legacy=False, extension_sha=SHA, missing=None,
         payload[MOD.MERGED_NOTICES[0]] = b"LGPL-3.0 terms"
         payload[MOD.MERGED_NOTICES[1]] = b"GPLv3 terms"
         payload[MOD.MERGED_NOTICES[2]] = b"Rime Stroke attribution"
+    if unicode_license:
+        payload[MOD.UNICODE_LICENSE] = b"UNICODE LICENSE V3 permission notice"
     if legacy:
         payload[MOD.EMOJI] = "group\tname\temoji\nSmileys\tgrin\t😀\n".encode()
     if missing:
@@ -72,6 +74,22 @@ def fixture(directory, *, legacy=False, extension_sha=SHA, missing=None,
 
 
 class IPABundleTests(unittest.TestCase):
+    def test_custom_emoji_requires_catalog_and_license(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            missing = fixture(tmp)
+            with self.assertRaisesRegex(MOD.BundleValidationError,
+                                        "Emoji resources missing"):
+                MOD.inspect_ipa(missing, expect_emoji_catalog=True)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            ipa = fixture(tmp, legacy=True, unicode_license=True)
+            result = MOD.inspect_ipa(
+                ipa, expected_sha=SHA, expect_emoji_catalog=True,
+                min_entries=1, min_emoji=1
+            )
+            self.assertEqual(result["emoji_mode"], "custom_extension")
+            self.assertEqual(result["emoji_entries"], 1)
+
     def test_native_system_emoji_passes_without_custom_catalog(self):
         with tempfile.TemporaryDirectory() as tmp:
             ipa = fixture(tmp)

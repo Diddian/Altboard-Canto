@@ -39,7 +39,8 @@ final class KeyboardViewController: UIInputViewController {
 
   override func loadView() {
     super.loadView()
-    view.backgroundColor = KeyboardPalette.backdrop
+    view.backgroundColor = .clear
+    view.isOpaque = false
     view.clipsToBounds = true
 
     if let inputView = view as? UIInputView {
@@ -508,7 +509,8 @@ extension KeyboardViewController {
     let keyboardView = KeyboardView(proxy: proxy, keyboardState: self.keyboardState)
     let hosting = UIHostingController(rootView: keyboardView)
     hosting.safeAreaRegions = []
-    hosting.view.backgroundColor = KeyboardPalette.backdrop
+    hosting.view.backgroundColor = .clear
+    hosting.view.isOpaque = false
     hosting.view.translatesAutoresizingMaskIntoConstraints = false
 
     self.addChild(hosting)

@@ -185,7 +185,12 @@ struct KeyboardView: View {
       .environment(\.keyboardHapticsEnabled, self.keyboardState.keyboardHapticsEnabled)
     }
     }
-    .background(Color(uiColor: KeyboardPalette.backdrop))
+    .background {
+      Rectangle()
+        .fill(.regularMaterial)
+        .overlay(Color(uiColor: KeyboardPalette.backdrop).opacity(0.10))
+        .ignoresSafeArea()
+    }
     .sensoryFeedback(.selection, trigger: self.sensoryPulse.count)
   }
 
