@@ -12,13 +12,13 @@ struct KeyboardHostInputTraits: Equatable {
 
   var bottomShortcuts: [String] {
     switch self.keyboardType {
-    case .emailAddress: ["@", "."]
-    case .URL: [".", "/", ".com"]
-    case .webSearch: ["."]
-    case .twitter: ["@", "#"]
-    case .namePhonePad: ["+", "#"]
-    case .phonePad: ["+", "*", "#"]
-    case .decimalPad: ["."]
+    case .emailAddress: return ["@", "."]
+    case .URL: return [".", "/", ".com"]
+    case .webSearch: return ["."]
+    case .twitter: return ["@", "#"]
+    case .namePhonePad: return ["+", "#"]
+    case .phonePad: return ["+", "*", "#"]
+    case .decimalPad: return ["."]
     default:
       if self.contentType == UITextContentType.emailAddress.rawValue {
         return ["@", "."]

@@ -31,7 +31,6 @@ struct KeyboardReturnKey: View {
     .buttonStyle(HostReturnStyle(prominent: self.appearance.prominent))
     .opacity(self.enabled ? 1 : 0.45)
     .accessibilityLabel(self.appearance.title)
-    .accessibilityAddTraits(self.enabled ? [] : .isDisabled)
     .disabled(!self.enabled)
   }
 }
