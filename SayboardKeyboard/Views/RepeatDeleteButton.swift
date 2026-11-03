@@ -7,6 +7,8 @@ struct RepeatDeleteButton: View {
   let fixedWidth: CGFloat
   /// Return true when a composition absorbed this delete.
   var onDeleteIntercept: (() -> Bool)? = nil
+  /// Separate optional quick-tap interception. Hold behavior stays unchanged.
+  var onTapDeleteIntercept: (() -> Bool)? = nil
   var onHostDeletion: (() -> Void)? = nil
   var fastCompositionRepeat = false
   /// Emoji category rail is icon-only, unlike the rectangular text keys.
@@ -62,7 +64,7 @@ struct RepeatDeleteButton: View {
             if !self.didRepeat {
               // A verified just-swiped word is one undo unit on the first
               // Delete tap. Ordinary text still deletes one character.
-              let intercepted = self.onDeleteIntercept?() ?? false
+              let intercepted = self.onTapDeleteIntercept?() ?? false
               if !intercepted { self.proxy.deleteBackward() }
               self.onHostDeletion?()
             }

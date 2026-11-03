@@ -518,7 +518,8 @@ struct AlphabeticKeyboardLayout: View {
         RepeatDeleteButton(
           proxy: self.proxy,
           fixedWidth: 50.kbScaled,
-          onDeleteIntercept: { self.interceptAlphabeticDelete() },
+          onDeleteIntercept: { self.deleteCompositionCharacter() },
+          onTapDeleteIntercept: { self.interceptAlphabeticDelete() },
           onHostDeletion: { self.handleHostDeletion() },
           fastCompositionRepeat: self.offersCantonese && !self.composition.isEmpty
         )
@@ -779,7 +780,7 @@ struct AlphabeticKeyboardLayout: View {
       return true
     }
     self.swipeAlternatives.removeAll()
-    return self.deleteCompositionCharacter()
+    return false
   }
 
   private func deleteCompositionCharacter() -> Bool {
