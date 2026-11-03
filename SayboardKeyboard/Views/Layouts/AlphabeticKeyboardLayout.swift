@@ -71,7 +71,8 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private var offersCantonese: Bool {
-    SharedSettings().preferredSpokenLanguages.contains("yue")
+    !self.keyboardState.hostInputTraits.usesASCIITypingOnly
+      && SharedSettings().preferredSpokenLanguages.contains("yue")
   }
 
   private var offersChineseInput: Bool {
@@ -86,7 +87,8 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private var usesShapeMode: Bool {
-    self.chineseMode.usesShapeTable && self.page == .letters
+    !self.keyboardState.hostInputTraits.usesASCIITypingOnly
+      && self.chineseMode.usesShapeTable && self.page == .letters
   }
 
   private var shapeDisplay: String {
@@ -203,6 +205,7 @@ struct AlphabeticKeyboardLayout: View {
         onEmojiAction: { self.openEmojiPage() },
         showsAlphabetIndicator: self.page == .letters,
         onSpaceAction: { self.handleSpace() },
+        onShortcutAction: { self.handleCharacter($0) },
         onReturnAction: { self.handleReturn() },
         onCursorTrackingBegan: { self.beginCursorTracking() },
         onCursorTrackingEnded: { self.endCursorTracking() }
@@ -231,8 +234,16 @@ struct AlphabeticKeyboardLayout: View {
       }
     }
     .onAppear {
+      self.applyHostKeyboardLayout()
+    }
+    .onChange(of: self.keyboardState.hostInputTraits.keyboardType) { _, _ in
+      self.applyHostKeyboardLayout()
+    }
+    .onChange(of: self.keyboardState.hostInputTraits.contentType) { _, _ in
+      self.applyHostKeyboardLayout()
+    }
+    .onChange(of: self.keyboardState.hostInputTraits.autocapitalizationType) { _, _ in
       self.refreshAutomaticShift()
-      self.updateCandidates()
     }
     .onChange(of: self.chineseModeRaw) { _, _ in
       self.clearComposition()
@@ -1280,9 +1291,21 @@ struct AlphabeticKeyboardLayout: View {
     self.updateCandidates()
   }
 
+  private func applyHostKeyboardLayout() {
+    // A new host field can require a different page. Do not reset the page
+    // just because the user typed another character in the same field.
+    self.clearComposition()
+    self.clearShapeComposition()
+    self.page = self.keyboardState.hostInputTraits.prefersNumberPage
+      ? .numbers : .letters
+    self.refreshAutomaticShift()
+    self.updateCandidates()
+  }
+
   private func refreshAutomaticShift() {
     guard !self.capsLock else { return }
-    self.shiftActive = self.autoCapitalize
+    self.shiftActive = !self.keyboardState.hostInputTraits.prefersLowercase
+      && self.autoCapitalize
       && SentenceCapitalization.shouldUseUppercase(after: self.proxy.documentContextBeforeInput())
   }
 

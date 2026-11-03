@@ -145,12 +145,17 @@ struct KeyboardBottomRow: View {
   var onEmojiAction: (() -> Void)? = nil
   var showsAlphabetIndicator = true
   var onSpaceAction: (() -> Void)? = nil
+  var onShortcutAction: ((String) -> Void)? = nil
   var onReturnAction: (() -> Void)? = nil
   var onTextEdited: (() -> Void)? = nil
   var onCursorTrackingBegan: (() -> Void)? = nil
   var onCursorTrackingEnded: (() -> Void)? = nil
 
   var body: some View {
+    let traits = self.keyboardState.hostInputTraits
+    let shortcuts = self.keyboardState.keyboardKind == .standard
+      ? [] : traits.bottomShortcuts
+    let returnWidth = shortcuts.count >= 3 ? 78.kbScaled : self.metrics.returnWidth
     HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
       if let action = self.onAlphabeticModeSwitch {
         KeyButton(
@@ -200,7 +205,28 @@ struct KeyboardBottomRow: View {
         }
       )
 
-      KeyButton(content: .systemImage("return.left"), fixedWidth: self.metrics.returnWidth) {
+      ForEach(Array(shortcuts.enumerated()), id: \.offset) { index, shortcut in
+        SymbolHoldKey(
+          symbol: shortcut,
+          fixedWidth: shortcut == ".com" ? 45.kbScaled
+            : (shortcuts.count >= 3 ? 34.kbScaled : 43.kbScaled),
+          column: index,
+          columnCount: shortcuts.count
+        ) { selected in
+          if let action = self.onShortcutAction {
+            action(selected)
+          } else {
+            self.proxy.insertText(selected)
+          }
+          self.onTextEdited?()
+        }
+      }
+
+      KeyboardReturnKey(
+        appearance: traits.returnAppearance,
+        enabled: traits.returnEnabled,
+        width: returnWidth
+      ) {
         if let action = self.onReturnAction { action() } else { self.proxy.insertText("\n") }
         self.onTextEdited?()
       }

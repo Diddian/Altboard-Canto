@@ -45,6 +45,7 @@ final class KeyboardState: ObservableObject {
   @Published var needsInputModeSwitchKey = false
   @Published var keyboardHapticsEnabled = true
   @Published var textContextRevision = 0
+  @Published var hostInputTraits = KeyboardHostInputTraits()
   @Published var keyboardKind = KeyboardKind.standard
   @Published var isDictationLocked = false
   @Published var showsMicHint = false

@@ -93,6 +93,7 @@ final class KeyboardViewController: UIInputViewController {
       self.setupKeyboardView()
     }
     self.keyboardState.refresh()
+    self.refreshHostInputTraits()
     KeyboardHaptics.prepare()
     if self.keyboardState.isRecording {
       self.keyboardState.startLevelPolling()
@@ -252,6 +253,7 @@ final class KeyboardViewController: UIInputViewController {
   private func hostDidEnterForeground() {
     self.syncFullAccessIfChanged()
     self.keyboardState.refresh()
+    self.refreshHostInputTraits()
     KeyboardHaptics.prepare()
     if self.keyboardState.isRecording {
       self.keyboardState.startLevelPolling()
@@ -649,8 +651,14 @@ extension KeyboardViewController {
 
 extension KeyboardViewController {
 
+  override func textWillChange(_ textInput: (any UITextInput)?) {
+    super.textWillChange(textInput)
+    self.refreshHostInputTraits()
+  }
+
   override func textDidChange(_ textInput: (any UITextInput)?) {
     super.textDidChange(textInput)
+    self.refreshHostInputTraits()
     self.keyboardState.textContextRevision &+= 1
     self.syncInputModeSwitchKey()
     self.insertDeferredAppearanceText()
@@ -659,6 +667,21 @@ extension KeyboardViewController {
   override func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
     self.insertDeferredAppearanceText()
+  }
+
+  private func refreshHostInputTraits() {
+    let proxy = self.textDocumentProxy
+    let traits = KeyboardHostInputTraits(
+      keyboardType: proxy.keyboardType ?? .default,
+      returnKeyType: proxy.returnKeyType ?? .default,
+      contentType: proxy.textContentType?.rawValue,
+      autocapitalizationType: proxy.autocapitalizationType ?? .sentences,
+      enablesReturnKeyAutomatically: proxy.enablesReturnKeyAutomatically ?? false,
+      hasText: proxy.hasText
+    )
+    if traits != self.keyboardState.hostInputTraits {
+      self.keyboardState.hostInputTraits = traits
+    }
   }
 
   private func syncInputModeSwitchKey() {
