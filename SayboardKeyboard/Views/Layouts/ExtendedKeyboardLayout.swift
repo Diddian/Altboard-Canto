@@ -82,15 +82,17 @@ extension ExtendedKeyboardLayout {
             if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
           }
         }
-        TranslateToggleButton(
-          fixedWidth: self.chrome.sideButtonWidth,
-          shape: .pill,
-          compactStyle: true,
-          keyboardState: self.keyboardState,
-          onHiddenSettings: self.keyboardState.showSettingsKey ? nil : {
-            if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
-          }
-        )
+        if self.keyboardState.showOutputLanguageButton {
+          TranslateToggleButton(
+            fixedWidth: self.chrome.sideButtonWidth,
+            shape: .pill,
+            compactStyle: true,
+            keyboardState: self.keyboardState,
+            onHiddenSettings: self.keyboardState.showSettingsKey ? nil : {
+              if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
+            }
+          )
+        }
         if self.keyboardState.showsAIButton { self.aiButton }
         if self.keyboardState.hasLLMHistory { self.undoRedoRow }
         Spacer(minLength: 0)

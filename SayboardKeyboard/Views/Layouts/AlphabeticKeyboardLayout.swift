@@ -321,7 +321,7 @@ struct AlphabeticKeyboardLayout: View {
             Image(systemName: self.showsCandidateGrid ? "chevron.up" : "chevron.down")
               .font(.system(size: 12.kbScaled, weight: .semibold))
               .foregroundStyle(.secondary)
-              .frame(width: 29.kbScaled, height: KeyboardChromeMetrics.keyHeight)
+              .frame(width: 44.kbScaled, height: KeyboardChromeMetrics.keyHeight)
               .contentShape(Rectangle())
           }
           .buttonStyle(.plain)
@@ -346,14 +346,16 @@ struct AlphabeticKeyboardLayout: View {
           .accessibilityHint("拼音、速成、倉頡、筆劃")
         }
 
-        TranslateToggleButton(
-          fixedWidth: self.chrome.sideButtonWidth,
-          compactStyle: true,
-          keyboardState: self.keyboardState,
-          onHiddenSettings: self.keyboardState.showSettingsKey ? nil : {
-            if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
-          }
-        )
+        if self.keyboardState.showOutputLanguageButton {
+          TranslateToggleButton(
+            fixedWidth: self.chrome.sideButtonWidth,
+            compactStyle: true,
+            keyboardState: self.keyboardState,
+            onHiddenSettings: self.keyboardState.showSettingsKey ? nil : {
+              if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
+            }
+          )
+        }
         if self.keyboardState.showsAIButton {
           AIButton(
             fixedWidth: self.chrome.sideButtonWidth,

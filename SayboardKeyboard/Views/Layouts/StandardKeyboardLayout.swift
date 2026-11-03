@@ -105,14 +105,16 @@ extension StandardKeyboardLayout {
           if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
         }
       }
-      TranslateToggleButton(
-        fixedWidth: self.chrome.sideButtonWidth,
-        keyboardState: self.keyboardState,
-        onHiddenSettings: self.keyboardState.showSettingsKey ? nil : {
-          if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
-        }
-      )
+      if self.keyboardState.showOutputLanguageButton {
+        TranslateToggleButton(
+          fixedWidth: self.chrome.sideButtonWidth,
+          keyboardState: self.keyboardState,
+          onHiddenSettings: self.keyboardState.showSettingsKey ? nil : {
+            if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
+          }
+        )
         .transition(.opacity.combined(with: .scale))
+      }
       Spacer(minLength: 0)
       VStack(alignment: .trailing, spacing: 8.5.kbScaled) {
         if self.keyboardState.hasLLMHistory {
@@ -121,9 +123,6 @@ extension StandardKeyboardLayout {
         HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
           if self.keyboardState.showsAIButton {
             self.aiButton.transition(.opacity.combined(with: .scale))
-          } else {
-            // Keep the two right-side slots symmetric even without a local LLM.
-            Color.clear.frame(width: self.chrome.sideButtonWidth)
           }
           RepeatDeleteButton(proxy: self.proxy, fixedWidth: self.chrome.sideButtonWidth)
         }

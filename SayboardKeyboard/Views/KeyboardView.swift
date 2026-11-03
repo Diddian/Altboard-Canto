@@ -139,16 +139,10 @@ struct KeyboardView: View {
 
   var body: some View {
     Group {
-    if let blocker = self.activeBlocker, self.keyboardState.keyboardKind != .alphabetic {
-      VStack(spacing: 0) {
-        BlockerPrompt(blocker: blocker)
-        KeyboardBottomRow(
-          proxy: self.proxy,
-          metrics: KeyboardChromeMetrics(keyboardState: self.keyboardState),
-          keyboardState: self.keyboardState,
-        )
-      }
-      .environment(\.keyboardHapticsEnabled, self.keyboardState.keyboardHapticsEnabled)
+    if self.keyboardState.requiresBasicTypingFallback {
+      // The microphone and AI require setup, but typing must remain usable.
+      AlphabeticKeyboardLayout(proxy: self.proxy, keyboardState: self.keyboardState)
+        .environment(\.keyboardHapticsEnabled, self.keyboardState.keyboardHapticsEnabled)
     } else if let error = self.keyboardState.llmError {
       LLMErrorPrompt(
         error: error, keyboardState: self.keyboardState,

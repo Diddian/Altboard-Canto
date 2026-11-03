@@ -140,6 +140,10 @@ private struct KeyboardTestPreview: View {
   private var hasUsableLLMModel = false
   @AppStorage(SharedKey.keyboardShowSettingsKey, store: UserDefaults(suiteName: AppGroup.identifier))
   private var showSettingsKey = true
+  @AppStorage(SharedKey.keyboardShowOutputLanguageButton, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var showOutputLanguageButton = true
+  @AppStorage(SharedKey.keyboardShowAIButton, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var showAIButton = true
 
   private var compact: Bool {
     self.kind == .standard && self.microphoneLayout == .compact
@@ -177,7 +181,7 @@ private struct KeyboardTestPreview: View {
       } else if self.kind == .extended {
         HStack(spacing: 6) {
           if self.showSettingsKey { self.key("gearshape", width: 45) }
-          self.key("character.bubble", width: 45)
+          if self.showOutputLanguageButton { self.key("character.bubble", width: 45) }
           Spacer()
           self.key("mic.fill", width: 96, capsule: true)
         }.padding(.horizontal, 6.67).frame(height: 57)
@@ -204,9 +208,11 @@ private struct KeyboardTestPreview: View {
           ZStack {
             HStack(spacing: 6) {
               if self.showSettingsKey { self.key("gearshape", width: side) }
-              self.key("character.bubble", width: side)
+              if self.showOutputLanguageButton { self.key("character.bubble", width: side) }
               Spacer(minLength: 0)
-              self.key("sparkles", width: side)
+              if self.showAIButton && self.llmEnabled && self.hasUsableLLMModel {
+                self.key("sparkles", width: side)
+              }
               self.key("delete.left", width: side)
             }
             if self.compact {
@@ -229,8 +235,8 @@ private struct KeyboardTestPreview: View {
   private var alphabetToolbar: some View {
     HStack(spacing: 6) {
       if self.showSettingsKey { self.key("gearshape", width: 48) }
-      self.translatePreview
-      if self.llmEnabled && self.hasUsableLLMModel {
+      if self.showOutputLanguageButton { self.translatePreview }
+      if self.showAIButton && self.llmEnabled && self.hasUsableLLMModel {
         self.key("sparkles", width: 48)
       }
       Spacer(minLength: 2)

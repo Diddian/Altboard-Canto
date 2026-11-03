@@ -144,6 +144,8 @@ enum SharedKey {
   static let microphoneKeyboardLayout = "microphoneKeyboardLayout"
   static let keyboardHapticsEnabled = "keyboardHapticsEnabled"
   static let keyboardShowSettingsKey = "keyboardShowSettingsKey"
+  static let keyboardShowOutputLanguageButton = "canto.keyboard.showOutputLanguageButton.v1"
+  static let keyboardShowAIButton = "canto.keyboard.showAIButton.v1"
   static let keyboardSwipeTypingEnabled = "keyboardSwipeTypingEnabled"
   static let keyboardTouchDebugOverlay = "keyboardTouchDebugOverlay"
   static let keyboardAdaptiveTouchEnabled = "canto.keyboard.adaptiveTouchEnabled"

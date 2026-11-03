@@ -65,6 +65,9 @@ final class KeyboardViewController: UIInputViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
+    // Altboard provides a microphone key; avoid a duplicate system dictation
+    // button below the keyboard on Face ID iPhones.
+    self.hasDictationKey = true
     self.keyboardState.bootstrapLayoutSettings()
     self.keyboardState.configureInputModeListButton = { [weak self] button in
       guard let self else { return }
@@ -101,8 +104,8 @@ final class KeyboardViewController: UIInputViewController {
       self.keyboardState.stopLevelPolling()
     }
     self.keyboardState.isTranslationMode = SharedSettings().isTranslationMode
-    self.updateKeyboardHeight(actionBarVisible: false)
     self.syncFullAccessIfChanged()
+    self.updateKeyboardHeight(actionBarVisible: false)
     self.pingMainAppForSessionStatus()
     self.pingValidator.startIfNeeded(for: self.keyboardState)
     self.keyboardState.appearedAt = CFAbsoluteTimeGetCurrent()
@@ -537,7 +540,7 @@ extension KeyboardViewController {
     guard let hc = self.heightConstraint else { return }
     let base = KeyboardMetrics.totalHeight(
       actionBarVisible: self.actionBarVisible,
-      kind: self.keyboardState.keyboardKind
+      kind: self.keyboardState.effectiveTypingKind
     )
     let target = base
     guard hc.constant != target else { return }

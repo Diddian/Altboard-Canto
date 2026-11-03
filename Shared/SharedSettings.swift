@@ -234,6 +234,16 @@ struct SharedSettings {
     nonmutating set { defaults.set(newValue, forKey: SharedKey.keyboardShowSettingsKey) }
   }
 
+  var keyboardShowOutputLanguageButton: Bool {
+    get { defaults.object(forKey: SharedKey.keyboardShowOutputLanguageButton) as? Bool ?? true }
+    nonmutating set { defaults.set(newValue, forKey: SharedKey.keyboardShowOutputLanguageButton) }
+  }
+
+  var keyboardShowAIButton: Bool {
+    get { defaults.object(forKey: SharedKey.keyboardShowAIButton) as? Bool ?? true }
+    nonmutating set { defaults.set(newValue, forKey: SharedKey.keyboardShowAIButton) }
+  }
+
   var useCustomSpaceBar: Bool {
     get { self.defaults.bool(forKey: SharedKey.useCustomSpaceBar) }
     nonmutating set { defaults.set(newValue, forKey: SharedKey.useCustomSpaceBar) }

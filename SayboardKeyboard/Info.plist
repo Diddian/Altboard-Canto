@@ -27,11 +27,11 @@
 		<key>NSExtensionAttributes</key>
 		<dict>
 			<key>IsASCIICapable</key>
-			<false/>
+			<true/>
 			<key>PrefersRightToLeft</key>
 			<false/>
 			<key>PrimaryLanguage</key>
-			<string>mis</string>
+			<string>yue-Hant-HK</string>
 			<key>RequestsOpenAccess</key>
 			<true/>
 		</dict>

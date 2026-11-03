@@ -7,6 +7,9 @@ struct VoiceOutputSettingsView: View {
   @AppStorage(SharedKey.voiceCleanupEnabled, store: AppGroup.sharedDefaults ?? .standard)
   private var cleanupEnabled = false
 
+  @AppStorage(SharedKey.keyboardShowOutputLanguageButton, store: AppGroup.sharedDefaults ?? .standard)
+  private var showOutputLanguageButton = true
+
   @AppStorage(SharedKey.voiceOutputTarget, store: AppGroup.sharedDefaults ?? .standard)
   private var target = VoiceOutputTarget.original.rawValue
 
@@ -20,6 +23,7 @@ struct VoiceOutputSettingsView: View {
     Form {
       Section {
         Toggle("Clean up transcription with offline AI", isOn: self.$cleanupEnabled)
+        Toggle("Show output-language button on keyboard", isOn: self.$showOutputLanguageButton)
         Picker("Output language", selection: self.$target) {
           ForEach(VoiceOutputTarget.allCases) { option in
             Text(option.title).tag(option.rawValue)

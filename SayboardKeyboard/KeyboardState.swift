@@ -20,6 +20,8 @@ final class KeyboardState: ObservableObject {
   @Published var hasFullAccess = false
   @Published var useCustomSpaceBar = false
   @Published var showSettingsKey = true
+  @Published var showOutputLanguageButton = true
+  @Published var showAIButton = true
   @Published var isTranslationMode = false
   @Published var selectedVariantSupportsTranslation = false
   @Published var selectedVariantSpecializesForNeuralEngine = false
@@ -61,6 +63,18 @@ final class KeyboardState: ObservableObject {
   var appearedAt: CFAbsoluteTime = 0
 
   /// Keep typing controls visible while recording in every non-mic mode.
+  // A third-party keyboard must retain ordinary typing without microphone,
+  // Full Access, a downloaded model, or writable App Group storage.
+  var requiresBasicTypingFallback: Bool {
+    self.keyboardKind != .alphabetic &&
+      (!self.hasFullAccess || !self.isMicrophoneAuthorized ||
+       !self.hasUsableModel || AppGroup.containerURL == nil)
+  }
+
+  var effectiveTypingKind: KeyboardKind {
+    self.requiresBasicTypingFallback ? .alphabetic : self.keyboardKind
+  }
+
   var auxiliaryControlsHidden: Bool {
     self.keyboardKind == .standard
       && (self.isStartingRecording || self.isRecording || self.isProcessing)
@@ -130,6 +144,8 @@ final class KeyboardState: ObservableObject {
     self.isMicrophoneAuthorized = self.settings.isMicrophoneAuthorized
     self.useCustomSpaceBar = self.settings.useCustomSpaceBar
     self.showSettingsKey = self.settings.keyboardShowSettingsKey
+    self.showOutputLanguageButton = self.settings.keyboardShowOutputLanguageButton
+    self.showAIButton = self.settings.keyboardShowAIButton
     self.keyboardKind = self.settings.keyboardKind
     let selectedVariant = self.settings.selectedVariant
     self.selectedVariantSupportsTranslation = selectedVariant.supportsTranslation

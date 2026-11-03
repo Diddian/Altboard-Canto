@@ -135,6 +135,26 @@ struct SharedSettingsDefaultsTests {
   }
 
   @Test
+  func optionalKeyboardButtonsDefaultOnAndPersistIndependently() throws {
+    let suiteName = Self.uniqueSuiteName()
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { Self.cleanup(suiteName: suiteName) }
+    let settings = SharedSettings(defaults: defaults)
+    #expect(settings.keyboardShowOutputLanguageButton)
+    #expect(settings.keyboardShowAIButton)
+    #expect(defaults.object(forKey: SharedKey.keyboardShowOutputLanguageButton) == nil)
+    #expect(defaults.object(forKey: SharedKey.keyboardShowAIButton) == nil)
+    settings.keyboardShowOutputLanguageButton = false
+    #expect(!SharedSettings(defaults: defaults).keyboardShowOutputLanguageButton)
+    #expect(SharedSettings(defaults: defaults).keyboardShowAIButton)
+    settings.keyboardShowAIButton = false
+    #expect(!SharedSettings(defaults: defaults).keyboardShowAIButton)
+    settings.keyboardShowOutputLanguageButton = true
+    #expect(SharedSettings(defaults: defaults).keyboardShowOutputLanguageButton)
+    #expect(!SharedSettings(defaults: defaults).keyboardShowAIButton)
+  }
+
+  @Test
   func swipeTypingRemainsOptInAndKeepsStoredUserChoice() throws {
     let suiteName = Self.uniqueSuiteName()
     let defaults = try #require(UserDefaults(suiteName: suiteName))

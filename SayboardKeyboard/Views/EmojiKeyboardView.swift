@@ -153,7 +153,7 @@ struct EmojiKeyboardView: View {
       } label: {
         Image(systemName: "xmark")
           .font(.system(size: 17.kbScaled, weight: .semibold))
-          .frame(width: 39.kbScaled, height: KeyboardChromeMetrics.keyHeight)
+          .frame(width: 44.kbScaled, height: KeyboardChromeMetrics.keyHeight)
           .background(Color(uiColor: KeyboardPalette.keyFill),
                       in: Capsule())
       }
@@ -213,7 +213,7 @@ struct EmojiKeyboardView: View {
                 .foregroundStyle(
                   self.selectedGroup == category.name ? Color.primary : Color.secondary
                 )
-                .frame(width: 27.kbScaled, height: KeyboardChromeMetrics.keyHeight)
+                .frame(width: 44.kbScaled, height: KeyboardChromeMetrics.keyHeight)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)

@@ -28,7 +28,9 @@ struct SymbolHoldKey: View {
 
   var body: some View {
     Text(verbatim: self.face ?? self.symbol)
-      .font(.system(size: 18.kbScaled))
+      .font(.system(size: (self.symbol.count > 2 ? 13 : 18).kbScaled))
+      .lineLimit(1)
+      .minimumScaleFactor(0.8)
       .foregroundStyle(.primary)
       .frame(maxWidth: .infinity)
       .frame(width: self.fixedWidth, height: KeyboardChromeMetrics.keyHeight)
