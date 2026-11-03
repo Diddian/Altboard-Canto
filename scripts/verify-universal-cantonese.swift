@@ -16,7 +16,9 @@ enum UniversalCantoneseSmoke {
     precondition(CantoneseRomanizationVariants.variants(for: "ng") == ["ng", "m"])
     precondition(CantoneseRomanizationVariants.variants(for: "yyu") == ["yyu", "yu"])
     precondition(CantoneseRomanizationVariants.variants(for: "gamyuen") == ["gamyuen"])
-    precondition(CantoneseRomanizationVariants.variants(for: String(repeating: "a", count: 49)).isEmpty)
+    let maxLength = String(repeating: "a", count: 96)
+    precondition(CantoneseRomanizationVariants.variants(for: maxLength) == [maxLength])
+    precondition(CantoneseRomanizationVariants.variants(for: String(repeating: "a", count: 97)).isEmpty)
     let cases: [(String, String, Int)] = [
       ("jui", "zeoi3", 3), ("sui", "seoi2", 3), ("yuen", "jyun4", 4),
       ("gamyuen", "gam1 jyun4", 4), ("gamyat", "gam1 jat6", 3),
