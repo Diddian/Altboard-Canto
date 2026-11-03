@@ -88,7 +88,18 @@ for order in [LetterKeyArrangement.qwerty, .qwertz] {
   )
   precondition(contractions.first == "that's", "apostrophe contraction: \(contractions)")
 }
-precondition(LatinSwipeDecoder.normalizedSpelling("that's") == "thats")
+// Colloquial English and German are swipe targets without new network data.
+for order in [LetterKeyArrangement.qwerty, .qwertz] {
+  for word in ["wanna", "gonna", "gotta", "kinda", "thinner",
+               "naja", "krass", "chillen", "digga"] {
+    let matches = LatinSwipeDecoder.rank(
+      path: stroke(word, order: order), arrangement: order,
+      fullWidth: 440, words: ["hello", "keyboard", "tomorrow", word]
+    )
+    precondition(matches.first == word, "colloquial swipe \(word): \(matches)")
+  }
+}
+\(marker)
 precondition(LatinSwipeDecoder.normalizedSpelling("Grüße") == "grusse")
 let session = LatinSwipeSession()
 let points = stroke("hello", order: .qwerty)

@@ -29,6 +29,8 @@ enum CantoneseRomanizationVariants {
         "nghaiaamaa", "mhaiama", "mhaiahma"].contains(source) {
       append("mhaiaamaa")
     }
+    // A bounded Yale-style rendering of 我 (ngo5), including 我係.
+    if source.hasPrefix("ngoh") { append("ngo" + source.dropFirst(4)) }
     if source.contains("yyu") {
       append(source.replacingOccurrences(of: "yyu", with: "yu"))
     }

@@ -22,26 +22,38 @@ struct VoiceOutputSettingsView: View {
   var body: some View {
     Form {
       Section {
-        Toggle("Clean up transcription with offline AI", isOn: self.$cleanupEnabled)
-        Toggle("Show output-language button on keyboard", isOn: self.$showOutputLanguageButton)
-        Picker("Output language", selection: self.$target) {
+        Toggle(isOn: self.$cleanupEnabled) {
+          Label("Clean up transcription with offline AI", systemImage: "wand.and.stars")
+        }
+        Toggle(isOn: self.$showOutputLanguageButton) {
+          Label("Show output-language button on keyboard", systemImage: "globe")
+        }
+        Picker(selection: self.$target) {
           ForEach(VoiceOutputTarget.allCases) { option in
             Text(option.title).tag(option.rawValue)
           }
+        } label: {
+          Label("Output language", systemImage: "character.bubble")
         }
         if self.target == VoiceOutputTarget.custom.rawValue {
-          TextField("Language code, e.g. fr, es, ja, ko", text: self.$customLanguage)
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
+          HStack {
+            Label("Language Code", systemImage: "character.cursor.ibeam")
+            TextField("fr, es, ja, ko", text: self.$customLanguage)
+              .multilineTextAlignment(.trailing)
+              .textInputAutocapitalization(.never)
+              .autocorrectionDisabled()
+          }
           if VoiceOutputTarget.customLanguageName(self.customLanguage) == nil {
             Text("Use a valid language code. An invalid target keeps the original language.")
               .font(.footnote).foregroundStyle(.orange)
           }
         }
-        Picker("Dictation tone", selection: self.$register) {
+        Picker(selection: self.$register) {
           ForEach(VoiceOutputRegister.allCases) { option in
             Text(option.title).tag(option.rawValue)
           }
+        } label: {
+          Label("Dictation tone", systemImage: "text.alignleft")
         }
       } header: {
         Text("Dictation → Edit → Output")
@@ -53,18 +65,22 @@ struct VoiceOutputSettingsView: View {
         NavigationLink {
           ModelsView()
         } label: {
-          LabeledContent("Speech recognition model") {
+          LabeledContent {
             Text(self.speechModels.selectedVariant.displayName)
               .foregroundStyle(.secondary)
+          } label: {
+            Label("Speech recognition model", systemImage: "waveform")
           }
         }
         NavigationLink {
           LLMModelsScreen()
         } label: {
-          LabeledContent("Offline cleanup / translation model") {
+          LabeledContent {
             Text(self.llmDownloadService.hasUsableModel
               ? self.llmDownloadService.selectedVariant.displayName : "Download required")
               .foregroundStyle(.secondary)
+          } label: {
+            Label("Offline cleanup / translation model", systemImage: "cpu")
           }
         }
         if !self.llmDownloadService.hasUsableModel {

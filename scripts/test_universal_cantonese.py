@@ -113,6 +113,9 @@ class UniversalCantoneseTests(unittest.TestCase):
         self.assertEqual(known["你食咗飯未呀"], "nei5 sik6 zo2 faan6 mei6 aa3")
         self.assertEqual(known["食塞米啦你"], "sik6 sak1 mai5 laa1 nei5")
         self.assertEqual(known["幾快"], "gei2 faai3")
+        self.assertEqual(known["其實"], "kei4 sat6")
+        self.assertEqual(known["我係"], "ngo5 hai6")
+        self.assertEqual(known["你係"], "nei5 hai6")
         self.assertNotIn("食塞埋你", known)
         self.assertGreaterEqual(sum(len(word) >= 9 for word in known), 500)
         self.assertTrue(all(len(word) == len(reading.split()) for word, reading in known.items()))
@@ -129,6 +132,16 @@ class UniversalCantoneseTests(unittest.TestCase):
                     "SELECT word FROM entries WHERE plain=? AND word=? LIMIT 1",
                     (plain, phrase)
                 ).fetchone(), (phrase,))
+                # The incremental composer can join exact short entries;
+                # no full-length phrase needs to exist for this combination.
+                self.assertEqual(db.execute(
+                    "SELECT word FROM entries WHERE plain=? AND word=? LIMIT 1",
+                    ("keisat", "其實")
+                ).fetchone(), ("其實",))
+                self.assertEqual(db.execute(
+                    "SELECT word FROM entries WHERE plain=? AND word=? LIMIT 1",
+                    ("ngohai", "我係")
+                ).fetchone(), ("我係",))
                 self.assertEqual(db.execute("PRAGMA quick_check").fetchone(), ("ok",))
             finally:
                 db.close()

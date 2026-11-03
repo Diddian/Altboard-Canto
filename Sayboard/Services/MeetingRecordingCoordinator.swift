@@ -17,6 +17,14 @@ struct MeetingRecord: Codable, Identifiable {
   var parts: [MeetingAudioPart]
   var transcript: String
   var state: String
+  // Optional metadata preserves decoding of recordings made before naming.
+  var title: String?
+  var notes: String?
+
+  var displayTitle: String {
+    let value = (self.title ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+    return value.isEmpty ? self.startedAt.formatted(date: .abbreviated, time: .shortened) : value
+  }
 }
 
 /// Opt-in experiment. No cloud uploads and no second microphone tap.
@@ -45,7 +53,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
 
   private init() { self.reloadRecords() }
 
-  func start(with service: SpeechRecognitionService) {
+  func start(with service: SpeechRecognitionService, title: String = "", notes: String = "") {
     guard !self.isRecording, !self.isFinalizing, !service.isRecording,
           SharedSettings().experimentalMeetingRecordEnabled,
           SharedSettings().selectedVariant == .qwen3ASR17B,
@@ -69,8 +77,12 @@ final class MeetingRecordingCoordinator: ObservableObject {
     self.speechService = service
     self.currentFormat = format
     self.currentAudioDirectory = audioDirectory
-    self.current = MeetingRecord(id: id, startedAt: Date(), endedAt: nil,
-                                 parts: [], transcript: "", state: "recording")
+    self.current = MeetingRecord(
+      id: id, startedAt: Date(), endedAt: nil, parts: [],
+      transcript: "", state: "recording",
+      title: Self.normalized(title, limit: 120),
+      notes: Self.normalized(notes, limit: 4000)
+    )
     self.lastPartStartedAt = Date()
     self.accumulator.reset()
     service.session.activateTap(accumulator: self.accumulator, recorder: self.audioRecorder)
@@ -192,18 +204,49 @@ final class MeetingRecordingCoordinator: ObservableObject {
     self.saveManifest()
   }
 
+  private static func normalized(_ value: String, limit: Int) -> String {
+    String(value.trimmingCharacters(in: .whitespacesAndNewlines).prefix(limit))
+  }
+
+  /// Update metadata only. Audio files, transcript and recording timestamps
+  /// are not renamed or moved, so existing exported files remain valid.
+  @discardableResult
+  func updateRecord(id: UUID, title: String, notes: String) -> Bool {
+    guard var record = (self.current?.id == id ? self.current : nil)
+      ?? self.records.first(where: { $0.id == id }) else { return false }
+    record.title = Self.normalized(title, limit: 120)
+    record.notes = Self.normalized(notes, limit: 4000)
+    guard self.writeManifest(record) else { return false }
+    if self.current?.id == id { self.current = record }
+    if let index = self.records.firstIndex(where: { $0.id == id }) {
+      self.records[index] = record
+    }
+    return true
+  }
+
   private func saveManifest() {
-    guard let record = self.current,
-          let root = Self.meetingsDirectory(),
-          let data = try? JSONEncoder().encode(record) else { return }
+    guard let record = self.current else { return }
+    _ = self.writeManifest(record)
+  }
+
+  @discardableResult
+  private func writeManifest(_ record: MeetingRecord) -> Bool {
+    guard let root = Self.meetingsDirectory(),
+          let data = try? JSONEncoder().encode(record) else { return false }
     let folder = root.appendingPathComponent(record.id.uuidString, isDirectory: true)
     let manifest = folder.appendingPathComponent("manifest.json")
-    try? data.write(to: manifest, options: [.atomic, .completeFileProtectionUnlessOpen])
-    let text = folder.appendingPathComponent("transcript.txt")
-    try? record.transcript.write(to: text, atomically: true, encoding: .utf8)
-    try? FileManager.default.setAttributes(
-      [.protectionKey: FileProtectionType.completeUnlessOpen], ofItemAtPath: text.path
-    )
+    do {
+      try data.write(to: manifest, options: [.atomic, .completeFileProtectionUnlessOpen])
+      let transcriptURL = folder.appendingPathComponent("transcript.txt")
+      try record.transcript.write(to: transcriptURL, atomically: true, encoding: .utf8)
+      try FileManager.default.setAttributes(
+        [.protectionKey: FileProtectionType.completeUnlessOpen], ofItemAtPath: transcriptURL.path
+      )
+      return true
+    } catch {
+      self.status = "Could not save meeting details"
+      return false
+    }
   }
 
   func reloadRecords() {

@@ -27,7 +27,7 @@ struct SettingsView: View {
         NavigationLink {
           ModelsView()
         } label: {
-          Label("Offline Speech Model", systemImage: "waveform")
+          Label("Offline Speech Model", systemImage: "cpu")
         }
         NavigationLink {
           TextAISettingsView()
@@ -124,7 +124,7 @@ struct SettingsView: View {
       if !self.setupChecklist.isComplete {
         NavigationLink(value: Route.setup) {
           HStack {
-            Text("Finish Setup")
+            Label("Finish Setup", systemImage: "checklist")
             Spacer()
             Text(verbatim: "\(self.setupChecklist.remainingCount)")
               .foregroundStyle(.secondary)

@@ -100,10 +100,20 @@ enum ChineseStrokeKeys {
     ["？", "！", "「", "」"]
   ]
   /// Positive horizontal movement always selects the option to the right.
-  static func popupIndex(horizontalDelta: Double, optionCount: Int, columnWidth: Double) -> Int {
+  /// Edge keys begin from the reachable side, not the middle of the popup.
+  static func popupStartIndex(keyIndex: Int, optionCount: Int) -> Int {
+    guard optionCount > 0 else { return 0 }
+    if keyIndex == 0 { return 0 }
+    if keyIndex == 2 { return optionCount - 1 }
+    return optionCount / 2
+  }
+
+  static func popupIndex(horizontalDelta: Double, optionCount: Int,
+                         columnWidth: Double, startIndex: Int? = nil) -> Int {
     guard optionCount > 0 else { return 0 }
     let steps = Int((horizontalDelta / max(1, columnWidth)).rounded())
-    return min(optionCount - 1, max(0, optionCount / 2 + steps))
+    let initial = startIndex ?? optionCount / 2
+    return min(optionCount - 1, max(0, initial + steps))
   }
 
   static func glyphs(for code: String) -> String {

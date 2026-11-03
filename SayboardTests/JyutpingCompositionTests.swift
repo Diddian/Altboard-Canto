@@ -60,6 +60,7 @@ struct JyutpingCompositionTests {
       hostMatches: true, recognizesLatinWord: true
     ))
     #expect(CantoneseRomanizationVariants.variants(for: "geifaai").first == "geifaai")
+    #expect(CantoneseRomanizationVariants.variants(for: "ngohhai").contains("ngohai"))
     #expect(!CantoneseRomanizationVariants.variants(for: "gifai").contains("geifaai"))
   }
 

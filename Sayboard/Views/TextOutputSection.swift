@@ -18,14 +18,16 @@ struct TextOutputSection: View {
         SnippetsView()
       } label: {
         HStack {
-          Text("Snippets")
+          Label("Snippets", systemImage: "text.quote")
           Spacer()
           Text(verbatim: "\(self.snippetCount)")
             .foregroundStyle(.secondary)
         }
       }
 
-      Toggle("Auto-Copy to Clipboard", isOn: self.$alsoCopyToClipboard)
+      Toggle(isOn: self.$alsoCopyToClipboard) {
+        Label("Auto-Copy to Clipboard", systemImage: "doc.on.clipboard")
+      }
     } header: {
       Text("Text & AI")
     } footer: {
@@ -58,7 +60,7 @@ struct TextOutputSection: View {
         self.showStylePicker = true
       } label: {
         HStack {
-          Text("Writing Style")
+          Label("Writing Style", systemImage: "textformat.size")
           Spacer()
           Text(LocalizedStringKey(self.writingStyle.displayNameKey))
             .foregroundStyle(.secondary)
@@ -75,7 +77,7 @@ struct TextOutputSection: View {
       NavigationLink {
         WritingStyleListView()
       } label: {
-        Text("Writing Style")
+        Label("Writing Style", systemImage: "textformat.size")
       }
     }
   }
@@ -102,7 +104,7 @@ struct AITextProcessingRow: View {
       LLMSettingsView()
     } label: {
       HStack {
-        Text("AI Text Processing")
+        Label("AI Text Processing", systemImage: "sparkles")
         Spacer()
         if self.llmEnabled, self.hasUsableModel {
           Text(verbatim: self.selectedVariantName)

@@ -49,9 +49,11 @@ struct SpeechLanguagesSettingsView: View {
           NavigationLink {
             ModelsView()
           } label: {
-            LabeledContent("Speech Recognition") {
+            LabeledContent {
               Text(self.speechModels.selectedVariant.displayName)
                 .foregroundStyle(.secondary)
+            } label: {
+              Label("Speech Recognition", systemImage: "waveform")
             }
           }
         }
@@ -97,14 +99,17 @@ struct SpeechLanguagesSettingsView: View {
     Button {
       self.showPreferredLanguagePicker = true
     } label: {
-      LabeledContent("Languages I Speak") {
+      VStack(alignment: .leading, spacing: 3) {
+        Label("Languages I Speak", systemImage: "globe")
         Text(self.spokenLanguages.isEmpty
           ? "Any language"
           : self.spokenLanguages.map { self.locale.capitalizedLanguageName(forLanguageCode: $0) }
             .joined(separator: ", "))
-          .multilineTextAlignment(.trailing)
+          .foregroundStyle(.secondary)
+          .multilineTextAlignment(.leading)
           .lineLimit(2)
       }
+      .frame(maxWidth: .infinity, alignment: .leading)
     }
     if !self.unsupportedSpokenLanguages.isEmpty {
       Label(

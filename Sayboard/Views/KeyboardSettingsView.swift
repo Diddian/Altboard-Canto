@@ -21,26 +21,36 @@ struct KeyboardSettingsView: View {
   @ViewBuilder
   var sections: some View {
     Section {
-      Picker("Keyboard Type", selection: self.$selectedKind) {
+      Picker(selection: self.$selectedKind) {
         ForEach(KeyboardKind.allCases, id: \.self) { kind in
           Text(LocalizedStringKey(kind.displayNameKey)).tag(kind)
         }
+      } label: {
+        Label("Keyboard Type", systemImage: "keyboard")
       }
       if self.selectedKind == .standard {
-        Picker("Microphone Layout", selection: self.$microphoneLayoutRaw) {
-          ForEach(MicrophoneKeyboardLayout.allCases, id: \.self) { layout in
-            Text(layout.displayName).tag(layout.rawValue)
+        VStack(alignment: .leading, spacing: 8) {
+          Label("Microphone Layout", systemImage: "mic.circle")
+          Picker("Microphone Layout", selection: self.$microphoneLayoutRaw) {
+            ForEach(MicrophoneKeyboardLayout.allCases, id: \.self) { layout in
+              Text(layout.displayName).tag(layout.rawValue)
+            }
           }
+          .pickerStyle(.segmented)
+          .labelsHidden()
         }
-        .pickerStyle(.segmented)
       }
 
       if self.selectedKind == .alphabetic {
-        Picker("Key Order", selection: self.$letterArrangementRaw) {
-          Text("QWERTZ").tag(LetterKeyArrangement.qwertz.rawValue)
-          Text("QWERTY").tag(LetterKeyArrangement.qwerty.rawValue)
+        VStack(alignment: .leading, spacing: 8) {
+          Label("Key Order", systemImage: "rectangle.split.3x1")
+          Picker("Key Order", selection: self.$letterArrangementRaw) {
+            Text("QWERTZ").tag(LetterKeyArrangement.qwertz.rawValue)
+            Text("QWERTY").tag(LetterKeyArrangement.qwerty.rawValue)
+          }
+          .pickerStyle(.segmented)
+          .labelsHidden()
         }
-        .pickerStyle(.segmented)
       }
 
       if self.cantoneseSelected || SharedSettings().preferredSpokenLanguages.contains("yue") {
@@ -52,11 +62,19 @@ struct KeyboardSettingsView: View {
       }
 
       if self.selectedKind == .alphabetic {
-        Toggle("Auto-capitalize Sentences", isOn: self.$autoCapitalizationEnabled)
+        Toggle(isOn: self.$autoCapitalizationEnabled) {
+          Label("Auto-capitalize Sentences", systemImage: "textformat.abc.dottedunderline")
+        }
       }
-      Toggle("Double-Space Period", isOn: self.$periodShortcutEnabled)
-      Toggle("Haptic Feedback", isOn: self.$keyboardHapticsEnabled)
-      Toggle("Show Settings Key", isOn: self.$showSettingsKey)
+      Toggle(isOn: self.$periodShortcutEnabled) {
+        Label("Double-Space Period", systemImage: "textformat")
+      }
+      Toggle(isOn: self.$keyboardHapticsEnabled) {
+        Label("Haptic Feedback", systemImage: "hand.tap")
+      }
+      Toggle(isOn: self.$showSettingsKey) {
+        Label("Show Settings Key", systemImage: "gearshape")
+      }
 
       KeyboardTestPreview(
         kind: self.selectedKind,

@@ -52,20 +52,28 @@ struct DictationSettingsView: View {
   @ViewBuilder
   private var sessionRows: some View {
     ActiveSessionToggle()
-    Picker("Auto-Stop", selection: self.$selectedAutoStopPolicy) {
+    Picker(selection: self.$selectedAutoStopPolicy) {
       ForEach(SessionAutoStopPolicy.allCases, id: \.self) { policy in
         Text(LocalizedStringKey(policy.displayNameKey)).tag(policy)
       }
+    } label: {
+      Label("Auto-Stop", systemImage: "timer")
     }
   }
 
   @ViewBuilder
   private var meetingRows: some View {
-    Toggle("Live Dictation", isOn: self.$experimentalLiveEnabled)
-    Toggle("Meeting Record", isOn: self.$experimentalMeetingEnabled)
+    Toggle(isOn: self.$experimentalLiveEnabled) {
+      Label("Live Dictation", systemImage: "waveform")
+    }
+    Toggle(isOn: self.$experimentalMeetingEnabled) {
+      Label("Meeting Record", systemImage: "record.circle")
+    }
     if self.experimentalMeetingEnabled {
-      NavigationLink("Meeting Recordings") {
+      NavigationLink {
         MeetingRecordsView()
+      } label: {
+        Label("Meeting Recordings", systemImage: "list.bullet.rectangle")
       }
     }
   }
@@ -86,8 +94,10 @@ struct ActiveSessionToggle: View {
   @EnvironmentObject private var speechService: SpeechRecognitionService
 
   var body: some View {
-    Toggle("Active Session", isOn: self.sessionBinding)
-      .tint(.orange)
+    Toggle(isOn: self.sessionBinding) {
+      Label("Active Session", systemImage: "mic")
+    }
+    .tint(.orange)
   }
 
   private var sessionBinding: Binding<Bool> {
@@ -118,11 +128,15 @@ struct HelpSettingsView: View {
   var body: some View {
     Form {
       Section {
-        NavigationLink("Setup & Permissions") {
+        NavigationLink {
           SetupView()
+        } label: {
+          Label("Setup & Permissions", systemImage: "checkmark.shield")
         }
-        NavigationLink("Diagnostics") {
+        NavigationLink {
           DiagnosticsView()
+        } label: {
+          Label("Diagnostics", systemImage: "stethoscope")
         }
       }
       FeedbackSection()
@@ -139,9 +153,11 @@ struct GeneralSettingsView: View {
         NavigationLink {
           AppLanguageListView()
         } label: {
-          LabeledContent("App Language") {
+          LabeledContent {
             Text(verbatim: nativeLanguageNames[self.appLanguage] ?? self.appLanguage)
               .foregroundStyle(.secondary)
+          } label: {
+            Label("App Language", systemImage: "globe")
           }
         }
       }

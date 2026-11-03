@@ -79,13 +79,17 @@ struct HistoryStorageSettingsView: View {
         NavigationLink {
           RetentionPolicyListView(selected: self.$selectedRetentionPolicy)
         } label: {
-          LabeledContent("Keep History") {
+          LabeledContent {
             Text(LocalizedStringKey(self.selectedRetentionPolicy.shortDisplayNameKey))
               .foregroundStyle(.secondary)
+          } label: {
+            Label("Keep History", systemImage: "clock.arrow.circlepath")
           }
         }
-        Button("Clear All History", role: .destructive) {
+        Button(role: .destructive) {
           self.showClearHistoryConfirmation = true
+        } label: {
+          Label("Clear All History", systemImage: "trash")
         }
         .confirmationDialog(
           "Clear All History",
@@ -101,13 +105,19 @@ struct HistoryStorageSettingsView: View {
           Text(self.clearHistoryMessage)
         }
         if !self.historyInfoText.isEmpty {
-          LabeledContent("Stored History", value: self.historyInfoText)
+          LabeledContent {
+            Text(self.historyInfoText)
+          } label: {
+            Label("Stored History", systemImage: "externaldrive")
+          }
         }
       }
 
       Section("Storage") {
-        Button("Clear Compiled Model Cache", role: .destructive) {
+        Button(role: .destructive) {
           self.showClearCacheConfirmation = true
+        } label: {
+          Label("Clear Compiled Model Cache", systemImage: "trash.slash")
         }
         .confirmationDialog(
           "Clear Compiled Model Cache",
@@ -123,9 +133,11 @@ struct HistoryStorageSettingsView: View {
           Text(self.clearCacheMessage)
         }
         if self.cacheSizeBytes > 0 {
-          LabeledContent("Compiled Cache Size", value: self.cacheSizeBytes.formatted(
-            .byteCount(style: .file).locale(self.locale)
-          ))
+          LabeledContent {
+            Text(self.cacheSizeBytes.formatted(.byteCount(style: .file).locale(self.locale)))
+          } label: {
+            Label("Compiled Cache Size", systemImage: "internaldrive")
+          }
         }
         Text("Clears compiled files only, not downloaded speech or text models.")
           .font(.footnote)

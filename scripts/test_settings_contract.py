@@ -13,15 +13,44 @@ class SettingsContractTests(unittest.TestCase):
         self.assertNotIn('Picker("Cantonese Romanization"', keyboard)
         self.assertNotIn('Toggle("Swipe Typing (English / German)"', keyboard)
         self.assertIn('private let swipeTypingEnabled = true', layout)
-        self.assertIn('Toggle("Haptic Feedback"', keyboard)
+        self.assertIn('Label("Haptic Feedback"', keyboard)
         self.assertNotIn('Slider(value: self.$hapticStrength', keyboard)
         self.assertNotIn('Picker("Haptic Method"', keyboard)
         self.assertNotIn('NavigationLink("All Keyboard Diagnostics")', keyboard)
-        self.assertIn('Toggle("Show Settings Key"', keyboard)
-        self.assertIn('Toggle("Double-Space Period"', keyboard)
-        self.assertIn('Toggle("Auto-capitalize Sentences"', keyboard)
+        self.assertIn('Label("Show Settings Key"', keyboard)
+        self.assertIn('Label("Double-Space Period"', keyboard)
+        self.assertIn('Label("Auto-capitalize Sentences"', keyboard)
         self.assertLess(keyboard.index('KeyboardTestPreview('),
                         keyboard.index('private struct KeyboardTestPreview'))
+
+    def test_settings_controls_have_icon_labels(self):
+        files = (
+            "Sayboard/Views/SettingsView.swift",
+            "Sayboard/Views/SettingsNavigationViews.swift",
+            "Sayboard/Views/SpeechLanguagesSettingsView.swift",
+            "Sayboard/Views/KeyboardSettingsView.swift",
+            "Sayboard/Views/TextOutputSection.swift",
+        )
+        for path in files:
+            with self.subTest(path=path):
+                content = (ROOT / path).read_text()
+                self.assertIn('Label(', content)
+        keyboard = (ROOT / "Sayboard/Views/KeyboardSettingsView.swift").read_text()
+        for name in ("Keyboard Type", "Key Order", "Auto-capitalize Sentences",
+                     "Double-Space Period", "Haptic Feedback", "Show Settings Key"):
+            self.assertIn('Label("' + name + '"', keyboard)
+
+    def test_meeting_titles_notes_preserve_existing_records(self):
+        coordinator = (ROOT / "Sayboard/Services/MeetingRecordingCoordinator.swift").read_text()
+        meeting_view = (ROOT / "Sayboard/Views/MeetingRecordsView.swift").read_text()
+        self.assertIn("var title: String?", coordinator)
+        self.assertIn("var notes: String?", coordinator)
+        self.assertIn("func updateRecord(id: UUID, title: String, notes: String)", coordinator)
+        self.assertIn("private func writeManifest(_ record: MeetingRecord)", coordinator)
+        self.assertIn("Meeting name (optional)", meeting_view)
+        self.assertIn("Meeting notes (optional)", meeting_view)
+        self.assertIn("record.displayTitle", meeting_view)
+        self.assertIn("Save Meeting Details", meeting_view)
 
     def test_settings_keyboard_sections_are_consolidated(self):
         keyboard = (ROOT / "Sayboard" / "Views" / "KeyboardSettingsView.swift").read_text()
@@ -33,7 +62,7 @@ class SettingsContractTests(unittest.TestCase):
                          'Section("Typing Shortcuts")', 'Text("Keyboard Preview")'):
             self.assertNotIn(obsolete, keyboard)
         self.assertIn('KeyboardTestPreview(', keyboard)
-        self.assertIn('Toggle("Double-Space Period"', keyboard)
+        self.assertIn('Label("Double-Space Period"', keyboard)
         self.assertIn('CantoneseCorrectionsView()', keyboard)
         self.assertIn('preferredSpokenLanguages.contains("yue")', keyboard)
         self.assertNotIn('CantoneseCorrectionsView()', voice)

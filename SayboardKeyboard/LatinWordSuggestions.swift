@@ -160,6 +160,11 @@ final class LatinWordSuggestions {
 
   static let commonWords: [String: [String]] = [
     "en": [
+      // Conversational and informal spellings are valid swipe targets.
+      "wanna", "gonna", "gotta", "kinda", "sorta", "lemme", "gimme",
+      "dunno", "ain't", "y'all", "nope", "yup", "nah", "bruh", "sus",
+      "lowkey", "highkey", "tho", "cuz", "tbh", "idk", "thinner",
+      "chillin", "vibing", "awesome", "legit", "yikes", "yolo", "btw",
       "about", "above", "after", "again", "also", "always", "another", "answer",
       "anything", "apple", "around", "because", "before", "Berlin", "better",
       "book", "business", "can", "change", "check", "city", "come", "company", "become", "becoming",
@@ -225,6 +230,12 @@ final class LatinWordSuggestions {
       "write", "writing", "year", "yesterday", "your"
     ],
     "de": [
+      // Informal spoken German, including common QWERTZ swipe words.
+      "naja", "joa", "jup", "nö", "krass", "Digga", "Diggi",
+      "Alter", "boah", "Moin", "Jein", "Tschüss", "chillen",
+      "chillig", "Bock", "ähm", "öhm", "läuft", "safe", "stabil",
+      "mega", "geil", "voll", "echt", "quasi", "halt", "achso",
+      "achja", "Brudi", "hammer", "nice", "lol", "nee",
       "aber", "Abend", "alle", "alles", "also", "andere", "Anfang", "Angst",
       "antworten", "Arbeit", "arbeiten", "auch", "auf", "aus", "Bahn",
       "Beispiel", "Berlin", "besser", "bestimmt", "bezahlen", "bitte",

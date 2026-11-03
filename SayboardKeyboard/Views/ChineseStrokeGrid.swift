@@ -238,7 +238,8 @@ struct ChineseStrokeGrid: View {
     return ChineseStrokeKeys.popupIndex(
       horizontalDelta: Double(point.x - self.touchStartPoint.x),
       optionCount: count,
-      columnWidth: Double(itemWidth)
+      columnWidth: Double(itemWidth),
+      startIndex: ChineseStrokeKeys.popupStartIndex(keyIndex: index, optionCount: count)
     )
   }
 

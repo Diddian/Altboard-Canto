@@ -108,6 +108,30 @@ final class JyutpingDictionary {
         gather("SELECT word,romanization FROM entries WHERE initials=? ORDER BY priority LIMIT ?", plain, rank: 3)
       }
     }
+    // Compose a short sequence of complete words when no whole-phrase reading
+    // exists. No large synthetic phrase table or raw keystroke history needed.
+    if !hasTone, !results.contains(where: { (originRank[$0.id] ?? 3) <= 1 }),
+       let combined = self.composedCandidate(for: plain),
+       usedWords.insert(combined.text).inserted {
+      results.insert(combined, at: 0)
+      originRank[combined.id] = -1
+    }
+
+    // An entered syllable yields characters, two complete syllables words,
+    // and three or more can yield phrases. Do not flood a single-character
+    // search with every nine-character phrase sharing its prefix.
+    let exactSyllables = results.filter { (originRank[$0.id] ?? 3) <= 1 }
+      .map { $0.romanization.split(separator: " ").count }.max() ?? 0
+    let maximum: Int
+    if exactSyllables > 0 {
+      maximum = exactSyllables < 3 ? exactSyllables : exactSyllables + 1
+    } else {
+      maximum = plain.count <= 4 ? 1 : min(6, max(2, plain.count / 3 + 1))
+    }
+    results.removeAll {
+      (originRank[$0.id] ?? 3) >= 2 && $0.text.count > maximum
+    }
+
     // Exact single-character readings precede prefix phrases. Personal
     // selection counts still rank candidates within each result class.
     let counts = self.defaults?.dictionary(forKey: self.memoryKey) as? [String: Int] ?? [:]
@@ -158,9 +182,11 @@ final class JyutpingDictionary {
     let exact = spellings.flatMap { key in
       expressions.flatMap { self.query($0, argument: key, limit: 24) }
     }
-    return exact.max { a, b in
+    let found = exact.max { a, b in
       a.romanization.split(separator: " ").count < b.romanization.split(separator: " ").count
     }?.romanization
+    return found ?? (input.contains(where: \.isNumber) ? nil
+      : self.composedCandidate(for: input)?.romanization)
   }
 
   /// Exact spelling check prevents prefix-only Chinese suggestions from
@@ -178,9 +204,74 @@ final class JyutpingDictionary {
         ]
     let spellings = input.contains(where: \.isNumber)
       ? [input] : CantoneseRomanizationVariants.variants(for: input)
-    return spellings.contains { key in
+    if spellings.contains(where: { key in
       sqls.contains { !self.query($0, argument: key, limit: 1).isEmpty }
+    }) { return true }
+    return !input.contains(where: \.isNumber)
+      && self.composedCandidate(for: input) != nil
+  }
+
+  /// Use complete words from the existing indexed dictionary to assemble
+  /// two or three chunks. The finite search is bounded on every keystroke.
+  /// These are explicit word boundaries, never unverified fuzzy syllables.
+  private func composedCandidate(for spelling: String) -> JyutpingCandidate? {
+    guard (7...32).contains(spelling.count),
+          spelling.allSatisfy({ $0.isASCII && $0.isLetter }) else { return nil }
+    let letters = Array(spelling)
+    var hits = [String: JyutpingCandidate]()
+    var misses = Set<String>()
+    func exact(_ range: Range<Int>) -> JyutpingCandidate? {
+      let code = String(letters[range])
+      if let value = hits[code] { return value }
+      if misses.contains(code) { return nil }
+      for variant in CantoneseRomanizationVariants.variants(for: code) {
+        for column in ["plain", "yale", "sidney"] {
+          if let value = self.query(
+            "SELECT word,romanization FROM entries WHERE \(column)=? ORDER BY priority LIMIT ?",
+            argument: variant, limit: 1
+          ).first {
+            hits[code] = value
+            return value
+          }
+        }
+        if let value = self.query(
+          "SELECT word,romanization FROM mixed_aliases WHERE alias=? ORDER BY priority LIMIT ?",
+          argument: variant, limit: 1
+        ).first {
+          hits[code] = value
+          return value
+        }
+      }
+      misses.insert(code)
+      return nil
     }
+    func join(_ parts: [JyutpingCandidate]) -> JyutpingCandidate {
+      JyutpingCandidate(
+        text: parts.map(\.text).joined(),
+        romanization: parts.map(\.romanization).joined(separator: " ")
+      )
+    }
+    let final = letters.count
+    // Prefer a complete two-word split; it is less ambiguous than three.
+    for split in 2...min(14, final - 2) {
+      guard let first = exact(0..<split), first.text.count <= 4,
+            let second = exact(split..<final), second.text.count <= 5
+      else { continue }
+      return join([first, second])
+    }
+    // A three-word composition also handles 其實 + 我 + 係 without
+    // requiring the full sentence to exist in the phrase table.
+    guard final <= 28 else { return nil }
+    for a in 2...min(12, final - 4) {
+      guard let first = exact(0..<a), first.text.count <= 4 else { continue }
+      for b in (a + 2)...min(a + 12, final - 2) {
+        guard let middle = exact(a..<b), middle.text.count <= 4,
+              let last = exact(b..<final), last.text.count <= 4
+        else { continue }
+        return join([first, middle, last])
+      }
+    }
+    return nil
   }
 
   /// Offer offline, corpus-derived words immediately after a Chinese commit.
