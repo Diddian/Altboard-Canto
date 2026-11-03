@@ -51,6 +51,15 @@ for order in [LetterKeyArrangement.qwerty, .qwertz] {
     precondition(decoded.first == word, "revisited letters: \\(word) -> \\(decoded)")
   }
 }
+// A contraction is swiped by its letters; apostrophes are restored by lexicon.
+for order in [LetterKeyArrangement.qwerty, .qwertz] {
+  let contractions = LatinSwipeDecoder.rank(
+    path: stroke("thats", order: order), arrangement: order,
+    fullWidth: 440, words: ["thank", "that", "that's", "thanks"]
+  )
+  precondition(contractions.first == "that's", "apostrophe contraction: \(contractions)")
+}
+precondition(LatinSwipeDecoder.normalizedSpelling("that's") == "thats")
 precondition(LatinSwipeDecoder.normalizedSpelling("Grüße") == "grusse")
 let session = LatinSwipeSession()
 let points = stroke("hello", order: .qwerty)

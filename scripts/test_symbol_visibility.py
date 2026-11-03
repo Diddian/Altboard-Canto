@@ -45,7 +45,7 @@ class SymbolVisibilityTests(unittest.TestCase):
         src = ALPHABET.read_text()
         for name in (
             "numbersRow1", "numbersRow2", "symbolsRow1", "symbolsRow2",
-            "chineseNumbersRow2", "chineseSymbolsRow1", "chineseSymbolsRow2"
+            "chineseSymbolsRow1", "chineseSymbolsRow2"
         ):
             with self.subTest(name=name):
                 chars = row(src, name)
@@ -55,6 +55,13 @@ class SymbolVisibilityTests(unittest.TestCase):
             with self.subTest(glyph=c):
                 self.assertIn(c, src)
         self.assertIn("self.characterRow(", src)
+        # ?123 is always native Western punctuation, regardless of language.
+        self.assertIn("case .numbers: self.characterRow(Self.numbersRow2)", src)
+        self.assertIn("self.page == .symbols && self.usesChinesePunctuation", src)
+        self.assertNotIn("chineseNumbersRow2", src)
+        bottom = {"。", "，", "？", "！", "「", "」"}
+        top = set(row(src, "chineseSymbolsRow1") + row(src, "chineseSymbolsRow2"))
+        self.assertTrue(top.isdisjoint(bottom), "Chinese #+= rows repeat bottom punctuation")
 
     def test_extended_number_symbol_punctuation_rows(self):
         src = EXTENDED.read_text()

@@ -50,6 +50,13 @@ enum LatinWordSuggestionPolicy {
     return word
   }
 
+  /// Separate two consecutive Latin words when the previous swipe did not
+  /// already leave a space. Do not add spaces after whitespace or punctuation.
+  static func swipeLeadingSeparator(in context: String?) -> String {
+    guard let last = context?.last else { return "" }
+    return isLatinLetter(last) || last.isNumber ? " " : ""
+  }
+
   /// Replacements never run unless the original word still exists directly
   /// to the left of the cursor. This prevents corrupting host text after a
   /// cursor move, external edit, or extension callback delay.

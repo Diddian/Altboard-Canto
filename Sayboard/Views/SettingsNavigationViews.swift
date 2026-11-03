@@ -4,8 +4,7 @@ struct DictationSettingsView: View {
   var body: some View {
     Form {
       Section {
-        Toggle("Active Session", isOn: self.sessionBinding)
-          .tint(.orange)
+        ActiveSessionToggle()
         Picker("Auto-Stop", selection: self.$selectedAutoStopPolicy) {
           ForEach(SessionAutoStopPolicy.allCases, id: \.self) { policy in
             Text(LocalizedStringKey(policy.displayNameKey)).tag(policy)
@@ -30,6 +29,17 @@ struct DictationSettingsView: View {
 
   @EnvironmentObject private var speechService: SpeechRecognitionService
   @State private var selectedAutoStopPolicy = SharedSettings().sessionAutoStopPolicy
+
+}
+
+// Shared by the Settings home and Dictation page; one session owner/binding.
+struct ActiveSessionToggle: View {
+  @EnvironmentObject private var speechService: SpeechRecognitionService
+
+  var body: some View {
+    Toggle("Active Session", isOn: self.sessionBinding)
+      .tint(.orange)
+  }
 
   private var sessionBinding: Binding<Bool> {
     Binding(

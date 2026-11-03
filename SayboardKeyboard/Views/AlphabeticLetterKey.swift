@@ -23,7 +23,7 @@ struct AlphabeticLetterKey: View {
 
   var body: some View {
     Text(verbatim: self.uppercase ? self.letter.uppercased() : self.letter.lowercased())
-      .font(.system(size: 23.kbScaled, weight: .regular, design: .default))
+      .font(.system(size: 21.kbScaled, weight: .regular, design: .default))
       .foregroundStyle(.primary)
       .offset(y: -1.2.kbScaled)
       .frame(maxWidth: .infinity)

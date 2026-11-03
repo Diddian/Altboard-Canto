@@ -272,7 +272,7 @@ private struct KeyboardTestPreview: View {
   private func letter(_ title: String) -> some View {
     Button { self.tap() } label: {
       Text(verbatim: title)
-        .font(.system(size: 23, weight: .regular, design: .default))
+        .font(.system(size: 21, weight: .regular, design: .default))
         .foregroundStyle(.primary)
         .offset(y: -1.2)
         .frame(maxWidth: .infinity)
@@ -293,7 +293,7 @@ private struct KeyboardTestPreview: View {
   private var alphabetBottomRow: some View {
     HStack(spacing: 6) {
       self.labelKey("?123", width: 48)
-      self.key("face.smiling", width: 48)
+      self.emojiPreviewKey(width: 48)
       self.labelKey("", height: 45)
       self.key("return.left", width: 102)
     }.padding(.horizontal, 6.67)
@@ -301,11 +301,24 @@ private struct KeyboardTestPreview: View {
 
   private var standardBottomRow: some View {
     HStack(spacing: 6) {
-      self.key("face.smiling", width: 45)
+      self.emojiPreviewKey(width: 45)
       self.key("trash", width: 45)
       self.labelKey("", height: 45)
       self.key("return.left", width: 96)
     }.padding(.horizontal, 4)
+  }
+
+  private func emojiPreviewKey(width: CGFloat) -> some View {
+    Button { self.tap() } label: {
+      NativeEmojiGlyph()
+        .fill(.primary, style: FillStyle(eoFill: true))
+        .frame(width: 20.67, height: 20.67)
+        .frame(width: width, height: 45)
+        .background(Color(uiColor: KeyboardPalette.keyFill),
+                    in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel("Test Emoji key haptic")
   }
 
   private func key(

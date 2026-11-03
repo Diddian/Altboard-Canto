@@ -59,6 +59,10 @@ struct AlphabeticKeyboardLayout: View {
     !Set(SharedSettings().preferredSpokenLanguages).isDisjoint(with: ["yue", "zh"])
   }
 
+  private var isChineseSymbolsPage: Bool {
+    self.page == .symbols && self.usesChinesePunctuation
+  }
+
   private var smartChineseQuote: String {
     self.nextChineseQuoteCloses ? "」" : "「"
   }
@@ -101,7 +105,9 @@ struct AlphabeticKeyboardLayout: View {
                  alignment: .bottom)
       }
       .overlay {
-        if self.page == .letters && self.swipeTypingEnabled && self.liveSwipePath.count > 1 {
+        // Keep the render-only canvas mounted throughout a gesture. Recreating
+        // it for every touch update could discard short-lived brush frames.
+        if self.page == .letters && self.swipeTypingEnabled {
           SwipeTrailOverlay(points: self.liveSwipePath)
             .allowsHitTesting(false)
             .accessibilityHidden(true)
@@ -291,7 +297,10 @@ struct AlphabeticKeyboardLayout: View {
     guard let chosen = adjusted.first else { return }
     self.clearComposition()
     self.swipeAlternatives = adjusted
-    self.proxy.insertText(chosen + " ")
+    let separator = LatinWordSuggestionPolicy.swipeLeadingSeparator(
+      in: self.proxy.documentContextBeforeInput()
+    )
+    self.proxy.insertText(separator + chosen + " ")
     self.lastShiftTap = nil
     if !self.capsLock { self.shiftActive = false }
     self.updateCandidates()
@@ -471,7 +480,7 @@ struct AlphabeticKeyboardLayout: View {
       self.letterRow(self.arrangement.rows[0], inset: Self.edgeInset,
                      top: 0, bottom: Self.rowSpacing / 2, rowIndex: 0)
     case .numbers: self.characterRow(Self.numbersRow1)
-    case .symbols: self.characterRow(self.usesChinesePunctuation ? Self.chineseSymbolsRow1 : Self.symbolsRow1)
+    case .symbols: self.characterRow(self.isChineseSymbolsPage ? Self.chineseSymbolsRow1 : Self.symbolsRow1)
     }
   }
 
@@ -481,8 +490,8 @@ struct AlphabeticKeyboardLayout: View {
     case .letters:
       self.letterRow(self.arrangement.rows[1], inset: Self.secondInset,
                      top: Self.rowSpacing / 2, bottom: Self.rowSpacing / 2, rowIndex: 1)
-    case .numbers: self.characterRow(self.usesChinesePunctuation ? Self.chineseNumbersRow2 : Self.numbersRow2)
-    case .symbols: self.characterRow(self.usesChinesePunctuation ? Self.chineseSymbolsRow2 : Self.symbolsRow2)
+    case .numbers: self.characterRow(Self.numbersRow2)
+    case .symbols: self.characterRow(self.isChineseSymbolsPage ? Self.chineseSymbolsRow2 : Self.symbolsRow2)
     }
   }
 
@@ -532,11 +541,11 @@ struct AlphabeticKeyboardLayout: View {
           Color.clear.frame(width: groupGap)
           HStack(spacing: keyGap) {
             ForEach(0..<5, id: \.self) { index in
-              let value = self.usesChinesePunctuation
+              let value = self.isChineseSymbolsPage
                 ? ["。", "，", "？", "！", self.smartChineseQuote][index]
                 : [".", ",", "?", "!", "'"][index]
               KeyButton(
-                content: .symbol(self.nativeSymbolFace(value), fontSize: 19),
+                content: .symbol(self.nativeSymbolFace(value), fontSize: 18),
                 fixedWidth: punctuationWidth
               ) {
                 self.handleCharacter(value)
@@ -602,7 +611,7 @@ struct AlphabeticKeyboardLayout: View {
   private func characterRow(_ characters: [String]) -> some View {
     HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
       ForEach(characters, id: \.self) { character in
-        KeyButton(content: .symbol(self.nativeSymbolFace(character), fontSize: 19),
+        KeyButton(content: .symbol(self.nativeSymbolFace(character), fontSize: 18),
                   showsCallout: true, calloutRowSpacing: Self.rowSpacing.kbScaled) {
           self.handleCharacter(character)
         }
@@ -870,9 +879,10 @@ struct AlphabeticKeyboardLayout: View {
     }
   }
 
-  private static let chineseNumbersRow2 = ["－","／","：","；","（","）","【","】","《","》"]
-  private static let chineseSymbolsRow1 = ["〈","〉","〖","〗","〔","〕","「","」","『","』"]
-  private static let chineseSymbolsRow2 = ["_","\\","|","～","…","、","€","£","¥","•"]
+  // The #+= page is the ONLY place Chinese punctuation replaces Latin keys.
+  // Keep the top rows disjoint from the bottom 。 ， ？ ！ and paired 「/」 key.
+  private static let chineseSymbolsRow1 = ["〈","〉","〖","〗","〔","〕","【","】","《","》"]
+  private static let chineseSymbolsRow2 = ["『","』","﹏","～","…","、","€","£","¥","•"]
 
   private static let numbersRow1 = ["1","2","3","4","5","6","7","8","9","0"]
   private static let numbersRow2 = ["-","/",":",";","(",")","$","&","@","\""]
@@ -896,16 +906,16 @@ private struct SwipeTrailOverlay: View {
     Canvas { context, _ in
       guard points.count >= 2 else { return }
       let last = points.count - 1
-      let ink = Color.primary.opacity(0.46)
+      let ink = Color.primary.opacity(0.34)
       for index in 1..<points.count {
         let a = points[index - 1], b = points[index]
         let progress = Double(index) / Double(last)
-        let width = 11.5 * (1 - progress) + 1.1
+        let width = 8.5 * (1 - progress) + 2.0
         var stroke = Path()
         stroke.move(to: CGPoint(x: a.x, y: a.y))
         stroke.addLine(to: CGPoint(x: b.x, y: b.y))
         context.stroke(
-          stroke, with: .color(ink.opacity(0.78 - 0.30 * progress)),
+          stroke, with: .color(ink.opacity(0.82 - 0.25 * progress)),
           style: StrokeStyle(lineWidth: width, lineCap: .round, lineJoin: .round)
         )
       }

@@ -6,6 +6,11 @@ import UIKit
 struct SettingsView: View {
   var body: some View {
     Form {
+      // Restore the original always-visible shortcut above setup/navigation.
+      Section {
+        ActiveSessionToggle()
+      }
+
       if !self.setupChecklist.isComplete || self.showsLowStorageWarning {
         self.setupSection
       }
