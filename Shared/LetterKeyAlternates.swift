@@ -13,6 +13,13 @@ enum LetterKeyAlternates {
     return [base] + (secondary.map { [$0] } ?? []) + other
   }
 
+  /// Holding must select an alternative, never the original tap character.
+  /// A plain tap still inserts the base key via the touch-row's normal path.
+  static func holdChoices(for letter: String, uppercase: Bool,
+                          secondary: String? = nil) -> [String] {
+    Array(choices(for: letter, uppercase: uppercase, secondary: secondary).dropFirst())
+  }
+
   private static let alternates: [String: [String]] = [
     "a": ["à", "á", "â", "ä", "æ", "ã", "å", "ā"],
     "c": ["ç", "ć", "č"], "d": ["ð"],
@@ -37,5 +44,28 @@ enum LetterKeySecondary {
   static func symbol(row: Int, index: Int) -> String? {
     guard rows.indices.contains(row), rows[row].indices.contains(index) else { return nil }
     return rows[row][index]
+  }
+}
+
+/// The first held option is always visually nearest the pressed key.
+/// Right-hand popups expand left and display their choices in reverse order,
+/// so a leftward finger movement selects a leftward visual option.
+enum LetterHoldNavigation {
+  static func expandsLeft(column: Int, keyCount: Int) -> Bool {
+    column >= keyCount / 2
+  }
+
+  static func visualOrder(count: Int, expandsLeft: Bool) -> [Int] {
+    guard count > 0 else { return [] }
+    let indices = Array(0..<count)
+    return expandsLeft ? Array(indices.reversed()) : indices
+  }
+
+  static func selectedIndex(initialX: Double, currentX: Double,
+                            expandsLeft: Bool, count: Int,
+                            step: Double) -> Int {
+    guard count > 0, step > 0 else { return 0 }
+    let distance = expandsLeft ? initialX - currentX : currentX - initialX
+    return min(count - 1, max(0, Int(max(0, distance) / step)))
   }
 }

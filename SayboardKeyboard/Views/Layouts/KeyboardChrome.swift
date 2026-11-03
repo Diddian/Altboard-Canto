@@ -183,8 +183,12 @@ struct KeyboardBottomRow: View {
           self.onTextEdited?()
         },
         onCursorMove: { self.proxy.adjustTextPosition($0) },
+        onVerticalCursorMove: { self.proxy.moveCursorVertically($0) },
         onTrackingBegan: self.onCursorTrackingBegan,
-        onTrackingEnded: self.onCursorTrackingEnded
+        onTrackingEnded: {
+          self.proxy.resetCursorVerticalState()
+          self.onCursorTrackingEnded?()
+        }
       )
 
       KeyButton(content: .systemImage("return.left"), fixedWidth: self.metrics.returnWidth) {

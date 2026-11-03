@@ -13,14 +13,16 @@ struct AlphabeticLetterKey: View {
   let selected: Int
 
   private var options: [String] {
-    LetterKeyAlternates.choices(for: self.letter, uppercase: self.uppercase,
-                                secondary: self.secondarySymbol)
+    LetterKeyAlternates.holdChoices(for: self.letter, uppercase: self.uppercase,
+                                    secondary: self.secondarySymbol)
+  }
+
+  private var expandsLeft: Bool {
+    LetterHoldNavigation.expandsLeft(column: self.column, keyCount: self.rowCount)
   }
 
   private var popupAlignment: Alignment {
-    if self.column <= 2 { return .topLeading }
-    if self.column >= self.rowCount - 3 { return .topTrailing }
-    return .top
+    self.expandsLeft ? .topTrailing : .topLeading
   }
 
   var body: some View {
@@ -48,8 +50,10 @@ struct AlphabeticLetterKey: View {
       .overlay(alignment: self.popupAlignment) {
         if self.choosing {
           HStack(spacing: 0) {
-            ForEach(Array(self.options.enumerated()), id: \.offset) { index, option in
-              Text(verbatim: option)
+            ForEach(LetterHoldNavigation.visualOrder(
+              count: self.options.count, expandsLeft: self.expandsLeft
+            ), id: \.self) { index in
+              Text(verbatim: self.options[index])
                 .font(.system(size: 22.kbScaled))
                 .foregroundStyle(index == self.selected ? Color.white : Color.primary)
                 .frame(width: 33.kbScaled, height: 43.kbScaled)
@@ -70,7 +74,7 @@ struct AlphabeticLetterKey: View {
         }
       }
       .zIndex(self.choosing ? 100 : 0)
-      .accessibilityLabel(self.options.first ?? self.letter)
+      .accessibilityLabel(self.uppercase ? self.letter.uppercased() : self.letter.lowercased())
       .accessibilityHint(self.options.count > 1 ? "Hold for symbols or accented letters" : "")
   }
 }

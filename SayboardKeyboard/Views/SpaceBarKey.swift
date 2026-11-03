@@ -6,6 +6,7 @@ struct SpaceBarKey: View {
   let showsAlphabetIndicator: Bool
   let onSpace: () -> Void
   let onCursorMove: (Int) -> Void
+  var onVerticalCursorMove: ((Int) -> Void)? = nil
   var onTrackingBegan: (() -> Void)? = nil
   var onTrackingEnded: (() -> Void)? = nil
 
@@ -41,17 +42,21 @@ struct SpaceBarKey: View {
             self.handleDragEnded()
           }
       )
+      .onDisappear { self.finishTracking(emitSpace: false) }
+      .accessibilityHint("Hold and drag to move the cursor. Up and down move between explicit lines.")
   }
 
-  private static let activationDelay: TimeInterval = 0.15
+  private static let activationDelay: TimeInterval = 0.22
   private static let pointsPerCharacter: CGFloat = 7.5
-  private static let verticalDeadZone: CGFloat = 50
-  private static let minimumHorizontalMovement: CGFloat = 2
+  private static let pointsPerLine: CGFloat = 25
+  private static let minimumMovement: CGFloat = 2
 
   @State private var isPressed = false
   @State private var isTrackpadActive = false
   @State private var pressStartTime: Date?
+  @State private var activationTask: Task<Void, Never>?
   @State private var lastReportedCharOffset = 0
+  @State private var lastReportedLineOffset = 0
 
   @ViewBuilder
   private var label: some View {
@@ -65,49 +70,74 @@ struct SpaceBarKey: View {
     }
   }
 
+  private func beginPress(at time: Date) {
+    self.pressStartTime = time
+    self.isPressed = true
+    KeyboardHaptics.key()
+    self.activationTask?.cancel()
+    self.activationTask = Task { @MainActor in
+      try? await Task.sleep(for: .milliseconds(220))
+      guard !Task.isCancelled, self.isPressed else { return }
+      self.activateTrackpad()
+    }
+  }
+
+  private func activateTrackpad() {
+    guard !self.isTrackpadActive else { return }
+    self.isTrackpadActive = true
+    self.onTrackingBegan?()
+    self.lastReportedCharOffset = 0
+    self.lastReportedLineOffset = 0
+    KeyboardHaptics.key(strength: 0.75)
+  }
+
   private func handleDragChanged(_ value: DragGesture.Value) {
     if self.pressStartTime == nil {
-      self.pressStartTime = value.time
-      self.isPressed = true
-      KeyboardHaptics.key()
+      self.beginPress(at: value.time)
     }
 
     guard let startTime = self.pressStartTime else { return }
     let elapsed = value.time.timeIntervalSince(startTime)
+    if !self.isTrackpadActive,
+       elapsed >= Self.activationDelay,
+       max(abs(value.translation.width), abs(value.translation.height)) > Self.minimumMovement {
+      self.activateTrackpad()
+    }
+    guard self.isTrackpadActive else { return }
 
-    if self.isTrackpadActive {
-      guard abs(value.translation.height) < Self.verticalDeadZone else { return }
-
-      let totalOffset = value.translation.width / Self.pointsPerCharacter
-      let charOffset = Int(totalOffset)
-      let delta = charOffset - self.lastReportedCharOffset
-
-      if delta != 0 {
-        self.onCursorMove(delta)
-        self.lastReportedCharOffset = charOffset
-      }
-    } else if
-      elapsed >= Self.activationDelay,
-      abs(value.translation.width) > Self.minimumHorizontalMovement
-    {
-      self.isTrackpadActive = true
-      self.onTrackingBegan?()
-      self.lastReportedCharOffset = 0
-      KeyboardHaptics.key(strength: 0.75)
+    // The spacebar owns this gesture even when the finger moves over the
+    // dimmed letter rows: no second recognizer or printable key is invoked.
+    let horizontal = Int(value.translation.width / Self.pointsPerCharacter)
+    let delta = horizontal - self.lastReportedCharOffset
+    if delta != 0 {
+      self.onCursorMove(delta)
+      self.lastReportedCharOffset = horizontal
+    }
+    let vertical = Int(value.translation.height / Self.pointsPerLine)
+    let lineDelta = vertical - self.lastReportedLineOffset
+    if lineDelta != 0 {
+      self.onVerticalCursorMove?(lineDelta)
+      self.lastReportedLineOffset = vertical
     }
   }
 
   private func handleDragEnded() {
+    self.finishTracking(emitSpace: true)
+  }
+
+  private func finishTracking(emitSpace: Bool) {
     let wasTracking = self.isTrackpadActive
-    if !self.isTrackpadActive {
+    self.activationTask?.cancel()
+    self.activationTask = nil
+    if emitSpace && self.isPressed && !wasTracking {
       KeyboardInputTrace.record(.spaceTouched)
       self.onSpace()
     }
-
     self.isPressed = false
     self.isTrackpadActive = false
     self.pressStartTime = nil
     self.lastReportedCharOffset = 0
+    self.lastReportedLineOffset = 0
     if wasTracking { self.onTrackingEnded?() }
   }
 }

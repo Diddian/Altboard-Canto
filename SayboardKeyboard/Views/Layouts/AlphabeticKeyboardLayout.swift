@@ -119,6 +119,11 @@ struct AlphabeticKeyboardLayout: View {
             .accessibilityHidden(true)
         }
       }
+      // Trackpad mode becomes one continuous neutral surface: key labels
+      // and hit targets fade and stop accepting separate presses.
+      .opacity(self.isCursorTracking ? 0.07 : 1)
+      .allowsHitTesting(!self.isCursorTracking)
+      .animation(.easeOut(duration: 0.13), value: self.isCursorTracking)
 
       KeyboardBottomRow(
         proxy: self.proxy,
@@ -736,6 +741,7 @@ struct AlphabeticKeyboardLayout: View {
     self.latinRefreshTask?.cancel()
     self.cantoneseRefreshTask?.cancel()
     self.isCursorTracking = true
+    self.liveSwipePath = []
     self.activeLatinWord = nil
     self.latinSuggestions.removeAll()
     self.candidates.removeAll()

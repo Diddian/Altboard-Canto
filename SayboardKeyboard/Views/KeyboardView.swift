@@ -53,6 +53,8 @@ struct KeyboardProxy {
   let requestLLMProcessing: (LLMAction, UUID?) -> Void
   let requestLLMClipboard: () -> Void
   let adjustTextPosition: (Int) -> Void
+  let moveCursorVertically: (Int) -> Void
+  let resetCursorVerticalState: () -> Void
   let undoLLM: () -> Void
   let redoLLM: () -> Void
   let setActionBarVisible: (Bool) -> Void

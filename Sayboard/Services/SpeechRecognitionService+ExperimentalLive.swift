@@ -7,18 +7,21 @@ extension SpeechRecognitionService {
           self.settings.selectedVariant.engine == .qwen3,
           let token = self.settings.dictationSessionToken,
           !token.isEmpty, self.experimentalLiveTask == nil else { return }
-    self.liveDictationStatus = "Waiting for 3 seconds of audio and Qwen model"
+    self.liveDictationStatus = "Waiting for first 1.5-second audio chunk and Qwen model"
     self.experimentalLiveTask = Task { @MainActor [weak self] in
       guard let self else { return }
       var readOffset = 0
       var revision = 0
       var combined = ""
-      let frameCount = 3 * 16_000
+      // Shorten first-text capture delay without starting concurrent 1.7B
+      // inference jobs. Native offline decode time remains device-dependent.
+      let frameCount = 24_000  // 1.5 s at 16 kHz
       while !Task.isCancelled && self.isRecording {
         guard self.activeLoadState == .loaded,
               let samples = self.accumulator.chunk(from: readOffset, count: frameCount)
         else {
-          try? await Task.sleep(for: .milliseconds(350))
+          do { try await Task.sleep(for: .milliseconds(120)) }
+          catch { break }
           continue
         }
         readOffset += samples.count
@@ -34,7 +37,13 @@ extension SpeechRecognitionService {
           self.liveDictationStatus = "Live update " + String(revision) + " delivered"
         }
         // Diagnostic is duration only. No text or audio is logged.
-        DiagnosticLog.write("experimental live: 3s decode completed in \(String(format: "%.1f", CFAbsoluteTimeGetCurrent() - started))s")
+        let decodeSeconds = CFAbsoluteTimeGetCurrent() - started
+        if decodeSeconds > 1.5 {
+          self.liveDictationStatus = "Live recognition behind recording: "
+            + String(format: "%.1fs decode", decodeSeconds)
+        }
+        DiagnosticLog.write("experimental live: 1.5s chunk decoded in "
+          + String(format: "%.1f", decodeSeconds) + "s")
       }
     }
   }

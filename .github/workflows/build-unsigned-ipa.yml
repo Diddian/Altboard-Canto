@@ -96,6 +96,9 @@ jobs:
           "$RUNNER_TEMP/swipe-smoke"
           swiftc -o "$RUNNER_TEMP/letter-hold-smoke"             Shared/LetterKeyAlternates.swift scripts/verify-letter-hold.swift
           "$RUNNER_TEMP/letter-hold-smoke"
+          swiftc -o "$RUNNER_TEMP/cursor-line-smoke" \
+            Shared/CursorLineNavigation.swift scripts/verify-cursor-navigation.swift
+          "$RUNNER_TEMP/cursor-line-smoke"
           python3 -m unittest discover -s scripts -p 'test_settings_contract.py'
           python3 -m json.tool docs/ios-keyboard-reference.json >/dev/null
           python3 -m json.tool docs/ios-keyboard-native-vs-altboard-pixel-comparison.json >/dev/null

@@ -21,6 +21,8 @@ final class KeyboardViewController: UIInputViewController {
   var llmClipboardOnly = false
   var pendingManualLLMAction: (action: LLMAction, customPromptId: UUID?)?
   var previousSpaceTap: PeriodShortcut.Tap?
+  var cursorPreferredColumn: Int?
+  var cursorPreferredDocumentID: UUID?
   var liveTranscriptionDocumentID: UUID?
   var liveTranscriptionMarkedText = ""
   var liveTranscriptionCommittedRaw = ""
@@ -595,7 +597,14 @@ extension KeyboardViewController {
       adjustTextPosition: { [weak self] offset in
         KeyboardTouchLearning.shared.invalidate()
         self?.previousSpaceTap = nil
+        self?.resetCursorVerticalState()
         self?.textDocumentProxy.adjustTextPosition(byCharacterOffset: offset)
+      },
+      moveCursorVertically: { [weak self] steps in
+        self?.moveCursorVertically(steps)
+      },
+      resetCursorVerticalState: { [weak self] in
+        self?.resetCursorVerticalState()
       },
       undoLLM: { [weak self] in self?.undoLLM() },
       redoLLM: { [weak self] in self?.redoLLM() },

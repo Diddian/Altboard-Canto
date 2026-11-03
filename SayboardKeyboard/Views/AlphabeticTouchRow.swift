@@ -253,10 +253,13 @@ struct AlphabeticTouchRow: View {
       KeyboardHaptics.key()
       self.scheduleAlternates(for: index)
     } else if self.showingAlternates, let index = self.activeIndex {
-      let trailing = index >= self.letters.count - 3
-      let travel = trailing ? self.initialX - x : x - self.initialX
-      let choices = self.options(for: index)
-      self.alternateIndex = min(max(0, Int(max(0, travel) / 32.kbScaled)), choices.count - 1)
+      self.alternateIndex = LetterHoldNavigation.selectedIndex(
+        initialX: Double(self.initialX), currentX: Double(x),
+        expandsLeft: LetterHoldNavigation.expandsLeft(
+          column: index, keyCount: self.letters.count
+        ),
+        count: self.options(for: index).count, step: Double(32.kbScaled)
+      )
     } else if let newIndex = self.target(at: x, width: width, weights: weights),
               self.activeIndex != newIndex {
       self.holdTask?.cancel()
@@ -272,13 +275,24 @@ struct AlphabeticTouchRow: View {
     let index = self.showingAlternates ? active
       : (self.target(at: x, width: width, weights: weights) ?? active)
     let options = self.options(for: index)
-    let option = self.showingAlternates ? min(self.alternateIndex, options.count - 1) : 0
-    let output = options[option]
-    KeyboardTouchLearning.shared.recordTap(
-      row: self.swipeRowIndex, index: index, keyCount: self.letters.count,
-      x: Double(x), width: Double(width), inset: Double(self.horizontalInset),
-      enabled: self.adaptiveTouchEnabled
-    )
+    let output: String
+    if self.showingAlternates, !options.isEmpty {
+      output = options[min(self.alternateIndex, options.count - 1)]
+    } else {
+      // The held popup has no base character; normal taps still insert it.
+      output = self.uppercase
+        ? self.letters[index].uppercased() : self.letters[index].lowercased()
+    }
+    if self.showingAlternates {
+      // A held symbol/accent is intentional, not an accidental letter tap.
+      KeyboardTouchLearning.shared.invalidate()
+    } else {
+      KeyboardTouchLearning.shared.recordTap(
+        row: self.swipeRowIndex, index: index, keyCount: self.letters.count,
+        x: Double(x), width: Double(width), inset: Double(self.horizontalInset),
+        enabled: self.adaptiveTouchEnabled
+      )
+    }
     self.reset()
     // Keep a very short highlight after quick taps, so SwiftUI can display
     // the pressed face even when down and up occur in the same frame.
@@ -293,7 +307,7 @@ struct AlphabeticTouchRow: View {
   }
 
   private func options(for index: Int) -> [String] {
-    LetterKeyAlternates.choices(
+    LetterKeyAlternates.holdChoices(
       for: self.letters[index], uppercase: self.uppercase,
       secondary: LetterKeySecondary.symbol(row: self.swipeRowIndex, index: index)
     )
@@ -301,7 +315,7 @@ struct AlphabeticTouchRow: View {
 
   private func scheduleAlternates(for index: Int) {
     self.holdTask?.cancel()
-    guard self.options(for: index).count > 1 else { return }
+    guard !self.options(for: index).isEmpty else { return }
     self.holdTask = Task { @MainActor in
       do { try await Task.sleep(for: .milliseconds(380)) } catch { return }
       guard !Task.isCancelled, self.activeIndex == index else { return }

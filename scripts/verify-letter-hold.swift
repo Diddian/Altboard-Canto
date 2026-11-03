@@ -9,6 +9,18 @@ struct VerifyLetterHoldAlternates {
     precondition(LetterKeySecondary.symbol(row: 0, index: 0) == "1")
     precondition(LetterKeySecondary.symbol(row: 2, index: 3) == "?")
     precondition(LetterKeySecondary.symbol(row: 3, index: 0) == nil)
+    let j = LetterKeyAlternates.holdChoices(for: "j", uppercase: false,
+                                             secondary: LetterKeySecondary.symbol(row: 1, index: 6))
+    precondition(j == ["$"], "Hold J should insert dollar sign without J")
+    let accents = LetterKeyAlternates.holdChoices(for: "u", uppercase: false,
+                                                    secondary: "7")
+    precondition(accents.first == "7" && accents.contains("ü"))
+    precondition(LetterHoldNavigation.visualOrder(count: 3, expandsLeft: true) == [2,1,0])
+    precondition(LetterHoldNavigation.visualOrder(count: 3, expandsLeft: false) == [0,1,2])
+    precondition(LetterHoldNavigation.selectedIndex(
+      initialX: 200, currentX: 136, expandsLeft: true, count: 3, step: 32) == 2)
+    precondition(LetterHoldNavigation.selectedIndex(
+      initialX: 200, currentX: 264, expandsLeft: false, count: 3, step: 32) == 2)
     print("Long-press punctuation and umlaut coexist: PASS")
   }
 }
