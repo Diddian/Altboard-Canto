@@ -12,17 +12,50 @@ struct SettingsView: View {
       PurchaseSection()
       #endif
 
-      DictationSettingsView(inline: true)
-      SpeechLanguagesSettingsView(
-        inline: true,
-        onPreferredLanguagesChanged: { self.preferredSpokenLanguages = $0 }
-      )
+      Section {
+        SpeechLanguagesSettingsView(
+          inline: true, rowsOnly: true,
+          onPreferredLanguagesChanged: { self.preferredSpokenLanguages = $0 }
+        )
+        DictationSettingsView(inline: true, rows: .session)
+        NavigationLink {
+          VoiceOutputSettingsView()
+        } label: {
+          Label("Voice Output & Translation", systemImage: "waveform")
+        }
+        DictationSettingsView(inline: true, rows: .meeting)
+        NavigationLink {
+          ModelsView()
+        } label: {
+          Label("Offline Speech Model", systemImage: "waveform")
+        }
+        NavigationLink {
+          TextAISettingsView()
+        } label: {
+          Label("Text & AI", systemImage: "textformat")
+        }
+      } header: {
+        HStack(spacing: 6) {
+          Text("Speech & Dictation")
+          Spacer(minLength: 4)
+          HStack(spacing: 3) {
+            Text("When active,")
+            Image(systemName: "mic.fill").foregroundStyle(.orange)
+            Text("will appear")
+          }
+          .font(.system(size: 10))
+          .lineLimit(1)
+          .fixedSize(horizontal: true, vertical: false)
+          .textCase(nil)
+          .accessibilityElement(children: .ignore)
+          .accessibilityLabel("When active, the orange microphone indicator will appear")
+        }
+      }
       KeyboardSettingsView(
         selectedKind: self.keyboardKindBinding,
         inline: true,
         cantoneseSelected: self.preferredSpokenLanguages.contains("yue")
       )
-      TextOutputSection(showFooter: false)
 
       Section {
         NavigationLink {

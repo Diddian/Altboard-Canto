@@ -1,7 +1,14 @@
 import SwiftUI
 
+enum DictationSettingsRows {
+  case all
+  case session
+  case meeting
+}
+
 struct DictationSettingsView: View {
   var inline = false
+  var rows: DictationSettingsRows = .all
 
   var body: some View {
     Group {
@@ -18,46 +25,47 @@ struct DictationSettingsView: View {
   @ViewBuilder
   var sections: some View {
     Group {
-      Section {
-        ActiveSessionToggle()
-        Picker("Auto-Stop", selection: self.$selectedAutoStopPolicy) {
-          ForEach(SessionAutoStopPolicy.allCases, id: \.self) { policy in
-            Text(LocalizedStringKey(policy.displayNameKey)).tag(policy)
-          }
-        }
-      } header: {
-        HStack(alignment: .center, spacing: 8) {
+      switch self.rows {
+      case .session:
+        self.sessionRows
+      case .meeting:
+        self.meetingRows
+      case .all:
+        Section {
+          self.sessionRows
+        } header: {
           Text("Dictation")
-          Spacer(minLength: 8)
-          VStack(alignment: .trailing, spacing: 1) {
-            Text("When active,")
-            HStack(spacing: 3) {
-              Image(systemName: "mic.fill")
-                .foregroundStyle(.orange)
-              Text("will appear")
-            }
-          }
-          .font(.caption2)
-          .foregroundStyle(.secondary)
-          .textCase(nil)
-          .accessibilityElement(children: .ignore)
-          .accessibilityLabel("When active, the orange microphone indicator will appear")
+        }
+        Section("Live Dictation & Meeting") {
+          self.meetingRows
         }
       }
-      Section("Live Dictation & Meeting") {
-        Toggle("Live Dictation", isOn: self.$experimentalLiveEnabled)
-         Toggle("Meeting Record", isOn: self.$experimentalMeetingEnabled)
-        if self.experimentalMeetingEnabled {
-          NavigationLink("Meeting Recordings") {
-            MeetingRecordsView()
-          }
-        }
-       }
     }
     .onChange(of: self.selectedAutoStopPolicy) { _, policy in
       SharedSettings().sessionAutoStopPolicy = policy
       if self.speechService.isSessionActive {
         self.speechService.session.updateTimeout()
+      }
+    }
+  }
+
+  @ViewBuilder
+  private var sessionRows: some View {
+    ActiveSessionToggle()
+    Picker("Auto-Stop", selection: self.$selectedAutoStopPolicy) {
+      ForEach(SessionAutoStopPolicy.allCases, id: \.self) { policy in
+        Text(LocalizedStringKey(policy.displayNameKey)).tag(policy)
+      }
+    }
+  }
+
+  @ViewBuilder
+  private var meetingRows: some View {
+    Toggle("Live Dictation", isOn: self.$experimentalLiveEnabled)
+    Toggle("Meeting Record", isOn: self.$experimentalMeetingEnabled)
+    if self.experimentalMeetingEnabled {
+      NavigationLink("Meeting Recordings") {
+        MeetingRecordsView()
       }
     }
   }

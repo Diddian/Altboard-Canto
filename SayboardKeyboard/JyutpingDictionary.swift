@@ -81,12 +81,22 @@ final class JyutpingDictionary {
       for column in columns {
         gather("SELECT word,romanization FROM entries WHERE \(column)=? ORDER BY priority LIMIT ?", plain, rank: 0)
       }
+      // Curated multi-syllable combinations of Jyutping/Yale/Sidney Lau.
+      // The indexed table covers only reviewed colloquial phrases.
+      gather(
+        "SELECT word,romanization FROM mixed_aliases WHERE alias=? ORDER BY priority LIMIT ?",
+        plain, rank: 1
+      )
       // A few bounded convenience aliases. Broad vowel substitutions create
       // false homophones; they do not belong in a keyboard's exact index.
       for alias in CantoneseRomanizationVariants.variants(for: plain).dropFirst().prefix(3) {
         for column in columns {
           gather("SELECT word,romanization FROM entries WHERE \(column)=? ORDER BY priority LIMIT ?", alias, rank: 1)
         }
+        gather(
+          "SELECT word,romanization FROM mixed_aliases WHERE alias=? ORDER BY priority LIMIT ?",
+          alias, rank: 1
+        )
       }
       for column in columns {
         gather(
@@ -140,7 +150,8 @@ final class JyutpingDictionary {
       : [
           "SELECT word,romanization FROM entries WHERE plain=? ORDER BY priority LIMIT ?",
           "SELECT word,romanization FROM entries WHERE yale=? ORDER BY priority LIMIT ?",
-          "SELECT word,romanization FROM entries WHERE sidney=? ORDER BY priority LIMIT ?"
+          "SELECT word,romanization FROM entries WHERE sidney=? ORDER BY priority LIMIT ?",
+          "SELECT word,romanization FROM mixed_aliases WHERE alias=? ORDER BY priority LIMIT ?"
         ]
     let spellings = input.contains(where: \.isNumber)
       ? [input] : CantoneseRomanizationVariants.variants(for: input)
@@ -162,7 +173,8 @@ final class JyutpingDictionary {
       : [
           "SELECT word,romanization FROM entries WHERE plain=? LIMIT ?",
           "SELECT word,romanization FROM entries WHERE yale=? LIMIT ?",
-          "SELECT word,romanization FROM entries WHERE sidney=? LIMIT ?"
+          "SELECT word,romanization FROM entries WHERE sidney=? LIMIT ?",
+          "SELECT word,romanization FROM mixed_aliases WHERE alias=? LIMIT ?"
         ]
     let spellings = input.contains(where: \.isNumber)
       ? [input] : CantoneseRomanizationVariants.variants(for: input)
@@ -215,7 +227,7 @@ final class JyutpingDictionary {
     "即係": ["我", "你", "話", "咁"],
     "點解": ["會", "你", "佢", "咁"],
     "可以": ["唔", "再", "一齊", "試"],
-    "唔係": ["咁", "好", "我", "呢個"],
+    "唔係": ["呀嘛", "呀", "喎", "咁", "好", "我", "呢個"],
     "咁": ["樣", "難", "好", "多"],
     "冇": ["問題", "咩", "嘢", "所謂"]
   ]

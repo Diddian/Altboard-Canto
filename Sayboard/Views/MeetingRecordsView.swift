@@ -3,6 +3,7 @@ import SwiftUI
 struct MeetingRecordsView: View {
   @EnvironmentObject private var speechService: SpeechRecognitionService
   @ObservedObject private var recorder = MeetingRecordingCoordinator.shared
+  @State private var pendingDeletion: UUID?
 
   var body: some View {
     Form {
@@ -39,8 +40,27 @@ struct MeetingRecordsView: View {
                 .font(.caption).foregroundStyle(.secondary)
             }
           }
+          .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            Button("Delete", role: .destructive) {
+              self.pendingDeletion = record.id
+            }
+          }
         }
       }
+    }
+    .confirmationDialog(
+      "Delete Meeting?", isPresented: Binding(
+        get: { self.pendingDeletion != nil },
+        set: { if !$0 { self.pendingDeletion = nil } }
+      ), titleVisibility: .visible
+    ) {
+      Button("Delete Meeting", role: .destructive) {
+        if let id = self.pendingDeletion { self.recorder.deleteRecord(id: id) }
+        self.pendingDeletion = nil
+      }
+      Button("Cancel", role: .cancel) { self.pendingDeletion = nil }
+    } message: {
+      Text("This permanently deletes the audio and transcript for this meeting.")
     }
     .navigationTitle("Meeting Records")
     .navigationBarTitleDisplayMode(.inline)

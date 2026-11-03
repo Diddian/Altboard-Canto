@@ -77,6 +77,34 @@ class UniversalCantoneseTests(unittest.TestCase):
             finally:
                 db.close()
 
+    def test_reviewed_long_phrases_and_mixed_scheme_aliases(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            dest = pathlib.Path(tmp) / "mixed.sqlite3"
+            BUILDER.compile_database("你好\\tnei5 hou2\\n".encode(), dest, verify_upstream=False)
+            db = sqlite3.connect(dest)
+            try:
+                for spelling in ("nghaiama", "nghaiaamaa", "nghaiamaa", "nghaiaama"):
+                    with self.subTest(spelling=spelling):
+                        self.assertEqual(db.execute(
+                            "SELECT word FROM mixed_aliases WHERE alias=? "
+                            "ORDER BY priority LIMIT 1", (spelling,)
+                        ).fetchone(), ("唔係呀嘛",))
+                self.assertEqual(db.execute(
+                    "SELECT word FROM entries WHERE plain=? AND word=? LIMIT 1",
+                    ("mhaiaamaa", "唔係呀嘛")
+                ).fetchone(), ("唔係呀嘛",))
+                self.assertEqual(db.execute(
+                    "SELECT word FROM mixed_aliases WHERE alias=? AND word=? LIMIT 1",
+                    ("jyutyue", "粵語")
+                ).fetchone(), ("粵語",))
+                plan = " ".join(map(str, db.execute(
+                    "EXPLAIN QUERY PLAN SELECT word FROM mixed_aliases WHERE alias=?",
+                    ("nghaiama",)
+                ).fetchall()))
+                self.assertIn("INDEX", plan.upper())
+            finally:
+                db.close()
+
     def test_all_three_indexes_and_tones(self):
         with tempfile.TemporaryDirectory() as tmp:
             dest = pathlib.Path(tmp) / "jyutping.sqlite3"

@@ -99,6 +99,13 @@ enum ChineseStrokeKeys {
     ["。", "，", "？"],
     ["？", "！", "「", "」"]
   ]
+  /// Positive horizontal movement always selects the option to the right.
+  static func popupIndex(horizontalDelta: Double, optionCount: Int, columnWidth: Double) -> Int {
+    guard optionCount > 0 else { return 0 }
+    let steps = Int((horizontalDelta / max(1, columnWidth)).rounded())
+    return min(optionCount - 1, max(0, optionCount / 2 + steps))
+  }
+
   static func glyphs(for code: String) -> String {
     let values = Dictionary(uniqueKeysWithValues: keys.map { ($0.code, $0.glyph) })
     return code.map { values[String($0)] ?? String($0) }.joined()

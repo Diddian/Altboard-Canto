@@ -46,11 +46,8 @@ struct AlphabeticKeyboardLayout: View {
   @State private var nextCantoneseWords = [String]()
   @State private var predictionAnchor: String?
   @State private var nextChineseQuoteCloses = false
-  @AppStorage(
-    SharedKey.keyboardSwipeTypingEnabled,
-    store: UserDefaults(suiteName: AppGroup.identifier)
-  )
-  private var swipeTypingEnabled = false
+  // English/German swipe typing is always available.
+  private let swipeTypingEnabled = true
   @State private var latinRefreshTask: Task<Void, Never>?
   @State private var cantoneseRefreshTask: Task<Void, Never>?
   @State private var cursorRefreshTask: Task<Void, Never>?

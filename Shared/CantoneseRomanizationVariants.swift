@@ -23,6 +23,12 @@ enum CantoneseRomanizationVariants {
     if source == "nghai" || source == "nghaai" {
       append("m" + source.dropFirst(2))
     }
+    // Common colloquial spellings of 唔係呀嘛 (m4 hai6 aa3 maa3).
+    // The extra h is a typed colloquial variant, not a general vowel rule.
+    if ["nghaiahma", "nghaiama", "nghaiaama", "nghaiamaa",
+        "nghaiaamaa", "mhaiama", "mhaiahma"].contains(source) {
+      append("mhaiaamaa")
+    }
     if source.contains("yyu") {
       append(source.replacingOccurrences(of: "yyu", with: "yu"))
     }

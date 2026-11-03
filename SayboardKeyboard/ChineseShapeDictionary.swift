@@ -83,15 +83,9 @@ final class ChineseShapeDictionary {
         best[hit.word] = (candidate, score)
       }
     }
-    // Keep characters that cannot be rendered by available iOS fallback
-    // fonts after visible candidates. Source entries remain searchable.
-    let displayable = Dictionary(uniqueKeysWithValues: best.keys.map {
-      ($0, Self.canDisplay($0))
-    })
-    return Array(best.values.sorted {
-      let lhsVisible = displayable[$0.candidate.text] ?? true
-      let rhsVisible = displayable[$1.candidate.text] ?? true
-      if lhsVisible != rhsVisible { return lhsVisible }
+    // Never propose a missing-font square or replacement character on iOS.
+    // Keep its source record intact, but omit it from visible candidates.
+    return Array(best.values.filter { Self.canDisplay($0.candidate.text) }.sorted {
       if $0.score != $1.score { return $0.score < $1.score }
       return $0.candidate.text < $1.candidate.text
     }.prefix(maxLimit).map { $0.candidate })
@@ -143,6 +137,9 @@ final class ChineseShapeDictionary {
   )
 
   private static func canDisplay(_ text: String) -> Bool {
+    guard !text.isEmpty, !text.unicodeScalars.contains(where: {
+      [0xFFFD, 0x25A1, 0x25AF].contains($0.value)
+    }) else { return false }
     for character in text {
       let fragment = String(character)
       let fallback = CTFontCreateForString(

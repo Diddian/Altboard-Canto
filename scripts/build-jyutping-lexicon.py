@@ -8,6 +8,7 @@ only jyutping.txt and does not bundle ODbL jyut6ping3.maps data.
 import argparse
 import base64
 import hashlib
+import itertools
 import json
 import os
 import pathlib
@@ -64,6 +65,44 @@ def sidney_lau_spelling(jyutping: str) -> str:
     return "".join(sidney_lau_syllable(syl) for syl in jyutping.split())
 
 
+def mixed_phrase_aliases(word: str, romanization: str) -> list[str]:
+    """Indexed cross-scheme aliases for reviewed phrases, not the upstream corpus.
+
+    Limit mixed spellings to at most two variant syllables. This keeps search
+    bounded and avoids inventing arbitrary Cantonese homophones.
+    """
+    syllables = romanization.split()
+    if len(syllables) < 2:
+        return []
+    choices = []
+    for syllable in syllables:
+        variants = [syllable.rstrip("123456"), yale_syllable(syllable),
+                    sidney_lau_syllable(syllable)]
+        choices.append(list(dict.fromkeys(variants)))
+    canonical = "".join(s[0] for s in choices)
+    uniform = {
+        canonical, yale_spelling(romanization), sidney_lau_spelling(romanization)
+    }
+    result = []
+    seen = set()
+    for parts in itertools.product(*choices):
+        changes = sum(a != b for a, b in zip(parts, (c[0] for c in choices)))
+        if changes > 2:
+            continue
+        alias = "".join(parts)
+        if alias not in uniform and alias not in seen:
+            seen.add(alias)
+            result.append(alias)
+        if word.startswith("唔") and syllables[0] == "m4":
+            colloquial = "ng" + "".join(parts[1:])
+            if colloquial not in seen:
+                seen.add(colloquial)
+                result.append(colloquial)
+        if len(result) >= 128:
+            break
+    return result
+
+
 def read_source(input_file: str | None) -> bytes:
     if input_file:
         return pathlib.Path(input_file).read_bytes()
@@ -113,13 +152,21 @@ def compile_database(source: bytes, output: pathlib.Path, verify_upstream: bool)
             priority INTEGER NOT NULL
         )""")
         batch = []
+        mixed_batch = []
         seen = set()
         count = 0
         # Reviewed common Cantonese phrases rank before the upstream lexicon.
         # Keep the upstream bytes/hash unchanged and additions auditable.
         supplemental = pathlib.Path(__file__).with_name("cantonese-phrases.tsv")
-        lines = supplemental.read_text(encoding="utf-8").splitlines() + source.decode("utf-8").splitlines()
-        for raw in lines:
+        reviewed = supplemental.read_text(encoding="utf-8").splitlines()
+        lines = reviewed + source.decode("utf-8").splitlines()
+        db.execute("""CREATE TABLE mixed_aliases (
+            alias TEXT NOT NULL,
+            word TEXT NOT NULL,
+            romanization TEXT NOT NULL,
+            priority INTEGER NOT NULL
+        )""")
+        for line_number, raw in enumerate(lines):
             fields = raw.strip().split("\t")
             if len(fields) != 2:
                 continue
@@ -138,12 +185,17 @@ def compile_database(source: bytes, output: pathlib.Path, verify_upstream: bool)
             yale = yale_spelling(romanization)
             sidney = sidney_lau_spelling(romanization)
             batch.append((word, romanization, plain, compact, yale, sidney, initials, count))
+            if line_number < len(reviewed):
+                for alias in mixed_phrase_aliases(word, romanization):
+                    mixed_batch.append((alias, word, romanization, count))
             count += 1
             if len(batch) >= 15000:
                 db.executemany("INSERT INTO entries VALUES (?,?,?,?,?,?,?,?)", batch)
                 batch.clear()
         if batch:
             db.executemany("INSERT INTO entries VALUES (?,?,?,?,?,?,?,?)", batch)
+        if mixed_batch:
+            db.executemany("INSERT INTO mixed_aliases VALUES (?,?,?,?)", mixed_batch)
         if count < 10000 and verify_upstream:
             raise ValueError(f"Lexicon unexpectedly small: {count} entries")
         db.executescript("""
@@ -153,6 +205,7 @@ def compile_database(source: bytes, output: pathlib.Path, verify_upstream: bool)
             CREATE INDEX idx_entries_yale ON entries(yale, priority);
             CREATE INDEX idx_entries_sidney ON entries(sidney, priority);
             CREATE INDEX idx_entries_initials ON entries(initials, priority);
+            CREATE INDEX idx_mixed_alias ON mixed_aliases(alias, priority);
         """)
         db.commit()
         db.execute("VACUUM")

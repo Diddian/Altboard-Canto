@@ -217,6 +217,23 @@ final class MeetingRecordingCoordinator: ObservableObject {
     }.sorted { $0.startedAt > $1.startedAt }
   }
 
+  /// Delete only a saved, inactive recording. Audio and transcripts share its folder.
+  @discardableResult
+  func deleteRecord(id: UUID) -> Bool {
+    guard records.contains(where: { $0.id == id }),
+          !(current?.id == id && (isRecording || isFinalizing)),
+          let root = Self.meetingsDirectory() else { return false }
+    let folder = root.appendingPathComponent(id.uuidString, isDirectory: true)
+    do {
+      try FileManager.default.removeItem(at: folder)
+      records.removeAll { $0.id == id }
+      return true
+    } catch {
+      status = "Could not delete meeting recording"
+      return false
+    }
+  }
+
   func meetingFolder(for record: MeetingRecord) -> URL? {
     Self.meetingsDirectory()?.appendingPathComponent(record.id.uuidString, isDirectory: true)
   }

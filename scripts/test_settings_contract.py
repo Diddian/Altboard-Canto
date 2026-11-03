@@ -6,18 +6,22 @@ import unittest
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 class SettingsContractTests(unittest.TestCase):
-    def test_legacy_romanization_picker_not_reintroduced(self):
-        content = (ROOT / "Sayboard" / "Views" / "KeyboardSettingsView.swift").read_text()
-        self.assertNotIn('Picker("Cantonese Romanization"', content)
-        self.assertIn('Toggle("Swipe Typing (English / German)"', content)
-
-    def test_haptic_reset_default_and_feedback_controls_exist(self):
-        content = (ROOT / "Sayboard" / "Views" / "KeyboardSettingsView.swift").read_text()
-        settings = (ROOT / "Shared" / "SharedSettings.swift").read_text()
-        self.assertIn('Button("Reset to Default (55%)")', content)
-        self.assertIn('Button("Test Haptic")', content)
-        self.assertIn("static let defaultKeyboardHapticStrength: Double = 0.55", settings)
-        self.assertIn("min(1.0, max(0.15, newValue))", settings)
+    def test_default_swipe_and_uncluttered_keyboard_settings(self):
+        keyboard = (ROOT / "Sayboard" / "Views" / "KeyboardSettingsView.swift").read_text()
+        layout = (ROOT / "SayboardKeyboard" / "Views" / "Layouts"
+                  / "AlphabeticKeyboardLayout.swift").read_text()
+        self.assertNotIn('Picker("Cantonese Romanization"', keyboard)
+        self.assertNotIn('Toggle("Swipe Typing (English / German)"', keyboard)
+        self.assertIn('private let swipeTypingEnabled = true', layout)
+        self.assertIn('Toggle("Haptic Feedback"', keyboard)
+        self.assertNotIn('Slider(value: self.$hapticStrength', keyboard)
+        self.assertNotIn('Picker("Haptic Method"', keyboard)
+        self.assertNotIn('NavigationLink("All Keyboard Diagnostics")', keyboard)
+        self.assertIn('Toggle("Show Settings Key"', keyboard)
+        self.assertIn('Toggle("Double-Space Period"', keyboard)
+        self.assertIn('Toggle("Auto-capitalize Sentences"', keyboard)
+        self.assertLess(keyboard.index('KeyboardTestPreview('),
+                        keyboard.index('private struct KeyboardTestPreview'))
 
     def test_settings_keyboard_sections_are_consolidated(self):
         keyboard = (ROOT / "Sayboard" / "Views" / "KeyboardSettingsView.swift").read_text()
@@ -36,12 +40,18 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn('onPreferredLanguagesChanged', speech)
         self.assertIn('cantoneseSelected: self.preferredSpokenLanguages.contains("yue")', home)
 
-    def test_active_session_header_note_is_always_visible(self):
-        content = (ROOT / "Sayboard" / "Views" / "SettingsNavigationViews.swift").read_text()
-        self.assertIn('Text("When active,")', content)
-        self.assertIn('Image(systemName: "mic.fill")', content)
-        self.assertIn('Text("will appear")', content)
-        self.assertNotIn('NavigationLink("Active Session Info")', content)
+    def test_speech_dictation_order_and_one_line_note(self):
+        home = (ROOT / "Sayboard" / "Views" / "SettingsView.swift").read_text()
+        self.assertIn('Text("Speech & Dictation")', home)
+        self.assertIn('Text("When active,")', home)
+        self.assertIn('Image(systemName: "mic.fill")', home)
+        self.assertIn('.fixedSize(horizontal: true, vertical: false)', home)
+        self.assertLess(home.index('rowsOnly: true'), home.index('rows: .session'))
+        self.assertLess(home.index('rows: .session'), home.index('VoiceOutputSettingsView()'))
+        self.assertLess(home.index('VoiceOutputSettingsView()'), home.index('rows: .meeting'))
+        self.assertLess(home.index('rows: .meeting'), home.index('ModelsView()'))
+        self.assertLess(home.index('ModelsView()'), home.index('TextAISettingsView()'))
+        self.assertNotIn('TextOutputSection(showFooter: false)', home)
 
     def test_visibility_and_legacy_settings_stay_backward_compatible(self):
         settings = (ROOT / "Shared" / "SharedSettings.swift").read_text()

@@ -63,6 +63,15 @@ class SymbolVisibilityTests(unittest.TestCase):
         top = set(row(src, "chineseSymbolsRow1") + row(src, "chineseSymbolsRow2"))
         self.assertTrue(top.isdisjoint(bottom), "Chinese #+= rows repeat bottom punctuation")
 
+    def test_stroke_popups_keep_readable_font_and_filter_unavailable_glyphs(self):
+        stroke = (ROOT / "SayboardKeyboard" / "Views" / "ChineseStrokeGrid.swift").read_text()
+        dictionary = (ROOT / "SayboardKeyboard" / "ChineseShapeDictionary.swift").read_text()
+        self.assertNotIn(".fontWidth(.compressed)", stroke)
+        self.assertNotIn(".fontWidth(.condensed)", stroke)
+        self.assertIn("ChineseStrokeKeys.popupIndex(", stroke)
+        self.assertIn("filter { Self.canDisplay($0.candidate.text) }", dictionary)
+        self.assertIn("0xFFFD", dictionary)
+
     def test_extended_number_symbol_punctuation_rows(self):
         src = EXTENDED.read_text()
         for name in ("numbersRow1", "numbersRow2", "symbolsRow1", "symbolsRow2"):
