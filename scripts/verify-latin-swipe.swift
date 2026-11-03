@@ -99,7 +99,7 @@ for order in [LetterKeyArrangement.qwerty, .qwertz] {
     precondition(matches.first == word, "colloquial swipe \(word): \(matches)")
   }
 }
-\(marker)
+precondition(LatinSwipeDecoder.normalizedSpelling("that's") == "thats")
 precondition(LatinSwipeDecoder.normalizedSpelling("Grüße") == "grusse")
 let session = LatinSwipeSession()
 let points = stroke("hello", order: .qwerty)
