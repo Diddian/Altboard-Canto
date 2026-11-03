@@ -219,8 +219,6 @@ struct ChineseStrokeGrid: View {
     let height = 52.kbScaled
     let inset = 6.kbScaled
     let gap = 8.kbScaled
-    let fullWidth = max(0, size.width - 2 * inset)
-    let keyWidth = max(30.kbScaled, (fullWidth - 2 * gap) / 3)
     let desired: CGFloat
     if index == 0 { desired = inset }
     else if index == 2 { desired = size.width - inset - width }
