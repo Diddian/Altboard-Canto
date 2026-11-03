@@ -41,13 +41,13 @@ struct JyutpingCompositionTests {
       firstCandidate: "幾快", isCurrentComposition: true, hasExactEntry: false
     ))
     #expect(CantonesePhraseCommitPolicy.commitsFirstOnSpace(
-      spelling: "gifai", firstCandidate: "幾快", hasExactEntry: true, hostMatches: true
+      spelling: "geifaai", firstCandidate: "幾快", hasExactEntry: true, hostMatches: true
     ))
     #expect(!CantonesePhraseCommitPolicy.commitsFirstOnSpace(
-      spelling: "gifai", firstCandidate: "幾快", hasExactEntry: false, hostMatches: true
+      spelling: "geifaai", firstCandidate: "幾快", hasExactEntry: false, hostMatches: true
     ))
     #expect(!CantonesePhraseCommitPolicy.commitsFirstOnSpace(
-      spelling: "gifai", firstCandidate: "幾快", hasExactEntry: true, hostMatches: false
+      spelling: "geifaai", firstCandidate: "幾快", hasExactEntry: true, hostMatches: false
     ))
     #expect(!CantonesePhraseCommitPolicy.commitsFirstOnSpace(
       spelling: "hello", firstCandidate: nil, hasExactEntry: false, hostMatches: true
@@ -59,7 +59,8 @@ struct JyutpingCompositionTests {
       spelling: "home", firstCandidate: "好咩", hasExactEntry: true,
       hostMatches: true, recognizesLatinWord: true
     ))
-    #expect(CantoneseRomanizationVariants.variants(for: "gifai").contains("geifaai"))
+    #expect(CantoneseRomanizationVariants.variants(for: "geifaai").first == "geifaai")
+    #expect(!CantoneseRomanizationVariants.variants(for: "gifai").contains("geifaai"))
   }
 
   @Test func rejectsInvalidKeysWithoutChangingBuffer() {

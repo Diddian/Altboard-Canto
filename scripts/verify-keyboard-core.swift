@@ -33,11 +33,11 @@ enum VerifyKeyboardCore {
     precondition(LiveCantoneseSafety.matches(buffer: "gamyat", hostContext: "Hello Gamyat"))
     precondition(!LiveCantoneseSafety.matches(buffer: "gamyat", hostContext: "Hello gamya"))
     precondition(CantonesePhraseCommitPolicy.commitsFirstOnSpace(
-      spelling: "gifai", firstCandidate: "幾快", hasExactEntry: true, hostMatches: true))
+      spelling: "geifaai", firstCandidate: "幾快", hasExactEntry: true, hostMatches: true))
     precondition(!CantonesePhraseCommitPolicy.commitsFirstOnSpace(
-      spelling: "gifai", firstCandidate: "幾快", hasExactEntry: false, hostMatches: true))
+      spelling: "geifaai", firstCandidate: "幾快", hasExactEntry: false, hostMatches: true))
     precondition(!CantonesePhraseCommitPolicy.commitsFirstOnSpace(
-      spelling: "gifai", firstCandidate: "幾快", hasExactEntry: true, hostMatches: false))
+      spelling: "geifaai", firstCandidate: "幾快", hasExactEntry: true, hostMatches: false))
     precondition(!CantonesePhraseCommitPolicy.commitsFirstOnSpace(
       spelling: "home", firstCandidate: "好咩", hasExactEntry: true,
       hostMatches: true, recognizesLatinWord: true))
