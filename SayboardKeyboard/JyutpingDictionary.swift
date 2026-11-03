@@ -43,7 +43,7 @@ final class JyutpingDictionary {
     limit: Int = 12
   ) -> [JyutpingCandidate] {
     let input = rawInput.lowercased().filter { $0.isASCII && ($0.isLetter || $0.isNumber) }
-    guard self.database != nil, !input.isEmpty, input.count <= 48 else { return [] }
+    guard self.database != nil, !input.isEmpty, input.count <= 96 else { return [] }
     let hasTone = input.contains(where: \.isNumber)
     let plain = input.filter(\.isLetter)
     guard !plain.isEmpty else { return [] }
@@ -141,7 +141,7 @@ final class JyutpingDictionary {
   /// one-syllable entries to avoid deleting more text than requested.
   func exactRomanization(for rawInput: String) -> String? {
     let input = rawInput.lowercased()
-    guard !input.isEmpty, input.count <= 48,
+    guard !input.isEmpty, input.count <= 96,
           input.allSatisfy({ $0.isASCII && ($0.isLetter || "123456".contains($0)) })
     else { return nil }
 
@@ -167,7 +167,7 @@ final class JyutpingDictionary {
   /// turning arbitrary English Backspace operations into whole-word deletes.
   func hasExactEntry(for rawInput: String) -> Bool {
     let input = rawInput.lowercased().filter { $0.isASCII && ($0.isLetter || $0.isNumber) }
-    guard !input.isEmpty, input.count <= 48 else { return false }
+    guard !input.isEmpty, input.count <= 96 else { return false }
     let sqls: [String] = input.contains(where: \.isNumber)
       ? ["SELECT word,romanization FROM entries WHERE compact=? LIMIT ?"]
       : [

@@ -660,7 +660,7 @@ struct AlphabeticKeyboardLayout: View {
       self.letterRow(self.arrangement.rows[0], inset: Self.edgeInset,
                      top: 0, bottom: Self.rowSpacing / 2, rowIndex: 0)
     case .numbers: self.characterRow(Self.numbersRow1)
-    case .symbols: self.characterRow(self.isChineseSymbolsPage ? Self.chineseSymbolsRow1 : Self.symbolsRow1)
+    case .symbols: self.characterRow(Self.symbolsRow1, chineseAlternates: self.isChineseSymbolsPage)
     }
   }
 
@@ -671,7 +671,7 @@ struct AlphabeticKeyboardLayout: View {
       self.letterRow(self.arrangement.rows[1], inset: Self.secondInset,
                      top: Self.rowSpacing / 2, bottom: Self.rowSpacing / 2, rowIndex: 1)
     case .numbers: self.characterRow(Self.numbersRow2)
-    case .symbols: self.characterRow(self.isChineseSymbolsPage ? Self.chineseSymbolsRow2 : Self.symbolsRow2)
+    case .symbols: self.characterRow(Self.symbolsRow2, chineseAlternates: self.isChineseSymbolsPage)
     }
   }
 
@@ -795,12 +795,13 @@ struct AlphabeticKeyboardLayout: View {
     }
   }
 
-  private func characterRow(_ characters: [String]) -> some View {
+  private func characterRow(_ characters: [String], chineseAlternates: Bool = false) -> some View {
     HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
       ForEach(Array(characters.enumerated()), id: \.offset) { index, character in
         SymbolHoldKey(
           symbol: character, face: self.nativeSymbolFace(character),
-          column: index, columnCount: characters.count
+          column: index, columnCount: characters.count,
+          chineseAlternates: chineseAlternates
         ) { value in
           self.handleCharacter(value)
         }
@@ -1325,11 +1326,9 @@ struct AlphabeticKeyboardLayout: View {
     }
   }
 
-  // The #+= page is the ONLY place Chinese punctuation replaces Latin keys.
-  // Keep the top rows disjoint from the bottom 。 ， ？ ！ and paired 「/」 key.
-  private static let chineseSymbolsRow1 = ["〈","〉","〖","〗","〔","〕","【","】","《","》"]
-  private static let chineseSymbolsRow2 = ["『","』","﹏","～","…","、","€","£","¥","•"]
-
+  // #+= always shows the native Latin symbol grid. When Chinese is selected,
+  // related Traditional Chinese brackets live under long press; the bottom
+  // punctuation row retains 。 ， ？ ！ and the context-aware 「/」 key.
   private static let numbersRow1 = ["1","2","3","4","5","6","7","8","9","0"]
   private static let numbersRow2 = ["-","/",":",";","(",")","$","&","@","\""]
   private static let symbolsRow1 = ["[","]","{","}","#","%","^","*","+","="]

@@ -117,7 +117,24 @@ enum SymbolKeyAlternates {
     "」": ["』", "”", "’"]
   ]
 
-  static func choices(for symbol: String) -> [String] {
-    Array(([symbol] + (variants[symbol] ?? [])).prefix(10))
+  /// Chinese symbol alternatives are available only on #+= in Chinese
+  /// contexts. Plain taps and all English/German symbols remain unchanged.
+  private static let chineseVariants: [String: [String]] = [
+    "[": ["「", "『", "【", "〔", "［"],
+    "]": ["」", "』", "】", "〕", "］"],
+    "{": ["《", "〈", "〖", "（"],
+    "}": ["》", "〉", "〗", "）"],
+    "#": ["＃"], "%": ["％", "‰"], "^": ["︿", "∧"],
+    "*": ["＊", "※"], "+": ["＋", "±"], "=": ["＝", "≠"],
+    "_": ["＿", "—"], "\\": ["＼", "／"], "|": ["｜", "‖"],
+    "~": ["～", "﹏"], "<": ["〈", "《", "＜"],
+    ">": ["〉", "》", "＞"]
+  ]
+
+  static func choices(for symbol: String, chinese: Bool = false) -> [String] {
+    let all = [symbol] + (chinese ? (chineseVariants[symbol] ?? []) : [])
+      + (variants[symbol] ?? [])
+    var seen = Set<String>()
+    return Array(all.filter { seen.insert($0).inserted }.prefix(8))
   }
 }

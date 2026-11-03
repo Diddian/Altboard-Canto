@@ -21,6 +21,16 @@ struct VerifyLetterHoldAlternates {
       initialX: 200, currentX: 136, expandsLeft: true, count: 3, step: 32) == 2)
     precondition(LetterHoldNavigation.selectedIndex(
       initialX: 200, currentX: 264, expandsLeft: false, count: 3, step: 32) == 2)
-    print("Long-press punctuation and umlaut coexist: PASS")
+    let chineseOpen = SymbolKeyAlternates.choices(for: "[", chinese: true)
+    precondition(chineseOpen.first == "[" && chineseOpen.contains("「")
+                 && chineseOpen.contains("【"))
+    let latinOpen = SymbolKeyAlternates.choices(for: "[")
+    precondition(latinOpen.first == "[" && !latinOpen.contains("「"))
+    precondition(SymbolKeyAlternates.choices(for: "#", chinese: true).contains("＃"))
+    precondition(SymbolKeyAlternates.choices(for: "^", chinese: true).contains("︿"))
+    precondition(SymbolKeyAlternates.choices(for: "+", chinese: true).contains("＋"))
+    precondition(SymbolKeyAlternates.choices(for: "=", chinese: true).contains("＝"))
+    precondition(SymbolKeyAlternates.choices(for: "]", chinese: true).contains("」"))
+    print("Long-press punctuation and context-scoped Chinese alternates: PASS")
   }
 }

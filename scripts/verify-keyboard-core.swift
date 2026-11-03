@@ -25,6 +25,10 @@ enum VerifyKeyboardCore {
     precondition(CantoneseSyllableEditing.lastSyllableLength(typed: "hello", canonical: "gam1 jat6") == nil)
     precondition(!buffer.append("."))
     buffer.clear()
+    for _ in 0..<96 { precondition(buffer.append("a")) }
+    precondition(buffer.buffer.count == 96)
+    precondition(!buffer.append("a"))
+    buffer.clear()
     precondition(!buffer.backspace() && buffer.isEmpty)
     precondition(LiveCantoneseSafety.matches(buffer: "gamyat", hostContext: "Hello Gamyat"))
     precondition(!LiveCantoneseSafety.matches(buffer: "gamyat", hostContext: "Hello gamya"))

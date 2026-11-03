@@ -5,12 +5,12 @@ import Foundation
 enum CantoneseRomanizationVariants {
   static func variants(for input: String, limit: Int = 4) -> [String] {
     let source = input.lowercased()
-    guard !source.isEmpty, source.count <= 48,
+    guard !source.isEmpty, source.count <= 96,
           source.allSatisfy({ $0.isASCII && $0.isLetter }) else { return [] }
     var results = [source]
     var seen: Set<String> = [source]
     func append(_ value: String) {
-      guard value.count <= 48, seen.insert(value).inserted else { return }
+      guard value.count <= 96, seen.insert(value).inserted else { return }
       results.append(value)
     }
     if source == "mm" || source == "mmm" { append("m") }

@@ -80,7 +80,7 @@ class UniversalCantoneseTests(unittest.TestCase):
     def test_reviewed_long_phrases_and_mixed_scheme_aliases(self):
         with tempfile.TemporaryDirectory() as tmp:
             dest = pathlib.Path(tmp) / "mixed.sqlite3"
-            BUILDER.compile_database("你好\\tnei5 hou2\\n".encode(), dest, verify_upstream=False)
+            BUILDER.compile_database("你好\tnei5 hou2\n".encode(), dest, verify_upstream=False)
             db = sqlite3.connect(dest)
             try:
                 for spelling in ("nghaiama", "nghaiaamaa", "nghaiamaa", "nghaiaama"):
@@ -102,6 +102,33 @@ class UniversalCantoneseTests(unittest.TestCase):
                     ("nghaiama",)
                 ).fetchall()))
                 self.assertIn("INDEX", plan.upper())
+            finally:
+                db.close()
+
+    def test_daily_dialogue_long_phrases_and_corrections(self):
+        # Additional entries are explicitly curated instead of arbitrary
+        # combinations of any syllables in the upstream dictionary.
+        supplemental = (ROOT / "scripts" / "cantonese-phrases.tsv").read_text(encoding="utf-8")
+        known = dict(line.split("\t", 1) for line in supplemental.splitlines())
+        self.assertEqual(known["你食咗飯未呀"], "nei5 sik6 zo2 faan6 mei6 aa3")
+        self.assertEqual(known["食塞米啦你"], "sik6 sak1 mai5 laa1 nei5")
+        self.assertNotIn("食塞埋你", known)
+        self.assertGreaterEqual(sum(len(word) >= 9 for word in known), 500)
+        self.assertTrue(all(len(word) == len(reading.split()) for word, reading in known.items()))
+        phrase = "我想問吓你有冇時間同我哋傾一傾"
+        plain = "".join(char for char in known[phrase] if char.isascii() and char.isalpha())
+        self.assertGreater(len(plain), 48)
+        self.assertLessEqual(len(plain), 96)
+        with tempfile.TemporaryDirectory() as tmp:
+            dest = pathlib.Path(tmp) / "long.sqlite3"
+            BUILDER.compile_database("你好\tnei5 hou2\n".encode(), dest, verify_upstream=False)
+            db = sqlite3.connect(dest)
+            try:
+                self.assertEqual(db.execute(
+                    "SELECT word FROM entries WHERE plain=? AND word=? LIMIT 1",
+                    (plain, phrase)
+                ).fetchone(), (phrase,))
+                self.assertEqual(db.execute("PRAGMA quick_check").fetchone(), ("ok",))
             finally:
                 db.close()
 
