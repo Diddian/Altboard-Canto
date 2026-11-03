@@ -279,6 +279,11 @@ struct SharedSettings {
     nonmutating set { defaults.set(newValue, forKey: SharedKey.experimentalLiveDictationEnabled) }
   }
 
+  var experimentalMeetingRecordEnabled: Bool {
+    get { defaults.bool(forKey: SharedKey.experimentalMeetingRecordEnabled) }
+    nonmutating set { defaults.set(newValue, forKey: SharedKey.experimentalMeetingRecordEnabled) }
+  }
+
   var keyboardAdaptiveTouchEnabled: Bool {
     get { defaults.bool(forKey: SharedKey.keyboardAdaptiveTouchEnabled) }
     nonmutating set { defaults.set(newValue, forKey: SharedKey.keyboardAdaptiveTouchEnabled) }
