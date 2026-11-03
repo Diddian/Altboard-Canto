@@ -1,18 +1,10 @@
 name: Build unsigned iPhone IPA
 
+# Single unsigned IPA workflow. All development and automatic IPA builds use main.
 on:
   push:
     branches:
-      - feat/cantonese-qwen3-offline-mvp
-      - fix/ios-keyboard-haptics-caps-20261102
-      - feat/live-yale-haptics-diagnostics-20261102
-      - fix/haptic-core-canto-ime-20261102
-      - feat/fixed-keyboard-settings-20261102
-      - fix/keyboard-native-candidates-20261102
-      - fix/instant-touchdown-highlight-20261102
-      - feat/instant-input-ai-swipe-20261102
-      - feat/swipe-trail-emoji-native-parity-20261102
-      - feat/combined-qa-system-emoji-swipe-20261102
+      - main
   workflow_dispatch:
 
 permissions:
@@ -25,6 +17,8 @@ concurrency:
 jobs:
   build:
     name: Unsigned iOS development build
+    # Manual dispatch from archival feature branches must not create a second IPA.
+    if: github.ref == 'refs/heads/main'
     # macOS 15 ARM64 jobs #52/#54 cancelled before executing a step (0ms billed).
     # The Intel image also carries Xcode 26.2; use this alternate hosted pool.
     runs-on: macos-15-intel
@@ -223,28 +217,15 @@ jobs:
           retention-days: 14
 
       # Artifact v7 with archive:false downloads the .ipa directly.
-      # Also publish the same .ipa as a Release asset for a stable direct URL.
+      # Keep prior branch preview releases (including #68) untouched.
+      # Only main publishes to its own stable development URL.
       - name: Publish direct IPA to rolling development release
-        # This review branch gets its own Actions artifact. Never overwrite
-        # the last successful swipe-beta release until physical iPhone QA.
-        if: github.ref_name != 'feat/swipe-trail-emoji-native-parity-20261102'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          TAG="altboard-canto-dev"
-          if [ "$GITHUB_REF_NAME" = "feat/combined-qa-system-emoji-swipe-20261102" ]; then
-            TAG="altboard-canto-combined-preview"
-          elif [ "$GITHUB_REF_NAME" = "feat/fixed-keyboard-settings-20261102" ]; then
-            TAG="altboard-canto-fixed-preview"
-          elif [ "$GITHUB_REF_NAME" = "fix/keyboard-native-candidates-20261102" ]; then
-            TAG="altboard-canto-native-preview"
-          elif [ "$GITHUB_REF_NAME" = "fix/instant-touchdown-highlight-20261102" ]; then
-            TAG="altboard-canto-instant-touch-preview"
-          elif [ "$GITHUB_REF_NAME" = "feat/instant-input-ai-swipe-20261102" ]; then
-            TAG="altboard-canto-swipe-beta"
-          fi
+          TAG="altboard-canto-main-dev"
           IPA="dist/Altboard-Canto-SideStore.ipa"
           test -s "$IPA"
           NOTES="Unsigned SideStore IPA built from commit $GITHUB_SHA on branch $GITHUB_REF_NAME. Install using SideStore, which must re-sign the IPA."

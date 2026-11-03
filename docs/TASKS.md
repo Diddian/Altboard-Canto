@@ -1,14 +1,24 @@
 # Altboard-Canto development tasks
 
-Source branch: `feat/instant-input-ai-swipe-20261102`
-Last successful beta IPA: run 41522770022 (`e0c1901`). Run 41528118833 failed on duplicate `.gitkeep` resource outputs. The universal-input changes are not yet built or iPhone-verified.
-The existing successful release branch and IPA remain unchanged. This branch publishes to its own beta Release tag.
-GitHub Issues are disabled in this repository (GitHub API 410). This file is the
-canonical, versioned ticket board until Issues are enabled.
+**Active development branch: `main`.** The integrated keyboard code through
+`26dc7cdc30e346a2d3f428f8be600d1e912fa573` is now on `main`.
+Use the single `.github/workflows/build-unsigned-ipa.yml` on `main` for
+future unsigned SideStore IPAs. The last successful branch IPA before this
+merge was #68 (`7583397`); the user installed/tested it and reported
+additional bugs, addressed in code at `26dc7cdc`. Main-branch device QA remains
+pending; a successful Actions build alone is not iPhone validation.
 
-Statuses: [x] implemented in review branch; [ ] pending or not verified.
-Code changes are not considered shipped until a successful iPhone build and
-physical checks, and a deliberate merge/release.
+**Historical caution:** Older task descriptions below mention temporary feature
+branches and a custom Emoji catalog. They are archival notes, not current
+instructions. The native iOS keyboard picker is retained; the project's Emoji
+glyph is only the button icon. Do not merge obsolete QA branches or revive
+the retired catalog without a new reviewed request.
+
+GitHub Issues are disabled in this repository (GitHub API 410). This file is
+the versioned task board until Issues are enabled.
+
+Statuses: [x] code implemented; [ ] pending / requires verification.
+Do not mark device behavior verified without physical iPhone testing.
 
 ## P1 — Common long phrases and segmentation (T-013)
 
