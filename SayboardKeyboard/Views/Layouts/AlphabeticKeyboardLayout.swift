@@ -194,7 +194,6 @@ struct AlphabeticKeyboardLayout: View {
         // currently typed word, in Cantonese, German, English or another
         // available preferred spellchecker language. Hide mic and controls.
         self.candidateStrip
-          .transition(.opacity)
         if self.offersCantonese && !self.composition.isEmpty {
           Button {
             self.showsCandidateGrid.toggle()
@@ -261,7 +260,7 @@ struct AlphabeticKeyboardLayout: View {
     }
     .padding(.horizontal, Self.edgeInset.kbScaled)
     .frame(height: KeyboardChromeMetrics.keyHeight)
-    .animation(.easeOut(duration: 0.16), value: self.composition.isEmpty)
+    .transaction { $0.animation = nil }
   }
 
   private var swipeCandidateStrip: some View {
@@ -519,7 +518,7 @@ struct AlphabeticKeyboardLayout: View {
         RepeatDeleteButton(
           proxy: self.proxy,
           fixedWidth: 50.kbScaled,
-          onDeleteIntercept: { self.deleteCompositionCharacter() },
+          onDeleteIntercept: { self.interceptAlphabeticDelete() },
           onHostDeletion: { self.handleHostDeletion() },
           fastCompositionRepeat: self.offersCantonese && !self.composition.isEmpty
         )
@@ -702,12 +701,17 @@ struct AlphabeticKeyboardLayout: View {
       : nil
     self.activeLatinWord = typed
     self.latinRefreshTask?.cancel()
-    self.latinSuggestions.removeAll()
-    guard let typed else { return }
+    guard let typed else {
+      self.latinSuggestions.removeAll()
+      return
+    }
+    // Keep stable suggestions on-screen between asynchronous dictionary lookups.
+    let preferred = SharedSettings().preferredSpokenLanguages
+    let immediate = LatinWordSuggestions.shared.fastChoices(for: typed, preferred: preferred)
+    if self.latinSuggestions != immediate { self.latinSuggestions = immediate }
 
     // Let key-down animation render before asking the installed OS
     // spellchecker for suggestions. Drop stale work during fast typing.
-    let preferred = SharedSettings().preferredSpokenLanguages
     self.latinRefreshTask = Task { @MainActor in
       do { try await Task.sleep(for: .milliseconds(45)) } catch { return }
       guard !Task.isCancelled,
@@ -717,7 +721,11 @@ struct AlphabeticKeyboardLayout: View {
             ) == typed else { return }
       let values = LatinWordSuggestions.shared.choices(for: typed, preferred: preferred)
       guard !Task.isCancelled, self.activeLatinWord == typed else { return }
-      self.latinSuggestions = values
+      if values != self.latinSuggestions {
+        var noAnimation = Transaction(animation: nil)
+        noAnimation.disablesAnimations = true
+        withTransaction(noAnimation) { self.latinSuggestions = values }
+      }
     }
   }
 
@@ -759,6 +767,21 @@ struct AlphabeticKeyboardLayout: View {
   /// Delete the *last syllable* of a verified complete Cantonese spelling.
   /// gamyat → gam (remove yat), not an entire "gamyat" word. Unknown English
   /// remains normal character-by-character deletion via RepeatDeleteButton.
+  /// Delete a verified last swiped word and its separator on one tap.
+  /// Ordinary keystrokes continue to delete one character.
+  private func interceptAlphabeticDelete() -> Bool {
+    if let word = self.swipeAlternatives.first,
+       self.proxy.documentContextBeforeInput()?.hasSuffix(word + " ") == true {
+      self.swipeAlternatives.removeAll()
+      for _ in 0..<(word.count + 1) { self.proxy.deleteBackward() }
+      self.updateCandidates()
+      self.refreshAutomaticShift()
+      return true
+    }
+    self.swipeAlternatives.removeAll()
+    return self.deleteCompositionCharacter()
+  }
+
   private func deleteCompositionCharacter() -> Bool {
     guard self.offersCantonese, self.trackedTextMatches,
       let canonical = JyutpingDictionary.shared.exactRomanization(for: self.composition.buffer),

@@ -60,8 +60,10 @@ struct RepeatDeleteButton: View {
             self.deletionTask?.cancel()
             self.deletionTask = nil
             if !self.didRepeat {
-              // Tap removes a character; faster syllable deletion requires a hold.
-              self.proxy.deleteBackward()
+              // A verified just-swiped word is one undo unit on the first
+              // Delete tap. Ordinary text still deletes one character.
+              let intercepted = self.onDeleteIntercept?() ?? false
+              if !intercepted { self.proxy.deleteBackward() }
               self.onHostDeletion?()
             }
             self.pressed = false

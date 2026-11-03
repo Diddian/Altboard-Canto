@@ -3,8 +3,23 @@ import SwiftUI
 /// The single place where users select spoken languages. These preferences
 /// also enable the Cantonese candidate bar in the Alphabet keyboard.
 struct SpeechLanguagesSettingsView: View {
+  var inline = false
+
   var body: some View {
-    Form {
+    Group {
+      if self.inline {
+        self.sections
+      } else {
+        Form { self.sections }
+          .navigationTitle("Speech & Languages")
+          .navigationBarTitleDisplayMode(.inline)
+      }
+    }
+  }
+
+  @ViewBuilder
+  var sections: some View {
+    Group {
       Section {
         Button {
           self.showPreferredLanguagePicker = true
@@ -27,7 +42,7 @@ struct SpeechLanguagesSettingsView: View {
           .foregroundStyle(.orange)
         }
       } header: {
-        Text("Preferred Languages")
+        Text("Speech & Languages")
       } footer: {
         Text("Cantonese also enables offline Chinese suggestions in Alphabet. Qwen3 voice recognition uses auto-detection.")
       }
@@ -53,8 +68,6 @@ struct SpeechLanguagesSettingsView: View {
         }
       }
     }
-    .navigationTitle("Speech & Languages")
-    .navigationBarTitleDisplayMode(.inline)
     .sheet(isPresented: self.$showPreferredLanguagePicker) {
       LanguagePickerView(
         mode: .multi(Binding(

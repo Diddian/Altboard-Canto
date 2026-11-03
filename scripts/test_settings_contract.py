@@ -10,7 +10,7 @@ class SettingsContractTests(unittest.TestCase):
         content = (ROOT / "Sayboard" / "Views" / "KeyboardSettingsView.swift").read_text()
         self.assertNotIn('Picker("Cantonese Romanization"', content)
         self.assertIn("Sidney Lau, Yale and Jyutping", content)
-        self.assertIn('Toggle("Swipe Typing (English / German · Beta)"', content)
+        self.assertIn('Toggle("Swipe Typing (English / German)"', content)
 
     def test_haptic_reset_default_and_feedback_controls_exist(self):
         content = (ROOT / "Sayboard" / "Views" / "KeyboardSettingsView.swift").read_text()

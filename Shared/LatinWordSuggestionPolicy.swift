@@ -73,6 +73,35 @@ enum LatinWordSuggestionPolicy {
     return suggestion.prefix(1).uppercased() + suggestion.dropFirst()
   }
 
+  /// Explicit split-word correction: somepeolpe -> some people.
+  /// No automatic replacement; the user chooses the suggested phrase.
+  static func splitPhraseCorrections(
+    for typed: String, dictionary: [String], limit: Int = 3
+  ) -> [String] {
+    guard (6...28).contains(typed.count), limit > 0 else { return [] }
+    let query = typed.lowercased()
+    let known = Set(dictionary.map { $0.lowercased() })
+    guard !known.contains(query) else { return [] }
+    let letters = Array(query)
+    var phrases = [String]()
+    for split in 2..<(letters.count - 2) {
+      let left = String(letters[..<split]), right = String(letters[split...])
+      if known.contains(left) {
+        for word in dictionary where abs(word.count - right.count) <= 1
+          && oneEditApart(right, word.lowercased()) {
+          phrases.append(matchCapitalization(left + " " + word.lowercased(), typed: typed))
+        }
+      }
+      if known.contains(right) {
+        for word in dictionary where abs(word.count - left.count) <= 1
+          && oneEditApart(left, word.lowercased()) {
+          phrases.append(matchCapitalization(word.lowercased() + " " + right, typed: typed))
+        }
+      }
+    }
+    return Array(Set(phrases)).sorted().prefix(limit).map { $0 }
+  }
+
   /// A small offline safety net when UITextChecker is unavailable or does not
   /// offer a candidate. Keep prefix matches first; only suggest one-edit
   /// corrections as explicit choices, never automatic replacements.

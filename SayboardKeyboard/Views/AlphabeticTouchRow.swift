@@ -49,6 +49,7 @@ struct AlphabeticTouchRow: View {
             uppercase: self.uppercase,
             column: index,
             rowCount: self.letters.count,
+            secondarySymbol: LetterKeySecondary.symbol(row: self.swipeRowIndex, index: index) ?? "",
             pressed: self.activeIndex == index || self.releasedHighlightIndex == index,
             choosing: self.activeIndex == index && self.showingAlternates,
             selected: self.alternateIndex
@@ -208,7 +209,16 @@ struct AlphabeticTouchRow: View {
       )
       let codes = preferred.filter { $0 == "en" || $0 == "de" }
       let languages = codes.isEmpty ? ["en", "de"] : codes
-      let dictionary = languages.flatMap { LatinWordSuggestions.commonWords[$0] ?? [] }
+      // Full JBoard frequency corpus is bundled offline for English.
+      // Keep learned explicit choices and the deterministic small starter list.
+      let learned = LatinWordSuggestions.shared.learnedSwipeWords(preferred: languages)
+      let corpus = languages.contains("en")
+        ? SwipeWordLexicon.shared.nearbyWords(
+            path: self.swipeSession.points, arrangement: self.swipeArrangement,
+            fullWidth: self.swipeWidth(for: width)
+          ) : []
+      let dictionary = learned + corpus
+        + languages.flatMap { LatinWordSuggestions.commonWords[$0] ?? [] }
       let matches = LatinSwipeDecoder.rank(
         path: self.swipeSession.points, arrangement: self.swipeArrangement,
         fullWidth: self.swipeWidth(for: width), words: dictionary
@@ -245,9 +255,7 @@ struct AlphabeticTouchRow: View {
     } else if self.showingAlternates, let index = self.activeIndex {
       let trailing = index >= self.letters.count - 3
       let travel = trailing ? self.initialX - x : x - self.initialX
-      let choices = LetterKeyAlternates.choices(
-        for: self.letters[index], uppercase: self.uppercase
-      )
+      let choices = self.options(for: index)
       self.alternateIndex = min(max(0, Int(max(0, travel) / 32.kbScaled)), choices.count - 1)
     } else if let newIndex = self.target(at: x, width: width, weights: weights),
               self.activeIndex != newIndex {
@@ -263,9 +271,7 @@ struct AlphabeticTouchRow: View {
     guard let active = self.activeIndex else { self.reset(); return }
     let index = self.showingAlternates ? active
       : (self.target(at: x, width: width, weights: weights) ?? active)
-    let options = LetterKeyAlternates.choices(
-      for: self.letters[index], uppercase: self.uppercase
-    )
+    let options = self.options(for: index)
     let option = self.showingAlternates ? min(self.alternateIndex, options.count - 1) : 0
     let output = options[option]
     KeyboardTouchLearning.shared.recordTap(
@@ -286,11 +292,16 @@ struct AlphabeticTouchRow: View {
     self.onInsert(output)
   }
 
+  private func options(for index: Int) -> [String] {
+    LetterKeyAlternates.choices(
+      for: self.letters[index], uppercase: self.uppercase,
+      secondary: LetterKeySecondary.symbol(row: self.swipeRowIndex, index: index)
+    )
+  }
+
   private func scheduleAlternates(for index: Int) {
     self.holdTask?.cancel()
-    guard LetterKeyAlternates.choices(
-      for: self.letters[index], uppercase: self.uppercase
-    ).count > 1 else { return }
+    guard self.options(for: index).count > 1 else { return }
     self.holdTask = Task { @MainActor in
       do { try await Task.sleep(for: .milliseconds(380)) } catch { return }
       guard !Task.isCancelled, self.activeIndex == index else { return }

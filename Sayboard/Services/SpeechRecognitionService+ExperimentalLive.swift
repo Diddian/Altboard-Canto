@@ -5,11 +5,9 @@ extension SpeechRecognitionService {
   func startExperimentalLiveIfNeeded() {
     guard self.settings.experimentalLiveDictationEnabled,
           self.settings.selectedVariant.engine == .qwen3,
-          self.recordingOutputOptions.target == .original,
-          !self.recordingOutputOptions.needsLLM,
-          !self.settings.defaultLLMActionSelection.isSet,
           let token = self.settings.dictationSessionToken,
           !token.isEmpty, self.experimentalLiveTask == nil else { return }
+    self.liveDictationStatus = "Waiting for 3 seconds of audio and Qwen model"
     self.experimentalLiveTask = Task { @MainActor [weak self] in
       guard let self else { return }
       var readOffset = 0
@@ -24,6 +22,7 @@ extension SpeechRecognitionService {
           continue
         }
         readOffset += samples.count
+        self.liveDictationStatus = "Transcribing live segment"
         let started = CFAbsoluteTimeGetCurrent()
         let result = await self.qwen3Service.transcribe(audioSamples: samples)
         guard !Task.isCancelled, self.isRecording else { break }
@@ -32,6 +31,7 @@ extension SpeechRecognitionService {
           revision += 1
           ExperimentalLiveTranscription.write(sessionToken: token,
                                                revision: revision, text: combined)
+          self.liveDictationStatus = "Live update " + String(revision) + " delivered"
         }
         // Diagnostic is duration only. No text or audio is logged.
         DiagnosticLog.write("experimental live: 3s decode completed in \(String(format: "%.1f", CFAbsoluteTimeGetCurrent() - started))s")
@@ -44,5 +44,6 @@ extension SpeechRecognitionService {
     self.experimentalLiveTask = nil
     task?.cancel()
     await task?.value
+    self.liveDictationStatus = "Stopped"
   }
 }

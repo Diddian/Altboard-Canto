@@ -3,9 +3,23 @@ import SwiftUI
 struct KeyboardSettingsView: View {
 
   @Binding var selectedKind: KeyboardKind
+  var inline = false
 
   var body: some View {
-    Form {
+    Group {
+      if self.inline {
+        self.sections
+      } else {
+        Form { self.sections }
+          .navigationTitle("Keyboard")
+          .navigationBarTitleDisplayMode(.inline)
+      }
+    }
+  }
+
+  @ViewBuilder
+  var sections: some View {
+    Group {
       Section {
         Picker("Keyboard Type", selection: self.$selectedKind) {
           ForEach(KeyboardKind.allCases, id: \.self) { kind in
@@ -33,8 +47,8 @@ struct KeyboardSettingsView: View {
           }
           .pickerStyle(.segmented)
           Toggle("Auto-capitalize Sentences", isOn: self.$autoCapitalizationEnabled)
-          Toggle("Swipe Typing (English / German · Beta)", isOn: self.$swipeTypingEnabled)
-          Text("Glide through letters to insert an English or German word. Experimental until verified on your iPhone.")
+          Toggle("Swipe Typing (English / German)", isOn: self.$swipeTypingEnabled)
+          Text("Glide through letters to insert an English or German word. Works entirely offline.")
             .font(.footnote)
             .foregroundStyle(.secondary)
           if SharedSettings().preferredSpokenLanguages.contains("yue") {
@@ -44,15 +58,15 @@ struct KeyboardSettingsView: View {
           }
         }
       } header: {
-        Text("Layout")
+        Text("Keyboard")
       } footer: {
         Text("Alphabet and Symbols always use the fixed iOS-style keyboard height.")
       }
 
       if self.selectedKind == .alphabetic {
-        Section("Experimental Touch Learning") {
-          NavigationLink("Swipe & Touch Diagnostics") {
-            SwipeTouchDiagnosticsView()
+        Section("Touch Learning") {
+          NavigationLink("All Keyboard Diagnostics") {
+            DiagnosticsView()
           }
           Text("Learn invisible key boundaries from repeated explicit corrections; never autocorrect or move visible keys.")
             .font(.footnote)
@@ -116,8 +130,6 @@ struct KeyboardSettingsView: View {
         Text("Keyboard Preview")
       }
     }
-    .navigationTitle("Keyboard")
-    .navigationBarTitleDisplayMode(.inline)
     .sensoryFeedback(.selection, trigger: self.sensoryPulse.count)
   }
 

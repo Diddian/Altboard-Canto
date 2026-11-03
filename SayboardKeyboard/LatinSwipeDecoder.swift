@@ -132,7 +132,7 @@ enum LatinSwipeDecoder {
       guard (2...32).contains(normalized.count), seen.insert(normalized).inserted,
             let firstChar = normalized.first, let lastChar = normalized.last,
             let a = centers[String(firstChar)], let z = centers[String(lastChar)],
-            first.distance(to: a) <= 68, last.distance(to: z) <= 68
+            first.distance(to: a) <= 88, last.distance(to: z) <= 88
       else { continue }
       var template = [LatinSwipePoint]()
       for letter in normalized {
@@ -149,16 +149,16 @@ enum LatinSwipeDecoder {
       let endpoints = 0.2 * (first.distance(to: a) + last.distance(to: z))
       let prior = log1p(Double(frequencyOrder)) * 0.18
       let rough = location + normalizedLengthCost + endpoints + prior
-      if rough < 105 {
+      if rough < 150 {
         shortlist.append((word: raw, rough: rough, template: reference,
                           short: normalized.count == 2))
       }
     }
-    let shortlisted = shortlist.sorted { $0.rough < $1.rough }.prefix(48)
+    let shortlisted = shortlist.sorted { $0.rough < $1.rough }.prefix(75)
     return Array(shortlisted.compactMap { candidate -> (String, Double)? in
       let elastic = warpedDistance(sampled, candidate.template)
       let score = candidate.rough * 0.42 + elastic * 0.58
-      guard candidate.short ? score < 28 : score < 67 else { return nil }
+      guard candidate.short ? score < 38 : score < 105 else { return nil }
       return (candidate.word, score)
     }.sorted { $0.1 < $1.1 }.prefix(limit).map(\.0))
   }
@@ -209,8 +209,8 @@ final class LatinSwipeSession {
     // Short two-letter swipes cannot visit three distinct letters reliably.
     // Require longer physical travel for two-key gestures than for a
     // conventional tap-to-neighbor correction.
-    (visited.count >= 3 && LatinSwipeDecoder.gestureLength(points) >= 78)
-      || (visited.count >= 2 && LatinSwipeDecoder.gestureLength(points) >= 70)
+    (visited.count >= 3 && LatinSwipeDecoder.gestureLength(points) >= 62)
+      || (visited.count >= 2 && LatinSwipeDecoder.gestureLength(points) >= 65)
   }
 
   func reset() {

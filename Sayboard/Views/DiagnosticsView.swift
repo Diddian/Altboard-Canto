@@ -28,6 +28,7 @@ struct DiagnosticsView: View {
       self.audioSection
       self.hapticsSection
       self.touchTargetSection
+      self.liveDictationSection
       self.testSection
       self.crashSection
       self.exportSection
@@ -146,8 +147,22 @@ struct DiagnosticsView: View {
         .font(.footnote)
         .foregroundStyle(.secondary)
       LabeledContent("Boundary adjustment limit", value: "12% predictive, 18% combined")
+      NavigationLink("Swipe & Touch Counters, Learning and Reset") {
+        SwipeTouchDiagnosticsView()
+      }
     } header: {
       Text("Keyboard Touch Diagnostics")
+    }
+  }
+
+  private var liveDictationSection: some View {
+    Section("Live Dictation") {
+      LabeledContent("Enabled", value:
+        self.yesNo(SharedSettings().experimentalLiveDictationEnabled))
+      LabeledContent("Recognizer state", value: String(describing: self.speech.activeLoadState))
+      LabeledContent("Last live step", value: self.speech.liveDictationStatus)
+      Text("If the model cannot load during recording, audio is preserved for the normal final transcription. No spoken text is stored in these counters.")
+        .font(.footnote).foregroundStyle(.secondary)
     }
   }
 

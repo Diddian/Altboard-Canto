@@ -10,7 +10,7 @@ struct SwipeTouchDiagnosticsView: View {
 
   var body: some View {
     Form {
-      Section("Experimental") {
+      Section("Swipe & Touch Settings") {
         Toggle("Swipe Diagnostics", isOn: self.$diagnosticsEnabled)
         Toggle("Learn Touch Boundaries", isOn: self.$learningEnabled)
         Text("Only a deliberate Delete followed by a neighboring correction near the key boundary is considered. Five observations are needed before any movement. Key labels never move; autocorrect is not used.")

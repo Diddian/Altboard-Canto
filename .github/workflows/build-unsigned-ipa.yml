@@ -94,6 +94,9 @@ jobs:
             Shared/KeyboardKind.swift SayboardKeyboard/LatinSwipeDecoder.swift \
             scripts/verify-latin-swipe.swift
           "$RUNNER_TEMP/swipe-smoke"
+          swiftc -o "$RUNNER_TEMP/letter-hold-smoke"             Shared/LetterKeyAlternates.swift scripts/verify-letter-hold.swift
+          "$RUNNER_TEMP/letter-hold-smoke"
+          python3 -m unittest discover -s scripts -p 'test_settings_contract.py'
           python3 -m json.tool docs/ios-keyboard-reference.json >/dev/null
           python3 -m json.tool docs/ios-keyboard-native-vs-altboard-pixel-comparison.json >/dev/null
           python3 -m json.tool docs/swipe-typing-en-de-plan.json >/dev/null
@@ -114,6 +117,22 @@ jobs:
             echo 'ERROR: legacy height slider is still exposed'
             exit 1
           fi
+
+      # JBoard's MIT Swift implementation informed our decoder. The pinned
+      # 82,834-entry frequency corpus has separate Google Books / SCOWL
+      # attribution, preserved verbatim in the shipped third-party notices.
+      - name: Stage pinned offline English swipe lexicon
+        run: |
+          set -euo pipefail
+          mkdir -p SayboardKeyboard/Resources
+          SOURCE="https://raw.githubusercontent.com/nkrsn/jboard/70b9d5af92ca4a6846db8bae18834c4cb1e2c510/Core/Resources"
+          curl -fsSL --retry 3 "$SOURCE/english-frequency.txt"             -o SayboardKeyboard/Resources/english-frequency.txt
+          curl -fsSL --retry 3 "$SOURCE/ThirdPartyNotices.txt"             -o SayboardKeyboard/Resources/ThirdPartyNotices.txt
+          test "$(wc -c < SayboardKeyboard/Resources/english-frequency.txt | tr -d ' ')" -eq 1332879
+          test -s SayboardKeyboard/Resources/ThirdPartyNotices.txt
+          grep -q '^you ' SayboardKeyboard/Resources/english-frequency.txt
+          grep -q '^not ' SayboardKeyboard/Resources/english-frequency.txt
+          grep -q '^actually ' SayboardKeyboard/Resources/english-frequency.txt
 
       - name: Stamp matching build SHA into app and keyboard
         shell: bash
@@ -155,6 +174,14 @@ jobs:
           test -d "$APP/PlugIns" || exit 1
           test -s "$APP/PlugIns/SayboardKeyboard.appex/jyutping.sqlite3" || {
             echo 'ERROR: offline Jyutping lexicon missing from keyboard extension'
+            exit 1
+          }
+          test -s "$APP/PlugIns/SayboardKeyboard.appex/english-frequency.txt" || {
+            echo 'ERROR: offline English swipe lexicon missing from keyboard extension'
+            exit 1
+          }
+          test -s "$APP/PlugIns/SayboardKeyboard.appex/ThirdPartyNotices.txt" || {
+            echo 'ERROR: required English lexicon attribution missing from keyboard extension'
             exit 1
           }
           test ! -e "$APP/PlugIns/SayboardKeyboard.appex/emoji_catalog.tsv" || exit 1

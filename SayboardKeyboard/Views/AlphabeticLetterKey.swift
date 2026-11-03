@@ -7,12 +7,14 @@ struct AlphabeticLetterKey: View {
   let uppercase: Bool
   let column: Int
   let rowCount: Int
+  let secondarySymbol: String
   let pressed: Bool
   let choosing: Bool
   let selected: Int
 
   private var options: [String] {
-    LetterKeyAlternates.choices(for: self.letter, uppercase: self.uppercase)
+    LetterKeyAlternates.choices(for: self.letter, uppercase: self.uppercase,
+                                secondary: self.secondarySymbol)
   }
 
   private var popupAlignment: Alignment {
@@ -22,10 +24,19 @@ struct AlphabeticLetterKey: View {
   }
 
   var body: some View {
-    Text(verbatim: self.uppercase ? self.letter.uppercased() : self.letter.lowercased())
-      .font(.system(size: 21.kbScaled, weight: .regular, design: .default))
-      .foregroundStyle(.primary)
-      .offset(y: -1.2.kbScaled)
+    ZStack(alignment: .topTrailing) {
+      Text(verbatim: self.uppercase ? self.letter.uppercased() : self.letter.lowercased())
+        .font(.system(size: 21.kbScaled, weight: .regular, design: .default))
+        .foregroundStyle(.primary)
+        .offset(y: -1.2.kbScaled)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+      Text(verbatim: self.secondarySymbol)
+        .font(.system(size: 8.5.kbScaled, weight: .regular))
+        .fontWidth(.condensed)
+        .foregroundStyle(Color.secondary.opacity(0.72))
+        .padding(.top, 3.2.kbScaled)
+        .padding(.trailing, 6.kbScaled)
+    }
       .frame(maxWidth: .infinity)
       .frame(height: KeyboardChromeMetrics.keyHeight)
       .background {
@@ -60,6 +71,6 @@ struct AlphabeticLetterKey: View {
       }
       .zIndex(self.choosing ? 100 : 0)
       .accessibilityLabel(self.options.first ?? self.letter)
-      .accessibilityHint(self.options.count > 1 ? "Hold for accented letters" : "")
+      .accessibilityHint(self.options.count > 1 ? "Hold for symbols or accented letters" : "")
   }
 }

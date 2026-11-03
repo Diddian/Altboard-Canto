@@ -6,11 +6,6 @@ import UIKit
 struct SettingsView: View {
   var body: some View {
     Form {
-      // Restore the original always-visible shortcut above setup/navigation.
-      Section {
-        ActiveSessionToggle()
-      }
-
       if !self.setupChecklist.isComplete || self.showsLowStorageWarning {
         self.setupSection
       }
@@ -19,32 +14,14 @@ struct SettingsView: View {
       PurchaseSection()
       #endif
 
+      // Only the four top-level settings parents are expanded here.
+      // Their deeper models, correction and diagnostic pages keep navigation.
+      DictationSettingsView(inline: true)
+      SpeechLanguagesSettingsView(inline: true)
+      KeyboardSettingsView(selectedKind: self.keyboardKindBinding, inline: true)
+      TextOutputSection()
+
       Section {
-        NavigationLink {
-          KeyboardSettingsView(selectedKind: self.keyboardKindBinding)
-        } label: {
-          HStack {
-            Label("Keyboard", systemImage: "keyboard")
-            Spacer()
-            Text(LocalizedStringKey(self.selectedKeyboardKind.displayNameKey))
-              .foregroundStyle(.secondary)
-          }
-        }
-        NavigationLink {
-          DictationSettingsView()
-        } label: {
-          Label("Dictation", systemImage: "mic")
-        }
-        NavigationLink {
-          SpeechLanguagesSettingsView()
-        } label: {
-          Label("Speech & Languages", systemImage: "waveform")
-        }
-        NavigationLink {
-          TextAISettingsView()
-        } label: {
-          Label("Text & AI", systemImage: "textformat")
-        }
         NavigationLink {
           HistoryStorageSettingsView()
         } label: {

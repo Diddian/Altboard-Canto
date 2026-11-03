@@ -44,6 +44,7 @@ final class SpeechRecognitionService: ObservableObject {
     cleanupEnabled: false, target: .original, register: .faithful, customLanguage: ""
   )
   var experimentalLiveTask: Task<Void, Never>?
+  @Published var liveDictationStatus = "Idle"
   var currentAudioFileName: String?
   var currentWordBoundaries: (start: Float, end: Float)?
 
@@ -85,6 +86,9 @@ final class SpeechRecognitionService: ObservableObject {
     self.recordingSpokenLanguages = self.settings.preferredSpokenLanguages
     self.settings.lastVoiceOutputProcessed = false
     self.settings.lastDictationOutcome = nil
+    if self.settings.dictationSessionToken == nil {
+      self.settings.dictationSessionToken = UUID().uuidString
+    }
     TranscriptionBridge.clearTranscription()
     TranscriptionBridge.clearVoiceProgress()
     ExperimentalLiveTranscription.clear()
@@ -128,8 +132,16 @@ final class SpeechRecognitionService: ObservableObject {
       // 512 MB available for the recording engine and the OS.
       let variant = self.settings.selectedVariant
       let availableMB = Int(os_proc_available_memory() / 1_048_576)
-      let minimumMB = variant.ramRequirementMB + 512
+      // Explicit live input permits a lower but still bounded warm-start
+      // threshold. Otherwise the old conservative final-only path applies.
+      let wantsLive = self.settings.experimentalLiveDictationEnabled
+      let minimumMB = wantsLive
+        ? max(2_400, Int(Double(variant.ramRequirementMB) * 0.58))
+        : variant.ramRequirementMB + 512
       guard availableMB >= minimumMB else {
+        if wantsLive {
+          self.liveDictationStatus = "Insufficient memory to warm Qwen while recording"
+        }
         DictationBreadcrumb.record(
           "qwen: deferred warmup (available \(availableMB)MB, budget \(minimumMB)MB)"
         )
@@ -140,8 +152,13 @@ final class SpeechRecognitionService: ObservableObject {
         "qwen: warming during active recording (available \(availableMB)MB)"
       )
       self.settings.isModelLoading = true
+      if wantsLive { self.liveDictationStatus = "Loading Qwen3-ASR" }
       defer { self.settings.isModelLoading = false }
       await self.loadModelIfAvailable(downloadService: downloads)
+      if wantsLive {
+        self.liveDictationStatus = self.activeLoadState == .loaded
+          ? "Recognizer ready" : "Recognizer could not load"
+      }
       DictationBreadcrumb.record(
         "qwen: concurrent warmup ended in state \(String(describing: self.activeLoadState))"
       )
@@ -210,6 +227,7 @@ final class SpeechRecognitionService: ObservableObject {
   }
 
   func cancelRecording() {
+    self.liveDictationStatus = "Cancelled"
     self.experimentalLiveTask?.cancel()
     self.experimentalLiveTask = nil
     ExperimentalLiveTranscription.clear()

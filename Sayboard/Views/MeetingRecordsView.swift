@@ -6,7 +6,7 @@ struct MeetingRecordsView: View {
 
   var body: some View {
     Form {
-      Section("Experimental Recording") {
+      Section("Meeting Recording") {
         if self.recorder.isRecording {
           LabeledContent("Elapsed", value: self.recorder.elapsed.formatted(.number.precision(.fractionLength(0))) + "s")
           Button("Stop & Save Meeting", role: .destructive) { self.recorder.stop() }

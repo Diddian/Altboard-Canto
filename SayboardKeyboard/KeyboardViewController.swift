@@ -23,6 +23,7 @@ final class KeyboardViewController: UIInputViewController {
   var previousSpaceTap: PeriodShortcut.Tap?
   var liveTranscriptionDocumentID: UUID?
   var liveTranscriptionMarkedText = ""
+  var liveTranscriptionCommittedRaw = ""
   var liveTranscriptionPrefix = ""
   var liveTranscriptionRevision = 0
   var liveTranscriptionBlockedToken: String?

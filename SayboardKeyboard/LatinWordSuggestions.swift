@@ -22,6 +22,34 @@ final class LatinWordSuggestions {
 
   private init() {}
 
+  func fastChoices(for typed: String, preferred: [String], limit: Int = 6)
+    -> [LatinWordSuggestion] {
+    let codes = LatinWordSuggestionPolicy.preferredCodes(preferred)
+    guard (2...32).contains(typed.count) else { return [] }
+    var result = [LatinWordSuggestion]()
+    var seen = Set<String>()
+    for code in codes where code == "en" || code == "de" {
+      let words = Self.commonWords[code] ?? []
+      let phrases = LatinWordSuggestionPolicy.splitPhraseCorrections(
+        for: typed, dictionary: words, limit: 2
+      )
+      let lexicon = code == "en"
+        ? SwipeWordLexicon.shared.prefixMatches(typed, limit: 10) : []
+      let prefixes = words.filter {
+        $0.lowercased().hasPrefix(typed.lowercased())
+          && $0.lowercased() != typed.lowercased()
+      }
+      for raw in phrases + lexicon + prefixes {
+        let text = LatinWordSuggestionPolicy.matchCapitalization(raw, typed: typed)
+        if seen.insert(text.lowercased()).inserted {
+          result.append(LatinWordSuggestion(text: text, language: code))
+        }
+        if result.count >= limit { return result }
+      }
+    }
+    return result
+  }
+
   func choices(for typed: String, preferred: [String], limit: Int = 9) -> [LatinWordSuggestion] {
     guard (2...32).contains(typed.count) else { return [] }
     let codes = LatinWordSuggestionPolicy.preferredCodes(preferred)
@@ -32,13 +60,13 @@ final class LatinWordSuggestions {
       preferred: preferred, available: available
     )
     let range = NSRange(location: 0, length: typed.utf16.count)
-    var collected = [LatinWordSuggestion]()
-    var seen = Set<String>()
+    var collected = fastChoices(for: typed, preferred: preferred, limit: limit)
+    var seen = Set(collected.map { $0.text.lowercased() })
 
     func collect(_ words: [String], code: String) {
       for raw in words.prefix(12) {
         guard (2...36).contains(raw.count),
-              raw.rangeOfCharacter(from: .whitespacesAndNewlines) == nil else { continue }
+              !raw.contains("\n") else { continue }
         let text = LatinWordSuggestionPolicy.matchCapitalization(raw, typed: typed)
         let normalized = text.lowercased()
         guard normalized != typed.lowercased(),
@@ -161,6 +189,8 @@ final class LatinWordSuggestions {
       "to", "of", "in", "on", "it", "it's", "is", "at", "as", "be", "by", "we", "we're", "he",
       "me", "my", "do", "don't", "can't", "I'm", "go", "so", "up", "us", "an", "am", "or", "if", "no", "hi",
       "this", "those", "through", "time", "today", "tomorrow", "under",
+      "you", "yourself", "younger", "young", "not", "note",
+      "actually", "actual", "perhaps", "people", "some", "someone",
       "understand", "until", "very", "want", "water", "week", "well",
       "what", "what's", "when", "where", "which", "while", "whole", "why",
       "will", "with", "without", "word", "work", "world", "would",

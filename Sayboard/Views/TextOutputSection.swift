@@ -26,7 +26,7 @@ struct TextOutputSection: View {
 
       Toggle("Auto-Copy to Clipboard", isOn: self.$alsoCopyToClipboard)
     } header: {
-      Text("Text")
+      Text("Text & AI")
     } footer: {
       Text(Self.clipboardFooterMessage)
     }

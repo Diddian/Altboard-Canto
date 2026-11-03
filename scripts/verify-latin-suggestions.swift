@@ -35,6 +35,11 @@ struct VerifyLatinSuggestions {
     precondition(LatinWordSuggestionPolicy.fallbackCandidates(
       for: "reco", dictionary: ["recognition", "recording", "recovery"]
     ).count == 3)
+    let split = LatinWordSuggestionPolicy.splitPhraseCorrections(
+      for: "somepeolpe", dictionary: ["some", "people", "someone", "other"]
+    )
+    precondition(split.contains("some people"),
+                 "explicit split phrase correction should be offered: \(split)")
     print("Multilingual Latin suggestion safety verified")
   }
 }

@@ -69,6 +69,17 @@ for _ in 0..<20 {
   for point in longTrace.dropFirst() { bounded.append(point, arrangement: .qwerty, width: 440) }
 }
 precondition(bounded.points.count <= 384, "swipe points must remain bounded")
+// Regression: frequent short and long swipes must decode on both layouts.
+// Geometric success alone is not device acceptance; real paths follow QA.
+for order in [LetterKeyArrangement.qwerty, .qwertz] {
+  for word in ["you", "not", "actually", "penetrate", "strange", "tight"] {
+    let choices = LatinSwipeDecoder.rank(
+      path: stroke(word, order: order), arrangement: order,
+      fullWidth: 440, words: ["hello", "keyboard", "never", word]
+    )
+    precondition(choices.first == word, "common swipe \(word): \(choices)")
+  }
+}
 // A contraction is swiped by its letters; apostrophes are restored by lexicon.
 for order in [LetterKeyArrangement.qwerty, .qwertz] {
   let contractions = LatinSwipeDecoder.rank(

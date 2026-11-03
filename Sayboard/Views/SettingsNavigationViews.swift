@@ -1,8 +1,23 @@
 import SwiftUI
 
 struct DictationSettingsView: View {
+  var inline = false
+
   var body: some View {
-    Form {
+    Group {
+      if self.inline {
+        self.sections
+      } else {
+        Form { self.sections }
+          .navigationTitle("Dictation")
+          .navigationBarTitleDisplayMode(.inline)
+      }
+    }
+  }
+
+  @ViewBuilder
+  var sections: some View {
+    Group {
       Section {
         ActiveSessionToggle()
         Picker("Auto-Stop", selection: self.$selectedAutoStopPolicy) {
@@ -13,12 +28,14 @@ struct DictationSettingsView: View {
         NavigationLink("Active Session Info") {
           SessionInfoView()
         }
+      } header: {
+        Text("Dictation")
       } footer: {
         Text("An active session lets your keyboard start recording without switching apps. The orange microphone indicator is expected.")
       }
-      Section("Experimental (Off by Default)") {
-        Toggle("Live Qwen3 Dictation", isOn: self.$experimentalLiveEnabled)
-        Text("When using Qwen3-ASR, the keyboard may show provisional speech in the host input field. The original Stop & Transcribe remains available.")
+      Section("Live Dictation & Meeting") {
+        Toggle("Live Dictation", isOn: self.$experimentalLiveEnabled)
+        Text("Show Qwen3-ASR speech in the text field while speaking. Translation and AI cleanup, if selected, still finish after Stop.")
           .font(.footnote).foregroundStyle(.secondary)
         Toggle("Meeting Record", isOn: self.$experimentalMeetingEnabled)
         if self.experimentalMeetingEnabled {
@@ -30,8 +47,6 @@ struct DictationSettingsView: View {
           .font(.footnote).foregroundStyle(.secondary)
       }
     }
-    .navigationTitle("Dictation")
-    .navigationBarTitleDisplayMode(.inline)
     .onChange(of: self.selectedAutoStopPolicy) { _, policy in
       SharedSettings().sessionAutoStopPolicy = policy
       if self.speechService.isSessionActive {

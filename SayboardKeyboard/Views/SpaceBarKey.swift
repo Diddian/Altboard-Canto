@@ -18,6 +18,7 @@ struct SpaceBarKey: View {
       if self.showsAlphabetIndicator && !self.isTrackpadActive {
         Text("A")
           .font(.system(size: 10.kbScaled, weight: .medium))
+          .fontWidth(.condensed)
           .foregroundStyle(.secondary)
           .padding(.trailing, 6.kbScaled)
           .padding(.bottom, 4.kbScaled)
