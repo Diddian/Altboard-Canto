@@ -25,27 +25,34 @@ struct DictationSettingsView: View {
             Text(LocalizedStringKey(policy.displayNameKey)).tag(policy)
           }
         }
-        NavigationLink("Active Session Info") {
-          SessionInfoView()
-        }
       } header: {
-        Text("Dictation")
-      } footer: {
-        Text("An active session lets your keyboard start recording without switching apps. The orange microphone indicator is expected.")
+        HStack(alignment: .center, spacing: 8) {
+          Text("Dictation")
+          Spacer(minLength: 8)
+          VStack(alignment: .trailing, spacing: 1) {
+            Text("When active,")
+            HStack(spacing: 3) {
+              Image(systemName: "mic.fill")
+                .foregroundStyle(.orange)
+              Text("will appear")
+            }
+          }
+          .font(.caption2)
+          .foregroundStyle(.secondary)
+          .textCase(nil)
+          .accessibilityElement(children: .ignore)
+          .accessibilityLabel("When active, the orange microphone indicator will appear")
+        }
       }
       Section("Live Dictation & Meeting") {
         Toggle("Live Dictation", isOn: self.$experimentalLiveEnabled)
-        Text("Show Qwen3-ASR speech in the text field while speaking. Translation and AI cleanup, if selected, still finish after Stop.")
-          .font(.footnote).foregroundStyle(.secondary)
-        Toggle("Meeting Record", isOn: self.$experimentalMeetingEnabled)
+         Toggle("Meeting Record", isOn: self.$experimentalMeetingEnabled)
         if self.experimentalMeetingEnabled {
           NavigationLink("Meeting Recordings") {
             MeetingRecordsView()
           }
         }
-        Text("Meeting recording keeps 15-minute audio parts in one local meeting with a combined transcript. Select Qwen3-ASR 1.7B in Models first.")
-          .font(.footnote).foregroundStyle(.secondary)
-      }
+       }
     }
     .onChange(of: self.selectedAutoStopPolicy) { _, policy in
       SharedSettings().sessionAutoStopPolicy = policy

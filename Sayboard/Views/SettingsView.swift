@@ -1,8 +1,6 @@
 import SwiftUI
 import UIKit
 
-/// The Settings home is a navigation hub. Detailed controls live in one
-/// destination each; this keeps the first screen short and predictable.
 struct SettingsView: View {
   var body: some View {
     Form {
@@ -14,12 +12,17 @@ struct SettingsView: View {
       PurchaseSection()
       #endif
 
-      // Only the four top-level settings parents are expanded here.
-      // Their deeper models, correction and diagnostic pages keep navigation.
       DictationSettingsView(inline: true)
-      SpeechLanguagesSettingsView(inline: true)
-      KeyboardSettingsView(selectedKind: self.keyboardKindBinding, inline: true)
-      TextOutputSection()
+      SpeechLanguagesSettingsView(
+        inline: true,
+        onPreferredLanguagesChanged: { self.preferredSpokenLanguages = $0 }
+      )
+      KeyboardSettingsView(
+        selectedKind: self.keyboardKindBinding,
+        inline: true,
+        cantoneseSelected: self.preferredSpokenLanguages.contains("yue")
+      )
+      TextOutputSection(showFooter: false)
 
       Section {
         NavigationLink {
@@ -52,6 +55,7 @@ struct SettingsView: View {
       SetupView()
     }
     .onAppear {
+      self.preferredSpokenLanguages = SharedSettings().preferredSpokenLanguages
       self.showsLowStorageWarning = DiskSpace.isLow()
         && !OperatingSystem.isBackgroundNeuralEngineBlocked
     }
@@ -65,6 +69,7 @@ struct SettingsView: View {
   @AppStorage(SharedKey.keyboardKind, store: UserDefaults(suiteName: AppGroup.identifier))
   private var keyboardKindRaw = KeyboardKind.standard.rawValue
   @State private var showsLowStorageWarning = false
+  @State private var preferredSpokenLanguages = SharedSettings().preferredSpokenLanguages
 
   private var selectedKeyboardKind: KeyboardKind {
     KeyboardKind(rawValue: self.keyboardKindRaw) ?? .standard

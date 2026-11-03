@@ -4,6 +4,7 @@ struct KeyboardSettingsView: View {
 
   @Binding var selectedKind: KeyboardKind
   var inline = false
+  var cantoneseSelected = false
 
   var body: some View {
     Group {
@@ -19,116 +20,85 @@ struct KeyboardSettingsView: View {
 
   @ViewBuilder
   var sections: some View {
-    Group {
-      Section {
-        Picker("Keyboard Type", selection: self.$selectedKind) {
-          ForEach(KeyboardKind.allCases, id: \.self) { kind in
-            Text(LocalizedStringKey(kind.displayNameKey)).tag(kind)
-          }
+    Section {
+      Picker("Keyboard Type", selection: self.$selectedKind) {
+        ForEach(KeyboardKind.allCases, id: \.self) { kind in
+          Text(LocalizedStringKey(kind.displayNameKey)).tag(kind)
         }
-        Toggle("Show Settings Key", isOn: self.$showSettingsKey)
+      }
+      Toggle("Show Settings Key", isOn: self.$showSettingsKey)
 
-        if self.selectedKind == .standard {
-          Picker("Microphone Layout", selection: self.$microphoneLayoutRaw) {
-            ForEach(MicrophoneKeyboardLayout.allCases, id: \.self) { layout in
-              Text(layout.displayName).tag(layout.rawValue)
-            }
-          }
-          .pickerStyle(.segmented)
-          Text("Default uses a round microphone. Compact uses a microphone bar above the space bar.")
-            .font(.footnote)
-            .foregroundStyle(.secondary)
-        }
-
-        if self.selectedKind == .alphabetic {
-          Picker("Key Order", selection: self.$letterArrangementRaw) {
-            Text("QWERTZ").tag(LetterKeyArrangement.qwertz.rawValue)
-            Text("QWERTY").tag(LetterKeyArrangement.qwerty.rawValue)
-          }
-          .pickerStyle(.segmented)
-          Toggle("Auto-capitalize Sentences", isOn: self.$autoCapitalizationEnabled)
-          Toggle("Swipe Typing (English / German)", isOn: self.$swipeTypingEnabled)
-          Text("Glide through letters to insert an English or German word. Works entirely offline.")
-            .font(.footnote)
-            .foregroundStyle(.secondary)
-          if SharedSettings().preferredSpokenLanguages.contains("yue") {
-            Text("Cantonese candidates automatically recognize Sidney Lau, Yale and Jyutping spellings together. No scheme switch is needed.")
-              .font(.footnote)
-              .foregroundStyle(.secondary)
+      if self.selectedKind == .standard {
+        Picker("Microphone Layout", selection: self.$microphoneLayoutRaw) {
+          ForEach(MicrophoneKeyboardLayout.allCases, id: \.self) { layout in
+            Text(layout.displayName).tag(layout.rawValue)
           }
         }
-      } header: {
-        Text("Keyboard")
-      } footer: {
-        Text("Alphabet and Symbols always use the fixed iOS-style keyboard height.")
+        .pickerStyle(.segmented)
       }
 
       if self.selectedKind == .alphabetic {
-        Section("Touch Learning") {
-          NavigationLink("All Keyboard Diagnostics") {
-            DiagnosticsView()
-          }
-          Text("Learn invisible key boundaries from repeated explicit corrections; never autocorrect or move visible keys.")
-            .font(.footnote)
-            .foregroundStyle(.secondary)
+        Picker("Key Order", selection: self.$letterArrangementRaw) {
+          Text("QWERTZ").tag(LetterKeyArrangement.qwertz.rawValue)
+          Text("QWERTY").tag(LetterKeyArrangement.qwerty.rawValue)
         }
-      }
-
-      Section("Feedback") {
-        Toggle("Haptic Feedback", isOn: self.$keyboardHapticsEnabled)
-        if self.keyboardHapticsEnabled {
-          VStack(alignment: .leading, spacing: 8) {
-            HStack {
-              Text("Haptic Strength")
-              Spacer()
-              Text("\(Int(self.hapticStrength * 100))%")
-                .monospacedDigit()
-                .foregroundStyle(.secondary)
-            }
-            Slider(value: self.$hapticStrength, in: 0.15...1, step: 0.05)
-              .accessibilityLabel("Haptic Strength")
-            Button("Reset to Default (55%)") {
-              self.hapticStrength = SharedSettings.defaultKeyboardHapticStrength
-            }
-            .font(.subheadline)
-            .disabled(abs(self.hapticStrength - SharedSettings.defaultKeyboardHapticStrength) < 0.001)
-            Text("55% is Altboard’s default, not a measured iOS keyboard strength.")
-              .font(.footnote)
-              .foregroundStyle(.secondary)
-          }
-          Button("Test Haptic") {
-            KeyboardHaptics.key(strength: self.hapticStrength, enabled: true)
-          }
-          Picker("Haptic Method", selection: self.$hapticDriverRaw) {
-            ForEach(KeyboardHapticDriver.allCases, id: \.self) { driver in
-              Text(driver.displayName).tag(driver.rawValue)
-            }
-          }
-        }
-        NavigationLink("Advanced Haptic Diagnostics") {
+        .pickerStyle(.segmented)
+        Toggle("Auto-capitalize Sentences", isOn: self.$autoCapitalizationEnabled)
+        Toggle("Swipe Typing (English / German)", isOn: self.$swipeTypingEnabled)
+        NavigationLink("All Keyboard Diagnostics") {
           DiagnosticsView()
         }
       }
 
-      Section("Typing Shortcuts") {
-        Toggle("Double-Space Period", isOn: self.$periodShortcutEnabled)
-        Text("Press Space twice to insert a period and a space.")
-          .font(.footnote)
-          .foregroundStyle(.secondary)
+      if self.cantoneseSelected || SharedSettings().preferredSpokenLanguages.contains("yue") {
+        NavigationLink {
+          CantoneseCorrectionsView()
+        } label: {
+          Label("Cantonese Word Corrections", systemImage: "text.badge.checkmark")
+        }
       }
 
-      Section {
-        KeyboardTestPreview(
-          kind: self.selectedKind,
-          microphoneLayout: MicrophoneKeyboardLayout(rawValue: self.microphoneLayoutRaw) ?? .defaultLayout,
-          letterArrangement: LetterKeyArrangement(rawValue: self.letterArrangementRaw) ?? .qwertz
-        )
-        Text("Tap any key in the preview to test haptic feedback. Preview keys do not type.")
-          .font(.footnote)
-          .foregroundStyle(.secondary)
-      } header: {
-        Text("Keyboard Preview")
+      Toggle("Haptic Feedback", isOn: self.$keyboardHapticsEnabled)
+      if self.keyboardHapticsEnabled {
+        VStack(alignment: .leading, spacing: 8) {
+          HStack {
+            Text("Haptic Strength")
+            Spacer()
+            Text("\(Int(self.hapticStrength * 100))%")
+              .monospacedDigit()
+              .foregroundStyle(.secondary)
+          }
+          Slider(value: self.$hapticStrength, in: 0.15...1, step: 0.05)
+            .accessibilityLabel("Haptic Strength")
+          Button("Reset to Default (55%)") {
+            self.hapticStrength = SharedSettings.defaultKeyboardHapticStrength
+          }
+          .font(.subheadline)
+          .disabled(abs(self.hapticStrength - SharedSettings.defaultKeyboardHapticStrength) < 0.001)
+        }
+        Button("Test Haptic") {
+          KeyboardHaptics.key(strength: self.hapticStrength, enabled: true)
+        }
+        Picker("Haptic Method", selection: self.$hapticDriverRaw) {
+          ForEach(KeyboardHapticDriver.allCases, id: \.self) { driver in
+            Text(driver.displayName).tag(driver.rawValue)
+          }
+        }
       }
+
+      Toggle("Double-Space Period", isOn: self.$periodShortcutEnabled)
+
+      KeyboardTestPreview(
+        kind: self.selectedKind,
+        microphoneLayout: MicrophoneKeyboardLayout(
+          rawValue: self.microphoneLayoutRaw
+        ) ?? .defaultLayout,
+        letterArrangement: LetterKeyArrangement(
+          rawValue: self.letterArrangementRaw
+        ) ?? .qwertz
+      )
+    } header: {
+      Text("Keyboard")
     }
     .sensoryFeedback(.selection, trigger: self.sensoryPulse.count)
   }

@@ -4,6 +4,7 @@ import SwiftUI
 /// also enable the Cantonese candidate bar in the Alphabet keyboard.
 struct SpeechLanguagesSettingsView: View {
   var inline = false
+  var onPreferredLanguagesChanged: (([String]) -> Void)? = nil
 
   var body: some View {
     Group {
@@ -44,7 +45,9 @@ struct SpeechLanguagesSettingsView: View {
       } header: {
         Text("Speech & Languages")
       } footer: {
-        Text("Cantonese also enables offline Chinese suggestions in Alphabet. Qwen3 voice recognition uses auto-detection.")
+        if !self.inline {
+          Text("Cantonese also enables offline Chinese suggestions in Alphabet. Qwen3 voice recognition uses auto-detection.")
+        }
       }
 
       Section {
@@ -54,7 +57,9 @@ struct SpeechLanguagesSettingsView: View {
           Label("Voice Output & Translation", systemImage: "waveform")
         }
       } footer: {
-        Text("Choose the output language, cleanup, dictation tone, and Cantonese corrections.")
+        if !self.inline {
+          Text("Choose the output language, cleanup and dictation tone.")
+        }
       }
 
       Section("Offline Speech Model") {
@@ -77,6 +82,7 @@ struct SpeechLanguagesSettingsView: View {
             self.spokenLanguages = kept + updated.subtracting(kept).sorted()
             let settings = SharedSettings()
             settings.preferredSpokenLanguages = self.spokenLanguages
+            self.onPreferredLanguagesChanged?(self.spokenLanguages)
             settings.setPreferredLanguages(
               SpeechModelRecommendation.preferredLanguages(
                 for: settings.selectedVariant, from: self.spokenLanguages
@@ -96,7 +102,10 @@ struct SpeechLanguagesSettingsView: View {
         autoDetectKey: "Any language"
       )
     }
-    .onAppear { self.spokenLanguages = SharedSettings().preferredSpokenLanguages }
+    .onAppear {
+      self.spokenLanguages = SharedSettings().preferredSpokenLanguages
+      self.onPreferredLanguagesChanged?(self.spokenLanguages)
+    }
   }
 
   @EnvironmentObject private var speechModels: ModelDownloadService

@@ -2,6 +2,7 @@
 import SwiftUI
 
 struct TextOutputSection: View {
+  var showFooter = true
 
   var body: some View {
     Section {
@@ -28,7 +29,9 @@ struct TextOutputSection: View {
     } header: {
       Text("Text & AI")
     } footer: {
-      Text(Self.clipboardFooterMessage)
+      if self.showFooter {
+        Text(Self.clipboardFooterMessage)
+      }
     }
     .onAppear {
       self.snippetCount = self.settings.snippets.count
