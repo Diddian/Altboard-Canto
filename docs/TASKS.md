@@ -20,6 +20,106 @@ the versioned task board until Issues are enabled.
 Statuses: [x] code implemented; [ ] pending / requires verification.
 Do not mark device behavior verified without physical iPhone testing.
 
+## P0 (next implementation) — Fast Live Dictation on the normal microphone (T-019)
+
+**Status: [ ] planned; no production code changed.** User-confirmed target:
+the existing microphone on Altboard's normal keyboard should show recognized
+speech in the active host text field while speaking, using the *already
+downloaded* offline Qwen3-ASR 1.7B ONNX model. Do not mistake a recording
+indicator or keyboard-only preview for working live host-field dictation.
+Keep existing tap-to-stop/batch dictation as the safe fallback until iPhone QA.
+
+- [ ] T-019.1 Benchmark current `SherpaOnnxOfflineRecognizer` on physical
+  iPhone with the actual Qwen3-ASR 1.7B ONNX download: cold/warm load,
+  per-chunk real-time factor, resident/peak memory, thermal throttling,
+  battery and foreground/background behavior. Meeting Assistant reportedly
+  achieves live ASR with the same model family; do not assume an identical
+  runtime or streaming API. Confirm support in the pinned sherpa-onnx version.
+- [ ] T-019.2 Reuse `BackgroundAudioSession`'s single microphone tap and
+  16 kHz samples. Add a bounded streaming/chunk-decoding coordinator and
+  speech-end detection. Target short (approximately 2–4 s) provisional
+  windows with measured rather than assumed update latency, overlap and
+  syllable/word-boundary reconciliation; do not run overlapping 1.7B decodes
+  or block the real-time audio callback.
+- [ ] T-019.3 Define App Group incremental transcript updates with a session
+  token, monotonically increasing revision, stable text, provisional tail
+  and completion/cancellation status. Notify the keyboard without copying
+  audio to the extension, storing raw host text, or starting a second mic.
+- [ ] T-019.4 For compatible hosts, update only the current document via
+  `UITextDocumentProxy.setMarkedText` with a bounded provisional tail.
+  Check document identifier and local context before replacing or
+  unmarking. If focus changes, the cursor moves, host access is restricted
+  or marked-text support fails, fall back to read-only preview plus safe
+  final insertion; never overwrite unrelated host text.
+- [ ] T-019.5 On Stop, reconcile the final Qwen recognition and existing
+  Cantonese normalization/voice output exactly once. No double insertion,
+  lost words, unbounded partial text, or silent conflict with the existing
+  AI/translation path. On Cancel, discard provisional input only when
+  ownership can be verified; preserve prior user-typed text.
+- [ ] T-019.6 Keep one microphone control and existing start/stop/cancel,
+  Active Session, privacy, app-group and SideStore behavior. Apply first
+  to the normal keyboard microphone. Other layouts may reuse it after QA.
+  Honor currently selected output language; live source-language preview
+  is not a promise of simultaneous live translation.
+- [ ] T-019.7 Run cheapest targeted source/unit checks, then one existing
+  unsigned IPA workflow from `main`. On iPhone test Yue/English/German
+  code-switch, punctuation, host switching, app lock, model cold start,
+  1.7B memory pressure, background interruption and Stop/Cancel. Record
+  first-text and subsequent-update latency; do not promise Apple-like
+  speed before the measurements meet acceptance.
+- [ ] T-019.8 Enable fast live dictation by default for an eligible Qwen3
+  microphone only **after** physical-iPhone acceptance. Until then the
+  original proven batch behavior remains available and no user setting is
+  silently discarded.
+
+## P1 (after T-019) — Experimental Meeting Record (T-020)
+
+**Status: [ ] planned, default OFF.** Separate long-form recording from normal
+keyboard dictation. User enables the experiment in Settings and starts one
+meeting; the visible recording is continuous even when storage rolls over.
+
+- [ ] T-020.1 Add `Settings > Dictation > Experimental > Meeting Record`
+  toggle, disabled by default; clearly distinguish it from Active Session
+  and the normal microphone. Display active recording, elapsed time,
+  microphone privacy, Stop and interrupted/low-storage states.
+- [ ] T-020.2 Keep one uninterrupted `AVAudioEngine` capture. Roll the
+  underlying audio writer every **15 minutes** at a sample-accurate
+  boundary: finalize a segment, start the next within the same meeting,
+  **without** stopping the UI session or creating a second input tap.
+  Recover partial segments on app/process interruption and show any
+  actual gap; never claim uninterrupted audio where none exists.
+- [ ] T-020.3 Use Qwen3-ASR 1.7B for ongoing offline transcription.
+  Publish new provisional/confirmed transcript passages roughly every
+  **5–10 seconds**, with chunk overlap and timestamp alignment; never
+  let a slow decode block recording. Decoding can fall behind safely,
+  with a visible backlog and preserved audio for recovery.
+- [ ] T-020.4 Persist a single meeting ID and one manifest/index:
+  meeting start/end, language/output settings, aggregate state,
+  ordered audio segments, segment duration and start offset,
+  transcript status and recovery markers. Store segment audio and
+  per-segment transcript together under one meeting directory/record;
+  use atomic manifest writes and existing secure file protection.
+- [ ] T-020.5 A continuous 120-minute meeting MUST appear as **one**
+  Meeting Record containing **eight 15-minute audio files**, numbered
+  1–8. A partial final segment is kept for shorter/irregular lengths.
+  Opening the meeting displays all audio parts and one combined,
+  chronologically ordered transcript with meaningful paragraphs and
+  optional timecodes; deduplicate overlapped recognition at boundaries.
+- [ ] T-020.6 Grouped export/delete/retention act on the whole meeting;
+  never allow the existing per-record history retention to orphan audio
+  parts. Keep recordings/transcripts on-device, with no background
+  listening before explicit start. Specify disk-space safety and
+  crash-recovery semantics before enabling.
+- [ ] T-020.7 Test rollover at 14:59, 15:00, 15:01, 30:00 and 120:00,
+  exact 2-hour group count, mid-sentence boundary, Stop/Cancel, lock,
+  Bluetooth/phone interruptions, 2-hour RAM/battery/thermal effects,
+  low storage, partial transcription and re-open/export. Verify on
+  SideStore iPhone before broadening access.
+
+**Source-level design contract:** `docs/live-meeting-transcription-experiment.json`.
+T-019 and T-020 are future implementation work; documentation here does
+not certify new streaming dictation or meeting recording behavior.
+
 ## P1 — Common long phrases and segmentation (T-013)
 
 - [x] T-013.1 Audit supplemental Cantonese list: 162 entries, just 2 with five or more characters; this excludes the main upstream dictionary.

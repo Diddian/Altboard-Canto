@@ -1,47 +1,113 @@
 {
-  "schema": "altboard.experimental.live-meeting-transcription.v1",
+  "schema": "altboard.experimental.live-dictation-and-meeting.v2",
   "state": "planned_only_not_implemented",
-  "productGoal": "Test-only, on-device live speech-to-text for meetings with fast provisional words and reliably corrected final sentences; never enable by default.",
-  "dependency": "Complete native-feel typing repairs and Swipe Typing acceptance before implementing live ASR.",
-  "principle": "Immediate recording and UI feedback; provisional recognition may lag and revise; text must never pretend to be final until a verified segment completes.",
-  "architecture": {
-    "audio": "Existing AVAudioEngine audio tap and session bridge. Do not run duplicate taps; preserve standard recording mode.",
-    "segments": "Propose 2–4 second speech chunks plus 300–700ms overlap, gated by VAD and acoustic continuity; parameters to benchmark.",
-    "model": "Evaluate current Qwen3 ASR ONNX against chunked incremental calls; native streaming API not verified. Keep existing batch finalization intact.",
-    "states": [
-      "idle",
-      "capture active",
-      "provisional segment decoding",
-      "stabilized segment",
-      "final output",
-      "cancelled"
-    ],
-    "transcript": "Maintain provisional and committed spans with timestamps, atomic file changes and one clearly marked tentative region.",
-    "feedback": "Visible recording consent and explicit stop/cancel, tiny latency status, no network or invisible background listening.",
-    "meetingFeatures": "Test-only timeline with text and timestamps; diarization and summaries are future research, not promised.",
-    "privacy": "On-device first; do not upload speech; configurable retention, clear-on-cancel, user-initiated session.",
-    "performance": "Benchmark cold/warm latency, 5/20/60 minute sessions, memory pressure, battery and thermal throttling on iPhone 17 Pro Max."
+  "baseCodeSha": "e1a5e32b78e29615b5d21796cb06bc77ddad99fc",
+  "recordedUserDecision": "2026-11-03",
+  "baseline": {
+    "branch": "main",
+    "successfulUnsignedIPAWorkflowNumber": 70,
+    "physicalIphoneVerification": "not yet reported for #70"
   },
-  "phases": [
-    {
-      "step": 1,
-      "task": "Record real Cantonese colloquial/code-switch corpus and user-approved spellings",
-      "acceptance": "No unverified forced particle normalization"
+  "priorities": [
+    "T-019 fast live dictation on existing normal keyboard microphone",
+    "T-020 opt-in meeting recording after stable dictation"
+  ],
+  "mechanisms": {
+    "sharedAudio": "Single AVAudioEngine capture and 16kHz accumulator; do not create a second microphone tap",
+    "model": "Use the already-downloaded Qwen3-ASR 1.7B sherpa-onnx-compatible ONNX model; benchmark the pinned offline recognizer instead of assuming native streaming support",
+    "speed": "Short provisional windows for normal keyboard; 5-10-second transcript updates for Meeting Record",
+    "hostInsert": "Session- and document-bound marked-text preview where supported, safe fallback, final reconciliation exactly once",
+    "pipeline": "Keep existing translation, cleanup, AI, cancellation, App Group, SideStore and host boundaries intact",
+    "liveOutput": "Show original recognized words as quickly as device performance permits; translation/correction can finish later",
+    "privacy": "Offline audio and transcripts, explicit recording consent, clear Stop/Cancel; no raw host typing or external upload"
+  },
+  "defaultKeyboardLiveDictation": {
+    "id": "T-019",
+    "state": "planned_only_not_implemented",
+    "entry": "Existing microphone in the normal keyboard",
+    "requestedDefaultAfterAcceptance": true,
+    "modelVariant": "qwen3-asr-1.7b-onnx",
+    "provisionalWindowSeconds": {
+      "targetMin": 2,
+      "targetMax": 4,
+      "benchmarkRequired": true
     },
-    {
-      "step": 2,
-      "task": "Evaluate model chunking/VAD and rolling stable-text quality",
-      "acceptance": "No duplicate or lost words at chunk boundaries"
+    "acceptance": [
+      "Measure real iPhone first-text delay and sustained updates before promising Apple-like latency",
+      "No duplicate committed text on finalization; no editing an unrelated host field",
+      "Preserve old batch dictation as fallback for model unavailability or unsafe host behavior",
+      "Yue/English/German code-switch and Cantonese orthography verified",
+      "Recording never stalls during decoding or OS background interruptions"
+    ]
+  },
+  "meetingRecord": {
+    "id": "T-020",
+    "state": "planned_only_not_implemented",
+    "experimentalSetting": "Settings > Dictation > Experimental > Meeting Record",
+    "enabledByDefault": false,
+    "transcriptEmitSeconds": {
+      "min": 5,
+      "max": 10
     },
-    {
-      "step": 3,
-      "task": "Add hidden experimental switch in a later isolated branch",
-      "acceptance": "Existing dictation remains unaffected"
+    "audioSegmentSeconds": 900,
+    "recordingUserExperience": "One continuous visible recording even while audio files rotate",
+    "storageContract": {
+      "meetingRoot": "meetings/<meeting-id>/",
+      "manifest": "manifest.json",
+      "segmentExample": "audio/0001.caf",
+      "transcriptExample": "transcripts/0001.json",
+      "combinedTranscript": "transcript.txt",
+      "atomicManifest": true,
+      "persistPartialAndRecoveryState": true,
+      "timestampBase": "Seconds from meeting start",
+      "privacy": "On-device only; group-level retention, delete and export",
+      "sampleAlignedRotation": true
     },
-    {
-      "step": 4,
-      "task": "Measure meeting-use reliability, privacy and battery",
-      "acceptance": "Explicit approval before any default exposure"
-    }
-  ]
+    "examples": [
+      {
+        "durationSeconds": 900,
+        "audioParts": 1
+      },
+      {
+        "durationSeconds": 1800,
+        "audioParts": 2
+      },
+      {
+        "durationSeconds": 7200,
+        "audioParts": 8
+      }
+    ],
+    "segmentRule": "At exact boundaries close the preceding segment and start the next; do not create an empty 9th part on Stop at exactly 120 minutes",
+    "transcriptionRule": "Continue decoding while audio is captured; if model lags, preserve audio and mark pending output instead of blocking capture",
+    "combinedTranscriptRule": "Combine ordered segment transcriptions with global timestamps; resolve overlap at boundaries; preserve uncertain text without destructive edits",
+    "recoveryRule": "Make interruptions and actual audio gaps explicit; preserve all completed parts even if the final transcript has not finished",
+    "acceptance": [
+      "14:59, 15:00, 15:01, 30:00, 120:00 boundary and resumed-session tests",
+      "Two hours -> 8 ordered 15-minute audio parts under one meeting",
+      "Transcript updates every 5-10 seconds when measured hardware throughput permits",
+      "One meeting transcript can be viewed/exported with all parts; no orphaned files after retention",
+      "A successful build is not proof of iPhone microphone, background decoding or storage reliability"
+    ]
+  },
+  "dependencies": {
+    "fastImplementation": [
+      "Qwen recognizer per-window RTF on actual device",
+      "Single ASR coordinator in host app",
+      "Safe App Group provisional-text channel",
+      "Host document ownership and final insertion tests"
+    ],
+    "meetingImplementation": [
+      "T-019 accepted or separately verified ASR chunking",
+      "Sample-exact file rotation and atomic manifest",
+      "Grouped history and retention UI",
+      "2-hour battery, thermal, storage and interruption validation"
+    ]
+  },
+  "deferred": [
+    "Speaker diarization",
+    "Meeting summaries",
+    "Automatic cloud synchronization",
+    "Any claim of native streaming in the current sherpa-onnx Qwen model"
+  ],
+  "historicalNote": "Original v1 design was planned only. User has since distinguished fast keyboard dictation from slower meeting transcript updates and specified 15-minute audio file rotation."
 }
