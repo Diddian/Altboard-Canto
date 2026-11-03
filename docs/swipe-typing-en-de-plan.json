@@ -1,7 +1,7 @@
 {
   "schema": "altboard.keyboard.swipe-typing-plan.v3",
   "state": "offline_beta_implemented_feature_flag_default_off_pending_swift_and_iphone_validation",
-  "date": "2026-11-02",
+  "date": "2026-11-03",
   "goal": "Offline glide/swipe typing for Latin-script preferred languages. First release English/German; expand only with licensed, tested per-language corpora. Preserve ordinary taps, accents, Cantonese composition, Space trackpad, and existing microphone.",
   "scope": {
     "languages": [
@@ -169,11 +169,22 @@
     },
     {
       "repo": "nkrsn/jboard",
-      "url": "https://github.com/nkrsn/jboard/blob/main/Core/KeyTargeting.swift",
-      "portableIdeas": [
-        "reuse existing bounded touch-cell boundaries as geometric input"
+      "url": "https://github.com/nkrsn/jboard",
+      "platform": "iOS Swift / UIKit Custom Keyboard Extension",
+      "inspected": [
+        "Core/SwipeDecoder.swift",
+        "Keyboard/KeyboardView.swift",
+        "Tests/CoreTests/SwipeTests.swift",
+        "Core/Resources/ThirdPartyNotices.txt"
       ],
-      "licensing": "Check before reproducing code"
+      "portableIdeas": [
+        "Endpoint buckets + coarse geometry score followed by banded dynamic time warping for top candidates",
+        "Use the actual UI key centers, plus frequency-weighted offline candidates and bounded explicitly saved personal words",
+        "CAShapeLayer renders gesture trail in the UIKit keyboard surface, separately from decoder outcomes",
+        "Focused tests for longer synthetic swipes including nitrification, repeated segments, word undo and stale candidate safety"
+      ],
+      "integrationCaveat": "JBoard attaches its own UIGestureRecognizer; Altboard must preserve the single existing UIKit touch owner. Borrow decoder/render ideas only, without competing recognizers.",
+      "licensing": "MIT original source (verified 2026-11-03); bundled English dictionary and bigram resources have separate underlying Google Books / SCOWL / SymSpell notices. Verify and retain third-party notices before redistribution."
     },
     {
       "repo": "jtvargas/SnipKey",
@@ -182,6 +193,38 @@
         "one keyboard-wide touch ownership, defer expensive prediction away from touch path"
       ],
       "licensing": "Architecture reference only"
+    },
+    {
+      "repo": "IgorVaryvoda/Ortholinear",
+      "url": "https://github.com/IgorVaryvoda/Ortholinear",
+      "platform": "iOS 17+ Swift 6 UIKit keyboard extension",
+      "inspected": [
+        "Core/GlideDecoder.swift",
+        "Tests/GlideTests.swift",
+        "README.md",
+        "LICENSE"
+      ],
+      "portableIdeas": [
+        "Use in-order per-key pass penalties, normalized shape and DTW elastic alignment to tolerate corner cutting and speed variation",
+        "Frequency/context-ranked candidates, explicit learned-word support and test-specific clean/noisy traces",
+        "Pure Swift decoder can be evaluated independently of Altboard UIKit touch path"
+      ],
+      "integrationCaveat": "Its native glide lexicon is English/Ukrainian; German requires a separate licensed DE corpus. Geometry and touch ownership remain Altboard-specific.",
+      "licensing": "MIT source verified 2026-11-03. Bundled frequency/context dictionary data carry separate attribution/share-alike obligations; do not copy them without review."
+    },
+    {
+      "repo": "ZimengXiong/swipeType",
+      "url": "https://github.com/ZimengXiong/swipeType",
+      "platform": "Rust core, macOS and Web; not ready-to-drop iOS extension",
+      "inspected": [
+        "README.md",
+        "crates/swipe-engine/src/dtw.rs (file listed by tree)"
+      ],
+      "portableIdeas": [
+        "Sakoe-Chiba bounded DTW, low-space rolling rows, first/last-key pruning over a large dictionary"
+      ],
+      "integrationCaveat": "No whole Rust engine/FFI port in a low-risk Swift keyboard repair; benchmark simpler MIT-native Swift alternatives first.",
+      "licensing": "MIT repo license verified 2026-11-03; verify any dictionary-data licensing separately."
     }
   ],
   "architecture": {
@@ -261,5 +304,109 @@
     "ranking": "Start/end proximity <=68pt, location cost, 18% path length penalty, small corpus-order prior",
     "compose": "Top result inserted with trailing space; top three candidates appear in toolbar and alternative replaces verified host suffix",
     "remainingRisks": "Quality is limited by starter dictionary and untuned thresholds. No physical-device tests or native compile yet. Off by default."
+  },
+  "investigation20261103": {
+    "ticket": "T-021",
+    "status": "source-level diagnosis and external implementation review only; not implemented or iPhone-verified",
+    "reportedContexts": {
+      "worksInputButTrailMissing": "ChatGPT after repeated swipes",
+      "trailVisible": "in-app keyboard test",
+      "unrecognized": [
+        "penetrate",
+        "strange",
+        "tight"
+      ],
+      "suspectedSelfIntersections": "reported; not proven to cause decode rejection"
+    },
+    "verifiedCodeFacts": {
+      "missingFromLatinWordSuggestionsEnglish": [
+        "penetrate",
+        "strange",
+        "tight"
+      ],
+      "swipeDictionary": "AlphabeticTouchRow.finishTouch derives only LatinWordSuggestions.commonWords en/de",
+      "decoder": "LatinSwipeDecoder: 32 fixed arclength samples; strict endpoint <68pt; combined positional/length/end penalties; score <68 for 3+ characters",
+      "touchLimit": "LatinSwipeSession appends at most 160 interpolated points; no self-intersection rejection",
+      "trail": "AlphabeticTouchRow.onSwipePath updates AlphabeticKeyboardLayout.liveSwipePath; SwipeTrailOverlay is Canvas, transient and allowsHitTesting(false)",
+      "rendererHypotheses": "Per-row zIndex, SwiftUI parent Canvas update, host-specific lifecycle or clipping, touch cancellation and callback state resets; none verified as root cause"
+    },
+    "comparison": {
+      "preferredCandidates": [
+        {
+          "repository": "nkrsn/jboard",
+          "strategy": "coarse candidate prefilter + banded DTW and UIKit CAShapeLayer",
+          "language": "English",
+          "license": "MIT code; data separate",
+          "source": "https://github.com/nkrsn/jboard"
+        },
+        {
+          "repository": "IgorVaryvoda/Ortholinear",
+          "strategy": "ordered key pass + spatial/shape + DTW, learned word boosts",
+          "language": "English/Ukrainian current glide",
+          "license": "MIT code; data separate",
+          "source": "https://github.com/IgorVaryvoda/Ortholinear"
+        },
+        {
+          "repository": "ZimengXiong/swipeType",
+          "strategy": "Rust bounded banded-DTW reference",
+          "language": "requires separate dictionaries",
+          "license": "MIT code",
+          "source": "https://github.com/ZimengXiong/swipeType"
+        }
+      ],
+      "doNotCopy": [
+        {
+          "repository": "akemin-dayo/iSwipe",
+          "reason": "GPL-3.0 and obsolete iOS private system-keyboard hooking"
+        },
+        {
+          "repository": "Henryikenna/sswipe",
+          "reason": "No verified license in prior repo audit"
+        }
+      ]
+    },
+    "suggestedImplementationOrder": [
+      "Confirm vocabulary exclusions by unit test",
+      "Compare isolated Swift decoders with synthetic long/crossed/looping and real-finger traces",
+      "Broaden independently licensed EN/DE lexicons, preserve third-party notices",
+      "Introduce opt-in non-persistent Swipe Diagnostics with reason codes and counters",
+      "Fix ChatGPT-specific trail lifecycle independent of recognition",
+      "Introduce bounded explicit-choice local learning with Forget/Reset",
+      "Run cheapest tests and physical iPhone matrix only after code change"
+    ],
+    "privacyRules": [
+      "Never persist raw swipe paths",
+      "Never log host text or intended words in diagnostics",
+      "No network calls",
+      "Retain one UIKit gesture owner"
+    ],
+    "deviceAcceptance": {
+      "hosts": [
+        "ChatGPT",
+        "Apple Notes",
+        "Altboard History test field"
+      ],
+      "repetitions": 30,
+      "words": [
+        "penetrate",
+        "strange",
+        "tight",
+        "it's",
+        "very"
+      ],
+      "layouts": [
+        "QWERTY",
+        "QWERTZ"
+      ],
+      "measurements": [
+        "top-1",
+        "top-3",
+        "rejection cause",
+        "trail visibility",
+        "p95 decode",
+        "memory"
+      ],
+      "currentConfidence": "no physical reproducer or benchmark executed"
+    }
   }
 }

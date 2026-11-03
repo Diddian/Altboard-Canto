@@ -120,6 +120,107 @@ meeting; the visible recording is continuous even when storage rolls over.
 T-019 and T-020 are future implementation work; documentation here does
 not certify new streaming dictation or meeting recording behavior.
 
+## P0 — Swipe Typing long words, disappearing trail and opt-in learning (T-021)
+
+**NO IPA / PLAN ONLY (2026-11-03).** User reports that `penetrate`,
+`strange` and `tight` produce no recognized word/candidates, sometimes
+after crossing/revisiting the swipe path; ChatGPT accepts swipe input but the
+brush trail becomes invisible after several gestures, while the app's own
+keyboard test field still draws it. This issue is **not** marked fixed.
+
+**Verified source-level cause:** All three named words are absent from
+`LatinWordSuggestions.commonWords["en"]`; the current gesture decoder
+passes *only* that small built-in English/German list to
+`LatinSwipeDecoder.rank`. It cannot return a missing word regardless
+of gesture accuracy. There is **no explicit self-intersection rejection** in
+the present decoder, so whether crossings independently cause failures is
+unverified. Existing `LatinSwipeSession` bounds touch points to 160;
+the fixed 32-sample positional matcher and score gates may further
+penalize longer, looping, irregular-speed paths. The ChatGPT-only
+rendering/lifecycle regression remains unlocalized.
+
+**External implementation review completed (read-only):**
+- [JBoard](https://github.com/nkrsn/jboard) — iOS UIKit/Swift,
+  MIT original code. [SwipeDecoder](https://github.com/nkrsn/jboard/blob/main/Core/SwipeDecoder.swift)
+  uses frequency-aware endpoint buckets, coarse matching followed by
+  banded DTW; [KeyboardView](https://github.com/nkrsn/jboard/blob/main/Keyboard/KeyboardView.swift)
+  renders a `CAShapeLayer` swipe trail; physical iPhone prototype and
+  synthetic long-word tests exist. Its 82,834-entry dictionary and word
+  pairs have separate attribution/licenses; verify notices before reuse.
+- [Ortholinear](https://github.com/IgorVaryvoda/Ortholinear) —
+  iOS Swift 6, MIT original code. Its
+  [GlideDecoder](https://github.com/IgorVaryvoda/Ortholinear/blob/main/Core/GlideDecoder.swift)
+  scores in-order key passes, spatial/shape distance, banded elastic
+  matching, frequency and context; [GlideTests](https://github.com/IgorVaryvoda/Ortholinear/blob/main/Tests/GlideTests.swift)
+  cover jitter, corner cutting, timing and learned words. Existing glide
+  language claims cover English/Ukrainian, not ready-made German.
+- [swipeType](https://github.com/ZimengXiong/swipeType) —
+  MIT Rust/macOS benchmark/reference with bounded-memory, banded DTW
+  and first/last-key pruning. A whole Rust/FFI port would add complexity.
+- **Do not copy:** [iSwipe](https://github.com/akemin-dayo/iSwipe)
+  is GPL-3.0 and hooks the old iOS system keyboard; older `sswipe`
+  research found no verified source license.
+
+- [ ] T-021.1 Make the named `penetrate`, `strange`, `tight`,
+  `it's very strange` and multiword-space cases explicit regression
+  tests. Separate **missing vocabulary**, **gesture not completed**,
+  **decoder rejected**, **candidate accepted** and **trail not rendered**
+  into distinct test outcomes. Include self-crossings, repeated letters,
+  backtracking, long (>8 letter) paths and tap-vs-swipe gating.
+- [ ] T-021.2 Replace the tiny starter Swipe vocabulary with
+  sufficiently broad, frequency-ranked, independently licensed EN/DE
+  lexicons. Record upstream versions, data licenses, attributions,
+  memory and search time; verify the three affected English words are
+  indexed and offer candidates. Avoid app-bundle bloat and loading
+  large corpora into the main touch callback.
+- [ ] T-021.3 Benchmark isolated decoders using the **same** synthetic
+  ideal/noisy/self-crossing traces: existing geometric matcher versus
+  JBoard's coarse+banded-DTW and Ortholinear's in-order key-pass/
+  elastic matcher. Consider selective MIT-code adoption only if
+  attribution/license obligations are met. Retain Swift/UIKit integration,
+  QWERTY + QWERTZ geometry, no new touch-ownership layer. Verify top-1,
+  top-3, false commits, p95 runtime and bounded memory. Do not assume
+  clean-path synthetic success equals real-finger accuracy.
+- [ ] T-021.4 Add a **manual opt-in** `Settings > Keyboard > Swipe
+  Diagnostics` debug view: per-gesture touch began/moved/ended/cancelled
+  count, path-point count (capped), glide gate result, dictionary hit
+  count, decoder rejection reason, Canvas update/render state and
+  bounded elapsed decode time. Show counters/flags only. **Never persist,
+  upload or log raw swipe traces, intended/host text or passwords.**
+  Clear indicators on new gesture, focus change and keyboard restart.
+- [ ] T-021.5 Isolate ChatGPT-host trail invisibility from recognition.
+  Audit `AlphabeticTouchRow` callback lifetime, `onSwipePath` resets,
+  `SwipeTrailOverlay` Canvas redraw, child `.zIndex`, row overlays,
+  cancellation, keyboard focus/dismissal and host-specific clipping.
+  If SwiftUI Canvas remains unstable, test an existing-owner UIKit
+  `CAShapeLayer` rendering path **without** adding JBoard's separate
+  competing UIGestureRecognizer. Use same translucent brush styling.
+- [ ] T-021.6 Optional **on-device** personalization: learn explicit
+  accepted alternate choices and manually added words per preferred
+  language; bound counts/weights and offer Forget/Reset. Consider
+  bounded per-key calibration from explicit corrections only.
+  Do not train on unconfirmed automatic guesses, record raw strokes,
+  inspect unrelated host text, or use online prediction. Keep English
+  and German preference ordering independent of Cantonese IME.
+- [ ] T-021.7 Verify at least 30 consecutive gestures (including
+  `penetrate`, `strange`, `tight`, loops and intersections) in
+  ChatGPT, Notes and Altboard's own test field, including keyboard
+  switching, focus change, dark/light, VoiceOver, finger cancellation
+  and return to ordinary typing. Trail visibility and correct insertion
+  must pass **separately**. Check no duplicate UIKit touch layer,
+  no haptic/Space-trackpad/accent/ASR regressions.
+- [ ] T-021.8 When implementation is explicitly requested, run
+  targeted pure Swift corpus/decoder tests first and only then use
+  the **existing** `.github/workflows/build-unsigned-ipa.yml` from
+  `main` for one physical-iPhone SideStore build. Preserve #70 as the
+  last confirmed green build until new acceptance. **No IPA for this
+  documentation-only research/task commit.**
+
+Full baseline and follow-on research:
+`docs/swipe-typing-en-de-plan.json` (`investigation20261103`).
+T-021 expands the already-open T-005.6/5.7 work; do not
+implement a second independent Swipe system or duplicate dictionaries.
+
 ## P1 — Common long phrases and segmentation (T-013)
 
 - [x] T-013.1 Audit supplemental Cantonese list: 162 entries, just 2 with five or more characters; this excludes the main upstream dictionary.
