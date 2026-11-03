@@ -34,12 +34,15 @@ struct AlphabeticLetterKey: View {
         .offset(y: -1.2.kbScaled)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
       Text(verbatim: self.hintOverride ?? self.secondarySymbol)
-        .font(.system(size: (self.hintOverride == nil ? 8.5 : 12).kbScaled,
+        .font(.system(size: (self.hintOverride == nil ? 8.5 : 9).kbScaled,
                       weight: .regular))
-        .fontWidth(.condensed)
+        .fontWidth(.compressed)
+        .lineLimit(1)
+        .minimumScaleFactor(0.75)
         .foregroundStyle(Color.secondary.opacity(0.72))
         .padding(.top, 3.2.kbScaled)
-        .padding(.trailing, 6.kbScaled)
+        .padding(.trailing, 4.kbScaled)
+        .allowsHitTesting(false)
     }
       .frame(maxWidth: .infinity)
       .frame(height: KeyboardChromeMetrics.keyHeight)
@@ -57,17 +60,17 @@ struct AlphabeticLetterKey: View {
             ), id: \.self) { index in
               Text(verbatim: self.options[index])
                 .font(.system(size: 22.kbScaled))
-                .foregroundStyle(index == self.selected ? Color.white : Color.primary)
+                .foregroundStyle(Color.primary)
                 .frame(width: 33.kbScaled, height: 43.kbScaled)
                 .background {
                   if index == self.selected {
-                    RoundedRectangle(cornerRadius: 5.kbScaled).fill(Color.accentColor)
+                    RoundedRectangle(cornerRadius: 7.kbScaled).fill(Color(uiColor: KeyboardPalette.pressedFill))
                   }
                 }
             }
           }
           .padding(3.kbScaled)
-          .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 9.kbScaled))
+          .background(Color(uiColor: KeyboardPalette.keyFill), in: RoundedRectangle(cornerRadius: 18.kbScaled))
           .shadow(color: .black.opacity(0.23), radius: 3, y: 2)
           .fixedSize(horizontal: true, vertical: true)
           .offset(y: -49.kbScaled)

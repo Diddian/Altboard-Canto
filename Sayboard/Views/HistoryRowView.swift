@@ -4,11 +4,16 @@ struct HistoryRowView: View {
 
   let record: HistoryRecord
   let onDelete: () -> Void
+  let onCorrection: (String) -> Bool
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
       self.headerRow
-      self.transcriptionText
+      if self.isEditing {
+        self.correctionEditor
+      } else {
+        self.transcriptionText
+      }
       self.audioPlayerControls
     }
     .padding(.vertical, 4)
@@ -17,17 +22,23 @@ struct HistoryRowView: View {
   @EnvironmentObject private var playerService: AudioPlayerService
   @State private var isExpanded = false
   @State private var copied = false
+  @State private var isEditing = false
+  @State private var correctedDraft = ""
+  @State private var correctionError: String?
+  @FocusState private var correctionFocused: Bool
+
+  private var displayedText: String { self.record.displayedTranscription }
 
   private let truncationThreshold = 150
   private let truncationSuffixReserve = 20
 
   private var needsTruncation: Bool {
-    self.record.transcription.count > self.truncationThreshold
+    self.displayedText.count > self.truncationThreshold
   }
 
   private var truncatedTranscription: String {
     let targetLength = self.truncationThreshold - self.truncationSuffixReserve
-    let prefix = self.record.transcription.prefix(targetLength)
+    let prefix = self.displayedText.prefix(targetLength)
     if let lastSpace = prefix.lastIndex(of: " ") {
       return String(prefix[prefix.startIndex..<lastSpace])
     }
@@ -40,6 +51,7 @@ struct HistoryRowView: View {
         .font(.subheadline)
         .foregroundStyle(.secondary)
       Spacer()
+      self.editButton
       self.copyButton
       self.deleteButton
     }
@@ -47,16 +59,17 @@ struct HistoryRowView: View {
 
   @ViewBuilder
   private var transcriptionText: some View {
-    if self.record.transcription.isEmpty {
+    if self.displayedText.isEmpty {
       Text("No transcription")
         .font(.body)
         .foregroundStyle(.tertiary)
         .italic()
     } else if !self.needsTruncation {
-      Text(self.record.transcription)
+      Text(self.displayedText)
         .font(.body)
+        .onTapGesture { self.startCorrection() }
     } else if self.isExpanded {
-      (Text(self.record.transcription) + Text(" ") + Text("less").foregroundColor(.secondary))
+      (Text(self.displayedText) + Text(" ") + Text("less").foregroundColor(.secondary))
         .font(.body)
         .onTapGesture {
           self.isExpanded = false
@@ -82,9 +95,77 @@ struct HistoryRowView: View {
     }
   }
 
+  private var editButton: some View {
+    Button {
+      self.startCorrection()
+    } label: {
+      Image(systemName: "pencil")
+        .font(.system(size: 16))
+        .foregroundStyle(.secondary)
+        .frame(width: 28, height: 28)
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel("Correct recognized speech")
+  }
+
+  private var correctionEditor: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Text("ASR 原文")
+        .font(.caption)
+        .foregroundStyle(.secondary)
+      Text(self.record.originalASR ?? self.record.transcription)
+        .font(.subheadline)
+        .textSelection(.enabled)
+        .foregroundStyle(.secondary)
+      Text("你真正講過嘅內容")
+        .font(.caption.weight(.semibold))
+      TextEditor(text: self.$correctedDraft)
+        .font(.body)
+        .frame(minHeight: 100)
+        .scrollContentBackground(.hidden)
+        .padding(7)
+        .background(Color(.secondarySystemBackground),
+                    in: RoundedRectangle(cornerRadius: 9))
+        .focused(self.$correctionFocused)
+        .accessibilityLabel("Corrected spoken words")
+      HStack(spacing: 15) {
+        Button("Cancel") {
+          self.isEditing = false
+          self.correctionFocused = false
+        }
+        .buttonStyle(.bordered)
+        Button("Save & Learn") {
+          if self.onCorrection(self.correctedDraft) {
+            self.isEditing = false
+            self.correctionFocused = false
+            self.correctionError = nil
+          } else {
+            self.correctionError = "Unable to save locally. Check shared storage."
+          }
+        }
+        .buttonStyle(.borderedProminent)
+        .disabled(self.correctedDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+      }
+      if let correctionError {
+        Text(correctionError).font(.footnote).foregroundStyle(.red)
+      }
+      Text("Repeated, verified phrases improve local corrections. "
+           + "This does not retrain ASR model weights.")
+        .font(.caption2)
+        .foregroundStyle(.secondary)
+    }
+  }
+
+  private func startCorrection() {
+    self.correctedDraft = self.displayedText
+    self.isEditing = true
+    self.correctionError = nil
+    self.correctionFocused = true
+  }
+
   private var copyButton: some View {
     Button {
-      UIPasteboard.general.string = self.record.transcription
+      UIPasteboard.general.string = self.displayedText
       withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
         self.copied = true
       }
@@ -102,7 +183,7 @@ struct HistoryRowView: View {
         .scaleEffect(self.copied ? 1.2 : 1.0)
     }
     .buttonStyle(.plain)
-    .disabled(self.record.transcription.isEmpty)
+    .disabled(self.displayedText.isEmpty)
   }
 
   private var deleteButton: some View {

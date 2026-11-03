@@ -219,33 +219,18 @@ extension ExtendedKeyboardLayout {
   }
 
   private func calloutKey(char: String, index: Int, count: Int) -> some View {
-    let alignment: KeyCalloutAlignment =
-      if index == 0 {
-        .left
-      } else if index == count - 1 {
-        .right
-      } else {
-        .center
-      }
-    return KeyButton(
-      content: .symbol(char),
-      showsCallout: true,
-      calloutRowSpacing: Self.rowSpacing,
-      calloutAlignment: alignment,
-    ) { self.proxy.insertText(char) }
+    SymbolHoldKey(symbol: char, column: index, columnCount: count) {
+      self.proxy.insertText($0)
+    }
   }
 
   private func punctRowContent(narrowKeyWidth: CGFloat) -> some View {
     HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
-      ForEach(Array(Self.punctRow.enumerated()), id: \.offset) { _, char in
-        KeyButton(
-          content: .symbol(char),
-          fixedWidth: narrowKeyWidth,
-          showsCallout: true,
-          calloutRowSpacing: Self.rowSpacing,
-        ) {
-          self.proxy.insertText(char)
-        }
+      ForEach(Array(Self.punctRow.enumerated()), id: \.offset) { index, char in
+        SymbolHoldKey(
+          symbol: char, fixedWidth: narrowKeyWidth,
+          column: index, columnCount: Self.punctRow.count
+        ) { self.proxy.insertText($0) }
       }
     }
   }

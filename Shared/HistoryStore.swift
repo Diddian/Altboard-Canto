@@ -67,6 +67,41 @@ struct HistoryStore: Sendable {
     self.writeRecords(records)
   }
 
+  @discardableResult
+  func saveCorrectedTranscript(id: UUID, corrected: String) -> Bool {
+    let text = corrected.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !text.isEmpty, text.count <= 10_000,
+          var records = try? self.readRecords(),
+          let index = records.firstIndex(where: { $0.id == id }) else {
+      return false
+    }
+    let original = records[index]
+    records[index] = original.withCorrection(
+      text == original.transcription ? nil : text
+    )
+    self.writeRecords(records)
+    guard (try? self.readRecords().first(where: { $0.id == id })?
+      .displayedTranscription) == text else { return false }
+
+    // Derive a conservative phrase dictionary only from repeated explicit
+    // corrections. This is local post-recognition learning, not weight updates.
+    let candidates = SpeechCorrectionLearning.recurringPairs(in: records)
+    if !candidates.isEmpty {
+      let settings = SharedSettings()
+      var rules = settings.cantoneseCorrectionRules
+      for pair in candidates {
+        guard rules.count < 50,
+              !rules.contains(where: { $0.heard == pair.heard }) else { continue }
+        rules.append(CantoneseCorrectionRule(
+          heard: pair.heard, intended: pair.intended
+        ))
+      }
+      settings.cantoneseCorrectionRules = rules
+      settings.synchronize()
+    }
+    return true
+  }
+
   func deleteRecord(id: UUID) {
     guard var records = try? self.readRecords() else { return }
     guard let index = records.firstIndex(where: { $0.id == id }) else { return }

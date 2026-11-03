@@ -9,6 +9,26 @@ struct LetterKeyAlternatesTests {
     #expect(LetterKeyAlternates.choices(for: "U", uppercase: false).contains("ü"))
   }
 
+  @Test func extendedLatinAndSymbolVariants() {
+    #expect(LetterKeyAlternates.holdChoices(
+      for: "h", uppercase: false
+    ).contains("ħ"))
+    #expect(LetterKeyAlternates.holdChoices(
+      for: "k", uppercase: false
+    ).contains("ķ"))
+    #expect(LetterKeyAlternates.holdChoices(
+      for: "l", uppercase: false
+    ).contains("ľ"))
+    #expect(LetterKeyAlternates.holdChoices(
+      for: "d", uppercase: false
+    ).contains("ď"))
+    #expect(SymbolKeyAlternates.choices(for: "$").contains("€"))
+    #expect(SymbolKeyAlternates.choices(for: "-").contains("—"))
+    #expect(SymbolKeyAlternates.choices(for: "/").contains("\\"))
+    #expect(SymbolKeyAlternates.choices(for: "2").contains("²"))
+    #expect(SymbolKeyAlternates.choices(for: "?").contains("？"))
+  }
+
   @Test func holdNeverInsertsBaseLetter() {
     let alternatives = LetterKeyAlternates.holdChoices(
       for: "j", uppercase: false, secondary: LetterKeySecondary.symbol(row: 1, index: 6)

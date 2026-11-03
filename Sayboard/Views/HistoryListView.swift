@@ -164,9 +164,17 @@ struct HistoryListView: View {
             if record.id != self.records.first?.id {
               Divider()
             }
-            HistoryRowView(record: record) {
-              self.deleteRecord(id: record.id)
-            }
+            HistoryRowView(
+              record: record,
+              onDelete: { self.deleteRecord(id: record.id) },
+              onCorrection: { corrected in
+                let saved = self.store.saveCorrectedTranscript(
+                  id: record.id, corrected: corrected
+                )
+                if saved { self.loadRecords() }
+                return saved
+              }
+            )
             .padding(.horizontal)
             .padding(.vertical, 18)
           }

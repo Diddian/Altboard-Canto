@@ -1,5 +1,6 @@
 import Foundation
 import SQLite3
+import CoreText
 
 struct ChineseShapeCandidate: Identifiable, Equatable {
   let text: String
@@ -82,7 +83,15 @@ final class ChineseShapeDictionary {
         best[hit.word] = (candidate, score)
       }
     }
+    // Keep characters that cannot be rendered by available iOS fallback
+    // fonts after visible candidates. Source entries remain searchable.
+    let displayable = Dictionary(uniqueKeysWithValues: best.keys.map {
+      ($0, Self.canDisplay($0))
+    })
     return Array(best.values.sorted {
+      let lhsVisible = displayable[$0.candidate.text] ?? true
+      let rhsVisible = displayable[$1.candidate.text] ?? true
+      if lhsVisible != rhsVisible { return lhsVisible }
       if $0.score != $1.score { return $0.score < $1.score }
       return $0.candidate.text < $1.candidate.text
     }.prefix(maxLimit).map { $0.candidate })
@@ -127,6 +136,32 @@ final class ChineseShapeDictionary {
     }
     generation[key] = min(120, (generation[key] ?? 0) + 1)
     self.defaults?.set(generation, forKey: self.generationKey)
+  }
+
+  private static let baseFont = CTFontCreateWithName(
+    "PingFangHK-Regular" as CFString, 18, nil
+  )
+
+  private static func canDisplay(_ text: String) -> Bool {
+    for character in text {
+      let fragment = String(character)
+      let fallback = CTFontCreateForString(
+        baseFont, fragment as CFString, CFRange(location: 0, length: fragment.utf16.count)
+      )
+      let fontName = CTFontCopyPostScriptName(fallback) as String
+      if fontName.localizedCaseInsensitiveContains("LastResort") { return false }
+      let scalars = Array(fragment.utf16)
+      var glyphs = [CGGlyph](repeating: 0, count: scalars.count)
+      let valid = scalars.withUnsafeBufferPointer { chars in
+        glyphs.withUnsafeMutableBufferPointer { output in
+          CTFontGetGlyphsForCharacters(
+            fallback, chars.baseAddress!, output.baseAddress!, chars.count
+          )
+        }
+      }
+      if !valid { return false }
+    }
+    return true
   }
 
   private func normalized(_ raw: String, mode: ChineseInputMode) -> String? {

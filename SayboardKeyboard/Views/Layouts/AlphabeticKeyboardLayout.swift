@@ -30,6 +30,7 @@ struct AlphabeticKeyboardLayout: View {
   @State private var shapeBuffer = ""
   @State private var shapeLatinBuffer = ""
   @State private var showsEmojiPage = false
+  @State private var emojiReturnPage = AlphabeticPage.letters
   @State private var shapeCandidates = [ChineseShapeCandidate]()
   @State private var expandedShapeCandidates = [ChineseShapeCandidate]()
   @State private var shapeHostAnchor: String?
@@ -138,6 +139,11 @@ struct AlphabeticKeyboardLayout: View {
             self.showsEmojiPage = false
             self.page = .numbers
             self.updateCandidates()
+          },
+          onClose: {
+            self.showsEmojiPage = false
+            self.page = self.emojiReturnPage
+            self.updateCandidates()
           }
         )
       } else {
@@ -147,7 +153,7 @@ struct AlphabeticKeyboardLayout: View {
         .padding(.top, KeyboardLayoutGeometry.alphabetToolbarTopInset.kbScaled)
         .padding(.bottom, KeyboardLayoutGeometry.alphabetToolbarBottomInset.kbScaled)
       Group {
-        if self.usesShapeMode && self.chineseMode == .stroke {
+        if self.page == .letters && self.usesShapeMode && self.chineseMode == .stroke {
           ChineseStrokeGrid(
             proxy: self.proxy,
             onStroke: { self.appendShapeCode($0) },
@@ -317,11 +323,6 @@ struct AlphabeticKeyboardLayout: View {
             if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
           }
         }
-
-        NativeInputModeSwitchKey(
-          configure: self.keyboardState.configureInputModeListButton
-        )
-        .frame(width: 28.kbScaled, height: KeyboardChromeMetrics.keyHeight)
 
         if self.offersChineseInput {
           KeyButton(
@@ -714,11 +715,13 @@ struct AlphabeticKeyboardLayout: View {
               let value = self.isChineseSymbolsPage
                 ? ["。", "，", "？", "！", self.smartChineseQuote][index]
                 : [".", ",", "?", "!", "'"][index]
-              KeyButton(
-                content: .symbol(self.nativeSymbolFace(value), fontSize: 18),
-                fixedWidth: punctuationWidth
-              ) {
-                self.handleCharacter(value)
+              SymbolHoldKey(
+                symbol: value,
+                face: self.nativeSymbolFace(value),
+                fixedWidth: punctuationWidth,
+                column: index, columnCount: 5
+              ) { selected in
+                self.handleCharacter(selected)
               }
             }
           }
@@ -784,10 +787,12 @@ struct AlphabeticKeyboardLayout: View {
 
   private func characterRow(_ characters: [String]) -> some View {
     HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
-      ForEach(characters, id: \.self) { character in
-        KeyButton(content: .symbol(self.nativeSymbolFace(character), fontSize: 18),
-                  showsCallout: true, calloutRowSpacing: Self.rowSpacing.kbScaled) {
-          self.handleCharacter(character)
+      ForEach(Array(characters.enumerated()), id: \.offset) { index, character in
+        SymbolHoldKey(
+          symbol: character, face: self.nativeSymbolFace(character),
+          column: index, columnCount: characters.count
+        ) { value in
+          self.handleCharacter(value)
         }
       }
     }
@@ -1106,6 +1111,7 @@ struct AlphabeticKeyboardLayout: View {
   /// Input-method selection is independent from pronunciation schemes. Both
   /// Cangjie generations and both Quick generations are searched together.
   private func openEmojiPage() {
+    self.emojiReturnPage = self.page
     self.clearShapeComposition()
     self.clearComposition()
     self.swipeAlternatives.removeAll()
@@ -1119,7 +1125,6 @@ struct AlphabeticKeyboardLayout: View {
     self.clearShapeComposition()
     self.nextCantoneseWords.removeAll()
     self.swipeAlternatives.removeAll()
-    self.page = .letters
     self.chineseModeRaw = next.rawValue
     self.updateCandidates()
   }

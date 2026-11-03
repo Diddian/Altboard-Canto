@@ -275,7 +275,12 @@ struct SharedSettings {
   }
 
   var experimentalLiveDictationEnabled: Bool {
-    get { defaults.bool(forKey: SharedKey.experimentalLiveDictationEnabled) }
+    get {
+      // With a selected Qwen recognizer, live dictation is the default.
+      // An explicit user preference, including OFF, always takes precedence.
+      defaults.object(forKey: SharedKey.experimentalLiveDictationEnabled) as? Bool
+        ?? (self.selectedVariant.engine == .qwen3)
+    }
     nonmutating set { defaults.set(newValue, forKey: SharedKey.experimentalLiveDictationEnabled) }
   }
 

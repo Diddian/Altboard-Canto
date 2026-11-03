@@ -182,6 +182,7 @@ extension SpeechRecognitionService {
       transcription: transcription,
       audioFileName: fileName,
       waveformSamples: waveformSamples,
+      originalASR: self.currentRawTranscription.isEmpty ? nil : self.currentRawTranscription,
     )
     HistoryStore.shared.saveRecord(record)
     HistoryStore.shared.applyRetentionPolicy()

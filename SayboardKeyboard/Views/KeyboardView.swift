@@ -187,8 +187,7 @@ struct KeyboardView: View {
     }
     .background {
       Rectangle()
-        .fill(.regularMaterial)
-        .overlay(Color(uiColor: KeyboardPalette.backdrop).opacity(0.10))
+        .fill(Color(uiColor: KeyboardPalette.backdrop))
         .ignoresSafeArea()
     }
     .sensoryFeedback(.selection, trigger: self.sensoryPulse.count)

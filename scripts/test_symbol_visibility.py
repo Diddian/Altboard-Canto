@@ -70,7 +70,7 @@ class SymbolVisibilityTests(unittest.TestCase):
                 self.assertEqual(len(row(src, name)), 10)
         self.assertEqual(len(row(src, "punctRow")), 5)
         self.assertIn("self.calloutKey(char: char", src)
-        self.assertIn("content: .symbol(char)", src)
+        self.assertIn("SymbolHoldKey(symbol: char", src)
 
 
 if __name__ == "__main__":
