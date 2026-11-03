@@ -56,7 +56,10 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/build-jyutping-lexicon.py
+          python3 scripts/build-chinese-shapes.py
           test -s JyutpingResources/jyutping.sqlite3
+          test -s JyutpingResources/chinese-shapes.sqlite3
+          python3 -m unittest discover -s scripts -p 'test_chinese_shapes.py'
           python3 -m unittest discover -s scripts -p 'test_jyutping_*.py'
           python3 -m unittest discover -s scripts -p 'test_universal_cantonese.py'
           # Regression for blank keycap rows seen on physical iPhone.
@@ -99,6 +102,9 @@ jobs:
           swiftc -o "$RUNNER_TEMP/cursor-line-smoke" \
             Shared/CursorLineNavigation.swift scripts/verify-cursor-navigation.swift
           "$RUNNER_TEMP/cursor-line-smoke"
+          swiftc -o "$RUNNER_TEMP/chinese-input-smoke" \
+            Shared/ChineseInputMode.swift scripts/verify-chinese-input.swift
+          "$RUNNER_TEMP/chinese-input-smoke"
           python3 -m unittest discover -s scripts -p 'test_settings_contract.py'
           python3 -m json.tool docs/ios-keyboard-reference.json >/dev/null
           python3 -m json.tool docs/ios-keyboard-native-vs-altboard-pixel-comparison.json >/dev/null
@@ -177,6 +183,10 @@ jobs:
           test -d "$APP/PlugIns" || exit 1
           test -s "$APP/PlugIns/SayboardKeyboard.appex/jyutping.sqlite3" || {
             echo 'ERROR: offline Jyutping lexicon missing from keyboard extension'
+            exit 1
+          }
+          test -s "$APP/PlugIns/SayboardKeyboard.appex/chinese-shapes.sqlite3" || {
+            echo 'ERROR: offline Cangjie, Quick and Stroke lexicon missing'
             exit 1
           }
           test -s "$APP/PlugIns/SayboardKeyboard.appex/english-frequency.txt" || {

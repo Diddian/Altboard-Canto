@@ -8,6 +8,7 @@ struct AlphabeticLetterKey: View {
   let column: Int
   let rowCount: Int
   let secondarySymbol: String
+  let hintOverride: String?
   let pressed: Bool
   let choosing: Bool
   let selected: Int
@@ -32,8 +33,9 @@ struct AlphabeticLetterKey: View {
         .foregroundStyle(.primary)
         .offset(y: -1.2.kbScaled)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-      Text(verbatim: self.secondarySymbol)
-        .font(.system(size: 8.5.kbScaled, weight: .regular))
+      Text(verbatim: self.hintOverride ?? self.secondarySymbol)
+        .font(.system(size: (self.hintOverride == nil ? 8.5 : 12).kbScaled,
+                      weight: .regular))
         .fontWidth(.condensed)
         .foregroundStyle(Color.secondary.opacity(0.72))
         .padding(.top, 3.2.kbScaled)

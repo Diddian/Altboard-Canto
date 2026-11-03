@@ -6,11 +6,14 @@ https://github.com/rime/rime-cantonese (CC-BY 4.0). This script deliberately use
 only jyutping.txt and does not bundle ODbL jyut6ping3.maps data.
 """
 import argparse
+import base64
 import hashlib
+import json
 import os
 import pathlib
 import re
 import sqlite3
+import time
 import urllib.request
 
 REVISION = "16bda076094abd63e0961cdc49e2b08ab4e381a3"
@@ -64,9 +67,27 @@ def sidney_lau_spelling(jyutping: str) -> str:
 def read_source(input_file: str | None) -> bytes:
     if input_file:
         return pathlib.Path(input_file).read_bytes()
-    request = urllib.request.Request(DOWNLOAD_URL, headers={"User-Agent": "Altboard-Canto-builder"})
-    with urllib.request.urlopen(request, timeout=60) as response:
-        return response.read()
+    urls = [
+        DOWNLOAD_URL,
+        f"https://api.github.com/repos/yuetyam/jyutping/contents/{UPSTREAM_FILE}?ref={REVISION}",
+    ]
+    last_error: OSError | None = None
+    for attempt in range(5):
+        url = urls[attempt % 2]
+        try:
+            request = urllib.request.Request(
+                url, headers={"User-Agent": "Altboard-Canto-builder"}
+            )
+            with urllib.request.urlopen(request, timeout=60) as response:
+                data = response.read()
+            if "api.github.com" in url:
+                data = base64.b64decode(json.loads(data)["content"])
+            return data
+        except (OSError, ValueError, KeyError) as error:
+            last_error = error
+            if attempt < 4:
+                time.sleep(min(2 ** attempt, 8))
+    raise RuntimeError("Could not obtain verified pinned Cantonese lexicon") from last_error
 
 def compile_database(source: bytes, output: pathlib.Path, verify_upstream: bool) -> int:
     if verify_upstream:

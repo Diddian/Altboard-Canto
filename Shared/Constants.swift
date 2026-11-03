@@ -140,6 +140,7 @@ enum SharedKey {
   static let alsoCopyToClipboard = "alsoCopyToClipboard"
   static let keyboardKind = "keyboardKind"
   static let keyboardLetterArrangement = "keyboardLetterArrangement"
+  static let keyboardChineseInputMode = "canto.keyboard.chineseInputMode.v1"
   static let microphoneKeyboardLayout = "microphoneKeyboardLayout"
   static let keyboardHapticsEnabled = "keyboardHapticsEnabled"
   static let keyboardShowSettingsKey = "keyboardShowSettingsKey"

@@ -17,6 +17,7 @@ struct AlphabeticTouchRow: View {
   let swipeEnabled: Bool
   let swipeArrangement: LetterKeyArrangement
   let swipeRowIndex: Int
+  let chineseInputMode: ChineseInputMode
   let onSwipe: ([String]) -> Void
   /// Render-only path callback; UIKit stays the sole touch owner.
   let onSwipePath: ([LatinSwipePoint]) -> Void
@@ -50,6 +51,7 @@ struct AlphabeticTouchRow: View {
             column: index,
             rowCount: self.letters.count,
             secondarySymbol: LetterKeySecondary.symbol(row: self.swipeRowIndex, index: index) ?? "",
+            hintOverride: ChineseShapeKeys.hint(for: letter, mode: self.chineseInputMode),
             pressed: self.activeIndex == index || self.releasedHighlightIndex == index,
             choosing: self.activeIndex == index && self.showingAlternates,
             selected: self.alternateIndex
