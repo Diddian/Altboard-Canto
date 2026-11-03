@@ -72,7 +72,9 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private var offersChineseInput: Bool {
-    !Set(SharedSettings().preferredSpokenLanguages).isDisjoint(with: ["yue", "zh"])
+    !InputMethodCatalog.available(
+      for: SharedSettings().preferredSpokenLanguages
+    ).isEmpty
   }
 
   private var chineseMode: ChineseInputMode {
@@ -1065,9 +1067,12 @@ struct AlphabeticKeyboardLayout: View {
     let code = raw.lowercased()
     let allowed = self.chineseMode == .stroke ? "nm,./"
       : "abcdefghijklmnopqrstuvwxyz"
-    let maximum = self.chineseMode == .quick ? 2 : 6
+    let maximum = self.chineseMode == .quick ? 2
+      : self.chineseMode == .stroke ? 64 : 6
     guard code.count == 1, code.allSatisfy({ allowed.contains($0) }) else { return }
     if self.shapeBuffer.count >= maximum {
+      // A long Rime stroke sequence must never silently choose the first word.
+      if self.chineseMode == .stroke { return }
       if let first = self.shapeCandidates.first { self.chooseShape(first) }
       else { self.insertShapeLiteral() }
     }
@@ -1123,9 +1128,10 @@ struct AlphabeticKeyboardLayout: View {
       self.clearShapeComposition()
       return
     }
+    let typedCode = self.shapeBuffer
     self.clearShapeComposition()
     self.proxy.insertText(candidate.text)
-    ChineseShapeDictionary.shared.remember(candidate)
+    ChineseShapeDictionary.shared.remember(candidate, typedCode: typedCode)
     self.predictionAnchor = candidate.text
     self.nextCantoneseWords = self.offersCantonese
       ? JyutpingDictionary.shared.continuations(after: candidate.text) : []

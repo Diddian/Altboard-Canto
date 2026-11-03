@@ -34,6 +34,28 @@ enum ChineseInputMode: String, CaseIterable, Sendable {
   }
 }
 
+/// Stable language-to-method registry. New language families can register new
+/// descriptors without reusing a Cantonese phonetic or shape dictionary.
+struct InputMethodDescriptor: Hashable, Sendable {
+  let languageTag: String
+  let identifier: String
+  let title: String
+  let shortTitle: String
+}
+
+enum InputMethodCatalog {
+  static let methods: [InputMethodDescriptor] = ChineseInputMode.allCases.map {
+    InputMethodDescriptor(
+      languageTag: "yue", identifier: "yue." + $0.rawValue,
+      title: $0.title, shortTitle: $0.shortTitle
+    )
+  }
+
+  static func available(for preferredLanguages: [String]) -> [InputMethodDescriptor] {
+    methods.filter { preferredLanguages.contains($0.languageTag) }
+  }
+}
+
 /// Physical Cangjie/Quick radical guide. The underlying character keys are
 /// unchanged; only the small secondary keycap label changes by input mode.
 enum ChineseShapeKeys {
@@ -87,6 +109,12 @@ enum ChineseShapeRanking {
     let remembered = min(80, max(0, count)) * 2_000
     return (exact ? 0 : 2_000_000_000) + priority / 10
       + versionPenalty - remembered
+  }
+
+  /// An explicit choice for this canonical stroke prefix (not an upstream
+  /// source) can move frequent glyphs ahead of equally plausible candidates.
+  static func strokeChoiceBonus(_ count: Int) -> Int {
+    min(60, max(0, count)) * 8_000
   }
 
   static func preferredVariant(_ counts: [String: Int], mode: ChineseInputMode) -> Int {

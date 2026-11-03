@@ -1,0 +1,24 @@
+Rime Stroke dictionary attribution
+
+Source: rime/rime-stroke, stroke.dict.yaml
+Upstream revision: 1e8fff9b9494ddec23b0cbc526bcfd8171a6fd48
+Source Git blob SHA-1: 5a4a49a825d40d85709b197caade546f192a5bde
+URL: https://github.com/rime/rime-stroke/blob/1e8fff9b9494ddec23b0cbc526bcfd8171a6fd48/stroke.dict.yaml
+License: GNU Lesser General Public License version 3; LGPL terms in RimeStrokeLicense.txt and incorporated GPLv3 terms in RimeStrokeGPLv3.txt.
+Attribution (upstream AUTHORS):
+四季的風, 雪齋 <leoyoontsaw@gmail.com>, Kunki Chou <cokunhui@gmail.com> : (LGPL)
+redistributed under LGPL after the licensing statement of CNS11643 database:
+http://www.cns11643.gov.tw/AIDB/copyright.do
+  preset/stroke.*.yaml
+
+宋天 (http://soongsky.com/) : (LGPL)
+
+Rime stroke keys h, s, p, n, z are translated respectively to
+internal m, /, comma, period, n. The five-key UI remains unchanged.
+The converted dictionary entries are
+compiled into chinese-shapes.sqlite3 together with public-domain
+Fcitx5 Table Extra entries. This derivative dataset is distributed
+with the keyboard extension. The source data and the conversion
+program (scripts/build-chinese-shapes.py) are available at
+https://github.com/Diddian/Altboard-Canto .
+No Rime or Fcitx program code or runtime is embedded.

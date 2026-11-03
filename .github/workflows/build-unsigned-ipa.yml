@@ -59,6 +59,9 @@ jobs:
           python3 scripts/build-chinese-shapes.py
           test -s JyutpingResources/jyutping.sqlite3
           test -s JyutpingResources/chinese-shapes.sqlite3
+          test -s JyutpingResources/RimeStrokeLicense.txt
+          test -s JyutpingResources/RimeStrokeGPLv3.txt
+          test -s JyutpingResources/RimeStrokeNotice.txt
           python3 -m unittest discover -s scripts -p 'test_chinese_shapes.py'
           python3 -m unittest discover -s scripts -p 'test_jyutping_*.py'
           python3 -m unittest discover -s scripts -p 'test_universal_cantonese.py'
@@ -189,6 +192,12 @@ jobs:
             echo 'ERROR: offline Cangjie, Quick and Stroke lexicon missing'
             exit 1
           }
+          for notice in RimeStrokeLicense.txt RimeStrokeGPLv3.txt RimeStrokeNotice.txt; do
+            test -s "$APP/PlugIns/SayboardKeyboard.appex/$notice" || {
+              echo "ERROR: required Rime Stroke attribution missing: $notice"
+              exit 1
+            }
+          done
           test -s "$APP/PlugIns/SayboardKeyboard.appex/english-frequency.txt" || {
             echo 'ERROR: offline English swipe lexicon missing from keyboard extension'
             exit 1
@@ -245,7 +254,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 scripts/verify-ipa-bundle.py             dist/Altboard-Canto-SideStore.ipa             --expected-sha "$GITHUB_SHA"             --expect-native-emoji
+          python3 scripts/verify-ipa-bundle.py             dist/Altboard-Canto-SideStore.ipa             --expected-sha "$GITHUB_SHA"             --expect-native-emoji --expect-merged-shapes
 
       - name: Upload IPA to this Actions run
         uses: actions/upload-artifact@v7

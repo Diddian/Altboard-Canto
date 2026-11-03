@@ -11,7 +11,7 @@ struct ChineseShapeCandidate: Identifiable, Equatable {
   var id: String { "\(mode.rawValue)|\(code)|\(text)|\(variant)" }
 }
 
-/// Read-only Fcitx5 data table with on-device, bounded explicit-choice ranking.
+/// Read-only fused Fcitx5/Rime table with bounded explicit-choice ranking.
 /// One SQLite connection, no Rime runtime, no network, no raw host typing logs.
 @MainActor
 final class ChineseShapeDictionary {
@@ -21,6 +21,7 @@ final class ChineseShapeDictionary {
   private let defaults = UserDefaults(suiteName: AppGroup.identifier)
   private let generationKey = "canto.ime.shapeGenerationCounts.v1"
   private let wordKey = "canto.ime.shapeWordCounts.v1"
+  private let strokePrefixKey = "canto.ime.strokePrefixSelections.v1"
 
   private init() {
     guard let url = Bundle.main.url(forResource: "chinese-shapes", withExtension: "sqlite3")
@@ -46,11 +47,15 @@ final class ChineseShapeDictionary {
     let preferred = ChineseShapeRanking.preferredVariant(generationCounts, mode: mode)
     let wordCounts = self.defaults?.dictionary(forKey: self.wordKey)
       as? [String: Int] ?? [:]
+    let strokeCounts = mode == .stroke
+      ? (self.defaults?.dictionary(forKey: self.strokePrefixKey) as? [String: Int] ?? [:])
+      : [:]
     let maxLimit = max(1, min(200, limit))
     // A bounded prefix lookup is only used when there are few exact matches.
     let exact = self.fetch(mode: mode, code: code, prefix: false, limit: 300)
     let prefix = exact.count < maxLimit
-      ? self.fetch(mode: mode, code: code, prefix: true, limit: 120) : []
+      ? self.fetch(mode: mode, code: code, prefix: true,
+                   limit: min(240, max(120, maxLimit))) : []
     var best: [String: (candidate: ChineseShapeCandidate, score: Int)] = [:]
     var matchedVariants: [String: Set<Int>] = [:]
 
@@ -65,7 +70,10 @@ final class ChineseShapeDictionary {
         let score = ChineseShapeRanking.score(
           priority: hit.priority, variant: hit.variant, preferred: preferred,
           count: count, exact: isExact
-        )
+        ) - (mode == .stroke
+          ? ChineseShapeRanking.strokeChoiceBonus(
+              strokeCounts[code + "|" + hit.word] ?? 0
+            ) : 0)
         let candidate = ChineseShapeCandidate(
           text: hit.word, code: hit.code, mode: mode, variant: hit.variant,
           ambiguousVariant: (matchedVariants[hit.word]?.count ?? 0) > 1
@@ -80,7 +88,7 @@ final class ChineseShapeDictionary {
     }.prefix(maxLimit).map { $0.candidate })
   }
 
-  func remember(_ candidate: ChineseShapeCandidate) {
+  func remember(_ candidate: ChineseShapeCandidate, typedCode: String) {
     guard candidate.mode.usesShapeTable else { return }
     let word = candidate.mode.rawValue + "|" + candidate.text
     var counts = self.defaults?.dictionary(forKey: self.wordKey)
@@ -92,6 +100,22 @@ final class ChineseShapeDictionary {
       }.prefix(800).map { ($0.key, $0.value) })
     }
     self.defaults?.set(counts, forKey: self.wordKey)
+
+    // Learn only the explicitly selected glyph under the canonical stroke
+    // prefix. A match shared by Rime and Fcitx5 must not imply source bias.
+    if candidate.mode == .stroke,
+       let prefix = self.normalized(typedCode, mode: .stroke) {
+      let key = prefix + "|" + candidate.text
+      var choices = self.defaults?.dictionary(forKey: self.strokePrefixKey)
+        as? [String: Int] ?? [:]
+      choices[key] = min(160, (choices[key] ?? 0) + 1)
+      if choices.count > 1400 {
+        choices = Dictionary(uniqueKeysWithValues: choices.sorted {
+          $0.value > $1.value
+        }.prefix(800).map { ($0.key, $0.value) })
+      }
+      self.defaults?.set(choices, forKey: self.strokePrefixKey)
+    }
 
     guard !candidate.ambiguousVariant, candidate.variant == 3 || candidate.variant == 5
     else { return }
@@ -107,7 +131,8 @@ final class ChineseShapeDictionary {
 
   private func normalized(_ raw: String, mode: ChineseInputMode) -> String? {
     let code = raw.lowercased()
-    guard !code.isEmpty, code.count <= 6 else { return nil }
+    guard !code.isEmpty,
+          code.count <= (mode == .stroke ? 64 : 6) else { return nil }
     let allowed = mode == .stroke ? "nm,./" : "abcdefghijklmnopqrstuvwxyz"
     return code.allSatisfy { allowed.contains($0) } ? code : nil
   }
@@ -122,9 +147,14 @@ final class ChineseShapeDictionary {
   private func fetch(mode: ChineseInputMode, code: String,
                      prefix: Bool, limit: Int) -> [Hit] {
     guard let db = self.database else { return [] }
-    let sql = prefix
-      ? "SELECT word,code,variant,priority FROM entries WHERE method=? AND code>=? AND code<? AND code!=? ORDER BY priority LIMIT ?"
-      : "SELECT word,code,variant,priority FROM entries WHERE method=? AND code=? ORDER BY priority LIMIT ?"
+    // Short stroke prefixes use a precomputed top-240 index to avoid
+    // sorting the whole full-length Rime dictionary on every key press.
+    let shortStroke = mode == .stroke && prefix && code.count <= 3
+    let sql = shortStroke
+      ? "SELECT word,code,0 AS variant,priority FROM stroke_prefix WHERE prefix=? ORDER BY priority LIMIT ?"
+      : prefix
+        ? "SELECT word,code,variant,priority FROM entries WHERE method=? AND code>=? AND code<? AND code!=? ORDER BY priority LIMIT ?"
+        : "SELECT word,code,variant,priority FROM entries WHERE method=? AND code=? ORDER BY priority LIMIT ?"
     var statement: OpaquePointer?
     guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK
     else { sqlite3_finalize(statement); return [] }
@@ -134,14 +164,19 @@ final class ChineseShapeDictionary {
     func bind(_ string: String, index: Int32) {
       _ = string.withCString { sqlite3_bind_text(statement, index, $0, -1, destructor) }
     }
-    bind(mode.rawValue, index: 1)
-    bind(code, index: 2)
-    if prefix {
-      bind(code + "\u{10FFFF}", index: 3)
-      bind(code, index: 4)
-      sqlite3_bind_int(statement, 5, Int32(limit))
+    if shortStroke {
+      bind(code, index: 1)
+      sqlite3_bind_int(statement, 2, Int32(limit))
     } else {
-      sqlite3_bind_int(statement, 3, Int32(limit))
+      bind(mode.rawValue, index: 1)
+      bind(code, index: 2)
+      if prefix {
+        bind(code + "\u{10FFFF}", index: 3)
+        bind(code, index: 4)
+        sqlite3_bind_int(statement, 5, Int32(limit))
+      } else {
+        sqlite3_bind_int(statement, 3, Int32(limit))
+      }
     }
 
     var result = [Hit]()

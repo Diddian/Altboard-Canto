@@ -21,6 +21,12 @@ class BundleValidationError(ValueError):
 APP = "Payload/Sayboard.app/"
 KEYBOARD = APP + "PlugIns/SayboardKeyboard.appex/"
 EMOJI = KEYBOARD + "emoji_catalog.tsv"
+SHAPES = KEYBOARD + "chinese-shapes.sqlite3"
+MERGED_NOTICES = (
+    KEYBOARD + "RimeStrokeLicense.txt",
+    KEYBOARD + "RimeStrokeGPLv3.txt",
+    KEYBOARD + "RimeStrokeNotice.txt",
+)
 REQUIRED = (
     APP + "Info.plist",
     KEYBOARD + "Info.plist",
@@ -36,6 +42,8 @@ def inspect_ipa(
     expect_native_emoji: bool = False,
     min_entries: int = 10_000,
     min_emoji: int = 3_000,
+    expect_merged_shapes: bool = False,
+    min_stroke_source_entries: int = 3_000,
 ) -> dict:
     try:
         with zipfile.ZipFile(path) as ipa:
@@ -45,6 +53,15 @@ def inspect_ipa(
                 raise BundleValidationError("Missing IPA payload files: " + ", ".join(sorted(absent)))
             if any(ipa.getinfo(n).file_size == 0 for n in REQUIRED):
                 raise BundleValidationError("Empty required app/keyboard resource")
+            if expect_merged_shapes:
+                merged = (SHAPES,) + MERGED_NOTICES
+                missing_merged = set(merged) - names
+                if missing_merged:
+                    raise BundleValidationError(
+                        "Missing merged stroke resources: " + ", ".join(sorted(missing_merged))
+                    )
+                if any(ipa.getinfo(n).file_size == 0 for n in merged):
+                    raise BundleValidationError("Empty merged stroke resource")
             if ipa.getinfo(KEYBOARD + "jyutping.sqlite3").file_size > 90_000_000:
                 raise BundleValidationError("Offline SQLite resource unexpectedly large")
             if expect_native_emoji and EMOJI in names:
@@ -78,6 +95,43 @@ def inspect_ipa(
                 finally:
                     db.close()
 
+            stroke_sources = {}
+            if expect_merged_shapes:
+                with tempfile.TemporaryDirectory(prefix="altboard-shape-qa-") as tmp:
+                    db_path = pathlib.Path(tmp) / "chinese-shapes.sqlite3"
+                    db_path.write_bytes(ipa.read(SHAPES))
+                    db = sqlite3.connect("file:" + str(db_path) + "?mode=ro", uri=True)
+                    try:
+                        if db.execute("PRAGMA quick_check").fetchone() != ("ok",):
+                            raise BundleValidationError("Merged stroke SQLite is corrupt")
+                        for source in ("stroke5", "rime-stroke"):
+                            count = db.execute(
+                                "SELECT COUNT(*) FROM entries "
+                                "WHERE method='stroke' AND source=?", (source,)
+                            ).fetchone()[0]
+                            if count < min_stroke_source_entries:
+                                raise BundleValidationError(
+                                    "Merged stroke source missing or too small: " + source
+                                )
+                            stroke_sources[source] = count
+                        for method in ("quick", "cangjie"):
+                            for variant in (3, 5):
+                                count = db.execute(
+                                    "SELECT COUNT(*) FROM entries "
+                                    "WHERE method=? AND variant=?",
+                                    (method, variant)
+                                ).fetchone()[0]
+                                if count < min_stroke_source_entries:
+                                    raise BundleValidationError(
+                                        f"Offline {method}{variant} source missing"
+                                    )
+                        if not db.execute(
+                            "SELECT 1 FROM stroke_prefix WHERE prefix='m' LIMIT 1"
+                        ).fetchone():
+                            raise BundleValidationError("Precomputed stroke prefix missing")
+                    finally:
+                        db.close()
+
             emoji_count = 0
             if EMOJI in names:
                 rows = ipa.read(EMOJI).decode("utf-8").splitlines()
@@ -106,6 +160,7 @@ def inspect_ipa(
                 "sqlite_indexes": len(indexes),
                 "emoji_mode": "system" if EMOJI not in names else "legacy_extension",
                 "emoji_entries": emoji_count,
+                "stroke_sources": stroke_sources,
                 "ipa_bytes": path.stat().st_size,
             }
     except (OSError, zipfile.BadZipFile, sqlite3.DatabaseError, plistlib.InvalidFileException) as error:
@@ -117,10 +172,13 @@ def main() -> None:
     parser.add_argument("ipa", type=pathlib.Path)
     parser.add_argument("--expected-sha", help="Exact 40-character GitHub commit SHA")
     parser.add_argument("--expect-native-emoji", action="store_true")
+    parser.add_argument("--expect-merged-shapes", action="store_true")
     args = parser.parse_args()
     try:
         result = inspect_ipa(
-            args.ipa, expected_sha=args.expected_sha, expect_native_emoji=args.expect_native_emoji
+            args.ipa, expected_sha=args.expected_sha,
+            expect_native_emoji=args.expect_native_emoji,
+            expect_merged_shapes=args.expect_merged_shapes
         )
     except BundleValidationError as error:
         parser.exit(1, "IPA INVALID: " + str(error) + "\n")

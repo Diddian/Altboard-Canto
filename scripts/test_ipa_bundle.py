@@ -16,7 +16,8 @@ SPEC.loader.exec_module(MOD)
 SHA = "a" * 40
 
 
-def fixture(directory, *, legacy=False, extension_sha=SHA, missing=None):
+def fixture(directory, *, legacy=False, extension_sha=SHA, missing=None,
+            merged_shapes=False):
     directory = pathlib.Path(directory)
     sqlite_file = directory / "jyutping.sqlite3"
     db = sqlite3.connect(sqlite_file)
@@ -36,6 +37,29 @@ def fixture(directory, *, legacy=False, extension_sha=SHA, missing=None):
         }),
         MOD.KEYBOARD + "jyutping.sqlite3": sqlite_file.read_bytes(),
     }
+    if merged_shapes:
+        shapes_file = directory / "chinese-shapes.sqlite3"
+        shape_db = sqlite3.connect(shapes_file)
+        shape_db.execute(
+            "CREATE TABLE entries(method TEXT, variant INTEGER, "
+            "code TEXT, word TEXT, source TEXT)"
+        )
+        shape_db.executemany("INSERT INTO entries VALUES (?,?,?,?,?)", [
+            ("stroke", 0, "m", "一", "stroke5"),
+            ("stroke", 0, "m", "一", "rime-stroke"),
+            ("quick", 3, "aa", "昌", "quick3"),
+            ("quick", 5, "aa", "昌", "quick5"),
+            ("cangjie", 3, "aa", "昌", "cangjie3"),
+            ("cangjie", 5, "aa", "昌", "cangjie5"),
+        ])
+        shape_db.execute("CREATE TABLE stroke_prefix(prefix TEXT, word TEXT)")
+        shape_db.execute("INSERT INTO stroke_prefix VALUES ('m','一')")
+        shape_db.commit()
+        shape_db.close()
+        payload[MOD.SHAPES] = shapes_file.read_bytes()
+        payload[MOD.MERGED_NOTICES[0]] = b"LGPL-3.0 terms"
+        payload[MOD.MERGED_NOTICES[1]] = b"GPLv3 terms"
+        payload[MOD.MERGED_NOTICES[2]] = b"Rime Stroke attribution"
     if legacy:
         payload[MOD.EMOJI] = "group\tname\temoji\nSmileys\tgrin\t😀\n".encode()
     if missing:
@@ -56,6 +80,25 @@ class IPABundleTests(unittest.TestCase):
             )
             self.assertEqual(actual["emoji_mode"], "system")
             self.assertEqual(actual["sqlite_entries"], 1)
+
+    def test_merged_stroke_sources_and_notices_in_extension(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ipa = fixture(tmp, merged_shapes=True)
+            result = MOD.inspect_ipa(
+                ipa, expected_sha=SHA, expect_merged_shapes=True,
+                expect_native_emoji=True, min_entries=1,
+                min_stroke_source_entries=1
+            )
+            self.assertEqual(result["stroke_sources"]["rime-stroke"], 1)
+            self.assertEqual(result["stroke_sources"]["stroke5"], 1)
+
+    def test_merged_stroke_requires_license(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ipa = fixture(tmp, merged_shapes=True,
+                          missing=MOD.MERGED_NOTICES[0])
+            with self.assertRaisesRegex(MOD.BundleValidationError,
+                                        "Missing merged stroke resources"):
+                MOD.inspect_ipa(ipa, expect_merged_shapes=True)
 
     def test_legacy_catalog_remains_backward_compatible(self):
         with tempfile.TemporaryDirectory() as tmp:
