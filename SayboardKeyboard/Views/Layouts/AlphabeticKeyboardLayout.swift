@@ -37,6 +37,8 @@ struct AlphabeticKeyboardLayout: View {
   @State private var composition = JyutpingComposition()
   @State private var candidates = [JyutpingCandidate]()
   @State private var candidateLookupSpelling = ""
+  @State private var exactPhraseSpelling: String?
+  @State private var recognizedLatinSpelling: String?
   @State private var expandedCandidates = [JyutpingCandidate]()
   @State private var showsCandidateGrid = false
   @State private var activeLatinWord: String?
@@ -481,11 +483,22 @@ struct AlphabeticKeyboardLayout: View {
   private var candidateStrip: some View {
     GeometryReader { geometry in
       let width: CGFloat? = self.offersCantonese ? nil : geometry.size.width / 3
+      let recognizedLatin = self.recognizedLatinSpelling == self.composition.buffer
       let prioritizesChinese = self.offersCantonese && !self.composition.isEmpty
+        && !recognizedLatin
         && (self.candidateLookupSpelling != self.composition.buffer
           || !self.candidates.isEmpty)
       let corrected = self.usesShapeMode || prioritizesChinese ? nil
         : EnglishCaseSuggestion.replacement(for: self.currentLiteral)
+      let hideLatinLiteral = CantonesePhraseCommitPolicy.hidesLatinLiteral(
+        firstCandidate: self.candidates.first?.text,
+        isCurrentComposition: self.offersCantonese && !self.usesShapeMode
+          && self.trackedTextMatches
+          && !self.composition.isEmpty
+          && self.candidateLookupSpelling == self.composition.buffer,
+        hasExactEntry: self.exactPhraseSpelling == self.composition.buffer,
+        recognizesLatinWord: recognizedLatin
+      )
 
       ScrollView(.horizontal) {
         HStack(spacing: 0) {
@@ -495,7 +508,7 @@ struct AlphabeticKeyboardLayout: View {
                 self.commitShapeLatin(self.shapeLatinBuffer, addSpace: false)
               }
             }
-          } else {
+          } else if !hideLatinLiteral {
             self.suggestionCell(self.currentLiteral, width: width, showDivider: true) {
               self.latinRefreshTask?.cancel()
               self.activeLatinWord = nil
@@ -927,6 +940,13 @@ struct AlphabeticKeyboardLayout: View {
               self.composition.buffer == prefix else { return }
         let newCandidates = JyutpingDictionary.shared.candidates(for: prefix)
         guard !Task.isCancelled, self.composition.buffer == prefix else { return }
+        let exactPhrase = (newCandidates.first?.text.count ?? 0) >= 2
+          && JyutpingDictionary.shared.hasExactEntry(for: prefix)
+        let recognizedLatin = exactPhrase
+          && LatinWordSuggestions.shared.recognizesWholeWord(
+            prefix, preferred: SharedSettings().preferredSpokenLanguages
+          )
+        guard !Task.isCancelled, self.composition.buffer == prefix else { return }
         let expanded = self.showsCandidateGrid && !newCandidates.isEmpty
           ? JyutpingDictionary.shared.candidates(for: prefix, limit: 200) : []
         var transaction = Transaction(animation: nil)
@@ -934,6 +954,8 @@ struct AlphabeticKeyboardLayout: View {
         withTransaction(transaction) {
           if self.candidates != newCandidates { self.candidates = newCandidates }
           self.candidateLookupSpelling = prefix
+          self.exactPhraseSpelling = exactPhrase ? prefix : nil
+          self.recognizedLatinSpelling = recognizedLatin ? prefix : nil
           if self.expandedCandidates != expanded { self.expandedCandidates = expanded }
         }
       }
@@ -941,6 +963,8 @@ struct AlphabeticKeyboardLayout: View {
       if !self.candidates.isEmpty { self.candidates.removeAll() }
       if !self.expandedCandidates.isEmpty { self.expandedCandidates.removeAll() }
       self.candidateLookupSpelling = ""
+      self.exactPhraseSpelling = nil
+      self.recognizedLatinSpelling = nil
     }
 
     let typed = self.page == .letters
@@ -1012,6 +1036,8 @@ struct AlphabeticKeyboardLayout: View {
     self.candidates.removeAll()
     self.expandedCandidates.removeAll()
     self.candidateLookupSpelling = ""
+    self.exactPhraseSpelling = nil
+    self.recognizedLatinSpelling = nil
     self.showsCandidateGrid = false
   }
 
@@ -1240,6 +1266,27 @@ struct AlphabeticKeyboardLayout: View {
         self.updateCandidates()
       }
       return
+    }
+    // Consume a complete multi-character Cantonese reading with Space.
+    // A synchronous lookup covers a quick tap before the 24 ms debounce ends.
+    if self.offersCantonese && !self.usesShapeMode && !self.composition.isEmpty {
+      let spelling = self.composition.buffer
+      let available = self.candidateLookupSpelling == spelling && !self.candidates.isEmpty
+        ? self.candidates : JyutpingDictionary.shared.candidates(for: spelling)
+      if let first = available.first,
+         first.text.count >= 2,
+         CantonesePhraseCommitPolicy.commitsFirstOnSpace(
+           spelling: spelling, firstCandidate: first.text,
+           hasExactEntry: JyutpingDictionary.shared.hasExactEntry(for: spelling),
+           hostMatches: self.trackedTextMatches,
+           recognizesLatinWord: LatinWordSuggestions.shared.recognizesWholeWord(
+             spelling, preferred: SharedSettings().preferredSpokenLanguages
+           )
+         ) {
+        self.candidateLookupSpelling = spelling
+        self.choose(first)
+        return
+      }
     }
     self.swipeAlternatives.removeAll()
     self.nextCantoneseWords.removeAll()

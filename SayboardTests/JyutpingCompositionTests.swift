@@ -27,6 +27,41 @@ struct JyutpingCompositionTests {
     #expect(composition.buffer == "gam")
   }
 
+  @Test func cantonesePhraseCandidateAndSpaceSelection() {
+    #expect(CantonesePhraseCommitPolicy.hidesLatinLiteral(
+      firstCandidate: "幾快", isCurrentComposition: true, hasExactEntry: true
+    ))
+    #expect(!CantonesePhraseCommitPolicy.hidesLatinLiteral(
+      firstCandidate: "幾快", isCurrentComposition: false, hasExactEntry: true
+    ))
+    #expect(!CantonesePhraseCommitPolicy.hidesLatinLiteral(
+      firstCandidate: "幾", isCurrentComposition: true, hasExactEntry: true
+    ))
+    #expect(!CantonesePhraseCommitPolicy.hidesLatinLiteral(
+      firstCandidate: "幾快", isCurrentComposition: true, hasExactEntry: false
+    ))
+    #expect(CantonesePhraseCommitPolicy.commitsFirstOnSpace(
+      spelling: "gifai", firstCandidate: "幾快", hasExactEntry: true, hostMatches: true
+    ))
+    #expect(!CantonesePhraseCommitPolicy.commitsFirstOnSpace(
+      spelling: "gifai", firstCandidate: "幾快", hasExactEntry: false, hostMatches: true
+    ))
+    #expect(!CantonesePhraseCommitPolicy.commitsFirstOnSpace(
+      spelling: "gifai", firstCandidate: "幾快", hasExactEntry: true, hostMatches: false
+    ))
+    #expect(!CantonesePhraseCommitPolicy.commitsFirstOnSpace(
+      spelling: "hello", firstCandidate: nil, hasExactEntry: false, hostMatches: true
+    ))
+    #expect(!CantonesePhraseCommitPolicy.hidesLatinLiteral(
+      firstCandidate: "好咩", isCurrentComposition: true, hasExactEntry: true, recognizesLatinWord: true
+    ))
+    #expect(!CantonesePhraseCommitPolicy.commitsFirstOnSpace(
+      spelling: "home", firstCandidate: "好咩", hasExactEntry: true,
+      hostMatches: true, recognizesLatinWord: true
+    ))
+    #expect(CantoneseRomanizationVariants.variants(for: "gifai").contains("geifaai"))
+  }
+
   @Test func rejectsInvalidKeysWithoutChangingBuffer() {
     var composition = JyutpingComposition()
     #expect(composition.append("n"))

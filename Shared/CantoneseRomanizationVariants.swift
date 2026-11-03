@@ -29,6 +29,8 @@ enum CantoneseRomanizationVariants {
         "nghaiaamaa", "mhaiama", "mhaiahma"].contains(source) {
       append("mhaiaamaa")
     }
+    // Colloquial shorthand for 幾快 (gei2 faai3); do not apply vowel shifts globally.
+    if source == "gifai" { append("geifaai") }
     if source.contains("yyu") {
       append(source.replacingOccurrences(of: "yyu", with: "yu"))
     }

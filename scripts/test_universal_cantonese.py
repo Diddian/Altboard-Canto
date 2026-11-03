@@ -112,6 +112,7 @@ class UniversalCantoneseTests(unittest.TestCase):
         known = dict(line.split("\t", 1) for line in supplemental.splitlines())
         self.assertEqual(known["你食咗飯未呀"], "nei5 sik6 zo2 faan6 mei6 aa3")
         self.assertEqual(known["食塞米啦你"], "sik6 sak1 mai5 laa1 nei5")
+        self.assertEqual(known["幾快"], "gei2 faai3")
         self.assertNotIn("食塞埋你", known)
         self.assertGreaterEqual(sum(len(word) >= 9 for word in known), 500)
         self.assertTrue(all(len(word) == len(reading.split()) for word, reading in known.items()))
