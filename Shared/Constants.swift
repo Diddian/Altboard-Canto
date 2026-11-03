@@ -145,6 +145,10 @@ enum SharedKey {
   static let keyboardShowSettingsKey = "keyboardShowSettingsKey"
   static let keyboardSwipeTypingEnabled = "keyboardSwipeTypingEnabled"
   static let keyboardTouchDebugOverlay = "keyboardTouchDebugOverlay"
+  static let keyboardAdaptiveTouchEnabled = "canto.keyboard.adaptiveTouchEnabled"
+  static let keyboardSwipeDiagnosticsEnabled = "canto.keyboard.swipeDiagnosticsEnabled"
+  static let experimentalLiveDictationEnabled = "canto.dictation.experimentalLiveEnabled"
+  static let experimentalMeetingRecordEnabled = "canto.dictation.experimentalMeetingEnabled"
   static let keyboardHapticDriver = "keyboardHapticDriver"
   static let keyboardAutoCapitalizationEnabled = "keyboardAutoCapitalizationEnabled"
   static let keyboardTypingLanguage = "keyboardTypingLanguage" // Legacy: ignored by Alphabet.
@@ -201,6 +205,7 @@ enum HistoryRetentionPolicy: String, CaseIterable, Sendable {
 
 enum DarwinNotificationName {
   static let transcriptionReady = "app.sayboard.transcriptionReady"
+  static let experimentalLiveTranscriptUpdated = "app.sayboard.experimentalLiveTranscriptUpdated"
   static let voiceProgressUpdated = "app.sayboard.voiceProgressUpdated"
   static let dictationStarted = "app.sayboard.dictationStarted"
   static let dictationStopped = "app.sayboard.dictationStopped"

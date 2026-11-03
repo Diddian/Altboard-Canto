@@ -51,6 +51,24 @@ for order in [LetterKeyArrangement.qwerty, .qwertz] {
     precondition(decoded.first == word, "revisited letters: \\(word) -> \\(decoded)")
   }
 }
+// Long, backtracking and crossing paths must not vanish solely due to length.
+for order in [LetterKeyArrangement.qwerty, .qwertz] {
+  for word in ["penetrate", "strange", "tight", "intervention"] {
+    let ideal = stroke(word, order: order)
+    let decoded = LatinSwipeDecoder.rank(
+      path: ideal, arrangement: order, fullWidth: 440,
+      words: ["world", "hello", "through", word]
+    )
+    precondition(decoded.first == word, "long swipe path \(word): \(decoded)")
+  }
+}
+let bounded = LatinSwipeSession()
+let longTrace = stroke("penetrate", order: .qwerty)
+bounded.begin(longTrace[0], arrangement: .qwerty, width: 440)
+for _ in 0..<20 {
+  for point in longTrace.dropFirst() { bounded.append(point, arrangement: .qwerty, width: 440) }
+}
+precondition(bounded.points.count <= 384, "swipe points must remain bounded")
 // A contraction is swiped by its letters; apostrophes are restored by lexicon.
 for order in [LetterKeyArrangement.qwerty, .qwertz] {
   let contractions = LatinSwipeDecoder.rank(

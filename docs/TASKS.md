@@ -20,9 +20,25 @@ the versioned task board until Issues are enabled.
 Statuses: [x] code implemented; [ ] pending / requires verification.
 Do not mark device behavior verified without physical iPhone testing.
 
+## Experimental 2026-11-03 candidate — requested combined SideStore IPA
+
+This is **not** physical-device acceptance. Experimental toggles remain disabled
+by default. See `docs/EXPERIMENTAL-IPA-DEVICE-CHECKS.md` for live ASR,
+15-minute meeting rollover and Swipe/Touch acceptance checks.
+
+Implementation scope: native document proxy marked-text updates with a
+session token and final reconciliation; sequential Qwen3 3s speech chunks;
+separate long-form meeting recording with 8s ASR chunks and approximate 15-minute
+time-based rotation; grouped local audio and transcript manifest; revised
+Swipe/DTW and expanded starter words; opt-in local neighboring-key touch
+boundary learning and counters. CPU inference speed, prolonged background
+recording, exact sample-level rollover and safe edits inside arbitrary host
+apps are **not yet validated**. Avoid promising full native streaming or
+pixel-perfect UI based only on CI.
+
 ## P0 (next implementation) — Fast Live Dictation on the normal microphone (T-019)
 
-**Status: [ ] planned; no production code changed.** User-confirmed target:
+**Status: experimental code prepared, pending Xcode and physical iPhone verification.** User-confirmed target:
 the existing microphone on Altboard's normal keyboard should show recognized
 speech in the active host text field while speaking, using the *already
 downloaded* offline Qwen3-ASR 1.7B ONNX model. Do not mistake a recording
@@ -74,7 +90,7 @@ Keep existing tap-to-stop/batch dictation as the safe fallback until iPhone QA.
 
 ## P1 (after T-019) — Experimental Meeting Record (T-020)
 
-**Status: [ ] planned, default OFF.** Separate long-form recording from normal
+**Status: experimental recorder, UI and single-meeting index prepared, default OFF; 2-hour real device QA pending.** Separate long-form recording from normal
 keyboard dictation. User enables the experiment in Settings and starts one
 meeting; the visible recording is continuous even when storage rolls over.
 
@@ -122,7 +138,7 @@ not certify new streaming dictation or meeting recording behavior.
 
 ## P0 — Swipe Typing long words, disappearing trail and opt-in learning (T-021)
 
-**NO IPA / PLAN ONLY (2026-11-03).** User reports that `penetrate`,
+**Experimental code prepared (2026-11-03); iPhone QA pending.** User reports that `penetrate`,
 `strange` and `tight` produce no recognized word/candidates, sometimes
 after crossing/revisiting the swipe path; ChatGPT accepts swipe input but the
 brush trail becomes invisible after several gestures, while the app's own

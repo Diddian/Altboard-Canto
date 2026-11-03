@@ -34,7 +34,7 @@ struct KeyboardSettingsView: View {
           .pickerStyle(.segmented)
           Toggle("Auto-capitalize Sentences", isOn: self.$autoCapitalizationEnabled)
           Toggle("Swipe Typing (English / German · Beta)", isOn: self.$swipeTypingEnabled)
-          Text("Glide through letters to insert a word. Uses an offline starter vocabulary. Disabled by default until tested on your iPhone.")
+          Text("Glide through letters to insert an English or German word. Experimental until verified on your iPhone.")
             .font(.footnote)
             .foregroundStyle(.secondary)
           if SharedSettings().preferredSpokenLanguages.contains("yue") {
@@ -47,6 +47,17 @@ struct KeyboardSettingsView: View {
         Text("Layout")
       } footer: {
         Text("Alphabet and Symbols always use the fixed iOS-style keyboard height.")
+      }
+
+      if self.selectedKind == .alphabetic {
+        Section("Experimental Touch Learning") {
+          NavigationLink("Swipe & Touch Diagnostics") {
+            SwipeTouchDiagnosticsView()
+          }
+          Text("Learn invisible key boundaries from repeated explicit corrections; never autocorrect or move visible keys.")
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+        }
       }
 
       Section("Feedback") {

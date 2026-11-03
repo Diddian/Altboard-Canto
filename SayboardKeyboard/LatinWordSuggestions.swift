@@ -88,6 +88,20 @@ final class LatinWordSuggestions {
     defaults?.set(counts, forKey: storageKey)
   }
 
+  /// Words saved by an explicit alternate tap are eligible for future swipes.
+  /// Raw paths and host text are never persisted.
+  func learnedSwipeWords(preferred: [String]) -> [String] {
+    let permitted = Set(LatinWordSuggestionPolicy.preferredCodes(preferred))
+    let counts = self.defaults?.dictionary(forKey: self.storageKey) as? [String: Int] ?? [:]
+    return counts.filter { entry in
+      let pieces = entry.key.split(separator: "|", maxSplits: 1).map(String.init)
+      return pieces.count == 2 && permitted.contains(pieces[0])
+        && entry.value > 0 && (2...32).contains(pieces[1].count)
+    }.sorted { $0.value > $1.value }.prefix(120).compactMap { entry in
+      entry.key.split(separator: "|", maxSplits: 1).last.map(String.init)
+    }
+  }
+
   static let commonWords: [String: [String]] = [
     "en": [
       "about", "above", "after", "again", "also", "always", "another", "answer",
@@ -103,6 +117,45 @@ final class LatinWordSuggestions {
       "music", "need", "never", "next", "night", "nothing", "now", "number",
       "often", "okay", "only", "other", "people", "place", "please", "possible",
       "question", "really", "right", "same", "school", "sentence", "should",
+      "penetrate", "penetration", "strange", "stranger", "strangely", "tight",
+      "tightly", "triangle", "translate", "translation", "transcribe",
+      "transcription", "technology", "technical", "testing", "testimony",
+      "temperature", "temporary", "important", "interesting", "interested",
+      "international", "information", "influence", "influential",
+      "difference", "different", "difficult", "difficulty", "development",
+      "developing", "developer", "deliver", "delivering", "delivery",
+      "direction", "discussion", "discover", "discovery", "description",
+      "communication", "community", "communicate", "connection",
+      "conversation", "conversational", "consider", "consideration",
+      "conclusion", "consequence", "confidence", "confident", "continue",
+      "continuation", "continuous", "correct", "correction", "correctly",
+      "character", "characteristic", "challenge", "challenging", "changeable",
+      "understanding", "understandable", "understood", "unnecessary",
+      "necessary", "necessarily", "naturally", "natural", "nature",
+      "experience", "experienced", "experiment", "experimental",
+      "environment", "everything", "everywhere", "especially", "essential",
+      "expression", "expressing", "explain", "explanation", "example",
+      "forward", "following", "function", "functionality", "future",
+      "generation", "generally", "government", "happening", "happiness",
+      "hardship", "hardware", "hospital", "immediately", "improve",
+      "improvement", "improving", "implementation", "implement",
+      "individual", "independent", "investigate", "investigation",
+      "language", "languages", "learning", "learned", "listening",
+      "literally", "location", "managing", "management", "meaning",
+      "meaningful", "measurement", "microphone", "movement",
+      "paragraph", "parliament", "particular", "particularly",
+      "performance", "performing", "permission", "personal", "personally",
+      "physical", "position", "possible", "possibly", "powerful",
+      "practical", "practice", "problem", "problems", "processing",
+      "production", "professional", "progress", "project", "projects",
+      "quality", "quantity", "questioning", "recognition", "recognize",
+      "relationship", "relationships", "reliable", "reliability",
+      "remember", "reminder", "repeated", "repeating", "replacement",
+      "represent", "representation", "responsibility", "respond",
+      "response", "satisfaction", "satisfied", "situation", "software",
+      "something", "sometimes", "speaking", "specifically", "specific",
+      "standard", "standing", "struggling", "structure", "successful",
+      "sufficient", "sustainability", "system", "systematic", "systematically",
       "some", "someone", "something", "start", "still", "story", "such",
       "talk", "thank", "thanks", "that's", "that", "their", "there", "there's", "these", "thing", "think",
       "to", "of", "in", "on", "it", "it's", "is", "at", "as", "be", "by", "we", "we're", "he",

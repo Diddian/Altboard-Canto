@@ -274,6 +274,16 @@ struct SharedSettings {
     nonmutating set { defaults.set(newValue, forKey: SharedKey.keyboardAutoCapitalizationEnabled) }
   }
 
+  var experimentalLiveDictationEnabled: Bool {
+    get { defaults.bool(forKey: SharedKey.experimentalLiveDictationEnabled) }
+    nonmutating set { defaults.set(newValue, forKey: SharedKey.experimentalLiveDictationEnabled) }
+  }
+
+  var keyboardAdaptiveTouchEnabled: Bool {
+    get { defaults.bool(forKey: SharedKey.keyboardAdaptiveTouchEnabled) }
+    nonmutating set { defaults.set(newValue, forKey: SharedKey.keyboardAdaptiveTouchEnabled) }
+  }
+
   var keyboardRomanizationScheme: CantoneseRomanizationScheme {
     get {
       guard let value = defaults.string(forKey: SharedKey.keyboardRomanizationScheme) else { return .jyutping }

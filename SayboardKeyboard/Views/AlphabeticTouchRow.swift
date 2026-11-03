@@ -13,6 +13,7 @@ struct AlphabeticTouchRow: View {
   let typedContext: String?
   let completionWords: [String]
   let showTouchDebug: Bool
+  let adaptiveTouchEnabled: Bool
   let swipeEnabled: Bool
   let swipeArrangement: LetterKeyArrangement
   let swipeRowIndex: Int
@@ -30,6 +31,7 @@ struct AlphabeticTouchRow: View {
   @State private var holdTask: Task<Void, Never>?
   @State private var swipeSession = LatinSwipeSession()
   @State private var isGliding = false
+  @State private var trailUpdateCount = 0
 
   private var bandHeight: CGFloat {
     KeyboardChromeMetrics.keyHeight + self.topHitInset + self.bottomHitInset
@@ -72,7 +74,11 @@ struct AlphabeticTouchRow: View {
             horizontalInset: self.horizontalInset,
             topInset: self.topHitInset,
             keyHeight: KeyboardChromeMetrics.keyHeight,
-            weights: weights
+            weights: weights,
+            calibrations: self.adaptiveTouchEnabled
+              ? KeyboardExperimentMetrics.calibration(
+                  row: self.swipeRowIndex, keyCount: self.letters.count
+                ) : []
           )
           .allowsHitTesting(false)
         }
@@ -92,6 +98,11 @@ struct AlphabeticTouchRow: View {
             self.finishTouch(at: point, width: geometry.size.width, weights: weights)
           },
           onCancelled: {
+            KeyboardExperimentMetrics.recordGesture(
+              points: self.swipeSession.points.count,
+              trailUpdates: self.trailUpdateCount, matches: 0, reason: "cancelled"
+            )
+            KeyboardTouchLearning.shared.invalidate()
             self.onSwipePath([])
             self.reset()
           }
@@ -116,7 +127,11 @@ struct AlphabeticTouchRow: View {
       width: Double(width),
       keyCount: self.letters.count,
       horizontalInset: Double(self.horizontalInset),
-      weights: weights
+      weights: weights,
+      calibrations: self.adaptiveTouchEnabled
+        ? KeyboardExperimentMetrics.calibration(
+            row: self.swipeRowIndex, keyCount: self.letters.count
+          ) : []
     )
   }
 
@@ -143,6 +158,7 @@ struct AlphabeticTouchRow: View {
   }
 
   private func beginTouch(at point: CGPoint, width: CGFloat, weights: [Double]) {
+    self.trailUpdateCount = 0
     self.onSwipePath([])
     self.reset()
     if self.swipeEnabled {
@@ -167,9 +183,11 @@ struct AlphabeticTouchRow: View {
         // No new gesture recognizer. The already captured UIKit points draw
         // into a noninteractive Canvas above the three letter rows.
         self.onSwipePath(self.swipeSession.points)
+        self.trailUpdateCount += 1
       }
       if self.isGliding || self.swipeSession.isLikelyGlide {
         self.isGliding = true
+        KeyboardTouchLearning.shared.invalidate()
         self.holdTask?.cancel()
         self.activeIndex = nil
         return
@@ -194,6 +212,11 @@ struct AlphabeticTouchRow: View {
       let matches = LatinSwipeDecoder.rank(
         path: self.swipeSession.points, arrangement: self.swipeArrangement,
         fullWidth: self.swipeWidth(for: width), words: dictionary
+      )
+      KeyboardExperimentMetrics.recordGesture(
+        points: self.swipeSession.points.count,
+        trailUpdates: self.trailUpdateCount, matches: matches.count,
+        reason: matches.isEmpty ? "no-candidate" : "matched"
       )
       self.reset()
       if !matches.isEmpty {
@@ -245,6 +268,11 @@ struct AlphabeticTouchRow: View {
     )
     let option = self.showingAlternates ? min(self.alternateIndex, options.count - 1) : 0
     let output = options[option]
+    KeyboardTouchLearning.shared.recordTap(
+      row: self.swipeRowIndex, index: index, keyCount: self.letters.count,
+      x: Double(x), width: Double(width), inset: Double(self.horizontalInset),
+      enabled: self.adaptiveTouchEnabled
+    )
     self.reset()
     // Keep a very short highlight after quick taps, so SwiftUI can display
     // the pressed face even when down and up occur in the same frame.
@@ -291,12 +319,14 @@ private struct KeyboardTouchDebugOverlay: View {
   let topInset: CGFloat
   let keyHeight: CGFloat
   let weights: [Double]
+  let calibrations: [Double]
 
   var body: some View {
     Canvas { context, size in
       let boundaries = KeyTouchMap.boundaries(
         width: Double(size.width), keyCount: self.count,
-        horizontalInset: Double(self.horizontalInset), weights: self.weights
+        horizontalInset: Double(self.horizontalInset), weights: self.weights,
+        calibrations: self.calibrations
       )
       guard boundaries.count == self.count + 1 else { return }
       for index in 0..<self.count {

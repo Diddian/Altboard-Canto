@@ -10,8 +10,9 @@ final class AudioRecorder: Sendable {
     let waveformSamples: [Float]
   }
 
-  func startRecording(fileName: String, format: AVAudioFormat) -> URL? {
-    guard let directory = HistoryStore.shared.audioDirectoryURL else { return nil }
+  func startRecording(fileName: String, format: AVAudioFormat,
+                      directory overrideDirectory: URL? = nil) -> URL? {
+    guard let directory = overrideDirectory ?? HistoryStore.shared.audioDirectoryURL else { return nil }
     let fileURL = directory.appendingPathComponent(fileName)
     do {
       let file = try AVAudioFile(forWriting: fileURL, settings: format.settings)

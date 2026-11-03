@@ -13,7 +13,7 @@ struct LatinSwipePoint: Equatable, Sendable {
 /// Offline geometric prototype. This deliberately makes no claim to Apple
 /// QuickPath's private language model or prediction algorithm.
 enum LatinSwipeDecoder {
-  static let sampleCount = 32
+  static let sampleCount = 40
 
   static func centers(
     arrangement: LetterKeyArrangement, fullWidth: Double
@@ -96,29 +96,43 @@ enum LatinSwipeDecoder {
       .filter { $0.isASCII && $0.isLetter }
   }
 
+  /// Banded elastic alignment permits long words, turns and self-crossings.
+  /// The first cheap pass limits work before running DTW on 48 finalists.
+  private static func warpedDistance(_ a: [LatinSwipePoint],
+                                     _ b: [LatinSwipePoint]) -> Double {
+    guard a.count == b.count, !a.isEmpty else { return .infinity }
+    let size = a.count
+    let band = max(6, size / 5)
+    var previous = [Double](repeating: .infinity, count: size + 1)
+    previous[0] = 0
+    for i in 1...size {
+      var current = [Double](repeating: .infinity, count: size + 1)
+      for j in max(1, i - band)...min(size, i + band) {
+        let cost = a[i - 1].distance(to: b[j - 1])
+        current[j] = cost + min(previous[j - 1], previous[j], current[j - 1])
+      }
+      previous = current
+    }
+    return previous[size] / Double(size)
+  }
+
   static func rank(
     path: [LatinSwipePoint], arrangement: LetterKeyArrangement,
     fullWidth: Double, words: [String], limit: Int = 3
   ) -> [String] {
-    // Two-letter words such as "to" have just two meaningful key centers.
-    // Require a real stroke, then score very strictly to avoid a sliding
-    // correction being misread as a two-letter swipe.
     guard path.count >= 2, gestureLength(path) >= 45, limit > 0 else { return [] }
     let centers = centers(arrangement: arrangement, fullWidth: fullWidth)
     guard let first = path.first, let last = path.last else { return [] }
     let sampled = resample(path)
     let measuredLength = gestureLength(path)
-    var ranked = [(word: String, score: Double)]()
+    var shortlist = [(word: String, rough: Double, template: [LatinSwipePoint], short: Bool)]()
     var seen = Set<String>()
     for (frequencyOrder, raw) in words.enumerated() {
       let normalized = normalizedSpelling(raw)
       guard (2...32).contains(normalized.count), seen.insert(normalized).inserted,
-            let firstChar = normalized.first,
-            let lastChar = normalized.last,
-            let a = centers[String(firstChar)],
-            let z = centers[String(lastChar)],
-            first.distance(to: a) <= 68,
-            last.distance(to: z) <= 68
+            let firstChar = normalized.first, let lastChar = normalized.last,
+            let a = centers[String(firstChar)], let z = centers[String(lastChar)],
+            first.distance(to: a) <= 68, last.distance(to: z) <= 68
       else { continue }
       var template = [LatinSwipePoint]()
       for letter in normalized {
@@ -127,33 +141,28 @@ enum LatinSwipeDecoder {
       }
       guard template.count >= 2 else { continue }
       let templateLength = gestureLength(template)
+      let normalizedLengthCost = abs(log((measuredLength + 30) / (templateLength + 30))) * 30
       let reference = resample(template)
-      guard reference.count == sampled.count else { continue }
-      let locationCost = zip(sampled, reference).reduce(0.0) {
+      let location = zip(sampled, reference).reduce(0.0) {
         $0 + $1.0.distance(to: $1.1)
       } / Double(sampled.count)
-      let lengthPenalty = abs(measuredLength - templateLength) * 0.18
-      let endpointPenalty = 0.2 * (first.distance(to: a) + last.distance(to: z))
-      // Corpus order is a small frequency prior, never stronger than geometry.
-      let prior = log1p(Double(frequencyOrder)) * 0.25
-      // A path that turns back on itself may revisit an earlier letter;
-      // compare its full ordered geometry instead of its unique-key set.
-      let score = locationCost + lengthPenalty + endpointPenalty + prior
-      let isShortWord = normalized.count == 2
-      if isShortWord {
-        let startError = first.distance(to: a)
-        let endError = last.distance(to: z)
-        if startError <= 30 && endError <= 30
-          && abs(measuredLength - templateLength) <= 42 && score < 29 {
-          ranked.append((raw, score))
-        }
-      } else if score < 68 {
-        ranked.append((raw, score))
+      let endpoints = 0.2 * (first.distance(to: a) + last.distance(to: z))
+      let prior = log1p(Double(frequencyOrder)) * 0.18
+      let rough = location + normalizedLengthCost + endpoints + prior
+      if rough < 105 {
+        shortlist.append((word: raw, rough: rough, template: reference,
+                          short: normalized.count == 2))
       }
     }
-    return ranked.sorted { $0.score < $1.score }
-      .prefix(limit).map(\.word)
+    let shortlisted = shortlist.sorted { $0.rough < $1.rough }.prefix(48)
+    return Array(shortlisted.compactMap { candidate -> (String, Double)? in
+      let elastic = warpedDistance(sampled, candidate.template)
+      let score = candidate.rough * 0.42 + elastic * 0.58
+      guard candidate.short ? score < 28 : score < 67 else { return nil }
+      return (candidate.word, score)
+    }.sorted { $0.1 < $1.1 }.prefix(limit).map(\.0))
   }
+
 }
 
 /// One retained gesture, including moves beyond the row where it began.
@@ -172,14 +181,14 @@ final class LatinSwipeSession {
   }
 
   func append(_ point: LatinSwipePoint, arrangement: LetterKeyArrangement, width: Double) {
-    guard points.count < 160 else { return }
+    guard points.count < 384 else { return }
     let previous = points.last
     if let previous, previous.distance(to: point) < 4 { return }
     // Fill sparse UIKit events so fast cross-row swipes still visit keys.
     let distance = previous?.distance(to: point) ?? 0
     let segments = max(1, Int(ceil(distance / 18)))
     for index in 1...segments {
-      guard points.count < 160 else { break }
+      guard points.count < 384 else { break }
       let step = Double(index) / Double(segments)
       let next = previous.map {
         LatinSwipePoint(

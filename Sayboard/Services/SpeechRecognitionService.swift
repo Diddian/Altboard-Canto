@@ -43,6 +43,7 @@ final class SpeechRecognitionService: ObservableObject {
   var recordingOutputOptions = VoiceOutputConfiguration(
     cleanupEnabled: false, target: .original, register: .faithful, customLanguage: ""
   )
+  var experimentalLiveTask: Task<Void, Never>?
   var currentAudioFileName: String?
   var currentWordBoundaries: (start: Float, end: Float)?
 
@@ -68,7 +69,8 @@ final class SpeechRecognitionService: ObservableObject {
     guard !self.settings.dictationCancellationRequested else { return }
     let micAuth = self.settings.isMicrophoneAuthorized
 
-    guard !self.isRecording, !self.isStopping else {
+    guard !self.isRecording, !self.isStopping,
+          !MeetingRecordingCoordinator.shared.isRecording else {
       return
     }
     guard micAuth else {
@@ -85,6 +87,7 @@ final class SpeechRecognitionService: ObservableObject {
     self.settings.lastDictationOutcome = nil
     TranscriptionBridge.clearTranscription()
     TranscriptionBridge.clearVoiceProgress()
+    ExperimentalLiveTranscription.clear()
     self.currentAudioFileName = "\(UUID().uuidString).caf"
 
     guard self.ensureSessionActive() else {
@@ -100,6 +103,7 @@ final class SpeechRecognitionService: ObservableObject {
     self.armMaxDurationTimer()
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStarted)
     self.scheduleQwenWarmupAfterCapture()
+    self.startExperimentalLiveIfNeeded()
   }
 
   /// Warm the offline recognizer while the user speaks, not before audio
@@ -162,6 +166,7 @@ final class SpeechRecognitionService: ObservableObject {
     self.cancelMaxDurationTimer()
     self.session.deactivateTap()
     let savedSamples = self.accumulator.samples
+    await self.stopExperimentalLive()
     let stylingHost = OnboardingTextEntry.stylingHost(self.settings.hostBundleId)
 
     // Preserve the first words: capture before cold Qwen3 ONNX initialization.
@@ -205,6 +210,9 @@ final class SpeechRecognitionService: ObservableObject {
   }
 
   func cancelRecording() {
+    self.experimentalLiveTask?.cancel()
+    self.experimentalLiveTask = nil
+    ExperimentalLiveTranscription.clear()
     self.cancelMaxDurationTimer()
     self.session.deactivateTap()
     if let recording = self.audioRecorder.stopRecording() {

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// QWERTZ / QWERTY keyboard with the existing mic and a built-in offline Jyutping IME.
 struct AlphabeticKeyboardLayout: View {
@@ -46,6 +47,11 @@ struct AlphabeticKeyboardLayout: View {
     store: UserDefaults(suiteName: AppGroup.identifier)
   )
   private var showTouchDebug = false
+  @AppStorage(
+    SharedKey.keyboardAdaptiveTouchEnabled,
+    store: UserDefaults(suiteName: AppGroup.identifier)
+  )
+  private var adaptiveTouchEnabled = false
 
   private var arrangement: LetterKeyArrangement {
     LetterKeyArrangement(rawValue: self.arrangementRaw) ?? .qwertz
@@ -597,6 +603,7 @@ struct AlphabeticKeyboardLayout: View {
       typedContext: self.touchPredictionPrefix,
       completionWords: self.touchPredictionWords,
       showTouchDebug: self.showTouchDebug,
+      adaptiveTouchEnabled: self.adaptiveTouchEnabled,
       swipeEnabled: self.swipeTypingEnabled,
       swipeArrangement: self.arrangement,
       swipeRowIndex: rowIndex,
@@ -897,30 +904,48 @@ private enum AlphabeticPage {
 }
 
 
-/// Theme-aware variable-width swipe ink. The tip tapers like a brush,
-/// rather than drawing a static neon line or duplicating a touch surface.
-private struct SwipeTrailOverlay: View {
+/// Persistent UIKit painting surface, separate from the sole UIKit touch
+/// owner. SwiftUI Canvas was sometimes not redrawn after repeated host edits.
+private struct SwipeTrailOverlay: UIViewRepresentable {
   let points: [LatinSwipePoint]
 
-  var body: some View {
-    Canvas { context, _ in
-      guard points.count >= 2 else { return }
-      let last = points.count - 1
-      let ink = Color.primary.opacity(0.34)
-      for index in 1..<points.count {
-        let a = points[index - 1], b = points[index]
-        let progress = Double(index) / Double(last)
-        let width = 8.5 * (1 - progress) + 2.0
-        var stroke = Path()
-        stroke.move(to: CGPoint(x: a.x, y: a.y))
-        stroke.addLine(to: CGPoint(x: b.x, y: b.y))
-        context.stroke(
-          stroke, with: .color(ink.opacity(0.82 - 0.25 * progress)),
-          style: StrokeStyle(lineWidth: width, lineCap: .round, lineJoin: .round)
-        )
-      }
+  func makeUIView(context: Context) -> SwipeTrailDrawingView {
+    let view = SwipeTrailDrawingView(frame: .zero)
+    view.backgroundColor = .clear
+    view.isOpaque = false
+    view.isUserInteractionEnabled = false
+    return view
+  }
+
+  func updateUIView(_ view: SwipeTrailDrawingView, context: Context) {
+    view.setPoints(self.points)
+  }
+}
+
+private final class SwipeTrailDrawingView: UIView {
+  private var points = [LatinSwipePoint]()
+
+  func setPoints(_ next: [LatinSwipePoint]) {
+    guard self.points != next else { return }
+    self.points = next
+    self.setNeedsDisplay()
+  }
+
+  override func draw(_ rect: CGRect) {
+    guard self.points.count > 1, let context = UIGraphicsGetCurrentContext() else { return }
+    context.setLineCap(.round)
+    context.setLineJoin(.round)
+    let last = Double(self.points.count - 1)
+    for i in 1..<self.points.count {
+      let progress = Double(i) / last
+      let a = self.points[i - 1]
+      let b = self.points[i]
+      context.setLineWidth(CGFloat(8 * (1 - progress) + 1.6))
+      context.setStrokeColor(UIColor.label.withAlphaComponent(CGFloat(0.26 * (1 - 0.25 * progress))).cgColor)
+      context.beginPath()
+      context.move(to: CGPoint(x: a.x, y: a.y))
+      context.addLine(to: CGPoint(x: b.x, y: b.y))
+      context.strokePath()
     }
-    .allowsHitTesting(false)
-    .accessibilityHidden(true)
   }
 }

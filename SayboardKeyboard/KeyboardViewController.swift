@@ -21,6 +21,12 @@ final class KeyboardViewController: UIInputViewController {
   var llmClipboardOnly = false
   var pendingManualLLMAction: (action: LLMAction, customPromptId: UUID?)?
   var previousSpaceTap: PeriodShortcut.Tap?
+  var liveTranscriptionDocumentID: UUID?
+  var liveTranscriptionMarkedText = ""
+  var liveTranscriptionPrefix = ""
+  var liveTranscriptionRevision = 0
+  var liveTranscriptionBlockedToken: String?
+  static var blockedLiveSessionToken: String?
 
   let keyboardState = KeyboardState()
 
@@ -66,6 +72,7 @@ final class KeyboardViewController: UIInputViewController {
     KeyboardHaptics.prepare()
     Self.activeInstance = self
     self.setupTranscriptionObserver()
+    self.setupExperimentalLiveObserver()
     self.setupVoiceProgressObserver()
     self.setupSessionObservers()
     self.setupForegroundObserver()
@@ -97,10 +104,16 @@ final class KeyboardViewController: UIInputViewController {
     saveHostBundleId()
     self.keyboardState.syncOnboardingPractice(hostProcessID: self.hostProcess?.pid)
     self.hasDeferredAppearanceInsert = true
+    self.applyExperimentalLiveUpdate()
   }
 
   override func viewWillDisappear(_ animated: Bool) {
     super.viewWillDisappear(animated)
+    if self.liveTranscriptionDocumentID != nil {
+      let token = SharedSettings().dictationSessionToken
+      self.liveTranscriptionBlockedToken = token
+      Self.blockedLiveSessionToken = token
+    }
     if !self.keyboardState.isRecording, !self.keyboardState.isProcessing {
       self.keyboardState.stopLevelPolling()
     }
@@ -123,6 +136,17 @@ final class KeyboardViewController: UIInputViewController {
     }
     TranscriptionBridge.clearTranscription()
 
+    if self.liveTranscriptionBlockedToken != nil || Self.blockedLiveSessionToken != nil {
+      Self.blockedLiveSessionToken = nil
+      self.liveTranscriptionBlockedToken = nil
+      self.keyboardState.showFinalOutputPreview(text)
+      return
+    }
+    if self.completeExperimentalLiveText(text) {
+      self.copyFinalTextToClipboardIfEnabled(text)
+      self.keyboardState.showFinalOutputPreview(text)
+      return
+    }
     if self.autoApplyLLMIfNeeded(directText: text) {
       return
     }
@@ -254,6 +278,8 @@ final class KeyboardViewController: UIInputViewController {
         vc.keyboardState.voiceProcessingProgress = nil
         vc.keyboardState.clearFinalOutputPreview()
         vc.keyboardState.isRecording = true
+        vc.liveTranscriptionBlockedToken = nil
+        Self.blockedLiveSessionToken = nil
         vc.keyboardState.recordingStartedAt = SharedSettings().recordingStartedAt
         vc.keyboardState.isStartingRecording = false
         if !vc.isPerformingHistoryNavigation {
@@ -279,6 +305,11 @@ final class KeyboardViewController: UIInputViewController {
         vc.keyboardState.syncModelLoading()
         vc.keyboardState.syncDictationLock()
         vc.insertTranscribedText()
+        if vc.liveTranscriptionDocumentID != nil,
+           (SharedSettings().dictationCancellationRequested
+             || (TranscriptionBridge.readTranscription() ?? "").isEmpty) {
+          vc.cancelExperimentalLiveText()
+        }
         vc.finalizeProcessingPipeline()
       }
     }
@@ -386,6 +417,7 @@ final class KeyboardViewController: UIInputViewController {
 extension KeyboardViewController {
 
   func cancelDictationViaDarwin() {
+    self.cancelExperimentalLiveText()
     self.staleFallbackTimer?.invalidate()
     self.staleFallbackTimer = nil
     self.cancelProcessingTimeout()
@@ -524,9 +556,11 @@ extension KeyboardViewController {
       },
       deleteBackward: { [weak self] in
         self?.previousSpaceTap = nil
+        KeyboardTouchLearning.shared.recordDelete()
         self?.textDocumentProxy.deleteBackward()
       },
       deleteWordBackward: { [weak self] in
+        KeyboardTouchLearning.shared.invalidate()
         self?.deletePreviousWord()
       },
       deleteAll: { [weak self] in
@@ -558,6 +592,7 @@ extension KeyboardViewController {
         self?.requestLLMClipboardProcessing()
       },
       adjustTextPosition: { [weak self] offset in
+        KeyboardTouchLearning.shared.invalidate()
         self?.previousSpaceTap = nil
         self?.textDocumentProxy.adjustTextPosition(byCharacterOffset: offset)
       },

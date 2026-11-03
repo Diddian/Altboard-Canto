@@ -31,6 +31,17 @@ struct VerifyKeyTouchMap {
     for i in 1..<count {
       precondition(abs(boosted[i]-edges[i]) <= cell * 0.18 + 0.00001)
     }
+    var calibrated = Array(repeating: 0.0, count: count - 1)
+    calibrated[2] = -0.12
+    let adjusted = KeyTouchMap.boundaries(
+      width: width, keyCount: count, horizontalInset: inset,
+      calibrations: calibrated
+    )
+    precondition(adjusted[3] < edges[3], "right-hand correction expands right key")
+    for i in 1..<count {
+      precondition(adjusted[i] > adjusted[i - 1])
+      precondition(abs(adjusted[i] - edges[i]) <= cell * 0.18 + 0.00001)
+    }
     let weights = KeyTouchPrediction.weights(
       typed: "hel", completions: ["hello", "help", "helmet"], row: ["l", "p", "x"]
     )

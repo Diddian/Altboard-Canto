@@ -16,6 +16,19 @@ struct DictationSettingsView: View {
       } footer: {
         Text("An active session lets your keyboard start recording without switching apps. The orange microphone indicator is expected.")
       }
+      Section("Experimental (Off by Default)") {
+        Toggle("Live Qwen3 Dictation", isOn: self.$experimentalLiveEnabled)
+        Text("When using Qwen3-ASR, the keyboard may show provisional speech in the host input field. The original Stop & Transcribe remains available.")
+          .font(.footnote).foregroundStyle(.secondary)
+        Toggle("Meeting Record", isOn: self.$experimentalMeetingEnabled)
+        if self.experimentalMeetingEnabled {
+          NavigationLink("Meeting Recordings") {
+            MeetingRecordsView()
+          }
+        }
+        Text("Meeting recording keeps 15-minute audio parts in one local meeting with a combined transcript. Select Qwen3-ASR 1.7B in Models first.")
+          .font(.footnote).foregroundStyle(.secondary)
+      }
     }
     .navigationTitle("Dictation")
     .navigationBarTitleDisplayMode(.inline)
@@ -29,6 +42,12 @@ struct DictationSettingsView: View {
 
   @EnvironmentObject private var speechService: SpeechRecognitionService
   @State private var selectedAutoStopPolicy = SharedSettings().sessionAutoStopPolicy
+  @AppStorage(SharedKey.experimentalLiveDictationEnabled,
+              store: UserDefaults(suiteName: AppGroup.identifier))
+  private var experimentalLiveEnabled = false
+  @AppStorage(SharedKey.experimentalMeetingRecordEnabled,
+              store: UserDefaults(suiteName: AppGroup.identifier))
+  private var experimentalMeetingEnabled = false
 
 }
 
