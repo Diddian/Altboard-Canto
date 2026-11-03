@@ -20,22 +20,6 @@ the versioned task board until Issues are enabled.
 Statuses: [x] code implemented; [ ] pending / requires verification.
 Do not mark device behavior verified without physical iPhone testing.
 
-## Experimental 2026-11-03 candidate — requested combined SideStore IPA
-
-This is **not** physical-device acceptance. Experimental toggles remain disabled
-by default. See `docs/EXPERIMENTAL-IPA-DEVICE-CHECKS.md` for live ASR,
-15-minute meeting rollover and Swipe/Touch acceptance checks.
-
-Implementation scope: native document proxy marked-text updates with a
-session token and final reconciliation; sequential Qwen3 3s speech chunks;
-separate long-form meeting recording with 8s ASR chunks and approximate 15-minute
-time-based rotation; grouped local audio and transcript manifest; revised
-Swipe/DTW and expanded starter words; opt-in local neighboring-key touch
-boundary learning and counters. CPU inference speed, prolonged background
-recording, exact sample-level rollover and safe edits inside arbitrary host
-apps are **not yet validated**. Avoid promising full native streaming or
-pixel-perfect UI based only on CI.
-
 ## P0 (next implementation) — Fast Live Dictation on the normal microphone (T-019)
 
 **Status: experimental code prepared, pending Xcode and physical iPhone verification.** User-confirmed target:
