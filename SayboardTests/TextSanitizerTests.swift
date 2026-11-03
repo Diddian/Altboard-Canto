@@ -55,6 +55,14 @@ struct TextSanitizerTests {
   }
 
   @Test
+  func `live qwen chunks remove each repeated header`() {
+    let first = TextSanitizer.sanitize("language Cantonese<asr_text>咁你睇唔睇到？")
+    let second = TextSanitizer.sanitize("language Cantonese<asr_text>其實我而。")
+    #expect(ExperimentalSpeechSegments.append(second, to: first) ==
+      "咁你睇唔睇到？其實我而。")
+  }
+
+  @Test
   func `empty input`() {
     #expect(TextSanitizer.sanitize("").isEmpty)
   }

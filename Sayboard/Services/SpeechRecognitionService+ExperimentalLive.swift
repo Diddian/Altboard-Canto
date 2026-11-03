@@ -30,11 +30,16 @@ extension SpeechRecognitionService {
         let result = await self.qwen3Service.transcribe(audioSamples: samples)
         guard !Task.isCancelled, self.isRecording else { break }
         if case .text(let output) = result {
-          combined = ExperimentalSpeechSegments.append(output.text, to: combined)
-          revision += 1
-          ExperimentalLiveTranscription.write(sessionToken: token,
-                                               revision: revision, text: combined)
-          self.liveDictationStatus = "Live update " + String(revision) + " delivered"
+          // The native Qwen decoder may prefix each chunk with a language
+          // header. Clean every chunk before it reaches the host input field.
+          let cleaned = CantoneseOutput.normalize(TextSanitizer.sanitize(output.text))
+          if !cleaned.isEmpty {
+            combined = ExperimentalSpeechSegments.append(cleaned, to: combined)
+            revision += 1
+            ExperimentalLiveTranscription.write(sessionToken: token,
+                                                 revision: revision, text: combined)
+            self.liveDictationStatus = "Live update " + String(revision) + " delivered"
+          }
         }
         // Diagnostic is duration only. No text or audio is logged.
         let decodeSeconds = CFAbsoluteTimeGetCurrent() - started

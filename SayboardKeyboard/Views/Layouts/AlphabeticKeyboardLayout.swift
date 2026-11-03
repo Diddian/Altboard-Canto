@@ -33,6 +33,7 @@ struct AlphabeticKeyboardLayout: View {
   @State private var shapeHostAnchor: String?
   @State private var composition = JyutpingComposition()
   @State private var candidates = [JyutpingCandidate]()
+  @State private var candidateLookupSpelling = ""
   @State private var expandedCandidates = [JyutpingCandidate]()
   @State private var showsCandidateGrid = false
   @State private var activeLatinWord: String?
@@ -235,6 +236,7 @@ struct AlphabeticKeyboardLayout: View {
       self.composition.clear()
       self.candidates.removeAll()
       self.expandedCandidates.removeAll()
+      self.candidateLookupSpelling = ""
       self.showsCandidateGrid = false
     }
   }
@@ -436,7 +438,12 @@ struct AlphabeticKeyboardLayout: View {
   private var candidateStrip: some View {
     GeometryReader { geometry in
       let width = geometry.size.width / 3
-      let corrected = self.usesShapeMode ? nil
+      // Keep Latin fallbacks out of a pending or populated Cantonese row.
+      // They remain available once the current spelling has no Canto hits.
+      let prioritizesChinese = self.offersCantonese && !self.composition.isEmpty
+        && (self.candidateLookupSpelling != self.composition.buffer
+          || !self.candidates.isEmpty)
+      let corrected = self.usesShapeMode || prioritizesChinese ? nil
         : EnglishCaseSuggestion.replacement(for: self.currentLiteral)
       let firstCantoneseSlot = corrected == nil ? 1 : 2
 
@@ -478,14 +485,16 @@ struct AlphabeticKeyboardLayout: View {
             }
           }
 
-          ForEach(Array(self.latinSuggestions.enumerated()), id: \.offset) { index, suggestion in
-            self.suggestionCell(
-              suggestion.text,
-              width: width,
-              showDivider: (firstCantoneseSlot + self.candidates.count + index) % 3 != 2
-            ) {
-              if self.chooseLatinSuggestion(suggestion.text) {
-                LatinWordSuggestions.shared.remember(suggestion)
+          if !prioritizesChinese {
+            ForEach(Array(self.latinSuggestions.enumerated()), id: \.offset) { index, suggestion in
+              self.suggestionCell(
+                suggestion.text,
+                width: width,
+                showDivider: (firstCantoneseSlot + self.candidates.count + index) % 3 != 2
+              ) {
+                if self.chooseLatinSuggestion(suggestion.text) {
+                  LatinWordSuggestions.shared.remember(suggestion)
+                }
               }
             }
           }
@@ -837,25 +846,31 @@ struct AlphabeticKeyboardLayout: View {
     }
     self.shapeCandidates.removeAll()
     self.expandedShapeCandidates.removeAll()
-    self.candidates.removeAll()
-    self.expandedCandidates.removeAll()
     if self.offersCantonese && !self.composition.isEmpty {
       let prefix = self.composition.buffer
+      // Do not empty the visible row during the 24 ms debounce. The previous
+      // candidates stay visible until the matching lookup is ready, but are
+      // never selectable for a different spelling.
       self.cantoneseRefreshTask = Task { @MainActor in
-        // Yield a frame before the SQLite query so finger-down highlights and
-        // host text insertion are not delayed by synchronous candidate search.
         do { try await Task.sleep(for: .milliseconds(24)) } catch { return }
         guard !Task.isCancelled, !self.isCursorTracking,
               self.composition.buffer == prefix else { return }
         let newCandidates = JyutpingDictionary.shared.candidates(for: prefix)
         guard !Task.isCancelled, self.composition.buffer == prefix else { return }
-        self.candidates = newCandidates
-        if self.showsCandidateGrid && !newCandidates.isEmpty {
-          self.expandedCandidates = JyutpingDictionary.shared.candidates(
-            for: prefix, limit: 200
-          )
+        let expanded = self.showsCandidateGrid && !newCandidates.isEmpty
+          ? JyutpingDictionary.shared.candidates(for: prefix, limit: 200) : []
+        var transaction = Transaction(animation: nil)
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
+          if self.candidates != newCandidates { self.candidates = newCandidates }
+          self.candidateLookupSpelling = prefix
+          if self.expandedCandidates != expanded { self.expandedCandidates = expanded }
         }
       }
+    } else {
+      if !self.candidates.isEmpty { self.candidates.removeAll() }
+      if !self.expandedCandidates.isEmpty { self.expandedCandidates.removeAll() }
+      self.candidateLookupSpelling = ""
     }
 
     let typed = self.page == .letters
@@ -903,6 +918,7 @@ struct AlphabeticKeyboardLayout: View {
     self.latinSuggestions.removeAll()
     self.candidates.removeAll()
     self.expandedCandidates.removeAll()
+    self.candidateLookupSpelling = ""
     self.showsCandidateGrid = false
   }
 
@@ -925,6 +941,7 @@ struct AlphabeticKeyboardLayout: View {
     self.cantoneseRefreshTask?.cancel()
     self.candidates.removeAll()
     self.expandedCandidates.removeAll()
+    self.candidateLookupSpelling = ""
     self.showsCandidateGrid = false
   }
 
@@ -1009,6 +1026,9 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private func choose(_ candidate: JyutpingCandidate) {
+    // The prior row stays visible during debounce, but must not commit a
+    // candidate belonging to the previous spelling.
+    guard self.candidateLookupSpelling == self.composition.buffer else { return }
     guard self.trackedTextMatches else {
       self.clearComposition()
       return

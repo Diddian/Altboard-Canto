@@ -54,7 +54,9 @@ final class ChineseShapeDictionary {
     var best: [String: (candidate: ChineseShapeCandidate, score: Int)] = [:]
     var matchedVariants: [String: Set<Int>] = [:]
 
-    for hit in exact {
+    // A prefix can match both generations even when its exact code cannot.
+    // Only unambiguous explicit selections should influence generation bias.
+    for hit in exact + prefix {
       matchedVariants[hit.word, default: []].insert(hit.variant)
     }
     for (isExact, hits) in [(true, exact), (false, prefix)] {
