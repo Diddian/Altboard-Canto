@@ -105,6 +105,19 @@ struct HistoryStore: Sendable {
       settings.cantoneseCorrectionRules = rules
       settings.synchronize()
     }
+    let latinPairs = LatinSpeechCorrectionLearning.recurringRules(in: records)
+    if !latinPairs.isEmpty {
+      var learned = LatinSpeechCorrectionLearning.read(defaults: AppGroup.sharedDefaults)
+      for candidate in latinPairs {
+        guard learned.count < LatinSpeechCorrectionLearning.maximumRules,
+              !learned.contains(where: {
+                $0.language == candidate.language &&
+                $0.heard.caseInsensitiveCompare(candidate.heard) == .orderedSame
+              }) else { continue }
+        learned.append(candidate)
+      }
+      LatinSpeechCorrectionLearning.save(learned, defaults: AppGroup.sharedDefaults)
+    }
     return true
   }
 

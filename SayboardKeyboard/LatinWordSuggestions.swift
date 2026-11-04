@@ -28,6 +28,28 @@ final class LatinWordSuggestions {
     guard (2...32).contains(typed.count) else { return [] }
     var result = [LatinWordSuggestion]()
     var seen = Set<String>()
+    // Previously confirmed custom words must be searchable again, including
+    // a neutral language bucket when both English and German were enabled.
+    let selected = defaults?.dictionary(forKey: storageKey) as? [String: Int] ?? [:]
+    let supported = Set(codes.filter { $0 == "en" || $0 == "de" })
+    let learned = selected.compactMap { key, count -> (LatinWordSuggestion, Int)? in
+      let parts = key.split(separator: "|", maxSplits: 1).map(String.init)
+      guard count > 0, parts.count == 2,
+            supported.contains(parts[0]) || (parts[0] == "und" && !supported.isEmpty),
+            parts[1].hasPrefix(typed.lowercased()),
+            parts[1] != typed.lowercased(),
+            (2...32).contains(parts[1].count) else { return nil }
+      return (LatinWordSuggestion(text: parts[1], language: parts[0]), count)
+    }.sorted { $0.1 == $1.1 ? $0.0.text < $1.0.text : $0.1 > $1.1 }
+    for item in learned.prefix(min(3, limit)) {
+      let suggestion = item.0
+      if seen.insert(suggestion.text.lowercased()).inserted {
+        result.append(LatinWordSuggestion(
+          text: LatinWordSuggestionPolicy.matchCapitalization(suggestion.text, typed: typed),
+          language: suggestion.language
+        ))
+      }
+    }
     // A few bounded reviewed slang/shortform completions; never auto-expand.
     for choice in InformalNgramStore.shared.completions(
       for: typed, preferred: preferred, limit: min(3, limit)
@@ -111,8 +133,9 @@ final class LatinWordSuggestions {
     func score(_ candidate: LatinWordSuggestion) -> Int {
       let token = candidate.text.lowercased()
         .trimmingCharacters(in: CharacterSet(charactersIn: "."))
-      return (counts[candidate.id] ?? 0) * 32
-        + (weights[candidate.language + "|" + token] ?? 0)
+      let saved = (counts[candidate.id] ?? 0)
+        + (candidate.language == "und" ? 0 : (counts["und|" + token] ?? 0))
+      return saved * 32 + (weights[candidate.language + "|" + token] ?? 0)
     }
     return Array(collected.enumerated().sorted { lhs, rhs in
       let a = score(lhs.element), b = score(rhs.element)
@@ -129,6 +152,11 @@ final class LatinWordSuggestions {
     let codes = LatinWordSuggestionPolicy.preferredCodes(preferred)
       .filter { $0 == "en" || $0 == "de" }
     guard !codes.isEmpty else { return false }
+    let selected = defaults?.dictionary(forKey: storageKey) as? [String: Int] ?? [:]
+    if (selected["und|" + lower] ?? 0) > 0 ||
+       codes.contains(where: { (selected[$0 + "|" + lower] ?? 0) > 0 }) {
+      return true
+    }
     if codes.contains("en") && (lower == "i" || lower == "a") { return true }
     if codes.contains("en") && SwipeWordLexicon.shared.contains(lower) { return true }
     for code in codes {
@@ -158,15 +186,19 @@ final class LatinWordSuggestions {
     // Do not write user context back to the language model. Confirmed Latin
     // choices can only advance an existing contextual candidate three places.
     return words.enumerated().sorted { a, b in
-      let aBoost = min(3, max(0, (counts[a.element.id] ?? 0) / 2))
-      let bBoost = min(3, max(0, (counts[b.element.id] ?? 0) / 2))
+      let aCount = (counts[a.element.id] ?? 0)
+        + (counts["und|" + a.element.text.lowercased()] ?? 0)
+      let bCount = (counts[b.element.id] ?? 0)
+        + (counts["und|" + b.element.text.lowercased()] ?? 0)
+      let aBoost = min(3, max(0, aCount / 2))
+      let bBoost = min(3, max(0, bCount / 2))
       let left = a.offset - aBoost, right = b.offset - bBoost
       return left == right ? a.offset < b.offset : left < right
     }.map(\.element)
   }
 
   func remember(_ suggestion: LatinWordSuggestion) {
-    guard ["en", "de", "yue"].contains(suggestion.language) else { return }
+    guard ["en", "de", "yue", "und"].contains(suggestion.language) else { return }
     let counts = defaults?.dictionary(forKey: storageKey) as? [String: Int] ?? [:]
     defaults?.set(
       ConfirmedChoiceLearning.increment(
@@ -194,7 +226,7 @@ final class LatinWordSuggestions {
     let selectedLanguage: String?
     if matching.count == 1 { selectedLanguage = matching[0] }
     else if codes.count == 1 { selectedLanguage = codes[0] }
-    else { selectedLanguage = nil }
+    else { selectedLanguage = "und" }
     guard let selectedLanguage else { return }
     remember(LatinWordSuggestion(text: word, language: selectedLanguage))
   }
@@ -208,9 +240,18 @@ final class LatinWordSuggestions {
           let first = cleaned.first, let last = cleaned.last,
           first.isLetter, last.isLetter,
           cleaned.allSatisfy({ $0.isLetter || $0 == "'" || $0 == "’" }),
-          let language = LatinWordSuggestionPolicy.preferredCodes(preferred)
-            .filter({ $0 == "en" || $0 == "de" }).first
+          defaults != nil
     else { return false }
+    let codes = LatinWordSuggestionPolicy.preferredCodes(preferred)
+      .filter { $0 == "en" || $0 == "de" }
+    guard !codes.isEmpty else { return false }
+    let matching = codes.filter { code in
+      Self.commonWords[code]?.contains(where: {
+        $0.caseInsensitiveCompare(cleaned) == .orderedSame
+      }) == true
+    }
+    let language = matching.count == 1 ? matching[0] :
+      (codes.count == 1 ? codes[0] : "und")
     self.remember(LatinWordSuggestion(text: cleaned, language: language))
     return true
   }
@@ -218,7 +259,8 @@ final class LatinWordSuggestions {
   /// Words saved by an explicit alternate tap are eligible for future swipes.
   /// Raw paths and host text are never persisted.
   func learnedSwipeWords(preferred: [String]) -> [String] {
-    let permitted = Set(LatinWordSuggestionPolicy.preferredCodes(preferred))
+    var permitted = Set(LatinWordSuggestionPolicy.preferredCodes(preferred))
+    if !permitted.isDisjoint(with: ["en", "de"]) { permitted.insert("und") }
     let counts = self.defaults?.dictionary(forKey: self.storageKey) as? [String: Int] ?? [:]
     return counts.filter { entry in
       let pieces = entry.key.split(separator: "|", maxSplits: 1).map(String.init)

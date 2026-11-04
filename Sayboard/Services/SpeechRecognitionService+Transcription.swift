@@ -91,7 +91,11 @@ extension SpeechRecognitionService {
       let corrections = CantoneseCorrections.applyDetailed(
         rawText, customRules: savedCorrections
       )
-      let correctedText = corrections.text
+      let correctedText = LatinSpeechCorrectionLearning.apply(
+        corrections.text,
+        languages: self.recordingSpokenLanguages,
+        defaults: AppGroup.sharedDefaults
+      )
       DiagnosticLog.write(
         "voice: saved correction rules=\(savedCorrections.count) matches=\(corrections.matchedRules)"
       )
@@ -183,6 +187,7 @@ extension SpeechRecognitionService {
       audioFileName: fileName,
       waveformSamples: waveformSamples,
       originalASR: self.currentRawTranscription.isEmpty ? nil : self.currentRawTranscription,
+      recognitionLanguages: self.recordingSpokenLanguages
     )
     HistoryStore.shared.saveRecord(record)
     HistoryStore.shared.applyRetentionPolicy()
