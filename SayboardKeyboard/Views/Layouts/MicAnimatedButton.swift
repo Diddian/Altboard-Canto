@@ -277,10 +277,12 @@ struct MicAnimatedButton: View {
     let hasToken = MicrophoneHoldStopIntent.request(
       for: settings.dictationSessionToken, defaults: settings.defaults
     )
-    if self.keyboardState.isRecording {
+    if hasToken || self.keyboardState.isRecording {
+      // Always notify the main app, even before the keyboard receives its
+      // recording acknowledgement. The service defers an early stop until
+      // capture starts, and an already-recording session stops at once.
       self.proxy.stopDictation()
-    } else if !hasToken {
-      // A session without a valid token cannot be stopped reliably.
+    } else {
       self.keyboardState.isStartingRecording = false
     }
     self.lastStartTapAt = nil
