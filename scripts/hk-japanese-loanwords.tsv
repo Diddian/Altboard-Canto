@@ -1,0 +1,198 @@
+# Hong Kong Japanese-influenced vocabulary: independently selected keyboard seed entries.
+# Columns: surface<TAB>Cantonese Jyutping<TAB>domain<TAB>usage<TAB>alternative ("-" when none)
+# Every reading is Cantonese, not Japanese. Exact suggestions only; no auto-substitution.
+# Sources for independent review:
+# https://www.jointpublishing.com/publishing/港式日語：香港日文大搜查，懷舊、日常、新興300例！/
+# https://words.hk/zidin/の
+# https://words.hk/zidin/放題
+# https://blog.tamago.edu.hk/2022/05/20/本番/
+# "shared" usages are Japanese-influenced in HK, not necessarily Japanese etymological inventions.
+の	zi1	orthography	common	之
+新の城	san1 zi1 sing4	orthography	context	新之城
+優の良品	jau1 zi1 loeng4 ban2	orthography	context	優之良品
+駅	jik6	orthography	context	驛
+気	hei3	orthography	context	氣
+円	jyun4	orthography	context	圓
+本番	bun2 faan1	media	context	-
+本格	bun2 gaak3	media	community	-
+一番	jat1 faan1	media	community	-
+物語	mat6 jyu5	life	community	-
+人間蒸發	jan4 gaan1 zing1 faat3	life	common	-
+羅生門	lo4 sang1 mun4	life	common	-
+小確幸	siu2 kok3 hang6	life	common	-
+斷捨離	dyun6 se2 lei4	life	common	-
+既視感	gei3 si6 gam2	life	common	-
+違和感	wai4 wo4 gam2	life	community	-
+使用感	si2 jung6 gam2	life	community	-
+高級感	gou1 kap1 gam2	life	community	-
+素顏	sou3 ngaan4	life	common	-
+美白	mei5 baak6	life	common	-
+小物	siu2 mat6	life	community	-
+手帳	sau2 zoeng3	life	community	-
+過勞死	gwo3 lou4 sei2	life	common	-
+過勞	gwo3 lou4	life	common	-
+達人	daat6 jan4	life	common	-
+職人	zik1 jan4	life	community	-
+素人	sou3 jan4	life	community	-
+神隱	san4 jan2	life	community	-
+入手	jap6 sau2	life	community	-
+女子力	neoi5 zi2 lik6	life	community	-
+草食男	cou2 sik6 naam4	life	community	-
+草食女	cou2 sik6 neoi5	life	community	-
+月光族	jyut6 gwong1 zuk6	life	common	-
+古着	gu2 zoek3	life	community	-
+浴衣	juk6 ji1	life	community	-
+和服	wo4 fuk6	life	common	-
+榻榻米	taap3 taap3 mai5	life	common	-
+招財貓	ziu1 coi4 maau1	life	common	-
+花見	faa1 gin3	life	community	-
+人氣	jan4 hei3	marketing	common	-
+高人氣	gou1 jan4 hei3	marketing	common	-
+期間限定	kei4 gaan1 haan6 ding6	marketing	common	-
+限定	haan6 ding6	marketing	common	-
+登場	dang1 coeng4	marketing	common	-
+放送	fong3 sung3	marketing	community	-
+攻略	gung1 loek6	marketing	common	-
+特典	dak6 din2	marketing	community	-
+劇場版	kek6 coeng4 baan2	marketing	community	-
+番外篇	faan1 ngoi6 pin1	marketing	common	-
+最終回	zeoi3 zung1 wui4	marketing	community	-
+新作	san1 zok3	marketing	common	-
+新發賣	san1 faat3 maai6	marketing	community	-
+開催	hoi1 ceoi1	marketing	context	-
+激安	gik1 on1	marketing	community	-
+福袋	fuk1 doi2	marketing	common	-
+定番	ding6 faan1	marketing	community	-
+元祖	jyun4 zou2	marketing	community	-
+始動	ci2 dung6	marketing	community	-
+大公開	daai6 gung1 hoi1	marketing	common	-
+大募集	daai6 mou6 zaap6	marketing	community	-
+追加	zeoi1 gaa1	marketing	common	-
+效果拔群	haau6 gwo2 bat6 kwan4	marketing	community	-
+感謝祭	gam2 ze6 zai3	marketing	common	-
+初回限定版	co1 wui4 haan6 ding6 baan2	marketing	context	-
+宅男	zaak6 naam4	subculture	common	-
+宅女	zaak6 neoi5	subculture	common	-
+御宅	jyu6 zaak6	subculture	community	-
+毒男	duk6 naam4	subculture	community	-
+毒女	duk6 neoi5	subculture	community	-
+聲優	sing1 jau1	subculture	common	-
+同人	tung4 jan4	subculture	common	-
+同人誌	tung4 jan4 zi3	subculture	community	-
+腐女	fu6 neoi5	subculture	community	-
+萌	mang4	subculture	common	-
+萌系	mang4 hai6	subculture	community	-
+激萌	gik1 mang4	subculture	community	-
+中二病	zung1 ji6 beng6	subculture	community	-
+傲嬌	ngou6 giu1	subculture	community	-
+腹黑	fuk1 hak1	subculture	community	-
+天然呆	tin1 jin4 ngoi4	subculture	community	-
+病嬌	beng6 giu1	subculture	community	-
+殘念	caan4 nim6	subculture	community	-
+毒舌	duk6 sit3	subculture	community	-
+必殺技	bit1 saat3 gei6	subculture	common	-
+黑歷史	hak1 lik6 si2	subculture	common	-
+修羅場	sau1 lo4 coeng4	subculture	community	-
+痛車	tung3 ce1	subculture	community	-
+扭蛋	nau2 daan2	subculture	common	-
+手辦	sau2 baan6	subculture	community	-
+二次元	ji6 ci3 jyun4	subculture	community	-
+三次元	saam1 ci3 jyun4	subculture	community	-
+治癒系	zi6 jyu6 hai6	subculture	common	-
+視覺系	si6 gok3 hai6	subculture	community	-
+女僕	neoi5 buk6	subculture	community	-
+空耳	hung1 ji5	subculture	community	-
+應援	jing3 wun4	subculture	common	-
+課金	fo3 gam1	subculture	common	-
+壽司	sau6 si1	food	common	-
+刺身	ci3 san1	food	common	-
+拉麵	laai1 min6	food	common	-
+烏冬	wu1 dung1	food	common	-
+定食	ding6 sik6	food	common	-
+便當	bin6 dong1	food	common	-
+放題	fong3 tai4	food	common	-
+居酒屋	geoi1 zau2 uk1	food	common	-
+料理	liu6 lei5	food	common	-
+懷石料理	waai4 sek6 liu6 lei5	food	community	-
+蛋包飯	daan6 baau1 faan6	food	common	-
+迴轉壽司	wui4 zyun2 sau6 si1	food	common	-
+一人前	jat1 jan4 cin4	food	community	-
+章魚燒	zoeng1 jyu4 siu1	food	common	-
+玉子燒	juk6 zi2 siu1	food	common	-
+壽喜燒	sau6 hei2 siu1	food	common	-
+鐵板燒	tit3 baan2 siu1	food	common	-
+鯛魚燒	diu1 jyu4 siu1	food	community	-
+御好燒	jyu6 hou2 siu1	food	community	-
+照燒	ziu3 siu1	food	common	-
+天婦羅	tin1 fu5 lo4	food	common	-
+關東煮	gwaan1 dung1 zyu2	food	common	-
+抹茶	mut3 caa4	food	common	-
+明太子	ming4 taai3 zi2	food	common	-
+海苔	hoi2 toi4	food	common	-
+枝豆	zi1 dau6	food	common	-
+納豆	naap6 dau6	food	common	-
+玄米茶	jyun4 mai5 caa4	food	common	-
+清酒	cing1 zau2	food	common	-
+梅酒	mui4 zau2	food	common	-
+大福	daai6 fuk1	food	common	-
+玉子豆腐	juk6 zi2 dau6 fu6	food	common	-
+賞味期限	soeng2 mei6 kei4 haan6	food	community	-
+無添加	mou4 tim1 gaa1	food	community	-
+和牛	wo4 ngau4	food	common	-
+和食	wo4 sik6	food	common	-
+和風	wo4 fung1	food	common	-
+# Additional Hong Kong media, retail, food, and Japanese-derived styles.
+顏藝	ngaan4 ngai6	subculture	community	-
+反差萌	faan2 caa1 mang4	subculture	community	-
+廢萌	fai3 mang4	subculture	community	-
+御宅族	jyu6 zaak6 zuk6	subculture	community	-
+御姐	jyu6 ze2	subculture	community	-
+蘿莉控	lo4 lei6 hung3	subculture	community	-
+妹控	mui6 hung3	subculture	community	-
+絕對領域	zyut6 deoi3 ling5 wik6	subculture	community	-
+追番	zeoi1 faan1	subculture	community	-
+補番	bou2 faan1	subculture	community	-
+新番	san1 faan1	subculture	community	-
+番劇	faan1 kek6	subculture	community	-
+原作	jyun4 zok3	subculture	common	-
+動畫化	dung6 waa2 faa3	subculture	community	-
+真人化	zan1 jan4 faa3	subculture	community	-
+真人版	zan1 jan4 baan2	subculture	common	-
+黑化	hak1 faa3	subculture	community	-
+角色歌	gok3 sik1 go1	subculture	community	-
+四天王	sei3 tin1 wong4	subculture	community	-
+大魔王	daai6 mo1 wong4	subculture	community	-
+生肉	sang1 juk6	subculture	context	-
+熟肉	suk6 juk6	subculture	context	-
+劇透	kek6 tau3	subculture	common	-
+周邊	zau1 bin1	subculture	common	-
+配信	pui3 seon3	subculture	context	-
+絕版	zyut6 baan2	marketing	common	-
+初回	co1 wui4	marketing	community	-
+日系	jat6 hai6	life	common	-
+山系	saan1 hai6	life	community	-
+森系	sam1 hai6	life	community	-
+鹽系	jim4 hai6	life	community	-
+可愛系	ho2 oi3 hai6	life	community	-
+復古	fuk6 gu2	life	common	-
+開箱	hoi1 soeng1	life	common	-
+社畜	se5 cuk1	life	community	-
+鰻魚飯	maan6 jyu4 faan6	food	common	-
+燒肉	siu1 juk6	food	common	-
+燒肉放題	siu1 juk6 fong3 tai4	food	common	-
+壽司放題	sau6 si1 fong3 tai4	food	common	-
+壽司拼盤	sau6 si1 ping3 pun4	food	common	-
+刺身拼盤	ci3 san1 ping3 pun4	food	common	-
+串燒	cyun3 siu1	food	common	-
+串炸	cyun3 zaa3	food	community	-
+燒鳥	siu1 niu5	food	community	-
+大阪燒	daai6 baan2 siu1	food	common	-
+可樂餅	ho2 lok6 beng2	food	common	-
+唐揚雞	tong4 joeng4 gai1	food	community	-
+和菓子	wo4 gwo2 zi2	food	community	-
+杯麵	bui1 min6	food	common	-
+出前一丁	ceot1 cin4 jat1 ding1	food	common	-
+蟹柳	haai5 lau5	food	common	-
+巨峰	geoi6 fung1	food	common	-
+一夜干	jat1 je6 gon1	food	context	-
+御結	jyu6 git3	food	context	-

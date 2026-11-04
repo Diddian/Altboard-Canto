@@ -217,6 +217,32 @@ def read_source(input_file: str | None) -> bytes:
                 time.sleep(min(2 ** attempt, 8))
     raise RuntimeError("Could not obtain verified pinned Cantonese lexicon") from last_error
 
+def load_hk_japanese_index(path: pathlib.Path) -> list[tuple[str, str, str, str, str]]:
+    """Reviewed HK usage, Cantonese readings only; never infer Japanese on-yomi."""
+    items = []
+    seen = set()
+    categories = {"orthography", "media", "life", "marketing", "subculture", "food"}
+    usage_levels = {"common", "community", "context"}
+    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        if not line.strip() or line.startswith("#"):
+            continue
+        fields = tuple(line.split("\t"))
+        if len(fields) != 5:
+            raise ValueError(f"Invalid Japanese index row at line {line_number}")
+        surface, romanization, domain, usage, alternative = fields
+        if (not surface or surface in seen or len(surface) > 30
+                or not VALID_ROMANIZATION.fullmatch(romanization)
+                or len(surface) != len(romanization.split())
+                or domain not in categories or usage not in usage_levels
+                or not alternative):
+            raise ValueError(f"Invalid Japanese loanword at line {line_number}: {surface}")
+        seen.add(surface)
+        items.append((surface, romanization, domain, usage, alternative))
+    if len(items) < 100:
+        raise ValueError("Hong Kong Japanese-influenced vocabulary index is incomplete")
+    return items
+
+
 def compile_database(source: bytes, output: pathlib.Path, verify_upstream: bool) -> int:
     if verify_upstream:
         digest = hashlib.sha1(b"blob " + str(len(source)).encode() + b"\0" + source).hexdigest()
@@ -249,7 +275,21 @@ def compile_database(source: bytes, output: pathlib.Path, verify_upstream: bool)
         # Keep the upstream bytes/hash unchanged and additions auditable.
         supplemental = pathlib.Path(__file__).with_name("cantonese-phrases.tsv")
         reviewed = supplemental.read_text(encoding="utf-8").splitlines()
-        lines = reviewed + source.decode("utf-8").splitlines()
+        contemporary = supplemental.with_name("contemporary-cantonese.tsv")
+        japanese = load_hk_japanese_index(supplemental.with_name("hk-japanese-loanwords.tsv"))
+        lines = (
+            reviewed + contemporary.read_text(encoding="utf-8").splitlines()
+            + [f"{word}\t{reading}" for word, reading, _, _, _ in japanese]
+            + source.decode("utf-8").splitlines()
+        )
+        db.execute("""CREATE TABLE hk_japanese_lexicon (
+            word TEXT PRIMARY KEY NOT NULL,
+            romanization TEXT NOT NULL,
+            domain TEXT NOT NULL,
+            usage TEXT NOT NULL,
+            alternative TEXT NOT NULL
+        ) WITHOUT ROWID""")
+        db.executemany("INSERT INTO hk_japanese_lexicon VALUES (?,?,?,?,?)", japanese)
         db.execute("""CREATE TABLE mixed_aliases (
             alias TEXT NOT NULL,
             word TEXT NOT NULL,

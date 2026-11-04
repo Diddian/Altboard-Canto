@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct KeyboardSettingsView: View {
 
@@ -15,6 +16,14 @@ struct KeyboardSettingsView: View {
           .navigationTitle("Keyboard")
           .navigationBarTitleDisplayMode(.inline)
       }
+    }
+    .fileExporter(
+      isPresented: self.$showWordExport,
+      document: self.wordExportDocument,
+      contentType: .json,
+      defaultFilename: "Altboard-Word-Selections"
+    ) { _ in
+      self.wordExportDocument = nil
     }
   }
 
@@ -76,6 +85,15 @@ struct KeyboardSettingsView: View {
         Label("Show Settings Key", systemImage: "gearshape")
       }
 
+      if self.selectedKind == .alphabetic {
+        Button {
+          self.exportWordSelections()
+        } label: {
+          Label("Export Learned Word Counts", systemImage: "square.and.arrow.up")
+        }
+        .disabled(AppGroup.sharedDefaults == nil)
+      }
+
       KeyboardTestPreview(
         kind: self.selectedKind,
         microphoneLayout: MicrophoneKeyboardLayout(
@@ -92,6 +110,26 @@ struct KeyboardSettingsView: View {
   }
 
   @StateObject private var sensoryPulse = KeyboardSensoryPulse.shared
+  @State private var showWordExport = false
+  @State private var wordExportDocument: WordSelectionsExportDocument?
+
+  private func exportWordSelections() {
+    guard let defaults = AppGroup.sharedDefaults else { return }
+    let cantonese = defaults.dictionary(
+      forKey: CantoneseSchemePreference.candidateStorageKey
+    ) as? [String: Int] ?? [:]
+    let latin = defaults.dictionary(
+      forKey: "canto.latin.selectedSuggestions"
+    ) as? [String: Int] ?? [:]
+    let scheme = defaults.dictionary(
+      forKey: CantoneseSchemePreference.preferenceStorageKey
+    ) as? [String: Int] ?? [:]
+    guard let contents = try? PersonalVocabularyExport.encode(
+      cantonese: cantonese, latin: latin, romanization: scheme
+    ) else { return }
+    self.wordExportDocument = WordSelectionsExportDocument(content: contents)
+    self.showWordExport = true
+  }
   @AppStorage(SharedKey.keyboardShowSettingsKey, store: UserDefaults(suiteName: AppGroup.identifier))
   private var showSettingsKey = true
 
@@ -105,6 +143,25 @@ struct KeyboardSettingsView: View {
   private var letterArrangementRaw = LetterKeyArrangement.qwertz.rawValue
   @AppStorage(SharedKey.keyboardAutoCapitalizationEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
   private var autoCapitalizationEnabled = true
+}
+
+private struct WordSelectionsExportDocument: FileDocument {
+  static var readableContentTypes: [UTType] { [.json] }
+
+  let content: Data
+
+  init(content: Data) { self.content = content }
+
+  init(configuration: ReadConfiguration) throws {
+    guard let contents = configuration.file.regularFileContents else {
+      throw CocoaError(.fileReadCorruptFile)
+    }
+    self.content = contents
+  }
+
+  func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+    FileWrapper(regularFileWithContents: self.content)
+  }
 }
 
 private struct KeyboardTestPreview: View {

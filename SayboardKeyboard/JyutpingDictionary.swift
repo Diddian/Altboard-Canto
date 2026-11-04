@@ -16,6 +16,9 @@ final class JyutpingDictionary {
 
   private var database: OpaquePointer?
   private var corpusAvailable = false
+  private var curatedWordWeights = [String: Int]()
+  private var curatedGramWeights = [String: Int]()
+  private var japaneseExplicitOnly = Set<String>()
   private let defaults = UserDefaults(suiteName: AppGroup.identifier)
   private let memoryKey = CantoneseSchemePreference.candidateStorageKey
   private let schemeKey = CantoneseSchemePreference.preferenceStorageKey
@@ -35,6 +38,9 @@ final class JyutpingDictionary {
         self.corpusAvailable = sqlite3_step(corpusProbe) == SQLITE_ROW
       }
       _ = sqlite3_finalize(corpusProbe)
+      self.curatedWordWeights = self.loadCuratedCounts(table: "curated_cantonese_words")
+      self.curatedGramWeights = self.loadCuratedCounts(table: "curated_cantonese_ngrams")
+      self.japaneseExplicitOnly = self.loadJapaneseExplicitOnly()
       self.defaults?.set(true, forKey: "canto.ime.offlineDictionaryReady")
     } else {
       sqlite3_close_v2(handle)
@@ -178,6 +184,15 @@ final class JyutpingDictionary {
       }
     }
 
+    // Keep the canonical 之 available even if its upstream dictionary row
+    // falls outside the fixed lookup window for the short spelling zi/ji.
+    if ["zi", "zi1", "ji"].contains(input) {
+      gather(
+        "SELECT word,romanization FROM entries WHERE word='之' AND compact=? ORDER BY priority LIMIT ?",
+        "zi1", rank: 0
+      )
+    }
+
     // Exact single-character readings precede prefix phrases. Personal
     // selection counts still rank candidates within each result class.
     let counts = self.defaults?.dictionary(forKey: self.memoryKey) as? [String: Int] ?? [:]
@@ -192,6 +207,19 @@ final class JyutpingDictionary {
       if a != b { return a > b }
       return lhs.offset < rhs.offset
     }.map(\.element)
+
+    // Japanese-style の is pronounced as 之 (zi1) in Hong Kong signage.
+    // Retain the ordinary Chinese character first; offer の as an explicit
+    // alternate for Jyutping zi/zi1 and traditional Yale/Sidney Lau ji.
+    if ["zi", "zi1", "ji"].contains(input),
+       let special = ordered.first(where: { $0.text == "の" }) {
+      ordered.removeAll { $0.text == "の" }
+      if let index = ordered.firstIndex(where: { $0.text == "之" }) {
+        let canonical = ordered.remove(at: index)
+        ordered.insert(canonical, at: 0)
+      }
+      ordered.insert(special, at: min(1, ordered.count))
+    }
 
     // Keep authentic ng syllable candidates first, then optionally offer 唔
     // for users who type ng as shorthand for the canonical m4 negative.
@@ -472,6 +500,14 @@ final class JyutpingDictionary {
     if self.corpusAvailable {
       for prefix in [String(text.suffix(2)), String(text.suffix(1))] {
         guard !prefix.isEmpty, words.count < bounded else { break }
+        // Short reviewed next-word examples supplement historical HKCanCor.
+        // Predict a whole word, not only the next character in its trigram.
+        for value in self.curatedNextWords(after: prefix, limit: 2) {
+          collect(value)
+        }
+        for value in self.corpusContinuations(after: prefix, limit: 2, curated: true) {
+          collect(value)
+        }
         for value in self.corpusContinuations(after: prefix, limit: bounded * 3) {
           collect(value)
         }
@@ -495,10 +531,35 @@ final class JyutpingDictionary {
     return Array(words.prefix(bounded))
   }
 
-  private func corpusContinuations(after prefix: String, limit: Int) -> [String] {
+  private func curatedNextWords(after prefix: String, limit: Int) -> [String] {
     guard let database = self.database, (1...2).contains(prefix.count) else { return [] }
-    let sql = "SELECT gram FROM corpus_ngrams WHERE gram>=? AND gram<? "
-      + "AND length(gram)>\(prefix.count) ORDER BY frequency DESC LIMIT ?"
+    let sql = "SELECT word FROM curated_cantonese_next WHERE prefix=? "
+      + "ORDER BY seed_weight DESC,word LIMIT ?"
+    var statement: OpaquePointer?
+    guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+      sqlite3_finalize(statement)
+      return []
+    }
+    defer { sqlite3_finalize(statement) }
+    let destructor = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+    _ = prefix.withCString { sqlite3_bind_text(statement, 1, $0, -1, destructor) }
+    sqlite3_bind_int(statement, 2, Int32(limit))
+    var next = [String]()
+    while sqlite3_step(statement) == SQLITE_ROW,
+          let text = sqlite3_column_text(statement, 0) {
+      next.append(String(cString: text))
+    }
+    return next
+  }
+
+  private func corpusContinuations(
+    after prefix: String, limit: Int, curated: Bool = false
+  ) -> [String] {
+    guard let database = self.database, (1...2).contains(prefix.count) else { return [] }
+    let table = curated ? "curated_cantonese_ngrams" : "corpus_ngrams"
+    let weight = curated ? "seed_weight" : "frequency"
+    let sql = "SELECT gram FROM \(table) WHERE gram>=? AND gram<? "
+      + "AND length(gram)>\(prefix.count) ORDER BY \(weight) DESC LIMIT ?"
     var statement: OpaquePointer?
     guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
       sqlite3_finalize(statement)
@@ -572,6 +633,46 @@ final class JyutpingDictionary {
     return decoded.map { JyutpingCandidate(text: $0.text, romanization: $0.romanization) }
   }
 
+  func requiresExplicitSelection(for word: String) -> Bool {
+    self.japaneseExplicitOnly.contains(word)
+  }
+
+  private func loadJapaneseExplicitOnly() -> Set<String> {
+    guard let database = self.database else { return [] }
+    var statement: OpaquePointer?
+    let sql = "SELECT word FROM hk_japanese_lexicon WHERE usage!='common'"
+    guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+      sqlite3_finalize(statement)
+      return []
+    }
+    defer { sqlite3_finalize(statement) }
+    var words = Set<String>()
+    while sqlite3_step(statement) == SQLITE_ROW,
+          let text = sqlite3_column_text(statement, 0) {
+      words.insert(String(cString: text))
+    }
+    return words
+  }
+
+  private func loadCuratedCounts(table: String) -> [String: Int] {
+    guard let database = self.database else { return [:] }
+    let sql = table == "curated_cantonese_words"
+      ? "SELECT word,seed_weight FROM curated_cantonese_words"
+      : "SELECT gram,seed_weight FROM curated_cantonese_ngrams"
+    var statement: OpaquePointer?
+    guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+      sqlite3_finalize(statement)
+      return [:]
+    }
+    defer { sqlite3_finalize(statement) }
+    var weights = [String: Int]()
+    while sqlite3_step(statement) == SQLITE_ROW,
+          let pointer = sqlite3_column_text(statement, 0) {
+      weights[String(cString: pointer)] = Int(sqlite3_column_int(statement, 1))
+    }
+    return weights
+  }
+
   private func corpusFrequency(_ key: String, table: String) -> Int {
     guard let database = self.database, !key.isEmpty else { return 0 }
     let sql = table == "corpus_words"
@@ -587,8 +688,14 @@ final class JyutpingDictionary {
     _ = key.withCString { pointer in
       sqlite3_bind_text(statement, 1, pointer, -1, destructor)
     }
-    return sqlite3_step(statement) == SQLITE_ROW
+    let observed = sqlite3_step(statement) == SQLITE_ROW
       ? Int(sqlite3_column_int(statement, 0)) : 0
+    // Editorial seed weights are not falsely presented as corpus counts.
+    // Only use a small fallback when an N-gram is absent from HKCanCor.
+    if observed > 0 { return observed }
+    let seedWeight = table == "corpus_words"
+      ? self.curatedWordWeights[key] ?? 0 : self.curatedGramWeights[key] ?? 0
+    return min(24, seedWeight * 4)
   }
 
   func remember(_ candidate: JyutpingCandidate, typed: String? = nil) {

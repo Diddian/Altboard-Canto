@@ -28,6 +28,12 @@ final class LatinWordSuggestions {
     guard (2...32).contains(typed.count) else { return [] }
     var result = [LatinWordSuggestion]()
     var seen = Set<String>()
+    // A few bounded reviewed slang/shortform completions; never auto-expand.
+    for choice in InformalNgramStore.shared.completions(
+      for: typed, preferred: preferred, limit: min(3, limit)
+    ) where choice.text.lowercased() != typed.lowercased() {
+      if seen.insert(choice.text.lowercased()).inserted { result.append(choice) }
+    }
     for code in codes where code == "en" || code == "de" {
       let words = Self.commonWords[code] ?? []
       let phrases = LatinWordSuggestionPolicy.splitPhraseCorrections(
@@ -50,10 +56,10 @@ final class LatinWordSuggestions {
     return result
   }
 
-  func choices(for typed: String, preferred: [String], limit: Int = 9) -> [LatinWordSuggestion] {
+  func choices(for typed: String, preferred: [String], context: String? = nil,
+               limit: Int = 9) -> [LatinWordSuggestion] {
     guard (2...32).contains(typed.count) else { return [] }
     let codes = LatinWordSuggestionPolicy.preferredCodes(preferred)
-    guard !codes.isEmpty else { return [] }
 
     let available = UITextChecker.availableLanguages
     let installed = LatinWordSuggestionPolicy.checkerLocales(
@@ -96,12 +102,20 @@ final class LatinWordSuggestions {
       }
     }
 
-    // Selected suggestions are learned locally, just as Cantonese choices
-    // already are. There is no collection of uncommitted typed text.
+    // Context only reorders explicit choices; personal selection counts win.
+    // Never retain host text or silently replace an abbreviation.
+    let weights = InformalNgramStore.shared.contextWeights(
+      context: context, current: typed, preferred: preferred
+    )
     let counts = defaults?.dictionary(forKey: storageKey) as? [String: Int] ?? [:]
+    func score(_ candidate: LatinWordSuggestion) -> Int {
+      let token = candidate.text.lowercased()
+        .trimmingCharacters(in: CharacterSet(charactersIn: "."))
+      return (counts[candidate.id] ?? 0) * 32
+        + (weights[candidate.language + "|" + token] ?? 0)
+    }
     return Array(collected.enumerated().sorted { lhs, rhs in
-      let a = counts[lhs.element.id] ?? 0
-      let b = counts[rhs.element.id] ?? 0
+      let a = score(lhs.element), b = score(rhs.element)
       return a == b ? lhs.offset < rhs.offset : a > b
     }.prefix(max(1, limit)).map(\.element))
   }
@@ -111,6 +125,7 @@ final class LatinWordSuggestions {
   func recognizesWholeWord(_ typed: String, preferred: [String]) -> Bool {
     guard (1...32).contains(typed.count) else { return false }
     let lower = typed.lowercased()
+    if InformalNgramStore.shared.hasTerm(typed, preferred: preferred) { return true }
     let codes = LatinWordSuggestionPolicy.preferredCodes(preferred)
       .filter { $0 == "en" || $0 == "de" }
     guard !codes.isEmpty else { return false }
@@ -132,6 +147,11 @@ final class LatinWordSuggestions {
       if error.location == NSNotFound { return true }
     }
     return false
+  }
+
+  func nextWords(after context: String?, preferred: [String], limit: Int = 6)
+    -> [LatinWordSuggestion] {
+    InformalNgramStore.shared.nextWords(after: context, preferred: preferred, limit: limit)
   }
 
   func remember(_ suggestion: LatinWordSuggestion) {
