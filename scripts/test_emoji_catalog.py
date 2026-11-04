@@ -9,6 +9,19 @@ SPEC.loader.exec_module(MOD)
 
 
 class EmojiCatalogTests(unittest.TestCase):
+    def test_bundled_unicode_17_data_and_license(self):
+        source = (ROOT / "scripts" / "data" / "emoji-test-17.0.txt").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(MOD.VERSION, source)
+        entries = MOD.parse_catalog(source)
+        self.assertGreaterEqual(len(entries), 3000)
+        self.assertIn(("Smileys & Emotion", "grinning face", "😀"), entries)
+        notice = (ROOT / "scripts" / "data" / "UnicodeLicense.txt").read_text(
+            encoding="utf-8"
+        )
+        self.assertTrue(notice.startswith("UNICODE LICENSE V3"))
+
     def test_fully_qualified_order_search_metadata(self):
         fixture = """# Version: 18.0
 # group: Smileys & Emotion

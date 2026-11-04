@@ -7,9 +7,11 @@ The extension never downloads emoji data or sends emoji searches to a server.
 import argparse
 import pathlib
 import re
-import urllib.request
 
 SOURCE = "https://www.unicode.org/Public/17.0.0/emoji/emoji-test.txt"
+# Pinned from unicode-org/unicodetools tag final-17.0-20250910.
+# CI must not depend on Unicode.org being reachable at build time.
+DATA_DIR = pathlib.Path(__file__).resolve().parent / "data"
 VERSION = "# Version: 17.0"
 EMOJI_NAME = re.compile(r"^E[0-9]+(?:\.[0-9]+)?\s+")
 
@@ -47,14 +49,10 @@ def main() -> None:
     parser.add_argument("--input", help="Optional local emoji-test.txt fixture")
     parser.add_argument("--output", default="EmojiResources/emoji_catalog.tsv")
     args = parser.parse_args()
-    if args.input:
-        source = pathlib.Path(args.input).read_text(encoding="utf-8")
-    else:
-        req = urllib.request.Request(SOURCE, headers={"User-Agent": "Altboard-Canto-EmojiBuilder"})
-        with urllib.request.urlopen(req, timeout=60) as response:
-            source = response.read().decode("utf-8")
-        if VERSION not in source:
-            raise ValueError("Unexpected Unicode Emoji version")
+    source_path = pathlib.Path(args.input) if args.input else DATA_DIR / "emoji-test-17.0.txt"
+    source = source_path.read_text(encoding="utf-8")
+    if not args.input and VERSION not in source:
+        raise ValueError("Unexpected Unicode Emoji version")
     entries = parse_catalog(source)
     if not args.input and len(entries) < 3000:
         raise ValueError(f"Incomplete emoji catalogue: {len(entries)} entries")
@@ -62,14 +60,9 @@ def main() -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text("group\tname\temoji\n" + "\n".join("\t".join(row) for row in entries) + "\n", encoding="utf-8")
     if not args.input:
-        notice_request = urllib.request.Request(
-            "https://www.unicode.org/license.txt",
-            headers={"User-Agent": "Altboard-Canto-EmojiBuilder"}
-        )
-        with urllib.request.urlopen(notice_request, timeout=60) as response:
-            license_text = response.read().decode("utf-8")
+        license_text = (DATA_DIR / "UnicodeLicense.txt").read_text(encoding="utf-8")
         if "UNICODE LICENSE V3" not in license_text:
-            raise ValueError("Unicode permission notice changed")
+            raise ValueError("Unexpected Unicode permission notice")
         (output.parent / "UnicodeLicense.txt").write_text(
             license_text, encoding="utf-8"
         )
