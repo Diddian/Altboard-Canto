@@ -55,6 +55,29 @@ class YaleAliasTests(unittest.TestCase):
             finally:
                 db.close()
 
+    def test_traditional_and_jyutping_aliases_for_common_words(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = pathlib.Path(tmp) / "common.sqlite3"
+            MOD.compile_database(
+                "殘\tcaan4\n讚\tzaan3\n哪\tnaa5\n".encode(), output,
+                verify_upstream=False
+            )
+            db = sqlite3.connect(output)
+            try:
+                for column, code, word in (
+                    ("plain", "caan", "殘"), ("yale", "chaan", "殘"),
+                    ("sidney", "chaan", "殘"), ("plain", "zaan", "讚"),
+                    ("yale", "jaan", "讚"), ("sidney", "jaan", "讚"),
+                    ("plain", "naa", "哪")
+                ):
+                    with self.subTest(column=column, code=code):
+                        self.assertEqual(db.execute(
+                            f"SELECT word FROM entries WHERE {column}=? AND word=?",
+                            (code, word)
+                        ).fetchone(), (word,))
+            finally:
+                db.close()
+
     def test_today(self):
         self.assertEqual(MOD.yale_spelling("gam1 jat6"), "gamyat")
 

@@ -49,7 +49,9 @@ final class JyutpingDictionary {
     guard !plain.isEmpty else { return [] }
 
     let boundedLimit = min(200, max(1, limit))
-    let queryLimit = max(24, boundedLimit)
+    // Fixed lookup depth keeps the first compact candidates identical to
+    // the expanded grid while avoiding 200-row lookups on every keystroke.
+    let queryLimit = 72
     var results: [JyutpingCandidate] = []
     var usedWords = Set<String>()
     var originRank = [String: Int]()
@@ -138,7 +140,7 @@ final class JyutpingDictionary {
     // lacks candidates, filtering by word length *before* SQL LIMIT.
     // Expanded candidates keep their existing broader search behavior.
     if !hasTone, (2...4).contains(plain.count), maximum >= 1,
-       results.count < boundedLimit {
+       results.count < 24 {
       let preferences = self.defaults?.dictionary(forKey: self.schemeKey) as? [String: Int] ?? [:]
       for column in CantoneseSchemePreference.lookupOrder(preferences) {
         gather(
@@ -228,7 +230,7 @@ final class JyutpingDictionary {
     }) { return true }
     return !input.contains(where: \.isNumber)
       && (self.repeatedNegationCandidate(for: input) != nil
-          || self.composedCandidate(for: input) != nil)
+          || self.composedCandidate(for: input, maxChunks: 3) != nil)
   }
 
   /// Form A唔A from a verified single-character predicate, without
@@ -263,11 +265,13 @@ final class JyutpingDictionary {
     return nil
   }
 
-  /// Use complete words from the existing indexed dictionary to assemble
-  /// two or three chunks. The finite search is bounded on every keystroke.
-  /// These are explicit word boundaries, never unverified fuzzy syllables.
-  private func composedCandidate(for spelling: String) -> JyutpingCandidate? {
-    guard (7...32).contains(spelling.count),
+  /// Use complete indexed words to assemble longer unspaced utterances.
+  /// Only two/three-chunk forms qualify for automatic Space commitment.
+  /// Longer forms remain explicit candidates until confirmed by the user.
+  private func composedCandidate(
+    for spelling: String, maxChunks: Int = 8
+  ) -> JyutpingCandidate? {
+    guard (7...52).contains(spelling.count),
           spelling.allSatisfy({ $0.isASCII && $0.isLetter }) else { return nil }
     let letters = Array(spelling)
     let preferences = self.defaults?.dictionary(forKey: self.schemeKey) as? [String: Int] ?? [:]
@@ -313,19 +317,45 @@ final class JyutpingDictionary {
       else { continue }
       return join([first, second])
     }
-    // A three-word composition also handles 其實 + 我 + 係 without
-    // requiring the full sentence to exist in the phrase table.
-    guard final <= 28 else { return nil }
-    for a in 2...min(12, final - 4) {
-      guard let first = exact(0..<a), first.text.count <= 4 else { continue }
-      for b in (a + 2)...min(a + 12, final - 2) {
-        guard let middle = exact(a..<b), middle.text.count <= 4,
-              let last = exact(b..<final), last.text.count <= 4
-        else { continue }
-        return join([first, middle, last])
+    // A three-word composition also handles 其實 + 我 + 係.
+    if final <= 28 {
+      for a in 2...min(12, final - 4) {
+        guard let first = exact(0..<a), first.text.count <= 4 else { continue }
+        for b in (a + 2)...min(a + 12, final - 2) {
+          guard let middle = exact(a..<b), middle.text.count <= 4,
+                let last = exact(b..<final), last.text.count <= 4
+          else { continue }
+          return join([first, middle, last])
+        }
       }
     }
-    return nil
+    guard maxChunks > 3, final <= 52 else { return nil }
+
+    // Bounded dynamic segmentation from verified lexicon entries. Favor
+    // fewer, longer matched words; never invent phonetic substitutions.
+    // Memoize substring results and cap SQLite probes during one refresh.
+    var paths = Array<[JyutpingCandidate]?>(repeating: nil, count: final + 1)
+    paths[0] = []
+    var probes = 0
+    for start in 0..<final {
+      guard let prefix = paths[start], prefix.count < maxChunks else { continue }
+      let upper = min(14, final - start)
+      guard upper >= 2 else { continue }
+      for length in stride(from: upper, through: 2, by: -1) {
+        if probes >= 84 { break }
+        probes += 1
+        let finish = start + length
+        guard let next = exact(start..<finish),
+              next.text.count <= 5 else { continue }
+        let proposed = prefix + [next]
+        if paths[finish] == nil || proposed.count < paths[finish]!.count {
+          paths[finish] = proposed
+        }
+      }
+    }
+    guard let chunks = paths[final], (4...maxChunks).contains(chunks.count)
+    else { return nil }
+    return join(chunks)
   }
 
   /// Offer offline, corpus-derived words immediately after a Chinese commit.

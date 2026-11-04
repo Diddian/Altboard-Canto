@@ -36,6 +36,12 @@ struct VerifyLetterHoldAlternates {
     precondition(SymbolKeyAlternates.choices(for: "+", chinese: true).contains("＋"))
     precondition(SymbolKeyAlternates.choices(for: "=", chinese: true).contains("＝"))
     precondition(SymbolKeyAlternates.choices(for: "]", chinese: true).contains("」"))
+    let apostrophe = SymbolKeyAlternates.choices(for: "'", chinese: true)
+    precondition(apostrophe.contains("「") && apostrophe.contains("」")
+                 && apostrophe.contains("『") && apostrophe.contains("』"))
+    precondition(!SymbolKeyAlternates.choices(for: "'").contains("「"))
+    let quotes = SymbolKeyAlternates.choices(for: "\"", chinese: true)
+    precondition(quotes.contains("「") && quotes.contains("』"))
     print("Long-press punctuation and context-scoped Chinese alternates: PASS")
   }
 }

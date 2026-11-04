@@ -58,8 +58,11 @@ class SymbolVisibilityTests(unittest.TestCase):
             with self.subTest(glyph=c):
                 self.assertIn(c, src)
         self.assertIn("self.characterRow(", src)
-        # ?123 is always native Western punctuation, regardless of language.
-        self.assertIn("case .numbers: self.characterRow(Self.numbersRow2)", src)
+        # ?123 key labels stay Western; long press can include Cantonese
+        # punctuation only when the user has selected Chinese.
+        self.assertIn("case .numbers: self.characterRow(Self.numbersRow2,", src)
+        self.assertIn("chineseAlternates: self.usesChinesePunctuation)", src)
+        self.assertIn("chineseAlternates: self.usesChinesePunctuation", src)
         self.assertIn("self.page == .symbols && self.usesChinesePunctuation", src)
         self.assertNotIn("chineseNumbersRow2", src)
         self.assertNotIn("chineseSymbolsRow1", src)
@@ -69,6 +72,17 @@ class SymbolVisibilityTests(unittest.TestCase):
         self.assertEqual(row(src, "symbolsRow1"), ["[", "]", "{", "}", "#", "%", "^", "*", "+", "="])
         self.assertEqual(row(src, "symbolsRow2"), ["_", "\\", "|", "~", "<", ">", "€", "£", "¥", "•"])
         self.assertIn('["。", "，", "？", "！", self.smartChineseQuote]', src)
+
+    def test_candidate_controls_and_stroke_feedback_are_visible(self):
+        src = ALPHABET.read_text()
+        self.assertIn("self.toggleCandidateGrid()", src)
+        self.assertIn("self.dismissCandidates()", src)
+        self.assertIn("private var expandedLatinCandidateGrid:", src)
+        self.assertIn('Text(verbatim: self.shapeDisplay)', src)
+        self.assertIn('self.expandedLatinSuggestions', src)
+        self.assertIn('let learnable = self.learnableLatinWord', src)
+        self.assertIn('rememberCustom(', src)
+        self.assertIn('self.clearShapeComposition()', src)
 
     def test_stroke_popups_keep_readable_font_and_filter_unavailable_glyphs(self):
         stroke = (ROOT / "SayboardKeyboard" / "Views" / "ChineseStrokeGrid.swift").read_text()

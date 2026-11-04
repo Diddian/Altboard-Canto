@@ -11,6 +11,10 @@ enum UniversalCantoneseSmoke {
     precondition(CantoneseRomanizationVariants.variants(for: "nghai").contains("mhai"))
     precondition(CantoneseRomanizationVariants.variants(for: "nghaai").contains("mhaai"))
     precondition(!CantoneseRomanizationVariants.variants(for: "ngau").contains("mau"))
+    precondition(CantoneseRomanizationVariants.variants(for: "woh").contains("wo"))
+    precondition(CantoneseRomanizationVariants.variants(for: "goh").contains("go"))
+    precondition(CantoneseRomanizationVariants.variants(for: "poh").contains("po"))
+    precondition(CantoneseRomanizationVariants.variants(for: "na").contains("naa"))
 
     precondition(CantoneseSyllableEditing.yaleAlias("zau6") == "jau")
     precondition(CantoneseSyllableEditing.yaleAlias("caan4") == "chaan")

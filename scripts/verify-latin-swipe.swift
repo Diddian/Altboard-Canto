@@ -90,7 +90,7 @@ for order in [LetterKeyArrangement.qwerty, .qwertz] {
 }
 // Colloquial English and German are swipe targets without new network data.
 for order in [LetterKeyArrangement.qwerty, .qwertz] {
-  for word in ["wanna", "gonna", "gotta", "kinda", "thinner",
+  for word in ["aite", "wanna", "gonna", "gotta", "kinda", "thinner",
                "naja", "krass", "chillen", "digga"] {
     let matches = LatinSwipeDecoder.rank(
       path: stroke(word, order: order), arrangement: order,

@@ -102,6 +102,18 @@ class SettingsContractTests(unittest.TestCase):
         self.assertLess(home.index('ModelsView()'), home.index('TextAISettingsView()'))
         self.assertNotIn('TextOutputSection(showFooter: false)', home)
 
+    def test_explicit_unknown_word_learning_is_bounded(self):
+        suggestions = (ROOT / "SayboardKeyboard/LatinWordSuggestions.swift").read_text()
+        layout = (ROOT / "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift").read_text()
+        self.assertIn('func rememberCustom(_ word: String, preferred: [String]) -> Bool', suggestions)
+        self.assertIn('self.remember(LatinWordSuggestion(text: cleaned, language: language))', suggestions)
+        self.assertIn('first.isLetter, last.isLetter', suggestions)
+        self.assertIn('"aite"', suggestions)
+        self.assertIn('let learnable = self.learnableLatinWord', layout)
+        self.assertIn('expandedLatinCandidateGrid', layout)
+        self.assertIn('Dismiss candidate suggestions', layout)
+        self.assertIn('Text(verbatim: self.shapeDisplay)', layout)
+
     def test_visibility_and_legacy_settings_stay_backward_compatible(self):
         settings = (ROOT / "Shared" / "SharedSettings.swift").read_text()
         kind = (ROOT / "Shared" / "KeyboardKind.swift").read_text()

@@ -110,6 +110,16 @@ class UniversalCantoneseTests(unittest.TestCase):
         # combinations of any syllables in the upstream dictionary.
         supplemental = (ROOT / "scripts" / "cantonese-phrases.tsv").read_text(encoding="utf-8")
         known = dict(line.split("\t", 1) for line in supplemental.splitlines())
+        for word, reading in {
+            "我": "ngo5", "你": "nei5", "妳": "naai5",
+            "佢": "keoi5", "她": "taa1", "他": "taa1",
+            "哪": "naa5", "哪個": "naa5 go3",
+            "啫係": "ze1 hai6", "呢個": "ni1 go3",
+            "嗰個": "go2 go3", "喎": "wo3", "個": "go3",
+            "我今日冇瞓過覺": "ngo5 gam1 jat6 mou5 fan3 gwo3 gaau3"
+        }.items():
+            with self.subTest(basic=word):
+                self.assertEqual(known[word], reading)
         self.assertEqual(known["你食咗飯未呀"], "nei5 sik6 zo2 faan6 mei6 aa3")
         self.assertEqual(known["食塞米啦你"], "sik6 sak1 mai5 laa1 nei5")
         self.assertEqual(known["幾快"], "gei2 faai3")
@@ -176,7 +186,13 @@ class UniversalCantoneseTests(unittest.TestCase):
             dictionary = (ROOT / "SayboardKeyboard" / "JyutpingDictionary.swift").read_text(
                 encoding="utf-8"
             )
-            self.assertIn("results.count < boundedLimit", dictionary)
+            self.assertIn("results.count < 24", dictionary)
+            # Both compact and expanded lookup use the same source order
+            # and per-index depth; only final output count may differ.
+            self.assertIn("let queryLimit = 72", dictionary)
+            self.assertIn("Array(ordered.prefix(boundedLimit))", dictionary)
+            self.assertIn("maxChunks: 3", dictionary)
+            self.assertIn("var paths = Array<[JyutpingCandidate]?>", dictionary)
             self.assertIn("AND length(word)=1 ORDER BY priority LIMIT ?", dictionary)
         finally:
             db.close()

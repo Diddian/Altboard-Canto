@@ -41,6 +41,13 @@ enum CantoneseRomanizationVariants {
     if source == "nghai" || source == "nghaai" {
       append("m" + source.dropFirst(2))
     }
+    // Colloquial optional aspirated-final spelling: woh/wo, goh/go,
+    // poh/po. Try the original reading first; never strip arbitrary h.
+    if source.count >= 3 && source.hasSuffix("oh") {
+      append(String(source.dropLast()))
+    }
+    // Short na is a common casual input for long-vowel naa (哪).
+    if source == "na" { append("naa") }
     // Common colloquial spellings of 唔係呀嘛 (m4 hai6 aa3 maa3).
     // The extra h is a typed colloquial variant, not a general vowel rule.
     if ["nghaiahma", "nghaiama", "nghaiaama", "nghaiamaa",

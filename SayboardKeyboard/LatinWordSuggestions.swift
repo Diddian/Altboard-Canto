@@ -144,6 +144,22 @@ final class LatinWordSuggestions {
     defaults?.set(counts, forKey: storageKey)
   }
 
+  /// An unfamiliar word is added only after the user selects its
+  /// quoted literal. Never learn raw gestures or unconfirmed host text.
+  @discardableResult
+  func rememberCustom(_ word: String, preferred: [String]) -> Bool {
+    let cleaned = word.lowercased()
+    guard (3...32).contains(cleaned.count),
+          let first = cleaned.first, let last = cleaned.last,
+          first.isLetter, last.isLetter,
+          cleaned.allSatisfy({ $0.isLetter || $0 == "'" || $0 == "’" }),
+          let language = LatinWordSuggestionPolicy.preferredCodes(preferred)
+            .first(where: { $0 == "en" || $0 == "de" })
+    else { return false }
+    self.remember(LatinWordSuggestion(text: cleaned, language: language))
+    return true
+  }
+
   /// Words saved by an explicit alternate tap are eligible for future swipes.
   /// Raw paths and host text are never persisted.
   func learnedSwipeWords(preferred: [String]) -> [String] {
@@ -161,7 +177,7 @@ final class LatinWordSuggestions {
   static let commonWords: [String: [String]] = [
     "en": [
       // Conversational and informal spellings are valid swipe targets.
-      "wanna", "gonna", "gotta", "kinda", "sorta", "lemme", "gimme",
+      "aite", "wanna", "gonna", "gotta", "kinda", "sorta", "lemme", "gimme",
       "dunno", "ain't", "y'all", "nope", "yup", "nah", "bruh", "sus",
       "lowkey", "highkey", "tho", "cuz", "tbh", "idk", "thinner",
       "chillin", "vibing", "awesome", "legit", "yikes", "yolo", "btw",
