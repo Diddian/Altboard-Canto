@@ -11,7 +11,7 @@ enum LLMError {
     switch self {
     case .noTextBeforeCursor, .selectText: "character.cursor.ibeam"
     case .clipboardUnavailable: "doc.on.clipboard"
-    case .storageUnavailable: "externaldrive.badge.exclamationmark"
+    case .storageUnavailable: "exclamationmark.triangle"
     }
   }
 
