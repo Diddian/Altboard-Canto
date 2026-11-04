@@ -557,25 +557,30 @@ extension KeyboardViewController {
       insertText: { [weak self] text in
         self?.previousSpaceTap = nil
         self?.textDocumentProxy.insertText(text)
+        self?.refreshHostInputTraits()
       },
       documentContextBeforeInput: { [weak self] in
         self?.textDocumentProxy.documentContextBeforeInput
       },
       insertSpace: { [weak self] in
         self?.insertSpace()
+        self?.refreshHostInputTraits()
       },
       deleteBackward: { [weak self] in
         self?.previousSpaceTap = nil
         KeyboardTouchLearning.shared.recordDelete()
         self?.textDocumentProxy.deleteBackward()
+        self?.refreshHostInputTraits()
       },
       deleteWordBackward: { [weak self] in
         KeyboardTouchLearning.shared.invalidate()
         self?.deletePreviousWord()
+        self?.refreshHostInputTraits()
       },
       deleteAll: { [weak self] in
         self?.previousSpaceTap = nil
         self?.deleteAllText()
+        self?.refreshHostInputTraits()
       },
       advanceToNextInputMode: { [weak self] in
         self?.advanceToNextInputMode()
@@ -681,6 +686,9 @@ extension KeyboardViewController {
       autocapitalizationType: proxy.autocapitalizationType ?? .sentences,
       enablesReturnKeyAutomatically: proxy.enablesReturnKeyAutomatically ?? false,
       hasText: proxy.hasText
+        || !(proxy.documentContextBeforeInput ?? "").isEmpty
+        || !(proxy.documentContextAfterInput ?? "").isEmpty
+        || !(proxy.selectedText ?? "").isEmpty
     )
     if traits != self.keyboardState.hostInputTraits {
       self.keyboardState.hostInputTraits = traits

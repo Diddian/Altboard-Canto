@@ -77,6 +77,30 @@ class UniversalCantoneseTests(unittest.TestCase):
             finally:
                 db.close()
 
+    def test_traditional_prefix_and_final_syllable_alternatives(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            dest = pathlib.Path(tmp) / "suffix.sqlite3"
+            fixture = "到\tdou3\n度\tdou6\n刀\tdou1\n"
+            BUILDER.compile_database(fixture.encode("utf-8"), dest, verify_upstream=False)
+            db = sqlite3.connect(dest)
+            try:
+                self.assertEqual(db.execute(
+                    "SELECT word FROM entries WHERE sidney=? AND word=? LIMIT 1",
+                    ("chaanyan", "殘忍")
+                ).fetchone(), ("殘忍",))
+                tails = {row[0] for row in db.execute(
+                    "SELECT word FROM entries WHERE sidney=? AND length(word)=1",
+                    ("dou",)
+                )}
+                self.assertTrue({"到", "度", "刀"}.issubset(tails))
+                source = (ROOT / "SayboardKeyboard" / "JyutpingDictionary.swift").read_text(
+                    encoding="utf-8"
+                )
+                self.assertIn("suffixCombinations(for: plain", source)
+                self.assertIn("minCharacters: 1, maxCharacters: 1", source)
+            finally:
+                db.close()
+
     def test_reviewed_long_phrases_and_mixed_scheme_aliases(self):
         with tempfile.TemporaryDirectory() as tmp:
             dest = pathlib.Path(tmp) / "mixed.sqlite3"

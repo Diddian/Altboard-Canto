@@ -108,8 +108,15 @@ final class JyutpingDictionary {
     // Compose a short sequence of complete words when no whole-phrase reading
     // exists. No large synthetic phrase table or raw keystroke history needed.
     if !hasTone, !results.contains(where: { (originRank[$0.id] ?? 3) <= 1 }) {
-      if let repeated = self.repeatedNegationCandidate(for: plain),
-         usedWords.insert(repeated.text).inserted {
+      // Preserve multi-character phrase prefixes and expand the final syllable.
+      let suffixes = self.suffixCombinations(for: plain, limit: 12)
+      if !suffixes.isEmpty {
+        for candidate in suffixes where usedWords.insert(candidate.text).inserted {
+          results.append(candidate)
+          originRank[candidate.id] = -1
+        }
+      } else if let repeated = self.repeatedNegationCandidate(for: plain),
+                usedWords.insert(repeated.text).inserted {
         results.insert(repeated, at: 0)
         originRank[repeated.id] = 1
       } else if let combined = self.composedCandidate(for: plain),
@@ -265,6 +272,75 @@ final class JyutpingDictionary {
     return nil
   }
 
+  /// Offer the final syllable's homophones after an exact phrase prefix.
+  /// Do not alter the host's uncommitted Latin text.
+  private func suffixCombinations(
+    for spelling: String, limit: Int
+  ) -> [JyutpingCandidate] {
+    guard (7...24).contains(spelling.count), limit > 0,
+          spelling.allSatisfy({ $0.isASCII && $0.isLetter }) else { return [] }
+
+    let letters = Array(spelling)
+    let preferences = self.defaults?.dictionary(forKey: self.schemeKey) as? [String: Int] ?? [:]
+    let columns = CantoneseSchemePreference.lookupOrder(preferences)
+
+    func exactMatches(
+      _ code: String, minCharacters: Int, maxCharacters: Int
+    ) -> [JyutpingCandidate] {
+      var found: [JyutpingCandidate] = []
+      var seen = Set<String>()
+      func collect(_ entries: [JyutpingCandidate]) {
+        for candidate in entries
+          where (minCharacters...maxCharacters).contains(candidate.text.count)
+            && seen.insert(candidate.text).inserted {
+          found.append(candidate)
+        }
+      }
+      for spelling in CantoneseRomanizationVariants.variants(for: code).prefix(3) {
+        for column in columns {
+          collect(self.query(
+            "SELECT word,romanization FROM entries WHERE " + column
+              + "=? ORDER BY priority LIMIT ?",
+            argument: spelling, limit: 24
+          ))
+          if found.count >= 12 { return Array(found.prefix(12)) }
+        }
+        collect(self.query(
+          "SELECT word,romanization FROM mixed_aliases "
+            + "WHERE alias=? ORDER BY priority LIMIT ?",
+          argument: spelling, limit: 24
+        ))
+        if found.count >= 12 { return Array(found.prefix(12)) }
+      }
+      return found
+    }
+
+    // Prefer the longest verified prefix and a single-character final syllable.
+    for suffixLength in 2...min(6, letters.count - 4) {
+      let split = letters.count - suffixLength
+      let headSpelling = String(letters[..<split])
+      let tailSpelling = String(letters[split...])
+      let heads = exactMatches(headSpelling, minCharacters: 2, maxCharacters: 4)
+        .filter { $0.romanization.split(separator: " ").count >= 2 }
+      guard !heads.isEmpty else { continue }
+      let tails = exactMatches(tailSpelling, minCharacters: 1, maxCharacters: 1)
+      guard !tails.isEmpty else { continue }
+
+      var results: [JyutpingCandidate] = []
+      for head in heads.prefix(2) {
+        for tail in tails {
+          results.append(JyutpingCandidate(
+            text: head.text + tail.text,
+            romanization: head.romanization + " " + tail.romanization
+          ))
+          if results.count >= limit { return results }
+        }
+      }
+      if !results.isEmpty { return results }
+    }
+    return []
+  }
+
   /// Use complete indexed words to assemble longer unspaced utterances.
   /// Only two/three-chunk forms qualify for automatic Space commitment.
   /// Longer forms remain explicit candidates until confirmed by the user.
@@ -400,7 +476,7 @@ final class JyutpingDictionary {
     "那": ["個", "裏", "裡", "邊", "時"],
     "拿": ["起", "住"],
     "嗱": ["嗱聲"],
-    "咁": ["樣", "就", "咪", "即係", "其實", "你", "我", "佢"],
+    "咁": ["樣", "就", "咪", "即係", "其實", "你", "我", "佢", "難", "好", "多"],
     "噉": ["樣", "就", "咪"],
     "即": ["係", "係話", "刻", "時", "使"],
     "啫": ["係", "係話"],
@@ -421,7 +497,6 @@ final class JyutpingDictionary {
     "點解": ["會", "你", "佢", "咁"],
     "可以": ["唔", "再", "一齊", "試"],
     "唔係": ["呀嘛", "呀", "喎", "咁", "好", "我", "呢個"],
-    "咁": ["樣", "難", "好", "多"],
     "冇": ["問題", "咩", "嘢", "所謂"]
   ]
 
