@@ -101,6 +101,13 @@ def mixed_phrase_aliases(word: str, romanization: str) -> list[str]:
                 result.append(colloquial)
         if len(result) >= 128:
             break
+    # Preserve existing reviewed colloquial spellings when long aa
+    # distinctions are corrected in the Yale/Sidney Lau indexes.
+    if word == "唔係呀嘛" and romanization == "m4 hai6 aa3 maa3":
+        for legacy in ("nghaiama", "nghaiamaa", "nghaiaama", "nghaiaamaa"):
+            if legacy not in seen:
+                seen.add(legacy)
+                result.append(legacy)
     return result
 
 
