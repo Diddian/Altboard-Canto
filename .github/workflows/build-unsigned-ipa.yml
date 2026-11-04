@@ -76,6 +76,7 @@ jobs:
           # Regression for blank keycap rows seen on physical iPhone.
           python3 -m unittest discover -s scripts -p 'test_symbol_visibility.py'
           python3 -m unittest discover -s scripts -p 'test_keyboard_initial_layout.py'
+          python3 -m unittest discover -s scripts -p 'test_keyboard_safety_contract.py'
           python3 -m unittest discover -s scripts -p 'test_emoji_catalog.py'
           python3 -m unittest discover -s scripts -p 'test_ipa_bundle.py'
           swiftc -o "$RUNNER_TEMP/punctuation-smoke" \
@@ -104,6 +105,9 @@ jobs:
           swiftc -o "$RUNNER_TEMP/microphone-press-smoke" \
             Shared/MicrophonePressPolicy.swift scripts/verify-microphone-press.swift
           "$RUNNER_TEMP/microphone-press-smoke"
+          swiftc -o "$RUNNER_TEMP/llm-bridge-smoke" \
+            Shared/LLMBridge.swift scripts/verify-llm-bridge.swift
+          "$RUNNER_TEMP/llm-bridge-smoke"
           swiftc -o "$RUNNER_TEMP/vocabulary-export-smoke" \
             Shared/PersonalVocabularyExport.swift scripts/verify-vocabulary-export.swift
           "$RUNNER_TEMP/vocabulary-export-smoke"
