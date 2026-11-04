@@ -16,6 +16,7 @@ final class KeyboardViewController: UIInputViewController {
   var pendingAutoActionText: String?
   var llmSelectedText: String?
   var llmDirectSelectedText: String?
+  var llmRequestID: UUID?
   var llmDocumentIdentifier: UUID?
   var llmSelectionContextBefore: String?
   var llmSelectionContextAfter: String?
