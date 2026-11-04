@@ -218,6 +218,7 @@ struct AlphabeticKeyboardLayout: View {
         onCursorTrackingBegan: { self.beginCursorTracking() },
         onCursorTrackingEnded: { self.endCursorTracking() }
       )
+      .id(self.keyboardState.keyboardAppearanceRevision)
       .padding(.top, Self.rowSpacing.kbScaled)
       }
     }
@@ -245,7 +246,14 @@ struct AlphabeticKeyboardLayout: View {
       }
     }
     .onAppear {
+      self.isCursorTracking = false
       self.applyHostKeyboardLayout()
+    }
+    .onChange(of: self.keyboardState.keyboardAppearanceRevision) { _, _ in
+      // Never leave alphabet rows dimmed after a host app or field switch.
+      self.isCursorTracking = false
+      self.cursorRefreshTask?.cancel()
+      self.liveSwipePath.removeAll()
     }
     .onChange(of: self.keyboardState.hostInputTraits.keyboardType) { _, _ in
       self.applyHostKeyboardLayout()
@@ -282,6 +290,7 @@ struct AlphabeticKeyboardLayout: View {
       self.updateCandidates()
     }
     .onDisappear {
+      self.isCursorTracking = false
       self.clearShapeComposition()
       self.liveSwipePath.removeAll()
       self.latinRefreshTask?.cancel()

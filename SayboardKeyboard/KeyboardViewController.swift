@@ -97,6 +97,8 @@ final class KeyboardViewController: UIInputViewController {
     }
     self.keyboardState.refresh()
     self.refreshHostInputTraits()
+    // Reactivation can reuse the same hosted SwiftUI view after an interrupted drag.
+    self.keyboardState.keyboardAppearanceRevision &+= 1
     KeyboardHaptics.prepare()
     if self.keyboardState.isRecording {
       self.keyboardState.startLevelPolling()
