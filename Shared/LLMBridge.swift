@@ -10,12 +10,16 @@ struct LLMRequest: Codable, Sendable {
 
 struct LLMBridge: Sendable {
 
-  static func writeRequest(_ request: LLMRequest) {
-    guard let url = requestFileURL else { return }
+  @discardableResult
+  static func writeRequest(_ request: LLMRequest) -> Bool {
+    guard let url = requestFileURL else { return false }
     do {
       let data = try JSONEncoder().encode(request)
       try data.write(to: url, options: [.atomic, .completeFileProtectionUnlessOpen])
-    } catch { }
+      return true
+    } catch {
+      return false
+    }
   }
 
   static func readRequest() -> LLMRequest? {
@@ -26,11 +30,15 @@ struct LLMBridge: Sendable {
     return try? JSONDecoder().decode(LLMRequest.self, from: data)
   }
 
-  static func writeResult(_ text: String) {
-    guard let url = resultFileURL else { return }
+  @discardableResult
+  static func writeResult(_ text: String) -> Bool {
+    guard let url = resultFileURL else { return false }
     do {
       try Data(text.utf8).write(to: url, options: [.atomic, .completeFileProtectionUnlessOpen])
-    } catch { }
+      return true
+    } catch {
+      return false
+    }
   }
 
   static func readResult() -> String? {
