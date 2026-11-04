@@ -146,6 +146,41 @@ class UniversalCantoneseTests(unittest.TestCase):
             finally:
                 db.close()
 
+    def test_short_prefix_backfills_single_characters_before_limit(self):
+        # Longer phrases can consume the first 24 prefix matches, leaving
+        # the compact candidate strip almost empty after length filtering.
+        db = sqlite3.connect(":memory:")
+        try:
+            db.execute("CREATE TABLE entries (word TEXT, romanization TEXT, "
+                       "plain TEXT, yale TEXT, sidney TEXT, priority INTEGER)")
+            for i in range(30):
+                db.execute("INSERT INTO entries VALUES (?, ?, ?, ?, ?, ?)",
+                           (f"短詞{i}", "gaa1 maa1", f"gaaa{i:02}", f"gaaa{i:02}",
+                            f"gaaa{i:02}", i))
+            for i, character in enumerate("㗎嘎噶架家加假嘉嫁價佳街皆戒"):
+                db.execute("INSERT INTO entries VALUES (?, ?, ?, ?, ?, ?)",
+                           (character, "gaa1", f"gaa{i:02}", f"gaa{i:02}",
+                            f"gaa{i:02}", i + 30))
+            shallow = db.execute(
+                "SELECT word FROM entries WHERE plain>=? AND plain<? "
+                "ORDER BY priority LIMIT ?", ("ga", "ga{", 24)
+            ).fetchall()
+            self.assertFalse(any(len(word) == 1 for (word,) in shallow))
+            backfill = db.execute(
+                "SELECT word FROM entries WHERE plain>=? AND plain<? "
+                "AND length(word)=1 ORDER BY priority LIMIT ?",
+                ("ga", "ga{", 24)
+            ).fetchall()
+            self.assertGreaterEqual(len(backfill), 12)
+            self.assertTrue(all(len(word) == 1 for (word,) in backfill))
+            dictionary = (ROOT / "SayboardKeyboard" / "JyutpingDictionary.swift").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("results.count < boundedLimit", dictionary)
+            self.assertIn("AND length(word)=1 ORDER BY priority LIMIT ?", dictionary)
+        finally:
+            db.close()
+
     def test_ng_for_negative_particle_in_any_word_position(self):
         examples = {
             "會唔會": ("wui5 m4 wui5", "wuingwui"),

@@ -132,6 +132,22 @@ final class JyutpingDictionary {
       (originRank[$0.id] ?? 3) >= 2 && $0.text.count > maximum
     }
 
+    // A short spelling such as "ga" may have many single-character matches,
+    // but the first 24 prefix rows can be occupied by longer phrases that
+    // the length filter above removes. Backfill only when the compact strip
+    // lacks candidates, filtering by word length *before* SQL LIMIT.
+    // Expanded candidates keep their existing broader search behavior.
+    if !hasTone, (2...4).contains(plain.count), maximum >= 1,
+       results.count < boundedLimit {
+      let preferences = self.defaults?.dictionary(forKey: self.schemeKey) as? [String: Int] ?? [:]
+      for column in CantoneseSchemePreference.lookupOrder(preferences) {
+        gather(
+          "SELECT word,romanization FROM entries WHERE \(column)>=? AND \(column)<? AND length(word)=1 ORDER BY priority LIMIT ?",
+          plain, rank: 2
+        )
+      }
+    }
+
     // Exact single-character readings precede prefix phrases. Personal
     // selection counts still rank candidates within each result class.
     let counts = self.defaults?.dictionary(forKey: self.memoryKey) as? [String: Int] ?? [:]
