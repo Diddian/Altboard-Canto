@@ -1,0 +1,52 @@
+import Foundation
+
+@main
+struct VerifyMicrophonePress {
+  static func main() {
+    var gesture = MicrophonePressPolicy()
+    precondition(!gesture.isActive)
+    precondition(gesture.begin(at: 10, state: .idle))
+    precondition(gesture.isActive)
+    precondition(!gesture.begin(at: 10.02, state: .idle))
+    precondition(!gesture.activateHold(at: 10.2))
+    precondition(gesture.release(at: 10.21) == .tap)
+    precondition(!gesture.isActive)
+    precondition(gesture.release(at: 10.5) == .none)
+
+    precondition(gesture.begin(at: 20, state: .idle))
+    precondition(gesture.activateHold(at: 20.3))
+    precondition(!gesture.activateHold(at: 20.4))
+    precondition(gesture.release(at: 21.8) == .stop)
+
+    precondition(gesture.begin(at: 30, state: .idle))
+    precondition(gesture.release(at: 30.4) == .startThenStop)
+
+    precondition(gesture.begin(at: 40, state: .recording))
+    precondition(!gesture.activateHold(at: 40.4))
+    precondition(gesture.release(at: 40.5) == .stop)
+
+    precondition(gesture.begin(at: 50, state: .recording))
+    precondition(gesture.release(at: 50.1) == .tap)
+    precondition(gesture.begin(at: 60, state: .starting))
+    precondition(gesture.release(at: 60.5) == .stop)
+    precondition(gesture.begin(at: 70, state: .locked))
+    precondition(gesture.release(at: 70.5) == .tap)
+    precondition(gesture.begin(at: 80, state: .idle))
+    gesture.cancel()
+    precondition(gesture.release(at: 81) == .none)
+
+    let suite = "altboard.test.mic.hold." + UUID().uuidString
+    guard let defaults = UserDefaults(suiteName: suite) else { fatalError("No test defaults") }
+    defer { defaults.removePersistentDomain(forName: suite) }
+    precondition(!MicrophoneHoldStopIntent.request(for: nil, defaults: defaults))
+    precondition(MicrophoneHoldStopIntent.request(for: "session-a", defaults: defaults))
+    precondition(!MicrophoneHoldStopIntent.consume(for: "session-b", defaults: defaults))
+    precondition(MicrophoneHoldStopIntent.isRequested(for: "session-a", defaults: defaults))
+    precondition(MicrophoneHoldStopIntent.consume(for: "session-a", defaults: defaults))
+    precondition(!MicrophoneHoldStopIntent.consume(for: "session-a", defaults: defaults))
+    precondition(MicrophoneHoldStopIntent.request(for: "old-session", defaults: defaults))
+    MicrophoneHoldStopIntent.clear(defaults: defaults)
+    precondition(!MicrophoneHoldStopIntent.isRequested(for: "old-session", defaults: defaults))
+    print("Microphone tap, hold, release and token-scoped stop checks passed")
+  }
+}

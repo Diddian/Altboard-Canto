@@ -101,6 +101,9 @@ jobs:
           swiftc -o "$RUNNER_TEMP/informal-ngram-smoke" \
             Shared/InformalNgramPolicy.swift scripts/verify-informal-ngram.swift
           "$RUNNER_TEMP/informal-ngram-smoke"
+          swiftc -o "$RUNNER_TEMP/microphone-press-smoke" \
+            Shared/MicrophonePressPolicy.swift scripts/verify-microphone-press.swift
+          "$RUNNER_TEMP/microphone-press-smoke"
           swiftc -o "$RUNNER_TEMP/vocabulary-export-smoke" \
             Shared/PersonalVocabularyExport.swift scripts/verify-vocabulary-export.swift
           "$RUNNER_TEMP/vocabulary-export-smoke"
