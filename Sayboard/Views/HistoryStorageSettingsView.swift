@@ -152,7 +152,7 @@ struct HistoryStorageSettingsView: View {
     .alert("Unable to remove all recordings", isPresented: self.$showHistoryDeletionError) {
       Button("OK", role: .cancel) {}
     } message: {
-      Text("Some History data could not be removed. The app kept the existing records where possible.")
+      Text("History cleanup was incomplete. Some records or audio files may remain. Do not assume all data was deleted.")
     }
     .sensoryFeedback(.success, trigger: self.historyClearedTrigger)
     .sensoryFeedback(.success, trigger: self.cacheClearedTrigger)
