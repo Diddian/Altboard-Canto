@@ -24,22 +24,63 @@ DOWNLOAD_URL = f"https://raw.githubusercontent.com/yuetyam/jyutping/{REVISION}/{
 VALID_ROMANIZATION = re.compile(r"^[a-z]+[1-6](?: [a-z]+[1-6])*$")
 
 
-def yale_syllable(jyutping: str) -> str:
-    """Unmarked Yale typing alias for a single Jyutping syllable."""
+# Both traditional systems keep long aa before codas (chaan, faan), but
+# represent the open Jyutping -aa final with a single a (naa -> na).
+# Sidney Lau also distinguishes -o from -ou using oh/o, and -u/-ui/-un/-ut
+# using oo/ooi/oon/oot. These differences must not be lost in the index.
+_JYUTPING_FINALS = frozenset(
+    "aa aai aau aam aan aang aap aat aak ai au am an ang ap at ak "
+    "e ei eu em en eng ep et ek eoi eon eot "
+    "i iu im in ing ip it ik "
+    "o oi on ong ok ot ou oe oeng oek oet "
+    "u ui un ung uk um up ut "
+    "yu yun yut m ng".split()
+)
+_ONSETS = (
+    "gw", "kw", "ng", "b", "p", "m", "f", "d", "t", "n", "l",
+    "g", "k", "h", "z", "c", "s", "j", "w",
+)
+_TRADITIONAL_INITIALS = {"z": "j", "c": "ch", "j": "y"}
+_YALE_FINALS = {
+    "aa": "a", "oe": "eu", "oeng": "eung", "oek": "euk", "oet": "eut",
+    "eoi": "eui", "eon": "eun", "eot": "eut",
+}
+_SIDNEY_FINALS = {
+    **_YALE_FINALS,
+    "oe": "euh", "eoi": "ui", "eon": "un", "eot": "ut",
+    "o": "oh", "ou": "o", "u": "oo", "ui": "ooi",
+    "un": "oon", "ut": "oot",
+    "yu": "ue", "yun": "uen", "yut": "uet",
+}
+
+
+def _split_jyutping(jyutping: str) -> tuple[str, str]:
     plain = jyutping.rstrip("123456")
-    # jy- is one Jyutping onset; converting j->y must not yield yyu/yyun.
-    if plain.startswith("jy"):
-        plain = "y" + plain[2:]
-    elif plain.startswith("j"):
-        plain = "y" + plain[1:]
-    elif plain.startswith("z"):
-        plain = "j" + plain[1:]
-    elif plain.startswith("c"):
-        plain = "ch" + plain[1:]
-    plain = plain.replace("oe", "eu").replace("eo", "eu")
-    # Both Yale and Sidney Lau distinguish long aa from short a.
-    # Removing the second a erased chaan (殘) and other valid spellings.
-    return plain
+    if plain in ("m", "ng"):
+        return "", plain
+    for onset in _ONSETS:
+        if plain.startswith(onset) and plain[len(onset):] in _JYUTPING_FINALS:
+            return onset, plain[len(onset):]
+    return "", plain
+
+
+def _traditional_syllable(jyutping: str, finals: dict[str, str]) -> str:
+    onset, final = _split_jyutping(jyutping)
+    if final not in _JYUTPING_FINALS:
+        # Preserve an unusual upstream spelling rather than synthesizing
+        # an invalid phonetic reading.
+        return jyutping.rstrip("123456")
+    prefix = _TRADITIONAL_INITIALS.get(onset, onset)
+    value = finals.get(final, final)
+    if onset == "j" and final.startswith("yu"):
+        # Jyutping jy- is one initial, not a y+y digraph in Yale.
+        return (value if finals is _YALE_FINALS else "y" + value)
+    return prefix + value
+
+
+def yale_syllable(jyutping: str) -> str:
+    """Unmarked Yale reading; open -aa maps to -a, but -aan stays -aan."""
+    return _traditional_syllable(jyutping, _YALE_FINALS)
 
 
 def yale_spelling(jyutping: str) -> str:
@@ -47,19 +88,8 @@ def yale_spelling(jyutping: str) -> str:
 
 
 def sidney_lau_syllable(jyutping: str) -> str:
-    """Unmarked Sidney Lau typing alias derived from canonical Jyutping."""
-    yale = yale_syllable(jyutping)
-    # Convert only complete syllable finals. 'jeung' has -eung, NOT -eun:
-    # the previous global replacement incorrectly produced 'jung'.
-    if yale in ("yu", "yun", "yut"):
-        return {"yu": "yue", "yun": "yuen", "yut": "yuet"}[yale]
-    for old, new in (
-        ("eui", "ui"), ("eun", "un"), ("eut", "ut"),
-        ("yun", "uen"), ("yut", "uet"), ("yu", "ue"), ("ou", "o"),
-    ):
-        if yale.endswith(old):
-            return yale[:-len(old)] + new
-    return yale
+    """Tone-free Sidney Lau spelling with distinct oh, oo, ooi and euh."""
+    return _traditional_syllable(jyutping, _SIDNEY_FINALS)
 
 
 def sidney_lau_spelling(jyutping: str) -> str:

@@ -80,10 +80,19 @@ enum CantoneseSchemePreference {
       "yale": syllables.map(CantoneseSyllableEditing.yaleAlias).joined(),
       "sidney": syllables.map(CantoneseSyllableEditing.sidneyLauAlias).joined()
     ]
-    let matching = keys.filter { variants[$0] == typed }
+    let direct = keys.filter { variants[$0] == typed }
+    let matching: [String]
+    if !direct.isEmpty {
+      matching = direct
+    } else if typed.hasSuffix("h"), let last = typed.dropLast().last,
+              "aeiou".contains(last) {
+      matching = keys.filter { variants[$0] == String(typed.dropLast()) }
+    } else {
+      matching = []
+    }
     if matching.count == 1 { return matching[0] }
-    // j- and ch- are shared by Yale and Sidney Lau. Record their
-    // common family without pretending that they distinguish the two.
+    // Shared j/ch and open -aa syllables belong to the traditional family.
+    // Do not guess Yale versus Sidney when both use the same spelling.
     if matching.count == 2 && matching.contains("yale")
       && matching.contains("sidney") { return traditionalKey }
     return nil

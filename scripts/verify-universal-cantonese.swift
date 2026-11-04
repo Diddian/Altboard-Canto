@@ -15,6 +15,28 @@ enum UniversalCantoneseSmoke {
     precondition(CantoneseRomanizationVariants.variants(for: "goh").contains("go"))
     precondition(CantoneseRomanizationVariants.variants(for: "poh").contains("po"))
     precondition(CantoneseRomanizationVariants.variants(for: "na").contains("naa"))
+    for (typed, canonical) in [
+      ("ah", "a"), ("eh", "e"), ("ih", "i"), ("oh", "o"),
+      ("uh", "u"), ("nah", "na"), ("aah", "aa"),
+      ("woh", "wo"), ("goh", "go"), ("poh", "po")
+    ] {
+      precondition(CantoneseRomanizationVariants.variants(for: typed).contains(canonical))
+    }
+    precondition(CantoneseRomanizationVariants.variants(for: "chaanh") == ["chaanh"])
+    precondition(CantoneseRomanizationVariants.variants(for: "ngh") == ["ngh"])
+    precondition(CantoneseSyllableEditing.yaleAlias("naa5") == "na")
+    precondition(CantoneseSyllableEditing.sidneyLauAlias("naa5") == "na")
+    precondition(CantoneseSyllableEditing.sidneyLauAlias("go3") == "goh")
+    precondition(CantoneseSyllableEditing.sidneyLauAlias("wo3") == "woh")
+    precondition(CantoneseSyllableEditing.sidneyLauAlias("po4") == "poh")
+    precondition(CantoneseSyllableEditing.sidneyLauAlias("fu3") == "foo")
+    precondition(CantoneseSyllableEditing.sidneyLauAlias("bui1") == "booi")
+    precondition(CantoneseSyllableEditing.lastSyllableLength(
+      typed: "nah", canonical: "naa5"
+    ) == 3)
+    precondition(CantoneseSyllableEditing.lastSyllableLength(
+      typed: "woh", canonical: "wo3"
+    ) == 3)
 
     precondition(CantoneseSyllableEditing.yaleAlias("zau6") == "jau")
     precondition(CantoneseSyllableEditing.yaleAlias("caan4") == "chaan")

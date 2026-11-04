@@ -109,17 +109,30 @@ class UniversalCantoneseTests(unittest.TestCase):
         # Additional entries are explicitly curated instead of arbitrary
         # combinations of any syllables in the upstream dictionary.
         supplemental = (ROOT / "scripts" / "cantonese-phrases.tsv").read_text(encoding="utf-8")
-        known = dict(line.split("\t", 1) for line in supplemental.splitlines())
+        known = {}
+        for line in supplemental.splitlines():
+            word, reading = line.split("\t", 1)
+            # A character may have several valid tonal readings.
+            known.setdefault(word, reading)
         for word, reading in {
             "我": "ngo5", "你": "nei5", "妳": "naai5",
             "佢": "keoi5", "她": "taa1", "他": "taa1",
-            "哪": "naa5", "哪個": "naa5 go3",
+            "哪": "naa5", "那": "naa5", "拿": "naa4", "嗱": "naa4",
+            "哪個": "naa5 go3", "那個": "naa5 go3",
             "啫係": "ze1 hai6", "呢個": "ni1 go3",
             "嗰個": "go2 go3", "喎": "wo3", "個": "go3",
             "我今日冇瞓過覺": "ngo5 gam1 jat6 mou5 fan3 gwo3 gaau3"
         }.items():
             with self.subTest(basic=word):
                 self.assertEqual(known[word], reading)
+        for starter in (
+            "我想", "你想", "佢想", "我會", "你會", "佢會",
+            "我冇", "你冇", "佢冇", "我覺得", "你覺得",
+            "呢邊", "嗰邊", "咁樣", "咁即係", "即係話",
+            "但係", "因為", "所以", "不如", "另外", "點解"
+        ):
+            with self.subTest(starter=starter):
+                self.assertIn(starter, known)
         self.assertEqual(known["你食咗飯未呀"], "nei5 sik6 zo2 faan6 mei6 aa3")
         self.assertEqual(known["食塞米啦你"], "sik6 sak1 mai5 laa1 nei5")
         self.assertEqual(known["幾快"], "gei2 faai3")

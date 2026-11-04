@@ -78,6 +78,71 @@ class YaleAliasTests(unittest.TestCase):
             finally:
                 db.close()
 
+    def test_open_aa_and_distinct_sidney_finals(self):
+        examples = {
+            "naa5": ("na", "na"), "naa4": ("na", "na"),
+            "caan4": ("chaan", "chaan"),
+            "zaan3": ("jaan", "jaan"),
+            "go3": ("go", "goh"), "wo3": ("wo", "woh"),
+            "po4": ("po", "poh"), "gou1": ("gou", "go"),
+            "fu3": ("fu", "foo"), "bui1": ("bui", "booi"),
+            "gun1": ("gun", "goon"), "gut1": ("gut", "goot"),
+            "ceot1": ("cheut", "chut"),
+            "zeon1": ("jeun", "jun"),
+            "jyun4": ("yun", "yuen"),
+            "jyu5": ("yu", "yue"),
+            "jyut6": ("yut", "yuet"),
+            "seoi2": ("seui", "sui"), "syu1": ("syu", "sue"),
+            "ngaa5": ("nga", "nga"),
+            "ng5": ("ng", "ng"), "m4": ("m", "m"),
+        }
+        for reading, (yale, sidney) in examples.items():
+            with self.subTest(syllable=reading):
+                self.assertEqual(MOD.yale_syllable(reading), yale)
+                self.assertEqual(MOD.sidney_lau_syllable(reading), sidney)
+
+    def test_na_exact_readings_and_priority_for_all_indexed_schemes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = pathlib.Path(tmp) / "na.sqlite3"
+            MOD.compile_database(b"\xe4\xbd\xa0\xe5\xa5\xbd\tnei5 hou2\n", output, verify_upstream=False)
+            db = sqlite3.connect(output)
+            try:
+                for column in ("yale", "sidney"):
+                    with self.subTest(column=column):
+                        rows = db.execute(
+                            f"SELECT word FROM entries WHERE {column}=? "
+                            "ORDER BY priority LIMIT 20", ("na",)
+                        ).fetchall()
+                        unique = list(dict.fromkeys(word for (word,) in rows))
+                        self.assertEqual(unique[:4], ["哪", "那", "拿", "嗱"])
+                expected = {
+                    "哪": {"naa1", "naa4", "naa5"},
+                    "那": {"naa5", "naa6"},
+                    "拿": {"naa4"}, "嗱": {"naa4"}
+                }
+                for word, readings in expected.items():
+                    got = {reading for (reading,) in db.execute(
+                        "SELECT romanization FROM entries WHERE word=? "
+                        "AND yale=? ORDER BY priority", (word, "na")
+                    ).fetchall()}
+                    self.assertTrue(readings.issubset(got), (word, got))
+                for word, plain, sidney in (
+                    ("喎", "wo", "woh"),
+                    ("個", "go", "goh"),
+                    ("婆", "po", "poh"),
+                ):
+                    self.assertIsNotNone(db.execute(
+                        "SELECT 1 FROM entries WHERE plain=? AND word=? LIMIT 1",
+                        (plain, word)
+                    ).fetchone())
+                    self.assertIsNotNone(db.execute(
+                        "SELECT 1 FROM entries WHERE sidney=? AND word=? LIMIT 1",
+                        (sidney, word)
+                    ).fetchone())
+                self.assertEqual(db.execute("PRAGMA quick_check").fetchone(), ("ok",))
+            finally:
+                db.close()
+
     def test_today(self):
         self.assertEqual(MOD.yale_spelling("gam1 jat6"), "gamyat")
 

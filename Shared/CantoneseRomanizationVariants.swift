@@ -41,9 +41,12 @@ enum CantoneseRomanizationVariants {
     if source == "nghai" || source == "nghaai" {
       append("m" + source.dropFirst(2))
     }
-    // Colloquial optional aspirated-final spelling: woh/wo, goh/go,
-    // poh/po. Try the original reading first; never strip arbitrary h.
-    if source.count >= 3 && source.hasSuffix("oh") {
+    // Yale and informal spellings may end in an unmarked vowel+h.
+    // Only strip a final h following a vowel; preserve genuine initial h,
+    // Cantonese coda consonants and the original exact reading.
+    // The new Yale/Sidney SQLite indexes handle canonical forms first.
+    if source.hasSuffix("h"), let beforeH = source.dropLast().last,
+       "aeiou".contains(beforeH) {
       append(String(source.dropLast()))
     }
     // Short na is a common casual input for long-vowel naa (哪).
