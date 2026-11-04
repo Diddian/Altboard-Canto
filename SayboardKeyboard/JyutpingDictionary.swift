@@ -15,6 +15,7 @@ final class JyutpingDictionary {
   static let shared = JyutpingDictionary()
 
   private var database: OpaquePointer?
+  private var corpusAvailable = false
   private let defaults = UserDefaults(suiteName: AppGroup.identifier)
   private let memoryKey = CantoneseSchemePreference.candidateStorageKey
   private let schemeKey = CantoneseSchemePreference.preferenceStorageKey
@@ -28,6 +29,12 @@ final class JyutpingDictionary {
     var handle: OpaquePointer?
     if sqlite3_open_v2(url.path, &handle, SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX, nil) == SQLITE_OK {
       self.database = handle
+      var corpusProbe: OpaquePointer?
+      if sqlite3_prepare_v2(handle, "SELECT 1 FROM corpus_ngrams LIMIT 1",
+                            -1, &corpusProbe, nil) == SQLITE_OK {
+        self.corpusAvailable = sqlite3_step(corpusProbe) == SQLITE_ROW
+      }
+      _ = sqlite3_finalize(corpusProbe)
       self.defaults?.set(true, forKey: "canto.ime.offlineDictionaryReady")
     } else {
       sqlite3_close_v2(handle)
@@ -105,6 +112,20 @@ final class JyutpingDictionary {
         gather("SELECT word,romanization FROM entries WHERE initials=? ORDER BY priority LIMIT ?", plain, rank: 3)
       }
     }
+    // Corpus-ranked multi-syllable completions are explicit suggestions only.
+    // Keep exact indexed phrases first and the old fallbacks for older IPAs.
+    if !hasTone, (6...48).contains(plain.count),
+       !results.contains(where: {
+         (originRank[$0.id] ?? 3) <= 1 && $0.text.count >= 2
+       }) {
+      for candidate in self.ngramCandidates(for: plain, limit: 12) {
+        if usedWords.insert(candidate.text).inserted {
+          results.append(candidate)
+          originRank[candidate.id] = -1
+        }
+      }
+    }
+
     // Compose a short sequence of complete words when no whole-phrase reading
     // exists. No large synthetic phrase table or raw keystroke history needed.
     if !hasTone, !results.contains(where: { (originRank[$0.id] ?? 3) <= 1 }) {
@@ -434,17 +455,30 @@ final class JyutpingDictionary {
     return join(chunks)
   }
 
-  /// Offer offline, corpus-derived words immediately after a Chinese commit.
+  /// Offer corpus-ranked next characters or words after confirmed Chinese text.
+  /// No manually curated context map or typed-text history is required.
   func continuations(after text: String, limit: Int = 9) -> [String] {
     guard !text.isEmpty else { return [] }
     let bounded = max(1, min(limit, 24))
     var words: [String] = []
     var seen = Set<String>()
     func collect(_ value: String) {
-      guard !value.isEmpty, value.count <= 10, seen.insert(value).inserted else { return }
+      guard !value.isEmpty, value.count <= 10,
+            seen.insert(value).inserted else { return }
       words.append(value)
     }
-    for value in Self.commonContinuations[text] ?? [] { collect(value) }
+
+    // Highest-context trigram first, then ordinary bigrams.
+    if self.corpusAvailable {
+      for prefix in [String(text.suffix(2)), String(text.suffix(1))] {
+        guard !prefix.isEmpty, words.count < bounded else { break }
+        for value in self.corpusContinuations(after: prefix, limit: bounded * 3) {
+          collect(value)
+        }
+      }
+    }
+
+    // Retain useful dictionary-prefix fallback even without the corpus.
     for prefix in [text, String(text.suffix(2)), String(text.suffix(1))] {
       guard !prefix.isEmpty, words.count < bounded else { break }
       for candidate in self.query(
@@ -461,44 +495,101 @@ final class JyutpingDictionary {
     return Array(words.prefix(bounded))
   }
 
-  private static let commonContinuations: [String: [String]] = [
-    "我": ["覺得", "哋", "都", "想", "唔係", "今日", "有", "冇", "會", "可以", "知", "想問"],
-    "你": ["係咪", "覺得", "知唔知", "想", "哋", "有", "冇", "會", "可以", "今日"],
-    "妳": ["係", "想", "有", "冇", "會", "哋"],
-    "佢": ["哋", "係", "話", "都", "有", "冇", "想", "會", "可以", "覺得"],
-    "她": ["係", "哋", "話", "有", "冇", "都"],
-    "他": ["係", "哋", "話", "有", "冇", "都"],
-    "它": ["係", "會", "都"],
-    "這": ["個", "啲", "樣", "邊"],
-    "呢": ["個", "啲", "度", "邊", "樣"],
-    "嗰": ["個", "啲", "度", "邊", "樣"],
-    "哪": ["個", "裏", "裡", "兒"],
-    "那": ["個", "裏", "裡", "邊", "時"],
-    "拿": ["起", "住"],
-    "嗱": ["嗱聲"],
-    "咁": ["樣", "就", "咪", "即係", "其實", "你", "我", "佢", "難", "好", "多"],
-    "噉": ["樣", "就", "咪"],
-    "即": ["係", "係話", "刻", "時", "使"],
-    "啫": ["係", "係話"],
-    "就": ["係", "算", "咁"],
-    "點": ["解", "樣", "算", "知", "先"],
-    "邊": ["個", "啲", "度"],
-    "今日": ["我", "有", "要", "點"],
-    "聽日": ["我", "要", "再", "見"],
-    "因為": ["我", "你", "佢", "呢個"],
-    "所以": ["我", "你", "就", "佢"],
-    "但係": ["我", "你", "佢", "都"],
-    "不過": ["我", "你", "佢", "都"],
-    "或者": ["我", "你", "可以", "係"],
-    "根據": ["呢個", "佢", "我", "你"],
-    "最": ["多", "少", "好", "緊要"],
-    "真係": ["唔知", "好", "冇", "唔係"],
-    "即係": ["我", "你", "話", "咁"],
-    "點解": ["會", "你", "佢", "咁"],
-    "可以": ["唔", "再", "一齊", "試"],
-    "唔係": ["呀嘛", "呀", "喎", "咁", "好", "我", "呢個"],
-    "冇": ["問題", "咩", "嘢", "所謂"]
-  ]
+  private func corpusContinuations(after prefix: String, limit: Int) -> [String] {
+    guard let database = self.database, (1...2).contains(prefix.count) else { return [] }
+    let sql = "SELECT gram FROM corpus_ngrams WHERE gram>=? AND gram<? "
+      + "AND length(gram)>\(prefix.count) ORDER BY frequency DESC LIMIT ?"
+    var statement: OpaquePointer?
+    guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+      sqlite3_finalize(statement)
+      return []
+    }
+    defer { sqlite3_finalize(statement) }
+    let destructor = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+    _ = prefix.withCString { sqlite3_bind_text(statement, 1, $0, -1, destructor) }
+    _ = (prefix + "\u{10FFFF}").withCString {
+      sqlite3_bind_text(statement, 2, $0, -1, destructor)
+    }
+    sqlite3_bind_int(statement, 3, Int32(limit))
+    var suggestions = [String]()
+    while sqlite3_step(statement) == SQLITE_ROW,
+          let value = sqlite3_column_text(statement, 0) {
+      let gram = String(cString: value)
+      if gram.hasPrefix(prefix), gram.count > prefix.count {
+        suggestions.append(String(gram.dropFirst(prefix.count)))
+      }
+    }
+    return suggestions
+  }
+
+  private func ngramCandidates(for spelling: String, limit: Int) -> [JyutpingCandidate] {
+    guard self.corpusAvailable else { return [] }
+    let counts = self.defaults?.dictionary(forKey: self.schemeKey) as? [String: Int] ?? [:]
+    let columns = CantoneseSchemePreference.lookupOrder(counts)
+
+    let decoded = CantoneseNgramDecoder.decode(
+      spelling, limit: limit,
+      choices: { code in
+        var variants = CantoneseRomanizationVariants.variants(for: code)
+        // Confusable n/l is intentionally scoped to this complete syllable.
+        // Never globally rewrite the letter l inside arbitrary user input.
+        if code == "lang" { variants.insert("nang", at: 0) }
+        if code == "ng" { variants.insert("m", at: 0) }
+        var found = [CantoneseNgramPiece]()
+        var seen = Set<String>()
+        for variant in variants.prefix(4) {
+          for column in columns {
+            let matches = self.query(
+              "SELECT word,romanization FROM entries WHERE \(column)=? "
+                + "AND length(word)<=3 ORDER BY priority LIMIT ?",
+              argument: variant, limit: 14
+            )
+            for candidate in matches where candidate.text.count <= 3 {
+              guard candidate.text.count == candidate.romanization.split(separator: " ").count,
+                    seen.insert(candidate.text).inserted else { continue }
+              found.append(CantoneseNgramPiece(
+                text: candidate.text, romanization: candidate.romanization
+              ))
+            }
+          }
+          for candidate in self.query(
+            "SELECT word,romanization FROM mixed_aliases WHERE alias=? "
+              + "AND length(word)<=3 ORDER BY priority LIMIT ?",
+            argument: variant, limit: 10
+          ) where candidate.text.count <= 3 {
+            guard candidate.text.count == candidate.romanization.split(separator: " ").count,
+                  seen.insert(candidate.text).inserted else { continue }
+            found.append(CantoneseNgramPiece(
+              text: candidate.text, romanization: candidate.romanization
+            ))
+          }
+        }
+        return Array(found.prefix(5))
+      },
+      frequency: { self.corpusFrequency($0, table: "corpus_ngrams") },
+      wordFrequency: { self.corpusFrequency($0, table: "corpus_words") }
+    )
+    return decoded.map { JyutpingCandidate(text: $0.text, romanization: $0.romanization) }
+  }
+
+  private func corpusFrequency(_ key: String, table: String) -> Int {
+    guard let database = self.database, !key.isEmpty else { return 0 }
+    let sql = table == "corpus_words"
+      ? "SELECT frequency FROM corpus_words WHERE word=? LIMIT 1"
+      : "SELECT frequency FROM corpus_ngrams WHERE gram=? LIMIT 1"
+    var statement: OpaquePointer?
+    guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+      sqlite3_finalize(statement)
+      return 0
+    }
+    defer { sqlite3_finalize(statement) }
+    let destructor = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+    _ = key.withCString { pointer in
+      sqlite3_bind_text(statement, 1, pointer, -1, destructor)
+    }
+    return sqlite3_step(statement) == SQLITE_ROW
+      ? Int(sqlite3_column_int(statement, 0)) : 0
+  }
 
   func remember(_ candidate: JyutpingCandidate, typed: String? = nil) {
     if let typed {

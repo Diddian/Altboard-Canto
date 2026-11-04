@@ -294,6 +294,34 @@ class UniversalCantoneseTests(unittest.TestCase):
             finally:
                 db.close()
 
+    def test_corpus_decoder_acceptance_spellings(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            dest = pathlib.Path(tmp) / "reviewed.sqlite3"
+            BUILDER.compile_database(b"hello\tnei5 hou2\n", dest, verify_upstream=False)
+            db = sqlite3.connect(dest)
+            try:
+                for word, column, code in [
+                    ("你都唔識", "plain", "neidoumsik"),
+                    ("耶穌", "yale", "yesou"),
+                    ("可能", "plain", "honang"),
+                    ("可能", "sidney", "hohnang"),
+                ]:
+                    with self.subTest(word=word, code=code):
+                        row = db.execute(
+                            f"SELECT word FROM entries WHERE {column}=? AND word=?",
+                            (code, word)
+                        ).fetchone()
+                        self.assertEqual(row, (word,))
+                for spelling in ("holang", "hohlang"):
+                    with self.subTest(spelling=spelling):
+                        row = db.execute(
+                            "SELECT word FROM mixed_aliases WHERE alias=? AND word='可能'",
+                            (spelling,)
+                        ).fetchone()
+                        self.assertEqual(row, ("可能",))
+            finally:
+                db.close()
+
     def test_all_three_indexes_and_tones(self):
         with tempfile.TemporaryDirectory() as tmp:
             dest = pathlib.Path(tmp) / "jyutping.sqlite3"

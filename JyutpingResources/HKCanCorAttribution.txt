@@ -1,0 +1,8 @@
+HKCanCor - Hong Kong Cantonese Corpus
+Compiled by Kang Kwong Luke. Source: https://github.com/fcbond/hkcancor
+CHAT conversion: https://github.com/jacksonllee/pycantonese
+Pinned PyCantonese source revision: 3d729c01e53f6056cb1c6c527953837e9a106147
+License: Creative Commons Attribution 4.0 International (CC BY 4.0)
+https://creativecommons.org/licenses/by/4.0/
+Citation: Luke, K. K. and Wong, May L. Y. (2015), The Hong Kong Cantonese Corpus: Design and Uses, Journal of Chinese Linguistics Monograph Series 25, 312–333.
+Adaptation: Altboard-Canto derives aggregate word and character 1–3-gram frequency counts. No source conversation, speaker identity or metadata is bundled. Attribution does not imply endorsement.

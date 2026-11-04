@@ -138,6 +138,12 @@ def mixed_phrase_aliases(word: str, romanization: str) -> list[str]:
             if legacy not in seen:
                 seen.add(legacy)
                 result.append(legacy)
+    # Informal n/l interchange occurs here only in this reviewed phrase.
+    if word == "可能" and romanization == "ho2 nang4":
+        for casual in ("holang", "hohlang"):
+            if casual not in seen:
+                seen.add(casual)
+                result.append(casual)
     return result
 
 

@@ -56,6 +56,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/build-jyutping-lexicon.py
+          python3 scripts/build-cantonese-ngrams.py
           python3 scripts/build-chinese-shapes.py
           python3 scripts/build-emoji-catalog.py
           test -s EmojiResources/emoji_catalog.tsv
@@ -68,6 +69,7 @@ jobs:
           python3 -m unittest discover -s scripts -p 'test_chinese_shapes.py'
           python3 -m unittest discover -s scripts -p 'test_jyutping_*.py'
           python3 -m unittest discover -s scripts -p 'test_universal_cantonese.py'
+          python3 -m unittest discover -s scripts -p 'test_cantonese_ngrams.py'
           # Regression for blank keycap rows seen on physical iPhone.
           python3 -m unittest discover -s scripts -p 'test_symbol_visibility.py'
           python3 -m unittest discover -s scripts -p 'test_emoji_catalog.py'
@@ -89,6 +91,9 @@ jobs:
             Shared/CantoneseRomanizationVariants.swift Shared/CantoneseSyllableEditing.swift \
             scripts/verify-universal-cantonese.swift
           "$RUNNER_TEMP/universal-canto-smoke"
+          swiftc -o "$RUNNER_TEMP/cantonese-ngram-smoke" \
+            Shared/CantoneseNgramDecoder.swift scripts/verify-cantonese-ngram.swift
+          "$RUNNER_TEMP/cantonese-ngram-smoke"
           swiftc -o "$RUNNER_TEMP/keyboard-smoke" \
             Shared/JyutpingComposition.swift Shared/SentenceCapitalization.swift \
             Shared/LiveCantoneseSafety.swift Shared/CantoneseSyllableEditing.swift Shared/EnglishCaseSuggestion.swift \
@@ -192,6 +197,12 @@ jobs:
             echo 'ERROR: offline Jyutping lexicon missing from keyboard extension'
             exit 1
           }
+          test -s "$APP/PlugIns/SayboardKeyboard.appex/HKCanCorAttribution.txt" || {
+            echo 'ERROR: required HKCanCor attribution missing from keyboard extension'
+            exit 1
+          }
+          python3 -c "import sqlite3,sys; db=sqlite3.connect(sys.argv[1]); assert db.execute('SELECT count(*) FROM corpus_ngrams').fetchone()[0]>2000; assert db.execute('PRAGMA quick_check').fetchone()[0]=='ok'" \
+            "$APP/PlugIns/SayboardKeyboard.appex/jyutping.sqlite3"
           test -s "$APP/PlugIns/SayboardKeyboard.appex/chinese-shapes.sqlite3" || {
             echo 'ERROR: offline Cangjie, Quick and Stroke lexicon missing'
             exit 1
