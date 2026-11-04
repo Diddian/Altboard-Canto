@@ -142,7 +142,6 @@ struct KeyboardBottomRow: View {
   @ObservedObject var keyboardState: KeyboardState
   var alphabeticModeLabel: String? = nil
   var onAlphabeticModeSwitch: (() -> Void)? = nil
-  var onEmojiAction: (() -> Void)? = nil
   var showsAlphabetIndicator = true
   var onSpaceAction: (() -> Void)? = nil
   var onShortcutAction: ((String) -> Void)? = nil
@@ -167,18 +166,12 @@ struct KeyboardBottomRow: View {
           action()
         }
       }
-      if let openEmoji = self.onEmojiAction {
-        KeyButton(content: .nativeEmojiGlyph, fixedWidth: self.metrics.sideButtonWidth) {
-          openEmoji()
-        }
-        .accessibilityLabel("Open Emoji keyboard")
-      } else {
-        NativeInputModeSwitchKey(
-          configure: self.keyboardState.configureInputModeListButton
-        )
-        .frame(width: self.metrics.sideButtonWidth,
-               height: KeyboardChromeMetrics.keyHeight)
-      }
+      // UIKit owns the native input-mode menu, including Apple's Emoji keyboard.
+      NativeInputModeSwitchKey(
+        configure: self.keyboardState.configureInputModeListButton
+      )
+      .frame(width: self.metrics.sideButtonWidth,
+             height: KeyboardChromeMetrics.keyHeight)
 
       if self.onAlphabeticModeSwitch == nil {
         KeyButton(
