@@ -143,9 +143,13 @@ final class LLMProcessingCoordinator: ObservableObject {
 
     if let result, !result.isEmpty {
       let finalResult = self.styled(result, action: validated.request.action, host: stylingHost, settings: settings)
-      LLMBridge.writeResult(finalResult)
-      TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingComplete)
-      DiagnosticLog.write("llm: complete, result=\(finalResult.count) chars")
+      if LLMBridge.writeResult(finalResult) {
+        TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingComplete)
+        DiagnosticLog.write("llm: complete, result=\(finalResult.count) chars")
+      } else {
+        DiagnosticLog.write("llm: result could not be saved in shared storage")
+        TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingFailed)
+      }
     } else {
       DiagnosticLog.write("llm: FAILED, inference produced nothing")
       TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingFailed)
