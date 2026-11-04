@@ -89,7 +89,7 @@ class UniversalCantoneseTests(unittest.TestCase):
                     ("chaanyan", "殘忍")
                 ).fetchone(), ("殘忍",))
                 tails = {row[0] for row in db.execute(
-                    "SELECT word FROM entries WHERE sidney=? AND length(word)=1",
+                    "SELECT word FROM entries WHERE plain=? AND length(word)=1",
                     ("dou",)
                 )}
                 self.assertTrue({"到", "度", "刀"}.issubset(tails))
