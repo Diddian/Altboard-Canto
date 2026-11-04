@@ -21,6 +21,7 @@ final class KeyboardViewController: UIInputViewController {
   var llmClipboardOnly = false
   var pendingManualLLMAction: (action: LLMAction, customPromptId: UUID?)?
   var previousSpaceTap: PeriodShortcut.Tap?
+  var lastTouchDocumentID: UUID?
   var cursorPreferredColumn: Int?
   var cursorPreferredDocumentID: UUID?
   var liveTranscriptionDocumentID: UUID?
@@ -97,6 +98,10 @@ final class KeyboardViewController: UIInputViewController {
     // SwiftUI. Creating the view before refresh could select a stale layout
     // and an incorrect initial host height.
     self.keyboardState.refresh()
+    if self.lastTouchDocumentID != self.textDocumentProxy.documentIdentifier {
+      KeyboardTouchLearning.shared.invalidate()
+    }
+    self.lastTouchDocumentID = self.textDocumentProxy.documentIdentifier
     self.refreshHostInputTraits()
     self.syncFullAccessIfChanged()
     if self.hostingController == nil {
@@ -123,6 +128,7 @@ final class KeyboardViewController: UIInputViewController {
 
   override func viewWillDisappear(_ animated: Bool) {
     super.viewWillDisappear(animated)
+    KeyboardTouchLearning.shared.invalidate()
     if self.liveTranscriptionDocumentID != nil {
       let token = SharedSettings().dictationSessionToken
       self.liveTranscriptionBlockedToken = token
@@ -365,9 +371,16 @@ final class KeyboardViewController: UIInputViewController {
   }
 
   private func deleteAllText() {
-    while textDocumentProxy.hasText {
-      textDocumentProxy.deleteBackward()
+    let proxy = self.textDocumentProxy
+    // hasText may remain true when there is text after the cursor.
+    // Only delete verified preceding text; stop when the host makes no
+    // observable progress and bound the number of deletion attempts.
+    for _ in 0..<4_096 {
+      guard let before = proxy.documentContextBeforeInput, !before.isEmpty else { break }
+      proxy.deleteBackward()
+      guard proxy.documentContextBeforeInput != before else { break }
     }
+    KeyboardTouchLearning.shared.invalidate()
     if !self.isPerformingHistoryNavigation {
       self.keyboardState.clearLLMHistory()
     }
@@ -683,6 +696,11 @@ extension KeyboardViewController {
 
   override func textDidChange(_ textInput: (any UITextInput)?) {
     super.textDidChange(textInput)
+    let currentDocument = self.textDocumentProxy.documentIdentifier
+    if self.lastTouchDocumentID != currentDocument {
+      KeyboardTouchLearning.shared.invalidate()
+      self.lastTouchDocumentID = currentDocument
+    }
     self.refreshHostInputTraits()
     self.keyboardState.textContextRevision &+= 1
     self.syncInputModeSwitchKey()
