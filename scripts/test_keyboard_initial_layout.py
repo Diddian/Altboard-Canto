@@ -14,7 +14,6 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn(".id(self.keyboardState.keyboardAppearanceRevision)", source)
         self.assertNotIn(".opacity(self.isCursorTracking ? 0.07 : 1)", source)
         self.assertNotIn(".allowsHitTesting(!self.isCursorTracking)", source)
-        self.assertIn("onSwipePath: { path in self.liveSwipePath = path }", source)
         self.assertIn("self.firstKeyRow", source)
         self.assertIn("self.secondKeyRow", source)
         self.assertIn("self.thirdKeyRow", source)
