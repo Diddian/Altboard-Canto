@@ -223,6 +223,11 @@ struct DiagnosticsView: View {
 
   private var exportSection: some View {
     Section {
+      NavigationLink {
+        CantoneseRomanizationDiagnosticsView()
+      } label: {
+        Label("Cantonese Learning & JSON Export", systemImage: "character.book.closed")
+      }
       Button("Copy complete diagnostics") {
         UIPasteboard.general.string = self.summary
       }

@@ -52,6 +52,26 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("record.displayTitle", meeting_view)
         self.assertIn("Save Meeting Details", meeting_view)
 
+    def test_cantonese_learning_export_is_private(self):
+        diagnostics = (ROOT / "Sayboard/Views/DiagnosticsView.swift").read_text()
+        view = (ROOT / "Sayboard/Views/CantoneseRomanizationDiagnosticsView.swift").read_text()
+        model = (ROOT / "Shared/CantoneseSchemePreference.swift").read_text()
+        dictionary = (ROOT / "SayboardKeyboard/JyutpingDictionary.swift").read_text()
+        self.assertIn("CantoneseRomanizationDiagnosticsView()", diagnostics)
+        self.assertIn("Share Diagnostic JSON", view)
+        self.assertIn("Copy Diagnostic JSON", view)
+        self.assertIn("UIActivityViewController", view)
+        self.assertIn("CantoneseSchemePreference.diagnosticJSON(", view)
+        self.assertIn("AppGroup.sharedDefaults", view)
+        self.assertIn("candidate_words_included", model)
+        self.assertIn("recent_weighted_counts", model)
+        self.assertIn("recording_or_transcript_included", model)
+        self.assertIn("candidateCounts.count", model)
+        self.assertNotIn("candidateCounts.keys", model)
+        self.assertNotIn("candidateCounts.map", model)
+        self.assertIn("CantoneseSchemePreference.preferenceStorageKey", dictionary)
+        self.assertIn("CantoneseSchemePreference.candidateStorageKey", dictionary)
+
     def test_settings_keyboard_sections_are_consolidated(self):
         keyboard = (ROOT / "Sayboard" / "Views" / "KeyboardSettingsView.swift").read_text()
         speech = (ROOT / "Sayboard" / "Views" / "SpeechLanguagesSettingsView.swift").read_text()

@@ -16,8 +16,8 @@ final class JyutpingDictionary {
 
   private var database: OpaquePointer?
   private let defaults = UserDefaults(suiteName: AppGroup.identifier)
-  private let memoryKey = "canto.jyutping.selectionCounts"
-  private let schemeKey = "canto.ime.schemePreferenceCounts.v1"
+  private let memoryKey = CantoneseSchemePreference.candidateStorageKey
+  private let schemeKey = CantoneseSchemePreference.preferenceStorageKey
 
   private init() {
     self.defaults?.set(false, forKey: "canto.ime.offlineDictionaryReady")

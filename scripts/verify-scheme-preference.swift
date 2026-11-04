@@ -67,5 +67,37 @@ enum VerifySchemePreference {
       in: evidence, typed: "long", canonical: "lung4"
     )
     precondition(unchanged == evidence)
+
+    let diagnostic = try! CantoneseSchemePreference.diagnosticJSON(
+      counts: ["plain": 1, "yale": 9, "negative_ng": 4],
+      candidateCounts: ["敏感文字|secret": 7, "示例": 3],
+      groupAvailable: true, preferenceDataPresent: true,
+      appVersion: "1.14.2", appBuild: "24",
+      appCommit: "appSHA", keyboardCommit: "keyboardSHA",
+      generatedAt: Date(timeIntervalSince1970: 0)
+    )
+    let report = try! JSONSerialization.jsonObject(with: diagnostic) as! [String: Any]
+    let storage = report["storage"] as! [String: Any]
+    let learned = report["romanization"] as! [String: Any]
+    let candidates = report["candidate_learning"] as! [String: Any]
+    let privacy = report["privacy"] as! [String: Any]
+    precondition((report["schema_version"] as? Int) == 1)
+    precondition((storage["status"] as? String) == "learning")
+    precondition((learned["preferred_scheme"] as? String) == "undetermined")
+    precondition((learned["total_weighted_evidence"] as? Int) == 14)
+    precondition((candidates["stored_candidate_count"] as? Int) == 2)
+    precondition((candidates["stored_selection_weight"] as? Int) == 10)
+    precondition((privacy["candidate_words_included"] as? Bool) == false)
+    let exported = String(decoding: diagnostic, as: UTF8.self)
+    precondition(!exported.contains("敏感文字") && !exported.contains("secret"))
+    precondition(!exported.contains("示例"))
+    let unavailable = try! CantoneseSchemePreference.diagnosticJSON(
+      counts: [:], candidateCounts: [:], groupAvailable: false,
+      preferenceDataPresent: false, appVersion: "1.14.2", appBuild: "24",
+      appCommit: "appSHA", keyboardCommit: "not reported",
+      generatedAt: Date(timeIntervalSince1970: 0)
+    )
+    let fallback = try! JSONSerialization.jsonObject(with: unavailable) as! [String: Any]
+    precondition((fallback["storage"] as? [String: Any])?["status"] as? String == "unavailable")
   }
 }

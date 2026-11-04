@@ -7,6 +7,8 @@ enum CantoneseSchemePreference {
   static let colloquialNgKey = "negative_ng"
   static let canonicalMKey = "negative_m"
   static let evidenceKeys = keys + [traditionalKey, colloquialNgKey, canonicalMKey]
+  static let preferenceStorageKey = "canto.ime.schemePreferenceCounts.v1"
+  static let candidateStorageKey = "canto.jyutping.selectionCounts"
 
   /// Keep evidence local and bounded. Older confirmed selections gradually
   /// lose weight so a user can change spelling habits without a reset.
@@ -107,5 +109,70 @@ enum CantoneseSchemePreference {
     let second = counts[ranked[1]] ?? 0
     guard first >= 7, first - second >= 4, first * 100 >= total * 55 else { return nil }
     return ranked[0]
+  }
+}
+
+extension CantoneseSchemePreference {
+  /// A deliberately narrow, shareable report. Persisted candidate keys can
+  /// contain actual Chinese words; include only their aggregate counts.
+  static func diagnosticJSON(
+    counts: [String: Int],
+    candidateCounts: [String: Int],
+    groupAvailable: Bool,
+    preferenceDataPresent: Bool,
+    appVersion: String,
+    appBuild: String,
+    appCommit: String,
+    keyboardCommit: String,
+    generatedAt: Date
+  ) throws -> Data {
+    let safeCounts = Dictionary(uniqueKeysWithValues: evidenceKeys.map {
+      ($0, max(0, counts[$0] ?? 0))
+    })
+    let totalEvidence = safeCounts.values.reduce(0, +)
+    let savedChoices = candidateCounts.values.reduce(0) {
+      $0 + min(10_000, max(0, $1))
+    }
+    let report: [String: Any] = [
+      "schema_version": 1,
+      "generated_at": ISO8601DateFormatter().string(from: generatedAt),
+      "build": [
+        "version": appVersion,
+        "number": appBuild,
+        "app_sha": appCommit,
+        "keyboard_sha": keyboardCommit
+      ],
+      "storage": [
+        "app_group_accessible": groupAvailable,
+        "preference_data_present": preferenceDataPresent,
+        "status": !groupAvailable ? "unavailable"
+          : (totalEvidence == 0 ? "no_confirmed_selections" : "learning")
+      ],
+      "romanization": [
+        "recent_weighted_counts": safeCounts,
+        "total_weighted_evidence": totalEvidence,
+        "preferred_scheme": preferred(safeCounts) ?? "undetermined",
+        "lookup_priority": lookupOrder(safeCounts),
+        "negative_ng_promoted": prefersColloquialNg(safeCounts)
+      ],
+      "candidate_learning": [
+        "stored_candidate_count": candidateCounts.count,
+        "stored_selection_weight": savedChoices
+      ],
+      "learning_policy": [
+        "decay_threshold": 48,
+        "negative_ng_min_confirmations": 3,
+        "note": "Counts are weighted and decay; they are not lifetime keystroke totals."
+      ],
+      "privacy": [
+        "raw_keystrokes_included": false,
+        "candidate_words_included": false,
+        "host_text_included": false,
+        "recording_or_transcript_included": false
+      ]
+    ]
+    return try JSONSerialization.data(
+      withJSONObject: report, options: [.prettyPrinted, .sortedKeys]
+    )
   }
 }
