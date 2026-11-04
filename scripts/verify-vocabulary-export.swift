@@ -6,10 +6,18 @@ struct VerifyVocabularyExport {
     let json = try PersonalVocabularyExport.encode(
       cantonese: ["世一|sai3 jat1": 3, "bad": 0],
       latin: ["en|brb": 4, "de|safe": 2],
-      romanization: ["sidney": 8]
+      romanization: ["sidney": 8],
+      confirmedChinese: ["佢": 5],
+      shapes: ["cangjie|佢": 3, "stroke|佢": 2],
+      shapeGenerations: ["cangjie.3": 4],
+      strokePrefixes: ["nm|佢": 2]
     )
     let root = try JSONSerialization.jsonObject(with: json) as! [String: Any]
-    precondition(root["schemaVersion"] as? Int == 1)
+    precondition(root["schemaVersion"] as? Int == 2)
+    precondition((root["confirmedChineseWords"] as? [String: Int])?["佢"] == 5)
+    precondition((root["shapeSelections"] as? [String: Int])?["stroke|佢"] == 2)
+    precondition((root["shapeGenerationPreferences"] as? [String: Int])?["cangjie.3"] == 4)
+    precondition((root["strokePrefixSelections"] as? [String: Int])?["nm|佢"] == 2)
     let cantonese = root["cantoneseSelections"] as! [String: Int]
     precondition(cantonese["世一|sai3 jat1"] == 3)
     precondition(cantonese["bad"] == nil)

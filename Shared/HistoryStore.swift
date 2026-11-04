@@ -95,6 +95,12 @@ struct HistoryStore: Sendable {
         rules.append(CantoneseCorrectionRule(
           heard: pair.heard, intended: pair.intended
         ))
+        // Three independent, manually corrected recordings also provide
+        // bounded positive evidence for a Chinese word across IME methods.
+        // No full transcript or audio is copied into the keyboard profile.
+        _ = ConfirmedChoiceLearning.rememberConfirmedChinese(
+          pair.intended, defaults: AppGroup.sharedDefaults
+        )
       }
       settings.cantoneseCorrectionRules = rules
       settings.synchronize()

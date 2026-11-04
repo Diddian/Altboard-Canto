@@ -51,6 +51,7 @@ final class ChineseShapeDictionary {
     let strokeCounts = mode == .stroke
       ? (self.defaults?.dictionary(forKey: self.strokePrefixKey) as? [String: Int] ?? [:])
       : [:]
+    let confirmedChinese = ConfirmedChoiceLearning.chineseCounts(defaults: self.defaults)
     let maxLimit = max(1, min(200, limit))
     // A bounded prefix lookup is only used when there are few exact matches.
     let exact = self.fetch(mode: mode, code: code, prefix: false, limit: 300)
@@ -70,7 +71,10 @@ final class ChineseShapeDictionary {
         let count = wordCounts[mode.rawValue + "|" + hit.word] ?? 0
         let score = ChineseShapeRanking.score(
           priority: hit.priority, variant: hit.variant, preferred: preferred,
-          count: count, exact: isExact
+          count: count, exact: isExact,
+          sharedCount: ConfirmedChoiceLearning.chinesePreference(
+            hit.word, counts: confirmedChinese
+          )
         ) - (mode == .stroke
           ? ChineseShapeRanking.strokeChoiceBonus(
               strokeCounts[code + "|" + hit.word] ?? 0
@@ -94,30 +98,31 @@ final class ChineseShapeDictionary {
   func remember(_ candidate: ChineseShapeCandidate, typedCode: String) {
     guard candidate.mode.usesShapeTable else { return }
     let word = candidate.mode.rawValue + "|" + candidate.text
-    var counts = self.defaults?.dictionary(forKey: self.wordKey)
+    let counts = self.defaults?.dictionary(forKey: self.wordKey)
       as? [String: Int] ?? [:]
-    counts[word] = min(160, (counts[word] ?? 0) + 1)
-    if counts.count > 1400 {
-      counts = Dictionary(uniqueKeysWithValues: counts.sorted {
-        $0.value > $1.value
-      }.prefix(800).map { ($0.key, $0.value) })
-    }
-    self.defaults?.set(counts, forKey: self.wordKey)
+    self.defaults?.set(
+      ConfirmedChoiceLearning.increment(
+        word, in: counts, maximum: 160, trimAt: 1400, retain: 800
+      ),
+      forKey: self.wordKey
+    )
+    _ = ConfirmedChoiceLearning.rememberConfirmedChinese(
+      candidate.text, defaults: self.defaults
+    )
 
     // Learn only the explicitly selected glyph under the canonical stroke
     // prefix. A match shared by Rime and Fcitx5 must not imply source bias.
     if candidate.mode == .stroke,
        let prefix = self.normalized(typedCode, mode: .stroke) {
       let key = prefix + "|" + candidate.text
-      var choices = self.defaults?.dictionary(forKey: self.strokePrefixKey)
+      let choices = self.defaults?.dictionary(forKey: self.strokePrefixKey)
         as? [String: Int] ?? [:]
-      choices[key] = min(160, (choices[key] ?? 0) + 1)
-      if choices.count > 1400 {
-        choices = Dictionary(uniqueKeysWithValues: choices.sorted {
-          $0.value > $1.value
-        }.prefix(800).map { ($0.key, $0.value) })
-      }
-      self.defaults?.set(choices, forKey: self.strokePrefixKey)
+      self.defaults?.set(
+        ConfirmedChoiceLearning.increment(
+          key, in: choices, maximum: 160, trimAt: 1400, retain: 800
+        ),
+        forKey: self.strokePrefixKey
+      )
     }
 
     guard !candidate.ambiguousVariant, candidate.variant == 3 || candidate.variant == 5

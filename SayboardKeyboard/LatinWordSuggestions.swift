@@ -151,17 +151,52 @@ final class LatinWordSuggestions {
 
   func nextWords(after context: String?, preferred: [String], limit: Int = 6)
     -> [LatinWordSuggestion] {
-    InformalNgramStore.shared.nextWords(after: context, preferred: preferred, limit: limit)
+    let words = InformalNgramStore.shared.nextWords(
+      after: context, preferred: preferred, limit: limit
+    )
+    let counts = defaults?.dictionary(forKey: storageKey) as? [String: Int] ?? [:]
+    // Do not write user context back to the language model. Confirmed Latin
+    // choices can only advance an existing contextual candidate three places.
+    return words.enumerated().sorted { a, b in
+      let aBoost = min(3, max(0, (counts[a.element.id] ?? 0) / 2))
+      let bBoost = min(3, max(0, (counts[b.element.id] ?? 0) / 2))
+      let left = a.offset - aBoost, right = b.offset - bBoost
+      return left == right ? a.offset < b.offset : left < right
+    }.map(\.element)
   }
 
   func remember(_ suggestion: LatinWordSuggestion) {
-    var counts = defaults?.dictionary(forKey: storageKey) as? [String: Int] ?? [:]
-    counts[suggestion.id] = min(10_000, (counts[suggestion.id] ?? 0) + 1)
-    if counts.count > 900 {
-      counts = Dictionary(uniqueKeysWithValues:
-        counts.sorted { $0.value > $1.value }.prefix(500).map { ($0.key, $0.value) })
+    guard ["en", "de", "yue"].contains(suggestion.language) else { return }
+    let counts = defaults?.dictionary(forKey: storageKey) as? [String: Int] ?? [:]
+    defaults?.set(
+      ConfirmedChoiceLearning.increment(
+        suggestion.id, in: counts, trimAt: 900, retain: 500
+      ),
+      forKey: storageKey
+    )
+  }
+
+  /// A word selected from a swipe-alternative strip is a confirmed choice.
+  /// Do not learn automatically committed first guesses or ambiguous words
+  /// that could belong to both enabled languages.
+  func rememberSwipeAlternative(_ word: String, preferred: [String]) {
+    let codes = LatinWordSuggestionPolicy.preferredCodes(preferred)
+      .filter { $0 == "en" || $0 == "de" }
+    guard (2...32).contains(word.count), !codes.isEmpty else { return }
+    let matching = codes.filter { code in
+      if code == "en" && SwipeWordLexicon.shared.contains(word.lowercased()) {
+        return true
+      }
+      return Self.commonWords[code]?.contains(where: {
+        $0.caseInsensitiveCompare(word) == .orderedSame
+      }) == true
     }
-    defaults?.set(counts, forKey: storageKey)
+    let selectedLanguage: String?
+    if matching.count == 1 { selectedLanguage = matching[0] }
+    else if codes.count == 1 { selectedLanguage = codes[0] }
+    else { selectedLanguage = nil }
+    guard let selectedLanguage else { return }
+    remember(LatinWordSuggestion(text: word, language: selectedLanguage))
   }
 
   /// An unfamiliar word is added only after the user selects its
@@ -174,7 +209,7 @@ final class LatinWordSuggestions {
           first.isLetter, last.isLetter,
           cleaned.allSatisfy({ $0.isLetter || $0 == "'" || $0 == "’" }),
           let language = LatinWordSuggestionPolicy.preferredCodes(preferred)
-            .first(where: { $0 == "en" || $0 == "de" })
+            .filter({ $0 == "en" || $0 == "de" }).first
     else { return false }
     self.remember(LatinWordSuggestion(text: cleaned, language: language))
     return true

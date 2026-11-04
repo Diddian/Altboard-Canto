@@ -127,11 +127,14 @@ enum ChineseStrokeKeys {
 /// of a user's generation preference.
 enum ChineseShapeRanking {
   static func score(priority: Int, variant: Int, preferred: Int,
-                    count: Int, exact: Bool) -> Int {
+                    count: Int, exact: Bool, sharedCount: Int = 0) -> Int {
     let versionPenalty = variant == preferred || variant == 0 ? 0 : 90_000
     let remembered = min(80, max(0, count)) * 2_000
+    // Shared confirmed Han words only break close ties. Exact codes and
+    // generation-specific evidence retain their existing priority.
+    let crossMethod = min(8, max(0, sharedCount)) * 750
     return (exact ? 0 : 2_000_000_000) + priority / 10
-      + versionPenalty - remembered
+      + versionPenalty - remembered - crossMethod
   }
 
   /// An explicit choice for this canonical stroke prefix (not an upstream
