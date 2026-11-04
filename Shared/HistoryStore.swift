@@ -140,12 +140,17 @@ struct HistoryStore: Sendable {
     self.deleteAudioFile(named: record.audioFileName)
   }
 
-  func deleteAllRecords() {
+  @discardableResult
+  func deleteAllRecords() -> Bool {
     guard let records = try? self.readRecords(),
-          self.writeRecords([]) else { return }
+          self.writeRecords([]) else { return false }
+    var removedAll = true
     for record in records {
-      self.deleteAudioFile(named: record.audioFileName)
+      if !self.deleteAudioFile(named: record.audioFileName) {
+        removedAll = false
+      }
     }
+    return removedAll
   }
 
   func retainedRecords(
@@ -213,9 +218,16 @@ struct HistoryStore: Sendable {
     }
   }
 
-  private func deleteAudioFile(named fileName: String) {
-    guard let url = audioFileURL(for: fileName) else { return }
-    try? FileManager.default.removeItem(at: url)
+  @discardableResult
+  private func deleteAudioFile(named fileName: String) -> Bool {
+    guard let url = audioFileURL(for: fileName) else { return false }
+    guard FileManager.default.fileExists(atPath: url.path) else { return true }
+    do {
+      try FileManager.default.removeItem(at: url)
+      return true
+    } catch {
+      return false
+    }
   }
 
   private func records(in records: [HistoryRecord], newerThan hours: Int, from now: Date) -> [HistoryRecord] {
