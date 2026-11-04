@@ -47,6 +47,7 @@ struct AlphabeticKeyboardLayout: View {
   @State private var swipeAlternatives = [String]()
   @State private var liveSwipePath = [LatinSwipePoint]()
   @State private var nextCantoneseWords = [String]()
+  @State private var nextLatinWords = [LatinWordSuggestion]()
   @State private var predictionAnchor: String?
   @State private var nextChineseQuoteCloses = false
   // English/German swipe typing is always available.
@@ -297,6 +298,7 @@ struct AlphabeticKeyboardLayout: View {
       self.cursorRefreshTask?.cancel()
       self.activeLatinWord = nil
       self.swipeAlternatives.removeAll()
+      self.nextLatinWords.removeAll()
       self.latinSuggestions.removeAll()
       self.composition.clear()
       self.candidates.removeAll()
@@ -314,6 +316,8 @@ struct AlphabeticKeyboardLayout: View {
         self.swipeCandidateStrip
       } else if self.page == .letters && !self.nextCantoneseWords.isEmpty {
         self.nextCantoneseCandidateStrip
+      } else if self.page == .letters && !self.nextLatinWords.isEmpty {
+        self.nextLatinCandidateStrip
       } else if self.page == .letters &&
           ((self.offersCantonese && !self.composition.isEmpty)
             || (self.usesShapeMode && !self.shapeBuffer.isEmpty)
@@ -529,6 +533,40 @@ struct AlphabeticKeyboardLayout: View {
     self.proxy.insertText(text)
     self.predictionAnchor = text
     self.nextCantoneseWords = JyutpingDictionary.shared.continuations(after: text)
+    self.updateCandidates()
+  }
+
+  private var nextLatinCandidateStrip: some View {
+    GeometryReader { geometry in
+      ScrollView(.horizontal) {
+        HStack(spacing: 0) {
+          ForEach(self.nextLatinWords) { suggestion in
+            self.suggestionCell(
+              suggestion.text, width: nil, showDivider: true
+            ) {
+              self.chooseLatinContinuation(suggestion)
+            }
+          }
+        }
+      }
+      .scrollIndicators(.hidden)
+    }
+    .frame(height: KeyboardChromeMetrics.keyHeight)
+  }
+
+  private func chooseLatinContinuation(_ choice: LatinWordSuggestion) {
+    // Revalidate the live host context: a cursor move must never insert a
+    // candidate that belonged to another field or an earlier word.
+    let context = self.proxy.documentContextBeforeInput()
+    let preferred = SharedSettings().preferredSpokenLanguages
+    guard LatinWordSuggestions.shared.nextWords(
+      after: context, preferred: preferred
+    ).contains(where: { $0.id == choice.id }) else {
+      self.nextLatinWords.removeAll()
+      return
+    }
+    self.proxy.insertText(choice.text + " ")
+    LatinWordSuggestions.shared.remember(choice)
     self.updateCandidates()
   }
 
@@ -960,6 +998,7 @@ struct AlphabeticKeyboardLayout: View {
     }
     self.swipeAlternatives.removeAll()
     self.nextCantoneseWords.removeAll()
+    self.nextLatinWords.removeAll()
     self.predictionAnchor = nil
     if self.usesChinesePunctuation {
       if character == "「" || character == "『" { self.nextChineseQuoteCloses = true }
@@ -998,6 +1037,7 @@ struct AlphabeticKeyboardLayout: View {
     guard !self.isCursorTracking else { return }
     self.cantoneseRefreshTask?.cancel()
     if self.usesShapeMode {
+      self.nextLatinWords.removeAll()
       self.candidates.removeAll()
       self.expandedCandidates.removeAll()
       self.expandedLatinSuggestions.removeAll()
@@ -1089,6 +1129,14 @@ struct AlphabeticKeyboardLayout: View {
       : nil
     self.activeLatinWord = typed
     self.latinRefreshTask?.cancel()
+    if typed == nil && self.page == .letters && self.composition.isEmpty {
+      self.nextLatinWords = LatinWordSuggestions.shared.nextWords(
+        after: self.proxy.documentContextBeforeInput(),
+        preferred: SharedSettings().preferredSpokenLanguages
+      )
+    } else {
+      self.nextLatinWords.removeAll()
+    }
     guard let typed else {
       self.latinSuggestions.removeAll()
       self.expandedLatinSuggestions.removeAll()
@@ -1109,7 +1157,8 @@ struct AlphabeticKeyboardLayout: View {
               in: self.proxy.documentContextBeforeInput()
             ) == typed else { return }
       let values = LatinWordSuggestions.shared.choices(
-        for: typed, preferred: preferred, limit: 48
+        for: typed, preferred: preferred,
+        context: self.proxy.documentContextBeforeInput(), limit: 48
       )
       guard !Task.isCancelled, self.activeLatinWord == typed else { return }
       let compact = Array(values.prefix(9))
@@ -1133,6 +1182,7 @@ struct AlphabeticKeyboardLayout: View {
     self.cantoneseRefreshTask?.cancel()
     self.isCursorTracking = true
     self.liveSwipePath = []
+    self.nextLatinWords.removeAll()
     self.activeLatinWord = nil
     self.latinSuggestions.removeAll()
     self.expandedLatinSuggestions.removeAll()

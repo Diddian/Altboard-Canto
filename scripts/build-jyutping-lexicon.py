@@ -249,7 +249,8 @@ def compile_database(source: bytes, output: pathlib.Path, verify_upstream: bool)
         # Keep the upstream bytes/hash unchanged and additions auditable.
         supplemental = pathlib.Path(__file__).with_name("cantonese-phrases.tsv")
         reviewed = supplemental.read_text(encoding="utf-8").splitlines()
-        lines = reviewed + source.decode("utf-8").splitlines()
+        contemporary = supplemental.with_name("contemporary-cantonese.tsv")
+        lines = reviewed + contemporary.read_text(encoding="utf-8").splitlines() + source.decode("utf-8").splitlines()
         db.execute("""CREATE TABLE mixed_aliases (
             alias TEXT NOT NULL,
             word TEXT NOT NULL,

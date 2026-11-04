@@ -16,6 +16,8 @@ final class JyutpingDictionary {
 
   private var database: OpaquePointer?
   private var corpusAvailable = false
+  private var curatedWordWeights = [String: Int]()
+  private var curatedGramWeights = [String: Int]()
   private let defaults = UserDefaults(suiteName: AppGroup.identifier)
   private let memoryKey = CantoneseSchemePreference.candidateStorageKey
   private let schemeKey = CantoneseSchemePreference.preferenceStorageKey
@@ -35,6 +37,8 @@ final class JyutpingDictionary {
         self.corpusAvailable = sqlite3_step(corpusProbe) == SQLITE_ROW
       }
       _ = sqlite3_finalize(corpusProbe)
+      self.curatedWordWeights = self.loadCuratedCounts(table: "curated_cantonese_words")
+      self.curatedGramWeights = self.loadCuratedCounts(table: "curated_cantonese_ngrams")
       self.defaults?.set(true, forKey: "canto.ime.offlineDictionaryReady")
     } else {
       sqlite3_close_v2(handle)
@@ -472,6 +476,14 @@ final class JyutpingDictionary {
     if self.corpusAvailable {
       for prefix in [String(text.suffix(2)), String(text.suffix(1))] {
         guard !prefix.isEmpty, words.count < bounded else { break }
+        // Short reviewed next-word examples supplement historical HKCanCor.
+        // Predict a whole word, not only the next character in its trigram.
+        for value in self.curatedNextWords(after: prefix, limit: 2) {
+          collect(value)
+        }
+        for value in self.corpusContinuations(after: prefix, limit: 2, curated: true) {
+          collect(value)
+        }
         for value in self.corpusContinuations(after: prefix, limit: bounded * 3) {
           collect(value)
         }
@@ -495,10 +507,35 @@ final class JyutpingDictionary {
     return Array(words.prefix(bounded))
   }
 
-  private func corpusContinuations(after prefix: String, limit: Int) -> [String] {
+  private func curatedNextWords(after prefix: String, limit: Int) -> [String] {
     guard let database = self.database, (1...2).contains(prefix.count) else { return [] }
-    let sql = "SELECT gram FROM corpus_ngrams WHERE gram>=? AND gram<? "
-      + "AND length(gram)>\(prefix.count) ORDER BY frequency DESC LIMIT ?"
+    let sql = "SELECT word FROM curated_cantonese_next WHERE prefix=? "
+      + "ORDER BY seed_weight DESC,word LIMIT ?"
+    var statement: OpaquePointer?
+    guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+      sqlite3_finalize(statement)
+      return []
+    }
+    defer { sqlite3_finalize(statement) }
+    let destructor = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+    _ = prefix.withCString { sqlite3_bind_text(statement, 1, $0, -1, destructor) }
+    sqlite3_bind_int(statement, 2, Int32(limit))
+    var next = [String]()
+    while sqlite3_step(statement) == SQLITE_ROW,
+          let text = sqlite3_column_text(statement, 0) {
+      next.append(String(cString: text))
+    }
+    return next
+  }
+
+  private func corpusContinuations(
+    after prefix: String, limit: Int, curated: Bool = false
+  ) -> [String] {
+    guard let database = self.database, (1...2).contains(prefix.count) else { return [] }
+    let table = curated ? "curated_cantonese_ngrams" : "corpus_ngrams"
+    let weight = curated ? "seed_weight" : "frequency"
+    let sql = "SELECT gram FROM \(table) WHERE gram>=? AND gram<? "
+      + "AND length(gram)>\(prefix.count) ORDER BY \(weight) DESC LIMIT ?"
     var statement: OpaquePointer?
     guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
       sqlite3_finalize(statement)
@@ -572,6 +609,25 @@ final class JyutpingDictionary {
     return decoded.map { JyutpingCandidate(text: $0.text, romanization: $0.romanization) }
   }
 
+  private func loadCuratedCounts(table: String) -> [String: Int] {
+    guard let database = self.database else { return [:] }
+    let sql = table == "curated_cantonese_words"
+      ? "SELECT word,seed_weight FROM curated_cantonese_words"
+      : "SELECT gram,seed_weight FROM curated_cantonese_ngrams"
+    var statement: OpaquePointer?
+    guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+      sqlite3_finalize(statement)
+      return [:]
+    }
+    defer { sqlite3_finalize(statement) }
+    var weights = [String: Int]()
+    while sqlite3_step(statement) == SQLITE_ROW,
+          let pointer = sqlite3_column_text(statement, 0) {
+      weights[String(cString: pointer)] = Int(sqlite3_column_int(statement, 1))
+    }
+    return weights
+  }
+
   private func corpusFrequency(_ key: String, table: String) -> Int {
     guard let database = self.database, !key.isEmpty else { return 0 }
     let sql = table == "corpus_words"
@@ -587,8 +643,14 @@ final class JyutpingDictionary {
     _ = key.withCString { pointer in
       sqlite3_bind_text(statement, 1, pointer, -1, destructor)
     }
-    return sqlite3_step(statement) == SQLITE_ROW
+    let observed = sqlite3_step(statement) == SQLITE_ROW
       ? Int(sqlite3_column_int(statement, 0)) : 0
+    // Editorial seed weights are not falsely presented as corpus counts.
+    // Only use a small fallback when an N-gram is absent from HKCanCor.
+    if observed > 0 { return observed }
+    let seedWeight = table == "corpus_words"
+      ? self.curatedWordWeights[key] ?? 0 : self.curatedGramWeights[key] ?? 0
+    return min(24, seedWeight * 4)
   }
 
   func remember(_ candidate: JyutpingCandidate, typed: String? = nil) {

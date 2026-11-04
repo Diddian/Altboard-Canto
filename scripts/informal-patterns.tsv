@@ -1,0 +1,111 @@
+# language<TAB>short editorial usage example; seed_weight is NOT corpus frequency.
+# en, de, yue (spaced Han words), en-mixed, de-mixed
+en	brb see you soon
+en	brb back soon
+en	lol that was funny
+en	lol that's wild
+en	idk what happened
+en	idk what to do
+en	tbh i think so
+en	tbh that makes sense
+en	ngl that is good
+en	imo this works
+en	imo that's better
+en	btw did you see
+en	lmk when you're free
+en	omw see you soon
+en	fr that is crazy
+en	no cap that was great
+en	this is so cringe
+en	that was so cringe
+en	this is fire
+en	that's fire
+en	that's a vibe
+en	that is lowkey funny
+en	lowkey i love this
+en	that was sus
+en	he is the goat
+en	that is such a flex
+en	i think this works
+en	i want to go
+en	i will be right back
+en	be right back
+en	see you later
+en	see you soon
+en	i get it
+en	that makes sense
+en	this is so good
+en	im so tired
+en	no way that's real
+de	Digga das ist wild
+de	Digga das ist krass
+de	Digga ich check das
+de	Brudi das ist krass
+de	Alter das ist heftig
+de	ich check das
+de	ich checke das
+de	ich check das nicht
+de	ich checke es nicht
+de	ich hab es gecheckt
+de	checkst du was ich meine
+de	checkst du das
+de	das ist safe
+de	das ist safe richtig
+de	safe machen wir so
+de	safe ich bin dabei
+de	ich bin safe dabei
+de	das ist voll cringe
+de	das ist echt wild
+de	ich bin lost
+de	ich bin komplett lost
+de	das crazy
+de	vllt sehen wir uns morgen
+de	vllt später
+de	kp was du meinst
+de	kp keine ahnung
+de	bzw ich meine
+de	bzw das heißt
+de	ich hab keinen plan
+de	ich weiß nicht
+de	ich verstehe das
+de	ich glaub schon
+de	junge das ist krass
+de	voll geil
+de	das ist stabil
+de	ich gönn dir
+de	bro das ist wild
+yue	你 真係 世一
+yue	呢個 真係 世一
+yue	世界 第一 世一
+yue	呢個 係 天花板
+yue	真係 天花板
+yue	有啲 破防
+yue	好 鬼 癲
+yue	真係 好 癲
+yue	笑 死 我
+yue	呢個 好 高質
+yue	睇 嘢 食花生
+yue	食花生 睇戲
+yue	今日 好 佛系
+yue	佢 又 自肥
+yue	呢個 好 屈機
+yue	完全 屈機
+en-mixed	唔好 咁 chur
+yue	有啲 社死
+yue	我 想 躺平
+yue	呢個 好 正
+yue	好 尷尬
+yue	太 誇張
+en-mixed	我 今日 好 tired
+en-mixed	我 真係 好 busy
+en-mixed	呢個 好 cringe
+en-mixed	呢個 好 chill
+en-mixed	佢 真係 so good
+en-mixed	個 vibe 好 good
+en-mixed	呢個 係 世一 fr
+en-mixed	影到 我 plz del
+en-mixed	呢個 真係 mnyy
+de-mixed	我 今日 好 lost
+de-mixed	ich bin 好 müde
+de-mixed	das ist 世一
+de-mixed	ich bin safe dabei
