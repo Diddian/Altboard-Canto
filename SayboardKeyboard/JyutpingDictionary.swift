@@ -72,12 +72,7 @@ final class JyutpingDictionary {
       gather("SELECT word,romanization FROM entries WHERE compact>=? AND compact<? ORDER BY priority LIMIT ?", input, rank: 2)
     } else {
       let preferenceCounts = self.defaults?.dictionary(forKey: self.schemeKey) as? [String: Int] ?? [:]
-      let preferred = CantoneseSchemePreference.preferred(preferenceCounts)
-      let columns = ["plain", "yale", "sidney"].sorted {
-        if $0 == preferred { return true }
-        if $1 == preferred { return false }
-        return false
-      }
+      let columns = CantoneseSchemePreference.lookupOrder(preferenceCounts)
       for column in columns {
         gather("SELECT word,romanization FROM entries WHERE \(column)=? ORDER BY priority LIMIT ?", plain, rank: 0)
       }
@@ -160,8 +155,9 @@ final class JyutpingDictionary {
          argument: "m", limit: 1
        ).first {
       ordered.removeAll { $0.text == negative.text }
-      let selected = counts[negative.id] ?? 0
-      ordered.insert(negative, at: min(selected > 0 ? 0 : 1, ordered.count))
+      let preferences = self.defaults?.dictionary(forKey: self.schemeKey) as? [String: Int] ?? [:]
+      let promote = CantoneseSchemePreference.prefersColloquialNg(preferences)
+      ordered.insert(negative, at: min(promote ? 0 : 1, ordered.count))
     }
     return Array(ordered.prefix(boundedLimit))
   }
@@ -232,8 +228,10 @@ final class JyutpingDictionary {
       "笑", "寫", "讀", "唱", "飛", "跟", "忍", "放", "醒",
       "肯", "明", "見", "似", "諗"
     ]
+    let preferences = self.defaults?.dictionary(forKey: self.schemeKey) as? [String: Int] ?? [:]
+    let columns = CantoneseSchemePreference.lookupOrder(preferences)
     for alias in CantoneseRomanizationVariants.variants(for: base) {
-      for column in ["plain", "yale", "sidney"] {
+      for column in columns {
         let matches = self.query(
           "SELECT word,romanization FROM entries WHERE \(column)=? ORDER BY priority LIMIT ?",
           argument: alias, limit: 24
@@ -256,6 +254,8 @@ final class JyutpingDictionary {
     guard (7...32).contains(spelling.count),
           spelling.allSatisfy({ $0.isASCII && $0.isLetter }) else { return nil }
     let letters = Array(spelling)
+    let preferences = self.defaults?.dictionary(forKey: self.schemeKey) as? [String: Int] ?? [:]
+    let columns = CantoneseSchemePreference.lookupOrder(preferences)
     var hits = [String: JyutpingCandidate]()
     var misses = Set<String>()
     func exact(_ range: Range<Int>) -> JyutpingCandidate? {
@@ -263,7 +263,7 @@ final class JyutpingDictionary {
       if let value = hits[code] { return value }
       if misses.contains(code) { return nil }
       for variant in CantoneseRomanizationVariants.variants(for: code) {
-        for column in ["plain", "yale", "sidney"] {
+        for column in columns {
           if let value = self.query(
             "SELECT word,romanization FROM entries WHERE \(column)=? ORDER BY priority LIMIT ?",
             argument: variant, limit: 1
@@ -362,19 +362,14 @@ final class JyutpingDictionary {
   ]
 
   func remember(_ candidate: JyutpingCandidate, typed: String? = nil) {
-    if let typed,
-       let scheme = CantoneseSchemePreference.inferredScheme(
-         input: typed, canonical: candidate.romanization
-       ) {
-      var counts = self.defaults?.dictionary(forKey: self.schemeKey) as? [String: Int] ?? [:]
-      // Gradual aging prevents long-term preference from locking forever.
-      if counts.values.reduce(0, +) >= 120 {
-        for key in CantoneseSchemePreference.evidenceKeys {
-          counts[key] = (counts[key] ?? 0) / 2
-        }
+    if let typed {
+      let counts = self.defaults?.dictionary(forKey: self.schemeKey) as? [String: Int] ?? [:]
+      let updated = CantoneseSchemePreference.recordingSelection(
+        in: counts, typed: typed, canonical: candidate.romanization
+      )
+      if updated != counts {
+        self.defaults?.set(updated, forKey: self.schemeKey)
       }
-      counts[scheme] = min(120, (counts[scheme] ?? 0) + 1)
-      self.defaults?.set(counts, forKey: self.schemeKey)
     }
     var counts = self.defaults?.dictionary(forKey: self.memoryKey) as? [String: Int] ?? [:]
     counts[candidate.id] = min(10000, (counts[candidate.id] ?? 0) + 1)

@@ -79,6 +79,50 @@ struct JyutpingCompositionTests {
     ) == "traditional")
   }
 
+  @Test func romanizationAdaptsToConfirmedSelectionsWithoutRawHistory() {
+    var evidence = [String: Int]()
+    for _ in 0..<5 {
+      evidence = CantoneseSchemePreference.recordingSelection(
+        in: evidence, typed: "jau", canonical: "zau6"
+      )
+    }
+    #expect(CantoneseSchemePreference.lookupOrder(evidence) == ["yale", "sidney", "plain"])
+    for _ in 0..<12 {
+      evidence = CantoneseSchemePreference.recordingSelection(
+        in: evidence, typed: "kui", canonical: "keoi5"
+      )
+    }
+    #expect(CantoneseSchemePreference.lookupOrder(evidence) == ["sidney", "yale", "plain"])
+    for _ in 0..<22 {
+      evidence = CantoneseSchemePreference.recordingSelection(
+        in: evidence, typed: "keui", canonical: "keoi5"
+      )
+    }
+    #expect(CantoneseSchemePreference.lookupOrder(evidence) == ["yale", "sidney", "plain"])
+    for _ in 0..<60 {
+      evidence = CantoneseSchemePreference.recordingSelection(
+        in: evidence, typed: "keoi", canonical: "keoi5"
+      )
+    }
+    #expect(CantoneseSchemePreference.lookupOrder(evidence) == ["plain", "yale", "sidney"])
+    var ngCounts = [String: Int]()
+    for _ in 0..<4 {
+      ngCounts = CantoneseSchemePreference.recordingSelection(
+        in: ngCounts, typed: "sikngsik", canonical: "sik6 m4 sik6"
+      )
+    }
+    #expect(CantoneseSchemePreference.prefersColloquialNg(ngCounts))
+    for _ in 0..<7 {
+      ngCounts = CantoneseSchemePreference.recordingSelection(
+        in: ngCounts, typed: "sikmsik", canonical: "sik6 m4 sik6"
+      )
+    }
+    #expect(!CantoneseSchemePreference.prefersColloquialNg(ngCounts))
+    #expect(CantoneseSchemePreference.negativeParticleStyle(
+      input: "ngaan", canonical: "ngaan5"
+    ) == nil)
+  }
+
   @Test func rejectsInvalidKeysWithoutChangingBuffer() {
     var composition = JyutpingComposition()
     #expect(composition.append("n"))
