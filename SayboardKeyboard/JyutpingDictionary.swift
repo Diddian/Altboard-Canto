@@ -18,6 +18,7 @@ final class JyutpingDictionary {
   private var corpusAvailable = false
   private var curatedWordWeights = [String: Int]()
   private var curatedGramWeights = [String: Int]()
+  private var japaneseExplicitOnly = Set<String>()
   private let defaults = UserDefaults(suiteName: AppGroup.identifier)
   private let memoryKey = CantoneseSchemePreference.candidateStorageKey
   private let schemeKey = CantoneseSchemePreference.preferenceStorageKey
@@ -39,6 +40,7 @@ final class JyutpingDictionary {
       _ = sqlite3_finalize(corpusProbe)
       self.curatedWordWeights = self.loadCuratedCounts(table: "curated_cantonese_words")
       self.curatedGramWeights = self.loadCuratedCounts(table: "curated_cantonese_ngrams")
+      self.japaneseExplicitOnly = self.loadJapaneseExplicitOnly()
       self.defaults?.set(true, forKey: "canto.ime.offlineDictionaryReady")
     } else {
       sqlite3_close_v2(handle)
@@ -182,6 +184,15 @@ final class JyutpingDictionary {
       }
     }
 
+    // Keep the canonical 之 available even if its upstream dictionary row
+    // falls outside the fixed lookup window for the short spelling zi/ji.
+    if ["zi", "zi1", "ji"].contains(input) {
+      gather(
+        "SELECT word,romanization FROM entries WHERE word='之' AND compact=? ORDER BY priority LIMIT ?",
+        "zi1", rank: 0
+      )
+    }
+
     // Exact single-character readings precede prefix phrases. Personal
     // selection counts still rank candidates within each result class.
     let counts = self.defaults?.dictionary(forKey: self.memoryKey) as? [String: Int] ?? [:]
@@ -196,6 +207,19 @@ final class JyutpingDictionary {
       if a != b { return a > b }
       return lhs.offset < rhs.offset
     }.map(\.element)
+
+    // Japanese-style の is pronounced as 之 (zi1) in Hong Kong signage.
+    // Retain the ordinary Chinese character first; offer の as an explicit
+    // alternate for Jyutping zi/zi1 and traditional Yale/Sidney Lau ji.
+    if ["zi", "zi1", "ji"].contains(input),
+       let special = ordered.first(where: { $0.text == "の" }) {
+      ordered.removeAll { $0.text == "の" }
+      if let index = ordered.firstIndex(where: { $0.text == "之" }) {
+        let canonical = ordered.remove(at: index)
+        ordered.insert(canonical, at: 0)
+      }
+      ordered.insert(special, at: min(1, ordered.count))
+    }
 
     // Keep authentic ng syllable candidates first, then optionally offer 唔
     // for users who type ng as shorthand for the canonical m4 negative.
@@ -607,6 +631,27 @@ final class JyutpingDictionary {
       wordFrequency: { self.corpusFrequency($0, table: "corpus_words") }
     )
     return decoded.map { JyutpingCandidate(text: $0.text, romanization: $0.romanization) }
+  }
+
+  func requiresExplicitSelection(for word: String) -> Bool {
+    self.japaneseExplicitOnly.contains(word)
+  }
+
+  private func loadJapaneseExplicitOnly() -> Set<String> {
+    guard let database = self.database else { return [] }
+    var statement: OpaquePointer?
+    let sql = "SELECT word FROM hk_japanese_lexicon WHERE usage!='common'"
+    guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+      sqlite3_finalize(statement)
+      return []
+    }
+    defer { sqlite3_finalize(statement) }
+    var words = Set<String>()
+    while sqlite3_step(statement) == SQLITE_ROW,
+          let text = sqlite3_column_text(statement, 0) {
+      words.insert(String(cString: text))
+    }
+    return words
   }
 
   private func loadCuratedCounts(table: String) -> [String: Int] {

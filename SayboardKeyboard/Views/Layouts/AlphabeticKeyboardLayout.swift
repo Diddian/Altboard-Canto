@@ -1452,6 +1452,7 @@ struct AlphabeticKeyboardLayout: View {
         ? self.candidates : JyutpingDictionary.shared.candidates(for: spelling)
       if let first = available.first,
          first.text.count >= 2,
+         !JyutpingDictionary.shared.requiresExplicitSelection(for: first.text),
          CantonesePhraseCommitPolicy.commitsFirstOnSpace(
            spelling: spelling, firstCandidate: first.text,
            hasExactEntry: JyutpingDictionary.shared.hasExactEntry(for: spelling),

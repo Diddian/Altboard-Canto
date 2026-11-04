@@ -79,6 +79,16 @@ def collect(directory: Path = HERE):
                 if i >= width:
                     history = " ".join(tokens[i-width:i])
                     latin[(actual, history, token)] += 1
+    # Only widely used Han-script loanwords add small, editorial fallback
+    # weights. Community/niche terms and Japanese kana remain direct lexicon
+    # suggestions; none are represented as measured corpus frequencies.
+    for surface, _, _, usage, _ in rows(directory / "hk-japanese-loanwords.tsv", 5):
+        if usage != "common" or not surface or not all(is_han(ch) for ch in surface):
+            continue
+        if 1 <= len(surface) <= 12:
+            words[surface] += 1
+            for width in (1, 2, 3):
+                chars.update(surface[i:i+width] for i in range(len(surface) - width + 1))
     if len(terms) < 15 or not latin or not chars:
         raise ValueError("Curated seed files are unexpectedly small")
     return terms, latin, words, chars, continuations
