@@ -11,7 +11,8 @@ struct VerifyLetterHoldAlternates {
     precondition(LetterKeySecondary.symbol(row: 3, index: 0) == nil)
     let h = LetterKeyAlternates.holdChoices(for: "h", uppercase: false,
                                              secondary: LetterKeySecondary.symbol(row: 1, index: 5))
-    precondition(h == ["$"], "Hold H should insert dollar sign without H")
+    precondition(h.first == "$" && h.contains("ħ") && !h.contains("h"),
+                 "Hold H should retain the dollar symbol and accented alternatives")
     let l = LetterKeyAlternates.holdChoices(for: "l", uppercase: false,
                                              secondary: LetterKeySecondary.symbol(row: 1, index: 8))
     precondition(l.first == "\"", "Hold L should insert double quote")

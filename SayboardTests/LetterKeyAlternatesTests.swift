@@ -33,7 +33,8 @@ struct LetterKeyAlternatesTests {
     let alternatives = LetterKeyAlternates.holdChoices(
       for: "h", uppercase: false, secondary: LetterKeySecondary.symbol(row: 1, index: 5)
     )
-    #expect(alternatives == ["$"])
+    #expect(alternatives.first == "$")
+    #expect(alternatives.contains("ħ"))
     #expect(!alternatives.contains("h"))
     #expect(LetterKeySecondary.symbol(row: 1, index: 8) == "\"")
     #expect(LetterKeySecondary.symbol(row: 2, index: 0) == ")")
