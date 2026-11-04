@@ -29,8 +29,6 @@ struct AlphabeticKeyboardLayout: View {
   private var chineseModeRaw = ChineseInputMode.phonetic.rawValue
   @State private var shapeBuffer = ""
   @State private var shapeLatinBuffer = ""
-  @State private var showsEmojiPage = false
-  @State private var emojiReturnPage = AlphabeticPage.letters
   @State private var shapeCandidates = [ChineseShapeCandidate]()
   @State private var expandedShapeCandidates = [ChineseShapeCandidate]()
   @State private var shapeHostAnchor: String?
@@ -137,27 +135,6 @@ struct AlphabeticKeyboardLayout: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      if self.showsEmojiPage {
-        EmojiKeyboardView(
-          proxy: self.proxy,
-          keyboardState: self.keyboardState,
-          onAlphabet: {
-            self.showsEmojiPage = false
-            self.page = .letters
-            self.updateCandidates()
-          },
-          onNumbers: {
-            self.showsEmojiPage = false
-            self.page = .numbers
-            self.updateCandidates()
-          },
-          onClose: {
-            self.showsEmojiPage = false
-            self.page = self.emojiReturnPage
-            self.updateCandidates()
-          }
-        )
-      } else {
       self.toolbar
         // Keep every toolbar button completely inside the keyboard's
         // clipping bounds. A negative offset cut the mic and icons off.
@@ -215,7 +192,6 @@ struct AlphabeticKeyboardLayout: View {
         keyboardState: self.keyboardState,
         alphabeticModeLabel: self.page == .letters ? "?123" : "ABC",
         onAlphabeticModeSwitch: { self.toggleNumberPage() },
-        onEmojiAction: { self.openEmojiPage() },
         showsAlphabetIndicator: self.page == .letters,
         onSpaceAction: { self.handleSpace() },
         onShortcutAction: { self.handleCharacter($0) },
@@ -225,11 +201,10 @@ struct AlphabeticKeyboardLayout: View {
       )
       .id(self.keyboardState.keyboardAppearanceRevision)
       .padding(.top, Self.rowSpacing.kbScaled)
-      }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     .overlay(alignment: .top) {
-      if !self.showsEmojiPage, self.showsCandidateGrid,
+      if self.showsCandidateGrid,
          (!self.expandedCandidates.isEmpty || !self.expandedShapeCandidates.isEmpty
            || !self.expandedLatinSuggestions.isEmpty),
          self.page == .letters {
@@ -1218,7 +1193,6 @@ struct AlphabeticKeyboardLayout: View {
     self.expandedLatinSuggestions.removeAll()
     self.candidates.removeAll()
     self.expandedCandidates.removeAll()
-    self.expandedLatinSuggestions.removeAll()
     self.candidateLookupSpelling = ""
     self.showsCandidateGrid = false
   }
@@ -1358,17 +1332,6 @@ struct AlphabeticKeyboardLayout: View {
     self.updateCandidates()
   }
 
-
-  /// Input-method selection is independent from pronunciation schemes. Both
-  /// Cangjie generations and both Quick generations are searched together.
-  private func openEmojiPage() {
-    self.emojiReturnPage = self.page
-    self.clearShapeComposition()
-    self.clearComposition()
-    self.swipeAlternatives.removeAll()
-    self.swipeTrail.clear()
-    self.showsEmojiPage = true
-  }
 
   private func cycleChineseMode() {
     let next = self.chineseMode.next
