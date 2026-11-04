@@ -54,8 +54,9 @@ final class KeyboardViewController: UIInputViewController {
       for constraint in view.constraintsAffectingLayout(for: .vertical) {
         constraint.priority = .defaultHigh
       }
-      let kind = self.keyboardState.keyboardKind
-      let initialHeight = KeyboardMetrics.totalHeight(actionBarVisible: false, kind: kind)
+      let initialHeight = KeyboardMetrics.totalHeight(
+        actionBarVisible: false, kind: self.keyboardState.effectiveTypingKind
+      )
       let hc = view.heightAnchor.constraint(equalToConstant: initialHeight)
       hc.priority = UILayoutPriority(rawValue: 999)
       hc.isActive = true
@@ -92,11 +93,15 @@ final class KeyboardViewController: UIInputViewController {
     Self.activeInstance = self
     SharedSettings().defaults.set(true, forKey: "canto.keyboardOpenedAtLeastOnce")
     SharedSettings().synchronize()
+    // Resolve persisted mode, permissions and host traits before mounting
+    // SwiftUI. Creating the view before refresh could select a stale layout
+    // and an incorrect initial host height.
+    self.keyboardState.refresh()
+    self.refreshHostInputTraits()
+    self.syncFullAccessIfChanged()
     if self.hostingController == nil {
       self.setupKeyboardView()
     }
-    self.keyboardState.refresh()
-    self.refreshHostInputTraits()
     // Reactivation can reuse the same hosted SwiftUI view after an interrupted drag.
     self.keyboardState.keyboardAppearanceRevision &+= 1
     KeyboardHaptics.prepare()
@@ -106,7 +111,6 @@ final class KeyboardViewController: UIInputViewController {
       self.keyboardState.stopLevelPolling()
     }
     self.keyboardState.isTranslationMode = SharedSettings().isTranslationMode
-    self.syncFullAccessIfChanged()
     self.updateKeyboardHeight(actionBarVisible: false)
     self.pingMainAppForSessionStatus()
     self.pingValidator.startIfNeeded(for: self.keyboardState)
@@ -191,6 +195,7 @@ final class KeyboardViewController: UIInputViewController {
   private var actionBarVisible = false
 
   private var hostingController: UIHostingController<KeyboardView>?
+  private var lastHostingLayoutSize: CGSize = .zero
   private var staleFallbackTimer: Timer?
   private var lastSyncedFullAccess = false
   private var hasPerformedInitialFullAccessSync = false
@@ -512,6 +517,7 @@ extension KeyboardViewController {
   }
 
   func setupKeyboardView() {
+    self.lastHostingLayoutSize = .zero
     let proxy = self.makeKeyboardProxy()
     let keyboardView = KeyboardView(proxy: proxy, keyboardState: self.keyboardState)
     let hosting = UIHostingController(rootView: keyboardView)
@@ -524,8 +530,9 @@ extension KeyboardViewController {
     self.view.addSubview(hosting.view)
     hosting.didMove(toParent: self)
 
-    let kind = self.keyboardState.keyboardKind
-    let initialHeight = KeyboardMetrics.totalHeight(actionBarVisible: false, kind: kind)
+    let initialHeight = KeyboardMetrics.totalHeight(
+      actionBarVisible: false, kind: self.keyboardState.effectiveTypingKind
+    )
     let hostingHeight = hosting.view.heightAnchor.constraint(equalToConstant: initialHeight)
     NSLayoutConstraint.activate([
       hosting.view.leadingAnchor.constraint(equalTo: self.view.leadingAnchor),
@@ -539,15 +546,22 @@ extension KeyboardViewController {
   }
 
   private func applyKeyboardHeight() {
-    guard let hc = self.heightConstraint else { return }
-    let base = KeyboardMetrics.totalHeight(
+    let target = KeyboardMetrics.totalHeight(
       actionBarVisible: self.actionBarVisible,
       kind: self.keyboardState.effectiveTypingKind
     )
-    let target = base
-    guard hc.constant != target else { return }
-    hc.constant = target
-    self.hostingHeightConstraint?.constant = target
+    // UIKit may request the view size after viewWillAppear. Update the hosted
+    // view even when the parent height constraint has not yet been created.
+    var changed = false
+    if let height = self.heightConstraint, height.constant != target {
+      height.constant = target
+      changed = true
+    }
+    if let height = self.hostingHeightConstraint, height.constant != target {
+      height.constant = target
+      changed = true
+    }
+    guard changed else { return }
     UIView.performWithoutAnimation {
       self.view.layoutIfNeeded()
       self.view.superview?.layoutIfNeeded()
@@ -677,6 +691,17 @@ extension KeyboardViewController {
   override func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
     self.insertDeferredAppearanceText()
+  }
+
+  override func viewDidLayoutSubviews() {
+    super.viewDidLayoutSubviews()
+    guard let hosting = self.hostingController?.view,
+          hosting.bounds.width > 0, hosting.bounds.height > 0,
+          hosting.bounds.size != self.lastHostingLayoutSize else { return }
+    self.lastHostingLayoutSize = hosting.bounds.size
+    // The extension can first appear with zero-width geometry. Invalidate
+    // its hosted SwiftUI layout once UIKit supplies nonzero bounds.
+    hosting.setNeedsLayout()
   }
 
   private func refreshHostInputTraits() {

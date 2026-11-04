@@ -75,6 +75,7 @@ jobs:
           python3 -m unittest discover -s scripts -p 'test_hk_japanese_lexicon.py'
           # Regression for blank keycap rows seen on physical iPhone.
           python3 -m unittest discover -s scripts -p 'test_symbol_visibility.py'
+          python3 -m unittest discover -s scripts -p 'test_keyboard_initial_layout.py'
           python3 -m unittest discover -s scripts -p 'test_emoji_catalog.py'
           python3 -m unittest discover -s scripts -p 'test_ipa_bundle.py'
           swiftc -o "$RUNNER_TEMP/punctuation-smoke" \

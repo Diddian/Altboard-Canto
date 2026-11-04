@@ -139,46 +139,44 @@ struct KeyboardView: View {
 
   var body: some View {
     Group {
-    if self.keyboardState.requiresBasicTypingFallback {
-      // The microphone and AI require setup, but typing must remain usable.
-      AlphabeticKeyboardLayout(proxy: self.proxy, keyboardState: self.keyboardState)
-        .environment(\.keyboardHapticsEnabled, self.keyboardState.keyboardHapticsEnabled)
-    } else if let error = self.keyboardState.llmError {
-      LLMErrorPrompt(
-        error: error, keyboardState: self.keyboardState,
-        onUseClipboard: { self.proxy.requestLLMClipboard() }
-      )
+      if !self.keyboardState.requiresBasicTypingFallback,
+         let error = self.keyboardState.llmError {
+        LLMErrorPrompt(
+          error: error, keyboardState: self.keyboardState,
+          onUseClipboard: { self.proxy.requestLLMClipboard() }
+        )
       } else {
-      Group {
-        switch self.keyboardState.keyboardKind {
-        case .standard:
-          StandardKeyboardLayout(proxy: self.proxy, keyboardState: self.keyboardState)
-        case .extended:
-          ExtendedKeyboardLayout(proxy: self.proxy, keyboardState: self.keyboardState)
-        case .alphabetic:
-          AlphabeticKeyboardLayout(proxy: self.proxy, keyboardState: self.keyboardState)
+        // A single source of truth for the visible layout. The alphabetic
+        // fallback no longer mounts a competing copy of the same keyboard.
+        Group {
+          switch self.keyboardState.effectiveTypingKind {
+          case .standard:
+            StandardKeyboardLayout(proxy: self.proxy, keyboardState: self.keyboardState)
+          case .extended:
+            ExtendedKeyboardLayout(proxy: self.proxy, keyboardState: self.keyboardState)
+          case .alphabetic:
+            AlphabeticKeyboardLayout(proxy: self.proxy, keyboardState: self.keyboardState)
+          }
         }
+        .padding(
+          .top, self.keyboardState.effectiveTypingKind == .extended ? 3.kbScaled : 0
+        )
       }
-      .padding(.top, self.keyboardState.keyboardKind == .extended ? 3.kbScaled : 0)
-      .onChange(of: self.keyboardState.showLLMActions) { _, visible in
-        // The action picker REPLACES the toolbar; it never overlays active keys.
-        self.proxy.setActionBarVisible(visible)
-      }
-      .onChange(of: self.keyboardState.isRecording) { _, isRecording in
-        if isRecording { self.keyboardState.showLLMActions = false }
-      }
-      .onChange(of: self.keyboardState.isLLMProcessing) { _, isProcessing in
-        if isProcessing { self.keyboardState.showLLMActions = false }
-      }
-      .onAppear {
-        self.keyboardState.openURLAction = { [openURL] url in
-          openURL(url)
-        }
-      }
-      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-      .environment(\.keyboardHapticsEnabled, self.keyboardState.keyboardHapticsEnabled)
     }
+    .onChange(of: self.keyboardState.showLLMActions) { _, visible in
+      self.proxy.setActionBarVisible(visible)
     }
+    .onChange(of: self.keyboardState.isRecording) { _, recording in
+      if recording { self.keyboardState.showLLMActions = false }
+    }
+    .onChange(of: self.keyboardState.isLLMProcessing) { _, processing in
+      if processing { self.keyboardState.showLLMActions = false }
+    }
+    .onAppear {
+      self.keyboardState.openURLAction = { [openURL] url in openURL(url) }
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    .environment(\.keyboardHapticsEnabled, self.keyboardState.keyboardHapticsEnabled)
     .background {
       Rectangle()
         .fill(Color(uiColor: KeyboardPalette.backdrop))

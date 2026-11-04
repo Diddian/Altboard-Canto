@@ -45,7 +45,7 @@ struct AlphabeticKeyboardLayout: View {
   @State private var activeLatinWord: String?
   @State private var latinSuggestions = [LatinWordSuggestion]()
   @State private var swipeAlternatives = [String]()
-  @State private var liveSwipePath = [LatinSwipePoint]()
+  @StateObject private var swipeTrail = SwipeTrailState()
   @State private var nextCantoneseWords = [String]()
   @State private var nextLatinWords = [LatinWordSuggestion]()
   @State private var predictionAnchor: String?
@@ -192,18 +192,22 @@ struct AlphabeticKeyboardLayout: View {
           .overlay {
             if self.page == .letters && self.swipeTypingEnabled
               && self.chineseMode == .phonetic {
-              SwipeTrailOverlay(points: self.liveSwipePath)
+              SwipeTrailOverlay(trail: self.swipeTrail)
                 .allowsHitTesting(false)
                 .accessibilityHidden(true)
             }
           }
+          // Reset the three UIKit touch rows on host reactivation. Previously
+          // only the bottom row was rebuilt, leaving reused letter surfaces
+          // in an incomplete first-frame state.
+          .id(self.keyboardState.keyboardAppearanceRevision)
         }
       }
       .frame(height: 3 * KeyboardChromeMetrics.keyHeight
         + 2 * Self.rowSpacing.kbScaled)
-      .opacity(self.isCursorTracking ? 0.07 : 1)
-      .allowsHitTesting(!self.isCursorTracking)
-      .animation(.easeOut(duration: 0.13), value: self.isCursorTracking)
+      // A cancelled spacebar gesture can miss its end callback. Do not fade
+      // or disable the printable keys when its transient tracking flag sticks.
+      // UIKit keeps the original SpaceBarKey gesture for the active drag.
 
       KeyboardBottomRow(
         proxy: self.proxy,
@@ -254,7 +258,7 @@ struct AlphabeticKeyboardLayout: View {
       // Never leave alphabet rows dimmed after a host app or field switch.
       self.isCursorTracking = false
       self.cursorRefreshTask?.cancel()
-      self.liveSwipePath.removeAll()
+      self.swipeTrail.clear()
     }
     .onChange(of: self.keyboardState.hostInputTraits.keyboardType) { _, _ in
       self.applyHostKeyboardLayout()
@@ -268,7 +272,7 @@ struct AlphabeticKeyboardLayout: View {
     .onChange(of: self.chineseModeRaw) { _, _ in
       self.clearComposition()
       self.clearShapeComposition()
-      self.liveSwipePath.removeAll()
+      self.swipeTrail.clear()
       self.updateCandidates()
     }
     .onChange(of: self.autoCapitalize) { _, _ in self.refreshAutomaticShift() }
@@ -293,7 +297,7 @@ struct AlphabeticKeyboardLayout: View {
     .onDisappear {
       self.isCursorTracking = false
       self.clearShapeComposition()
-      self.liveSwipePath.removeAll()
+      self.swipeTrail.clear()
       self.latinRefreshTask?.cancel()
       self.cursorRefreshTask?.cancel()
       self.activeLatinWord = nil
@@ -955,7 +959,7 @@ struct AlphabeticKeyboardLayout: View {
       swipeRowIndex: rowIndex,
       chineseInputMode: self.chineseMode,
       onSwipe: { words in self.commitSwipe(words) },
-      onSwipePath: { path in self.liveSwipePath = path }
+      onSwipePath: { path in self.swipeTrail.update(path) }
     ) { typed in
       self.handleCharacter(typed)
       self.lastShiftTap = nil
@@ -987,6 +991,9 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private func handleCharacter(_ character: String) {
+    // Receiving a real key action is definitive evidence that a previous
+    // trackpad gesture is no longer active.
+    if self.isCursorTracking { self.isCursorTracking = false }
     if self.usesShapeMode,
        character.count == 1, character.allSatisfy({ $0.isASCII && $0.isLetter }) {
       self.appendShapeCode(character)
@@ -1095,24 +1102,29 @@ struct AlphabeticKeyboardLayout: View {
         do { try await Task.sleep(for: .milliseconds(24)) } catch { return }
         guard !Task.isCancelled, !self.isCursorTracking,
               self.composition.buffer == prefix else { return }
-        let newCandidates = JyutpingDictionary.shared.candidates(for: prefix)
+        // Query the dictionary once. The expanded grid used to repeat the
+        // same SQLite/beam-search work immediately after a compact lookup.
+        let gridVisible = self.showsCandidateGrid
+        let ranked = JyutpingDictionary.shared.candidates(
+          for: prefix, limit: gridVisible ? 200 : 12
+        )
         guard !Task.isCancelled, self.composition.buffer == prefix else { return }
-        let exactPhrase = (newCandidates.first?.text.count ?? 0) >= 2
+        let compact = Array(ranked.prefix(12))
+        let exactPhrase = (compact.first?.text.count ?? 0) >= 2
           && JyutpingDictionary.shared.hasExactEntry(for: prefix)
         let recognizedLatin = exactPhrase
           && LatinWordSuggestions.shared.recognizesWholeWord(
             prefix, preferred: SharedSettings().preferredSpokenLanguages
           )
         guard !Task.isCancelled, self.composition.buffer == prefix else { return }
-        let expanded = self.showsCandidateGrid && !newCandidates.isEmpty
-          ? JyutpingDictionary.shared.candidates(for: prefix, limit: 200) : []
         var transaction = Transaction(animation: nil)
         transaction.disablesAnimations = true
         withTransaction(transaction) {
-          if self.candidates != newCandidates { self.candidates = newCandidates }
+          if self.candidates != compact { self.candidates = compact }
           self.candidateLookupSpelling = prefix
           self.exactPhraseSpelling = exactPhrase ? prefix : nil
           self.recognizedLatinSpelling = recognizedLatin ? prefix : nil
+          let expanded = gridVisible ? ranked : []
           if self.expandedCandidates != expanded { self.expandedCandidates = expanded }
         }
       }
@@ -1181,7 +1193,7 @@ struct AlphabeticKeyboardLayout: View {
     self.latinRefreshTask?.cancel()
     self.cantoneseRefreshTask?.cancel()
     self.isCursorTracking = true
-    self.liveSwipePath = []
+    self.swipeTrail.clear()
     self.nextLatinWords.removeAll()
     self.activeLatinWord = nil
     self.latinSuggestions.removeAll()
@@ -1329,7 +1341,7 @@ struct AlphabeticKeyboardLayout: View {
     self.clearShapeComposition()
     self.clearComposition()
     self.swipeAlternatives.removeAll()
-    self.liveSwipePath.removeAll()
+    self.swipeTrail.clear()
     self.showsEmojiPage = true
   }
 
@@ -1567,10 +1579,26 @@ private enum AlphabeticPage {
 }
 
 
-/// Persistent UIKit painting surface, separate from the sole UIKit touch
-/// owner. SwiftUI Canvas was sometimes not redrawn after repeated host edits.
+/// The swipe path updates frequently. Keep it in its own observable object
+/// so SwiftUI re-renders only the noninteractive drawing surface, not 26 keys.
+@MainActor
+private final class SwipeTrailState: ObservableObject {
+  @Published private(set) var points = [LatinSwipePoint]()
+
+  func update(_ next: [LatinSwipePoint]) {
+    guard self.points != next else { return }
+    self.points = next
+  }
+
+  func clear() {
+    guard !self.points.isEmpty else { return }
+    self.points.removeAll(keepingCapacity: true)
+  }
+}
+
+/// UIKit draws the trail without taking ownership of keyboard touches.
 private struct SwipeTrailOverlay: UIViewRepresentable {
-  let points: [LatinSwipePoint]
+  @ObservedObject var trail: SwipeTrailState
 
   func makeUIView(context: Context) -> SwipeTrailDrawingView {
     let view = SwipeTrailDrawingView(frame: .zero)
@@ -1581,7 +1609,7 @@ private struct SwipeTrailOverlay: UIViewRepresentable {
   }
 
   func updateUIView(_ view: SwipeTrailDrawingView, context: Context) {
-    view.setPoints(self.points)
+    view.setPoints(self.trail.points)
   }
 }
 
