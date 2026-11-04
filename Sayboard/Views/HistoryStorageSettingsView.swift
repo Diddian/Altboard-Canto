@@ -97,8 +97,11 @@ struct HistoryStorageSettingsView: View {
           titleVisibility: .visible
         ) {
           Button("Delete All Recordings", role: .destructive) {
-            HistoryStore.shared.deleteAllRecords()
-            self.historyClearedTrigger.toggle()
+            if HistoryStore.shared.deleteAllRecords() {
+              self.historyClearedTrigger.toggle()
+            } else {
+              self.showHistoryDeletionError = true
+            }
             self.refreshHistoryInfo()
           }
         } message: {
@@ -146,6 +149,11 @@ struct HistoryStorageSettingsView: View {
     }
     .navigationTitle("History & Storage")
     .navigationBarTitleDisplayMode(.inline)
+    .alert("Unable to remove all recordings", isPresented: self.$showHistoryDeletionError) {
+      Button("OK", role: .cancel) {}
+    } message: {
+      Text("Some History data could not be removed. The app kept the existing records where possible.")
+    }
     .sensoryFeedback(.success, trigger: self.historyClearedTrigger)
     .sensoryFeedback(.success, trigger: self.cacheClearedTrigger)
     .onAppear {
@@ -162,6 +170,7 @@ struct HistoryStorageSettingsView: View {
   @Environment(\.locale) private var locale
   @State private var selectedRetentionPolicy: HistoryRetentionPolicy
   @State private var showClearHistoryConfirmation = false
+  @State private var showHistoryDeletionError = false
   @State private var showClearCacheConfirmation = false
   @State private var historyInfoText = ""
   @State private var historyClearedTrigger = false
