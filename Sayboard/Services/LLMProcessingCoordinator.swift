@@ -143,7 +143,7 @@ final class LLMProcessingCoordinator: ObservableObject {
 
     if let result, !result.isEmpty {
       let finalResult = self.styled(result, action: validated.request.action, host: stylingHost, settings: settings)
-      if LLMBridge.writeResult(finalResult) {
+      if LLMBridge.writeResult(finalResult, requestID: validated.request.requestID) {
         TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingComplete)
         DiagnosticLog.write("llm: complete, result=\(finalResult.count) chars")
       } else {
