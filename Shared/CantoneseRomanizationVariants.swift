@@ -3,6 +3,24 @@ import Foundation
 /// The regular systems are directly indexed in SQLite. Only narrowly scoped
 /// colloquial aliases remain here, avoiding combinatorial false homophones.
 enum CantoneseRomanizationVariants {
+  /// The grammatical A唔A spelling is A+ng+A (or A+m+A).
+  /// Do not rewrite ng within unrelated syllables.
+  static func repeatedNegationBase(for input: String) -> String? {
+    let source = input.lowercased()
+    guard source.allSatisfy({ $0.isASCII && $0.isLetter }) else { return nil }
+    for marker in ["ng", "m"] {
+      let remainder = source.count - marker.count
+      guard remainder >= 4, remainder.isMultiple(of: 2) else { continue }
+      let half = remainder / 2
+      let first = String(source.prefix(half))
+      if String(source.dropFirst(half).prefix(marker.count)) == marker
+        && String(source.suffix(half)) == first {
+        return first
+      }
+    }
+    return nil
+  }
+
   static func variants(for input: String, limit: Int = 4) -> [String] {
     let source = input.lowercased()
     guard !source.isEmpty, source.count <= 96,

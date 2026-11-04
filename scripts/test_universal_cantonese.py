@@ -146,6 +146,66 @@ class UniversalCantoneseTests(unittest.TestCase):
             finally:
                 db.close()
 
+    def test_ng_for_negative_particle_in_any_word_position(self):
+        examples = {
+            "會唔會": ("wui5 m4 wui5", "wuingwui"),
+            "食唔食": ("sik6 m4 sik6", "sikngsik"),
+            "但唔係": ("daan6 m4 hai6", "daannghai"),
+            "你食唔食": ("nei5 sik6 m4 sik6", "neisikngsik"),
+        }
+        for word, (reading, alias) in examples.items():
+            with self.subTest(word=word):
+                self.assertIn(alias, BUILDER.negative_particle_aliases(word, reading))
+        self.assertEqual(BUILDER.negative_particle_aliases("眼", "ngaan5"), [])
+        self.assertEqual(BUILDER.negative_particle_aliases("銀行", "ngan4 hong4"), [])
+        # Every existing curated 唔 entry must allow an ng spelling,
+        # whether 唔 is at the start, in the middle or appears twice.
+        supplemental = (ROOT / "scripts" / "cantonese-phrases.tsv").read_text(encoding="utf-8")
+        negatives = dict(line.split("\t", 1) for line in supplemental.splitlines()
+                         if "唔" in line.split("\t", 1)[0])
+        self.assertGreaterEqual(len(negatives), 600)
+        for word, reading in negatives.items():
+            with self.subTest(word=word):
+                self.assertTrue(BUILDER.negative_particle_aliases(word, reading))
+        for word in ("唔好", "唔係", "唔洗", "唔使"):
+            with self.subTest(common=word):
+                self.assertIn(word, negatives)
+        self.assertIn("nghou", BUILDER.negative_particle_aliases("唔好", "m4 hou2"))
+        self.assertIn("ngho", BUILDER.negative_particle_aliases("唔好", "m4 hou2"))
+        self.assertIn("ngsai", BUILDER.negative_particle_aliases("唔洗", "m4 sai2"))
+        with tempfile.TemporaryDirectory() as tmp:
+            dest = pathlib.Path(tmp) / "negation.sqlite3"
+            source = "".join(
+                f"{word}\t{reading}\n" for word, (reading, _) in examples.items()
+            )
+            BUILDER.compile_database(source.encode(), dest, verify_upstream=False)
+            db = sqlite3.connect(dest)
+            try:
+                for word, (_, alias) in examples.items():
+                    with self.subTest(word=word, alias=alias):
+                        row = db.execute(
+                            "SELECT word FROM mixed_aliases WHERE alias=? AND word=? LIMIT 1",
+                            (alias, word),
+                        ).fetchone()
+                        self.assertEqual(row, (word,))
+                for word, alias in [
+                    ("唔好", "nghou"), ("唔好", "ngho"),
+                    ("唔係", "nghai"), ("唔洗", "ngsai"),
+                    ("唔使", "ngsai"), ("唔洗", "msai"),
+                    ("唔使", "msai"),
+                ]:
+                    with self.subTest(word=word, spelling=alias):
+                        column = "mixed_aliases" if alias.startswith("ng") else "entries"
+                        field = "alias" if alias.startswith("ng") else "plain"
+                        row = db.execute(
+                            f"SELECT word FROM {column} WHERE {field}=? AND word=? LIMIT 1",
+                            (alias, word),
+                        ).fetchone()
+                        self.assertEqual(row, (word,))
+                self.assertEqual(db.execute("PRAGMA quick_check").fetchone(), ("ok",))
+            finally:
+                db.close()
+
     def test_all_three_indexes_and_tones(self):
         with tempfile.TemporaryDirectory() as tmp:
             dest = pathlib.Path(tmp) / "jyutping.sqlite3"

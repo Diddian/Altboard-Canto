@@ -9,9 +9,13 @@ struct VerifyLetterHoldAlternates {
     precondition(LetterKeySecondary.symbol(row: 0, index: 0) == "1")
     precondition(LetterKeySecondary.symbol(row: 2, index: 3) == "?")
     precondition(LetterKeySecondary.symbol(row: 3, index: 0) == nil)
-    let j = LetterKeyAlternates.holdChoices(for: "j", uppercase: false,
-                                             secondary: LetterKeySecondary.symbol(row: 1, index: 6))
-    precondition(j == ["$"], "Hold J should insert dollar sign without J")
+    let h = LetterKeyAlternates.holdChoices(for: "h", uppercase: false,
+                                             secondary: LetterKeySecondary.symbol(row: 1, index: 5))
+    precondition(h == ["$"], "Hold H should insert dollar sign without H")
+    let l = LetterKeyAlternates.holdChoices(for: "l", uppercase: false,
+                                             secondary: LetterKeySecondary.symbol(row: 1, index: 8))
+    precondition(l.first == "\"", "Hold L should insert double quote")
+    precondition(LetterKeySecondary.symbol(row: 2, index: 0) == ")")
     let accents = LetterKeyAlternates.holdChoices(for: "u", uppercase: false,
                                                     secondary: "7")
     precondition(accents.first == "7" && accents.contains("ü"))

@@ -110,11 +110,16 @@ final class JyutpingDictionary {
     }
     // Compose a short sequence of complete words when no whole-phrase reading
     // exists. No large synthetic phrase table or raw keystroke history needed.
-    if !hasTone, !results.contains(where: { (originRank[$0.id] ?? 3) <= 1 }),
-       let combined = self.composedCandidate(for: plain),
-       usedWords.insert(combined.text).inserted {
-      results.insert(combined, at: 0)
-      originRank[combined.id] = -1
+    if !hasTone, !results.contains(where: { (originRank[$0.id] ?? 3) <= 1 }) {
+      if let repeated = self.repeatedNegationCandidate(for: plain),
+         usedWords.insert(repeated.text).inserted {
+        results.insert(repeated, at: 0)
+        originRank[repeated.id] = 1
+      } else if let combined = self.composedCandidate(for: plain),
+                usedWords.insert(combined.text).inserted {
+        results.insert(combined, at: 0)
+        originRank[combined.id] = -1
+      }
     }
 
     // An entered syllable yields characters, two complete syllables words,
@@ -155,7 +160,8 @@ final class JyutpingDictionary {
          argument: "m", limit: 1
        ).first {
       ordered.removeAll { $0.text == negative.text }
-      ordered.insert(negative, at: min(1, ordered.count))
+      let selected = counts[negative.id] ?? 0
+      ordered.insert(negative, at: min(selected > 0 ? 0 : 1, ordered.count))
     }
     return Array(ordered.prefix(boundedLimit))
   }
@@ -186,7 +192,8 @@ final class JyutpingDictionary {
       a.romanization.split(separator: " ").count < b.romanization.split(separator: " ").count
     }?.romanization
     return found ?? (input.contains(where: \.isNumber) ? nil
-      : self.composedCandidate(for: input)?.romanization)
+      : (self.repeatedNegationCandidate(for: input)
+         ?? self.composedCandidate(for: input))?.romanization)
   }
 
   /// Exact spelling check prevents prefix-only Chinese suggestions from
@@ -208,7 +215,38 @@ final class JyutpingDictionary {
       sqls.contains { !self.query($0, argument: key, limit: 1).isEmpty }
     }) { return true }
     return !input.contains(where: \.isNumber)
-      && self.composedCandidate(for: input) != nil
+      && (self.repeatedNegationCandidate(for: input) != nil
+          || self.composedCandidate(for: input) != nil)
+  }
+
+  /// Form A唔A from a verified single-character predicate, without
+  /// storing arbitrary generated phrases or treating every ng as negative.
+  private func repeatedNegationCandidate(for spelling: String) -> JyutpingCandidate? {
+    guard let base = CantoneseRomanizationVariants.repeatedNegationBase(for: spelling),
+          (2...12).contains(base.count) else { return nil }
+    let predicates: Set<String> = [
+      "會", "食", "做", "去", "係", "有", "好", "得", "要", "知", "識",
+      "飲", "買", "睇", "聽", "講", "走", "嚟", "行", "返", "坐",
+      "瞓", "搵", "愛", "憎", "怕", "慣", "開", "閂", "試", "用",
+      "打", "答", "等", "記", "信", "覺", "教", "學", "玩", "跳",
+      "笑", "寫", "讀", "唱", "飛", "跟", "忍", "放", "醒",
+      "肯", "明", "見", "似", "諗"
+    ]
+    for alias in CantoneseRomanizationVariants.variants(for: base) {
+      for column in ["plain", "yale", "sidney"] {
+        let matches = self.query(
+          "SELECT word,romanization FROM entries WHERE \(column)=? ORDER BY priority LIMIT ?",
+          argument: alias, limit: 24
+        )
+        if let verb = matches.first(where: { $0.text.count == 1 && predicates.contains($0.text) }) {
+          return JyutpingCandidate(
+            text: verb.text + "唔" + verb.text,
+            romanization: verb.romanization + " m4 " + verb.romanization
+          )
+        }
+      }
+    }
+    return nil
   }
 
   /// Use complete words from the existing indexed dictionary to assemble
@@ -331,7 +369,7 @@ final class JyutpingDictionary {
       var counts = self.defaults?.dictionary(forKey: self.schemeKey) as? [String: Int] ?? [:]
       // Gradual aging prevents long-term preference from locking forever.
       if counts.values.reduce(0, +) >= 120 {
-        for key in CantoneseSchemePreference.keys {
+        for key in CantoneseSchemePreference.evidenceKeys {
           counts[key] = (counts[key] ?? 0) / 2
         }
       }

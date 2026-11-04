@@ -64,6 +64,21 @@ struct JyutpingCompositionTests {
     #expect(!CantoneseRomanizationVariants.variants(for: "gifai").contains("geifaai"))
   }
 
+  @Test func negativeRomanizationAndSharedTraditionalEvidence() {
+    #expect(CantoneseRomanizationVariants.repeatedNegationBase(for: "sikngsik") == "sik")
+    #expect(CantoneseRomanizationVariants.repeatedNegationBase(for: "wuingwui") == "wui")
+    #expect(CantoneseRomanizationVariants.repeatedNegationBase(for: "daannghai") == nil)
+    #expect(CantoneseSyllableEditing.lastSyllableLength(
+      typed: "sikngsik", canonical: "sik6 m4 sik6"
+    ) == 3)
+    #expect(CantoneseSchemePreference.inferredScheme(
+      input: "jau", canonical: "zau6"
+    ) == "traditional")
+    #expect(CantoneseSchemePreference.inferredScheme(
+      input: "chaan", canonical: "caan4"
+    ) == "traditional")
+  }
+
   @Test func rejectsInvalidKeysWithoutChangingBuffer() {
     var composition = JyutpingComposition()
     #expect(composition.append("n"))

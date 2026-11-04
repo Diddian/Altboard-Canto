@@ -3,6 +3,8 @@ import Foundation
 /// Bounded, explicit-choice-only evidence for romanization ordering.
 enum CantoneseSchemePreference {
   static let keys = ["plain", "yale", "sidney"]
+  static let traditionalKey = "traditional"
+  static let evidenceKeys = keys + [traditionalKey]
   static func inferredScheme(
     input: String, canonical: String
   ) -> String? {
@@ -17,11 +19,28 @@ enum CantoneseSchemePreference {
       "sidney": syllables.map(CantoneseSyllableEditing.sidneyLauAlias).joined()
     ]
     let matching = keys.filter { variants[$0] == typed }
-    return matching.count == 1 ? matching[0] : nil
+    if matching.count == 1 { return matching[0] }
+    // j- and ch- are shared by Yale and Sidney Lau. Record their
+    // common family without pretending that they distinguish the two.
+    if matching.count == 2 && matching.contains("yale")
+      && matching.contains("sidney") { return traditionalKey }
+    return nil
   }
 
   static func preferred(_ counts: [String: Int]) -> String? {
-    let total = keys.reduce(0) { $0 + (counts[$1] ?? 0) }
+    let plain = counts["plain"] ?? 0
+    let yale = counts["yale"] ?? 0
+    let sidney = counts["sidney"] ?? 0
+    let traditional = counts[traditionalKey] ?? 0
+    let traditionalEvidence = traditional + yale + sidney
+
+    // j/ch are shared by Yale and Sidney Lau; four explicit traditional
+    // selections may prefer that family without asserting a specific scheme.
+    if traditional >= 4 && traditionalEvidence > plain + 2 {
+      return sidney > yale ? "sidney" : "yale"
+    }
+
+    let total = plain + yale + sidney
     guard total >= 12 else { return nil }
     let ranked = keys.sorted { (counts[$0] ?? 0) > (counts[$1] ?? 0) }
     let first = counts[ranked[0]] ?? 0

@@ -31,10 +31,12 @@ struct LetterKeyAlternatesTests {
 
   @Test func holdNeverInsertsBaseLetter() {
     let alternatives = LetterKeyAlternates.holdChoices(
-      for: "j", uppercase: false, secondary: LetterKeySecondary.symbol(row: 1, index: 6)
+      for: "h", uppercase: false, secondary: LetterKeySecondary.symbol(row: 1, index: 5)
     )
     #expect(alternatives == ["$"])
-    #expect(!alternatives.contains("j"))
+    #expect(!alternatives.contains("h"))
+    #expect(LetterKeySecondary.symbol(row: 1, index: 8) == "\"")
+    #expect(LetterKeySecondary.symbol(row: 2, index: 0) == ")")
     #expect(LetterKeyAlternates.holdChoices(for: "u", uppercase: false,
                                             secondary: "7").contains("ü"))
   }

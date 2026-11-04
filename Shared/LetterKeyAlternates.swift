@@ -38,8 +38,8 @@ enum LetterKeyAlternates {
 enum LetterKeySecondary {
   private static let rows: [[String]] = [
     ["1","2","3","4","5","6","7","8","9","0"],
-    ["-","/",":",";","(",")","$","&","@"],
-    ["\"",".",",","?","!","'","~"]
+    ["-","/",":",";","(","$","&","@","\""],
+    [")",".",",","?","!","'","~"]
   ]
   static func symbol(row: Int, index: Int) -> String? {
     guard rows.indices.contains(row), rows[row].indices.contains(index) else { return nil }

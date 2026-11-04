@@ -37,7 +37,8 @@ def yale_syllable(jyutping: str) -> str:
     elif plain.startswith("c"):
         plain = "ch" + plain[1:]
     plain = plain.replace("oe", "eu").replace("eo", "eu")
-    plain = plain.replace("aa", "a")
+    # Both Yale and Sidney Lau distinguish long aa from short a.
+    # Removing the second a erased chaan (殘) and other valid spellings.
     return plain
 
 
@@ -103,6 +104,51 @@ def mixed_phrase_aliases(word: str, romanization: str) -> list[str]:
     return result
 
 
+def negative_particle_aliases(word: str, romanization: str) -> list[str]:
+    """Index colloquial ng for 唔 (m4) at any syllable boundary.
+
+    Match the actual 唔 character and its m4 reading. Do not rewrite ng
+    inside unrelated syllables such as ngaan or the English word long.
+    These aliases cover the entire pinned lexicon, not just manual phrases.
+    """
+    syllables = romanization.split()
+    if len(word) != len(syllables):
+        return []
+    positions = [i for i, (character, syllable) in enumerate(zip(word, syllables))
+                 if character == "唔" and syllable == "m4"]
+    if not positions:
+        return []
+    # Every 唔 position is supported. Enumerate mixed m/ng masks for
+    # ordinary phrases; for long unusual phrases cover each position
+    # individually and the all-ng spelling, without 2**n expansion.
+    from itertools import combinations
+    if len(positions) <= 5:
+        subsets = [
+            subset
+            for count in range(1, len(positions) + 1)
+            for subset in combinations(positions, count)
+        ]
+    else:
+        subsets = [(position,) for position in positions]
+        subsets.append(tuple(positions))
+    seen = set()
+    aliases = []
+    for spell in (
+        lambda syl: syl.rstrip("123456"),
+        yale_syllable, sidney_lau_syllable,
+    ):
+        parts = [spell(syl) for syl in syllables]
+        for subset in subsets:
+            rewritten = parts.copy()
+            for position in subset:
+                rewritten[position] = "ng"
+            alias = "".join(rewritten)
+            if alias not in seen:
+                seen.add(alias)
+                aliases.append(alias)
+    return aliases
+
+
 def read_source(input_file: str | None) -> bytes:
     if input_file:
         return pathlib.Path(input_file).read_bytes()
@@ -154,6 +200,7 @@ def compile_database(source: bytes, output: pathlib.Path, verify_upstream: bool)
         batch = []
         mixed_batch = []
         seen = set()
+        seen_aliases = set()
         count = 0
         # Reviewed common Cantonese phrases rank before the upstream lexicon.
         # Keep the upstream bytes/hash unchanged and additions auditable.
@@ -185,8 +232,13 @@ def compile_database(source: bytes, output: pathlib.Path, verify_upstream: bool)
             yale = yale_spelling(romanization)
             sidney = sidney_lau_spelling(romanization)
             batch.append((word, romanization, plain, compact, yale, sidney, initials, count))
+            aliases = negative_particle_aliases(word, romanization)
             if line_number < len(reviewed):
-                for alias in mixed_phrase_aliases(word, romanization):
+                aliases.extend(mixed_phrase_aliases(word, romanization))
+            for alias in aliases:
+                key_alias = (alias, word)
+                if key_alias not in seen_aliases:
+                    seen_aliases.add(key_alias)
                     mixed_batch.append((alias, word, romanization, count))
             count += 1
             if len(batch) >= 15000:

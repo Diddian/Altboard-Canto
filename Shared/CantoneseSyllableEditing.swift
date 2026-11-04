@@ -11,9 +11,22 @@ enum CantoneseSyllableEditing {
     let yale = syllables.map(yaleAlias)
     let sidneyLau = syllables.map(sidneyLauAlias)
     let spellings = [syllables, jyutping, yale, sidneyLau]
-    for parts in spellings where parts.joined() == input {
-      guard let last = parts.last, !last.isEmpty else { return nil }
-      return last.count
+    for parts in spellings {
+      if parts.joined() == input { return parts.last?.count }
+      // ng is a deliberate colloquial spelling of 唔, not a general
+      // substitution for every syllable containing n/g.
+      let positions = syllables.enumerated().compactMap {
+        $0.element == "m4" ? $0.offset : nil
+      }.prefix(3)
+      let slots = Array(positions)
+      if slots.isEmpty { continue }
+      for mask in 1..<(1 << slots.count) {
+        var variants = parts
+        for (bit, position) in slots.enumerated() where (mask & (1 << bit)) != 0 {
+          variants[position] = "ng"
+        }
+        if variants.joined() == input { return variants.last?.count }
+      }
     }
     return nil
   }
@@ -40,6 +53,5 @@ enum CantoneseSyllableEditing {
     else if base.hasPrefix("c") { base = "ch" + base.dropFirst() }
     return base.replacingOccurrences(of: "oe", with: "eu")
       .replacingOccurrences(of: "eo", with: "eu")
-      .replacingOccurrences(of: "aa", with: "a")
   }
 }
