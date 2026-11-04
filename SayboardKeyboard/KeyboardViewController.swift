@@ -584,7 +584,8 @@ extension KeyboardViewController {
       },
       deleteBackward: { [weak self] in
         self?.previousSpaceTap = nil
-        KeyboardTouchLearning.shared.recordDelete()
+        // Only an actual Delete keypress is evidence of a touch repair.
+        // Candidate replacements also call this proxy and must not teach hitboxes.
         self?.textDocumentProxy.deleteBackward()
         self?.refreshHostInputTraits()
       },

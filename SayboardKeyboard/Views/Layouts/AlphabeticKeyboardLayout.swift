@@ -484,8 +484,12 @@ struct AlphabeticKeyboardLayout: View {
       self.swipeAlternatives.removeAll()
       return
     }
+    KeyboardTouchLearning.shared.invalidate()
     for _ in 0..<(current.count + 1) { self.proxy.deleteBackward() }
     self.proxy.insertText(value + " ")
+    LatinWordSuggestions.shared.rememberSwipeAlternative(
+      value, preferred: SharedSettings().preferredSpokenLanguages
+    )
     self.swipeAlternatives.removeAll()
     self.refreshAutomaticShift()
     self.updateCandidates()
@@ -498,6 +502,7 @@ struct AlphabeticKeyboardLayout: View {
       shouldCapitalize ? word.prefix(1).uppercased() + word.dropFirst() : word
     }
     guard let chosen = adjusted.first else { return }
+    KeyboardTouchLearning.shared.invalidate()
     self.clearComposition()
     self.swipeAlternatives = adjusted
     let separator = LatinWordSuggestionPolicy.swipeLeadingSeparator(
@@ -534,7 +539,11 @@ struct AlphabeticKeyboardLayout: View {
       self.predictionAnchor = nil
       return
     }
+    KeyboardTouchLearning.shared.invalidate()
     self.proxy.insertText(text)
+    _ = ConfirmedChoiceLearning.rememberConfirmedChinese(
+      text, defaults: AppGroup.sharedDefaults
+    )
     self.predictionAnchor = text
     self.nextCantoneseWords = JyutpingDictionary.shared.continuations(after: text)
     self.updateCandidates()
@@ -569,6 +578,7 @@ struct AlphabeticKeyboardLayout: View {
       self.nextLatinWords.removeAll()
       return
     }
+    KeyboardTouchLearning.shared.invalidate()
     self.proxy.insertText(choice.text + " ")
     LatinWordSuggestions.shared.remember(choice)
     self.updateCandidates()
@@ -660,10 +670,13 @@ struct AlphabeticKeyboardLayout: View {
             ForEach(Array(self.latinSuggestions.enumerated()), id: \.offset) { _, suggestion in
               self.suggestionCell(suggestion.text, width: width, showDivider: true) {
                 if self.usesShapeMode {
-                  self.commitShapeLatin(suggestion.text, addSpace: false)
-                  LatinWordSuggestions.shared.remember(suggestion)
-                } else if self.chooseLatinSuggestion(suggestion.text) {
-                  LatinWordSuggestions.shared.remember(suggestion)
+                  if self.commitShapeLatin(suggestion.text, addSpace: false) {
+                    LatinWordSuggestions.shared.remember(suggestion)
+                  }
+                } else {
+                  _ = self.chooseLatinSuggestion(
+                    suggestion.text, learnedSuggestion: suggestion
+                  )
                 }
               }
             }
@@ -684,7 +697,9 @@ struct AlphabeticKeyboardLayout: View {
         ForEach(self.expandedLatinSuggestions) { candidate in
           Button {
             KeyboardHaptics.key()
-            _ = self.chooseLatinSuggestion(candidate.text)
+            _ = self.chooseLatinSuggestion(
+              candidate.text, learnedSuggestion: candidate
+            )
           } label: {
             Text(verbatim: candidate.text)
               .font(.system(size: 17.kbScaled))
@@ -994,6 +1009,9 @@ struct AlphabeticKeyboardLayout: View {
     // Receiving a real key action is definitive evidence that a previous
     // trackpad gesture is no longer active.
     if self.isCursorTracking { self.isCursorTracking = false }
+    if !character.allSatisfy({ $0.isASCII && $0.isLetter }) {
+      KeyboardTouchLearning.shared.invalidate()
+    }
     if self.usesShapeMode,
        character.count == 1, character.allSatisfy({ $0.isASCII && $0.isLetter }) {
       self.appendShapeCode(character)
@@ -1291,7 +1309,9 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   @discardableResult
-  private func chooseLatinSuggestion(_ text: String) -> Bool {
+  private func chooseLatinSuggestion(
+    _ text: String, learnedSuggestion: LatinWordSuggestion? = nil
+  ) -> Bool {
     let typed = self.currentLiteral
     guard LatinWordSuggestionPolicy.canReplace(
       typed, in: self.proxy.documentContextBeforeInput()
@@ -1304,8 +1324,12 @@ struct AlphabeticKeyboardLayout: View {
     self.clearComposition()
     self.activeLatinWord = nil
     self.latinSuggestions.removeAll()
+    KeyboardTouchLearning.shared.invalidate()
     for _ in 0..<typed.count { self.proxy.deleteBackward() }
     self.proxy.insertText(text)
+    if let learnedSuggestion {
+      LatinWordSuggestions.shared.remember(learnedSuggestion)
+    }
     KeyboardInputTrace.record(.latinSuggestionChosen)
     self.refreshAutomaticShift()
     self.updateCandidates()
@@ -1323,6 +1347,7 @@ struct AlphabeticKeyboardLayout: View {
     let typedSpelling = self.composition.buffer
     let count = typedSpelling.count
     self.clearComposition()
+    KeyboardTouchLearning.shared.invalidate()
     for _ in 0..<count { self.proxy.deleteBackward() }
     self.proxy.insertText(candidate.text)
     self.predictionAnchor = candidate.text
@@ -1396,12 +1421,13 @@ struct AlphabeticKeyboardLayout: View {
     self.showsCandidateGrid = false
   }
 
-  private func commitShapeLatin(_ text: String, addSpace: Bool) {
+  @discardableResult
+  private func commitShapeLatin(_ text: String, addSpace: Bool) -> Bool {
     guard self.usesShapeMode, self.chineseMode != .stroke,
           !self.shapeLatinBuffer.isEmpty,
           self.shapeHostAnchor == self.proxy.documentContextBeforeInput() else {
       self.clearShapeComposition()
-      return
+      return false
     }
     self.clearShapeComposition()
     self.proxy.insertText(text + (addSpace ? " " : ""))
@@ -1410,6 +1436,7 @@ struct AlphabeticKeyboardLayout: View {
     KeyboardInputTrace.record(.latinKept)
     self.refreshAutomaticShift()
     self.updateCandidates()
+    return true
   }
 
   private func insertShapePunctuation(_ symbol: String) {
@@ -1428,6 +1455,7 @@ struct AlphabeticKeyboardLayout: View {
     }
     let typedCode = self.shapeBuffer
     self.clearShapeComposition()
+    KeyboardTouchLearning.shared.invalidate()
     self.proxy.insertText(candidate.text)
     ChineseShapeDictionary.shared.remember(candidate, typedCode: typedCode)
     self.predictionAnchor = candidate.text
@@ -1439,6 +1467,7 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private func handleSpace() {
+    KeyboardTouchLearning.shared.invalidate()
     if self.usesShapeMode && !self.shapeBuffer.isEmpty {
       let isLatin = self.chineseMode != .stroke
         && LatinWordSuggestions.shared.recognizesWholeWord(

@@ -107,6 +107,14 @@ jobs:
           swiftc -o "$RUNNER_TEMP/vocabulary-export-smoke" \
             Shared/PersonalVocabularyExport.swift scripts/verify-vocabulary-export.swift
           "$RUNNER_TEMP/vocabulary-export-smoke"
+          swiftc -o "$RUNNER_TEMP/confirmed-choice-smoke" \
+            Shared/ChineseInputMode.swift Shared/ConfirmedChoiceLearning.swift \
+            scripts/verify-confirmed-choice-learning.swift
+          "$RUNNER_TEMP/confirmed-choice-smoke"
+          swiftc -o "$RUNNER_TEMP/latin-speech-learning-smoke" \
+            Shared/HistoryRecord.swift Shared/LatinSpeechCorrectionLearning.swift \
+            scripts/verify-latin-speech-learning.swift
+          "$RUNNER_TEMP/latin-speech-learning-smoke"
           swiftc -o "$RUNNER_TEMP/keyboard-smoke" \
             Shared/JyutpingComposition.swift Shared/SentenceCapitalization.swift \
             Shared/LiveCantoneseSafety.swift Shared/CantoneseSyllableEditing.swift Shared/EnglishCaseSuggestion.swift \

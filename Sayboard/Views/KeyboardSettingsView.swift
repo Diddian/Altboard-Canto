@@ -124,8 +124,19 @@ struct KeyboardSettingsView: View {
     let scheme = defaults.dictionary(
       forKey: CantoneseSchemePreference.preferenceStorageKey
     ) as? [String: Int] ?? [:]
+    let shapes = defaults.dictionary(
+      forKey: ConfirmedChoiceLearning.shapeWordKey
+    ) as? [String: Int] ?? [:]
+    let generations = defaults.dictionary(
+      forKey: ConfirmedChoiceLearning.shapeGenerationKey
+    ) as? [String: Int] ?? [:]
+    let prefixes = defaults.dictionary(
+      forKey: ConfirmedChoiceLearning.strokePrefixKey
+    ) as? [String: Int] ?? [:]
     guard let contents = try? PersonalVocabularyExport.encode(
-      cantonese: cantonese, latin: latin, romanization: scheme
+      cantonese: cantonese, latin: latin, romanization: scheme,
+      confirmedChinese: ConfirmedChoiceLearning.chineseCounts(defaults: defaults),
+      shapes: shapes, shapeGenerations: generations, strokePrefixes: prefixes
     ) else { return }
     self.wordExportDocument = WordSelectionsExportDocument(content: contents)
     self.showWordExport = true

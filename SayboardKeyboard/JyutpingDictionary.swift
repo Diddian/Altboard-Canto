@@ -196,14 +196,19 @@ final class JyutpingDictionary {
     // Exact single-character readings precede prefix phrases. Personal
     // selection counts still rank candidates within each result class.
     let counts = self.defaults?.dictionary(forKey: self.memoryKey) as? [String: Int] ?? [:]
+    let sharedChoices = ConfirmedChoiceLearning.chineseCounts(defaults: self.defaults)
     var ordered = results.enumerated().sorted { lhs, rhs in
       func group(_ c: JyutpingCandidate) -> Int {
         (originRank[c.id] ?? 3) * 2 + (c.text.count == 1 ? 0 : 1)
       }
       let aGroup = group(lhs.element), bGroup = group(rhs.element)
       if aGroup != bGroup { return aGroup < bGroup }
-      let a = counts[lhs.element.id] ?? 0
-      let b = counts[rhs.element.id] ?? 0
+      // Method-specific evidence wins; cross-method explicit selections
+      // break ties within the same exact/prefix and character/phrase class.
+      let a = (counts[lhs.element.id] ?? 0) * 9
+        + ConfirmedChoiceLearning.chinesePreference(lhs.element.text, counts: sharedChoices)
+      let b = (counts[rhs.element.id] ?? 0) * 9
+        + ConfirmedChoiceLearning.chinesePreference(rhs.element.text, counts: sharedChoices)
       if a != b { return a > b }
       return lhs.offset < rhs.offset
     }.map(\.element)
@@ -528,7 +533,20 @@ final class JyutpingDictionary {
     if words.count < 3 {
       for fallback in ["嘅", "都", "啦", "喎"] { collect(fallback) }
     }
-    return Array(words.prefix(bounded))
+    // Do not change the corpus counts. Within the existing candidate pool,
+    // previously confirmed words may rise by at most three positions.
+    let personal = ConfirmedChoiceLearning.chineseCounts(defaults: self.defaults)
+    let ranked = words.enumerated().sorted { a, b in
+      func position(_ entry: (offset: Int, element: String)) -> Int {
+        let confirmed = ConfirmedChoiceLearning.chinesePreference(
+          entry.element, counts: personal
+        )
+        return entry.offset - min(3, confirmed / 2)
+      }
+      let left = position(a), right = position(b)
+      return left == right ? a.offset < b.offset : left < right
+    }.map(\.element)
+    return Array(ranked.prefix(bounded))
   }
 
   private func curatedNextWords(after prefix: String, limit: Int) -> [String] {
@@ -708,13 +726,16 @@ final class JyutpingDictionary {
         self.defaults?.set(updated, forKey: self.schemeKey)
       }
     }
-    var counts = self.defaults?.dictionary(forKey: self.memoryKey) as? [String: Int] ?? [:]
-    counts[candidate.id] = min(10000, (counts[candidate.id] ?? 0) + 1)
-    if counts.count > 1000 {
-      counts = Dictionary(uniqueKeysWithValues:
-        counts.sorted { $0.value > $1.value }.prefix(600).map { ($0.key, $0.value) })
-    }
-    self.defaults?.set(counts, forKey: self.memoryKey)
+    let counts = self.defaults?.dictionary(forKey: self.memoryKey) as? [String: Int] ?? [:]
+    self.defaults?.set(
+      ConfirmedChoiceLearning.increment(
+        candidate.id, in: counts, trimAt: 1000, retain: 600
+      ),
+      forKey: self.memoryKey
+    )
+    _ = ConfirmedChoiceLearning.rememberConfirmedChinese(
+      candidate.text, defaults: self.defaults
+    )
   }
 
   private func query(
