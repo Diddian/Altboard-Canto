@@ -41,7 +41,11 @@ struct SpeechLanguagesSettingsView: View {
         mode: .ordered(Binding(
           get: { self.spokenLanguages },
           set: { updated in
-            self.spokenLanguages = PreferredVoiceLanguages.normalized(updated)
+            let normalized = PreferredVoiceLanguages.normalized(updated)
+            if normalized != self.spokenLanguages {
+              FeatureDiagnostics.record(.language, .selected)
+            }
+            self.spokenLanguages = normalized
             let settings = SharedSettings()
             settings.preferredSpokenLanguages = self.spokenLanguages
             settings.setPreferredLanguages(
@@ -54,6 +58,7 @@ struct SpeechLanguagesSettingsView: View {
               target: settings.voiceOutputTarget, custom: settings.voiceCustomLanguage
             )
             if !old.isEmpty && !self.spokenLanguages.contains(old) {
+              FeatureDiagnostics.record(.language, .fallback)
               settings.voiceOutputTarget = .original
             }
           }

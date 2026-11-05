@@ -466,7 +466,10 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private func commitSwipe(_ alternatives: [String]) {
-    guard !alternatives.isEmpty else { return }
+    guard !alternatives.isEmpty else {
+      FeatureDiagnostics.record(.swipe, .fallback)
+      return
+    }
     let shouldCapitalize = self.shiftActive || self.capsLock
     let adjusted = alternatives.map { word in
       shouldCapitalize ? word.prefix(1).uppercased() + word.dropFirst() : word
@@ -479,6 +482,7 @@ struct AlphabeticKeyboardLayout: View {
       in: self.proxy.documentContextBeforeInput()
     )
     self.proxy.insertText(separator + chosen + " ")
+    FeatureDiagnostics.record(.swipe, .completed)
     self.lastShiftTap = nil
     if !self.capsLock { self.shiftActive = false }
     self.updateCandidates()
@@ -1309,8 +1313,12 @@ struct AlphabeticKeyboardLayout: View {
   private func choose(_ candidate: JyutpingCandidate) {
     // The prior row stays visible during debounce, but must not commit a
     // candidate belonging to the previous spelling.
-    guard self.candidateLookupSpelling == self.composition.buffer else { return }
+    guard self.candidateLookupSpelling == self.composition.buffer else {
+      FeatureDiagnostics.record(.chineseInput, .rejected)
+      return
+    }
     guard self.trackedTextMatches else {
+      FeatureDiagnostics.record(.chineseInput, .rejected)
       self.clearComposition()
       return
     }
@@ -1320,6 +1328,7 @@ struct AlphabeticKeyboardLayout: View {
     KeyboardTouchLearning.shared.invalidate()
     for _ in 0..<count { self.proxy.deleteBackward() }
     self.proxy.insertText(candidate.text)
+    FeatureDiagnostics.record(.chineseInput, .completed)
     self.predictionAnchor = candidate.text
     self.nextCantoneseWords = JyutpingDictionary.shared.continuations(after: candidate.text)
     KeyboardInputTrace.record(.candidateChosen)
@@ -1330,6 +1339,7 @@ struct AlphabeticKeyboardLayout: View {
 
 
   private func cycleChineseMode() {
+    FeatureDiagnostics.record(.chineseInput, .selected)
     let next = self.chineseMode.next
     self.clearComposition()
     self.clearShapeComposition()
@@ -1409,6 +1419,7 @@ struct AlphabeticKeyboardLayout: View {
           candidate.mode == self.chineseMode else { return }
     // A host field switch invalidates the pending code before any commit.
     guard self.shapeHostAnchor == self.proxy.documentContextBeforeInput() else {
+      FeatureDiagnostics.record(.chineseInput, .rejected)
       self.clearShapeComposition()
       return
     }
@@ -1416,6 +1427,7 @@ struct AlphabeticKeyboardLayout: View {
     self.clearShapeComposition()
     KeyboardTouchLearning.shared.invalidate()
     self.proxy.insertText(candidate.text)
+    FeatureDiagnostics.record(.chineseInput, .completed)
     ChineseShapeDictionary.shared.remember(candidate, typedCode: typedCode)
     self.predictionAnchor = candidate.text
     self.nextCantoneseWords = self.offersCantonese
