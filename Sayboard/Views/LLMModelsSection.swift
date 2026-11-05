@@ -16,7 +16,6 @@ struct LLMModelsSection: View {
           self.modelCard(for: variant, recommendation: recommendation)
         }
       }
-      .animation(.easeInOut(duration: 0.35), value: variants)
     }
     .sensoryFeedback(.selection, trigger: self.selectionHapticTrigger)
     .onChange(of: self.llmDownloadService.selectedVariant) {
@@ -177,9 +176,7 @@ struct LLMModelsSection: View {
   private func syncSelectedVariant() {
     let current = SharedSettings().selectedLLMVariant
     if self.selectedVariant != current {
-      withAnimation(.easeInOut(duration: 0.35)) {
-        self.selectedVariant = current
-      }
+      self.selectedVariant = current
     }
   }
 
@@ -207,10 +204,8 @@ struct LLMModelsSection: View {
       downloadState: downloadState,
       onSelect: {
         self.selectionHapticTrigger.toggle()
-        withAnimation(.easeInOut(duration: 0.35)) {
-          self.selectedVariant = variant
-          self.llmDownloadService.selectVariant(variant)
-        }
+        self.selectedVariant = variant
+        self.llmDownloadService.selectVariant(variant)
       },
       onDownload: {
         self.llmDownloadService.startDownload(variant: variant)
@@ -223,13 +218,12 @@ struct LLMModelsSection: View {
         self.llmDownloadService.startDownload(variant: variant)
       },
       onRemove: {
-        withAnimation(.easeInOut(duration: 0.35)) {
-          self.llmDownloadService.deleteModel(variant: variant)
-          self.syncSelectedVariant()
-        }
+        self.llmDownloadService.deleteModel(variant: variant)
+        self.syncSelectedVariant()
       },
     )
     .equatable()
   }
 }
+
 

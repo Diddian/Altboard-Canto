@@ -24,9 +24,11 @@ struct DataAndStorageSettingsView: View {
   var body: some View {
     Group {
       if self.inline {
-        self.sections
+        VStack(alignment: .leading, spacing: 12) { self.rows }
+          .pickerStyle(.menu)
+          .buttonStyle(.borderless)
       } else {
-        Form { self.sections }
+        Form { self.rows }
           .navigationTitle("History & Storage")
           .navigationBarTitleDisplayMode(.inline)
       }
@@ -67,8 +69,8 @@ struct DataAndStorageSettingsView: View {
   }
 
   @ViewBuilder
-  private var sections: some View {
-    Section {
+  private var rows: some View {
+    Group {
       ForEach(LocalUserDataStore.Category.allCases) { category in
         HStack {
           LabeledContent(category.title, value: "\(self.count(for: category))")
@@ -108,10 +110,8 @@ struct DataAndStorageSettingsView: View {
         ModelStorageManager.clearCompiledModelCache()
       }
       .disabled(self.busy || self.recordingActive)
-    } header: {
-      Text("History & Storage")
-    } footer: {
-      Text("Exports include audio, transcripts, corrections and learned suggestions. Downloaded models and app settings are kept. Stop recording before exporting or deleting.")
+      Text("Exports include recordings, transcripts and vocabulary. Models and app settings are kept.")
+        .font(.footnote).foregroundStyle(.secondary)
     }
   }
 
@@ -192,3 +192,4 @@ private struct DataExportSheet: UIViewControllerRepresentable {
   }
   func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }
+

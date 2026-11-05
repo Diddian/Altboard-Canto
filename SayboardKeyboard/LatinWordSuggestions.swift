@@ -25,6 +25,7 @@ final class LatinWordSuggestions {
   func fastChoices(for typed: String, preferred: [String], limit: Int = 6)
     -> [LatinWordSuggestion] {
     let codes = LatinWordSuggestionPolicy.preferredCodes(preferred)
+    let languageBoosts = LanguagePriority.boosts(preferred)
     guard (2...32).contains(typed.count) else { return [] }
     var result = [LatinWordSuggestion]()
     var seen = Set<String>()
@@ -40,7 +41,12 @@ final class LatinWordSuggestions {
             parts[1] != typed.lowercased(),
             (2...32).contains(parts[1].count) else { return nil }
       return (LatinWordSuggestion(text: parts[1], language: parts[0]), count)
-    }.sorted { $0.1 == $1.1 ? $0.0.text < $1.0.text : $0.1 > $1.1 }
+    }.sorted {
+      if $0.1 != $1.1 { return $0.1 > $1.1 }
+      let left = languageBoosts[$0.0.language] ?? 0
+      let right = languageBoosts[$1.0.language] ?? 0
+      return left == right ? $0.0.text < $1.0.text : left > right
+    }
     for item in learned.prefix(min(3, limit)) {
       let suggestion = item.0
       if seen.insert(suggestion.text.lowercased()).inserted {
@@ -82,6 +88,7 @@ final class LatinWordSuggestions {
                limit: Int = 9) -> [LatinWordSuggestion] {
     guard (2...32).contains(typed.count) else { return [] }
     let codes = LatinWordSuggestionPolicy.preferredCodes(preferred)
+    let languageBoosts = LanguagePriority.boosts(preferred)
 
     let available = UITextChecker.availableLanguages
     let installed = LatinWordSuggestionPolicy.checkerLocales(
@@ -136,6 +143,7 @@ final class LatinWordSuggestions {
       let saved = (counts[candidate.id] ?? 0)
         + (candidate.language == "und" ? 0 : (counts["und|" + token] ?? 0))
       return saved * 32 + (weights[candidate.language + "|" + token] ?? 0)
+        + (languageBoosts[candidate.language] ?? 0)
     }
     return Array(collected.enumerated().sorted { lhs, rhs in
       let a = score(lhs.element), b = score(rhs.element)
@@ -379,3 +387,4 @@ final class LatinWordSuggestions {
     ]
   ]
 }
+

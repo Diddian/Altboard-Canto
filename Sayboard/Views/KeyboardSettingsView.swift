@@ -3,7 +3,6 @@ import SwiftUI
 struct KeyboardSettingsView: View {
   @Binding var selectedKind: KeyboardKind
   var inline = false
-  var cantoneseSelected = false
 
   @AppStorage(SharedKey.microphoneKeyboardLayout, store: UserDefaults(suiteName: AppGroup.identifier))
   private var microphoneLayoutRaw = MicrophoneKeyboardLayout.defaultLayout.rawValue
@@ -55,13 +54,10 @@ struct KeyboardSettingsView: View {
         }
         .pickerStyle(.menu)
       }
-    } header: {
-      Text("Keyboard Layout")
-    } footer: {
-      Text("Key order does not change your suggestion languages.")
-    }
-
-    Section("Keyboard Preview") {
+      DisclosureGroup("Customization") {
+        KeyboardCustomizationView(inline: true)
+      }
+      Text("Preview").font(.subheadline).foregroundStyle(.secondary)
       KeyboardTestPreview(
         kind: self.selectedKind,
         microphoneLayout: MicrophoneKeyboardLayout(rawValue: self.microphoneLayoutRaw)
@@ -70,7 +66,10 @@ struct KeyboardSettingsView: View {
           ?? .qwertz
       )
       .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
+    } header: {
+      Text("Keyboard")
     }
+
   }
 }
 
@@ -301,4 +300,5 @@ private struct KeyboardTestPreview: View {
     KeyboardHaptics.key(strength: self.hapticStrength, enabled: self.keyboardHapticsEnabled)
   }
 }
+
 

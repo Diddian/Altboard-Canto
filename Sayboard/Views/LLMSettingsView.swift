@@ -6,9 +6,7 @@ struct LLMSettingsView: View {
   var body: some View {
     Form {
       self.enableSection
-      if !self.llmDownloadService.hasUsableModel {
-        self.modelsSection
-      } else if self.llmEnabled {
+      if self.llmEnabled && self.llmDownloadService.hasUsableModel {
         self.promptsLink
         self.defaultActionSection
         self.longPressActionSection
@@ -16,7 +14,6 @@ struct LLMSettingsView: View {
     }
     .navigationTitle("AI Actions")
     .navigationBarTitleDisplayMode(.inline)
-    .animation(.easeInOut(duration: 0.3), value: self.llmEnabled)
     .onAppear {
       let shared = SharedSettings()
       self.defaultActionSelection = shared.defaultLLMActionSelection
@@ -43,18 +40,6 @@ struct LLMSettingsView: View {
         .disabled(!self.llmDownloadService.hasUsableModel)
     } footer: {
       Text("Adds an AI button to the keyboard for rewriting, reformatting, and other text actions.")
-    }
-  }
-
-  private var modelsSection: some View {
-    Section {
-      NavigationLink("Models") {
-        LLMModelsScreen()
-      }
-    } header: {
-      Text("Download a text processing model to enable AI features")
-        .textCase(nil)
-        .font(.footnote)
     }
   }
 
@@ -138,7 +123,7 @@ struct LLMModelsScreen: View {
       .padding()
     }
     .background(Color(.systemGroupedBackground))
-    .navigationTitle("Models")
+    .navigationTitle("Text Models")
     .navigationBarTitleDisplayMode(.inline)
   }
 }
@@ -365,4 +350,5 @@ private struct EditPromptView: View {
       || self.prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
   }
 }
+
 

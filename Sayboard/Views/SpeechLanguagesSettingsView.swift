@@ -5,7 +5,6 @@ import SwiftUI
 struct SpeechLanguagesSettingsView: View {
   var inline = false
   var rowsOnly = false
-  var onPreferredLanguagesChanged: (([String]) -> Void)? = nil
 
   var body: some View {
     Group {
@@ -23,7 +22,7 @@ struct SpeechLanguagesSettingsView: View {
   var sections: some View {
     Group {
       if self.rowsOnly {
-        self.languageSelectionRows
+        VStack(alignment: .leading, spacing: 6) { self.languageSelectionRows }
       } else {
         Section {
           self.languageSelectionRows
@@ -34,41 +33,17 @@ struct SpeechLanguagesSettingsView: View {
             Text("Cantonese also enables offline Chinese suggestions in Alphabet. Qwen3 voice recognition uses auto-detection.")
           }
         }
-        Section {
-          NavigationLink {
-            VoiceOutputSettingsView()
-          } label: {
-            Label("Voice Output & Translation", systemImage: "waveform")
-          }
-        } footer: {
-          if !self.inline {
-            Text("Choose the output language, cleanup and dictation tone.")
-          }
-        }
-        Section("Offline Speech Model") {
-          NavigationLink {
-            ModelsView()
-          } label: {
-            LabeledContent {
-              Text(self.speechModels.selectedVariant.displayName)
-                .foregroundStyle(.secondary)
-            } label: {
-              Label("Speech Recognition", systemImage: "waveform")
-            }
-          }
-        }
+
       }
     }
     .sheet(isPresented: self.$showPreferredLanguagePicker) {
       LanguagePickerView(
-        mode: .multi(Binding(
-          get: { Set(self.spokenLanguages) },
+        mode: .ordered(Binding(
+          get: { self.spokenLanguages },
           set: { updated in
-            let kept = self.spokenLanguages.filter { updated.contains($0) }
-            self.spokenLanguages = kept + updated.subtracting(kept).sorted()
+            self.spokenLanguages = PreferredVoiceLanguages.normalized(updated)
             let settings = SharedSettings()
             settings.preferredSpokenLanguages = self.spokenLanguages
-            self.onPreferredLanguagesChanged?(self.spokenLanguages)
             settings.setPreferredLanguages(
               SpeechModelRecommendation.preferredLanguages(
                 for: settings.selectedVariant, from: self.spokenLanguages
@@ -90,7 +65,6 @@ struct SpeechLanguagesSettingsView: View {
     }
     .onAppear {
       self.spokenLanguages = SharedSettings().preferredSpokenLanguages
-      self.onPreferredLanguagesChanged?(self.spokenLanguages)
     }
   }
 
@@ -100,11 +74,13 @@ struct SpeechLanguagesSettingsView: View {
       self.showPreferredLanguagePicker = true
     } label: {
       VStack(alignment: .leading, spacing: 3) {
-        Label("Languages I Speak", systemImage: "globe")
+        Label("Language Priority", systemImage: "globe")
         Text(self.spokenLanguages.isEmpty
           ? "Any language"
-          : self.spokenLanguages.map { self.locale.capitalizedLanguageName(forLanguageCode: $0) }
-            .joined(separator: ", "))
+          : self.spokenLanguages.enumerated().map {
+              "\($0.offset + 1). " + ($0.element == "zh" ? String(localized: "Mandarin")
+                : self.locale.capitalizedLanguageName(forLanguageCode: $0.element))
+            }.joined(separator: " · "))
           .foregroundStyle(.secondary)
           .multilineTextAlignment(.leading)
           .lineLimit(2)
@@ -131,3 +107,4 @@ struct SpeechLanguagesSettingsView: View {
       .map { self.locale.capitalizedLanguageName(forLanguageCode: $0) }
   }
 }
+

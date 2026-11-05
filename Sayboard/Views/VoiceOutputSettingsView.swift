@@ -2,7 +2,6 @@ import SwiftUI
 
 struct VoiceOutputSettingsView: View {
   @EnvironmentObject private var llmDownloadService: LLMDownloadService
-  @EnvironmentObject private var speechModels: ModelDownloadService
 
   @AppStorage(SharedKey.voiceCleanupEnabled, store: AppGroup.sharedDefaults ?? .standard)
   private var cleanupEnabled = false
@@ -55,39 +54,12 @@ struct VoiceOutputSettingsView: View {
         Text("Original keeps the language you spoke, including Cantonese-English-German mixing. As spoken preserves your tone; Casual and Formal change only the register.")
       }
 
-      Section {
-        NavigationLink {
-          ModelsView()
-        } label: {
-          LabeledContent {
-            Text(self.speechModels.selectedVariant.displayName)
-              .foregroundStyle(.secondary)
-          } label: {
-            Label("Speech recognition model", systemImage: "waveform")
-          }
+      TextOutputSection()
+      if !self.llmDownloadService.hasUsableModel {
+        Section {
+          Text("Download a text model in Settings to enable cleanup and translation.")
+            .font(.footnote).foregroundStyle(.secondary)
         }
-        NavigationLink {
-          LLMModelsScreen()
-        } label: {
-          LabeledContent {
-            Text(self.llmDownloadService.hasUsableModel
-              ? self.llmDownloadService.selectedVariant.displayName : "Download required")
-              .foregroundStyle(.secondary)
-          } label: {
-            Label("Text Model", systemImage: "cpu")
-          }
-        }
-        if !self.llmDownloadService.hasUsableModel {
-          Label(
-            "Without a downloaded text model, translation and AI corrections are unavailable. An explicit translation failure leaves the original in history instead of inserting it in the wrong language.",
-            systemImage: "exclamationmark.triangle"
-          )
-          .font(.footnote).foregroundStyle(.orange)
-        }
-      } header: {
-        Text("Offline Models")
-      } footer: {
-        Text("Speech recognition uses the selected speech model. Cleanup and translation need an installed offline text model.")
       }
 
       Section {
@@ -100,4 +72,5 @@ struct VoiceOutputSettingsView: View {
 
   }
 }
+
 

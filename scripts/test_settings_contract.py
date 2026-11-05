@@ -17,7 +17,7 @@ class SettingsContractTests(unittest.TestCase):
             self.assertIn(heading, home)
         for path in ("SpeechLanguagesSettingsView(", "DictationSettingsView()",
                      "VoiceOutputSettingsView()", "LLMSettingsView()",
-                     "KeyboardSettingsView(", "DataAndStorageSettingsView(inline: true)",
+                     "KeyboardSettingsView(", "DataAndStorageSettingsView(inline: true)", "LLMModelsScreen()",
                      "AppLanguageListView()", "DiagnosticsView()"):
             self.assertIn(path, home)
         self.assertNotIn("DictationSettingsView(inline: true", home)
@@ -25,19 +25,19 @@ class SettingsContractTests(unittest.TestCase):
         self.assertNotIn('Section("Start Here")', home)
         self.assertNotIn('Is My Microphone Ready?', home)
         self.assertIn('ActiveSessionToggle()', home)
-        self.assertIn('KeyboardCustomizationView(inline: true)', home)
+        layout = read("Sayboard/Views/KeyboardSettingsView.swift")
+        self.assertIn('KeyboardCustomizationView(inline: true)', layout)
+        self.assertNotIn('KeyboardCustomizationView(', home)
+        self.assertIn('DisclosureGroup("History & Storage"', home)
+        self.assertEqual(home.count("ActiveSessionToggle()"), 1)
+        self.assertNotIn("ActiveSessionToggle()", read("Sayboard/Views/SettingsNavigationViews.swift"))
         self.assertIn('selectedKind: self.keyboardKindBinding, inline: true', home)
 
     def test_sections_with_footers_use_explicit_headers(self):
         sections = {
             "Sayboard/Views/SettingsView.swift": ("App",),
             "Sayboard/Views/SettingsNavigationViews.swift":
-                ("Microphone & Recording", "Live Speech to Text"),
-            "Sayboard/Views/KeyboardSettingsView.swift": ("Keyboard Layout",),
-            "Sayboard/Views/KeyboardCustomizationView.swift":
-                ("Haptic Feedback", "Keyboard Buttons"),
-            "Sayboard/Views/DataAndStorageSettingsView.swift":
-                ("History & Storage",),
+                ("Recording", "Live Speech to Text"),
             "Sayboard/Views/LearningDataSettingsView.swift":
                 ("Learned Suggestions", "Your Data"),
         }
@@ -58,12 +58,31 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn('Text("German (Ä Ö Ü ß)")', layout)
         self.assertIn(".pickerStyle(.menu)", layout)
         self.assertIn("KeyboardTestPreview(", layout)
-        self.assertNotIn("KeyboardCustomizationView()", layout)
+        self.assertEqual(layout.count("    Section {"), 1)
+        self.assertLess(layout.index('Label("Key Order"'), layout.index('DisclosureGroup("Customization")'))
+        self.assertLess(layout.index('DisclosureGroup("Customization")'), layout.index("KeyboardTestPreview("))
+        self.assertNotIn("Section(", custom)
+        self.assertNotIn("Slider(", custom)
+        self.assertNotIn('Text("Strength")', custom)
         for control in ('Auto-capitalization', 'Double-Space Period',
                         'Haptic Feedback', 'Extra Globe Key', 'Settings Key',
                         'Output Key', 'AI Key'):
             self.assertIn(control, custom)
         self.assertNotIn('Text("Not yet available")', custom)
+
+    def test_settings_routes_have_single_owners(self):
+        routes = read("Sayboard/Views/SettingsNavigationViews.swift")
+        output = read("Sayboard/Views/VoiceOutputSettingsView.swift")
+        ai = read("Sayboard/Views/LLMSettingsView.swift")
+        models = read("Sayboard/Views/ModelsView.swift")
+        languages = read("Sayboard/Views/SpeechLanguagesSettingsView.swift")
+        self.assertNotIn("ModelsView()", routes + output + languages)
+        self.assertNotIn("LLMModelsScreen()", output + languages)
+        self.assertNotIn("self.modelsSection", ai)
+        self.assertNotIn("LLMModelsSection()", models)
+        self.assertNotIn("languagePrefVariant", models)
+        self.assertIn("mode: .ordered(", languages)
+        self.assertNotIn("updated.subtracting", languages)
 
     def test_native_globe_is_optional_except_when_ios_requires_it(self):
         keyboard = read("SayboardKeyboard/Views/Layouts/KeyboardChrome.swift")
@@ -102,8 +121,8 @@ class SettingsContractTests(unittest.TestCase):
         view = read("Sayboard/Views/SettingsNavigationViews.swift")
         self.assertIn("ProcessInfo.processInfo.physicalMemory >= 8 * 1_073_741_824", shared)
         self.assertIn("defaults.object(forKey: SharedKey.experimentalLiveDictationEnabled)", shared)
-        self.assertIn("less than 8 GB of RAM", view)
-        self.assertIn("1.5-second updates are a target", view)
+        self.assertIn("SharedSettings().experimentalLiveDictationEnabled = enabled", view)
+        self.assertIn("guard self.experimentalLiveEnabled != enabled", view)
 
     def test_history_only_deletes_voice_notes(self):
         history = read("Sayboard/Views/HistoryStorageSettingsView.swift")
@@ -149,4 +168,5 @@ class SettingsContractTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
 

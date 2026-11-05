@@ -12,21 +12,15 @@ struct DiagnosticsView: View {
   @State private var testResult = ""
   @State private var rawASRResult = ""
   @State private var breadcrumbs = [String]()
-  @State private var hapticEvents = [String]()
-  @State private var hapticTotal = 0
   @AppStorage(SharedKey.keyboardTouchDebugOverlay,
               store: UserDefaults(suiteName: AppGroup.identifier))
   private var showTouchTargets = false
-  @State private var coreHapticStatus = ""
-  @State private var coreHapticEngine: CHHapticEngine?
-  @StateObject private var sensoryPulse = KeyboardSensoryPulse.shared
 
   var body: some View {
     Form {
       self.permissionsSection
       self.modelsSection
       self.audioSection
-      self.hapticsSection
       self.touchTargetSection
       self.liveDictationSection
       self.testSection
@@ -36,7 +30,6 @@ struct DiagnosticsView: View {
     .navigationTitle("Diagnostics")
     .navigationBarTitleDisplayMode(.inline)
     .onAppear(perform: self.refresh)
-    .sensoryFeedback(.selection, trigger: self.sensoryPulse.count)
   }
 
   private var permissionsSection: some View {
@@ -89,54 +82,6 @@ struct DiagnosticsView: View {
       LabeledContent("iOS", value: UIDevice.current.systemVersion)
     } header: {
       Text("Audio and Device")
-    }
-  }
-
-  private var hapticsSection: some View {
-    Section {
-      LabeledContent("Hardware haptics", value: self.yesNo(CHHapticEngine.capabilitiesForHardware().supportsHaptics))
-      LabeledContent("App Group haptics enabled", value: self.yesNo(SharedSettings().keyboardHapticsEnabled))
-      LabeledContent("Requested events", value: String(self.hapticTotal))
-      LabeledContent("Keyboard Full Access", value: self.report(self.permissions.keyboardReportedFullAccess))
-      LabeledContent("Configured haptic engine", value: SharedSettings().keyboardHapticDriver.displayName)
-      ForEach(KeyboardHaptics.Technique.allCases, id: \.rawValue) { technique in
-        Button("Test " + technique.displayName + " haptic") {
-          KeyboardHaptics.key(enabled: true, technique: technique)
-          self.refreshHaptics()
-        }
-      }
-      Button("Test Core Haptics (app)") {
-        self.testCoreHaptics()
-      }
-      .disabled(!CHHapticEngine.capabilitiesForHardware().supportsHaptics)
-      if !self.coreHapticStatus.isEmpty {
-        Text(self.coreHapticStatus)
-          .font(.footnote)
-          .foregroundStyle(.secondary)
-          .textSelection(.enabled)
-      }
-      if !self.hapticEvents.isEmpty {
-        Text(self.hapticEvents.suffix(20).joined(separator: "\n"))
-          .font(.system(.caption2, design: .monospaced))
-          .textSelection(.enabled)
-      }
-      if !KeyboardInputTrace.events.isEmpty {
-        Text("Keyboard interactions (event names only)")
-          .font(.caption.weight(.medium))
-        Text(KeyboardInputTrace.events.suffix(12).joined(separator: "\n"))
-          .font(.system(.caption2, design: .monospaced))
-          .textSelection(.enabled)
-      }
-      Button("Clear haptic trace") {
-        KeyboardHapticTrace.clear()
-        KeyboardInputTrace.clear()
-        self.refreshHaptics()
-      }
-      Button("Refresh haptic trace", action: self.refreshHaptics)
-    } header: {
-      Text("Haptic Diagnostics")
-    } footer: {
-      Text("Events record calls, not confirmed physical vibration. Core Haptics errors are recorded separately. App and keyboard extension use separate processes; compare both in this trace.")
     }
   }
 
@@ -277,38 +222,6 @@ struct DiagnosticsView: View {
     self.permissions.refreshAll()
     self.models.verifyExistingModels()
     self.refreshBreadcrumbs()
-    self.refreshHaptics()
-  }
-
-  private func testCoreHaptics() {
-    guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else {
-      self.coreHapticStatus = "This device has no Core Haptics hardware."
-      return
-    }
-    do {
-      let engine = try CHHapticEngine()
-      self.coreHapticEngine = engine
-      try engine.start()
-      let event = CHHapticEvent(
-        eventType: .hapticTransient,
-        parameters: [
-          CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.85),
-          CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.55)
-        ],
-        relativeTime: 0
-      )
-      let pattern = try CHHapticPattern(events: [event], parameters: [])
-      let player = try engine.makePlayer(with: pattern)
-      try player.start(atTime: 0)
-      self.coreHapticStatus = "Core Haptics started; physically felt vibration still requires confirmation."
-    } catch {
-      self.coreHapticStatus = "Core Haptics error: \(error.localizedDescription)"
-    }
-  }
-
-  private func refreshHaptics() {
-    self.hapticEvents = KeyboardHapticTrace.events
-    self.hapticTotal = KeyboardHapticTrace.total
   }
 
   private func refreshBreadcrumbs() {
@@ -392,3 +305,4 @@ struct DiagnosticsView: View {
     ].joined(separator: "\n")
   }
 }
+

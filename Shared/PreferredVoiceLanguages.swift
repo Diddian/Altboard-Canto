@@ -7,13 +7,7 @@ enum PreferredVoiceLanguages {
   static let legacyChoices = ["yue", "en", "de"]
 
   static func normalized(_ values: [String]) -> [String] {
-    var seen = Set<String>()
-    return values.map { value in
-      let lower = value.lowercased()
-      if lower == "zh-hk" || lower.hasPrefix("zh-hant-hk") { return "yue" }
-      return lower.split(separator: "-").first.map(String.init) ?? ""
-    }
-      .filter { SpeechLanguages.all.contains($0) && seen.insert($0).inserted }
+    LanguagePriority.ordered(values, available: SpeechLanguages.all)
   }
 
   struct Choice: Equatable {
@@ -94,3 +88,4 @@ enum PreferredVoiceLanguages {
     return nil
   }
 }
+

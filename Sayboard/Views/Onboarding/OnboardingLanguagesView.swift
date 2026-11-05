@@ -34,7 +34,7 @@ struct OnboardingLanguagesView: View {
       self.languagesOnAppear = Set(self.draft.languages)
     }
     .sheet(isPresented: self.$showsLanguagePicker) {
-      LanguagePickerView(mode: .multi(self.languageSelection), autoDetectKey: "Any language")
+      LanguagePickerView(mode: .ordered(self.languageSelection), autoDetectKey: "Any language")
     }
     .sheet(isPresented: self.$showsOtherModels, onDismiss: self.finishSheetChoice) {
       OnboardingModelsSheet(
@@ -82,15 +82,10 @@ struct OnboardingLanguagesView: View {
     }
   }
 
-  private var languageSelection: Binding<Set<String>> {
+  private var languageSelection: Binding<[String]> {
     Binding(
-      get: { Set(self.draft.languages) },
-      set: { chosen in
-        withAnimation(Self.chipAnimation) {
-          let kept = self.draft.languages.filter { chosen.contains($0) }
-          self.draft.languages = kept + chosen.subtracting(kept).sorted()
-        }
-      },
+      get: { self.draft.languages },
+      set: { self.draft.languages = PreferredVoiceLanguages.normalized($0) }
     )
   }
 
@@ -304,3 +299,4 @@ struct OnboardingModelsSheet: View {
     self.dismiss()
   }
 }
+

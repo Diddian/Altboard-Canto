@@ -8,12 +8,6 @@ struct TextOutputSection: View {
     Section {
       self.writingStyleRow
 
-      AITextProcessingRow(
-        llmEnabled: self.llmEnabled,
-        hasUsableModel: self.llmDownloadService.hasUsableModel,
-        selectedVariantName: self.llmDownloadService.selectedVariant.displayName,
-      )
-
       NavigationLink {
         SnippetsView()
       } label: {
@@ -29,7 +23,7 @@ struct TextOutputSection: View {
         Label("Auto-Copy to Clipboard", systemImage: "doc.on.clipboard")
       }
     } header: {
-      Text("Text & AI")
+      Text("Formatting")
     } footer: {
       if self.showFooter {
         Text(Self.clipboardFooterMessage)
@@ -43,11 +37,8 @@ struct TextOutputSection: View {
 
   private static let clipboardFooterMessage: LocalizedStringKey = "After each dictation, the inserted text is also copied to the system clipboard. Replaces the previous clipboard contents."
 
-  @AppStorage(SharedKey.llmEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var llmEnabled = false
   @AppStorage(SharedKey.alsoCopyToClipboard, store: UserDefaults(suiteName: AppGroup.identifier))
   private var alsoCopyToClipboard = false
-  @EnvironmentObject private var llmDownloadService: LLMDownloadService
   @State private var settings = SharedSettings()
   @State private var snippetCount = 0
   @State private var showStylePicker = false
@@ -93,27 +84,3 @@ struct TextOutputSection: View {
   }
 }
 
-struct AITextProcessingRow: View {
-
-  let llmEnabled: Bool
-  let hasUsableModel: Bool
-  let selectedVariantName: String
-
-  var body: some View {
-    NavigationLink {
-      LLMSettingsView()
-    } label: {
-      HStack {
-        Label("AI Text Processing", systemImage: "sparkles")
-        Spacer()
-        if self.llmEnabled, self.hasUsableModel {
-          Text(verbatim: self.selectedVariantName)
-            .foregroundStyle(.secondary)
-        } else {
-          Text("Off")
-            .foregroundStyle(.secondary)
-        }
-      }
-    }
-  }
-}

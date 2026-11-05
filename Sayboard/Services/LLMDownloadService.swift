@@ -76,8 +76,8 @@ final class LLMDownloadService: ObservableObject {
     // Keep a usable existing model until a Heretic download is ready. New
     // multi-gigabyte downloads always require the normal Download action.
     if let target = installed ?? (self.hasUsableModel ? nil : self.recommendedVariant) {
-      settings.selectedLLMVariant = target
-      self.selectedVariant = target
+      if settings.selectedLLMVariant != target { settings.selectedLLMVariant = target }
+      if self.selectedVariant != target { self.selectedVariant = target }
       self.syncHasUsableModel()
     }
   }
@@ -94,21 +94,23 @@ final class LLMDownloadService: ObservableObject {
   }
 
   func verifyExistingModels() {
+    var states = self.variantStates
     for variant in LLMModelVariant.allCases {
-      switch self.variantStates[variant] {
+      switch states[variant] {
       case .downloading, .error:
         continue
       case .downloaded, .notDownloaded, .none:
         break
       }
       if LLMModelStorageManager.isDownloaded(variant) {
-        self.variantStates[variant] = .downloaded
+        states[variant] = .downloaded
       } else if self.isDownloadInFlight(variant) {
-        self.variantStates[variant] = .downloading(progress: 0)
+        states[variant] = .downloading(progress: 0)
       } else {
-        self.variantStates[variant] = .notDownloaded
+        states[variant] = .notDownloaded
       }
     }
+    if states != self.variantStates { self.variantStates = states }
     self.ensureValidSelection()
     self.syncHasUsableModel()
   }
@@ -192,7 +194,8 @@ final class LLMDownloadService: ObservableObject {
 
   func syncHasUsableModel() {
     let usable = self.hasUsableModel
-    SharedSettings().hasUsableLLMModel = usable
+    let settings = SharedSettings()
+    if settings.hasUsableLLMModel != usable { settings.hasUsableLLMModel = usable }
   }
 
   func checkForInterruptedDownloadOnLaunch() {
@@ -396,7 +399,7 @@ final class LLMDownloadService: ObservableObject {
     let settings = SharedSettings()
     let current = settings.selectedLLMVariant
     guard !self.isDownloaded(current) else {
-      self.selectedVariant = current
+      if self.selectedVariant != current { self.selectedVariant = current }
       return
     }
     if let downloaded = LLMModelVariant.allCases.first(where: { isDownloaded($0) }) {
@@ -454,4 +457,5 @@ final class LLMDownloadService: ObservableObject {
     settings.llmDownloadInProgressVariants = variants
   }
 }
+
 

@@ -24,12 +24,7 @@ final class InformalNgramStore {
   }
 
   private func languages(_ preferred: [String]) -> [String] {
-    var codes = LatinWordSuggestionPolicy.preferredCodes(preferred)
-      .filter { $0 == "en" || $0 == "de" }
-    if preferred.contains(where: { $0.lowercased().hasPrefix("yue") }) {
-      codes.append("yue")
-    }
-    return codes
+    LanguagePriority.ordered(preferred, available: ["en", "de", "yue"])
   }
 
   /// Each statement uses an indexed prefix or exact-match query and a hard cap.
@@ -117,13 +112,15 @@ final class InformalNgramStore {
     guard let context, context.last?.isWhitespace == true else { return [] }
     let weights = contextWeights(context: context, current: nil, preferred: preferred)
     let languages = self.languages(preferred)
+    let languageBoosts = LanguagePriority.boosts(preferred)
     let ranked = weights.map { key, weight -> (LatinWordSuggestion, Int)? in
       guard let divider = key.firstIndex(of: "|") else { return nil }
       let language = String(key[..<divider])
       let word = String(key[key.index(after: divider)...])
       guard languages.contains(language), (2...32).contains(word.count),
             word.first?.isLetter == true else { return nil }
-      return (LatinWordSuggestion(text: word, language: language), weight)
+      return (LatinWordSuggestion(text: word, language: language),
+              weight + (languageBoosts[language] ?? 0))
     }.compactMap { $0 }
     return Array(ranked.sorted { left, right in
       if left.1 != right.1 { return left.1 > right.1 }
@@ -133,3 +130,4 @@ final class InformalNgramStore {
     }.prefix(max(1, min(limit, 9))).map(\.0))
   }
 }
+

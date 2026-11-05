@@ -80,8 +80,6 @@ struct MainTabView: View {
     }
   }
 
-  private static let settingsTabIndex = 2
-
   private static let defaultLanguage = AppLanguageConfig.fallback
 
   private static var isSpeechModelDownloading: Bool {
@@ -132,9 +130,6 @@ struct MainTabView: View {
     }
     .onReceive(self.permissionService.objectWillChange.receive(on: RunLoop.main)) { _ in
       self.recheckActiveBanner()
-    }
-    .background {
-      TabBarTapInterceptor(settingsTabIndex: Self.settingsTabIndex) { }
     }
   }
 
@@ -352,3 +347,4 @@ private struct AIProcessingEnabledAlert: ViewModifier {
   @EnvironmentObject private var llmDownloadService: LLMDownloadService
 
 }
+

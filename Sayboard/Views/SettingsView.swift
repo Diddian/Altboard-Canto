@@ -10,8 +10,8 @@ struct SettingsView: View {
   @AppStorage(SharedKey.keyboardKind, store: UserDefaults(suiteName: AppGroup.identifier))
   private var keyboardKindRaw = KeyboardKind.standard.rawValue
   @AppStorage(SharedKey.appLanguage) private var appLanguage = AppLanguageConfig.fallback
-  @State private var preferredSpokenLanguages = SharedSettings().preferredSpokenLanguages
   @State private var showsLowStorageWarning = false
+  @State private var showsStorage = false
 
   private enum Route: Hashable { case setup }
 
@@ -57,15 +57,17 @@ struct SettingsView: View {
       #endif
 
       Section("Speech & AI") {
-        SpeechLanguagesSettingsView(
-          inline: true, rowsOnly: true,
-          onPreferredLanguagesChanged: { self.preferredSpokenLanguages = $0 }
-        )
+        SpeechLanguagesSettingsView(inline: true, rowsOnly: true)
         ActiveSessionToggle()
         NavigationLink {
           ModelsView()
         } label: {
           Label("Speech Model", systemImage: "cpu")
+        }
+        NavigationLink {
+          LLMModelsScreen()
+        } label: {
+          Label("Text Model", systemImage: "text.bubble")
         }
         NavigationLink {
           DictationSettingsView()
@@ -84,14 +86,14 @@ struct SettingsView: View {
         }
       }
 
-      KeyboardSettingsView(
-        selectedKind: self.keyboardKindBinding, inline: true,
-        cantoneseSelected: self.preferredSpokenLanguages.contains("yue")
-      )
-      KeyboardCustomizationView(inline: true)
-      DataAndStorageSettingsView(inline: true)
+      KeyboardSettingsView(selectedKind: self.keyboardKindBinding, inline: true)
 
       Section {
+        DisclosureGroup("History & Storage", isExpanded: self.$showsStorage) {
+          if self.showsStorage {
+            DataAndStorageSettingsView(inline: true)
+          }
+        }
         NavigationLink {
           AppLanguageListView()
         } label: {
@@ -134,10 +136,10 @@ struct SettingsView: View {
     .navigationTitle("Settings")
     .navigationDestination(for: Route.self) { _ in SetupView() }
     .onAppear {
-      self.preferredSpokenLanguages = SharedSettings().preferredSpokenLanguages
       self.showsLowStorageWarning = DiskSpace.isLow()
         && !OperatingSystem.isBackgroundNeuralEngineBlocked
     }
   }
 }
+
 

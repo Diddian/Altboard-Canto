@@ -12,14 +12,7 @@ enum LatinWordSuggestionPolicy {
   /// Prefer the selected languages in the user's own order. Han scripts
   /// are handled by the separate Cantonese IME, not the Latin spell checker.
   static func preferredCodes(_ preferred: [String]) -> [String] {
-    var seen = Set<String>()
-    return preferred.compactMap { value in
-      let code = value.lowercased()
-        .replacingOccurrences(of: "-", with: "_")
-        .split(separator: "_").first.map(String.init) ?? ""
-      guard code.count == 2, code != "zh", seen.insert(code).inserted else { return nil }
-      return code
-    }
+    LanguagePriority.ordered(preferred).filter { $0.count == 2 && $0 != "zh" }
   }
 
   static func checkerLocales(preferred: [String], available: [String]) -> [CheckerLocale] {
@@ -173,3 +166,4 @@ enum LatinWordSuggestionPolicy {
     }
   }
 }
+

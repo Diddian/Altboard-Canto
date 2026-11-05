@@ -34,24 +34,19 @@ struct DictationSettingsView: View {
         Section {
           self.sessionRows
         } header: {
-          Text("Microphone & Recording")
+          Text("Recording")
         } footer: {
-          Text("Keep recording active only when you need it. Auto-Stop limits a recording session, not saved meeting length.")
+          Text("Auto-stop limits the active microphone session.")
         }
         Section {
           self.liveRows
         } header: {
           Text("Live Speech to Text")
         } footer: {
-          Text("Recognition runs offline. Roughly 1.5-second updates are a target, not a guaranteed speed. Long recordings require a supported model.")
+          Text("Offline updates are provisional; speed depends on the model and device.")
         }
         Section("Meetings") {
           self.meetingRows
-          NavigationLink {
-            ModelsView()
-          } label: {
-            Label("Offline Speech Model", systemImage: "cpu")
-          }
           NavigationLink {
             CantoneseCorrectionsView()
           } label: {
@@ -60,22 +55,12 @@ struct DictationSettingsView: View {
         }
       }
     }
-    .onAppear { self.experimentalLiveEnabled = SharedSettings().experimentalLiveDictationEnabled }
-    .onChange(of: self.experimentalLiveEnabled) { _, enabled in
-      SharedSettings().experimentalLiveDictationEnabled = enabled
-    }
-    .onChange(of: self.selectedAutoStopPolicy) { _, policy in
-      SharedSettings().sessionAutoStopPolicy = policy
-      if self.speechService.isSessionActive {
-        self.speechService.session.updateTimeout()
-      }
-    }
+
   }
 
   @ViewBuilder
   private var sessionRows: some View {
-    ActiveSessionToggle()
-    Picker(selection: self.$selectedAutoStopPolicy) {
+    Picker(selection: self.autoStopBinding) {
       ForEach(SessionAutoStopPolicy.allCases, id: \.self) { policy in
         Text(LocalizedStringKey(policy.displayNameKey)).tag(policy)
       }
@@ -86,18 +71,11 @@ struct DictationSettingsView: View {
 
   @ViewBuilder
   private var liveRows: some View {
-    Toggle(isOn: self.$experimentalLiveEnabled) {
+    Toggle(isOn: self.liveBinding) {
       Label("Live Dictation", systemImage: "waveform")
     }
     if ProcessInfo.processInfo.physicalMemory < 8 * 1_073_741_824 {
-      Label {
-        Text("This iPhone has less than 8 GB of RAM. Live Dictation is off by default because rapid updates may be slow. You can still enable it and test.")
-      } icon: {
-        Image(systemName: "exclamationmark.triangle").foregroundStyle(.orange)
-      }
-      .font(.footnote)
-    } else {
-      Text("This iPhone meets the initial 8 GB memory recommendation. Actual dictation speed still depends on the downloaded model and thermal conditions.")
+      Text("Live updates may be slower on this device.")
         .font(.footnote).foregroundStyle(.secondary)
     }
   }
@@ -107,13 +85,25 @@ struct DictationSettingsView: View {
     Toggle(isOn: self.$experimentalMeetingEnabled) {
       Label("Enable Meeting Recording", systemImage: "record.circle")
     }
-    NavigationLink {
-      MeetingRecordsView()
-    } label: {
-      Label("Meeting Recordings", systemImage: "list.bullet.rectangle")
-    }
-    Text("Meeting audio rotates into 15-minute files; provisional transcript updates target about 8 seconds. Files and the combined transcript stay on-device.")
+    Text("Recordings stay on this device. Audio is saved in 15-minute parts.")
       .font(.footnote).foregroundStyle(.secondary)
+  }
+
+  private var liveBinding: Binding<Bool> {
+    Binding(get: { self.experimentalLiveEnabled }, set: { enabled in
+      guard self.experimentalLiveEnabled != enabled else { return }
+      self.experimentalLiveEnabled = enabled
+      SharedSettings().experimentalLiveDictationEnabled = enabled
+    })
+  }
+
+  private var autoStopBinding: Binding<SessionAutoStopPolicy> {
+    Binding(get: { self.selectedAutoStopPolicy }, set: { policy in
+      guard self.selectedAutoStopPolicy != policy else { return }
+      self.selectedAutoStopPolicy = policy
+      SharedSettings().sessionAutoStopPolicy = policy
+      if self.speechService.isSessionActive { self.speechService.session.updateTimeout() }
+    })
   }
 
   @EnvironmentObject private var speechService: SpeechRecognitionService
@@ -125,7 +115,7 @@ struct DictationSettingsView: View {
 
 }
 
-// Shared by the Settings home and Dictation page; one session owner/binding.
+// The Settings home owns the recording-session toggle.
 struct ActiveSessionToggle: View {
   @EnvironmentObject private var speechService: SpeechRecognitionService
 
@@ -150,31 +140,9 @@ struct ActiveSessionToggle: View {
   }
 }
 
-struct TextAISettingsView: View {
-  var body: some View {
-    Form {
-      TextOutputSection()
-    }
-    .navigationTitle("Text & AI")
-    .navigationBarTitleDisplayMode(.inline)
-  }
-}
-
 struct HelpSettingsView: View {
   var body: some View {
     Form {
-      Section {
-        NavigationLink {
-          SetupView()
-        } label: {
-          Label("Setup & Permissions", systemImage: "checkmark.shield")
-        }
-        NavigationLink {
-          DiagnosticsView()
-        } label: {
-          Label("Diagnostics", systemImage: "stethoscope")
-        }
-      }
       FeedbackSection()
     }
     .navigationTitle("Help")
@@ -182,42 +150,3 @@ struct HelpSettingsView: View {
   }
 }
 
-struct GeneralSettingsView: View {
-  var body: some View {
-    Form {
-      Section {
-        NavigationLink {
-          AppLanguageListView()
-        } label: {
-          LabeledContent {
-            Text(verbatim: nativeLanguageNames[self.appLanguage] ?? self.appLanguage)
-              .foregroundStyle(.secondary)
-          } label: {
-            Label("App Language", systemImage: "globe")
-          }
-        }
-      }
-    }
-    .navigationTitle("General")
-    .navigationBarTitleDisplayMode(.inline)
-  }
-
-  @AppStorage(SharedKey.appLanguage) private var appLanguage = AppLanguageConfig.fallback
-}
-
-struct AboutSettingsView: View {
-  var body: some View {
-    Form {
-      Section("About") {
-        #if APPSTORE
-        FullVersionRow()
-        #endif
-        LabeledContent("Version", value: Bundle.main.infoDictionary?[
-          "CFBundleShortVersionString"
-        ] as? String ?? "Unknown")
-      }
-    }
-    .navigationTitle("About")
-    .navigationBarTitleDisplayMode(.inline)
-  }
-}

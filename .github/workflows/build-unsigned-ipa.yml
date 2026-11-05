@@ -112,6 +112,9 @@ jobs:
             Shared/LLMDevicePolicy.swift Sayboard/Services/LLMPromptTemplates.swift \
             scripts/verify-llm-device-policy.swift
           "$RUNNER_TEMP/llm-device-policy-smoke"
+          swiftc -o "$RUNNER_TEMP/language-priority-smoke" \
+            Shared/LanguagePriority.swift scripts/verify-language-priority.swift
+          "$RUNNER_TEMP/language-priority-smoke"
           swiftc -o "$RUNNER_TEMP/vocabulary-export-smoke" \
             Shared/PersonalVocabularyExport.swift scripts/verify-vocabulary-export.swift
           "$RUNNER_TEMP/vocabulary-export-smoke"
@@ -129,7 +132,7 @@ jobs:
             scripts/verify-keyboard-core.swift
           "$RUNNER_TEMP/keyboard-smoke"
           swiftc -o "$RUNNER_TEMP/latin-suggestions-smoke" \
-            Shared/LatinWordSuggestionPolicy.swift scripts/verify-latin-suggestions.swift
+            Shared/LanguagePriority.swift Shared/LatinWordSuggestionPolicy.swift scripts/verify-latin-suggestions.swift
           "$RUNNER_TEMP/latin-suggestions-smoke"
           swiftc -o "$RUNNER_TEMP/touch-smoke" \
             Shared/KeyTouchMap.swift scripts/verify-key-touch-map.swift
@@ -349,4 +352,5 @@ jobs:
           echo "### Direct IPA download" >> "$GITHUB_STEP_SUMMARY"
           echo "[$DIRECT]($DIRECT)" >> "$GITHUB_STEP_SUMMARY"
           echo "Built from commit: \`$GITHUB_SHA\`" >> "$GITHUB_STEP_SUMMARY"
+
 
