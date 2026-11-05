@@ -66,7 +66,10 @@ struct StandardKeyboardLayout: View {
   private var controlsRow: some View {
     GeometryReader { geometry in
       let sideWidth = self.chrome.sideButtonWidth
-      let reserved = (sideWidth * 4) + (KeyboardChromeMetrics.buttonSpacing * 6) + 16.kbScaled
+      let globeWidth = self.keyboardState.showGlobeKey
+        ? sideWidth + KeyboardChromeMetrics.buttonSpacing : 0
+      let reserved = (sideWidth * 4) + (KeyboardChromeMetrics.buttonSpacing * 6)
+        + globeWidth + 16.kbScaled
       let available = self.keyboardState.auxiliaryControlsHidden
         ? geometry.size.width - 8.kbScaled
         : max(75.kbScaled, geometry.size.width - reserved)
@@ -95,6 +98,13 @@ struct StandardKeyboardLayout: View {
 extension StandardKeyboardLayout {
   private var sideButtons: some View {
     HStack(alignment: .bottom, spacing: KeyboardChromeMetrics.buttonSpacing) {
+      if self.keyboardState.showGlobeKey {
+        NativeInputModeSwitchKey(
+          configure: self.keyboardState.configureInputModeListButton,
+          iconName: "globe"
+        )
+        .frame(width: self.chrome.sideButtonWidth, height: KeyboardChromeMetrics.keyHeight)
+      }
       if self.keyboardState.showSettingsKey {
         KeyButton(
           content: .systemImage("gearshape"),

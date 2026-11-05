@@ -83,8 +83,7 @@ struct SpeechLanguagesSettingsView: View {
         Text(self.spokenLanguages.isEmpty
           ? "Any language"
           : self.spokenLanguages.enumerated().map {
-              "\($0.offset + 1). " + ($0.element == "zh" ? String(localized: "Mandarin")
-                : self.locale.capitalizedLanguageName(forLanguageCode: $0.element))
+              "\($0.offset + 1). " + self.displayName(for: $0.element)
             }.joined(separator: " · "))
           .foregroundStyle(.secondary)
           .multilineTextAlignment(.leading)
@@ -107,9 +106,14 @@ struct SpeechLanguagesSettingsView: View {
   @State private var showPreferredLanguagePicker = false
   @Environment(\.locale) private var locale
 
+  private func displayName(for code: String) -> String {
+    code == "zh" ? String(localized: "Mandarin", locale: self.locale)
+      : self.locale.capitalizedLanguageName(forLanguageCode: code)
+  }
+
   private var unsupportedSpokenLanguages: [String] {
     self.spokenLanguages.filter { !self.speechModels.selectedVariant.supportedLanguages.contains($0) }
-      .map { self.locale.capitalizedLanguageName(forLanguageCode: $0) }
+      .map { self.displayName(for: $0) }
   }
 }
 

@@ -330,6 +330,13 @@ struct AlphabeticKeyboardLayout: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Dismiss candidate suggestions")
       } else {
+        if self.keyboardState.showGlobeKey {
+          NativeInputModeSwitchKey(
+            configure: self.keyboardState.configureInputModeListButton,
+            iconName: "globe"
+          )
+          .frame(width: self.chrome.sideButtonWidth, height: KeyboardChromeMetrics.keyHeight)
+        }
         if self.keyboardState.showSettingsKey {
           KeyButton(content: .systemImage("gearshape"),
                     fixedWidth: self.chrome.sideButtonWidth) {

@@ -94,6 +94,19 @@ class InterfaceLocalizationTests(unittest.TestCase):
         ):
             self.assertIn(key, strings)
         self.assertNotIn("Diagnostics", strings)
+        for key in (
+            "Mandarin", "Voice Notes", "Corrections & Suggestions",
+            "Export All Data", "Preparing Export…", "Priority",
+            "Drag to reorder. Higher languages take priority; all selected languages remain available.",
+            "Exports include recordings, transcripts and vocabulary. Models and app settings are kept.",
+        ):
+            self.assertIn(key, strings)
+            self.assertNotEqual(
+                strings[key]["localizations"]["zh-Hant"]["stringUnit"]["value"], key
+            )
+        self.assertEqual(
+            strings["Mandarin"]["localizations"]["zh-Hant"]["stringUnit"]["value"], "普通話"
+        )
 
 if __name__ == "__main__":
     unittest.main()

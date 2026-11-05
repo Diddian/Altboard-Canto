@@ -37,9 +37,7 @@ struct KeyboardCustomizationView: View {
     Toggle("Auto-capitalization", isOn: self.$autoCapitalize)
     Toggle("Double-Space Period", isOn: self.$periodShortcut)
     Toggle("Haptic Feedback", isOn: self.$hapticsEnabled)
-    Toggle("Extra Globe Key", isOn: SharedSettings.keyboardGlobeTemporarilyDisabled
-           ? .constant(false) : self.$showGlobe)
-      .disabled(SharedSettings.keyboardGlobeTemporarilyDisabled)
+    Toggle("Extra Globe Key", isOn: self.$showGlobe)
     Toggle("Settings Key", isOn: self.$showSettingsKey)
     Toggle("Output Key", isOn: self.$showOutputButton)
     Toggle("AI Key", isOn: self.$showAIButton).disabled(!self.aiEnabled)

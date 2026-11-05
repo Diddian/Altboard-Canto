@@ -62,9 +62,14 @@ struct LanguagePickerView: View {
 
   private var sortedLanguages: [String] {
     self.availableLanguages.sorted { lhs, rhs in
-      self.locale.capitalizedLanguageName(forLanguageCode: lhs)
-        .localizedCompare(self.locale.capitalizedLanguageName(forLanguageCode: rhs)) == .orderedAscending
+      self.displayName(for: lhs)
+        .localizedCompare(self.displayName(for: rhs)) == .orderedAscending
     }
+  }
+
+  private func displayName(for code: String) -> String {
+    code == "zh" ? String(localized: "Mandarin", locale: self.locale)
+      : self.locale.capitalizedLanguageName(forLanguageCode: code)
   }
 
   private var filteredLanguages: [String] {
@@ -73,9 +78,8 @@ struct LanguagePickerView: View {
     }
     let query = self.searchText.lowercased()
     return self.sortedLanguages.filter { code in
-      let name = self.locale.capitalizedLanguageName(forLanguageCode: code).lowercased()
-      let alias = code == "zh" ? String(localized: "Mandarin").lowercased() : ""
-      return name.contains(query) || alias.contains(query) || code.lowercased().contains(query)
+      let name = self.displayName(for: code).lowercased()
+      return name.contains(query) || code.lowercased().contains(query)
     }
   }
 
@@ -156,8 +160,7 @@ struct LanguagePickerView: View {
         HStack(spacing: 12) {
           Text("\((binding.wrappedValue.firstIndex(of: code) ?? 0) + 1)")
             .monospacedDigit().foregroundStyle(.secondary)
-          Text(code == "zh" ? String(localized: "Mandarin")
-            : self.locale.capitalizedLanguageName(forLanguageCode: code))
+          Text(self.displayName(for: code))
         }
       }
       .onMove { offsets, destination in
@@ -184,8 +187,7 @@ struct LanguagePickerView: View {
           binding.wrappedValue.append(code)
         } label: {
           HStack {
-            Text(code == "zh" ? String(localized: "Mandarin")
-              : self.locale.capitalizedLanguageName(forLanguageCode: code))
+            Text(self.displayName(for: code))
             Spacer()
             Image(systemName: "plus.circle")
           }
@@ -203,7 +205,7 @@ struct LanguagePickerView: View {
     action: @escaping () -> Void,
   ) -> some View {
     HStack {
-      Text(self.locale.capitalizedLanguageName(forLanguageCode: code))
+      Text(self.displayName(for: code))
       Spacer()
       if isChecked {
         Image(systemName: "checkmark")

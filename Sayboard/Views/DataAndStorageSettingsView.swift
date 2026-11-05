@@ -73,7 +73,11 @@ struct DataAndStorageSettingsView: View {
     Group {
       ForEach(LocalUserDataStore.Category.allCases) { category in
         HStack {
-          LabeledContent(category.title, value: "\(self.count(for: category))")
+          LabeledContent {
+            Text("\(self.count(for: category))")
+          } label: {
+            Text(LocalizedStringKey(category.title))
+          }
           Menu {
             Button("Export", systemImage: "square.and.arrow.up") { self.export([category]) }
             Button("Delete", systemImage: "trash", role: .destructive) {
@@ -94,24 +98,37 @@ struct DataAndStorageSettingsView: View {
         }
       }
       .disabled(self.busy || self.recordingActive)
-      Button { self.export(LocalUserDataStore.Category.allCases) } label: {
-        Label(self.busy ? "Preparing Export…" : "Export All Data", systemImage: "square.and.arrow.up")
+      Divider()
+        .padding(.vertical, 3)
+      VStack(alignment: .leading, spacing: 14) {
+        Button { self.export(LocalUserDataStore.Category.allCases) } label: {
+          Label {
+            Text(LocalizedStringKey(self.busy ? "Preparing Export…" : "Export All Data"))
+          } icon: {
+            Image(systemName: "square.and.arrow.up")
+          }
+          .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .disabled(self.busy || self.recordingActive)
+        Button(role: .destructive) {
+          self.pendingRetentionPolicy = nil
+          self.pendingDeletion = LocalUserDataStore.Category.allCases
+          self.confirmDeletion = true
+        } label: {
+          Label("Delete All Data", systemImage: "trash")
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .disabled(self.busy || self.recordingActive)
+        Button("Clear Model Cache", role: .destructive) {
+          ModelStorageManager.clearCompiledModelCache()
+        }
+        .disabled(self.busy || self.recordingActive)
+        Text("Exports include recordings, transcripts and vocabulary. Models and app settings are kept.")
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+          .fixedSize(horizontal: false, vertical: true)
       }
-      .disabled(self.busy || self.recordingActive)
-      Button(role: .destructive) {
-        self.pendingRetentionPolicy = nil
-        self.pendingDeletion = LocalUserDataStore.Category.allCases
-        self.confirmDeletion = true
-      } label: {
-        Label("Delete All Data", systemImage: "trash")
-      }
-      .disabled(self.busy || self.recordingActive)
-      Button("Clear Model Cache", role: .destructive) {
-        ModelStorageManager.clearCompiledModelCache()
-      }
-      .disabled(self.busy || self.recordingActive)
-      Text("Exports include recordings, transcripts and vocabulary. Models and app settings are kept.")
-        .font(.footnote).foregroundStyle(.secondary)
+      .padding(.vertical, 8)
     }
   }
 

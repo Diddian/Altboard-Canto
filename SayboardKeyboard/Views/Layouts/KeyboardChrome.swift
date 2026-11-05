@@ -2,8 +2,7 @@ import SwiftUI
 
 extension KeyboardState {
   var showsGlobeButton: Bool {
-    !SharedSettings.keyboardGlobeTemporarilyDisabled
-      && (self.showGlobeKey || self.needsInputModeSwitchKey)
+    true // Keep the native keyboard/Emoji picker visible on every layout.
   }
 
   var showsAIButton: Bool {
@@ -171,7 +170,6 @@ struct KeyboardBottomRow: View {
           action()
         }
       }
-      // The temporary switch experiment also suppresses the required in-extension key.
       if self.keyboardState.showsGlobeButton {
         // iOS may require a native switch key when multiple keyboards exist.
         NativeInputModeSwitchKey(

@@ -78,6 +78,10 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertNotIn("let input = self.view\\n", host)
         self.assertIn("self.scheduleRenderCheckpoint(checkpoint: \"afterAppear\")", host)
         self.assertIn("self.scheduleRenderCheckpoint(checkpoint: \"afterDocumentChange\")", host)
+        self.assertIn("self.scheduleRenderCheckpoint(checkpoint: \"afterHostTextCleared\")", host)
+        self.assertIn("case hostTextCleared", lifecycle)
+        self.assertIn("postSubmitReview(for: events)", lifecycle)
+        self.assertIn('self.recordKeyboardTrace(.hostTextCleared)', host)
         self.assertIn("self.renderProbeGeneration &+= 1", host)
         for private_content in ("documentContextBeforeInput", "selectedText", "insertText",
                                 "audioBuffer", "touchPath", "pointX", "pointY"):

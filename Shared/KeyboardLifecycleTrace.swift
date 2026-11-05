@@ -16,6 +16,7 @@ enum KeyboardLifecycleTrace {
     case willDisappear
     case didDisappear
     case documentChanged
+    case hostTextCleared
     case layoutChanged
     case switchRequirementChanged
     case memoryWarning
@@ -24,7 +25,8 @@ enum KeyboardLifecycleTrace {
 
     var needsImmediateWrite: Bool {
       switch self {
-      case .willAppear, .willDisappear, .didDisappear, .memoryWarning, .renderSuspicious: true
+      case .willAppear, .willDisappear, .didDisappear, .hostTextCleared,
+           .memoryWarning, .renderSuspicious: true
       default: false
       }
     }
@@ -178,6 +180,35 @@ enum KeyboardLifecycleTrace {
     ]
   }
 
+  /// A separate export summary for keyboard field clears and lifecycle changes.
+  /// Clearing the input may follow Send; it does not prove Send was pressed.
+  private static func postSubmitReview(for events: [[String: Any]]) -> [String: Any] {
+    let names: Set<String> = [
+      Event.hostTextCleared.rawValue, Event.documentChanged.rawValue,
+      Event.willAppear.rawValue, Event.didAppear.rawValue,
+      Event.willDisappear.rawValue, Event.didDisappear.rawValue,
+      Event.renderCheckpoint.rawValue, Event.renderSuspicious.rawValue
+    ]
+    let recent: [[String: Any]] = events.compactMap { item in
+      guard let event = item["event"] as? String, names.contains(event) else { return nil }
+      return [
+        "timestampMs": item["timestampMs"] ?? 0,
+        "session": item["session"] ?? "",
+        "event": event,
+        "viewHeight": item["viewHeight"] ?? 0,
+        "hostHeight": item["hostHeight"] ?? 0,
+        "hostingInWindow": item["hostingInWindow"] ?? false,
+        "hostHint": item["hostHint"] ?? "unknown",
+        "renderCheckpoint": (item["renderProbe"] as? [String: Any])?["checkpoint"] ?? ""
+      ]
+    }
+    return [
+      "fieldClearCount": events.filter { ($0["event"] as? String) == Event.hostTextCleared.rawValue }.count,
+      "recentTransitions": Array(recent.suffix(80)),
+      "interpretation": "Field clearing is only a possible post-Send signal; correlate with device observations."
+    ]
+  }
+
   static func exportJSON() -> String {
     let events = entries()
     let document: [String: Any] = [
@@ -189,6 +220,7 @@ enum KeyboardLifecycleTrace {
       "privacy": "No keystrokes, host text, touch positions, audio or transcripts",
       "events": events,
       "renderReview": renderReview(for: events),
+      "postSubmitReview": postSubmitReview(for: events),
     ]
     guard let data = try? JSONSerialization.data(withJSONObject: document, options: [.prettyPrinted, .sortedKeys])
     else { return "{\"schemaVersion\":1,\"events\":[]}" }

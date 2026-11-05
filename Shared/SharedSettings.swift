@@ -1,9 +1,6 @@
 import Foundation
 
 struct SharedSettings {
-  // Temporary keyboard-switch experiment. Preserve the saved preference.
-  static let keyboardGlobeTemporarilyDisabled = true
-
   init() {
     self.init(defaults: AppGroup.sharedDefaults ?? .standard)
   }

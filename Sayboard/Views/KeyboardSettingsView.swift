@@ -83,10 +83,7 @@ private struct KeyboardTestPreview: View {
   private var showGlobeKey = false
   @AppStorage(SharedKey.needsInputModeSwitchKey, store: UserDefaults(suiteName: AppGroup.identifier))
   private var needsInputModeSwitchKey = false
-  private var showsGlobeButton: Bool {
-    !SharedSettings.keyboardGlobeTemporarilyDisabled
-      && (self.showGlobeKey || self.needsInputModeSwitchKey)
-  }
+  private var showsGlobeButton: Bool { true }
   @AppStorage(SharedKey.keyboardHapticsEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
   private var keyboardHapticsEnabled = true
   @AppStorage(SharedKey.keyboardHapticStrength, store: UserDefaults(suiteName: AppGroup.identifier))
@@ -194,6 +191,7 @@ private struct KeyboardTestPreview: View {
 
   private var alphabetToolbar: some View {
     HStack(spacing: 6) {
+      if self.showGlobeKey { self.key("globe", width: 42) }
       if self.showSettingsKey { self.key("gearshape", width: 48) }
       if self.outputKeyEnabled { self.translatePreview }
       if self.showAIButton && self.llmEnabled && self.hasUsableLLMModel {
@@ -253,7 +251,7 @@ private struct KeyboardTestPreview: View {
     HStack(spacing: 6) {
       self.labelKey("?123", width: 48)
       if self.showsGlobeButton {
-        self.key("globe", width: 48)
+        self.key("face.smiling", width: 48)
       }
       self.labelKey("", height: 45)
       self.key("return.left", width: 102)
@@ -263,7 +261,7 @@ private struct KeyboardTestPreview: View {
   private var standardBottomRow: some View {
     HStack(spacing: 6) {
       if self.showsGlobeButton {
-        self.key("globe", width: 45)
+        self.key("face.smiling", width: 45)
       }
       self.key("trash", width: 45)
       self.labelKey("", height: 45)

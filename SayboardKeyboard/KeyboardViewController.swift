@@ -66,7 +66,6 @@ final class KeyboardViewController: UIInputViewController {
     self.hasDictationKey = true
     self.keyboardState.bootstrapLayoutSettings()
     self.keyboardState.configureInputModeListButton = { [weak self] button in
-      guard !SharedSettings.keyboardGlobeTemporarilyDisabled else { return }
       guard let self else { return }
       button.addTarget(
         self, action: #selector(handleInputModeList(from:with:)),
@@ -806,7 +805,8 @@ extension KeyboardViewController {
   override func textDidChange(_ textInput: (any UITextInput)?) {
     super.textDidChange(textInput)
     let currentDocument = self.textDocumentProxy.documentIdentifier
-    if self.lastTouchDocumentID != currentDocument {
+    let sameDocument = self.lastTouchDocumentID == currentDocument
+    if !sameDocument {
       KeyboardTouchLearning.shared.invalidate()
       self.lastTouchDocumentID = currentDocument
       // A host can switch fields without another appearance callback.
@@ -815,7 +815,14 @@ extension KeyboardViewController {
       self.recordKeyboardTrace(.documentChanged)
       self.scheduleRenderCheckpoint(checkpoint: "afterDocumentChange")
     }
+    let hadHostText = self.keyboardState.hostInputTraits.hasText
     self.refreshHostInputTraits()
+    if sameDocument && hadHostText && !self.keyboardState.hostInputTraits.hasText {
+      // The host may have cleared its compose field after Send.
+      // Record no text, cursor positions, or document identifiers.
+      self.recordKeyboardTrace(.hostTextCleared)
+      self.scheduleRenderCheckpoint(checkpoint: "afterHostTextCleared")
+    }
     self.keyboardState.textContextRevision &+= 1
     self.syncInputModeSwitchKey()
     self.insertDeferredAppearanceText()
