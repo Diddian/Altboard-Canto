@@ -24,7 +24,7 @@ struct KeyboardSettingsView: View {
 
   @ViewBuilder
   var sections: some View {
-    Section("Keyboard Layout") {
+    Section {
       Picker(selection: self.$selectedKind) {
         ForEach(KeyboardKind.allCases, id: \.self) { kind in
           Text(LocalizedStringKey(kind.displayNameKey)).tag(kind)
@@ -55,6 +55,8 @@ struct KeyboardSettingsView: View {
         }
         .pickerStyle(.menu)
       }
+    } header: {
+      Text("Keyboard Layout")
     } footer: {
       Text("Choose the layout that feels most natural. Chinese and English suggestions remain available independently of key order.")
     }

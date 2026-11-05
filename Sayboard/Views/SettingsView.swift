@@ -125,7 +125,7 @@ struct SettingsView: View {
         }
       }
 
-      Section("App") {
+      Section {
         NavigationLink {
           AppLanguageListView()
         } label: {
@@ -153,6 +153,8 @@ struct SettingsView: View {
         }
         LabeledContent("Version", value:
           Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown")
+      } header: {
+        Text("App")
       } footer: {
         HStack {
           Spacer(minLength: 0)

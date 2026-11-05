@@ -35,7 +35,7 @@ struct KeyboardCustomizationView: View {
         }
       }
 
-      Section("Haptic Feedback") {
+      Section {
         Toggle("Haptic Feedback", isOn: self.$hapticsEnabled)
         if self.hapticsEnabled {
           HStack {
@@ -47,17 +47,21 @@ struct KeyboardCustomizationView: View {
             .font(.caption)
           }
         }
+      } header: {
+        Text("Haptic Feedback")
       } footer: {
         Text("iOS does not expose the exact native keyboard vibration strength. Reset restores Altboard's default.")
       }
 
-      Section("Keyboard Buttons") {
+      Section {
         Toggle("Extra Globe Key", isOn: self.$showGlobe)
         Toggle("Settings Key", isOn: self.$showSettingsKey)
         Toggle("Output & Translation Key", isOn: self.$showOutputButton)
           .disabled(!self.voiceCleanup && self.outputTarget == VoiceOutputTarget.original.rawValue)
         Toggle("Text AI Key", isOn: self.$showAIButton)
           .disabled(!self.aiEnabled)
+      } header: {
+        Text("Keyboard Buttons")
       } footer: {
         Text("The extra Globe key is optional, but iOS can require a system keyboard switch key. Output and AI keys also depend on their features being enabled.")
       }

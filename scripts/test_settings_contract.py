@@ -15,7 +15,7 @@ class SettingsContractTests(unittest.TestCase):
         home = read("Sayboard/Views/SettingsView.swift")
         for heading in ('Section("Start Here")', 'Section("Speech & AI")',
                         'Section("Keyboard")', 'Section("Your Data")',
-                        'Section("App")'):
+                        'Text("App")'):
             self.assertIn(heading, home)
         for path in ("SpeechLanguagesSettingsView(", "DictationSettingsView()",
                      "VoiceOutputSettingsView()", "LLMSettingsView()",
@@ -24,6 +24,28 @@ class SettingsContractTests(unittest.TestCase):
             self.assertIn(path, home)
         self.assertNotIn("DictationSettingsView(inline: true", home)
         self.assertIn("Altboard-Canto · Source on GitHub", home)
+
+    def test_sections_with_footers_use_explicit_headers(self):
+        sections = {
+            "Sayboard/Views/SettingsView.swift": ("App",),
+            "Sayboard/Views/SettingsNavigationViews.swift":
+                ("Microphone & Recording", "Live Speech to Text"),
+            "Sayboard/Views/KeyboardSettingsView.swift": ("Keyboard Layout",),
+            "Sayboard/Views/KeyboardCustomizationView.swift":
+                ("Haptic Feedback", "Keyboard Buttons"),
+            "Sayboard/Views/DataAndStorageSettingsView.swift":
+                ("Personal Vocabulary",),
+            "Sayboard/Views/LearningDataSettingsView.swift":
+                ("Learned Suggestions", "Your Data"),
+        }
+        for path, titles in sections.items():
+            source = read(path)
+            for title in titles:
+                with self.subTest(path=path, section=title):
+                    self.assertNotIn('Section("' + title + '") {', source)
+                    self.assertIn('Text("' + title + '")', source)
+                    self.assertIn('} header: {', source)
+                    self.assertIn('} footer: {', source)
 
     def test_keyboard_options_are_not_a_flat_settings_page(self):
         layout = read("Sayboard/Views/KeyboardSettingsView.swift")

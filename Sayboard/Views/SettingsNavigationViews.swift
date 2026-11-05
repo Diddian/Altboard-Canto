@@ -31,13 +31,17 @@ struct DictationSettingsView: View {
       case .meeting:
         self.meetingRows
       case .all:
-        Section("Microphone & Recording") {
+        Section {
           self.sessionRows
+        } header: {
+          Text("Microphone & Recording")
         } footer: {
           Text("Keep recording active only when you need it. Auto-Stop limits a recording session, not saved meeting length.")
         }
-        Section("Live Speech to Text") {
+        Section {
           self.liveRows
+        } header: {
+          Text("Live Speech to Text")
         } footer: {
           Text("Recognition runs offline. Roughly 1.5-second updates are a target, not a guaranteed speed. Long recordings require a supported model.")
         }
