@@ -41,11 +41,10 @@ jobs:
           sudo xcode-select -s "$XCODE"
           xcodebuild -version
 
-      - name: Install build utilities
+      - name: Install XcodeGen
         run: |
           set -euo pipefail
           if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
-          if ! command -v swiftlint >/dev/null; then brew install swiftlint; fi
 
       - name: Bootstrap llama.cpp framework
         run: |
@@ -150,6 +149,7 @@ jobs:
             Shared/ChineseInputMode.swift scripts/verify-chinese-input.swift
           "$RUNNER_TEMP/chinese-input-smoke"
           python3 -m unittest discover -s scripts -p 'test_settings_contract.py'
+          python3 scripts/check-app-structure.py --check
           python3 -m json.tool docs/ios-keyboard-reference.json >/dev/null
           python3 -m json.tool docs/ios-keyboard-native-vs-altboard-pixel-comparison.json >/dev/null
           python3 -m json.tool docs/swipe-typing-en-de-plan.json >/dev/null
