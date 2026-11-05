@@ -4,7 +4,8 @@ import SwiftUI
 struct LLMModelsSection: View {
 
   var body: some View {
-    let variants = self.filteredAndSortedVariants
+    let recommendation = self.recommendedVariant
+    let variants = self.filteredAndSortedVariants(recommendation: recommendation)
     return Group {
       if let replaced = self.llmDownloadService.replacedByUpgrade {
         self.upgradeNotice(replaced: replaced)
@@ -12,7 +13,7 @@ struct LLMModelsSection: View {
       self.languageFilterButton
       VStack(spacing: 12) {
         ForEach(variants) { variant in
-          self.modelCard(for: variant)
+          self.modelCard(for: variant, recommendation: recommendation)
         }
       }
       .animation(.easeInOut(duration: 0.35), value: variants)
@@ -51,14 +52,17 @@ struct LLMModelsSection: View {
     LLMModelVariant.allCases.filter { !$0.isSuperseded || self.llmDownloadService.isDownloaded($0) }
   }
 
-  private var filteredAndSortedVariants: [LLMModelVariant] {
+  private func filteredAndSortedVariants(recommendation: LLMModelVariant) -> [LLMModelVariant] {
     let variants =
       if let language = self.selectedLanguageFilter {
         self.catalogVariants.filter { $0.supportedLanguages.contains(language) }
       } else {
         self.catalogVariants
       }
-    return variants.sorted { self.sortKey(for: $0).precedes(self.sortKey(for: $1)) }
+    return variants.sorted {
+      self.sortKey(for: $0, recommendation: recommendation)
+        .precedes(self.sortKey(for: $1, recommendation: recommendation))
+    }
   }
 
   private var upgradeNoticeHeader: some View {
@@ -179,24 +183,26 @@ struct LLMModelsSection: View {
     }
   }
 
-  private func sortKey(for variant: LLMModelVariant) -> ModelListSortKey {
+  private func sortKey(for variant: LLMModelVariant,
+                       recommendation: LLMModelVariant) -> ModelListSortKey {
     let isDownloaded = self.llmDownloadService.isDownloaded(variant)
     return ModelListSortKey(
       isActive: isDownloaded && variant == self.effectiveSelectedVariant,
       isDownloaded: isDownloaded,
       isSupported: variant.isSupportedOnCurrentDevice,
-      isRecommended: variant == self.recommendedVariant,
+      isRecommended: variant == recommendation,
       catalogRank: variant.catalogRank,
     )
   }
 
-  private func modelCard(for variant: LLMModelVariant) -> some View {
+  private func modelCard(for variant: LLMModelVariant,
+                         recommendation: LLMModelVariant) -> some View {
     let downloadState = self.llmDownloadService.state(for: variant)
     let isActive = self.effectiveSelectedVariant == variant && self.llmDownloadService.isDownloaded(variant)
 
     return LLMModelCardView(
       variant: variant,
-      recommended: variant == self.recommendedVariant,
+      recommended: variant == recommendation,
       isActive: isActive,
       downloadState: downloadState,
       onSelect: {
