@@ -75,7 +75,7 @@ struct HistoryStorageSettingsView: View {
 
   var body: some View {
     Form {
-      Section("History") {
+      Section("Voice Notes") {
         NavigationLink {
           RetentionPolicyListView(selected: self.$selectedRetentionPolicy)
         } label: {
@@ -89,16 +89,19 @@ struct HistoryStorageSettingsView: View {
         Button(role: .destructive) {
           self.showClearHistoryConfirmation = true
         } label: {
-          Label("Clear All History", systemImage: "trash")
+          Label("Delete Voice Notes", systemImage: "trash")
         }
         .confirmationDialog(
-          "Clear All History",
+          "Delete Voice Notes",
           isPresented: self.$showClearHistoryConfirmation,
           titleVisibility: .visible
         ) {
-          Button("Delete All Recordings", role: .destructive) {
-            HistoryStore.shared.deleteAllRecords()
-            self.historyClearedTrigger.toggle()
+          Button("Delete All Voice Notes", role: .destructive) {
+            if HistoryStore.shared.deleteAllRecords() {
+              self.historyClearedTrigger.toggle()
+            } else {
+              self.showHistoryDeletionError = true
+            }
             self.refreshHistoryInfo()
           }
         } message: {
@@ -144,8 +147,13 @@ struct HistoryStorageSettingsView: View {
           .foregroundStyle(.secondary)
       }
     }
-    .navigationTitle("History & Storage")
+    .navigationTitle("Voice Notes & Storage")
     .navigationBarTitleDisplayMode(.inline)
+    .alert("Unable to remove all recordings", isPresented: self.$showHistoryDeletionError) {
+      Button("OK", role: .cancel) {}
+    } message: {
+      Text("History cleanup was incomplete. Some records or audio files may remain. Do not assume all data was deleted.")
+    }
     .sensoryFeedback(.success, trigger: self.historyClearedTrigger)
     .sensoryFeedback(.success, trigger: self.cacheClearedTrigger)
     .onAppear {
@@ -162,6 +170,7 @@ struct HistoryStorageSettingsView: View {
   @Environment(\.locale) private var locale
   @State private var selectedRetentionPolicy: HistoryRetentionPolicy
   @State private var showClearHistoryConfirmation = false
+  @State private var showHistoryDeletionError = false
   @State private var showClearCacheConfirmation = false
   @State private var historyInfoText = ""
   @State private var historyClearedTrigger = false
@@ -169,7 +178,7 @@ struct HistoryStorageSettingsView: View {
   @State private var cacheSizeBytes: Int64 = 0
 
   private let clearHistoryMessage: LocalizedStringKey =
-    "All History recordings, their transcription text and audio files on this device will be permanently deleted."
+    "Delete voice-note audio and transcripts on this device. Meetings, learned suggestions and downloaded models are not affected."
   private let clearCacheMessage: LocalizedStringKey =
     "Compiled model files will be removed. They will be rebuilt on next use."
 

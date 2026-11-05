@@ -20,10 +20,15 @@ struct MeetingRecord: Codable, Identifiable {
   // Optional metadata preserves decoding of recordings made before naming.
   var title: String?
   var notes: String?
+  var sequenceNumber: Int? = nil
+
+  var totalDuration: TimeInterval {
+    self.parts.reduce(0) { $0 + $1.duration }
+  }
 
   var displayTitle: String {
     let value = (self.title ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-    return value.isEmpty ? self.startedAt.formatted(date: .abbreviated, time: .shortened) : value
+    return value.isEmpty ? "New Meeting \(self.sequenceNumber ?? 1)" : value
   }
 }
 
@@ -33,6 +38,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
   static let shared = MeetingRecordingCoordinator()
   static let partDuration: TimeInterval = 15 * 60
   static let updateSeconds = 8
+  private static let meetingSequenceKey = "canto.meeting.lastSequenceNumber.v1"
 
   @Published private(set) var isRecording = false
   @Published private(set) var isFinalizing = false
@@ -77,12 +83,19 @@ final class MeetingRecordingCoordinator: ObservableObject {
     self.speechService = service
     self.currentFormat = format
     self.currentAudioDirectory = audioDirectory
+    let defaults = SharedSettings().defaults
+    let nextNumber = max(
+      defaults.integer(forKey: Self.meetingSequenceKey),
+      self.records.compactMap(\.sequenceNumber).max() ?? self.records.count
+    ) + 1
     self.current = MeetingRecord(
       id: id, startedAt: Date(), endedAt: nil, parts: [],
       transcript: "", state: "recording",
       title: Self.normalized(title, limit: 120),
-      notes: Self.normalized(notes, limit: 4000)
+      notes: Self.normalized(notes, limit: 4000),
+      sequenceNumber: nextNumber
     )
+    defaults.set(nextNumber, forKey: Self.meetingSequenceKey)
     self.lastPartStartedAt = Date()
     self.accumulator.reset()
     service.session.activateTap(accumulator: self.accumulator, recorder: self.audioRecorder)
@@ -253,10 +266,15 @@ final class MeetingRecordingCoordinator: ObservableObject {
     guard let root = Self.meetingsDirectory(),
           let folders = try? FileManager.default.contentsOfDirectory(at: root,
                                               includingPropertiesForKeys: nil) else { return }
-    self.records = folders.compactMap { folder -> MeetingRecord? in
+    let loaded = folders.compactMap { folder -> MeetingRecord? in
       guard let data = try? Data(contentsOf: folder.appendingPathComponent("manifest.json"))
       else { return nil }
       return try? JSONDecoder().decode(MeetingRecord.self, from: data)
+    }.sorted { $0.startedAt < $1.startedAt }
+    self.records = loaded.enumerated().map { index, record in
+      var normalized = record
+      if normalized.sequenceNumber == nil { normalized.sequenceNumber = index + 1 }
+      return normalized
     }.sorted { $0.startedAt > $1.startedAt }
   }
 

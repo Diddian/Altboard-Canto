@@ -1,108 +1,19 @@
 import SwiftUI
 import UIKit
 
+/// Put the decisions users make first. Advanced controls stay in one clearly
+/// named destination instead of a flat page of unrelated toggles.
 struct SettingsView: View {
-  var body: some View {
-    Form {
-      if !self.setupChecklist.isComplete || self.showsLowStorageWarning {
-        self.setupSection
-      }
-
-      #if APPSTORE
-      PurchaseSection()
-      #endif
-
-      Section {
-        SpeechLanguagesSettingsView(
-          inline: true, rowsOnly: true,
-          onPreferredLanguagesChanged: { self.preferredSpokenLanguages = $0 }
-        )
-        DictationSettingsView(inline: true, rows: .session)
-        NavigationLink {
-          VoiceOutputSettingsView()
-        } label: {
-          Label("Voice Output & Translation", systemImage: "waveform")
-        }
-        DictationSettingsView(inline: true, rows: .meeting)
-        NavigationLink {
-          ModelsView()
-        } label: {
-          Label("Offline Speech Model", systemImage: "cpu")
-        }
-        NavigationLink {
-          TextAISettingsView()
-        } label: {
-          Label("Text & AI", systemImage: "textformat")
-        }
-      } header: {
-        HStack(spacing: 6) {
-          Text("Speech & Dictation")
-          Spacer(minLength: 4)
-          HStack(spacing: 3) {
-            Text("When active,")
-            Image(systemName: "mic.fill").foregroundStyle(.orange)
-            Text("will appear")
-          }
-          .font(.system(size: 10))
-          .lineLimit(1)
-          .fixedSize(horizontal: true, vertical: false)
-          .textCase(nil)
-          .accessibilityElement(children: .ignore)
-          .accessibilityLabel("When active, the orange microphone indicator will appear")
-        }
-      }
-      KeyboardSettingsView(
-        selectedKind: self.keyboardKindBinding,
-        inline: true,
-        cantoneseSelected: self.preferredSpokenLanguages.contains("yue")
-      )
-
-      Section {
-        NavigationLink {
-          HistoryStorageSettingsView()
-        } label: {
-          Label("History & Storage", systemImage: "clock.arrow.circlepath")
-        }
-      }
-
-      Section {
-        NavigationLink {
-          HelpSettingsView()
-        } label: {
-          Label("Help", systemImage: "questionmark.circle")
-        }
-        NavigationLink {
-          GeneralSettingsView()
-        } label: {
-          Label("General", systemImage: "gearshape")
-        }
-        NavigationLink {
-          AboutSettingsView()
-        } label: {
-          Label("About", systemImage: "info.circle")
-        }
-      }
-    }
-    .navigationTitle("Settings")
-    .navigationDestination(for: Route.self) { _ in
-      SetupView()
-    }
-    .onAppear {
-      self.preferredSpokenLanguages = SharedSettings().preferredSpokenLanguages
-      self.showsLowStorageWarning = DiskSpace.isLow()
-        && !OperatingSystem.isBackgroundNeuralEngineBlocked
-    }
-  }
-
-  private enum Route: Hashable { case setup }
-
   @EnvironmentObject private var permissionService: PermissionService
   @AppStorage(SharedKey.hasUsableModel, store: UserDefaults(suiteName: AppGroup.identifier))
   private var hasUsableModel = false
   @AppStorage(SharedKey.keyboardKind, store: UserDefaults(suiteName: AppGroup.identifier))
   private var keyboardKindRaw = KeyboardKind.standard.rawValue
-  @State private var showsLowStorageWarning = false
+  @AppStorage(SharedKey.appLanguage) private var appLanguage = AppLanguageConfig.fallback
   @State private var preferredSpokenLanguages = SharedSettings().preferredSpokenLanguages
+  @State private var showsLowStorageWarning = false
+
+  private enum Route: Hashable { case setup }
 
   private var selectedKeyboardKind: KeyboardKind {
     KeyboardKind(rawValue: self.keyboardKindRaw) ?? .standard
@@ -119,34 +30,145 @@ struct SettingsView: View {
     SetupChecklist(permissions: self.permissionService, hasUsableModel: self.hasUsableModel)
   }
 
-  private var setupSection: some View {
-    Section {
-      if !self.setupChecklist.isComplete {
-        NavigationLink(value: Route.setup) {
-          HStack {
-            Label("Finish Setup", systemImage: "checklist")
-            Spacer()
-            Text(verbatim: "\(self.setupChecklist.remainingCount)")
-              .foregroundStyle(.secondary)
-              .accessibilityLabel(Text("\(self.setupChecklist.remainingCount) setup items remaining"))
+  var body: some View {
+    Form {
+      if !self.setupChecklist.isComplete || self.showsLowStorageWarning {
+        Section("Action Required") {
+          if !self.setupChecklist.isComplete {
+            NavigationLink(value: Route.setup) {
+              LabeledContent {
+                Text("\(self.setupChecklist.remainingCount) steps")
+                  .foregroundStyle(.orange)
+              } label: {
+                Label("Complete Setup", systemImage: "checkmark.shield")
+              }
+            }
+          }
+          if self.showsLowStorageWarning {
+            Label("Free storage before loading an offline model",
+                  systemImage: "externaldrive.badge.exclamationmark")
+              .foregroundStyle(.orange)
           }
         }
       }
-      if self.showsLowStorageWarning {
-        Label {
-          VStack(alignment: .leading, spacing: 2) {
-            Text("Storage Is Getting Low")
-            Text("Free some iPhone storage to avoid rebuilding the offline speech model.")
-              .font(.caption)
-              .foregroundStyle(.secondary)
+
+      #if APPSTORE
+      PurchaseSection()
+      #endif
+
+      Section("Start Here") {
+        SpeechLanguagesSettingsView(
+          inline: true, rowsOnly: true,
+          onPreferredLanguagesChanged: { self.preferredSpokenLanguages = $0 }
+        )
+        NavigationLink {
+          SetupView()
+        } label: {
+          LabeledContent {
+            Text(self.setupChecklist.isComplete ? "Ready" : "Check")
+              .foregroundStyle(self.setupChecklist.isComplete ? Color.secondary : Color.orange)
+          } label: {
+            Label("Is My Microphone Ready?", systemImage: "mic.circle")
           }
-        } icon: {
-          Image(systemName: "exclamationmark.triangle.fill")
-            .foregroundStyle(.orange)
+        }
+        NavigationLink {
+          ModelsView()
+        } label: {
+          Label("Offline Speech Model", systemImage: "cpu")
         }
       }
-    } header: {
-      Text("Action Required")
+
+      Section("Speech & AI") {
+        NavigationLink {
+          DictationSettingsView()
+        } label: {
+          Label("Speech to Text", systemImage: "waveform")
+        }
+        NavigationLink {
+          VoiceOutputSettingsView()
+        } label: {
+          Label("Speech Cleanup & Translation", systemImage: "character.bubble")
+        }
+        NavigationLink {
+          LLMSettingsView()
+        } label: {
+          Label("Text Cleanup & AI Actions", systemImage: "sparkles")
+        }
+      }
+
+      Section("Keyboard") {
+        NavigationLink {
+          KeyboardSettingsView(
+            selectedKind: self.keyboardKindBinding,
+            cantoneseSelected: self.preferredSpokenLanguages.contains("yue")
+          )
+        } label: {
+          LabeledContent {
+            Text(LocalizedStringKey(self.selectedKeyboardKind.displayNameKey))
+              .foregroundStyle(.secondary)
+          } label: {
+            Label("Keyboard Layout & Preview", systemImage: "keyboard")
+          }
+        }
+        NavigationLink {
+          KeyboardCustomizationView()
+        } label: {
+          Label("Customize Keys & Feedback", systemImage: "slider.horizontal.3")
+        }
+      }
+
+      Section("Your Data") {
+        NavigationLink {
+          DataAndStorageSettingsView()
+        } label: {
+          Label("History & Storage", systemImage: "externaldrive")
+        }
+      }
+
+      Section("App") {
+        NavigationLink {
+          AppLanguageListView()
+        } label: {
+          LabeledContent {
+            Text(verbatim: nativeLanguageNames[self.appLanguage] ?? self.appLanguage)
+              .foregroundStyle(.secondary)
+          } label: {
+            Label("App Language", systemImage: "globe")
+          }
+        }
+        NavigationLink {
+          SetupView()
+        } label: {
+          Label("Setup & Permissions", systemImage: "checkmark.shield")
+        }
+        NavigationLink {
+          DiagnosticsView()
+        } label: {
+          Label("Diagnostics", systemImage: "stethoscope")
+        }
+        NavigationLink {
+          HelpSettingsView()
+        } label: {
+          Label("Help", systemImage: "questionmark.circle")
+        }
+        LabeledContent("Version", value:
+          Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown")
+      } footer: {
+        HStack {
+          Spacer(minLength: 0)
+          Link("Altboard-Canto · Source on GitHub",
+               destination: URL(string: "https://github.com/Diddian/Altboard-Canto")!)
+            .font(.footnote)
+          Spacer(minLength: 0)
+        }
+      }
+    }
+    .navigationTitle("Settings")
+    .navigationDestination(for: Route.self) { _ in SetupView() }
+    .onAppear {
+      self.preferredSpokenLanguages = SharedSettings().preferredSpokenLanguages
+      self.showsLowStorageWarning = DiskSpace.isLow()
+        && !OperatingSystem.isBackgroundNeuralEngineBlocked
     }
   }
 }

@@ -81,6 +81,9 @@ struct RepeatDeleteButton: View {
       .onDisappear {
         self.deletionTask?.cancel()
         self.deletionTask = nil
+        self.didRepeat = false
+        self.pressed = false
+        KeyboardTouchLearning.shared.invalidate()
       }
       .accessibilityLabel("Delete; hold to delete characters, then words")
   }

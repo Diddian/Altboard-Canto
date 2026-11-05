@@ -15,6 +15,8 @@ struct MainTabView: View {
       }
     }
     .task {
+      // Migrate SceneStorage saved while the second tab was called Models.
+      if self.selectedTab == "models" { self.selectedTab = TabID.meetings.rawValue }
       self.activeBanner = Self.initialBanner()
     }
     .onChange(of: self.isBehindOnboarding) { _, isBehind in
@@ -40,7 +42,7 @@ struct MainTabView: View {
 
   private enum TabID: String {
     case history
-    case models
+    case meetings
     case settings
   }
 
@@ -119,7 +121,7 @@ struct MainTabView: View {
     }
     .onReceive(NotificationCenter.default.publisher(for: .dictationFailedNoModel)) { _ in
       guard !self.isBehindOnboarding else { return }
-      self.selectedTab = TabID.models.rawValue
+      self.selectedTab = TabID.settings.rawValue
       self.activeBanner = .noModel
     }
     .onReceive(NotificationCenter.default.publisher(for: .dictationFailedNoMic)) { _ in
@@ -145,10 +147,9 @@ struct MainTabView: View {
         }
       }
 
-      Tab("Models", image: "tab-models", value: TabID.models.rawValue) {
+      Tab("Meetings", systemImage: "person.3", value: TabID.meetings.rawValue) {
         NavigationStack {
-          ModelsView()
-            .equatable()
+          MeetingRecordsView()
         }
       }
 
@@ -172,13 +173,12 @@ struct MainTabView: View {
       .tag(TabID.history.rawValue)
 
       NavigationStack {
-        ModelsView()
-          .equatable()
+        MeetingRecordsView()
       }
       .tabItem {
-        Label("Models", image: "tab-models")
+        Label("Meetings", systemImage: "person.3")
       }
-      .tag(TabID.models.rawValue)
+      .tag(TabID.meetings.rawValue)
 
       NavigationStack {
         SettingsView()
@@ -249,7 +249,7 @@ struct MainTabView: View {
       [
         SetupBannerAction(title: "Open Models", style: .primary) {
           self.activeBanner = nil
-          self.selectedTab = TabID.models.rawValue
+          self.selectedTab = TabID.settings.rawValue
         }
       ]
 
@@ -317,7 +317,7 @@ struct MainTabView: View {
       self.selectedTab = TabID.settings.rawValue
 
     case DeepLink.modelsHost:
-      self.selectedTab = TabID.models.rawValue
+      self.selectedTab = TabID.settings.rawValue
       self.activeBanner = .noModel
 
     case DeepLink.setupMicHost:

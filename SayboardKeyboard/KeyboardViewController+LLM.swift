@@ -78,6 +78,8 @@ extension KeyboardViewController {
 
     let inputText: String
     self.llmSelectedText = nil
+    self.llmDirectSelectedText = nil
+    self.llmRequestID = nil
     self.llmDocumentIdentifier = nil
     self.llmSelectionContextBefore = nil
     self.llmSelectionContextAfter = nil
@@ -88,6 +90,13 @@ extension KeyboardViewController {
       inputText = directText
       self.llmOriginalText = ""
       self.pendingAutoActionText = clipboardOnly ? nil : directText
+      if !clipboardOnly {
+        let proxy = self.textDocumentProxy
+        self.llmDocumentIdentifier = proxy.documentIdentifier
+        self.llmSelectionContextBefore = proxy.documentContextBeforeInput
+        self.llmSelectionContextAfter = proxy.documentContextAfterInput
+        self.llmDirectSelectedText = proxy.selectedText
+      }
     } else {
       // The proxy can expose selected text, not arbitrary host-field contents.
       guard let selected = self.textDocumentProxy.selectedText,
@@ -129,8 +138,17 @@ extension KeyboardViewController {
       customPromptId: customPromptId,
       language: language,
     )
-    LLMBridge.writeRequest(request)
-
+    self.llmRequestID = request.requestID
+    // Prevent an earlier response from being reused by the next action.
+    LLMBridge.clearResult()
+    LLMBridge.clearRequest()
+    guard LLMBridge.writeRequest(request) else {
+      self.keyboardState.llmError = .storageUnavailable
+      self.insertPendingAutoActionFallback()
+      self.keyboardState.clearLLMHistory()
+      self.finishLLMInsertion()
+      return
+    }
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.requestLLMProcessing)
     DiagnosticLog.write("llm/kb: requested \(action.rawValue), text=\(inputText.count) chars")
   }
@@ -154,7 +172,14 @@ extension KeyboardViewController {
   }
 
   func checkForPendingLLMResult() {
-    guard let result = LLMBridge.readResult(), !result.isEmpty else { return }
+    guard LLMBridge.hasResult() else { return }
+    guard let result = LLMBridge.readResult(matching: self.llmRequestID),
+          !result.isEmpty else {
+      // A response owned by a previous keyboard/request must never enter
+      // the currently focused document.
+      LLMBridge.clearResult()
+      return
+    }
     self.insertLLMResult()
   }
 
@@ -165,15 +190,35 @@ extension KeyboardViewController {
     return dominant.rawValue
   }
 
+  private func currentLLMFieldMatches() -> Bool {
+    guard let document = self.llmDocumentIdentifier else { return false }
+    let proxy = self.textDocumentProxy
+    return proxy.documentIdentifier == document
+      && proxy.documentContextBeforeInput == self.llmSelectionContextBefore
+      && proxy.documentContextAfterInput == self.llmSelectionContextAfter
+      && proxy.selectedText == self.llmDirectSelectedText
+  }
+
   private func insertPendingAutoActionFallback() {
     guard let fallbackText = self.pendingAutoActionText else { return }
-    self.keyboardState.llmHistorySuffix = self.insertSpacedText(fallbackText).trailing
-    self.copyFinalTextToClipboardIfEnabled(fallbackText)
+    if self.currentLLMFieldMatches() {
+      self.keyboardState.llmHistorySuffix = self.insertSpacedText(fallbackText).trailing
+      self.copyFinalTextToClipboardIfEnabled(fallbackText)
+    } else {
+      UIPasteboard.general.string = fallbackText
+      self.keyboardState.showFinalOutputPreview("Input changed. Dictation copied.")
+    }
     self.pendingAutoActionText = nil
   }
 
   private func insertLLMResult() {
-    guard let result = LLMBridge.readResult(), !result.isEmpty else {
+    guard let result = LLMBridge.readResult(matching: self.llmRequestID),
+          !result.isEmpty else {
+      if LLMBridge.hasResult() {
+        // A stale response must not end an unrelated, still-active action.
+        LLMBridge.clearResult()
+        return
+      }
       DiagnosticLog.write("llm/kb: notified complete but bridge held no result")
       self.insertPendingAutoActionFallback()
       self.keyboardState.isLLMProcessing = false
@@ -202,6 +247,14 @@ extension KeyboardViewController {
         UIPasteboard.general.string = result
         self.keyboardState.showFinalOutputPreview("Selection changed. Rewrite copied.")
       }
+      self.keyboardState.clearLLMHistory()
+      self.finishLLMInsertion()
+      return
+    }
+
+    guard self.currentLLMFieldMatches() else {
+      UIPasteboard.general.string = result
+      self.keyboardState.showFinalOutputPreview("Input changed. Rewrite copied.")
       self.keyboardState.clearLLMHistory()
       self.finishLLMInsertion()
       return
@@ -247,6 +300,8 @@ extension KeyboardViewController {
     self.pendingAutoActionText = nil
     self.llmOriginalText = ""
     self.llmSelectedText = nil
+    self.llmDirectSelectedText = nil
+    self.llmRequestID = nil
     self.llmDocumentIdentifier = nil
     self.llmSelectionContextBefore = nil
     self.llmSelectionContextAfter = nil

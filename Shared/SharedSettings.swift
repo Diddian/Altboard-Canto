@@ -229,6 +229,13 @@ struct SharedSettings {
     nonmutating set { defaults.set(newValue, forKey: SharedKey.hasPreparedModelOnce) }
   }
 
+  /// Extra in-keyboard Globe is opt-in. The mandatory iOS switch key
+  /// remains available whenever UIInputViewController requires it.
+  var keyboardShowGlobeKey: Bool {
+    get { defaults.bool(forKey: SharedKey.keyboardShowGlobeKey) }
+    nonmutating set { defaults.set(newValue, forKey: SharedKey.keyboardShowGlobeKey) }
+  }
+
   var keyboardShowSettingsKey: Bool {
     get { defaults.object(forKey: SharedKey.keyboardShowSettingsKey) as? Bool ?? true }
     nonmutating set { defaults.set(newValue, forKey: SharedKey.keyboardShowSettingsKey) }
@@ -289,7 +296,8 @@ struct SharedSettings {
       // With a selected Qwen recognizer, live dictation is the default.
       // An explicit user preference, including OFF, always takes precedence.
       defaults.object(forKey: SharedKey.experimentalLiveDictationEnabled) as? Bool
-        ?? (self.selectedVariant.engine == .qwen3)
+        ?? (self.selectedVariant.engine == .qwen3
+          && ProcessInfo.processInfo.physicalMemory >= 8 * 1_073_741_824)
     }
     nonmutating set { defaults.set(newValue, forKey: SharedKey.experimentalLiveDictationEnabled) }
   }

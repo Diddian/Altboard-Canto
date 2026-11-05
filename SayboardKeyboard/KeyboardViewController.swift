@@ -15,12 +15,15 @@ final class KeyboardViewController: UIInputViewController {
   var isPerformingHistoryNavigation = false
   var pendingAutoActionText: String?
   var llmSelectedText: String?
+  var llmDirectSelectedText: String?
+  var llmRequestID: UUID?
   var llmDocumentIdentifier: UUID?
   var llmSelectionContextBefore: String?
   var llmSelectionContextAfter: String?
   var llmClipboardOnly = false
   var pendingManualLLMAction: (action: LLMAction, customPromptId: UUID?)?
   var previousSpaceTap: PeriodShortcut.Tap?
+  var lastTouchDocumentID: UUID?
   var cursorPreferredColumn: Int?
   var cursorPreferredDocumentID: UUID?
   var liveTranscriptionDocumentID: UUID?
@@ -97,6 +100,12 @@ final class KeyboardViewController: UIInputViewController {
     // SwiftUI. Creating the view before refresh could select a stale layout
     // and an incorrect initial host height.
     self.keyboardState.refresh()
+    self.rootNeedsMeasuredRemount = true
+    self.view.setNeedsLayout()
+    if self.lastTouchDocumentID != self.textDocumentProxy.documentIdentifier {
+      KeyboardTouchLearning.shared.invalidate()
+    }
+    self.lastTouchDocumentID = self.textDocumentProxy.documentIdentifier
     self.refreshHostInputTraits()
     self.syncFullAccessIfChanged()
     if self.hostingController == nil {
@@ -123,6 +132,7 @@ final class KeyboardViewController: UIInputViewController {
 
   override func viewWillDisappear(_ animated: Bool) {
     super.viewWillDisappear(animated)
+    KeyboardTouchLearning.shared.invalidate()
     if self.liveTranscriptionDocumentID != nil {
       let token = SharedSettings().dictationSessionToken
       self.liveTranscriptionBlockedToken = token
@@ -196,6 +206,7 @@ final class KeyboardViewController: UIInputViewController {
 
   private var hostingController: UIHostingController<KeyboardView>?
   private var lastHostingLayoutSize: CGSize = .zero
+  private var rootNeedsMeasuredRemount = true
   private var staleFallbackTimer: Timer?
   private var lastSyncedFullAccess = false
   private var hasPerformedInitialFullAccessSync = false
@@ -365,9 +376,16 @@ final class KeyboardViewController: UIInputViewController {
   }
 
   private func deleteAllText() {
-    while textDocumentProxy.hasText {
-      textDocumentProxy.deleteBackward()
+    let proxy = self.textDocumentProxy
+    // hasText may remain true when there is text after the cursor.
+    // Only delete verified preceding text; stop when the host makes no
+    // observable progress and bound the number of deletion attempts.
+    for _ in 0..<4_096 {
+      guard let before = proxy.documentContextBeforeInput, !before.isEmpty else { break }
+      proxy.deleteBackward()
+      guard proxy.documentContextBeforeInput != before else { break }
     }
+    KeyboardTouchLearning.shared.invalidate()
     if !self.isPerformingHistoryNavigation {
       self.keyboardState.clearLLMHistory()
     }
@@ -518,6 +536,7 @@ extension KeyboardViewController {
 
   func setupKeyboardView() {
     self.lastHostingLayoutSize = .zero
+    self.rootNeedsMeasuredRemount = true
     let proxy = self.makeKeyboardProxy()
     let keyboardView = KeyboardView(proxy: proxy, keyboardState: self.keyboardState)
     let hosting = UIHostingController(rootView: keyboardView)
@@ -683,6 +702,15 @@ extension KeyboardViewController {
 
   override func textDidChange(_ textInput: (any UITextInput)?) {
     super.textDidChange(textInput)
+    let currentDocument = self.textDocumentProxy.documentIdentifier
+    if self.lastTouchDocumentID != currentDocument {
+      KeyboardTouchLearning.shared.invalidate()
+      self.lastTouchDocumentID = currentDocument
+      // The host may switch input fields without calling viewWillAppear.
+      // Force all three letter rows to remount on the new input document.
+      self.keyboardState.keyboardAppearanceRevision &+= 1
+      self.view.setNeedsLayout()
+    }
     self.refreshHostInputTraits()
     self.keyboardState.textContextRevision &+= 1
     self.syncInputModeSwitchKey()
@@ -696,13 +724,23 @@ extension KeyboardViewController {
 
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
-    guard let hosting = self.hostingController?.view,
-          hosting.bounds.width > 0, hosting.bounds.height > 0,
-          hosting.bounds.size != self.lastHostingLayoutSize else { return }
-    self.lastHostingLayoutSize = hosting.bounds.size
-    // The extension can first appear with zero-width geometry. Invalidate
-    // its hosted SwiftUI layout once UIKit supplies nonzero bounds.
-    hosting.setNeedsLayout()
+    guard let controller = self.hostingController else { return }
+    let hostedView = controller.view!
+    guard hostedView.bounds.width > 1, hostedView.bounds.height > 1 else { return }
+    let changedSize = hostedView.bounds.size != self.lastHostingLayoutSize
+    guard changedSize || self.rootNeedsMeasuredRemount else { return }
+    self.lastHostingLayoutSize = hostedView.bounds.size
+    if self.rootNeedsMeasuredRemount {
+      // SwiftUI may mount the keyboard while the extension reports zero
+      // geometry. A UIKit layout pass alone does not reconstruct those
+      // zero-width letter rows; remount the root once measured bounds exist.
+      // Mark finished first to prevent a recursive UIKit layout loop.
+      self.rootNeedsMeasuredRemount = false
+      controller.rootView = KeyboardView(
+        proxy: self.makeKeyboardProxy(), keyboardState: self.keyboardState
+      )
+    }
+    hostedView.setNeedsLayout()
   }
 
   private func refreshHostInputTraits() {

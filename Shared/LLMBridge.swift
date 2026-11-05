@@ -2,20 +2,30 @@
 import Foundation
 
 struct LLMRequest: Codable, Sendable {
+  var requestID = UUID()
   let text: String
   let action: LLMAction
   let customPromptId: UUID?
   let language: String?
 }
 
+struct LLMResult: Codable, Sendable {
+  let requestID: UUID
+  let text: String
+}
+
 struct LLMBridge: Sendable {
 
-  static func writeRequest(_ request: LLMRequest) {
-    guard let url = requestFileURL else { return }
+  @discardableResult
+  static func writeRequest(_ request: LLMRequest) -> Bool {
+    guard let url = requestFileURL else { return false }
     do {
       let data = try JSONEncoder().encode(request)
       try data.write(to: url, options: [.atomic, .completeFileProtectionUnlessOpen])
-    } catch { }
+      return true
+    } catch {
+      return false
+    }
   }
 
   static func readRequest() -> LLMRequest? {
@@ -26,16 +36,31 @@ struct LLMBridge: Sendable {
     return try? JSONDecoder().decode(LLMRequest.self, from: data)
   }
 
-  static func writeResult(_ text: String) {
-    guard let url = resultFileURL else { return }
+  @discardableResult
+  static func writeResult(_ text: String, requestID: UUID) -> Bool {
+    guard let url = resultFileURL else { return false }
     do {
-      try Data(text.utf8).write(to: url, options: [.atomic, .completeFileProtectionUnlessOpen])
-    } catch { }
+      let payload = LLMResult(requestID: requestID, text: text)
+      try JSONEncoder().encode(payload).write(
+        to: url, options: [.atomic, .completeFileProtectionUnlessOpen]
+      )
+      return true
+    } catch {
+      return false
+    }
   }
 
-  static func readResult() -> String? {
-    guard let url = resultFileURL else { return nil }
-    return try? String(contentsOf: url, encoding: .utf8)
+  static func readResult(matching requestID: UUID?) -> String? {
+    guard let requestID, let url = resultFileURL,
+          let data = try? Data(contentsOf: url),
+          let payload = try? JSONDecoder().decode(LLMResult.self, from: data),
+          payload.requestID == requestID else { return nil }
+    return payload.text
+  }
+
+  static func hasResult() -> Bool {
+    guard let url = resultFileURL else { return false }
+    return FileManager.default.fileExists(atPath: url.path)
   }
 
   static func clearRequest() {

@@ -18,7 +18,12 @@ struct HistoryStore: Sendable {
   }
 
   func audioFileURL(for fileName: String) -> URL? {
-    self.audioDirectoryURL?.appendingPathComponent(fileName)
+    // Stored history can be imported or corrupted. Never resolve an audio
+    // filename outside this app's private recordings directory.
+    guard !fileName.isEmpty, fileName != ".", fileName != "..",
+          !fileName.contains("/"), !fileName.contains("\\"),
+          !fileName.contains("\0") else { return nil }
+    return self.audioDirectoryURL?.appendingPathComponent(fileName, isDirectory: false)
   }
 
   func audioStorageSize() -> Int64 {
@@ -62,9 +67,14 @@ struct HistoryStore: Sendable {
       self.deleteAudioFile(named: record.audioFileName)
       return
     }
-    guard var records = try? self.readRecords() else { return }
+    guard var records = try? self.readRecords() else {
+      self.deleteAudioFile(named: record.audioFileName)
+      return
+    }
     records.insert(record, at: 0)
-    self.writeRecords(records)
+    if !self.writeRecords(records) {
+      self.deleteAudioFile(named: record.audioFileName)
+    }
   }
 
   @discardableResult
@@ -79,7 +89,7 @@ struct HistoryStore: Sendable {
     records[index] = original.withCorrection(
       text == original.transcription ? nil : text
     )
-    self.writeRecords(records)
+    guard self.writeRecords(records) else { return false }
     guard (try? self.readRecords().first(where: { $0.id == id })?
       .displayedTranscription) == text else { return false }
 
@@ -125,17 +135,22 @@ struct HistoryStore: Sendable {
     guard var records = try? self.readRecords() else { return }
     guard let index = records.firstIndex(where: { $0.id == id }) else { return }
     let record = records[index]
-    self.deleteAudioFile(named: record.audioFileName)
     records.remove(at: index)
-    self.writeRecords(records)
+    guard self.writeRecords(records) else { return }
+    self.deleteAudioFile(named: record.audioFileName)
   }
 
-  func deleteAllRecords() {
-    let records = self.loadRecords()
+  @discardableResult
+  func deleteAllRecords() -> Bool {
+    guard let records = try? self.readRecords(),
+          self.writeRecords([]) else { return false }
+    var removedAll = true
     for record in records {
-      self.deleteAudioFile(named: record.audioFileName)
+      if !self.deleteAudioFile(named: record.audioFileName) {
+        removedAll = false
+      }
     }
-    self.writeRecords([])
+    return removedAll
   }
 
   func retainedRecords(
@@ -166,10 +181,10 @@ struct HistoryStore: Sendable {
     guard let records = try? self.readRecords() else { return }
     let retained = self.retainedRecords(for: SharedSettings().retentionPolicy, in: records)
     let retainedIDs = Set(retained.map(\.id))
+    guard self.writeRecords(retained) else { return }
     for record in records where !retainedIDs.contains(record.id) {
       self.deleteAudioFile(named: record.audioFileName)
     }
-    self.writeRecords(retained)
   }
 
   private let historyFileName = "history.json"
@@ -189,15 +204,30 @@ struct HistoryStore: Sendable {
     AppGroup.containerURL?.appendingPathComponent(self.historyFileName)
   }
 
-  private func writeRecords(_ records: [HistoryRecord]) {
-    guard let url = historyFileURL else { return }
-    guard let data = try? JSONEncoder.historyEncoder.encode(records) else { return }
-    try? data.write(to: url, options: [.atomic, .completeFileProtection])
+  @discardableResult
+  private func writeRecords(_ records: [HistoryRecord]) -> Bool {
+    guard let url = historyFileURL,
+          let data = try? JSONEncoder.historyEncoder.encode(records) else {
+      return false
+    }
+    do {
+      try data.write(to: url, options: [.atomic, .completeFileProtection])
+      return true
+    } catch {
+      return false
+    }
   }
 
-  private func deleteAudioFile(named fileName: String) {
-    guard let url = audioFileURL(for: fileName) else { return }
-    try? FileManager.default.removeItem(at: url)
+  @discardableResult
+  private func deleteAudioFile(named fileName: String) -> Bool {
+    guard let url = audioFileURL(for: fileName) else { return false }
+    guard FileManager.default.fileExists(atPath: url.path) else { return true }
+    do {
+      try FileManager.default.removeItem(at: url)
+      return true
+    } catch {
+      return false
+    }
   }
 
   private func records(in records: [HistoryRecord], newerThan hours: Int, from now: Date) -> [HistoryRecord] {

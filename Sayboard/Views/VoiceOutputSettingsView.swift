@@ -28,6 +28,7 @@ struct VoiceOutputSettingsView: View {
         Toggle(isOn: self.$showOutputLanguageButton) {
           Label("Show output-language button on keyboard", systemImage: "globe")
         }
+        .disabled(!self.cleanupEnabled && self.target == VoiceOutputTarget.original.rawValue)
         Picker(selection: self.$target) {
           ForEach(VoiceOutputTarget.allCases) { option in
             Text(option.title).tag(option.rawValue)

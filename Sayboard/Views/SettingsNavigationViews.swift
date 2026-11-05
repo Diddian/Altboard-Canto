@@ -31,15 +31,34 @@ struct DictationSettingsView: View {
       case .meeting:
         self.meetingRows
       case .all:
-        Section {
+        Section("Microphone & Recording") {
           self.sessionRows
-        } header: {
-          Text("Dictation")
+        } footer: {
+          Text("Keep recording active only when you need it. Auto-Stop limits a recording session, not saved meeting length.")
         }
-        Section("Live Dictation & Meeting") {
+        Section("Live Speech to Text") {
+          self.liveRows
+        } footer: {
+          Text("Recognition runs offline. Roughly 1.5-second updates are a target, not a guaranteed speed. Long recordings require a supported model.")
+        }
+        Section("Meetings") {
           self.meetingRows
+          NavigationLink {
+            ModelsView()
+          } label: {
+            Label("Offline Speech Model", systemImage: "cpu")
+          }
+          NavigationLink {
+            CantoneseCorrectionsView()
+          } label: {
+            Label("Cantonese Recognition Corrections", systemImage: "text.badge.checkmark")
+          }
         }
       }
+    }
+    .onAppear { self.experimentalLiveEnabled = SharedSettings().experimentalLiveDictationEnabled }
+    .onChange(of: self.experimentalLiveEnabled) { _, enabled in
+      SharedSettings().experimentalLiveDictationEnabled = enabled
     }
     .onChange(of: self.selectedAutoStopPolicy) { _, policy in
       SharedSettings().sessionAutoStopPolicy = policy
@@ -62,27 +81,40 @@ struct DictationSettingsView: View {
   }
 
   @ViewBuilder
-  private var meetingRows: some View {
+  private var liveRows: some View {
     Toggle(isOn: self.$experimentalLiveEnabled) {
       Label("Live Dictation", systemImage: "waveform")
     }
-    Toggle(isOn: self.$experimentalMeetingEnabled) {
-      Label("Meeting Record", systemImage: "record.circle")
-    }
-    if self.experimentalMeetingEnabled {
-      NavigationLink {
-        MeetingRecordsView()
-      } label: {
-        Label("Meeting Recordings", systemImage: "list.bullet.rectangle")
+    if ProcessInfo.processInfo.physicalMemory < 8 * 1_073_741_824 {
+      Label {
+        Text("This iPhone has less than 8 GB of RAM. Live Dictation is off by default because rapid updates may be slow. You can still enable it and test.")
+      } icon: {
+        Image(systemName: "exclamationmark.triangle").foregroundStyle(.orange)
       }
+      .font(.footnote)
+    } else {
+      Text("This iPhone meets the initial 8 GB memory recommendation. Actual dictation speed still depends on the downloaded model and thermal conditions.")
+        .font(.footnote).foregroundStyle(.secondary)
     }
+  }
+
+  @ViewBuilder
+  private var meetingRows: some View {
+    Toggle(isOn: self.$experimentalMeetingEnabled) {
+      Label("Enable Meeting Recording", systemImage: "record.circle")
+    }
+    NavigationLink {
+      MeetingRecordsView()
+    } label: {
+      Label("Meeting Recordings", systemImage: "list.bullet.rectangle")
+    }
+    Text("Meeting audio rotates into 15-minute files; provisional transcript updates target about 8 seconds. Files and the combined transcript stay on-device.")
+      .font(.footnote).foregroundStyle(.secondary)
   }
 
   @EnvironmentObject private var speechService: SpeechRecognitionService
   @State private var selectedAutoStopPolicy = SharedSettings().sessionAutoStopPolicy
-  @AppStorage(SharedKey.experimentalLiveDictationEnabled,
-              store: UserDefaults(suiteName: AppGroup.identifier))
-  private var experimentalLiveEnabled = false
+  @State private var experimentalLiveEnabled = SharedSettings().experimentalLiveDictationEnabled
   @AppStorage(SharedKey.experimentalMeetingRecordEnabled,
               store: UserDefaults(suiteName: AppGroup.identifier))
   private var experimentalMeetingEnabled = false
