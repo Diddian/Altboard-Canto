@@ -64,19 +64,29 @@ final class MeetingRecordingCoordinator: ObservableObject {
           SharedSettings().experimentalMeetingRecordEnabled,
           SharedSettings().selectedVariant == .qwen3ASR17B,
           let root = Self.meetingsDirectory() else {
+      FeatureDiagnostics.record(.meeting, .blocked)
       self.status = "Enable Meeting Record and select Qwen3-ASR 1.7B; stop other dictation first."
       return
     }
     do { try service.session.startSession() }
-    catch { self.status = "Unable to activate microphone"; return }
+    catch {
+      FeatureDiagnostics.record(.meeting, .failed)
+      self.status = "Unable to activate microphone"
+      return
+    }
     let id = UUID()
     let folder = root.appendingPathComponent(id.uuidString, isDirectory: true)
     let audioDirectory = folder.appendingPathComponent("audio", isDirectory: true)
     do { try FileManager.default.createDirectory(at: audioDirectory, withIntermediateDirectories: true) }
-    catch { self.status = "Cannot create meeting storage"; return }
+    catch {
+      FeatureDiagnostics.record(.meeting, .failed)
+      self.status = "Cannot create meeting storage"
+      return
+    }
     let format = service.session.audioEngine.inputNode.outputFormat(forBus: 0)
     guard self.audioRecorder.startRecording(fileName: "0001.caf", format: format,
                                             directory: audioDirectory) != nil else {
+      FeatureDiagnostics.record(.meeting, .failed)
       self.status = "Cannot open meeting audio file"
       return
     }
@@ -101,6 +111,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
     service.session.activateTap(accumulator: self.accumulator, recorder: self.audioRecorder)
     self.elapsed = 0
     self.isRecording = true
+    FeatureDiagnostics.record(.meeting, .started)
     self.status = "Recording on iPhone"
     self.saveManifest()
     self.sessionObservation = service.session.$isSessionActive.sink { [weak self] active in
@@ -146,6 +157,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
     self.sessionObservation?.cancel()
     self.sessionObservation = nil
     self.isFinalizing = true
+    FeatureDiagnostics.record(.meeting, interrupted ? .interrupted : .stopped)
     self.status = "Saving final transcript…"
     let service = self.speechService
     Task { @MainActor [weak self] in
@@ -165,6 +177,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
         self.current = record
         self.saveManifest()
       }
+      FeatureDiagnostics.record(.meeting, .completed)
       self.status = interrupted ? "Recording interrupted; saved available audio" : "Meeting saved"
       self.currentFormat = nil
       self.currentAudioDirectory = nil
@@ -184,6 +197,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
             let count = self.current?.parts.count,
             self.audioRecorder.startRecording(fileName: String(format: "%04d.caf", count + 1),
                                               format: format, directory: directory) != nil else {
+        FeatureDiagnostics.record(.meeting, .failed)
         self.status = "Audio file rotation failed"
         self.stop(interrupted: true)
         return
@@ -245,7 +259,10 @@ final class MeetingRecordingCoordinator: ObservableObject {
   @discardableResult
   private func writeManifest(_ record: MeetingRecord) -> Bool {
     guard let root = Self.meetingsDirectory(),
-          let data = try? JSONEncoder().encode(record) else { return false }
+          let data = try? JSONEncoder().encode(record) else {
+      FeatureDiagnostics.record(.meeting, .failed)
+      return false
+    }
     let folder = root.appendingPathComponent(record.id.uuidString, isDirectory: true)
     let manifest = folder.appendingPathComponent("manifest.json")
     do {
@@ -257,6 +274,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
       )
       return true
     } catch {
+      FeatureDiagnostics.record(.meeting, .failed)
       self.status = "Could not save meeting details"
       return false
     }
@@ -290,6 +308,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
       records.removeAll { $0.id == id }
       return true
     } catch {
+      FeatureDiagnostics.record(.meeting, .failed)
       status = "Could not delete meeting recording"
       return false
     }
@@ -305,6 +324,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
       self.current = nil
       return true
     } catch {
+      FeatureDiagnostics.record(.meeting, .failed)
       self.status = "Could not delete meeting recordings"
       return false
     }
