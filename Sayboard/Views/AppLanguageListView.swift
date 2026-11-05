@@ -74,7 +74,8 @@ struct AppLanguageListView: View {
     InterfaceLanguage(code: "sv", englishName: "Swedish", nativeName: "Svenska"),
     InterfaceLanguage(code: "tr", englishName: "Turkish", nativeName: "Türkçe"),
     InterfaceLanguage(code: "uk", englishName: "Ukrainian", nativeName: "Українська"),
-    InterfaceLanguage(code: "zh", englishName: "Chinese", nativeName: "中文"),
+    InterfaceLanguage(code: "zh-Hant", englishName: "Chinese (Traditional, Hong Kong)", nativeName: "繁體中文（香港）"),
+    InterfaceLanguage(code: "zh-Hans", englishName: "Chinese (Simplified, Mainland China)", nativeName: "简体中文（中国大陆）"),
   ]
 
   private static let defaultLanguage = AppLanguageConfig.fallback
@@ -113,5 +114,6 @@ let nativeLanguageNames: [String: String] = [
   "sv": "Svenska",
   "tr": "Türkçe",
   "uk": "Українська",
-  "zh": "中文",
+  "zh-Hant": "繁體中文（香港）",
+  "zh-Hans": "简体中文（中国大陆）",
 ]

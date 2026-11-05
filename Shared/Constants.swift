@@ -308,13 +308,29 @@ enum AppLanguageConfig {
     "sv",
     "tr",
     "uk",
-    "zh",
+    "zh-Hans",
+    "zh-Hant",
   ]
   static let fallback = "en"
 
+  /// The former generic Chinese catalog contained Simplified Chinese.
+  static func migratedStoredLanguage(_ code: String) -> String {
+    if code == "zh" { return "zh-Hans" }
+    return code
+  }
+
   static func resolveLanguage(from preferredLanguages: [String]) -> String {
-    let systemLanguage = preferredLanguages.first
-      .flatMap { Locale(identifier: $0).language.languageCode?.identifier }
+    guard let preferred = preferredLanguages.first else { return self.fallback }
+    let components = preferred.replacingOccurrences(of: "_", with: "-")
+      .lowercased().split(separator: "-").map(String.init)
+    if components.first == "zh" {
+      if components.contains("hans") { return "zh-Hans" }
+      if components.contains("hant") { return "zh-Hant" }
+      return components.contains("hk") || components.contains("mo")
+        || components.contains("tw") ? "zh-Hant" : "zh-Hans"
+    }
+    if components.first == "yue" { return "zh-Hant" }
+    let systemLanguage = Locale(identifier: preferred).language.languageCode?.identifier
       ?? self.fallback
     let appLanguage = self.systemLanguageAliases[systemLanguage] ?? systemLanguage
     return self.supported.contains(appLanguage) ? appLanguage : self.fallback

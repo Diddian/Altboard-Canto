@@ -74,6 +74,8 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("input.hitTest(point, with: nil)", host)
         self.assertIn("scanned < 256", host)
         self.assertIn("DispatchQueue.main.asyncAfter(deadline: .now() + 0.35)", host)
+        self.assertIn("guard let input = self.viewIfLoaded else { return }", host)
+        self.assertNotIn("let input = self.view\\n", host)
         self.assertIn("self.scheduleRenderCheckpoint(checkpoint: \"afterAppear\")", host)
         self.assertIn("self.scheduleRenderCheckpoint(checkpoint: \"afterDocumentChange\")", host)
         self.assertIn("self.renderProbeGeneration &+= 1", host)

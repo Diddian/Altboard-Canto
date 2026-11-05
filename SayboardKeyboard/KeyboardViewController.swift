@@ -184,8 +184,7 @@ final class KeyboardViewController: UIInputViewController {
 
   private func captureRenderCheckpoint(checkpoint: String) {
     #if !APPSTORE
-    guard self.isViewLoaded else { return }
-    let input = self.view
+    guard let input = self.viewIfLoaded else { return }
     let hosted = self.hostingController?.viewIfLoaded
     let hostingFrame = hosted.map { $0.convert($0.bounds, to: input) } ?? .zero
     var stack: [UIView] = hosted.map { [$0] } ?? []

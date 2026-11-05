@@ -142,12 +142,6 @@
             "value": "Altboard"
           }
         },
-        "zh": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Altboard"
-          }
-        },
         "bg": {
           "stringUnit": {
             "state": "translated",
@@ -179,6 +173,18 @@
           }
         },
         "sl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altboard"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altboard"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "Altboard"
@@ -328,12 +334,6 @@
             "value": "Altboard"
           }
         },
-        "zh": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Altboard"
-          }
-        },
         "bg": {
           "stringUnit": {
             "state": "translated",
@@ -365,6 +365,18 @@
           }
         },
         "sl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altboard"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altboard"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "Altboard"
@@ -513,12 +525,6 @@
             "value": "Altboard потребує доступу до мікрофона для перетворення мовлення на текст. Уся обробка відбувається на пристрої."
           }
         },
-        "zh": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Altboard 需要麦克风权限来将您的语音转换为文字。所有处理均在设备上完成。"
-          }
-        },
         "bg": {
           "stringUnit": {
             "state": "translated",
@@ -553,6 +559,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "Altboard potrebuje dostop do mikrofona za pretvorbo govora v besedilo. Vsa obdelava poteka v napravi."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altboard 需要麦克风权限来将您的语音转换为文字。所有处理均在设备上完成。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altboard 需要使用咪高風，將語音轉換為文字。所有處理均於裝置上完成。"
           }
         }
       }

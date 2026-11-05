@@ -188,7 +188,11 @@ struct SayboardApp: App {
 
   private static func configureDefaultLanguageIfNeeded() {
     let defaults = UserDefaults.standard
-    guard defaults.string(forKey: SharedKey.appLanguage) == nil else { return }
+    if let current = defaults.string(forKey: SharedKey.appLanguage) {
+      let migrated = AppLanguageConfig.migratedStoredLanguage(current)
+      if migrated != current { defaults.set(migrated, forKey: SharedKey.appLanguage) }
+      return
+    }
     defaults.set(
       AppLanguageConfig.resolveLanguage(from: Locale.preferredLanguages),
       forKey: SharedKey.appLanguage,
@@ -270,7 +274,7 @@ private struct SayboardRootView: View {
     .environmentObject(self.llmDownloadService)
     .environmentObject(self.llmCoordinator)
     .environmentObject(self.pipTutorialService)
-    .environment(\.locale, Locale(identifier: self.appLanguage))
+    .environment(\.locale, Locale(identifier: self.appLanguage == "no" ? "nb" : self.appLanguage))
   }
 
   @ViewBuilder
