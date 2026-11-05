@@ -14,7 +14,7 @@ struct LLMSettingsView: View {
         self.longPressActionSection
       }
     }
-    .navigationTitle("AI Text Processing")
+    .navigationTitle("AI Actions")
     .navigationBarTitleDisplayMode(.inline)
     .animation(.easeInOut(duration: 0.3), value: self.llmEnabled)
     .onAppear {
@@ -32,8 +32,6 @@ struct LLMSettingsView: View {
   @EnvironmentObject private var llmDownloadService: LLMDownloadService
   @AppStorage(SharedKey.llmEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
   private var llmEnabled = false
-  @AppStorage(SharedKey.keyboardShowAIButton, store: AppGroup.sharedDefaults ?? .standard)
-  private var showAIButton = true
   @State private var defaultActionSelection = LLMActionSelection.none
   @State private var customPrompts = [LLMCustomPrompt]()
   @State private var longPressAction = LLMActionSelection.none
@@ -41,10 +39,8 @@ struct LLMSettingsView: View {
 
   private var enableSection: some View {
     Section {
-      Toggle("AI Text Processing", isOn: self.$llmEnabled)
+      Toggle("AI Actions", isOn: self.$llmEnabled)
         .disabled(!self.llmDownloadService.hasUsableModel)
-      Toggle("Show AI Cleanup / Actions button on keyboard", isOn: self.$showAIButton)
-        .disabled(!self.llmEnabled || !self.llmDownloadService.hasUsableModel)
     } footer: {
       Text("Adds an AI button to the keyboard for rewriting, reformatting, and other text actions.")
     }
@@ -369,3 +365,4 @@ private struct EditPromptView: View {
       || self.prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
   }
 }
+

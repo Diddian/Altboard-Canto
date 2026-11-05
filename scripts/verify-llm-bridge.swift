@@ -3,6 +3,7 @@ import Foundation
 // The bridge test is standalone: no host app or model is started.
 enum LLMAction: String, Codable, Sendable {
   case rewrite
+  case translate
 }
 
 enum AppGroup {
@@ -27,6 +28,17 @@ enum VerifyLLMBridge {
       text: "sample text", action: .rewrite,
       customPromptId: nil, language: "en"
     )
+    let translation = LLMRequest(
+      text: "Hello", action: .translate, customPromptId: nil, language: "en",
+      translationTarget: "german", customTranslationLanguage: ""
+    )
+    precondition(LLMBridge.writeRequest(translation))
+    precondition(LLMBridge.readRequest()?.translationTarget == "german")
+    let oldJSON = """
+      {"requestID":"00000000-0000-0000-0000-000000000001","text":"old request","action":"rewrite","language":"en"}
+      """
+    let old = try! JSONDecoder().decode(LLMRequest.self, from: Data(oldJSON.utf8))
+    precondition(old.translationTarget == nil)
     LLMBridge.clearResult()
     LLMBridge.clearRequest()
     precondition(!LLMBridge.hasResult())
@@ -46,3 +58,4 @@ enum VerifyLLMBridge {
     print("LLM bridge request identity and stale-result rejection verified")
   }
 }
+

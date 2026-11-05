@@ -64,6 +64,12 @@ extension KeyboardViewController {
       return false
     }
 
+    if resolved.action == .translate {
+      let settings = SharedSettings()
+      guard settings.voiceOutputTarget != .original,
+            settings.voiceOutputTarget.targetInstruction(customLanguage: settings.voiceCustomLanguage) != nil
+      else { return false }
+    }
     self.requestLLMProcessing(action: resolved.action, customPromptId: resolved.customPromptId, directText: directText)
     return true
   }
@@ -76,6 +82,13 @@ extension KeyboardViewController {
       return
     }
 
+    let target = SharedSettings().voiceOutputTarget
+    let customLanguage = SharedSettings().voiceCustomLanguage
+    if action == .translate,
+       (target == .original || target.targetInstruction(customLanguage: customLanguage) == nil) {
+      self.keyboardState.llmError = .translationTargetRequired
+      return
+    }
     let inputText: String
     self.llmSelectedText = nil
     self.llmDirectSelectedText = nil
@@ -137,6 +150,8 @@ extension KeyboardViewController {
       action: action,
       customPromptId: customPromptId,
       language: language,
+      translationTarget: action == .translate ? target.rawValue : nil,
+      customTranslationLanguage: action == .translate ? customLanguage : nil,
     )
     self.llmRequestID = request.requestID
     // Prevent an earlier response from being reused by the next action.
@@ -348,3 +363,4 @@ extension KeyboardViewController {
     self.navigateLLMHistory(to: self.keyboardState.llmHistoryIndex + 1)
   }
 }
+

@@ -7,9 +7,6 @@ struct VoiceOutputSettingsView: View {
   @AppStorage(SharedKey.voiceCleanupEnabled, store: AppGroup.sharedDefaults ?? .standard)
   private var cleanupEnabled = false
 
-  @AppStorage(SharedKey.keyboardShowOutputLanguageButton, store: AppGroup.sharedDefaults ?? .standard)
-  private var showOutputLanguageButton = true
-
   @AppStorage(SharedKey.voiceOutputTarget, store: AppGroup.sharedDefaults ?? .standard)
   private var target = VoiceOutputTarget.original.rawValue
 
@@ -23,18 +20,14 @@ struct VoiceOutputSettingsView: View {
     Form {
       Section {
         Toggle(isOn: self.$cleanupEnabled) {
-          Label("Clean up transcription with offline AI", systemImage: "wand.and.stars")
+          Label("Transcript Cleanup", systemImage: "wand.and.stars")
         }
-        Toggle(isOn: self.$showOutputLanguageButton) {
-          Label("Show output-language button on keyboard", systemImage: "globe")
-        }
-        .disabled(!self.cleanupEnabled && self.target == VoiceOutputTarget.original.rawValue)
         Picker(selection: self.$target) {
           ForEach(VoiceOutputTarget.allCases) { option in
             Text(option.title).tag(option.rawValue)
           }
         } label: {
-          Label("Output language", systemImage: "character.bubble")
+          Label("Output Language", systemImage: "character.bubble")
         }
         if self.target == VoiceOutputTarget.custom.rawValue {
           HStack {
@@ -54,10 +47,10 @@ struct VoiceOutputSettingsView: View {
             Text(option.title).tag(option.rawValue)
           }
         } label: {
-          Label("Dictation tone", systemImage: "text.alignleft")
+          Label("Tone", systemImage: "text.alignleft")
         }
       } header: {
-        Text("Dictation → Edit → Output")
+        Text("Output")
       } footer: {
         Text("Original keeps the language you spoke, including Cantonese-English-German mixing. As spoken preserves your tone; Casual and Formal change only the register.")
       }
@@ -81,7 +74,7 @@ struct VoiceOutputSettingsView: View {
               ? self.llmDownloadService.selectedVariant.displayName : "Download required")
               .foregroundStyle(.secondary)
           } label: {
-            Label("Offline cleanup / translation model", systemImage: "cpu")
+            Label("Text Model", systemImage: "cpu")
           }
         }
         if !self.llmDownloadService.hasUsableModel {
@@ -102,8 +95,9 @@ struct VoiceOutputSettingsView: View {
           .font(.footnote).foregroundStyle(.secondary)
       }
     }
-    .navigationTitle("Voice Output & Translation")
+    .navigationTitle("Output")
     .navigationBarTitleDisplayMode(.inline)
 
   }
 }
+

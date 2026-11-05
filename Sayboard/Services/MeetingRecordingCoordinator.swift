@@ -295,6 +295,21 @@ final class MeetingRecordingCoordinator: ObservableObject {
     }
   }
 
+  @discardableResult
+  func deleteAllRecords() -> Bool {
+    guard !self.isRecording, !self.isFinalizing,
+          let root = Self.meetingsDirectory() else { return false }
+    do {
+      try FileManager.default.removeItem(at: root)
+      self.records = []
+      self.current = nil
+      return true
+    } catch {
+      self.status = "Could not delete meeting recordings"
+      return false
+    }
+  }
+
   func meetingFolder(for record: MeetingRecord) -> URL? {
     Self.meetingsDirectory()?.appendingPathComponent(record.id.uuidString, isDirectory: true)
   }
@@ -306,3 +321,4 @@ final class MeetingRecordingCoordinator: ObservableObject {
     return root
   }
 }
+

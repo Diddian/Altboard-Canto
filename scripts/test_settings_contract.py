@@ -13,17 +13,20 @@ def read(path):
 class SettingsContractTests(unittest.TestCase):
     def test_settings_follow_user_tasks(self):
         home = read("Sayboard/Views/SettingsView.swift")
-        for heading in ('Section("Start Here")', 'Section("Speech & AI")',
-                        'Section("Keyboard")', 'Section("Your Data")',
-                        'Text("App")'):
+        for heading in ('Section("Speech & AI")', 'Text("App")'):
             self.assertIn(heading, home)
         for path in ("SpeechLanguagesSettingsView(", "DictationSettingsView()",
                      "VoiceOutputSettingsView()", "LLMSettingsView()",
-                     "KeyboardSettingsView(", "DataAndStorageSettingsView()",
+                     "KeyboardSettingsView(", "DataAndStorageSettingsView(inline: true)",
                      "AppLanguageListView()", "DiagnosticsView()"):
             self.assertIn(path, home)
         self.assertNotIn("DictationSettingsView(inline: true", home)
         self.assertIn("Altboard-Canto · Source on GitHub", home)
+        self.assertNotIn('Section("Start Here")', home)
+        self.assertNotIn('Is My Microphone Ready?', home)
+        self.assertIn('ActiveSessionToggle()', home)
+        self.assertIn('KeyboardCustomizationView(inline: true)', home)
+        self.assertIn('selectedKind: self.keyboardKindBinding, inline: true', home)
 
     def test_sections_with_footers_use_explicit_headers(self):
         sections = {
@@ -34,7 +37,7 @@ class SettingsContractTests(unittest.TestCase):
             "Sayboard/Views/KeyboardCustomizationView.swift":
                 ("Haptic Feedback", "Keyboard Buttons"),
             "Sayboard/Views/DataAndStorageSettingsView.swift":
-                ("Personal Vocabulary",),
+                ("History & Storage",),
             "Sayboard/Views/LearningDataSettingsView.swift":
                 ("Learned Suggestions", "Your Data"),
         }
@@ -55,12 +58,12 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn('Text("German (Ä Ö Ü ß)")', layout)
         self.assertIn(".pickerStyle(.menu)", layout)
         self.assertIn("KeyboardTestPreview(", layout)
-        self.assertIn("KeyboardCustomizationView()", layout)
-        for control in ('Auto-capitalize Sentences', 'Double-Space Period',
+        self.assertNotIn("KeyboardCustomizationView()", layout)
+        for control in ('Auto-capitalization', 'Double-Space Period',
                         'Haptic Feedback', 'Extra Globe Key', 'Settings Key',
-                        'Output & Translation Key', 'Text AI Key'):
+                        'Output Key', 'AI Key'):
             self.assertIn(control, custom)
-        self.assertIn('Text("Not yet available")', custom)
+        self.assertNotIn('Text("Not yet available")', custom)
 
     def test_native_globe_is_optional_except_when_ios_requires_it(self):
         keyboard = read("SayboardKeyboard/Views/Layouts/KeyboardChrome.swift")
@@ -108,17 +111,24 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("Delete Voice Notes", history)
         self.assertIn("Meetings, learned suggestions and downloaded models are not affected",
                       history)
-        self.assertIn("MeetingRecordsView()", categories)
-        self.assertIn("LearningDataSettingsView()", categories)
+        self.assertNotIn("NavigationLink", categories)
+        for label in ("Export All Data", "Delete All Data"):
+            self.assertIn(label, categories)
+        self.assertIn("recordingActive", categories)
+        store = read("Sayboard/Services/LocalUserDataStore.swift")
+        self.assertIn("recorder.deleteAllRecords()", store)
+        self.assertIn("try fm.zipItem(at:", store)
 
     def test_user_initiated_export_includes_explicit_corrections(self):
         export = read("Shared/PersonalVocabularyExport.swift")
         settings = read("Sayboard/Views/LearningDataSettingsView.swift")
         self.assertIn("schemaVersion: 3", export)
         self.assertIn("manualSpeechCorrections", export)
-        self.assertIn("cantoneseCorrectionRules.map", settings)
-        self.assertIn("LatinSpeechCorrectionLearning.read", settings)
-        self.assertIn("ConfirmedChoiceLearning.chineseCounts", settings)
+        store = read("Sayboard/Services/LocalUserDataStore.swift")
+        self.assertIn("cantoneseCorrectionRules.map", store)
+        self.assertIn("LatinSpeechCorrectionLearning.read", store)
+        self.assertIn("ConfirmedChoiceLearning.chineseCounts", store)
+        self.assertIn("LocalUserDataStore.vocabularyData()", settings)
         self.assertIn("self.showExporter = true", settings)
 
     def test_universal_cantonese_diagnostics_preserved(self):
@@ -139,3 +149,4 @@ class SettingsContractTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

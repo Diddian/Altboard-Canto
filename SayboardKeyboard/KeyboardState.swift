@@ -148,7 +148,6 @@ final class KeyboardState: ObservableObject {
     self.showSettingsKey = self.settings.keyboardShowSettingsKey
     self.showGlobeKey = self.settings.keyboardShowGlobeKey
     self.showOutputLanguageButton = self.settings.keyboardShowOutputLanguageButton
-      && (self.settings.voiceCleanupEnabled || self.settings.voiceOutputTarget != .original)
     self.showAIButton = self.settings.keyboardShowAIButton
       && self.settings.llmEnabled && self.settings.hasUsableLLMModel
     self.keyboardKind = self.settings.keyboardKind
@@ -283,3 +282,4 @@ private final class DisplayLinkTarget: NSObject {
 
   private let callback: () -> Bool
 }
+

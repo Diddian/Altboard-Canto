@@ -142,6 +142,14 @@ final class LLMProcessingCoordinator: ObservableObject {
     )
 
     if let result, !result.isEmpty {
+      if validated.request.action == .translate,
+         let rawTarget = validated.request.translationTarget,
+         let target = VoiceOutputTarget(rawValue: rawTarget),
+         !VoiceLanguageValidator.matches(result, target: target) {
+        self.inferenceService.unloadModel()
+        TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingFailed)
+        return
+      }
       let finalResult = self.styled(result, action: validated.request.action, host: stylingHost, settings: settings)
       if LLMBridge.writeResult(finalResult, requestID: validated.request.requestID) {
         TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingComplete)
@@ -164,6 +172,14 @@ final class LLMProcessingCoordinator: ObservableObject {
       DiagnosticLog.write("llm: no request in bridge")
       TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingFailed)
       return nil
+    }
+    if request.action == .translate {
+      guard let rawTarget = request.translationTarget,
+            let target = VoiceOutputTarget(rawValue: rawTarget), target != .original,
+            target.targetInstruction(customLanguage: request.customTranslationLanguage ?? "") != nil else {
+        TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingFailed)
+        return nil
+      }
     }
     DiagnosticLog.write("llm: text=\(request.text.count) chars, action=\(request.action.rawValue)")
 
@@ -214,7 +230,7 @@ final class LLMProcessingCoordinator: ObservableObject {
   }
 
   private func styled(_ text: String, action: LLMAction, host: String?, settings: SharedSettings) -> String {
-    guard action != .addPunctuation, action != .fixGrammar else { return text }
+    guard action != .translate, action != .addPunctuation, action != .fixGrammar else { return text }
     let resolvedStyle = AppStyleStore().resolvedStyle(
       hostBundleId: host,
       defaultStyle: settings.defaultWritingStyle,
@@ -223,6 +239,13 @@ final class LLMProcessingCoordinator: ObservableObject {
   }
 
   private func buildSystemPrompt(for request: LLMRequest, settings: SharedSettings) -> String {
+    if request.action == .translate, let rawTarget = request.translationTarget,
+       let target = VoiceOutputTarget(rawValue: rawTarget) {
+      return VoiceOutputPrompt.systemPrompt(for: VoiceOutputConfiguration(
+        cleanupEnabled: false, target: target, register: .faithful,
+        customLanguage: request.customTranslationLanguage ?? ""
+      ))
+    }
     let language = request.language
     if
       let customId = request.customPromptId,
@@ -272,3 +295,4 @@ final class LLMProcessingCoordinator: ObservableObject {
     }
   }
 }
+

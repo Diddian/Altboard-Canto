@@ -58,7 +58,7 @@ struct KeyboardSettingsView: View {
     } header: {
       Text("Keyboard Layout")
     } footer: {
-      Text("Choose the layout that feels most natural. Chinese and English suggestions remain available independently of key order.")
+      Text("Key order does not change your suggestion languages.")
     }
 
     Section("Keyboard Preview") {
@@ -70,16 +70,6 @@ struct KeyboardSettingsView: View {
           ?? .qwertz
       )
       .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
-    }
-
-    Section {
-      NavigationLink {
-        KeyboardCustomizationView()
-      } label: {
-        Label("Customization", systemImage: "slider.horizontal.3")
-      }
-    } footer: {
-      Text("Haptic strength, capitalization, shortcuts, Globe and toolbar buttons live here.")
     }
   }
 }
@@ -105,13 +95,8 @@ private struct KeyboardTestPreview: View {
   private var showSettingsKey = true
   @AppStorage(SharedKey.keyboardShowOutputLanguageButton, store: UserDefaults(suiteName: AppGroup.identifier))
   private var showOutputLanguageButton = true
-  @AppStorage(SharedKey.voiceCleanupEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var voiceCleanupEnabled = false
-  @AppStorage(SharedKey.voiceOutputTarget, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var voiceOutputTarget = VoiceOutputTarget.original.rawValue
   private var outputKeyEnabled: Bool {
     self.showOutputLanguageButton
-      && (self.voiceCleanupEnabled || self.voiceOutputTarget != VoiceOutputTarget.original.rawValue)
   }
   @AppStorage(SharedKey.keyboardShowAIButton, store: UserDefaults(suiteName: AppGroup.identifier))
   private var showAIButton = true
@@ -316,3 +301,4 @@ private struct KeyboardTestPreview: View {
     KeyboardHaptics.key(strength: self.hapticStrength, enabled: self.keyboardHapticsEnabled)
   }
 }
+
