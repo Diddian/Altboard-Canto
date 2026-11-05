@@ -37,6 +37,9 @@ enum ChatTemplate: String, CaseIterable, Codable, Sendable {
 }
 
 enum LLMModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
+  case hereticSmall = "qwen35-heretic-0.8b-q4km-v3"
+  case hereticBalanced = "qwen35-heretic-2b-q4km"
+  case hereticLarge = "qwen35-heretic-max-9b-mtp-iq3m"
   case qwen35Small = "qwen35-0.8b-q4km"
   case gemma3OneQAT = "gemma3-1b-qat-q4_0"
   case llama32One = "llama32-1b-q5km"
@@ -60,6 +63,9 @@ enum LLMModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
 
   var displayName: String {
     switch self {
+    case .hereticSmall: "Qwen 3.5 Heretic 0.8B"
+    case .hereticBalanced: "Qwen 3.5 Heretic 2B"
+    case .hereticLarge: "Qwen 3.5 Heretic MAX-MTP 9B"
     case .qwen35Small: "Qwen 3.5 0.8B"
     case .gemma3OneQAT, .gemma3One: "Gemma 3 1B"
     case .llama32One: "Llama 3.2 1B"
@@ -72,6 +78,9 @@ enum LLMModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
 
   var descriptionKey: String {
     switch self {
+    case .hereticSmall: "Compact Heretic model for phones with less available memory. Verify faithful rewriting on your device."
+    case .hereticBalanced: "Heretic model with a smaller memory footprint than 9B. Verify faithful rewriting on your device."
+    case .hereticLarge: "5.72 GB download. Requires substantial free app memory; CPU processing may be slow. MTP acceleration is not enabled."
     case .qwen35Small, .qwen3Small: "Smallest and fastest model. Basic quality with multilingual support."
     case .gemma3OneQAT, .gemma3One: "Good quality at high speed. The most balanced model on this list."
     case .llama32One: "Similar quality to Gemma 3. Stronger in English, weaker multilingual."
@@ -83,6 +92,9 @@ enum LLMModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
 
   var downloadSizeMB: Int {
     switch self {
+    case .hereticSmall: 530
+    case .hereticBalanced: 1271
+    case .hereticLarge: 5723
     case .qwen35Small: 562
     case .gemma3OneQAT: 721
     case .gemma3One: 851
@@ -96,6 +108,9 @@ enum LLMModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
 
   var ramRequirementMB: Int {
     switch self {
+    case .hereticSmall: 850
+    case .hereticBalanced: 1900
+    case .hereticLarge: 7000
     case .qwen35Small: 750
     case .gemma3OneQAT: 850
     case .gemma3One: 1000
@@ -109,6 +124,7 @@ enum LLMModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
 
   var quality: Double {
     switch self {
+    case .hereticSmall, .hereticBalanced, .hereticLarge: 0
     case .qwen35Small: 0.60
     case .gemma3OneQAT, .gemma3One: 0.65
     case .llama32One: 0.60
@@ -121,6 +137,7 @@ enum LLMModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
 
   var speed: Double {
     switch self {
+    case .hereticSmall, .hereticBalanced, .hereticLarge: 0
     case .qwen35Small: 0.92
     case .gemma3OneQAT: 0.86
     case .gemma3One: 0.80
@@ -134,6 +151,7 @@ enum LLMModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
 
   var languageTagKey: String {
     switch self {
+    case .hereticSmall, .hereticBalanced, .hereticLarge: "Multilingual"
     case .qwen35Small, .qwen35Large: "200+ languages"
     case .gemma3OneQAT, .gemma3One: "140 languages"
     case .llama32One: "8 languages"
@@ -144,7 +162,7 @@ enum LLMModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
 
   var supportedLanguages: Set<String> {
     switch self {
-    case .qwen35Small, .qwen35Large, .qwen3Small, .qwen3Large, .gemma3OneQAT, .gemma3One:
+    case .hereticSmall, .hereticBalanced, .hereticLarge, .qwen35Small, .qwen35Large, .qwen3Small, .qwen3Large, .gemma3OneQAT, .gemma3One:
       SpeechLanguages.whisper
     case .llama32One:
       ["en", "de", "fr", "it", "pt", "hi", "es", "th"]
@@ -154,7 +172,8 @@ enum LLMModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
   }
 
   var catalogRank: Double {
-    self.quality * Self.qualityWeight + self.speed * (1 - Self.qualityWeight)
+    if let tier = self.hereticTier { return 0.8 + Double(tier.rawValue) * 0.01 }
+    return self.quality * Self.qualityWeight + self.speed * (1 - Self.qualityWeight)
   }
 
   var isRecommended: Bool {
@@ -170,12 +189,15 @@ enum LLMModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
     case .qwen3Small: .qwen35Small
     case .qwen3Large: .qwen35Large
     case .gemma3One: .gemma3OneQAT
-    case .qwen35Small, .qwen35Large, .gemma3OneQAT, .llama32One, .smollm2Medium: nil
+    case .hereticSmall, .hereticBalanced, .hereticLarge, .qwen35Small, .qwen35Large, .gemma3OneQAT, .llama32One, .smollm2Medium: nil
     }
   }
 
   var ggufFileName: String {
     switch self {
+    case .hereticSmall: "Qwen3.5-0.8B-heretic-v3.i1-Q4_K_M.gguf"
+    case .hereticBalanced: "Qwen3.5-2B-heretic-Q4_K_M.gguf"
+    case .hereticLarge: "Qwen3.5-9B-The-Defiant-Fable-Uncnr-Heretic-NEO-MAX-MTP-IQ3_M.gguf"
     case .qwen35Small: "qwen3.5-0.8b-q4_k_m.gguf"
     case .gemma3OneQAT: "gemma3-1b-qat-q4_0.gguf"
     case .gemma3One: "gemma3-1b-q5_k_m.gguf"
@@ -187,13 +209,31 @@ enum LLMModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
     }
   }
 
+  var hereticTier: LLMDevicePolicy.Tier? {
+    switch self {
+    case .hereticSmall: .compact
+    case .hereticBalanced: .balanced
+    case .hereticLarge: .large
+    default: nil
+    }
+  }
+
+  static func heretic(for tier: LLMDevicePolicy.Tier) -> Self {
+    switch tier {
+    case .compact: .hereticSmall
+    case .balanced: .hereticBalanced
+    case .large: .hereticLarge
+    }
+  }
+
   var minRAMBytes: UInt64 {
-    (self.ramRequirementMB + Self.systemOverheadMB).megabytesInBytes
+    if self == .hereticLarge { return 12_000_000_000 }
+    return (self.ramRequirementMB + Self.systemOverheadMB).megabytesInBytes
   }
 
   var chatTemplate: ChatTemplate {
     switch self {
-    case .qwen35Small, .qwen35Large, .qwen3Small, .qwen3Large: .qwenNoThinking
+    case .hereticSmall, .hereticBalanced, .hereticLarge, .qwen35Small, .qwen35Large, .qwen3Small, .qwen3Large: .qwenNoThinking
     case .gemma3OneQAT, .gemma3One: .gemma
     case .llama32One: .llama
     case .smollm2Medium: .chatml
@@ -202,9 +242,9 @@ enum LLMModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
 
   var contextSize: Int {
     switch self {
-    case .gemma3OneQAT, .gemma3One, .llama32One, .qwen3Small, .qwen35Small:
+    case .hereticSmall, .gemma3OneQAT, .gemma3One, .llama32One, .qwen3Small, .qwen35Small:
       1024
-    case .smollm2Medium, .qwen3Large, .qwen35Large:
+    case .hereticBalanced, .hereticLarge, .smollm2Medium, .qwen3Large, .qwen35Large:
       2048
     }
   }
@@ -335,4 +375,5 @@ enum LLMActionSelection: Codable, Hashable, Sendable {
     }
   }
 }
+
 

@@ -36,6 +36,13 @@ struct LLMModelsSection: View {
   @State private var showLanguagePicker = false
   @State private var selectionHapticTrigger = false
 
+  private var recommendedVariant: LLMModelVariant {
+    if LLMDevicePolicy.usesChinese([self.selectedLanguageFilter].compactMap { $0 }) {
+      return self.llmDownloadService.recommendedHereticVariant
+    }
+    return self.llmDownloadService.recommendedVariant
+  }
+
   private var effectiveSelectedVariant: LLMModelVariant {
     self.selectedVariant ?? self.llmDownloadService.selectedVariant
   }
@@ -178,7 +185,7 @@ struct LLMModelsSection: View {
       isActive: isDownloaded && variant == self.effectiveSelectedVariant,
       isDownloaded: isDownloaded,
       isSupported: variant.isSupportedOnCurrentDevice,
-      isRecommended: variant.isRecommended,
+      isRecommended: variant == self.recommendedVariant,
       catalogRank: variant.catalogRank,
     )
   }
@@ -189,6 +196,7 @@ struct LLMModelsSection: View {
 
     return LLMModelCardView(
       variant: variant,
+      recommended: variant == self.recommendedVariant,
       isActive: isActive,
       downloadState: downloadState,
       onSelect: {
@@ -218,3 +226,4 @@ struct LLMModelsSection: View {
     .equatable()
   }
 }
+

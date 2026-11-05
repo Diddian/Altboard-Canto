@@ -1,6 +1,7 @@
 
 import Combine
 import Foundation
+import os
 
 @MainActor
 final class LLMDownloadService: ObservableObject {
@@ -9,6 +10,8 @@ final class LLMDownloadService: ObservableObject {
     LLMModelStorageManager.removeOrphanedDirectories()
     self.verifyExistingModels()
     self.subscribeToDownloadEvents()
+    self.refreshAutomaticSelection()
+    self.subscribeToLanguageChanges()
     self.startUpgradeIfNeeded()
   }
 
@@ -38,7 +41,49 @@ final class LLMDownloadService: ObservableObject {
     self.state(for: variant) == .downloaded
   }
 
+  var recommendedVariant: LLMModelVariant {
+    guard LLMDevicePolicy.usesChinese(SharedSettings().textProcessingLanguages) else {
+      return .gemma3OneQAT
+    }
+    return self.recommendedHereticVariant
+  }
+
+  var recommendedHereticVariant: LLMModelVariant {
+    .heretic(for: LLMDevicePolicy.recommendedTier(
+      physicalBytes: ProcessInfo.processInfo.physicalMemory,
+      availableBytes: UInt64(os_proc_available_memory())
+    ))
+  }
+
+  func preferredLanguagesDidChange() {
+    SharedSettings().defaults.set(false, forKey: Self.manualSelectionKey)
+    self.refreshAutomaticSelection()
+  }
+
+  private func refreshAutomaticSelection() {
+    let settings = SharedSettings()
+    guard !settings.isLLMProcessing,
+          !settings.defaults.bool(forKey: Self.manualSelectionKey),
+          LLMDevicePolicy.usesChinese(settings.textProcessingLanguages) else { return }
+    let physical = ProcessInfo.processInfo.physicalMemory
+    let available = UInt64(os_proc_available_memory())
+    let candidates: [LLMModelVariant] = [.hereticLarge, .hereticBalanced, .hereticSmall]
+    let installed = candidates.first {
+      guard let tier = $0.hereticTier else { return false }
+      return self.isDownloaded($0)
+        && LLMDevicePolicy.supports(tier, physicalBytes: physical, availableBytes: available)
+    }
+    // Keep a usable existing model until a Heretic download is ready. New
+    // multi-gigabyte downloads always require the normal Download action.
+    if let target = installed ?? (self.hasUsableModel ? nil : self.recommendedVariant) {
+      settings.selectedLLMVariant = target
+      self.selectedVariant = target
+      self.syncHasUsableModel()
+    }
+  }
+
   func selectVariant(_ variant: LLMModelVariant) {
+    SharedSettings().defaults.set(true, forKey: Self.manualSelectionKey)
     SharedSettings().selectedLLMVariant = variant
     self.selectedVariant = variant
     self.syncHasUsableModel()
@@ -184,10 +229,30 @@ final class LLMDownloadService: ObservableObject {
     }
   }
 
+  private static let manualSelectionKey = "llm.manualModelSelection.v1"
   private static let llmDownloadTypes: [DownloadType] = [.llm, .llmUpgrade]
 
   private var cachedManifest: ModelManifest?
   private var eventCancellable: AnyCancellable?
+  private var languageCancellable: AnyCancellable?
+  private var observedLanguages = SharedSettings().textProcessingLanguages
+  private var observedProcessing = SharedSettings().isLLMProcessing
+
+  private func subscribeToLanguageChanges() {
+    self.languageCancellable = NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)
+      .receive(on: DispatchQueue.main)
+      .sink { [weak self] _ in
+        guard let self else { return }
+        let settings = SharedSettings()
+        let finishedProcessing = self.observedProcessing && !settings.isLLMProcessing
+        self.observedProcessing = settings.isLLMProcessing
+        if finishedProcessing { self.refreshAutomaticSelection() }
+        let languages = settings.textProcessingLanguages
+        guard languages != self.observedLanguages else { return }
+        self.observedLanguages = languages
+        self.preferredLanguagesDidChange()
+      }
+  }
   private var enqueueTasks = [LLMModelVariant: Task<Void, Never>]()
 
   private func subscribeToDownloadEvents() {
@@ -233,9 +298,15 @@ final class LLMDownloadService: ObservableObject {
 
   private func enqueueDownload(variant: LLMModelVariant, downloadType: DownloadType = .llm) async {
     do {
-      let manifest = try await self.fetchManifest()
-      guard let entry = manifest.llmEntry(for: variant) else {
-        throw R2DownloadError.manifestMissingVariant(variant.rawValue)
+      let entry: LLMModelEntry
+      if let pinned = HereticModelCatalog.entry(for: variant) {
+        entry = pinned
+      } else {
+        let manifest = try await self.fetchManifest()
+        guard let remote = manifest.llmEntry(for: variant) else {
+          throw R2DownloadError.manifestMissingVariant(variant.rawValue)
+        }
+        entry = remote
       }
       guard entry.isLoadableByThisBuild else {
         DiagnosticLog.write("llm: \(variant.rawValue) needs llama.cpp > \(LlamaRuntime.buildNumber)")
@@ -287,6 +358,8 @@ final class LLMDownloadService: ObservableObject {
     let current = settings.selectedLLMVariant
 
     guard !settings.isDictationLocked else { return }
+    if LLMDevicePolicy.usesChinese(settings.textProcessingLanguages),
+       !settings.defaults.bool(forKey: Self.manualSelectionKey) { return }
 
     guard self.isDownloaded(current), let successor = current.successor else { return }
     guard !self.isDownloaded(successor) else { return }
@@ -347,6 +420,7 @@ final class LLMDownloadService: ObservableObject {
       settings.selectedLLMVariant = variant
       self.selectedVariant = variant
     }
+    self.refreshAutomaticSelection()
     self.syncHasUsableModel()
   }
 
@@ -380,3 +454,4 @@ final class LLMDownloadService: ObservableObject {
     settings.llmDownloadInProgressVariants = variants
   }
 }
+

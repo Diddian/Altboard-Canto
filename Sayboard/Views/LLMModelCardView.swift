@@ -5,6 +5,7 @@ import UIKit
 struct LLMModelCardView: View, Equatable {
 
   let variant: LLMModelVariant
+  var recommended = false
   let isActive: Bool
   let downloadState: ModelDownloadState
   let onSelect: () -> Void
@@ -46,6 +47,7 @@ struct LLMModelCardView: View, Equatable {
 
   nonisolated static func ==(lhs: Self, rhs: Self) -> Bool {
     lhs.variant == rhs.variant
+      && lhs.recommended == rhs.recommended
       && lhs.isActive == rhs.isActive
       && lhs.downloadState == rhs.downloadState
   }
@@ -60,13 +62,13 @@ struct LLMModelCardView: View, Equatable {
     if self.dynamicTypeSize.isAccessibilitySize {
       VStack(alignment: .leading, spacing: 6) {
         self.titleAndBadges
-        self.statBars
+        if self.variant.hereticTier == nil { self.statBars }
       }
     } else {
       HStack(alignment: .top) {
         self.titleAndBadges
         Spacer()
-        self.statBars
+        if self.variant.hereticTier == nil { self.statBars }
       }
     }
   }
@@ -76,7 +78,7 @@ struct LLMModelCardView: View, Equatable {
       Text(verbatim: self.variant.displayName)
         .font(.headline)
       ModelBadgesRow(isActive: self.isActive) {
-        if self.variant.isRecommended {
+        if self.recommended {
           ModelBadgePill(text: Text("Recommended"), color: .green)
         } else if let successor = self.variant.successor {
           ModelBadgePill(text: Text("Replaced by \(successor.displayName)"), color: .orange)
@@ -152,3 +154,4 @@ struct LLMModelCardView: View, Equatable {
     }
   }
 }
+

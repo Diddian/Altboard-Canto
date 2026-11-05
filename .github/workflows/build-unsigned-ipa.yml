@@ -108,6 +108,10 @@ jobs:
           swiftc -o "$RUNNER_TEMP/llm-bridge-smoke" \
             Shared/LLMBridge.swift scripts/verify-llm-bridge.swift
           "$RUNNER_TEMP/llm-bridge-smoke"
+          swiftc -o "$RUNNER_TEMP/llm-device-policy-smoke" \
+            Shared/LLMDevicePolicy.swift Sayboard/Services/LLMPromptTemplates.swift \
+            scripts/verify-llm-device-policy.swift
+          "$RUNNER_TEMP/llm-device-policy-smoke"
           swiftc -o "$RUNNER_TEMP/vocabulary-export-smoke" \
             Shared/PersonalVocabularyExport.swift scripts/verify-vocabulary-export.swift
           "$RUNNER_TEMP/vocabulary-export-smoke"
@@ -345,3 +349,4 @@ jobs:
           echo "### Direct IPA download" >> "$GITHUB_STEP_SUMMARY"
           echo "[$DIRECT]($DIRECT)" >> "$GITHUB_STEP_SUMMARY"
           echo "Built from commit: \`$GITHUB_SHA\`" >> "$GITHUB_STEP_SUMMARY"
+

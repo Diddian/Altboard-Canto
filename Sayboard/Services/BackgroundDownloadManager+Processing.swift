@@ -61,7 +61,20 @@ extension BackgroundDownloadManager {
       return
     }
 
-    if let extractError = self.extractToDestination(zipURL: tempURL, destinationDir: metadata.destinationDirectory) {
+    let rawGGUFName: String?
+    if metadata.downloadType != .stt, metadata.sourceURL.pathExtension.lowercased() == "gguf" {
+      rawGGUFName = LLMModelVariant(rawValue: metadata.variantRawValue)?.ggufFileName
+      guard rawGGUFName != nil else {
+        try? fm.removeItem(at: tempURL)
+        self.completeWithFailure(key: key, metadata: metadata, error: R2DownloadError.cancelled)
+        return
+      }
+    } else {
+      rawGGUFName = nil
+    }
+    if let extractError = self.extractToDestination(
+      zipURL: tempURL, destinationDir: metadata.destinationDirectory, ggufFileName: rawGGUFName
+    ) {
       self.completeWithFailure(key: key, metadata: metadata, error: extractError)
       return
     }
@@ -86,26 +99,18 @@ extension BackgroundDownloadManager {
     }
   }
 
-  private func extractToDestination(zipURL: URL, destinationDir: URL) -> R2DownloadError? {
+  private func extractToDestination(zipURL: URL, destinationDir: URL,
+                                    ggufFileName: String? = nil) -> R2DownloadError? {
     let fm = FileManager.default
     do {
-      if fm.fileExists(atPath: destinationDir.path) {
-        try fm.removeItem(at: destinationDir)
-      }
-      try fm.createDirectory(at: destinationDir, withIntermediateDirectories: true)
-      try fm.unzipItem(at: zipURL, to: destinationDir)
-      try? fm.removeItem(at: zipURL)
-
-      var destURL = destinationDir
-      var backupValues = URLResourceValues()
-      backupValues.isExcludedFromBackup = true
-      try? destURL.setResourceValues(backupValues)
+      try ModelDownloadInstaller.install(
+        source: zipURL, destination: destinationDir, ggufFileName: ggufFileName
+      )
 
       return nil
     } catch {
       let ranOutOfSpace = Self.volumeIsFull()
       try? fm.removeItem(at: zipURL)
-      try? fm.removeItem(at: destinationDir)
       return ranOutOfSpace ? .extractionRanOutOfSpace : .extractionFailed(error)
     }
   }
@@ -126,3 +131,4 @@ extension BackgroundDownloadManager {
     DispatchQueue.main.async { self.eventSubject.send(event) }
   }
 }
+

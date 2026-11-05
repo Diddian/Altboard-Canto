@@ -408,13 +408,26 @@ struct SharedSettings {
     }
   }
 
+  var textProcessingLanguages: [String] {
+    var languages = self.preferredSpokenLanguages
+    switch self.voiceOutputTarget {
+    case .cantonese: languages.append("yue")
+    case .traditionalChinese: languages.append("zh-Hant")
+    case .custom: languages.append(self.voiceCustomLanguage)
+    case .english: languages.append("en")
+    case .german: languages.append("de")
+    case .original: break
+    }
+    return languages
+  }
+
   var selectedLLMVariant: LLMModelVariant {
     get {
       guard
         let raw = defaults.string(forKey: SharedKey.selectedLLMVariant),
         let variant = LLMModelVariant(rawValue: raw)
       else {
-        return .qwen35Small
+        return LLMDevicePolicy.usesChinese(self.textProcessingLanguages) ? .hereticSmall : .qwen35Small
       }
       return variant
     }
@@ -610,3 +623,4 @@ struct SharedSettings {
   }
 
 }
+

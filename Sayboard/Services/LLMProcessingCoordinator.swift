@@ -269,6 +269,10 @@ final class LLMProcessingCoordinator: ObservableObject {
         Self.inferenceTimeoutSeconds
       }
 
+    let generationDeadline = min(
+      timeout, SharedSettings().selectedLLMVariant == .hereticLarge ? 60.0 : 15.0
+    )
+
     return await withTaskGroup(of: String?.self) { group in
       group.addTask {
         await self.inferenceService.process(
@@ -276,7 +280,7 @@ final class LLMProcessingCoordinator: ObservableObject {
           userText: userText,
           assistantPrefill: assistantPrefill,
           maxOutputTokens: nil,
-          deadlineSeconds: 15,
+          deadlineSeconds: generationDeadline,
         )
       }
 
@@ -295,4 +299,5 @@ final class LLMProcessingCoordinator: ObservableObject {
     }
   }
 }
+
 
