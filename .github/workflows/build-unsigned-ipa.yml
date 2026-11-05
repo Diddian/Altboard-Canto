@@ -208,19 +208,34 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          xcodebuild \
-            -project Sayboard.xcodeproj \
-            -scheme Sayboard \
-            -configuration Release \
-            -sdk iphoneos \
-            -destination 'generic/platform=iOS' \
-            -derivedDataPath "$RUNNER_TEMP/AltboardDerived" \
-            -jobs 2 \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            'CODE_SIGN_IDENTITY=' \
-            'DEVELOPMENT_TEAM=' \
-            build 2>&1 | tee "$RUNNER_TEMP/xcodebuild.log"
+          # The macOS runner's stale SwiftPM binary-artifact cache can prevent
+          # package resolution before the compiler starts.
+          ARTIFACT_CACHE="$HOME/Library/Caches/org.swift.swiftpm/artifacts"
+          rm -rf "$ARTIFACT_CACHE"
+          build_iphone() {
+            xcodebuild \
+              -project Sayboard.xcodeproj \
+              -scheme Sayboard \
+              -configuration Release \
+              -sdk iphoneos \
+              -destination 'generic/platform=iOS' \
+              -derivedDataPath "$RUNNER_TEMP/AltboardDerived" \
+              -jobs 2 \
+              CODE_SIGNING_ALLOWED=NO \
+              CODE_SIGNING_REQUIRED=NO \
+              'CODE_SIGN_IDENTITY=' \
+              'DEVELOPMENT_TEAM=' \
+              build
+          }
+          if ! build_iphone 2>&1 | tee "$RUNNER_TEMP/xcodebuild.log"; then
+            if grep -Fq 'Could not resolve package dependencies' "$RUNNER_TEMP/xcodebuild.log" &&
+               grep -Fq 'already exists in file system' "$RUNNER_TEMP/xcodebuild.log"; then
+              rm -rf "$ARTIFACT_CACHE"
+              build_iphone 2>&1 | tee "$RUNNER_TEMP/xcodebuild-retry.log"
+            else
+              exit 1
+            fi
+          fi
 
       - name: Preserve App Group entitlements for SideStore
         shell: bash

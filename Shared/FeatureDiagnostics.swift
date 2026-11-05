@@ -97,6 +97,33 @@ enum FeatureDiagnostics {
 
   static var eventCount: Int { entries().count }
 
+  // Export-only heuristics; never label a repeated event as proven duplicate work.
+  private static func patterns(in items: [[String: Any]]) -> [String: Any] {
+    var counts = [String: Int]()
+    var repeatedStartOrQueue = [String: Int]()
+    var maximumDurationMs = [String: Int]()
+    var previous: String?
+    for item in items {
+      guard let area = item["area"] as? String,
+            let event = item["event"] as? String else { continue }
+      let key = area + "." + event
+      counts[key, default: 0] += 1
+      if previous == key && (event == "started" || event == "queued") {
+        repeatedStartOrQueue[key, default: 0] += 1
+      }
+      previous = key
+      if let duration = item["durationMs"] as? Int {
+        maximumDurationMs[area] = max(maximumDurationMs[area, default: 0], duration)
+      }
+    }
+    return [
+      "countsByEvent": counts,
+      "adjacentRepeatedStartOrQueue": repeatedStartOrQueue,
+      "maxDurationMsByArea": maximumDurationMs,
+      "interpretation": "Investigation hints only; compare source and app lifecycle before removing code",
+    ]
+  }
+
   static func exportJSON() -> String {
     let keyboardJSON = Data(KeyboardLifecycleTrace.exportJSON().utf8)
     let keyboard = (try? JSONSerialization.jsonObject(with: keyboardJSON))
@@ -105,12 +132,14 @@ enum FeatureDiagnostics {
     let swipeCounters = swipeCountersData.flatMap {
       try? JSONSerialization.jsonObject(with: $0)
     } ?? [:]
+    let featureEvents = entries()
     let payload: [String: Any] = [
       "schemaVersion": 1,
       "exportedAtMs": Int64(Date().timeIntervalSince1970 * 1_000),
       "build": Bundle.main.infoDictionary?["AltboardBuildSHA"] as? String ?? "unknown",
       "privacy": "No typed text, host content, touch paths, audio, transcripts or credentials",
-      "features": entries(),
+      "features": featureEvents,
+      "patternsForReview": patterns(in: featureEvents),
       "keyboardLifecycle": keyboard,
       "existingAggregates": [
         "hapticRequestCount": KeyboardHapticTrace.total,

@@ -6,6 +6,13 @@ enum LLMAction: String, Codable, Sendable {
   case translate
 }
 
+// The standalone verifier does not link the app's persistent diagnostic writer.
+enum FeatureDiagnostics {
+  enum Area { case bridge }
+  enum Event { case unavailable, queued, failed }
+  static func record(_ area: Area, _ event: Event) {}
+}
+
 enum AppGroup {
   static let containerURL: URL? = {
     let url = FileManager.default.temporaryDirectory

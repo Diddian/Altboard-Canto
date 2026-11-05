@@ -89,6 +89,8 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("KeyboardLifecycleTrace.exportJSON()", trace)
         self.assertIn("KeyboardLifecycleTrace.clear()", trace)
         self.assertIn("KeyboardExperimentMetrics.read()", trace)
+        self.assertIn('"patternsForReview": patterns(in: featureEvents)', trace)
+        self.assertIn('event == "started" || event == "queued"', trace)
         self.assertIn("KeyboardHapticTrace.events", trace)
         self.assertIn('DisclosureGroup("Development Traces"', screen)
         for sensitive in ("documentContextBeforeInput", "selectedText", "audioSamples",
