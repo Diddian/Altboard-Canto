@@ -66,7 +66,7 @@ struct SettingsView: View {
         } label: {
           LabeledContent {
             Text(self.setupChecklist.isComplete ? "Ready" : "Check")
-              .foregroundStyle(self.setupChecklist.isComplete ? .secondary : .orange)
+              .foregroundStyle(self.setupChecklist.isComplete ? Color.secondary : Color.orange)
           } label: {
             Label("Is My Microphone Ready?", systemImage: "mic.circle")
           }
