@@ -153,6 +153,9 @@ jobs:
           python3 -m json.tool docs/ios-keyboard-reference.json >/dev/null
           python3 -m json.tool docs/ios-keyboard-native-vs-altboard-pixel-comparison.json >/dev/null
           python3 -m json.tool docs/swipe-typing-en-de-plan.json >/dev/null
+          swiftc -o "$RUNNER_TEMP/keyboard-host-geometry-smoke" \
+            Shared/KeyboardHostGeometry.swift scripts/verify-keyboard-host-geometry.swift
+          "$RUNNER_TEMP/keyboard-host-geometry-smoke"
           swiftc -o "$RUNNER_TEMP/layout-smoke" \
             Shared/KeyboardKind.swift Shared/KeyboardLayoutGeometry.swift \
             scripts/verify-keyboard-layout.swift
@@ -352,5 +355,6 @@ jobs:
           echo "### Direct IPA download" >> "$GITHUB_STEP_SUMMARY"
           echo "[$DIRECT]($DIRECT)" >> "$GITHUB_STEP_SUMMARY"
           echo "Built from commit: \`$GITHUB_SHA\`" >> "$GITHUB_STEP_SUMMARY"
+
 
 

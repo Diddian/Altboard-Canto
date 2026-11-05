@@ -174,10 +174,6 @@ struct AlphabeticKeyboardLayout: View {
                 .accessibilityHidden(true)
             }
           }
-          // Reset the three UIKit touch rows on host reactivation. Previously
-          // only the bottom row was rebuilt, leaving reused letter surfaces
-          // in an incomplete first-frame state.
-          .id(self.keyboardState.keyboardAppearanceRevision)
         }
       }
       .frame(height: 3 * KeyboardChromeMetrics.keyHeight
@@ -199,7 +195,6 @@ struct AlphabeticKeyboardLayout: View {
         onCursorTrackingBegan: { self.beginCursorTracking() },
         onCursorTrackingEnded: { self.endCursorTracking() }
       )
-      .id(self.keyboardState.keyboardAppearanceRevision)
       .padding(.top, Self.rowSpacing.kbScaled)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -936,6 +931,7 @@ struct AlphabeticKeyboardLayout: View {
   ) -> some View {
     AlphabeticTouchRow(
       letters: letters,
+      appearanceRevision: self.keyboardState.keyboardAppearanceRevision,
       uppercase: self.shiftActive || self.capsLock,
       horizontalInset: inset.kbScaled,
       topHitInset: top.kbScaled,
@@ -1632,3 +1628,4 @@ private final class SwipeTrailDrawingView: UIView {
     }
   }
 }
+

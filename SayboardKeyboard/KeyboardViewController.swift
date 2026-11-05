@@ -41,30 +41,18 @@ final class KeyboardViewController: UIInputViewController {
   var receivedPingDuringProcessing = false
 
   override func loadView() {
-    super.loadView()
-    view.backgroundColor = .clear
-    view.isOpaque = false
-    view.clipsToBounds = true
-
-    if let inputView = view as? UIInputView {
-      inputView.allowsSelfSizing = true
-    }
-  }
-
-  override func updateViewConstraints() {
-    super.updateViewConstraints()
-    if self.heightConstraint == nil {
-      for constraint in view.constraintsAffectingLayout(for: .vertical) {
-        constraint.priority = .defaultHigh
-      }
-      let initialHeight = KeyboardMetrics.totalHeight(
-        actionBarVisible: false, kind: self.keyboardState.effectiveTypingKind
-      )
-      let hc = view.heightAnchor.constraint(equalToConstant: initialHeight)
-      hc.priority = UILayoutPriority(rawValue: 999)
-      hc.isActive = true
-      self.heightConstraint = hc
-    }
+    let keyboard = KeyboardInputView(frame: .zero, inputViewStyle: .keyboard)
+    keyboard.contentHeight = KeyboardMetrics.totalHeight(
+      actionBarVisible: false, kind: self.keyboardState.effectiveTypingKind
+    )
+    keyboard.allowsSelfSizing = true
+    keyboard.backgroundColor = KeyboardPalette.backdrop
+    keyboard.clipsToBounds = true
+    self.inputView = keyboard
+    let height = keyboard.heightAnchor.constraint(equalToConstant: keyboard.contentHeight)
+    height.priority = UILayoutPriority(rawValue: 999)
+    height.isActive = true
+    self.heightConstraint = height
   }
 
   override func viewDidLoad() {
@@ -80,6 +68,7 @@ final class KeyboardViewController: UIInputViewController {
         for: .allTouchEvents
       )
     }
+    self.setupKeyboardView()
     KeyboardHaptics.prepare()
     Self.activeInstance = self
     self.setupTranscriptionObserver()
@@ -96,22 +85,14 @@ final class KeyboardViewController: UIInputViewController {
     Self.activeInstance = self
     SharedSettings().defaults.set(true, forKey: "canto.keyboardOpenedAtLeastOnce")
     SharedSettings().synchronize()
-    // Resolve persisted mode, permissions and host traits before mounting
-    // SwiftUI. Creating the view before refresh could select a stale layout
-    // and an incorrect initial host height.
     self.keyboardState.refresh()
-    self.rootNeedsMeasuredRemount = true
-    self.view.setNeedsLayout()
     if self.lastTouchDocumentID != self.textDocumentProxy.documentIdentifier {
       KeyboardTouchLearning.shared.invalidate()
     }
     self.lastTouchDocumentID = self.textDocumentProxy.documentIdentifier
     self.refreshHostInputTraits()
     self.syncFullAccessIfChanged()
-    if self.hostingController == nil {
-      self.setupKeyboardView()
-    }
-    // Reactivation can reuse the same hosted SwiftUI view after an interrupted drag.
+    // Reset transient gestures without tearing down the visible render tree.
     self.keyboardState.keyboardAppearanceRevision &+= 1
     KeyboardHaptics.prepare()
     if self.keyboardState.isRecording {
@@ -204,9 +185,8 @@ final class KeyboardViewController: UIInputViewController {
   private var hostingHeightConstraint: NSLayoutConstraint?
   private var actionBarVisible = false
 
-  private var hostingController: UIHostingController<KeyboardView>?
-  private var lastHostingLayoutSize: CGSize = .zero
-  private var rootNeedsMeasuredRemount = true
+  private var hostingController: UIHostingController<KeyboardHostingRoot>?
+  private let hostGeometry = KeyboardHostGeometry()
   private var staleFallbackTimer: Timer?
   private var lastSyncedFullAccess = false
   private var hasPerformedInitialFullAccessSync = false
@@ -275,6 +255,8 @@ final class KeyboardViewController: UIInputViewController {
     self.syncFullAccessIfChanged()
     self.keyboardState.refresh()
     self.refreshHostInputTraits()
+    self.keyboardState.keyboardAppearanceRevision &+= 1
+    self.updateKeyboardHeight(actionBarVisible: false)
     KeyboardHaptics.prepare()
     if self.keyboardState.isRecording {
       self.keyboardState.startLevelPolling()
@@ -534,21 +516,21 @@ extension KeyboardViewController {
     self.applyKeyboardHeight()
   }
 
-  func setupKeyboardView() {
-    self.lastHostingLayoutSize = .zero
-    self.rootNeedsMeasuredRemount = true
-    let proxy = self.makeKeyboardProxy()
-    let keyboardView = KeyboardView(proxy: proxy, keyboardState: self.keyboardState)
-    let hosting = UIHostingController(rootView: keyboardView)
+  private func setupKeyboardView() {
+    guard self.hostingController == nil else { return }
+    let root = KeyboardHostingRoot(
+      proxy: self.makeKeyboardProxy(), keyboardState: self.keyboardState,
+      geometry: self.hostGeometry
+    )
+    let hosting = UIHostingController(rootView: root)
     hosting.safeAreaRegions = []
+    hosting.sizingOptions = []
     hosting.view.backgroundColor = .clear
     hosting.view.isOpaque = false
     hosting.view.translatesAutoresizingMaskIntoConstraints = false
 
     self.addChild(hosting)
     self.view.addSubview(hosting.view)
-    hosting.didMove(toParent: self)
-
     let initialHeight = KeyboardMetrics.totalHeight(
       actionBarVisible: false, kind: self.keyboardState.effectiveTypingKind
     )
@@ -556,12 +538,12 @@ extension KeyboardViewController {
     NSLayoutConstraint.activate([
       hosting.view.leadingAnchor.constraint(equalTo: self.view.leadingAnchor),
       hosting.view.trailingAnchor.constraint(equalTo: self.view.trailingAnchor),
-      hosting.view.bottomAnchor.constraint(equalTo: self.view.bottomAnchor),
+      hosting.view.topAnchor.constraint(equalTo: self.view.topAnchor),
       hostingHeight,
     ])
     self.hostingHeightConstraint = hostingHeight
-
     self.hostingController = hosting
+    hosting.didMove(toParent: self)
   }
 
   private func applyKeyboardHeight() {
@@ -569,22 +551,17 @@ extension KeyboardViewController {
       actionBarVisible: self.actionBarVisible,
       kind: self.keyboardState.effectiveTypingKind
     )
-    // UIKit may request the view size after viewWillAppear. Update the hosted
-    // view even when the parent height constraint has not yet been created.
-    var changed = false
+    if let keyboard = self.inputView as? KeyboardInputView {
+      keyboard.contentHeight = target
+    }
     if let height = self.heightConstraint, height.constant != target {
       height.constant = target
-      changed = true
     }
     if let height = self.hostingHeightConstraint, height.constant != target {
       height.constant = target
-      changed = true
     }
-    guard changed else { return }
-    UIView.performWithoutAnimation {
-      self.view.layoutIfNeeded()
-      self.view.superview?.layoutIfNeeded()
-    }
+    self.hostGeometry.update(width: self.view.bounds.width, height: target)
+    self.view.setNeedsLayout()
   }
 
   private func makeKeyboardProxy() -> KeyboardProxy {
@@ -706,8 +683,7 @@ extension KeyboardViewController {
     if self.lastTouchDocumentID != currentDocument {
       KeyboardTouchLearning.shared.invalidate()
       self.lastTouchDocumentID = currentDocument
-      // The host may switch input fields without calling viewWillAppear.
-      // Force all three letter rows to remount on the new input document.
+      // A host can switch fields without another appearance callback.
       self.keyboardState.keyboardAppearanceRevision &+= 1
       self.view.setNeedsLayout()
     }
@@ -724,28 +700,12 @@ extension KeyboardViewController {
 
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
-    guard let controller = self.hostingController else { return }
-    let hostedView = controller.view!
-    guard hostedView.bounds.width > 1, hostedView.bounds.height > 1 else { return }
-    let changedSize = hostedView.bounds.size != self.lastHostingLayoutSize
-    guard changedSize || self.rootNeedsMeasuredRemount else { return }
-    self.lastHostingLayoutSize = hostedView.bounds.size
-    if self.rootNeedsMeasuredRemount {
-      // SwiftUI may mount the keyboard while the extension reports zero
-      // geometry. A UIKit layout pass alone does not reconstruct those
-      // zero-width letter rows; remount the root once measured bounds exist.
-      // Mark finished first to prevent a recursive UIKit layout loop.
-      self.rootNeedsMeasuredRemount = false
-      DispatchQueue.main.async { [weak self, weak controller] in
-        guard let self, let controller, self.hostingController === controller else { return }
-        self.keyboardState.keyboardAppearanceRevision &+= 1
-        controller.rootView = KeyboardView(
-          proxy: self.makeKeyboardProxy(), keyboardState: self.keyboardState
-        )
-        controller.view.setNeedsLayout()
-      }
-    }
-    hostedView.setNeedsLayout()
+    self.hostGeometry.update(
+      width: self.view.bounds.width,
+      height: KeyboardMetrics.totalHeight(
+        actionBarVisible: self.actionBarVisible, kind: self.keyboardState.effectiveTypingKind
+      )
+    )
   }
 
   private func refreshHostInputTraits() {
@@ -780,4 +740,5 @@ extension KeyboardViewController {
     self.checkForPendingLLMResult()
   }
 }
+
 

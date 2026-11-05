@@ -1,4 +1,4 @@
-"""Regression guards for a visible, correctly sized keyboard on first focus."""
+"""Regression guards for stable keyboard hosting across focus changes."""
 from pathlib import Path
 import unittest
 
@@ -11,7 +11,10 @@ ROOT_VIEW = ROOT / "SayboardKeyboard" / "Views" / "KeyboardView.swift"
 class KeyboardInitialLayoutTests(unittest.TestCase):
     def test_letter_rows_remain_visible_and_rehydrate_on_reactivation(self):
         source = LAYOUT.read_text(encoding="utf-8")
-        self.assertIn(".id(self.keyboardState.keyboardAppearanceRevision)", source)
+        self.assertNotIn(".id(self.keyboardState.keyboardAppearanceRevision)", source)
+        row = (ROOT / "SayboardKeyboard/Views/AlphabeticTouchRow.swift").read_text()
+        self.assertIn(".onChange(of: self.appearanceRevision)", row)
+        self.assertIn("resetToken: self.appearanceRevision", row)
         self.assertNotIn(".opacity(self.isCursorTracking ? 0.07 : 1)", source)
         self.assertNotIn(".allowsHitTesting(!self.isCursorTracking)", source)
         self.assertIn("self.firstKeyRow", source)
@@ -27,10 +30,18 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         appear = source.split("override func viewWillAppear(", 1)[1].split(
             "override func viewWillDisappear(", 1
         )[0]
-        self.assertLess(appear.index("self.keyboardState.refresh()"),
-                        appear.index("self.setupKeyboardView()"))
-        self.assertLess(appear.index("self.syncFullAccessIfChanged()"),
-                        appear.index("self.setupKeyboardView()"))
+        self.assertNotIn("self.setupKeyboardView()", appear)
+        self.assertIn("self.keyboardState.refresh()", appear)
+        self.assertIn("self.syncFullAccessIfChanged()", appear)
+        self.assertNotIn("controller.rootView =", source)
+        self.assertNotIn("rootNeedsMeasuredRemount", source)
+        self.assertNotIn("constraintsAffectingLayout", source)
+        self.assertNotIn("self.view.superview?.layoutIfNeeded()", source)
+        self.assertIn("hosting.view.topAnchor.constraint(equalTo: self.view.topAnchor)", source)
+        self.assertIn("hosting.sizingOptions = []", source)
+        host = (ROOT / "SayboardKeyboard/KeyboardInputView.swift").read_text()
+        self.assertIn("override func systemLayoutSizeFitting", host)
+        self.assertIn(".frame(width: self.geometry.size.width, height: self.geometry.size.height", host)
         self.assertIn("kind: self.keyboardState.effectiveTypingKind", source)
         self.assertIn("self.hostingHeightConstraint, height.constant != target", source)
         self.assertIn("override func viewDidLayoutSubviews()", source)
@@ -40,7 +51,7 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertEqual(root.count("AlphabeticKeyboardLayout(proxy:"), 1)
         self.assertIn("switch self.keyboardState.effectiveTypingKind", root)
         self.assertNotIn("switch self.keyboardState.keyboardKind", root)
-        self.assertIn(".id(self.keyboardState.keyboardAppearanceRevision)", root)
+        self.assertNotIn(".id(self.keyboardState.keyboardAppearanceRevision)", root)
         self.assertIn(".transaction { $0.animation = nil }", root)
         layout = LAYOUT.read_text(encoding="utf-8")
         update = layout.split("private func updateCandidates()", 1)[1].split(
@@ -53,4 +64,5 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
 

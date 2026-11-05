@@ -94,11 +94,14 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("var keyboardShowGlobeKey: Bool", config)
         self.assertIn("self.showGlobeKey = self.settings.keyboardShowGlobeKey", state)
 
-    def test_first_focus_remounts_after_measured_size(self):
+    def test_host_keeps_render_tree_across_focus_changes(self):
         controller = read("SayboardKeyboard/KeyboardViewController.swift")
-        self.assertIn("rootNeedsMeasuredRemount", controller)
-        self.assertIn("hostedView.bounds.width > 1", controller)
-        self.assertIn("controller.rootView = KeyboardView(", controller)
+        host = read("SayboardKeyboard/KeyboardInputView.swift")
+        self.assertIn("KeyboardHostGeometry()", controller)
+        self.assertIn("self.hostGeometry.update(", controller)
+        self.assertNotIn("controller.rootView =", controller)
+        self.assertNotIn("rootNeedsMeasuredRemount", controller)
+        self.assertIn("self.geometry.size.width > 1", host)
         self.assertIn("keyboardAppearanceRevision &+= 1", controller)
 
     def test_meeting_tab_uses_existing_local_recorder(self):
@@ -168,5 +171,6 @@ class SettingsContractTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
 
 
