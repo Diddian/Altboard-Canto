@@ -33,16 +33,18 @@ struct LLMSettingsView: View {
   @State private var customPrompts = [LLMCustomPrompt]()
   @State private var longPressAction = LLMActionSelection.none
   @State private var disabledActions = Set<LLMAction>()
+  @State private var showsFormatting = false
 
   @ViewBuilder
   private var controls: some View {
     Toggle("Enabled", isOn: self.$llmEnabled)
       .disabled(!self.llmDownloadService.hasUsableModel)
-    // Local formatting and clipboard controls remain available without AI.
-    NavigationLink {
-      VoiceOutputSettingsView()
+    DisclosureGroup(isExpanded: self.$showsFormatting) {
+      if self.showsFormatting {
+        TextOutputSection(inline: true)
+      }
     } label: {
-      Label("Output", systemImage: "character.bubble")
+      Label("Formatting", systemImage: "textformat")
     }
     if self.llmEnabled && self.llmDownloadService.hasUsableModel {
       NavigationLink {

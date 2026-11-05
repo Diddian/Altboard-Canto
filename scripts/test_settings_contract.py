@@ -116,14 +116,27 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("var keyboardShowGlobeKey: Bool", config)
         self.assertIn("self.showGlobeKey = self.settings.keyboardShowGlobeKey", state)
 
-    def test_output_has_one_route_and_local_controls_are_not_ai_gated(self):
-        ai = read("Sayboard/Views/LLMSettingsView.swift")
-        self.assertEqual(ai.count("VoiceOutputSettingsView()"), 1)
-        controls = ai.split("private var controls: some View", 1)[1]
-        self.assertLess(controls.index("VoiceOutputSettingsView()"),
-                        controls.index("if self.llmEnabled && self.llmDownloadService.hasUsableModel"))
+    def test_output_and_formatting_have_one_owner(self):
+        dictation = read("Sayboard/Views/SettingsNavigationViews.swift")
+        actions = read("Sayboard/Views/LLMSettingsView.swift")
         output = read("Sayboard/Views/VoiceOutputSettingsView.swift")
-        self.assertEqual(output.count("TextOutputSection()"), 1)
+        formatting = read("Sayboard/Views/TextOutputSection.swift")
+        self.assertIn("DisclosureGroup(isExpanded: self.$showsOutput)", dictation)
+        self.assertIn("VoiceOutputSettingsView(inline: true)", dictation)
+        self.assertNotIn("VoiceOutputSettingsView(", actions)
+        self.assertIn("DisclosureGroup(isExpanded: self.$showsFormatting)", actions)
+        self.assertEqual(actions.count("TextOutputSection(inline: true)"), 1)
+        self.assertNotIn("TextOutputSection(", output)
+        self.assertIn("var inline = false", formatting)
+        self.assertIn("var inline = false", output)
+        self.assertLess(actions.index("TextOutputSection(inline: true)"),
+                        actions.index("if self.llmEnabled && self.llmDownloadService.hasUsableModel"))
+
+    def test_no_custom_swipe_to_switch_app_tabs(self):
+        tabs = read("Sayboard/Views/MainTabView.swift")
+        self.assertNotIn("pageSwipe(for:", tabs)
+        self.assertNotIn("AppPageSwipe.destination(", tabs)
+        self.assertEqual(tabs.count("TabView(selection: self.$selectedTab)"), 2)
 
     def test_host_keeps_render_tree_across_focus_changes(self):
         controller = read("SayboardKeyboard/KeyboardViewController.swift")

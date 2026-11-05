@@ -9,6 +9,7 @@ enum DictationSettingsRows {
 struct DictationSettingsView: View {
   var inline = false
   var rows: DictationSettingsRows = .all
+  @State private var showsOutput = false
 
   var body: some View {
     Group {
@@ -33,16 +34,28 @@ struct DictationSettingsView: View {
       if self.inline {
         self.sessionRows
         self.liveRows
+        self.outputRows
         self.meetingRows
         self.correctionsLink
       } else {
         Section("Recording") { self.sessionRows }
         Section("Live Speech to Text") { self.liveRows }
+        Section("Output") { VoiceOutputSettingsView(inline: true) }
         Section("Meetings") {
           self.meetingRows
           self.correctionsLink
         }
       }
+    }
+  }
+
+  private var outputRows: some View {
+    DisclosureGroup(isExpanded: self.$showsOutput) {
+      if self.showsOutput {
+        VoiceOutputSettingsView(inline: true)
+      }
+    } label: {
+      Label("Output", systemImage: "character.bubble")
     }
   }
 

@@ -2,31 +2,21 @@
 import SwiftUI
 
 struct TextOutputSection: View {
+  var inline = false
   var showFooter = true
 
   var body: some View {
-    Section {
-      self.writingStyleRow
-
-      NavigationLink {
-        SnippetsView()
-      } label: {
-        HStack {
-          Label("Snippets", systemImage: "text.quote")
-          Spacer()
-          Text(verbatim: "\(self.snippetCount)")
-            .foregroundStyle(.secondary)
+    Group {
+      if self.inline {
+        self.controls
+      } else {
+        Section {
+          self.controls
+        } header: {
+          Text("Formatting")
+        } footer: {
+          if self.showFooter { Text(Self.clipboardFooterMessage) }
         }
-      }
-
-      Toggle(isOn: self.$alsoCopyToClipboard) {
-        Label("Auto-Copy to Clipboard", systemImage: "doc.on.clipboard")
-      }
-    } header: {
-      Text("Formatting")
-    } footer: {
-      if self.showFooter {
-        Text(Self.clipboardFooterMessage)
       }
     }
     .onAppear {
@@ -35,7 +25,26 @@ struct TextOutputSection: View {
     }
   }
 
-  private static let clipboardFooterMessage: LocalizedStringKey = "After each dictation, the inserted text is also copied to the system clipboard. Replaces the previous clipboard contents."
+  @ViewBuilder
+  private var controls: some View {
+    self.writingStyleRow
+    NavigationLink {
+      SnippetsView()
+    } label: {
+      HStack {
+        Label("Snippets", systemImage: "text.quote")
+        Spacer()
+        Text(verbatim: "\(self.snippetCount)")
+          .foregroundStyle(.secondary)
+      }
+    }
+    Toggle(isOn: self.$alsoCopyToClipboard) {
+      Label("Auto-Copy to Clipboard", systemImage: "doc.on.clipboard")
+    }
+  }
+
+  private static let clipboardFooterMessage: LocalizedStringKey =
+    "After dictation, the inserted text is also copied to Clipboard."
 
   @AppStorage(SharedKey.alsoCopyToClipboard, store: UserDefaults(suiteName: AppGroup.identifier))
   private var alsoCopyToClipboard = false
