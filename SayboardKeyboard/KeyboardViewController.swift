@@ -163,6 +163,7 @@ final class KeyboardViewController: UIInputViewController {
       }
       return
     }
+    FeatureDiagnostics.record(.bridge, .started)
     self.keyboardState.dictationOutcome = nil
     if !self.isPerformingHistoryNavigation {
       self.keyboardState.clearLLMHistory()
@@ -173,19 +174,23 @@ final class KeyboardViewController: UIInputViewController {
       Self.blockedLiveSessionToken = nil
       self.liveTranscriptionBlockedToken = nil
       self.keyboardState.showFinalOutputPreview(text)
+      FeatureDiagnostics.record(.bridge, .fallback)
       return
     }
     if self.completeExperimentalLiveText(text) {
       self.copyFinalTextToClipboardIfEnabled(text)
       self.keyboardState.showFinalOutputPreview(text)
+      FeatureDiagnostics.record(.bridge, .completed)
       return
     }
     if self.autoApplyLLMIfNeeded(directText: text) {
+      FeatureDiagnostics.record(.bridge, .queued)
       return
     }
 
     DiagnosticLog.write("keyboard: inserting \(text.count) chars into textDocumentProxy")
     self.insertSpacedText(text)
+    FeatureDiagnostics.record(.bridge, .completed)
     self.copyFinalTextToClipboardIfEnabled(text)
     self.keyboardState.showFinalOutputPreview(text)
   }

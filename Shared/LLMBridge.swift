@@ -20,12 +20,17 @@ struct LLMBridge: Sendable {
 
   @discardableResult
   static func writeRequest(_ request: LLMRequest) -> Bool {
-    guard let url = requestFileURL else { return false }
+    guard let url = requestFileURL else {
+      FeatureDiagnostics.record(.bridge, .unavailable)
+      return false
+    }
     do {
       let data = try JSONEncoder().encode(request)
       try data.write(to: url, options: [.atomic, .completeFileProtectionUnlessOpen])
+      FeatureDiagnostics.record(.bridge, .queued)
       return true
     } catch {
+      FeatureDiagnostics.record(.bridge, .failed)
       return false
     }
   }
@@ -40,14 +45,19 @@ struct LLMBridge: Sendable {
 
   @discardableResult
   static func writeResult(_ text: String, requestID: UUID) -> Bool {
-    guard let url = resultFileURL else { return false }
+    guard let url = resultFileURL else {
+      FeatureDiagnostics.record(.bridge, .unavailable)
+      return false
+    }
     do {
       let payload = LLMResult(requestID: requestID, text: text)
       try JSONEncoder().encode(payload).write(
         to: url, options: [.atomic, .completeFileProtectionUnlessOpen]
       )
+      FeatureDiagnostics.record(.bridge, .queued)
       return true
     } catch {
+      FeatureDiagnostics.record(.bridge, .failed)
       return false
     }
   }

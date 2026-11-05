@@ -10,7 +10,7 @@ import Glibc
 enum FeatureDiagnostics {
   enum Area: String, Sendable {
     case speech, liveDictation, voiceOutput, aiActions, speechModel, textModel
-    case meeting, data, language, swipe, chineseInput
+    case meeting, data, language, swipe, chineseInput, bridge
   }
 
   enum Event: String, Sendable {

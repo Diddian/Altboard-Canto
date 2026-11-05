@@ -106,6 +106,10 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
             "Sayboard/Services/LocalUserDataStore.swift": ".data",
             "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift": ".swipe",
             "Sayboard/Views/SpeechLanguagesSettingsView.swift": ".language",
+            "Shared/TranscriptionBridge.swift": ".bridge",
+            "Shared/LLMBridge.swift": ".bridge",
+            "SayboardKeyboard/KeyboardViewController.swift": ".bridge",
+            "SayboardKeyboard/KeyboardViewController+LLM.swift": ".bridge",
         }
         for file, area in modules.items():
             with self.subTest(path=file):

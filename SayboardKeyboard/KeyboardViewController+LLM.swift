@@ -190,6 +190,7 @@ extension KeyboardViewController {
     guard LLMBridge.hasResult() else { return }
     guard let result = LLMBridge.readResult(matching: self.llmRequestID),
           !result.isEmpty else {
+      FeatureDiagnostics.record(.bridge, .rejected)
       // A response owned by a previous keyboard/request must never enter
       // the currently focused document.
       LLMBridge.clearResult()
@@ -234,6 +235,7 @@ extension KeyboardViewController {
         LLMBridge.clearResult()
         return
       }
+      FeatureDiagnostics.record(.bridge, .unavailable)
       DiagnosticLog.write("llm/kb: notified complete but bridge held no result")
       self.insertPendingAutoActionFallback()
       self.keyboardState.isLLMProcessing = false
@@ -243,6 +245,7 @@ extension KeyboardViewController {
     DiagnosticLog.write("llm/kb: inserting \(result.count) chars")
 
     if self.llmClipboardOnly {
+      FeatureDiagnostics.record(.bridge, .fallback)
       UIPasteboard.general.string = result
       self.keyboardState.showFinalOutputPreview("Rewrite copied. Paste to replace.")
       self.keyboardState.clearLLMHistory()
@@ -257,8 +260,10 @@ extension KeyboardViewController {
         && textDocumentProxy.documentContextAfterInput == self.llmSelectionContextAfter
       if matches {
         textDocumentProxy.insertText(result)
+        FeatureDiagnostics.record(.bridge, .completed)
         self.keyboardState.showFinalOutputPreview("Selected text rewritten")
       } else {
+        FeatureDiagnostics.record(.bridge, .fallback)
         UIPasteboard.general.string = result
         self.keyboardState.showFinalOutputPreview("Selection changed. Rewrite copied.")
       }
@@ -268,6 +273,7 @@ extension KeyboardViewController {
     }
 
     guard self.currentLLMFieldMatches() else {
+      FeatureDiagnostics.record(.bridge, .fallback)
       UIPasteboard.general.string = result
       self.keyboardState.showFinalOutputPreview("Input changed. Rewrite copied.")
       self.keyboardState.clearLLMHistory()
@@ -278,6 +284,7 @@ extension KeyboardViewController {
     let currentBeforeText = textDocumentProxy.documentContextBeforeInput ?? ""
     let expected = self.llmOriginalText
     guard expected.isEmpty || currentBeforeText == expected else {
+      FeatureDiagnostics.record(.bridge, .rejected)
       DiagnosticLog.write("llm/kb: document changed under the request, refusing to replace")
       self.keyboardState.llmError = .noTextBeforeCursor
       self.finishLLMInsertion()
@@ -301,6 +308,7 @@ extension KeyboardViewController {
       self.keyboardState.showFinalOutputPreview(result)
     }
 
+    FeatureDiagnostics.record(.bridge, .completed)
     self.keyboardState.llmTextHistory.append(result)
     self.keyboardState.llmHistoryIndex = self.keyboardState.llmTextHistory.count - 1
 
