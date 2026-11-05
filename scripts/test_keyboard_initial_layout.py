@@ -76,9 +76,38 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
                       "willDisappear", "didDisappear", "layoutChanged", "documentChanged",
                       "switchRequirementChanged", "memoryWarning"):
             self.assertIn("self.recordKeyboardTrace(." + event + ")", controller)
-        for label in ("Share Keyboard Trace JSON", "Copy Keyboard Trace JSON",
-                      "Clear Keyboard Trace"):
+        for label in ("Share Development Diagnostics JSON", "Copy Development Diagnostics JSON",
+                      "Clear Development Traces"):
             self.assertIn(label, diagnostics)
+
+    def test_feature_diagnostics_contract(self):
+        trace = (ROOT / "Shared/FeatureDiagnostics.swift").read_text()
+        screen = (ROOT / "Sayboard/Views/DiagnosticsView.swift").read_text()
+        self.assertIn("#if !APPSTORE", trace)
+        self.assertIn("private static let maxBytes: off_t = 1_048_576", trace)
+        self.assertIn("flock(fd, LOCK_EX)", trace)
+        self.assertIn("KeyboardLifecycleTrace.exportJSON()", trace)
+        self.assertIn("KeyboardLifecycleTrace.clear()", trace)
+        self.assertIn('DisclosureGroup("Development Traces"', screen)
+        for sensitive in ("documentContextBeforeInput", "selectedText", "audioSamples",
+                          "request.text", "hostBundleId", "prompt", "touchPath"):
+            self.assertNotIn(sensitive, trace)
+        modules = {
+            "Sayboard/Services/SpeechRecognitionService.swift": ".speech",
+            "Sayboard/Services/SpeechRecognitionService+Transcription.swift": ".speech",
+            "Sayboard/Services/SpeechRecognitionService+ExperimentalLive.swift": ".liveDictation",
+            "Sayboard/Services/ModelDownloadService.swift": ".speechModel",
+            "Sayboard/Services/ModelDownloadService+Execution.swift": ".speechModel",
+            "Sayboard/Services/LLMDownloadService.swift": ".textModel",
+            "Sayboard/Services/LLMProcessingCoordinator.swift": ".aiActions",
+            "Sayboard/Services/MeetingRecordingCoordinator.swift": ".meeting",
+            "Sayboard/Services/LocalUserDataStore.swift": ".data",
+            "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift": ".swipe",
+            "Sayboard/Views/SpeechLanguagesSettingsView.swift": ".language",
+        }
+        for file, area in modules.items():
+            with self.subTest(path=file):
+                self.assertIn("FeatureDiagnostics.record(" + area, (ROOT / file).read_text())
 
 
 if __name__ == "__main__":

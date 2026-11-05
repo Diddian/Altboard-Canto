@@ -13,6 +13,8 @@ struct DiagnosticsView: View {
   @State private var rawASRResult = ""
   @State private var breadcrumbs = [String]()
   @State private var keyboardTraceCount = 0
+  @State private var featureTraceCount = 0
+  @State private var showsDevelopmentTraces = false
   @State private var keyboardTraceExportURL: URL?
   @State private var confirmTraceClear = false
   @State private var traceExportFailed = false
@@ -29,16 +31,19 @@ struct DiagnosticsView: View {
       self.liveDictationSection
       self.testSection
       self.crashSection
-      self.keyboardTraceSection
+      #if !APPSTORE
+      self.developmentTraceSection
+      #endif
       self.exportSection
     }
     .navigationTitle("Diagnostics")
     .navigationBarTitleDisplayMode(.inline)
     .onAppear(perform: self.refresh)
-    .confirmationDialog("Clear keyboard trace?", isPresented: self.$confirmTraceClear) {
-      Button("Clear Trace", role: .destructive) {
-        KeyboardLifecycleTrace.clear()
+    .confirmationDialog("Clear development traces?", isPresented: self.$confirmTraceClear) {
+      Button("Clear Traces", role: .destructive) {
+        FeatureDiagnostics.clearAll()
         self.keyboardTraceCount = 0
+        self.featureTraceCount = 0
       }
     }
     .sheet(isPresented: Binding(
@@ -49,7 +54,7 @@ struct DiagnosticsView: View {
         KeyboardTraceShareSheet(url: url)
       }
     }
-    .alert("Keyboard trace export failed", isPresented: self.$traceExportFailed) {
+    .alert("Development diagnostics export failed", isPresented: self.$traceExportFailed) {
       Button("OK", role: .cancel) {}
     }
   }
@@ -188,31 +193,35 @@ struct DiagnosticsView: View {
     }
   }
 
-  private var keyboardTraceSection: some View {
+  #if !APPSTORE
+  private var developmentTraceSection: some View {
     Section {
-      LabeledContent("Recorded events", value: "\(self.keyboardTraceCount)")
-      Button("Share Keyboard Trace JSON") {
-        if let url = KeyboardLifecycleTrace.exportFileURL() {
-          self.keyboardTraceExportURL = url
-        } else {
-          self.traceExportFailed = true
+      DisclosureGroup("Development Traces", isExpanded: self.$showsDevelopmentTraces) {
+        LabeledContent("Keyboard lifecycle", value: "\(self.keyboardTraceCount)")
+        LabeledContent("Feature milestones", value: "\(self.featureTraceCount)")
+        Button("Share Development Diagnostics JSON") {
+          if let url = FeatureDiagnostics.exportFileURL() {
+            self.keyboardTraceExportURL = url
+          } else {
+            self.traceExportFailed = true
+          }
+        }
+        Button("Copy Development Diagnostics JSON") {
+          UIPasteboard.general.string = FeatureDiagnostics.exportJSON()
+        }
+        Button("Refresh Diagnostic Counts") {
+          self.keyboardTraceCount = KeyboardLifecycleTrace.eventCount
+          self.featureTraceCount = FeatureDiagnostics.eventCount
+        }
+        Button("Clear Development Traces", role: .destructive) {
+          self.confirmTraceClear = true
         }
       }
-      Button("Copy Keyboard Trace JSON") {
-        UIPasteboard.general.string = KeyboardLifecycleTrace.exportJSON()
-      }
-      Button("Refresh Event Count") {
-        self.keyboardTraceCount = KeyboardLifecycleTrace.eventCount
-      }
-      Button("Clear Keyboard Trace", role: .destructive) {
-        self.confirmTraceClear = true
-      }
-    } header: {
-      Text("Keyboard Lifecycle")
     } footer: {
-      Text("Automatic local trace of keyboard appearance and layout. No typed text. Export after the issue occurs.")
+      Text("Local metadata only. Export after a failure. Nothing uploads automatically.")
     }
   }
+  #endif
 
   private var exportSection: some View {
     Section {
@@ -271,6 +280,7 @@ struct DiagnosticsView: View {
     self.models.verifyExistingModels()
     self.refreshBreadcrumbs()
     self.keyboardTraceCount = KeyboardLifecycleTrace.eventCount
+    self.featureTraceCount = FeatureDiagnostics.eventCount
   }
 
   private func refreshBreadcrumbs() {
@@ -347,6 +357,7 @@ struct DiagnosticsView: View {
       "Haptic request trace (no typed characters):",
       KeyboardHapticTrace.events.joined(separator: "\n"),
       "Keyboard lifecycle trace events: \(self.keyboardTraceCount)",
+      "Feature diagnostic events: \(self.featureTraceCount)",
       "Keyboard interaction trace (no text):",
       KeyboardInputTrace.events.joined(separator: "\n"),
       "Audio engine: \(self.speech.session.audioEngine.isRunning)",
