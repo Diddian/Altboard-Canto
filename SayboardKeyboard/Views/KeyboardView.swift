@@ -145,6 +145,9 @@ struct KeyboardView: View {
           error: error, keyboardState: self.keyboardState,
           onUseClipboard: { self.proxy.requestLLMClipboard() }
         )
+        .onAppear {
+          FeatureDiagnostics.record(.keyboardRender, .llmPromptMounted)
+        }
       } else {
         // A single source of truth for the visible layout. The alphabetic
         // fallback no longer mounts a competing copy of the same keyboard.

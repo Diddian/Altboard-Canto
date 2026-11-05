@@ -153,6 +153,9 @@ struct AlphabeticKeyboardLayout: View {
             },
             onHostDeletion: { self.handleHostDeletion() }
           )
+          .onAppear {
+            FeatureDiagnostics.record(.keyboardRender, .strokeGridMounted)
+          }
         } else {
           // Keep the three-row touch bands under one UIKit touch owner.
           VStack(spacing: 0) {
@@ -172,6 +175,9 @@ struct AlphabeticKeyboardLayout: View {
               SwipeTrailOverlay(trail: self.swipeTrail)
                 .allowsHitTesting(false)
                 .accessibilityHidden(true)
+                .onAppear {
+                  FeatureDiagnostics.record(.keyboardRender, .trailOverlayMounted)
+                }
             }
           }
         }
@@ -221,6 +227,7 @@ struct AlphabeticKeyboardLayout: View {
       }
     }
     .onAppear {
+      FeatureDiagnostics.record(.keyboardRender, .layoutMounted)
       self.isCursorTracking = false
       self.applyHostKeyboardLayout()
     }

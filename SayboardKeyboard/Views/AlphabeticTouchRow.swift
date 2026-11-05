@@ -118,6 +118,9 @@ struct AlphabeticTouchRow: View {
     }
     .frame(height: self.bandHeight)
     .zIndex(self.activeIndex == nil ? 0 : 10)
+    .onAppear {
+      FeatureDiagnostics.record(.keyboardRender, .letterRowMounted)
+    }
     .onChange(of: self.appearanceRevision) { _, _ in self.cancelTouch() }
     .onDisappear { self.cancelTouch() }
   }

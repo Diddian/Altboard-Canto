@@ -32,6 +32,14 @@ struct KeyboardHostingRoot: View {
       KeyboardView(proxy: self.proxy, keyboardState: self.keyboardState)
         .frame(width: self.geometry.size.width, height: self.geometry.size.height,
                alignment: .top)
+        .onAppear {
+          FeatureDiagnostics.record(.keyboardRender, .rootReady)
+        }
+    } else {
+      Color.clear
+        .onAppear {
+          FeatureDiagnostics.record(.keyboardRender, .rootWaiting)
+        }
     }
   }
 }

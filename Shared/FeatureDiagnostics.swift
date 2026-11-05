@@ -10,13 +10,15 @@ import Glibc
 enum FeatureDiagnostics {
   enum Area: String, Sendable {
     case speech, liveDictation, voiceOutput, aiActions, speechModel, textModel
-    case meeting, data, language, swipe, chineseInput, bridge
+    case meeting, data, language, swipe, chineseInput, bridge, keyboardRender
   }
 
   enum Event: String, Sendable {
     case started, completed, stopped, cancelled, failed, blocked, fallback
     case selected, queued, downloaded, deleted, slow, noSpeech, rejected
     case unavailable, interrupted, firstUpdate
+    case rootWaiting, rootReady, layoutMounted, letterRowMounted
+    case strokeGridMounted, trailOverlayMounted, llmPromptMounted
   }
 
   private struct Entry: Codable, Sendable {

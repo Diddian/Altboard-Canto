@@ -46,6 +46,22 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("self.hostingHeightConstraint, height.constant != target", source)
         self.assertIn("override func viewDidLayoutSubviews()", source)
 
+    def test_render_probe_distinguishes_blank_root_from_key_rows(self):
+        root = (ROOT / "SayboardKeyboard/KeyboardInputView.swift").read_text()
+        view = ROOT_VIEW.read_text()
+        layout = LAYOUT.read_text()
+        row = (ROOT / "SayboardKeyboard/Views/AlphabeticTouchRow.swift").read_text()
+        diagnostic = (ROOT / "Shared/FeatureDiagnostics.swift").read_text()
+        self.assertIn("FeatureDiagnostics.record(.keyboardRender, .rootWaiting)", root)
+        self.assertIn("FeatureDiagnostics.record(.keyboardRender, .rootReady)", root)
+        self.assertIn("FeatureDiagnostics.record(.keyboardRender, .layoutMounted)", layout)
+        self.assertIn("FeatureDiagnostics.record(.keyboardRender, .letterRowMounted)", row)
+        self.assertIn("FeatureDiagnostics.record(.keyboardRender, .strokeGridMounted)", layout)
+        self.assertIn("FeatureDiagnostics.record(.keyboardRender, .trailOverlayMounted)", layout)
+        self.assertIn("FeatureDiagnostics.record(.keyboardRender, .llmPromptMounted)", view)
+        self.assertIn("#if !APPSTORE", diagnostic)
+        self.assertNotIn("touchPath", diagnostic)
+
     def test_drawing_view_exists_only_for_an_active_trail(self):
         source = LAYOUT.read_text()
         overlay = source.split("private struct SwipeTrailOverlay: View", 1)[1].split(
