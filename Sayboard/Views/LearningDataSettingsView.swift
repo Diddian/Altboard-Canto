@@ -78,47 +78,12 @@ struct LearningDataSettingsView: View {
   }
 
   private func reset() {
-    guard let defaults = AppGroup.sharedDefaults else { return }
-    for key in [
-      ConfirmedChoiceLearning.chineseKey,
-      CantoneseSchemePreference.candidateStorageKey,
-      CantoneseSchemePreference.preferenceStorageKey,
-      ConfirmedChoiceLearning.shapeWordKey,
-      ConfirmedChoiceLearning.shapeGenerationKey,
-      ConfirmedChoiceLearning.strokePrefixKey,
-      ConfirmedChoiceLearning.latinKey
-    ] {
-      defaults.removeObject(forKey: key)
-    }
-    defaults.synchronize()
+    LocalUserDataStore.resetLearning()
     self.reload()
   }
 
   private func exportJSON() {
-    guard let defaults = AppGroup.sharedDefaults else { return }
-    func counts(for key: String) -> [String: Int] {
-      defaults.dictionary(forKey: key) as? [String: Int] ?? [:]
-    }
-    let chinese = SharedSettings().cantoneseCorrectionRules.map {
-      PersonalVocabularyExport.CorrectionEntry(
-        language: "yue", heard: $0.heard, intended: $0.intended
-      )
-    }
-    let latin = LatinSpeechCorrectionLearning.read(defaults: defaults).map {
-      PersonalVocabularyExport.CorrectionEntry(
-        language: $0.language, heard: $0.heard, intended: $0.intended
-      )
-    }
-    guard let data = try? PersonalVocabularyExport.encode(
-      cantonese: counts(for: CantoneseSchemePreference.candidateStorageKey),
-      latin: counts(for: ConfirmedChoiceLearning.latinKey),
-      romanization: counts(for: CantoneseSchemePreference.preferenceStorageKey),
-      confirmedChinese: ConfirmedChoiceLearning.chineseCounts(defaults: defaults),
-      shapes: counts(for: ConfirmedChoiceLearning.shapeWordKey),
-      shapeGenerations: counts(for: ConfirmedChoiceLearning.shapeGenerationKey),
-      strokePrefixes: counts(for: ConfirmedChoiceLearning.strokePrefixKey),
-      manualCorrections: chinese + latin
-    ) else { return }
+    guard let data = try? LocalUserDataStore.vocabularyData() else { return }
     self.exportedDocument = LearningDataExportDocument(content: data)
     self.showExporter = true
   }
@@ -141,3 +106,4 @@ private struct LearningDataExportDocument: FileDocument {
     FileWrapper(regularFileWithContents: self.content)
   }
 }
+

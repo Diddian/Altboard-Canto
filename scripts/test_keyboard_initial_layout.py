@@ -40,6 +40,8 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertEqual(root.count("AlphabeticKeyboardLayout(proxy:"), 1)
         self.assertIn("switch self.keyboardState.effectiveTypingKind", root)
         self.assertNotIn("switch self.keyboardState.keyboardKind", root)
+        self.assertIn(".id(self.keyboardState.keyboardAppearanceRevision)", root)
+        self.assertIn(".transaction { $0.animation = nil }", root)
         layout = LAYOUT.read_text(encoding="utf-8")
         update = layout.split("private func updateCandidates()", 1)[1].split(
             "private func beginCursorTracking()", 1
@@ -51,3 +53,4 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

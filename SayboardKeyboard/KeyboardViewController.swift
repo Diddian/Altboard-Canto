@@ -736,9 +736,14 @@ extension KeyboardViewController {
       // zero-width letter rows; remount the root once measured bounds exist.
       // Mark finished first to prevent a recursive UIKit layout loop.
       self.rootNeedsMeasuredRemount = false
-      controller.rootView = KeyboardView(
-        proxy: self.makeKeyboardProxy(), keyboardState: self.keyboardState
-      )
+      DispatchQueue.main.async { [weak self, weak controller] in
+        guard let self, let controller, self.hostingController === controller else { return }
+        self.keyboardState.keyboardAppearanceRevision &+= 1
+        controller.rootView = KeyboardView(
+          proxy: self.makeKeyboardProxy(), keyboardState: self.keyboardState
+        )
+        controller.view.setNeedsLayout()
+      }
     }
     hostedView.setNeedsLayout()
   }
@@ -775,3 +780,4 @@ extension KeyboardViewController {
     self.checkForPendingLLMResult()
   }
 }
+

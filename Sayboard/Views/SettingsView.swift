@@ -56,74 +56,40 @@ struct SettingsView: View {
       PurchaseSection()
       #endif
 
-      Section("Start Here") {
+      Section("Speech & AI") {
         SpeechLanguagesSettingsView(
           inline: true, rowsOnly: true,
           onPreferredLanguagesChanged: { self.preferredSpokenLanguages = $0 }
         )
-        NavigationLink {
-          SetupView()
-        } label: {
-          LabeledContent {
-            Text(self.setupChecklist.isComplete ? "Ready" : "Check")
-              .foregroundStyle(self.setupChecklist.isComplete ? Color.secondary : Color.orange)
-          } label: {
-            Label("Is My Microphone Ready?", systemImage: "mic.circle")
-          }
-        }
+        ActiveSessionToggle()
         NavigationLink {
           ModelsView()
         } label: {
-          Label("Offline Speech Model", systemImage: "cpu")
+          Label("Speech Model", systemImage: "cpu")
         }
-      }
-
-      Section("Speech & AI") {
         NavigationLink {
           DictationSettingsView()
         } label: {
-          Label("Speech to Text", systemImage: "waveform")
+          Label("Dictation", systemImage: "waveform")
         }
         NavigationLink {
           VoiceOutputSettingsView()
         } label: {
-          Label("Speech Cleanup & Translation", systemImage: "character.bubble")
+          Label("Output", systemImage: "character.bubble")
         }
         NavigationLink {
           LLMSettingsView()
         } label: {
-          Label("Text Cleanup & AI Actions", systemImage: "sparkles")
+          Label("AI Actions", systemImage: "sparkles")
         }
       }
 
-      Section("Keyboard") {
-        NavigationLink {
-          KeyboardSettingsView(
-            selectedKind: self.keyboardKindBinding,
-            cantoneseSelected: self.preferredSpokenLanguages.contains("yue")
-          )
-        } label: {
-          LabeledContent {
-            Text(LocalizedStringKey(self.selectedKeyboardKind.displayNameKey))
-              .foregroundStyle(.secondary)
-          } label: {
-            Label("Keyboard Layout & Preview", systemImage: "keyboard")
-          }
-        }
-        NavigationLink {
-          KeyboardCustomizationView()
-        } label: {
-          Label("Customize Keys & Feedback", systemImage: "slider.horizontal.3")
-        }
-      }
-
-      Section("Your Data") {
-        NavigationLink {
-          DataAndStorageSettingsView()
-        } label: {
-          Label("History & Storage", systemImage: "externaldrive")
-        }
-      }
+      KeyboardSettingsView(
+        selectedKind: self.keyboardKindBinding, inline: true,
+        cantoneseSelected: self.preferredSpokenLanguages.contains("yue")
+      )
+      KeyboardCustomizationView(inline: true)
+      DataAndStorageSettingsView(inline: true)
 
       Section {
         NavigationLink {
@@ -174,3 +140,4 @@ struct SettingsView: View {
     }
   }
 }
+

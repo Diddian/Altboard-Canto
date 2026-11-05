@@ -7,6 +7,8 @@ struct LLMRequest: Codable, Sendable {
   let action: LLMAction
   let customPromptId: UUID?
   let language: String?
+  var translationTarget: String? = nil
+  var customTranslationLanguage: String? = nil
 }
 
 struct LLMResult: Codable, Sendable {
@@ -84,3 +86,4 @@ struct LLMBridge: Sendable {
     AppGroup.containerURL?.appendingPathComponent(resultFileName)
   }
 }
+

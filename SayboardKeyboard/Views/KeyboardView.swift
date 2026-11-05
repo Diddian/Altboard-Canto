@@ -163,6 +163,8 @@ struct KeyboardView: View {
         )
       }
     }
+    .id(self.keyboardState.keyboardAppearanceRevision)
+    .transaction { $0.animation = nil }
     .onChange(of: self.keyboardState.showLLMActions) { _, visible in
       self.proxy.setActionBarVisible(visible)
     }
@@ -201,3 +203,4 @@ struct KeyboardView: View {
     }
   }
 }
+

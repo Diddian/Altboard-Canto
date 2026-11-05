@@ -229,6 +229,7 @@ enum LLMModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
 
 enum LLMAction: String, CaseIterable, Codable, Sendable {
   case removeRedundancy
+  case translate
   case rewrite
   case formal
   case casual
@@ -244,6 +245,7 @@ enum LLMAction: String, CaseIterable, Codable, Sendable {
   var displayNameKey: String {
     switch self {
     case .removeRedundancy: "Remove redundancy"
+    case .translate: "Translate"
     case .rewrite: "Rewrite"
     case .formal: "Formal"
     case .casual: "Casual"
@@ -333,3 +335,4 @@ enum LLMActionSelection: Codable, Hashable, Sendable {
     }
   }
 }
+

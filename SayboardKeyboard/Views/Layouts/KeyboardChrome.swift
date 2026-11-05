@@ -11,7 +11,7 @@ struct KeyboardChromeMetrics {
 
   @MainActor
   init(keyboardState: KeyboardState) {
-    let compact = (keyboardState.showOutputLanguageButton && keyboardState.selectedVariantSupportsTranslation) || keyboardState.showsAIButton
+    let compact = keyboardState.showOutputLanguageButton || keyboardState.showsAIButton
     let side: CGFloat = (keyboardState.effectiveTypingKind == .alphabetic ? 48 : (compact ? 43 : 45)).kbScaled
     let wide: CGFloat = 92.kbScaled
     let showsGlobe = true // Reserve the required system keyboard-switch key.
@@ -297,3 +297,4 @@ enum KeyboardActions {
     proxy.openURL(url)
   }
 }
+
