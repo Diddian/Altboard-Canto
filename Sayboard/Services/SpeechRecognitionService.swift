@@ -75,6 +75,7 @@ final class SpeechRecognitionService: ObservableObject {
       return
     }
     guard micAuth else {
+      FeatureDiagnostics.record(.speech, .blocked)
       self.errorMessage = "Microphone access is required for voice input."
       return
     }
@@ -95,6 +96,7 @@ final class SpeechRecognitionService: ObservableObject {
     self.currentAudioFileName = "\(UUID().uuidString).caf"
 
     guard self.ensureSessionActive() else {
+      FeatureDiagnostics.record(.speech, .failed)
       return
     }
 
@@ -102,6 +104,7 @@ final class SpeechRecognitionService: ObservableObject {
     self.startAudioCapture()
 
     self.isRecording = true
+    FeatureDiagnostics.record(.speech, .started)
     self.settings.isRecording = true
     self.settings.recordingStartedAt = Date().timeIntervalSinceReferenceDate
     self.armMaxDurationTimer()
@@ -191,6 +194,7 @@ final class SpeechRecognitionService: ObservableObject {
       return
     }
     self.isRecording = false
+    FeatureDiagnostics.record(.speech, .stopped)
     self.settings.recordingStartedAt = 0
     self.isStopping = true
     MicrophoneHoldStopIntent.clear(defaults: self.settings.defaults)
@@ -243,6 +247,7 @@ final class SpeechRecognitionService: ObservableObject {
   }
 
   func cancelRecording() {
+    FeatureDiagnostics.record(.speech, .cancelled)
     MicrophoneHoldStopIntent.clear(defaults: self.settings.defaults)
     self.liveDictationStatus = "Cancelled"
     self.experimentalLiveTask?.cancel()

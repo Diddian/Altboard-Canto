@@ -43,17 +43,21 @@ final class LLMProcessingCoordinator: ObservableObject {
   func processVoiceDictation(_ input: String, options: VoiceOutputConfiguration) async -> String? {
     guard options.needsLLM, !input.isEmpty else { return nil }
     let started = CFAbsoluteTimeGetCurrent()
+    FeatureDiagnostics.record(.voiceOutput, .started)
     guard !self.isProcessing else {
+      FeatureDiagnostics.record(.voiceOutput, .blocked)
       DiagnosticLog.write("voice/llm: already processing")
       return nil
     }
     guard let downloads = self.downloadService, downloads.hasUsableModel else {
+      FeatureDiagnostics.record(.voiceOutput, .unavailable)
       DiagnosticLog.write("voice/llm: offline text model unavailable")
       return nil
     }
     let settings = SharedSettings()
     let variant = settings.selectedLLMVariant
     guard let modelPath = downloads.modelFileURL(for: variant)?.path else {
+      FeatureDiagnostics.record(.voiceOutput, .unavailable)
       DiagnosticLog.write("voice/llm: selected model file missing")
       return nil
     }
@@ -68,6 +72,7 @@ final class LLMProcessingCoordinator: ObservableObject {
     defer { self.endInferenceBackgroundTask(backgroundTask) }
     await self.prepareForInference(variant: variant, modelPath: modelPath)
     guard self.inferenceService.loadState == .loaded else {
+      FeatureDiagnostics.record(.voiceOutput, .failed)
       DiagnosticLog.write("voice/llm: offline model load failed")
       return nil
     }
@@ -76,17 +81,22 @@ final class LLMProcessingCoordinator: ObservableObject {
       userText: input, assistantPrefill: ""
     )
     guard let output = result?.trimmingCharacters(in: .whitespacesAndNewlines), !output.isEmpty else {
+      FeatureDiagnostics.record(.voiceOutput, .failed)
       DiagnosticLog.write("voice/llm: output missing or timed out")
       return nil
     }
     guard VoiceLanguageValidator.matches(output, target: options.target) else {
+      FeatureDiagnostics.record(.voiceOutput, .rejected)
       DiagnosticLog.write("voice/llm: generated text did not match selected language")
       return nil
     }
     if input.count >= 30, output.count > max(input.count * 4, input.count + 200) {
+      FeatureDiagnostics.record(.voiceOutput, .rejected)
       DiagnosticLog.write("voice/llm: output excessively long")
       return nil
     }
+    FeatureDiagnostics.record(.voiceOutput, .completed,
+      durationMs: Int((CFAbsoluteTimeGetCurrent() - started) * 1_000))
     DictationBreadcrumb.record(
       "voice/llm: complete in \(String(format: "%.1f", CFAbsoluteTimeGetCurrent() - started))s"
     )
@@ -95,12 +105,15 @@ final class LLMProcessingCoordinator: ObservableObject {
 
   private func handleProcessingRequest() async {
     guard !self.isProcessing else {
+      FeatureDiagnostics.record(.aiActions, .blocked)
       DiagnosticLog.write("llm: request ignored, already processing")
       return
     }
+    FeatureDiagnostics.record(.aiActions, .started)
     DiagnosticLog.write("llm: request received")
 
     guard !SharedSettings().isDictationLocked else {
+      FeatureDiagnostics.record(.aiActions, .blocked)
       LLMBridge.clearRequest()
       TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingFailed)
       return
@@ -127,6 +140,7 @@ final class LLMProcessingCoordinator: ObservableObject {
 
     guard self.inferenceService.loadState == .loaded else {
       let state = String(describing: self.inferenceService.loadState)
+      FeatureDiagnostics.record(.aiActions, .failed)
       DiagnosticLog.write("llm: load failed, state=\(state)")
       TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingFailed)
       return
@@ -146,6 +160,7 @@ final class LLMProcessingCoordinator: ObservableObject {
          let rawTarget = validated.request.translationTarget,
          let target = VoiceOutputTarget(rawValue: rawTarget),
          !VoiceLanguageValidator.matches(result, target: target) {
+        FeatureDiagnostics.record(.aiActions, .rejected)
         self.inferenceService.unloadModel()
         TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingFailed)
         return
@@ -153,12 +168,15 @@ final class LLMProcessingCoordinator: ObservableObject {
       let finalResult = self.styled(result, action: validated.request.action, host: stylingHost, settings: settings)
       if LLMBridge.writeResult(finalResult, requestID: validated.request.requestID) {
         TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingComplete)
+        FeatureDiagnostics.record(.aiActions, .completed)
         DiagnosticLog.write("llm: complete, result=\(finalResult.count) chars")
       } else {
+        FeatureDiagnostics.record(.aiActions, .failed)
         DiagnosticLog.write("llm: result could not be saved in shared storage")
         TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingFailed)
       }
     } else {
+      FeatureDiagnostics.record(.aiActions, .failed)
       DiagnosticLog.write("llm: FAILED, inference produced nothing")
       TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingFailed)
     }

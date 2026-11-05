@@ -8,11 +8,13 @@ extension SpeechRecognitionService {
           let token = self.settings.dictationSessionToken,
           !token.isEmpty, self.experimentalLiveTask == nil else { return }
     self.liveDictationStatus = "Waiting for first 1.5-second audio chunk and Qwen model"
+    FeatureDiagnostics.record(.liveDictation, .started)
     self.experimentalLiveTask = Task { @MainActor [weak self] in
       guard let self else { return }
       var readOffset = 0
       var revision = 0
       var combined = ""
+      var reportedSlow = false
       // Shorten first-text capture delay without starting concurrent 1.7B
       // inference jobs. Native offline decode time remains device-dependent.
       let frameCount = 24_000  // 1.5 s at 16 kHz
@@ -39,11 +41,16 @@ extension SpeechRecognitionService {
             ExperimentalLiveTranscription.write(sessionToken: token,
                                                  revision: revision, text: combined)
             self.liveDictationStatus = "Live update " + String(revision) + " delivered"
+            if revision == 1 { FeatureDiagnostics.record(.liveDictation, .firstUpdate) }
           }
         }
         // Diagnostic is duration only. No text or audio is logged.
         let decodeSeconds = CFAbsoluteTimeGetCurrent() - started
         if decodeSeconds > 1.5 {
+          if !reportedSlow {
+            reportedSlow = true
+            FeatureDiagnostics.record(.liveDictation, .slow, durationMs: Int(decodeSeconds * 1_000))
+          }
           self.liveDictationStatus = "Live recognition behind recording: "
             + String(format: "%.1fs decode", decodeSeconds)
         }
@@ -55,6 +62,7 @@ extension SpeechRecognitionService {
 
   func stopExperimentalLive() async {
     let task = self.experimentalLiveTask
+    if task != nil { FeatureDiagnostics.record(.liveDictation, .stopped) }
     self.experimentalLiveTask = nil
     task?.cancel()
     await task?.value
