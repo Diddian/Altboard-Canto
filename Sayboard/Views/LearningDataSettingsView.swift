@@ -10,7 +10,7 @@ struct LearningDataSettingsView: View {
 
   var body: some View {
     Form {
-      Section("Learned Suggestions") {
+      Section {
         LabeledContent("Confirmed words", value: "\(self.counts.count)")
         if self.counts.isEmpty {
           Text("Choose a word in the keyboard to begin building personal suggestions.")
@@ -20,11 +20,13 @@ struct LearningDataSettingsView: View {
             LabeledContent(word.key, value: "\(word.value)")
           }
         }
+      } header: {
+        Text("Learned Suggestions")
       } footer: {
         Text("Only chosen words and aggregate counts are learned. Altboard does not store full typed messages or gesture paths.")
       }
 
-      Section("Your Data") {
+      Section {
         Button {
           self.exportJSON()
         } label: {
@@ -38,6 +40,8 @@ struct LearningDataSettingsView: View {
           Label("Reset Learned Suggestions", systemImage: "arrow.counterclockwise")
         }
         .disabled(AppGroup.sharedDefaults == nil)
+      } header: {
+        Text("Your Data")
       } footer: {
         Text("Export includes explicit speech correction pairs and aggregate keyboard preferences, but not recordings or transcripts. Reset only affects learned keyboard selections; it does not delete recordings, speech correction rules or downloaded models.")
       }

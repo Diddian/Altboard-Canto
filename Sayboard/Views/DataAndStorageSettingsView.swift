@@ -29,7 +29,7 @@ struct DataAndStorageSettingsView: View {
           Label("Text & Translation Models", systemImage: "cpu")
         }
       }
-      Section("Personal Vocabulary") {
+      Section {
         NavigationLink {
           CantoneseCorrectionsView()
         } label: {
@@ -40,6 +40,8 @@ struct DataAndStorageSettingsView: View {
         } label: {
           Label("Learned Suggestions & JSON Export", systemImage: "square.and.arrow.up")
         }
+      } header: {
+        Text("Personal Vocabulary")
       } footer: {
         Text("Voice notes, meetings, correction rules and learned suggestions are managed separately. Nothing is uploaded automatically.")
       }
