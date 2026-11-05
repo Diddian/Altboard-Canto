@@ -85,7 +85,7 @@ enum LocalUserDataStore {
           AppGroup.sharedDefaults?.synchronize()
         }
       }
-    FeatureDiagnostics.record(.data, .completed)
+      FeatureDiagnostics.record(.data, .completed)
     } catch {
       FeatureDiagnostics.record(.data, .failed)
       throw error
@@ -134,8 +134,8 @@ enum LocalUserDataStore {
           throw error
         }
       }.value
-    FeatureDiagnostics.record(.data, .completed)
-    return exportURL
+      FeatureDiagnostics.record(.data, .completed)
+      return exportURL
     } catch {
       FeatureDiagnostics.record(.data, .failed)
       throw error

@@ -482,7 +482,6 @@ struct AlphabeticKeyboardLayout: View {
       in: self.proxy.documentContextBeforeInput()
     )
     self.proxy.insertText(separator + chosen + " ")
-    FeatureDiagnostics.record(.swipe, .completed)
     self.lastShiftTap = nil
     if !self.capsLock { self.shiftActive = false }
     self.updateCandidates()
@@ -1328,7 +1327,6 @@ struct AlphabeticKeyboardLayout: View {
     KeyboardTouchLearning.shared.invalidate()
     for _ in 0..<count { self.proxy.deleteBackward() }
     self.proxy.insertText(candidate.text)
-    FeatureDiagnostics.record(.chineseInput, .completed)
     self.predictionAnchor = candidate.text
     self.nextCantoneseWords = JyutpingDictionary.shared.continuations(after: candidate.text)
     KeyboardInputTrace.record(.candidateChosen)
@@ -1427,7 +1425,6 @@ struct AlphabeticKeyboardLayout: View {
     self.clearShapeComposition()
     KeyboardTouchLearning.shared.invalidate()
     self.proxy.insertText(candidate.text)
-    FeatureDiagnostics.record(.chineseInput, .completed)
     ChineseShapeDictionary.shared.remember(candidate, typedCode: typedCode)
     self.predictionAnchor = candidate.text
     self.nextCantoneseWords = self.offersCantonese

@@ -88,9 +88,11 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("flock(fd, LOCK_EX)", trace)
         self.assertIn("KeyboardLifecycleTrace.exportJSON()", trace)
         self.assertIn("KeyboardLifecycleTrace.clear()", trace)
+        self.assertIn("KeyboardExperimentMetrics.read()", trace)
+        self.assertIn("KeyboardHapticTrace.events", trace)
         self.assertIn('DisclosureGroup("Development Traces"', screen)
         for sensitive in ("documentContextBeforeInput", "selectedText", "audioSamples",
-                          "request.text", "hostBundleId", "prompt", "touchPath"):
+                          "request.text", "request.prompt", "hostBundleId", "touchPath"):
             self.assertNotIn(sensitive, trace)
         modules = {
             "Sayboard/Services/SpeechRecognitionService.swift": ".speech",

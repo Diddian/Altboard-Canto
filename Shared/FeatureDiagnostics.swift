@@ -101,6 +101,10 @@ enum FeatureDiagnostics {
     let keyboardJSON = Data(KeyboardLifecycleTrace.exportJSON().utf8)
     let keyboard = (try? JSONSerialization.jsonObject(with: keyboardJSON))
       ?? ["events": []]
+    let swipeCountersData = try? JSONEncoder().encode(KeyboardExperimentMetrics.read())
+    let swipeCounters = swipeCountersData.flatMap {
+      try? JSONSerialization.jsonObject(with: $0)
+    } ?? [:]
     let payload: [String: Any] = [
       "schemaVersion": 1,
       "exportedAtMs": Int64(Date().timeIntervalSince1970 * 1_000),
@@ -108,6 +112,11 @@ enum FeatureDiagnostics {
       "privacy": "No typed text, host content, touch paths, audio, transcripts or credentials",
       "features": entries(),
       "keyboardLifecycle": keyboard,
+      "existingAggregates": [
+        "hapticRequestCount": KeyboardHapticTrace.total,
+        "hapticRequestSamples": KeyboardHapticTrace.events,
+        "swipeTouchCounters": swipeCounters,
+      ] as [String: Any],
     ]
     guard let data = try? JSONSerialization.data(
       withJSONObject: payload, options: [.prettyPrinted, .sortedKeys]
