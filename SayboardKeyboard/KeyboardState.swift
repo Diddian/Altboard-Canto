@@ -20,6 +20,7 @@ final class KeyboardState: ObservableObject {
   @Published var hasFullAccess = false
   @Published var useCustomSpaceBar = false
   @Published var showSettingsKey = true
+  @Published var showGlobeKey = false
   @Published var showOutputLanguageButton = true
   @Published var showAIButton = true
   @Published var isTranslationMode = false
@@ -145,8 +146,11 @@ final class KeyboardState: ObservableObject {
     self.isMicrophoneAuthorized = self.settings.isMicrophoneAuthorized
     self.useCustomSpaceBar = self.settings.useCustomSpaceBar
     self.showSettingsKey = self.settings.keyboardShowSettingsKey
-    self.showOutputLanguageButton = self.settings.keyboardShowOutputLanguageButton\n      && (self.settings.voiceCleanupEnabled || self.settings.voiceOutputTarget != .original)
-    self.showAIButton = self.settings.keyboardShowAIButton\n      && self.settings.llmEnabled && self.settings.hasUsableLLMModel
+    self.showGlobeKey = self.settings.keyboardShowGlobeKey
+    self.showOutputLanguageButton = self.settings.keyboardShowOutputLanguageButton
+      && (self.settings.voiceCleanupEnabled || self.settings.voiceOutputTarget != .original)
+    self.showAIButton = self.settings.keyboardShowAIButton
+      && self.settings.llmEnabled && self.settings.hasUsableLLMModel
     self.keyboardKind = self.settings.keyboardKind
     let selectedVariant = self.settings.selectedVariant
     self.selectedVariantSupportsTranslation = selectedVariant.supportsTranslation
