@@ -19,13 +19,38 @@ enum KeyboardLifecycleTrace {
     case layoutChanged
     case switchRequirementChanged
     case memoryWarning
+    case renderCheckpoint
+    case renderSuspicious
 
     var needsImmediateWrite: Bool {
       switch self {
-      case .willAppear, .willDisappear, .didDisappear, .memoryWarning: true
+      case .willAppear, .willDisappear, .didDisappear, .memoryWarning, .renderSuspicious: true
       default: false
       }
     }
+  }
+
+  /// A snapshot of view geometry and hit testing, not a screenshot or input record.
+  struct RenderProbe: Codable, Sendable {
+    let checkpoint: String
+    let inputWidth: Int
+    let inputHeight: Int
+    let hostingWidth: Int
+    let hostingHeight: Int
+    let geometryWidth: Int
+    let geometryHeight: Int
+    let inputAlphaPercent: Int
+    let hostingAlphaPercent: Int
+    let inputHidden: Bool
+    let hostingHidden: Bool
+    let hostingInWindow: Bool
+    let hostingIntersectsInput: Bool
+    let visitedSubviews: Int
+    let scanLimited: Bool
+    let hostingLayerCount: Int
+    let touchSurfaceCount: Int
+    let touchSurfacesInWindow: Int
+    let touchHitTestCount: Int
   }
 
   private struct Entry: Codable, Sendable {
@@ -45,6 +70,7 @@ enum KeyboardLifecycleTrace {
     let fullAccess: Bool
     let appGroupAvailable: Bool
     let hostHint: String
+    let renderProbe: RenderProbe?
   }
 
   private static let filename = "keyboard-lifecycle-v1.jsonl"
@@ -57,7 +83,7 @@ enum KeyboardLifecycleTrace {
     effectiveMode: KeyboardKind, viewWidth: CGFloat, viewHeight: CGFloat,
     hostWidth: CGFloat, hostHeight: CGFloat, hostingMounted: Bool,
     hostingInWindow: Bool, nativeSwitchRequired: Bool, fullAccess: Bool,
-    hostBundleHint: String?
+    hostBundleHint: String?, renderProbe: RenderProbe? = nil
   ) {
     #if !APPSTORE
     let entry = Entry(
@@ -70,7 +96,8 @@ enum KeyboardLifecycleTrace {
       hostingMounted: hostingMounted, hostingInWindow: hostingInWindow,
       nativeSwitchRequired: nativeSwitchRequired, fullAccess: fullAccess,
       appGroupAvailable: AppGroup.containerURL != nil,
-      hostHint: safeHostHint(hostBundleHint)
+      hostHint: safeHostHint(hostBundleHint),
+      renderProbe: renderProbe
     )
     if event.needsImmediateWrite {
       queue.sync { append(entry) }
@@ -140,15 +167,28 @@ enum KeyboardLifecycleTrace {
 
   static var eventCount: Int { entries().count }
 
+  private static func renderReview(for events: [[String: Any]]) -> [String: Any] {
+    let checkpoints = events.filter { $0["renderProbe"] is [String: Any] }
+    let suspicious = checkpoints.filter { ($0["event"] as? String) == Event.renderSuspicious.rawValue }
+    return [
+      "checkpointCount": checkpoints.count,
+      "suspiciousCount": suspicious.count,
+      "recentCheckpoints": Array(checkpoints.suffix(6)),
+      "interpretation": "Structural checks only: a mounted or hittable view does not prove pixels were drawn."
+    ]
+  }
+
   static func exportJSON() -> String {
+    let events = entries()
     let document: [String: Any] = [
-      "schemaVersion": 1,
+      "schemaVersion": 2,
       "exportedAtMs": Int64(Date().timeIntervalSince1970 * 1_000),
       "appBuild": Bundle.main.infoDictionary?["AltboardBuildSHA"] as? String ?? "unknown",
       "keyboardBuild": AppGroup.sharedDefaults?.string(forKey: "canto.keyboardBuildSHA") ?? "unknown",
       "captureScope": "keyboard extension lifecycle; last-known host category only",
       "privacy": "No keystrokes, host text, touch positions, audio or transcripts",
-      "events": entries(),
+      "events": events,
+      "renderReview": renderReview(for: events),
     ]
     guard let data = try? JSONSerialization.data(withJSONObject: document, options: [.prettyPrinted, .sortedKeys])
     else { return "{\"schemaVersion\":1,\"events\":[]}" }

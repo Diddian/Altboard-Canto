@@ -37,6 +37,7 @@ final class KeyboardViewController: UIInputViewController {
   let keyboardState = KeyboardState()
   private let keyboardTraceSession = String(UUID().uuidString.prefix(8))
   private var lastTracedLayoutKey = ""
+  private var renderProbeGeneration = 0
 
   var processingTimeoutTimer: Timer?
   var processingStartTime: Date?
@@ -119,6 +120,7 @@ final class KeyboardViewController: UIInputViewController {
 
   override func viewWillDisappear(_ animated: Bool) {
     super.viewWillDisappear(animated)
+    self.renderProbeGeneration &+= 1
     KeyboardTouchLearning.shared.invalidate()
     if self.liveTranscriptionDocumentID != nil {
       let token = SharedSettings().dictationSessionToken
@@ -136,7 +138,10 @@ final class KeyboardViewController: UIInputViewController {
     super.didReceiveMemoryWarning()
   }
 
-  private func recordKeyboardTrace(_ event: KeyboardLifecycleTrace.Event) {
+  private func recordKeyboardTrace(
+    _ event: KeyboardLifecycleTrace.Event,
+    renderProbe: KeyboardLifecycleTrace.RenderProbe? = nil
+  ) {
     let bounds = self.viewIfLoaded?.bounds ?? .zero
     KeyboardLifecycleTrace.record(
       event, session: self.keyboardTraceSession,
@@ -149,8 +154,96 @@ final class KeyboardViewController: UIInputViewController {
       hostingInWindow: self.hostingController?.viewIfLoaded?.window != nil,
       nativeSwitchRequired: self.needsInputModeSwitchKey,
       fullAccess: self.keyboardState.hasFullAccess,
-      hostBundleHint: SharedSettings().hostBundleId
+      hostBundleHint: SharedSettings().hostBundleId,
+      renderProbe: renderProbe
     )
+  }
+
+  /// One delayed, cancellable checkpoint per appearance or field transition.
+  /// Never poll during typing or retain host text or UIKit touch coordinates.
+  private func scheduleRenderCheckpoint(checkpoint: String) {
+    #if !APPSTORE
+    self.renderProbeGeneration &+= 1
+    let generation = self.renderProbeGeneration
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
+      guard let self, self.renderProbeGeneration == generation else { return }
+      self.captureRenderCheckpoint(checkpoint: checkpoint)
+    }
+    #endif
+  }
+
+  private static func traceDimension(_ value: CGFloat) -> Int {
+    guard value.isFinite else { return -1 }
+    return max(-1, min(4_096, Int(value.rounded())))
+  }
+
+  private static func traceAlpha(_ value: CGFloat) -> Int {
+    guard value.isFinite else { return -1 }
+    return max(0, min(100, Int((value * 100).rounded())))
+  }
+
+  private func captureRenderCheckpoint(checkpoint: String) {
+    #if !APPSTORE
+    guard self.isViewLoaded else { return }
+    let input = self.view
+    let hosted = self.hostingController?.viewIfLoaded
+    let hostingFrame = hosted.map { $0.convert($0.bounds, to: input) } ?? .zero
+    var stack: [UIView] = hosted.map { [$0] } ?? []
+    var scanned = 0
+    var touchCount = 0
+    var touchInWindow = 0
+    var touchHitCount = 0
+
+    // The actual UIKit touch views are more informative than SwiftUI onAppear.
+    // Cap the traversal so diagnostics cannot stall a keyboard extension.
+    while let node = stack.popLast(), scanned < 256 {
+      scanned += 1
+      if let touch = node as? ImmediateKeyTouchView {
+        touchCount += 1
+        if touch.window != nil && touch.bounds.width > 1 && touch.bounds.height > 1 {
+          touchInWindow += 1
+          let point = touch.convert(
+            CGPoint(x: touch.bounds.midX, y: touch.bounds.midY), to: input
+          )
+          if input.bounds.contains(point),
+             let target = input.hitTest(point, with: nil),
+             (target === touch || target.isDescendant(of: touch)) {
+            touchHitCount += 1
+          }
+        }
+      }
+      stack.append(contentsOf: node.subviews)
+    }
+    let probe = KeyboardLifecycleTrace.RenderProbe(
+      checkpoint: checkpoint,
+      inputWidth: Self.traceDimension(input.bounds.width),
+      inputHeight: Self.traceDimension(input.bounds.height),
+      hostingWidth: Self.traceDimension(hosted?.bounds.width ?? 0),
+      hostingHeight: Self.traceDimension(hosted?.bounds.height ?? 0),
+      geometryWidth: Self.traceDimension(self.hostGeometry.size.width),
+      geometryHeight: Self.traceDimension(self.hostGeometry.size.height),
+      inputAlphaPercent: Self.traceAlpha(input.alpha),
+      hostingAlphaPercent: Self.traceAlpha(hosted?.alpha ?? 0),
+      inputHidden: input.isHidden,
+      hostingHidden: hosted?.isHidden ?? true,
+      hostingInWindow: hosted?.window != nil,
+      hostingIntersectsInput: hosted != nil && input.bounds.intersects(hostingFrame),
+      visitedSubviews: scanned,
+      scanLimited: !stack.isEmpty,
+      hostingLayerCount: hosted?.layer.sublayers?.count ?? 0,
+      touchSurfaceCount: touchCount,
+      touchSurfacesInWindow: touchInWindow,
+      touchHitTestCount: touchHitCount
+    )
+    let suspicious = !probe.hostingInWindow || probe.inputHidden
+      || probe.hostingHidden || probe.inputAlphaPercent < 1
+      || probe.hostingAlphaPercent < 1 || !probe.hostingIntersectsInput
+      || probe.inputHeight < 30 || probe.hostingHeight < 30
+      || (touchInWindow > 0 && touchHitCount == 0)
+    self.recordKeyboardTrace(
+      suspicious ? .renderSuspicious : .renderCheckpoint, renderProbe: probe
+    )
+    #endif
   }
 
   func insertTranscribedText() {
@@ -721,6 +814,7 @@ extension KeyboardViewController {
       self.keyboardState.keyboardAppearanceRevision &+= 1
       self.view.setNeedsLayout()
       self.recordKeyboardTrace(.documentChanged)
+      self.scheduleRenderCheckpoint(checkpoint: "afterDocumentChange")
     }
     self.refreshHostInputTraits()
     self.keyboardState.textContextRevision &+= 1
@@ -732,6 +826,7 @@ extension KeyboardViewController {
     super.viewDidAppear(animated)
     self.insertDeferredAppearanceText()
     self.recordKeyboardTrace(.didAppear)
+    self.scheduleRenderCheckpoint(checkpoint: "afterAppear")
   }
 
   override func viewDidDisappear(_ animated: Bool) {

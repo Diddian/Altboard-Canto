@@ -62,6 +62,25 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("#if !APPSTORE", diagnostic)
         self.assertNotIn("touchPath", diagnostic)
 
+    def test_delayed_render_probe_inspects_uikit_touch_targets_privately(self):
+        host = HOST.read_text()
+        lifecycle = (ROOT / "Shared/KeyboardLifecycleTrace.swift").read_text()
+        self.assertIn("case renderCheckpoint", lifecycle)
+        self.assertIn("case renderSuspicious", lifecycle)
+        self.assertIn("let renderProbe: RenderProbe?", lifecycle)
+        self.assertIn('"renderReview": renderReview(for: events)', lifecycle)
+        self.assertIn('let checkpoint: String', lifecycle)
+        self.assertIn("ImmediateKeyTouchView", host)
+        self.assertIn("input.hitTest(point, with: nil)", host)
+        self.assertIn("scanned < 256", host)
+        self.assertIn("DispatchQueue.main.asyncAfter(deadline: .now() + 0.35)", host)
+        self.assertIn("self.scheduleRenderCheckpoint(checkpoint: \"afterAppear\")", host)
+        self.assertIn("self.scheduleRenderCheckpoint(checkpoint: \"afterDocumentChange\")", host)
+        self.assertIn("self.renderProbeGeneration &+= 1", host)
+        for private_content in ("documentContextBeforeInput", "selectedText", "insertText",
+                                "audioBuffer", "touchPath", "pointX", "pointY"):
+            self.assertNotIn(private_content, lifecycle)
+
     def test_drawing_view_exists_only_for_an_active_trail(self):
         source = LAYOUT.read_text()
         overlay = source.split("private struct SwipeTrailOverlay: View", 1)[1].split(
