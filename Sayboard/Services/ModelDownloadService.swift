@@ -48,6 +48,7 @@ final class ModelDownloadService: ObservableObject {
   }
 
   func selectVariant(_ variant: ModelVariant) {
+    FeatureDiagnostics.record(.speechModel, .selected)
     let settings = SharedSettings()
     settings.selectedVariant = variant
     settings.setPreferredLanguages(
@@ -158,6 +159,7 @@ final class ModelDownloadService: ObservableObject {
     settings.downloadStartedAt = Date()
 
     self.variantStates[variant] = .downloading(progress: 0)
+    FeatureDiagnostics.record(.speechModel, .queued)
 
     self.enqueueTasks[variant] = Task {
       await self.enqueueDownload(variant: variant)
@@ -165,6 +167,7 @@ final class ModelDownloadService: ObservableObject {
   }
 
   func cancelDownload(variant: ModelVariant) {
+    FeatureDiagnostics.record(.speechModel, .cancelled)
     self.enqueueTasks[variant]?.cancel()
     self.enqueueTasks[variant] = nil
 
@@ -182,7 +185,9 @@ final class ModelDownloadService: ObservableObject {
   func deleteModel(variant: ModelVariant) {
     do {
       try ModelStorageManager.delete(variant)
+      FeatureDiagnostics.record(.speechModel, .deleted)
     } catch {
+      FeatureDiagnostics.record(.speechModel, .failed)
       let name = variant.rawValue
       DiagnosticLog.write("models: DELETE FAILED \(name): \(error)")
     }
