@@ -3,8 +3,8 @@
 Generated from `APP-STRUCTURE.json`; edit the JSON and run
 `python3 scripts/check-app-structure.py --write`.
 
-App source baseline: `d2fb55443e710ab492231073c9620de715f5eac9` · build 123.
-This records source structure, not physical-device verification.
+Last installed diagnostic baseline: `7b7aa5c5041805783358fbfeb8a38b09a2922ec4` · build 124.
+Live main source may include newer changes; this menu is not device verification.
 
 Conditions and initial expansion state appear in parentheses. Descriptions
 of dynamic lists describe repeated rows, not extra navigation destinations.
@@ -45,21 +45,20 @@ of dynamic lists describe repeated rows, not extra navigation destinations.
     - Dictation (initially collapsed)
       - Auto-Stop
       - Live Dictation
+      - Output (initially collapsed)
+        - Transcript Cleanup
+        - Output Language
+        - Tone
+        - Language Code (custom output language; invalid code warning when needed)
       - Enable Meeting Recording
       - Cantonese Recognition Corrections
         - Edit speech-recognition correction rules
     - AI Actions (initially collapsed)
       - Enabled (disabled without usable downloaded text model)
-      - Output
-        - Transcript Cleanup
-        - Output Language
-        - Tone
-        - Language Code (custom output language; invalid code warning when needed)
-        - Formatting
-          - Writing Style
-          - Snippets
-          - Auto-Copy to Clipboard
-        - Missing text-model notice (no usable text model)
+      - Formatting (initially collapsed)
+        - Writing Style
+        - Snippets
+        - Auto-Copy to Clipboard
       - Prompts (AI enabled and usable model installed)
         - Standard Prompts
         - Custom Prompts / Add Custom Prompt
@@ -136,10 +135,11 @@ of dynamic lists describe repeated rows, not extra navigation destinations.
 - Existing download, recommended model and actively selected model are separate. No file replacement or refusal behavior is implied.
 - Diagnostics has additional technical controls outside Customization. No cleanup or deletion is authorized by documenting them.
 - This map records current source rather than proposed menu changes. Update owners and conditions after bounded source review; regenerate Markdown.
-- Main root pages support left/right swipes in History / Meetings / Settings order, without wrapping; native tabs remain. Phone gesture arbitration is unverified.
-- Output is a single destination inside AI Actions. Local writing style, snippets and clipboard controls are not gated on AI.
 - Temporary user-requested experiment suppresses Altboard Globe including required in-extension visibility; it cannot suppress iOS-owned controls outside the extension.
 - Swipe drawing UIView mounts only after the active trail has more than one point; this is not a confirmed ink-pad fix.
-- Base source is build 123 plus local UI changes, with no new compiled or device-tested build.
+- Dictation owns Output (Transcript Cleanup, Output Language, Tone, custom Language Code). AI Actions owns Formatting (Writing Style, Snippets, Auto-Copy). These are separate inline groups.
+- History, Meetings and Settings change using the native tabs only; the custom horizontal page gesture was removed because it conflicted with scrolling and navigation.
+- Build #124 is the last confirmed installed diagnostic baseline; subsequent source repairs require a new build and physical iPhone acceptance.
+- Source owners and anchor checks are structural contracts; existing reference SHAs are historical, never a reason to rewrite current working code.
 
 Consult `KNOWN-ISSUES.json` for evidence and pending acceptance checks.

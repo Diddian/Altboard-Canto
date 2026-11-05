@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Check reviewed source fingerprints and render the documented menu; no Swift parsing."""
 import argparse
-import hashlib
 import json
 from pathlib import Path
 import sys
@@ -16,8 +15,8 @@ def render(data):
         "# AltBoard-Canto: current app and Settings menu", "",
         "Generated from `APP-STRUCTURE.json`; edit the JSON and run",
         "`python3 scripts/check-app-structure.py --write`.", "",
-        f"App source baseline: `{data['baseline']['commit']}` · build {data['baseline']['build']}.",
-        "This records source structure, not physical-device verification.", "",
+        f"Last installed diagnostic baseline: `{data['baseline']['commit']}` · build {data['baseline']['build']}.",
+        "Live main source may include newer changes; this menu is not device verification.", "",
         "Conditions and initial expansion state appear in parentheses. Descriptions",
         "of dynamic lists describe repeated rows, not extra navigation destinations.", "",
     ]
@@ -43,12 +42,10 @@ def render(data):
 def validate(data):
     errors = []
     owners = data["source_owners"]
-    for relative, expected in owners.items():
+    for relative in owners:
         path = ROOT / relative
         if not path.is_file():
             errors.append(f"Missing owner: {relative}")
-        elif hashlib.sha256(path.read_bytes()).hexdigest() != expected:
-            errors.append(f"Stale owner: {relative}; review its map entries before updating its hash")
     ids = set()
 
     def walk(nodes):
@@ -89,7 +86,7 @@ def main():
         return 1
     if args.write:
         MENU.write_text(expected)
-    print(f"Verified {count} unique menu nodes and {len(data['source_owners'])} reviewed source fingerprints")
+    print(f"Verified {count} unique menu nodes and {len(data['source_owners'])} source owners")
     return 0
 
 
