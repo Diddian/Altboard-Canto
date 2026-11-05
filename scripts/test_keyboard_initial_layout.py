@@ -61,6 +61,25 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("for: prefix, limit: gridVisible ? 200 : 12", update)
         self.assertNotIn("for: prefix, limit: 200", update)
 
+    def test_keyboard_lifecycle_trace_is_private_and_bounded(self):
+        trace = (ROOT / "Shared/KeyboardLifecycleTrace.swift").read_text()
+        controller = HOST.read_text()
+        diagnostics = (ROOT / "Sayboard/Views/DiagnosticsView.swift").read_text()
+        self.assertIn("#if !APPSTORE", trace)
+        self.assertIn("private static let maxBytes: off_t = 1_048_576", trace)
+        self.assertIn("flock(fd, LOCK_EX)", trace)
+        self.assertIn('hostHint: safeHostHint(hostBundleHint)', trace)
+        for private_content in ("documentContextBeforeInput", "selectedText", "insertText",
+                                "audioBuffer", "touchPath"):
+            self.assertNotIn(private_content, trace)
+        for event in ("inputViewLoaded", "hostingMounted", "willAppear", "didAppear",
+                      "willDisappear", "didDisappear", "layoutChanged", "documentChanged",
+                      "switchRequirementChanged", "memoryWarning"):
+            self.assertIn("self.recordKeyboardTrace(." + event + ")", controller)
+        for label in ("Share Keyboard Trace JSON", "Copy Keyboard Trace JSON",
+                      "Clear Keyboard Trace"):
+            self.assertIn(label, diagnostics)
+
 
 if __name__ == "__main__":
     unittest.main()

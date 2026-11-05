@@ -35,6 +35,8 @@ final class KeyboardViewController: UIInputViewController {
   static var blockedLiveSessionToken: String?
 
   let keyboardState = KeyboardState()
+  private let keyboardTraceSession = String(UUID().uuidString.prefix(8))
+  private var lastTracedLayoutKey = ""
 
   var processingTimeoutTimer: Timer?
   var processingStartTime: Date?
@@ -53,6 +55,7 @@ final class KeyboardViewController: UIInputViewController {
     height.priority = UILayoutPriority(rawValue: 999)
     height.isActive = true
     self.heightConstraint = height
+    self.recordKeyboardTrace(.inputViewLoaded)
   }
 
   override func viewDidLoad() {
@@ -78,6 +81,7 @@ final class KeyboardViewController: UIInputViewController {
     self.setupForegroundObserver()
     self.setupLLMObservers()
     self.setupDictationLockObserver()
+    self.recordKeyboardTrace(.hostingMounted)
   }
 
   override func viewWillAppear(_ animated: Bool) {
@@ -109,6 +113,7 @@ final class KeyboardViewController: UIInputViewController {
     self.keyboardState.syncOnboardingPractice(hostProcessID: self.hostProcess?.pid)
     self.hasDeferredAppearanceInsert = true
     self.applyExperimentalLiveUpdate()
+    self.recordKeyboardTrace(.willAppear)
   }
 
   override func viewWillDisappear(_ animated: Bool) {
@@ -122,6 +127,29 @@ final class KeyboardViewController: UIInputViewController {
     if !self.keyboardState.isRecording, !self.keyboardState.isProcessing {
       self.keyboardState.stopLevelPolling()
     }
+    self.recordKeyboardTrace(.willDisappear)
+  }
+
+  override func didReceiveMemoryWarning() {
+    self.recordKeyboardTrace(.memoryWarning)
+    super.didReceiveMemoryWarning()
+  }
+
+  private func recordKeyboardTrace(_ event: KeyboardLifecycleTrace.Event) {
+    let bounds = self.viewIfLoaded?.bounds ?? .zero
+    KeyboardLifecycleTrace.record(
+      event, session: self.keyboardTraceSession,
+      requestedMode: self.keyboardState.keyboardKind,
+      effectiveMode: self.keyboardState.effectiveTypingKind,
+      viewWidth: bounds.width, viewHeight: bounds.height,
+      hostWidth: self.hostGeometry.size.width,
+      hostHeight: self.hostGeometry.size.height,
+      hostingMounted: self.hostingController != nil,
+      hostingInWindow: self.hostingController?.viewIfLoaded?.window != nil,
+      nativeSwitchRequired: self.needsInputModeSwitchKey,
+      fullAccess: self.keyboardState.hasFullAccess,
+      hostBundleHint: SharedSettings().hostBundleId
+    )
   }
 
   func insertTranscribedText() {
@@ -686,6 +714,7 @@ extension KeyboardViewController {
       // A host can switch fields without another appearance callback.
       self.keyboardState.keyboardAppearanceRevision &+= 1
       self.view.setNeedsLayout()
+      self.recordKeyboardTrace(.documentChanged)
     }
     self.refreshHostInputTraits()
     self.keyboardState.textContextRevision &+= 1
@@ -696,6 +725,12 @@ extension KeyboardViewController {
   override func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
     self.insertDeferredAppearanceText()
+    self.recordKeyboardTrace(.didAppear)
+  }
+
+  override func viewDidDisappear(_ animated: Bool) {
+    super.viewDidDisappear(animated)
+    self.recordKeyboardTrace(.didDisappear)
   }
 
   override func viewDidLayoutSubviews() {
@@ -706,6 +741,15 @@ extension KeyboardViewController {
         actionBarVisible: self.actionBarVisible, kind: self.keyboardState.effectiveTypingKind
       )
     )
+    let width = self.view.bounds.width
+    let height = self.view.bounds.height
+    let hostValid = self.hostGeometry.size.width > 1 && self.hostGeometry.size.height > 1
+    let inWindow = self.hostingController?.viewIfLoaded?.window != nil
+    let signature = "\(width.isFinite ? Int(width.rounded()) : -1):\(height.isFinite ? Int(height.rounded()) : -1):\(hostValid):\(inWindow)"
+    if self.lastTracedLayoutKey != signature {
+      self.lastTracedLayoutKey = signature
+      self.recordKeyboardTrace(.layoutChanged)
+    }
   }
 
   private func refreshHostInputTraits() {
@@ -731,6 +775,7 @@ extension KeyboardViewController {
     guard needsKey != self.keyboardState.needsInputModeSwitchKey else { return }
     self.keyboardState.needsInputModeSwitchKey = needsKey
     SharedSettings().needsInputModeSwitchKey = needsKey
+    self.recordKeyboardTrace(.switchRequirementChanged)
   }
 
   private func insertDeferredAppearanceText() {

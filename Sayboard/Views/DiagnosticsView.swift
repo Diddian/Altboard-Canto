@@ -12,6 +12,10 @@ struct DiagnosticsView: View {
   @State private var testResult = ""
   @State private var rawASRResult = ""
   @State private var breadcrumbs = [String]()
+  @State private var keyboardTraceCount = 0
+  @State private var keyboardTraceExportURL: URL?
+  @State private var confirmTraceClear = false
+  @State private var traceExportFailed = false
   @AppStorage(SharedKey.keyboardTouchDebugOverlay,
               store: UserDefaults(suiteName: AppGroup.identifier))
   private var showTouchTargets = false
@@ -25,11 +29,29 @@ struct DiagnosticsView: View {
       self.liveDictationSection
       self.testSection
       self.crashSection
+      self.keyboardTraceSection
       self.exportSection
     }
     .navigationTitle("Diagnostics")
     .navigationBarTitleDisplayMode(.inline)
     .onAppear(perform: self.refresh)
+    .confirmationDialog("Clear keyboard trace?", isPresented: self.$confirmTraceClear) {
+      Button("Clear Trace", role: .destructive) {
+        KeyboardLifecycleTrace.clear()
+        self.keyboardTraceCount = 0
+      }
+    }
+    .sheet(isPresented: Binding(
+      get: { self.keyboardTraceExportURL != nil },
+      set: { if !$0 { self.removeKeyboardTraceExport() } }
+    ), onDismiss: { self.removeKeyboardTraceExport() }) {
+      if let url = self.keyboardTraceExportURL {
+        KeyboardTraceShareSheet(url: url)
+      }
+    }
+    .alert("Keyboard trace export failed", isPresented: self.$traceExportFailed) {
+      Button("OK", role: .cancel) {}
+    }
   }
 
   private var permissionsSection: some View {
@@ -166,6 +188,32 @@ struct DiagnosticsView: View {
     }
   }
 
+  private var keyboardTraceSection: some View {
+    Section {
+      LabeledContent("Recorded events", value: "\(self.keyboardTraceCount)")
+      Button("Share Keyboard Trace JSON") {
+        if let url = KeyboardLifecycleTrace.exportFileURL() {
+          self.keyboardTraceExportURL = url
+        } else {
+          self.traceExportFailed = true
+        }
+      }
+      Button("Copy Keyboard Trace JSON") {
+        UIPasteboard.general.string = KeyboardLifecycleTrace.exportJSON()
+      }
+      Button("Refresh Event Count") {
+        self.keyboardTraceCount = KeyboardLifecycleTrace.eventCount
+      }
+      Button("Clear Keyboard Trace", role: .destructive) {
+        self.confirmTraceClear = true
+      }
+    } header: {
+      Text("Keyboard Lifecycle")
+    } footer: {
+      Text("Automatic local trace of keyboard appearance and layout. No typed text. Export after the issue occurs.")
+    }
+  }
+
   private var exportSection: some View {
     Section {
       NavigationLink {
@@ -222,6 +270,7 @@ struct DiagnosticsView: View {
     self.permissions.refreshAll()
     self.models.verifyExistingModels()
     self.refreshBreadcrumbs()
+    self.keyboardTraceCount = KeyboardLifecycleTrace.eventCount
   }
 
   private func refreshBreadcrumbs() {
@@ -263,6 +312,12 @@ struct DiagnosticsView: View {
     return "\(Int(height)) pt (fixed iPhone layout)"
   }
 
+  private func removeKeyboardTraceExport() {
+    guard let url = self.keyboardTraceExportURL else { return }
+    self.keyboardTraceExportURL = nil
+    try? FileManager.default.removeItem(at: url)
+  }
+
   private var summary: String {
     [
       "Altboard-Canto Diagnostics",
@@ -291,6 +346,7 @@ struct DiagnosticsView: View {
       "Haptic requested count: \(KeyboardHapticTrace.total)",
       "Haptic request trace (no typed characters):",
       KeyboardHapticTrace.events.joined(separator: "\n"),
+      "Keyboard lifecycle trace events: \(self.keyboardTraceCount)",
       "Keyboard interaction trace (no text):",
       KeyboardInputTrace.events.joined(separator: "\n"),
       "Audio engine: \(self.speech.session.audioEngine.isRunning)",
@@ -306,3 +362,12 @@ struct DiagnosticsView: View {
   }
 }
 
+private struct KeyboardTraceShareSheet: UIViewControllerRepresentable {
+  let url: URL
+
+  func makeUIViewController(context: Context) -> UIActivityViewController {
+    UIActivityViewController(activityItems: [self.url], applicationActivities: nil)
+  }
+
+  func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
+}
