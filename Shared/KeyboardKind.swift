@@ -33,9 +33,14 @@ enum MicrophoneKeyboardLayout: String, CaseIterable, Sendable {
 enum LetterKeyArrangement: String, CaseIterable, Sendable {
   case qwertz
   case qwerty
+  case german
 
   var rows: [[String]] {
     switch self {
+    case .german:
+      [["Q","W","E","R","T","Z","U","I","O","P","Ü"],
+       ["A","S","D","F","G","H","J","K","L","Ö","Ä"],
+       ["Y","X","C","V","B","N","M","ß"]]
     case .qwertz:
       [["Q","W","E","R","T","Z","U","I","O","P"],
        ["A","S","D","F","G","H","J","K","L"],

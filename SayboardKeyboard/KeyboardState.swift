@@ -145,8 +145,8 @@ final class KeyboardState: ObservableObject {
     self.isMicrophoneAuthorized = self.settings.isMicrophoneAuthorized
     self.useCustomSpaceBar = self.settings.useCustomSpaceBar
     self.showSettingsKey = self.settings.keyboardShowSettingsKey
-    self.showOutputLanguageButton = self.settings.keyboardShowOutputLanguageButton
-    self.showAIButton = self.settings.keyboardShowAIButton
+    self.showOutputLanguageButton = self.settings.keyboardShowOutputLanguageButton\n      && (self.settings.voiceCleanupEnabled || self.settings.voiceOutputTarget != .original)
+    self.showAIButton = self.settings.keyboardShowAIButton\n      && self.settings.llmEnabled && self.settings.hasUsableLLMModel
     self.keyboardKind = self.settings.keyboardKind
     let selectedVariant = self.settings.selectedVariant
     self.selectedVariantSupportsTranslation = selectedVariant.supportsTranslation

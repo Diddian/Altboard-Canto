@@ -167,11 +167,14 @@ struct KeyboardBottomRow: View {
         }
       }
       // UIKit owns the native input-mode menu, including Apple's Emoji keyboard.
-      NativeInputModeSwitchKey(
-        configure: self.keyboardState.configureInputModeListButton
-      )
-      .frame(width: self.metrics.sideButtonWidth,
-             height: KeyboardChromeMetrics.keyHeight)
+      if self.keyboardState.showGlobeKey || self.keyboardState.needsInputModeSwitchKey {
+        // iOS may require a native switch key when multiple keyboards exist.
+        NativeInputModeSwitchKey(
+          configure: self.keyboardState.configureInputModeListButton
+        )
+        .frame(width: self.metrics.sideButtonWidth,
+               height: KeyboardChromeMetrics.keyHeight)
+      }
 
       if self.onAlphabeticModeSwitch == nil {
         KeyButton(

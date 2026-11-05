@@ -3,6 +3,19 @@ import Testing
 
 @Suite("SharedSettings globe key cache")
 struct SharedSettingsGlobeKeyTests {
+  @Test func extraGlobeChoiceDefaultsOffAndPersists() throws {
+    let suite = "test.altboard.globe." + UUID().uuidString
+    guard let defaults = UserDefaults(suiteName: suite) else { return }
+    defer { defaults.removePersistentDomain(forName: suite) }
+    let settings = SharedSettings(defaults: defaults)
+    #expect(!settings.keyboardShowGlobeKey)
+    settings.keyboardShowGlobeKey = true
+    #expect(SharedSettings(defaults: defaults).keyboardShowGlobeKey)
+    settings.keyboardShowGlobeKey = false
+    #expect(!SharedSettings(defaults: defaults).keyboardShowGlobeKey)
+  }
+
+
 
   @Test
   func `a keyboard that never read the flag assumes it needs the globe`() throws {

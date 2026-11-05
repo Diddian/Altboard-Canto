@@ -12,6 +12,13 @@ struct VerifyKeyboardLayout {
         precondition(normal == 277 && compact == 277)
       }
     }
+    // A separate German layout exposes native Ä, Ö, Ü and ß keys.
+    precondition(LetterKeyArrangement.german.rows[0].contains("Ü"))
+    precondition(LetterKeyArrangement.german.rows[1].contains("Ö"))
+    precondition(LetterKeyArrangement.german.rows[1].contains("Ä"))
+    precondition(LetterKeyArrangement.german.rows[2].contains("ß"))
+    precondition(LetterKeyArrangement.qwerty.rows.flatMap { $0 }.count == 26)
+    precondition(LetterKeyArrangement.qwertz.rows.flatMap { $0 }.count == 26)
     // The first row starts below the toolbar, never above its clipping area.
     let firstKeyTop = KeyboardLayoutGeometry.alphabetToolbarTopInset
       + KeyboardLayoutGeometry.keyHeight

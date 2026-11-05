@@ -1,11 +1,14 @@
 import SwiftUI
-import UniformTypeIdentifiers
 
 struct KeyboardSettingsView: View {
-
   @Binding var selectedKind: KeyboardKind
   var inline = false
   var cantoneseSelected = false
+
+  @AppStorage(SharedKey.microphoneKeyboardLayout, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var microphoneLayoutRaw = MicrophoneKeyboardLayout.defaultLayout.rawValue
+  @AppStorage(SharedKey.keyboardLetterArrangement, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var letterArrangementRaw = LetterKeyArrangement.qwertz.rawValue
 
   var body: some View {
     Group {
@@ -17,19 +20,11 @@ struct KeyboardSettingsView: View {
           .navigationBarTitleDisplayMode(.inline)
       }
     }
-    .fileExporter(
-      isPresented: self.$showWordExport,
-      document: self.wordExportDocument,
-      contentType: .json,
-      defaultFilename: "Altboard-Word-Selections"
-    ) { _ in
-      self.wordExportDocument = nil
-    }
   }
 
   @ViewBuilder
   var sections: some View {
-    Section {
+    Section("Keyboard Layout") {
       Picker(selection: self.$selectedKind) {
         ForEach(KeyboardKind.allCases, id: \.self) { kind in
           Text(LocalizedStringKey(kind.displayNameKey)).tag(kind)
@@ -37,141 +32,53 @@ struct KeyboardSettingsView: View {
       } label: {
         Label("Keyboard Type", systemImage: "keyboard")
       }
+      .pickerStyle(.menu)
+
       if self.selectedKind == .standard {
-        VStack(alignment: .leading, spacing: 8) {
-          Label("Microphone Layout", systemImage: "mic.circle")
-          Picker("Microphone Layout", selection: self.$microphoneLayoutRaw) {
-            ForEach(MicrophoneKeyboardLayout.allCases, id: \.self) { layout in
-              Text(layout.displayName).tag(layout.rawValue)
-            }
+        Picker(selection: self.$microphoneLayoutRaw) {
+          ForEach(MicrophoneKeyboardLayout.allCases, id: \.self) { layout in
+            Text(layout.displayName).tag(layout.rawValue)
           }
-          .pickerStyle(.segmented)
-          .labelsHidden()
+        } label: {
+          Label("Microphone Layout", systemImage: "mic")
         }
+        .pickerStyle(.menu)
       }
 
       if self.selectedKind == .alphabetic {
-        VStack(alignment: .leading, spacing: 8) {
+        Picker(selection: self.$letterArrangementRaw) {
+          Text("QWERTY (English)").tag(LetterKeyArrangement.qwerty.rawValue)
+          Text("QWERTZ").tag(LetterKeyArrangement.qwertz.rawValue)
+          Text("German (Ä Ö Ü ß)").tag(LetterKeyArrangement.german.rawValue)
+        } label: {
           Label("Key Order", systemImage: "rectangle.split.3x1")
-          Picker("Key Order", selection: self.$letterArrangementRaw) {
-            Text("QWERTZ").tag(LetterKeyArrangement.qwertz.rawValue)
-            Text("QWERTY").tag(LetterKeyArrangement.qwerty.rawValue)
-          }
-          .pickerStyle(.segmented)
-          .labelsHidden()
         }
+        .pickerStyle(.menu)
       }
+    } footer: {
+      Text("Choose the layout that feels most natural. Chinese and English suggestions remain available independently of key order.")
+    }
 
-      if self.cantoneseSelected || SharedSettings().preferredSpokenLanguages.contains("yue") {
-        NavigationLink {
-          CantoneseCorrectionsView()
-        } label: {
-          Label("Cantonese Word Corrections", systemImage: "text.badge.checkmark")
-        }
-      }
-
-      if self.selectedKind == .alphabetic {
-        Toggle(isOn: self.$autoCapitalizationEnabled) {
-          Label("Auto-capitalize Sentences", systemImage: "textformat.abc.dottedunderline")
-        }
-      }
-      Toggle(isOn: self.$periodShortcutEnabled) {
-        Label("Double-Space Period", systemImage: "textformat")
-      }
-      Toggle(isOn: self.$keyboardHapticsEnabled) {
-        Label("Haptic Feedback", systemImage: "hand.tap")
-      }
-      Toggle(isOn: self.$showSettingsKey) {
-        Label("Show Settings Key", systemImage: "gearshape")
-      }
-
-      if self.selectedKind == .alphabetic {
-        Button {
-          self.exportWordSelections()
-        } label: {
-          Label("Export Learned Word Counts", systemImage: "square.and.arrow.up")
-        }
-        .disabled(AppGroup.sharedDefaults == nil)
-      }
-
+    Section("Keyboard Preview") {
       KeyboardTestPreview(
         kind: self.selectedKind,
-        microphoneLayout: MicrophoneKeyboardLayout(
-          rawValue: self.microphoneLayoutRaw
-        ) ?? .defaultLayout,
-        letterArrangement: LetterKeyArrangement(
-          rawValue: self.letterArrangementRaw
-        ) ?? .qwertz
+        microphoneLayout: MicrophoneKeyboardLayout(rawValue: self.microphoneLayoutRaw)
+          ?? .defaultLayout,
+        letterArrangement: LetterKeyArrangement(rawValue: self.letterArrangementRaw)
+          ?? .qwertz
       )
-    } header: {
-      Text("Keyboard")
+      .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
     }
-    .sensoryFeedback(.selection, trigger: self.sensoryPulse.count)
-  }
 
-  @StateObject private var sensoryPulse = KeyboardSensoryPulse.shared
-  @State private var showWordExport = false
-  @State private var wordExportDocument: WordSelectionsExportDocument?
-
-  private func exportWordSelections() {
-    guard let defaults = AppGroup.sharedDefaults else { return }
-    let cantonese = defaults.dictionary(
-      forKey: CantoneseSchemePreference.candidateStorageKey
-    ) as? [String: Int] ?? [:]
-    let latin = defaults.dictionary(
-      forKey: "canto.latin.selectedSuggestions"
-    ) as? [String: Int] ?? [:]
-    let scheme = defaults.dictionary(
-      forKey: CantoneseSchemePreference.preferenceStorageKey
-    ) as? [String: Int] ?? [:]
-    let shapes = defaults.dictionary(
-      forKey: ConfirmedChoiceLearning.shapeWordKey
-    ) as? [String: Int] ?? [:]
-    let generations = defaults.dictionary(
-      forKey: ConfirmedChoiceLearning.shapeGenerationKey
-    ) as? [String: Int] ?? [:]
-    let prefixes = defaults.dictionary(
-      forKey: ConfirmedChoiceLearning.strokePrefixKey
-    ) as? [String: Int] ?? [:]
-    guard let contents = try? PersonalVocabularyExport.encode(
-      cantonese: cantonese, latin: latin, romanization: scheme,
-      confirmedChinese: ConfirmedChoiceLearning.chineseCounts(defaults: defaults),
-      shapes: shapes, shapeGenerations: generations, strokePrefixes: prefixes
-    ) else { return }
-    self.wordExportDocument = WordSelectionsExportDocument(content: contents)
-    self.showWordExport = true
-  }
-  @AppStorage(SharedKey.keyboardShowSettingsKey, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var showSettingsKey = true
-
-  @AppStorage(SharedKey.microphoneKeyboardLayout, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var microphoneLayoutRaw = MicrophoneKeyboardLayout.defaultLayout.rawValue
-  @AppStorage(SharedKey.keyboardHapticsEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var keyboardHapticsEnabled = true
-  @AppStorage(SharedKey.periodShortcutEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var periodShortcutEnabled = true
-  @AppStorage(SharedKey.keyboardLetterArrangement, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var letterArrangementRaw = LetterKeyArrangement.qwertz.rawValue
-  @AppStorage(SharedKey.keyboardAutoCapitalizationEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var autoCapitalizationEnabled = true
-}
-
-private struct WordSelectionsExportDocument: FileDocument {
-  static var readableContentTypes: [UTType] { [.json] }
-
-  let content: Data
-
-  init(content: Data) { self.content = content }
-
-  init(configuration: ReadConfiguration) throws {
-    guard let contents = configuration.file.regularFileContents else {
-      throw CocoaError(.fileReadCorruptFile)
+    Section {
+      NavigationLink {
+        KeyboardCustomizationView()
+      } label: {
+        Label("Customization", systemImage: "slider.horizontal.3")
+      }
+    } footer: {
+      Text("Haptic strength, capitalization, shortcuts, Globe and toolbar buttons live here.")
     }
-    self.content = contents
-  }
-
-  func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
-    FileWrapper(regularFileWithContents: self.content)
   }
 }
 
@@ -180,6 +87,10 @@ private struct KeyboardTestPreview: View {
   let microphoneLayout: MicrophoneKeyboardLayout
   let letterArrangement: LetterKeyArrangement
 
+  @AppStorage(SharedKey.keyboardShowGlobeKey, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var showGlobeKey = false
+  @AppStorage(SharedKey.needsInputModeSwitchKey, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var needsInputModeSwitchKey = false
   @AppStorage(SharedKey.keyboardHapticsEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
   private var keyboardHapticsEnabled = true
   @AppStorage(SharedKey.keyboardHapticStrength, store: UserDefaults(suiteName: AppGroup.identifier))
@@ -192,6 +103,14 @@ private struct KeyboardTestPreview: View {
   private var showSettingsKey = true
   @AppStorage(SharedKey.keyboardShowOutputLanguageButton, store: UserDefaults(suiteName: AppGroup.identifier))
   private var showOutputLanguageButton = true
+  @AppStorage(SharedKey.voiceCleanupEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var voiceCleanupEnabled = false
+  @AppStorage(SharedKey.voiceOutputTarget, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var voiceOutputTarget = VoiceOutputTarget.original.rawValue
+  private var outputKeyEnabled: Bool {
+    self.showOutputLanguageButton
+      && (self.voiceCleanupEnabled || self.voiceOutputTarget != VoiceOutputTarget.original.rawValue)
+  }
   @AppStorage(SharedKey.keyboardShowAIButton, store: UserDefaults(suiteName: AppGroup.identifier))
   private var showAIButton = true
 
@@ -231,7 +150,7 @@ private struct KeyboardTestPreview: View {
       } else if self.kind == .extended {
         HStack(spacing: 6) {
           if self.showSettingsKey { self.key("gearshape", width: 45) }
-          if self.showOutputLanguageButton { self.key("character.bubble", width: 45) }
+          if self.outputKeyEnabled { self.key("character.bubble", width: 45) }
           Spacer()
           self.key("mic.fill", width: 96, capsule: true)
         }.padding(.horizontal, 6.67).frame(height: 57)
@@ -258,7 +177,7 @@ private struct KeyboardTestPreview: View {
           ZStack {
             HStack(spacing: 6) {
               if self.showSettingsKey { self.key("gearshape", width: side) }
-              if self.showOutputLanguageButton { self.key("character.bubble", width: side) }
+              if self.outputKeyEnabled { self.key("character.bubble", width: side) }
               Spacer(minLength: 0)
               if self.showAIButton && self.llmEnabled && self.hasUsableLLMModel {
                 self.key("sparkles", width: side)
@@ -285,7 +204,7 @@ private struct KeyboardTestPreview: View {
   private var alphabetToolbar: some View {
     HStack(spacing: 6) {
       if self.showSettingsKey { self.key("gearshape", width: 48) }
-      if self.showOutputLanguageButton { self.translatePreview }
+      if self.outputKeyEnabled { self.translatePreview }
       if self.showAIButton && self.llmEnabled && self.hasUsableLLMModel {
         self.key("sparkles", width: 48)
       }
@@ -342,7 +261,9 @@ private struct KeyboardTestPreview: View {
   private var alphabetBottomRow: some View {
     HStack(spacing: 6) {
       self.labelKey("?123", width: 48)
-      self.emojiPreviewKey(width: 48)
+      if self.showGlobeKey || self.needsInputModeSwitchKey {
+        self.key("globe", width: 48)
+      }
       self.labelKey("", height: 45)
       self.key("return.left", width: 102)
     }.padding(.horizontal, 6.67)
@@ -350,24 +271,13 @@ private struct KeyboardTestPreview: View {
 
   private var standardBottomRow: some View {
     HStack(spacing: 6) {
-      self.emojiPreviewKey(width: 45)
+      if self.showGlobeKey || self.needsInputModeSwitchKey {
+        self.key("globe", width: 45)
+      }
       self.key("trash", width: 45)
       self.labelKey("", height: 45)
       self.key("return.left", width: 96)
     }.padding(.horizontal, 4)
-  }
-
-  private func emojiPreviewKey(width: CGFloat) -> some View {
-    Button { self.tap() } label: {
-      NativeEmojiGlyph()
-        .fill(.primary, style: FillStyle(eoFill: true))
-        .frame(width: 20.67, height: 20.67)
-        .frame(width: width, height: 45)
-        .background(Color(uiColor: KeyboardPalette.keyFill),
-                    in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-    }
-    .buttonStyle(.plain)
-    .accessibilityLabel("Test Emoji key haptic")
   }
 
   private func key(

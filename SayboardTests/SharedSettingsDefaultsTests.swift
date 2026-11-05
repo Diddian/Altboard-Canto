@@ -90,6 +90,10 @@ struct SharedSettingsDefaultsTests {
     #expect(SharedSettings(defaults: defaults).keyboardLetterArrangement == .qwerty)
     #expect(LetterKeyArrangement.qwerty.rows.flatMap { $0 }.count == 26)
     #expect(LetterKeyArrangement.qwertz.rows.flatMap { $0 }.count == 26)
+    settings.keyboardLetterArrangement = .german
+    #expect(SharedSettings(defaults: defaults).keyboardLetterArrangement == .german)
+    #expect(LetterKeyArrangement.german.rows[0].contains("Ü"))
+    #expect(LetterKeyArrangement.german.rows[1].contains("Ä"))
   }
 
   @Test
