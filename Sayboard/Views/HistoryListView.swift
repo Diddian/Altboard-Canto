@@ -123,8 +123,11 @@ struct HistoryListView: View {
         .textInputAutocapitalization(.sentences)
         .accessibilityLabel("Keyboard test input")
       Button {
-        self.keyboardTestingText = ""
-        self.isKeyboardTestFocused = false
+        if self.keyboardTestingText.isEmpty {
+          self.isKeyboardTestFocused = false
+        } else {
+          self.keyboardTestingText = ""
+        }
       } label: {
         Image(systemName: "xmark.circle.fill")
           .foregroundStyle(.secondary)
@@ -132,7 +135,7 @@ struct HistoryListView: View {
           .contentShape(Rectangle())
       }
       .buttonStyle(.plain)
-      .accessibilityLabel("Clear test text and close keyboard")
+      .accessibilityLabel(self.keyboardTestingText.isEmpty ? "Close test keyboard" : "Clear test text")
     }
     .padding(.horizontal, 16)
     .padding(.vertical, 10)

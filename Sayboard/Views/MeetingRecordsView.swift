@@ -117,7 +117,7 @@ struct MeetingRecordsView: View {
     .alert("Meeting Model Needed", isPresented: self.$showModelNotice) {
       Button("OK", role: .cancel) {}
     } message: {
-      Text("Meeting recording requires a downloaded Qwen3-ASR 1.7B model. Open Settings → History & Storage → Speech Recognition Models to select it.")
+      Text("Meeting recording requires a downloaded Qwen3-ASR 1.7B model. Open Settings → Speech & AI → Speech Model to select it.")
     }
   }
 

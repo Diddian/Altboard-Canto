@@ -24,38 +24,34 @@ struct DictationSettingsView: View {
 
   @ViewBuilder
   var sections: some View {
-    Group {
-      switch self.rows {
-      case .session:
+    switch self.rows {
+    case .session:
+      self.sessionRows
+    case .meeting:
+      self.meetingRows
+    case .all:
+      if self.inline {
         self.sessionRows
-      case .meeting:
+        self.liveRows
         self.meetingRows
-      case .all:
-        Section {
-          self.sessionRows
-        } header: {
-          Text("Recording")
-        } footer: {
-          Text("Auto-stop limits the active microphone session.")
-        }
-        Section {
-          self.liveRows
-        } header: {
-          Text("Live Speech to Text")
-        } footer: {
-          Text("Offline updates are provisional; speed depends on the model and device.")
-        }
+        self.correctionsLink
+      } else {
+        Section("Recording") { self.sessionRows }
+        Section("Live Speech to Text") { self.liveRows }
         Section("Meetings") {
           self.meetingRows
-          NavigationLink {
-            CantoneseCorrectionsView()
-          } label: {
-            Label("Cantonese Recognition Corrections", systemImage: "text.badge.checkmark")
-          }
+          self.correctionsLink
         }
       }
     }
+  }
 
+  private var correctionsLink: some View {
+    NavigationLink {
+      CantoneseCorrectionsView()
+    } label: {
+      Label("Cantonese Recognition Corrections", systemImage: "text.badge.checkmark")
+    }
   }
 
   @ViewBuilder
@@ -74,10 +70,6 @@ struct DictationSettingsView: View {
     Toggle(isOn: self.liveBinding) {
       Label("Live Dictation", systemImage: "waveform")
     }
-    if ProcessInfo.processInfo.physicalMemory < 8 * 1_073_741_824 {
-      Text("Live updates may be slower on this device.")
-        .font(.footnote).foregroundStyle(.secondary)
-    }
   }
 
   @ViewBuilder
@@ -85,8 +77,6 @@ struct DictationSettingsView: View {
     Toggle(isOn: self.$experimentalMeetingEnabled) {
       Label("Enable Meeting Recording", systemImage: "record.circle")
     }
-    Text("Recordings stay on this device. Audio is saved in 15-minute parts.")
-      .font(.footnote).foregroundStyle(.secondary)
   }
 
   private var liveBinding: Binding<Bool> {

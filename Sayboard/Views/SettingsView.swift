@@ -12,6 +12,8 @@ struct SettingsView: View {
   @AppStorage(SharedKey.appLanguage) private var appLanguage = AppLanguageConfig.fallback
   @State private var showsLowStorageWarning = false
   @State private var showsStorage = false
+  @State private var showsDictation = false
+  @State private var showsAIActions = false
 
   private enum Route: Hashable { case setup }
 
@@ -69,8 +71,10 @@ struct SettingsView: View {
         } label: {
           Label("Text Model", systemImage: "text.bubble")
         }
-        NavigationLink {
-          DictationSettingsView()
+        DisclosureGroup(isExpanded: self.$showsDictation) {
+          if self.showsDictation {
+            DictationSettingsView(inline: true)
+          }
         } label: {
           Label("Dictation", systemImage: "waveform")
         }
@@ -79,8 +83,10 @@ struct SettingsView: View {
         } label: {
           Label("Output", systemImage: "character.bubble")
         }
-        NavigationLink {
-          LLMSettingsView()
+        DisclosureGroup(isExpanded: self.$showsAIActions) {
+          if self.showsAIActions {
+            LLMSettingsView(inline: true)
+          }
         } label: {
           Label("AI Actions", systemImage: "sparkles")
         }

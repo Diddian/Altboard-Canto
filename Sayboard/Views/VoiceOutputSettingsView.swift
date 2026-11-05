@@ -50,8 +50,6 @@ struct VoiceOutputSettingsView: View {
         }
       } header: {
         Text("Output")
-      } footer: {
-        Text("Original keeps the language you spoke, including Cantonese-English-German mixing. As spoken preserves your tone; Casual and Formal change only the register.")
       }
 
       TextOutputSection()
@@ -62,10 +60,6 @@ struct VoiceOutputSettingsView: View {
         }
       }
 
-      Section {
-        Text("Offline AI can edit a transcript but cannot recover words missing from the recording.")
-          .font(.footnote).foregroundStyle(.secondary)
-      }
     }
     .navigationTitle("Output")
     .navigationBarTitleDisplayMode(.inline)

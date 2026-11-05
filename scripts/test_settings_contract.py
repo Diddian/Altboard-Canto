@@ -15,12 +15,12 @@ class SettingsContractTests(unittest.TestCase):
         home = read("Sayboard/Views/SettingsView.swift")
         for heading in ('Section("Speech & AI")', 'Text("App")'):
             self.assertIn(heading, home)
-        for path in ("SpeechLanguagesSettingsView(", "DictationSettingsView()",
-                     "VoiceOutputSettingsView()", "LLMSettingsView()",
+        for path in ("SpeechLanguagesSettingsView(", "DictationSettingsView(inline: true)",
+                     "VoiceOutputSettingsView()", "LLMSettingsView(inline: true)",
                      "KeyboardSettingsView(", "DataAndStorageSettingsView(inline: true)", "LLMModelsScreen()",
                      "AppLanguageListView()", "DiagnosticsView()"):
             self.assertIn(path, home)
-        self.assertNotIn("DictationSettingsView(inline: true", home)
+        self.assertNotIn("DictationSettingsView()", home)
         self.assertIn("Altboard-Canto · Source on GitHub", home)
         self.assertNotIn('Section("Start Here")', home)
         self.assertNotIn('Is My Microphone Ready?', home)
@@ -33,11 +33,24 @@ class SettingsContractTests(unittest.TestCase):
         self.assertNotIn("ActiveSessionToggle()", read("Sayboard/Views/SettingsNavigationViews.swift"))
         self.assertIn('selectedKind: self.keyboardKindBinding, inline: true', home)
 
+    def test_inline_actions_and_test_field_clear(self):
+        home = read("Sayboard/Views/SettingsView.swift")
+        history = read("Sayboard/Views/HistoryListView.swift")
+        ai = read("Sayboard/Views/LLMSettingsView.swift")
+        self.assertEqual(home.count("DisclosureGroup(isExpanded: self.$showsDictation)"), 1)
+        self.assertEqual(home.count("DisclosureGroup(isExpanded: self.$showsAIActions)"), 1)
+        self.assertEqual(home.count("DictationSettingsView(inline: true)"), 1)
+        self.assertEqual(home.count("LLMSettingsView(inline: true)"), 1)
+        self.assertIn('Toggle("Enabled", isOn: self.$llmEnabled)', ai)
+        self.assertIn('if self.keyboardTestingText.isEmpty {', history)
+        self.assertIn('self.isKeyboardTestFocused = false\n        } else {\n          self.keyboardTestingText = ""', history)
+        self.assertIn('"Close test keyboard" : "Clear test text"', history)
+        self.assertIn("Settings → Speech & AI → Speech Model",
+                      read("Sayboard/Views/MeetingRecordsView.swift"))
+
     def test_sections_with_footers_use_explicit_headers(self):
         sections = {
             "Sayboard/Views/SettingsView.swift": ("App",),
-            "Sayboard/Views/SettingsNavigationViews.swift":
-                ("Recording", "Live Speech to Text"),
             "Sayboard/Views/LearningDataSettingsView.swift":
                 ("Learned Suggestions", "Your Data"),
         }
@@ -58,6 +71,7 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn('Text("German (Ä Ö Ü ß)")', layout)
         self.assertIn(".pickerStyle(.menu)", layout)
         self.assertIn("KeyboardTestPreview(", layout)
+        self.assertNotIn('Text("Preview")', layout)
         self.assertEqual(layout.count("    Section {"), 1)
         self.assertLess(layout.index('Label("Key Order"'), layout.index('DisclosureGroup("Customization")'))
         self.assertLess(layout.index('DisclosureGroup("Customization")'), layout.index("KeyboardTestPreview("))

@@ -57,7 +57,6 @@ struct KeyboardSettingsView: View {
       DisclosureGroup("Customization") {
         KeyboardCustomizationView(inline: true)
       }
-      Text("Preview").font(.subheadline).foregroundStyle(.secondary)
       KeyboardTestPreview(
         kind: self.selectedKind,
         microphoneLayout: MicrophoneKeyboardLayout(rawValue: self.microphoneLayoutRaw)

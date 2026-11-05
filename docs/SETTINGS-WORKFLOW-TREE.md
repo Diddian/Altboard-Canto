@@ -1,192 +1,61 @@
-# Altboard-Canto: Settings and App Workflow
+# Settings and input navigation
 
-Implemented branch: feat/fixed-keyboard-settings-20261102
-Base: chore/settings-audit-tree-20261102
+Source-owned architecture for Settings and input. Read current code when this map differs from the implementation.
 
-This tree describes the settings screens in the new review build. It is
-plain English; indentation means a child screen or control.
+## Main tabs
 
-## Main navigation
+- **History** — saved voice notes and temporary keyboard test field. The X clears text first; with an empty field, it closes the keyboard.
+- **Meetings** — local meeting recording, search, playback and editing.
+- **Settings** — Speech & AI, Keyboard and App. Speech/Text models are Settings destinations, not a duplicate tab.
 
-Altboard-Canto
-|
-+-- History
-|   +-- Saved transcriptions and recordings
-|   +-- Playback, copy and delete
-|   +-- Try Your Keyboard input (stays above the bottom navigation bar)
-|
-+-- Models
-|   +-- Speech Recognition (offline ASR)
-|   +-- Text Processing (offline LLM)
-|
-+-- Settings
-    |
-    +-- Keyboard
-    |   +-- Layout
-    |   |   +-- Keyboard Type
-    |   |   |   +-- Microphone Only
-    |   |   |   +-- Symbols
-    |   |   |   +-- Alphabet
-    |   |   +-- Microphone Layout (only in Microphone Only)
-    |   |   |   +-- Default: large round microphone
-    |   |   |   +-- Compact: microphone bar above Space
-    |   |   +-- Alphabet Options (only in Alphabet)
-    |   |       +-- Key Order: QWERTZ or QWERTY
-    |   |       +-- Auto-Capitalize Sentences
-    |   |       +-- Cantonese Romanization (only when Cantonese is preferred)
-    |   |           +-- Jyutping
-    |   |           +-- Yale
-    |   |           +-- Yuetyam
-    |   +-- Feedback
-    |   |   +-- Haptic Feedback: On / Off
-    |   |   +-- Haptic Strength (Altboard default: 55%)
-    |   |   +-- Reset to Default (55%)
-    |   |   +-- Test Haptic
-    |   |   +-- Haptic Method
-    |   |   +-- Advanced Haptic Diagnostics
-    |   +-- Typing Shortcuts
-    |   |   +-- Double-Space Period
-    |   +-- Keyboard Preview
-    |       +-- Tap keys to test haptics
-    |
-    +-- Dictation
-    |   +-- Active Session
-    |   +-- Auto-Stop
-    |   +-- Active Session Info
-    |
-    +-- Speech & Languages
-    |   +-- Languages I Speak
-    |   |   +-- Preferred spoken languages
-    |   |   +-- Cantonese also enables Alphabet Chinese candidates
-    |   +-- Voice Output & Translation
-    |   |   +-- Clean Up Transcription
-    |   |   +-- Output Language
-    |   |   +-- Dictation Tone
-    |   |   +-- Speech Recognition Model shortcut
-    |   |   +-- Offline Cleanup / Translation Model shortcut
-    |   |   +-- Cantonese Word Corrections
-    |   +-- Speech Recognition Model shortcut
-    |
-    +-- Text & AI
-    |   +-- Writing Style (ordinary text formatting)
-    |   +-- AI Text Processing
-    |   |   +-- Enable / Disable
-    |   |   +-- Prompts
-    |   |   |   +-- Standard Prompts
-    |   |   |   +-- Custom Prompts
-    |   |   +-- Auto Action
-    |   |   +-- Long Press Action
-    |   +-- Snippets
-    |   +-- Auto-Copy to Clipboard
-    |
-    +-- History & Storage
-    |   +-- Keep History
-    |   +-- Clear All History (confirmation required)
-    |   +-- Clear Compiled Model Cache (confirmation required)
-    |
-    +-- Help
-    |   +-- Setup & Permissions
-    |   +-- Diagnostics
-    |   |   +-- Permissions and Signing
-    |   |   +-- Offline Models
-    |   |   +-- Haptic Tests
-    |   |   +-- Microphone and Speech Tests
-    |   |   +-- Execution Logs
-    |   |   +-- Copy Diagnostics
-    |   +-- Report a Problem
-    |       +-- GitHub Issue
-    |       +-- Email
-    |
-    +-- General
-    |   +-- App Language
-    |
-    +-- About
-        +-- Version
-        +-- Full Version (App Store builds only)
+## Settings
 
-## Keyboard sizing rules
+### Speech & AI
 
-Keyboard
-|
-+-- Microphone Only
-|   +-- Default: fixed 260 pt iPhone canvas, large round microphone
-|   +-- Compact: fixed 150 pt iPhone canvas, wide mic above Space
-|
-+-- Symbols
-|   +-- Fixed 277 pt iPhone canvas
-|
-+-- Alphabet
-    +-- Fixed 277 pt iPhone canvas
-    +-- Full toolbar inside the keyboard; no negative top offset
-    +-- Fixed 45 pt letter keys and 11 pt row spacing
+1. **Language Priority** — numbered drag-to-reorder languages; empty means automatic language choice.
+2. **Active Session** — the only active recording-session toggle, on Settings home.
+3. **Speech Model** — speech-model manager.
+4. **Text Model** — offline text-model manager.
+5. **Dictation** — collapsed inline: Auto-Stop, Live Dictation, Enable Meeting Recording, Cantonese Recognition Corrections.
+6. **Output** — transcript cleanup, output language, tone and text-output settings.
+7. **AI Actions** — collapsed inline: Enabled, then Prompts, Auto Action and Long Press Action when a usable text model is selected. No duplicate model link.
 
-The previous 70%-110% keyboard-height setting has been removed from Settings.
-Old height values stored on the device are ignored. This is not a value
-migration: only Microphone Only has a new explicit Default/Compact preference.
+### Keyboard
 
-## Voice and text workflow
+1. **Keyboard Type** — Microphone Only, Symbols, Alphabet.
+2. **Microphone Layout** — only for Microphone Only: Default / Compact.
+3. **Key Order** — only for Alphabet: QWERTY / QWERTZ / German.
+4. **Customization** — collapsed inline: auto-capitalization, double-space period, one haptic toggle, optional Globe, Settings, Output and AI buttons.
+5. Interactive keyboard preview directly below Customization, with no redundant "Preview" label.
 
-Keyboard microphone
-+-- Start recording
-+-- Offline speech recognizer
-+-- Check allowed languages
-+-- Offline Cantonese corrections
-+-- Optional offline AI cleanup or translation
-+-- Format, apply snippets and final corrections
-+-- Insert into host app
-+-- Save history according to retention policy
+There is no visible keyboard-height slider, haptic strength control, haptic test page, or additional keyboard-button submenu. Retain compatibility keys where needed without exposing duplicate controls.
 
-Alphabet keyboard
-+-- Send Latin keys directly to the host
-+-- Show Cantonese candidates if Cantonese is preferred
-+-- Keep raw English as a candidate
-+-- Replace only the verified typed suffix when a Chinese candidate is chosen
-+-- Space keeps Latin and starts a new word
-+-- Backspace deletes the last complete Cantonese syllable when safe
+### App
 
-## Change status
+1. **History & Storage** — collapsed inline: local storage categories, export/delete, voice-note retention, all-data export/delete and compiled-cache clearing. Preserve confirmation and active-recording protection.
+2. **App Language** — independent interface language.
+3. **Setup & Permissions**
+4. **Diagnostics**
+5. **Help**
+6. **Version** and source link.
 
-- Implemented in the review branch: fixed keyboard sizing, compact mic selection,
-  Settings grouping, shared keyboard geometry, touch-down haptic triggers,
-  and asynchronous haptic diagnostics.
-- Not proven until real iPhone testing: perceived haptic latency, toolbar safe
-  bounds in every host, and exact microphone feel.
-- Not changed: the offline speech engine, model storage, AI inference, history
-  retention policy, and direct IPA packaging.
+## Source and state ownership
 
-## Closing the keyboard
+| Area | Source | State owner |
+| --- | --- | --- |
+| Navigation and collapses | `Sayboard/Views/SettingsView.swift` | Local presentation state |
+| Keyboard layout, customization, preview | `KeyboardSettingsView.swift`, `KeyboardCustomizationView.swift` | App Group / `SharedSettings` |
+| Dictation controls | `SettingsNavigationViews.swift` | Speech service / App Group |
+| AI action controls | `LLMSettingsView.swift` | `SharedSettings` / `LLMDownloadService` |
+| Ordered language selection | `SpeechLanguagesSettingsView.swift`, `LanguagePickerView.swift` | `SharedSettings.preferredSpokenLanguages` |
+| History test X | `HistoryListView.swift` | Temporary, unsaved text |
+| Extension layout and host text | `SayboardKeyboard/KeyboardViewController.swift`, `Views/Layouts/AlphabeticKeyboardLayout.swift` | UIKit document proxy |
+| Native keyboard list | `SayboardKeyboard/Views/NativeInputModeSwitchKey.swift` | iOS input mode picker |
 
-History screen
-+-- Tap another part of History to dismiss the test keyboard
-+-- Scroll the History list to dismiss interactively
-+-- Switching tabs clears the text input focus
-+-- Tap the microphone while testing: record directly in Altboard
+## Invariants
 
-Other host apps
-+-- Each host app controls its background-tap dismissal
-+-- The experimental top-edge swipe recognizer was removed
-
-## Multilingual prediction strip
-
-Alphabet keyboard
-+-- Typing uses the same Languages I Speak preference as dictation
-+-- English and German
-|   +-- On-device UITextChecker completions and spelling guesses
-|   +-- Small offline fallback vocabulary
-|   +-- Accepted words rise in personal local order
-+-- Cantonese
-|   +-- Jyutping / Yale / Yuetyam: existing offline SQLite IME
-|   +-- Existing local candidate learning is preserved
-+-- Candidate UI
-|   +-- First item is the literal Latin text already in the host
-|   +-- Additional options in three equal-width iOS-style cells
-|   +-- Only two 1pt × 24pt separators per set of three cells
-|   +-- Mic, Settings and AI hidden while actively composing
-+-- Space
-|   +-- Small A in bottom-right on Alphabet
-|   +-- Hold 150ms, then drag horizontally to move text cursor
-+-- Emoji
-    +-- Filled face.smiling.inverse symbol, approx. 28pt
-
-Future (not in this IPA)
-+-- English / German glide/swipe typing; see docs/swipe-typing-en-de-plan.json
+- One visible owner per decision; don't duplicate controls or persistent state when inlining a submenu.
+- Keep the keyboard extension's UIKit touch owner and SwiftUI drawing/accessibility separate. Swipe trails are visual feedback, not a separate input mode.
+- The iOS Chinese handwriting keyboard is a system input mode. Altboard's five-key Chinese stroke grid is not a freehand drawing canvas.
+- Keep the host `UIHostingController` across ordinary focus changes; validate geometry and fallback paths before changing lifecycle ownership.
+- `main` uses the existing `.github/workflows/build-unsigned-ipa.yml`; a successful build is not physical-device validation.

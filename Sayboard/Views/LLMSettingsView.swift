@@ -2,18 +2,18 @@
 import SwiftUI
 
 struct LLMSettingsView: View {
+  var inline = false
 
   var body: some View {
-    Form {
-      self.enableSection
-      if self.llmEnabled && self.llmDownloadService.hasUsableModel {
-        self.promptsLink
-        self.defaultActionSection
-        self.longPressActionSection
+    Group {
+      if self.inline {
+        self.controls
+      } else {
+        Form { self.controls }
+          .navigationTitle("AI Actions")
+          .navigationBarTitleDisplayMode(.inline)
       }
     }
-    .navigationTitle("AI Actions")
-    .navigationBarTitleDisplayMode(.inline)
     .onAppear {
       let shared = SharedSettings()
       self.defaultActionSelection = shared.defaultLLMActionSelection
@@ -34,17 +34,11 @@ struct LLMSettingsView: View {
   @State private var longPressAction = LLMActionSelection.none
   @State private var disabledActions = Set<LLMAction>()
 
-  private var enableSection: some View {
-    Section {
-      Toggle("AI Actions", isOn: self.$llmEnabled)
-        .disabled(!self.llmDownloadService.hasUsableModel)
-    } footer: {
-      Text("Adds an AI button to the keyboard for rewriting, reformatting, and other text actions.")
-    }
-  }
-
-  private var promptsLink: some View {
-    Section {
+  @ViewBuilder
+  private var controls: some View {
+    Toggle("Enabled", isOn: self.$llmEnabled)
+      .disabled(!self.llmDownloadService.hasUsableModel)
+    if self.llmEnabled && self.llmDownloadService.hasUsableModel {
       NavigationLink {
         LLMPromptsView()
       } label: {
@@ -53,49 +47,30 @@ struct LLMSettingsView: View {
             .foregroundStyle(.secondary)
         }
       }
-    } footer: {
-      Text("Actions that appear when you tap the AI button on the keyboard.")
-    }
-  }
-
-  private var promptsSummary: String {
-    let enabledStandardCount = LLMAction.enabledActions(excluding: self.disabledActions).count
-    let customCount = self.customPrompts.count
-    let totalCount = enabledStandardCount + customCount
-    return "\(totalCount)"
-  }
-
-  private var defaultActionSection: some View {
-    Section {
       Picker("Auto Action", selection: self.$defaultActionSelection) {
         self.actionPickerContent()
       }
       .onChange(of: self.defaultActionSelection) { _, newValue in
         SharedSettings().defaultLLMActionSelection = newValue
       }
-    } footer: {
-      Text("Automatic actions affect dictated transcripts. Manual AI actions are separate and can process text selected in any input field.")
-    }
-  }
-
-  private var longPressActionSection: some View {
-    Section {
       Picker("Long Press Action", selection: self.$longPressAction) {
         self.actionPickerContent()
       }
       .onChange(of: self.longPressAction) { _, newValue in
         SharedSettings().longPressLLMAction = newValue
       }
-    } footer: {
-      Text("Long-pressing the AI button on keyboard runs this action directly, skipping the action list.")
     }
+  }
+
+  private var promptsSummary: String {
+    let enabledStandardCount = LLMAction.enabledActions(excluding: self.disabledActions).count
+    let customCount = self.customPrompts.count
+    return "\(enabledStandardCount + customCount)"
   }
 
   @ViewBuilder
   private func actionPickerContent() -> some View {
-    Section {
-      Text("Off").tag(LLMActionSelection.none)
-    }
+    Section { Text("Off").tag(LLMActionSelection.none) }
     Section {
       ForEach(LLMAction.enabledActions(excluding: self.disabledActions), id: \.self) { action in
         Text(LocalizedStringKey(action.displayNameKey))
@@ -111,7 +86,6 @@ struct LLMSettingsView: View {
       }
     }
   }
-
 }
 
 struct LLMModelsScreen: View {
