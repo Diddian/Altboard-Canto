@@ -54,8 +54,10 @@ struct KeyboardSettingsView: View {
         }
         .pickerStyle(.menu)
       }
-      DisclosureGroup("Customization") {
+      DisclosureGroup {
         KeyboardCustomizationView(inline: true)
+      } label: {
+        Label("Customization", systemImage: "slider.horizontal.3")
       }
       KeyboardTestPreview(
         kind: self.selectedKind,
@@ -81,6 +83,10 @@ private struct KeyboardTestPreview: View {
   private var showGlobeKey = false
   @AppStorage(SharedKey.needsInputModeSwitchKey, store: UserDefaults(suiteName: AppGroup.identifier))
   private var needsInputModeSwitchKey = false
+  private var showsGlobeButton: Bool {
+    !SharedSettings.keyboardGlobeTemporarilyDisabled
+      && (self.showGlobeKey || self.needsInputModeSwitchKey)
+  }
   @AppStorage(SharedKey.keyboardHapticsEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
   private var keyboardHapticsEnabled = true
   @AppStorage(SharedKey.keyboardHapticStrength, store: UserDefaults(suiteName: AppGroup.identifier))
@@ -246,7 +252,7 @@ private struct KeyboardTestPreview: View {
   private var alphabetBottomRow: some View {
     HStack(spacing: 6) {
       self.labelKey("?123", width: 48)
-      if self.showGlobeKey || self.needsInputModeSwitchKey {
+      if self.showsGlobeButton {
         self.key("globe", width: 48)
       }
       self.labelKey("", height: 45)
@@ -256,7 +262,7 @@ private struct KeyboardTestPreview: View {
 
   private var standardBottomRow: some View {
     HStack(spacing: 6) {
-      if self.showGlobeKey || self.needsInputModeSwitchKey {
+      if self.showsGlobeButton {
         self.key("globe", width: 45)
       }
       self.key("trash", width: 45)

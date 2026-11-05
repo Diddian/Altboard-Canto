@@ -65,6 +65,7 @@ final class KeyboardViewController: UIInputViewController {
     self.hasDictationKey = true
     self.keyboardState.bootstrapLayoutSettings()
     self.keyboardState.configureInputModeListButton = { [weak self] button in
+      guard !SharedSettings.keyboardGlobeTemporarilyDisabled else { return }
       guard let self else { return }
       button.addTarget(
         self, action: #selector(handleInputModeList(from:with:)),

@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "app_source_commit": "d2fb55443e710ab492231073c9620de715f5eac9",
+  "tested_ipa_build": 123,
+  "status_meaning": "Source evidence, device reports, hypotheses and user-requirement gaps are separate. This document update does not implement any pending app fix.",
+  "issues": [
+    {
+      "id": "AB-DOC-001",
+      "status": "unresolved_device_report",
+      "title": "Recurring blank board / line drawing",
+      "evidence": [
+        "User reports recurrence beyond the first app opening, including on iPhone 17 Pro Max.",
+        "Earlier attached screenshots show a top resize handle, top-right Delete and 123/Emoji bottom row unlike the reviewed AltBoard source.",
+        "User could not confirm the active keyboard name; said supposedly AltBoard.",
+        "Current source already removes cursor-mode letter fading and retains a bounded hosting root. Build 120 passes compile/package checks; this does not establish the cause or a device fix.",
+        "Supplied build-123 JSON has matching app/keyboard SHA d2fb55443e710ab492231073c9620de715f5eac9: 73 lifecycle events, 10 sessions, eight didAppear, two sessions ending after initial layout; zero recorded memoryWarning; nativeSwitchRequired false in all captured events. This does not establish termination or active pad ownership.",
+        "The supplied video visibly contains an ink pad in WhatsApp and Notes and ordinary Altboard letter keys between scenes.",
+        "Local main now contains the requested temporary Globe suppression and on-demand swipe drawing layer. No phone test or new IPA proves the recurring pad is resolved."
+      ],
+      "owners": [
+        "SayboardKeyboard/KeyboardViewController.swift",
+        "SayboardKeyboard/KeyboardInputView.swift",
+        "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift",
+        "SayboardKeyboard/Views/AlphabeticTouchRow.swift",
+        "Sayboard/Views/HistoryListView.swift"
+      ],
+      "acceptance": [
+        "Identify the selected keyboard by name while the failure is visible; do not infer selection from being inside AltBoard.",
+        "Explicitly select AltBoard; record whether keys return, stay blank or switch away again.",
+        "Check app/extension build stamps and any matching termination report; a historical probe or breadcrumb alone is not proof.",
+        "Repeat focus, keyboard dismissal/reopening, host switches and interrupted gestures in ChatGPT, Notes and the app test field; both key visibility and text insertion must work."
+      ],
+      "hypotheses_not_verified": [
+        "Another active keyboard, possibly Apple Chinese handwriting",
+        "System fallback following an extension exit or memory termination",
+        "A remaining AltBoard rendering, layout or touch-lifecycle defect"
+      ]
+    },
+    {
+      "id": "AB-DOC-002",
+      "status": "confirmed_source_mismatch_not_fixed",
+      "title": "Meetings missing-model message names an obsolete settings path",
+      "evidence": [
+        "MeetingRecordsView instructs Settings → History & Storage → Speech Recognition Models.",
+        "Current SettingsView puts Speech Model under Speech & AI; History & Storage has no model destination."
+      ],
+      "owners": [
+        "Sayboard/Views/MeetingRecordsView.swift",
+        "Sayboard/Views/SettingsView.swift"
+      ],
+      "acceptance": [
+        "In a separately authorized app patch, use the existing Settings → Speech & AI → Speech Model destination and matching localized help text.",
+        "Check the no-Qwen meeting action and all affected links; update the menu map. No app edit is included in this document update."
+      ]
+    },
+    {
+      "id": "AB-DOC-003",
+      "status": "user_requirement_gap_not_fixed",
+      "title": "Storage categories are coarser than the requested structure",
+      "evidence": [
+        "Current LocalUserDataStore categories are voiceNotes, meetings and vocabulary.",
+        "Vocabulary combines Corrections & Suggestions. Export/Delete All Data keeps downloaded models and app settings.",
+        "The user requested model management plus separate manual-correction and learned-suggestion controls. This is not fully represented in current storage UI."
+      ],
+      "owners": [
+        "Sayboard/Services/LocalUserDataStore.swift",
+        "Sayboard/Views/DataAndStorageSettingsView.swift",
+        "Shared/PersonalVocabularyExport.swift"
+      ],
+      "acceptance": [
+        "Before an app patch, define exact data-category boundaries and existing storage consumers; preserve independent retention/export/deletion behavior.",
+        "Describe what each export/delete contains, preserve confirmations and active-recording guards, and verify unrelated categories survive.",
+        "Keep proposed menu changes separate from the current-source menu until implemented."
+      ]
+    },
+    {
+      "id": "AB-DOC-004",
+      "status": "device_verification_pending",
+      "title": "Settings jitter and duplicate-flow regression acceptance",
+      "evidence": [
+        "Current code groups Customization and removes haptic strength/test menus there; Active Session is on Settings home.",
+        "User reported jitter, redundant menus and repeated controls. Focused source checks pass; representative iPhone scrolling and navigation have not been verified."
+      ],
+      "owners": [
+        "Sayboard/Views/SettingsView.swift",
+        "Sayboard/Views/KeyboardSettingsView.swift",
+        "Sayboard/Views/KeyboardCustomizationView.swift",
+        "Sayboard/Views/SettingsNavigationViews.swift"
+      ],
+      "acceptance": [
+        "Test scrolling and expansion on iPhone 17 Pro Max, including returning from submenus and reopening Settings.",
+        "Confirm one Active Session toggle and one Customization group, persistent preferences and visible Preview.",
+        "If a UI audit is requested, present five evidenced problems and proposed changes before editing; do not infer smoothness from a build."
+      ]
+    },
+    {
+      "id": "AB-DOC-005",
+      "status": "inference_and_device_verification_pending",
+      "title": "Heretic feasibility, faithful Traditional Chinese and actual refusal behavior",
+      "evidence": [
+        "Current source recommends 0.8B/2B/9B Heretic choices using language and memory policies.",
+        "9B MAX-MTP IQ3_M is approximately 5.72 GB on disk; current policy requires at least 12 GB physical RAM and 8.4 GB available app memory.",
+        "Recommendation is not active selection, existing downloads are not replaced automatically, and inference uses CPU without enabled MTP acceleration.",
+        "Prompt-contract checks pass; actual latency, memory behavior and political/historical rewrite results have not been tested."
+      ],
+      "owners": [
+        "Shared/LLMDevicePolicy.swift",
+        "Shared/LLMConstants.swift",
+        "Sayboard/Services/LLMPromptTemplates.swift",
+        "Sayboard/Services/LLMDownloadService.swift"
+      ],
+      "acceptance": [
+        "Confirm recommended, installed and selected model separately; test with the selected Heretic download.",
+        "Check meaning and Traditional Chinese preservation with the user’s historical/political rewrite example.",
+        "Measure cold/warm latency, available memory and interruption behavior on the phone; do not promise uncensored outputs or 9B viability from file size."
+      ]
+    },
+    {
+      "id": "AB-DOC-006",
+      "status": "bounded_support_not_universal",
+      "title": "Language Priority does not govern every language/model algorithm",
+      "evidence": [
+        "Ordered selection and supported Latin suggestion boosts exist; local context may outweigh stored order.",
+        "Available language selection is broader than the supported swipe/prediction paths; Qwen speech uses auto-detection.",
+        "Passing ordering tests does not prove Japanese prediction or universal n-gram prioritization."
+      ],
+      "owners": [
+        "Shared/LanguagePriority.swift",
+        "Shared/LatinWordSuggestionPolicy.swift",
+        "Sayboard/Views/SpeechLanguagesSettingsView.swift",
+        "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift"
+      ],
+      "acceptance": [
+        "Check stored order after reopening and supported suggestion ranking without overriding strong local context.",
+        "For future language work, state decoder/model capability and fallback separately; do not silently imply support from a selectable preference."
+      ]
+    },
+    {
+      "id": "AB-DOC-007",
+      "status": "documentation_updated_locally",
+      "title": "Stale menu and weak cross-page development handoff",
+      "evidence": [
+        "Previous SETTINGS-WORKFLOW-TREE.md described a Models tab, haptic strength/test menus and duplicate session controls.",
+        "It has been replaced locally by a menu rendered from the reviewed APP-STRUCTURE.json snapshot.",
+        "Root AGENTS.md and CHAT-DEVELOPMENT.md require a feature-first, bounded owner/consumer check and document maintenance. The checker invalidates changed mapped owners; it does not parse Swift or prove completeness."
+      ],
+      "owners": [
+        "docs/APP-STRUCTURE.json",
+        "docs/SETTINGS-WORKFLOW-TREE.md",
+        "docs/CHAT-DEVELOPMENT.md",
+        "scripts/check-app-structure.py",
+        "AGENTS.md"
+      ],
+      "acceptance": [
+        "JSON parses; menu generation and check agree; source-owner fingerprints and declared anchors match.",
+        "A changed owner and an edited generated menu must each produce a failing check.",
+        "For new routes, update reviewed entries and fingerprints before regenerating. The user should not be asked to supply the menu tree again."
+      ]
+    }
+  ]
+}

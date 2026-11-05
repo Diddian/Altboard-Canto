@@ -38,6 +38,12 @@ struct LLMSettingsView: View {
   private var controls: some View {
     Toggle("Enabled", isOn: self.$llmEnabled)
       .disabled(!self.llmDownloadService.hasUsableModel)
+    // Local formatting and clipboard controls remain available without AI.
+    NavigationLink {
+      VoiceOutputSettingsView()
+    } label: {
+      Label("Output", systemImage: "character.bubble")
+    }
     if self.llmEnabled && self.llmDownloadService.hasUsableModel {
       NavigationLink {
         LLMPromptsView()

@@ -1,61 +1,145 @@
-# Settings and input navigation
+# AltBoard-Canto: current app and Settings menu
 
-Source-owned architecture for Settings and input. Read current code when this map differs from the implementation.
+Generated from `APP-STRUCTURE.json`; edit the JSON and run
+`python3 scripts/check-app-structure.py --write`.
 
-## Main tabs
+App source baseline: `d2fb55443e710ab492231073c9620de715f5eac9` · build 123.
+This records source structure, not physical-device verification.
 
-- **History** — saved voice notes and temporary keyboard test field. The X clears text first; with an empty field, it closes the keyboard.
-- **Meetings** — local meeting recording, search, playback and editing.
-- **Settings** — Speech & AI, Keyboard and App. Speech/Text models are Settings destinations, not a duplicate tab.
+Conditions and initial expansion state appear in parentheses. Descriptions
+of dynamic lists describe repeated rows, not extra navigation destinations.
 
-## Settings
+- History
+  - Saved voice notes: playback, copy, correction/learning and delete
+  - Try your keyboard here (system-selected keyboard; not forced to AltBoard)
+- Meetings
+  - Search meetings
+  - Start a new meeting / Stop and save meeting
+  - Recording information and 15-minute audio parts
+  - Saved meeting
+    - Playback
+    - Rename
+    - Transcript & Files
+    - Delete (confirmation)
+  - Transcript & Files
+    - Name and notes / Save Name & Notes
+    - Combined Transcript / Copy Transcript / Share
+    - Saved Audio Parts
+- Settings
+  - Action Required (incomplete setup or low storage; rows depend on the condition)
+    - Complete Setup
+    - Low storage warning
+  - Purchase section (APPSTORE configuration only)
+  - Speech & AI
+    - Language Priority
+      - Preferred Languages: numbered, draggable ordering
+      - Any language (empty preference)
+      - Unsupported speech-model language warning
+    - Active Session
+    - Speech Model
+      - Speech Models: filtered catalog, selected/download states
+      - Advanced: Change Qwen model source
+    - Text Model
+      - Text Models: language filter, recommendation, selected/download states
+      - Model update notice / Switch back / Remove
+    - Dictation (initially collapsed)
+      - Auto-Stop
+      - Live Dictation
+      - Enable Meeting Recording
+      - Cantonese Recognition Corrections
+        - Edit speech-recognition correction rules
+    - AI Actions (initially collapsed)
+      - Enabled (disabled without usable downloaded text model)
+      - Output
+        - Transcript Cleanup
+        - Output Language
+        - Tone
+        - Language Code (custom output language; invalid code warning when needed)
+        - Formatting
+          - Writing Style
+          - Snippets
+          - Auto-Copy to Clipboard
+        - Missing text-model notice (no usable text model)
+      - Prompts (AI enabled and usable model installed)
+        - Standard Prompts
+        - Custom Prompts / Add Custom Prompt
+      - Auto Action (AI enabled and usable model installed; applies to dictation)
+      - Long Press Action (AI enabled and usable model installed)
+  - Keyboard
+    - Keyboard Type (Microphone Only / Symbols / Alphabet)
+    - Microphone Layout (Microphone Only; Default / Compact)
+    - Key Order (Alphabet; QWERTY (English) / QWERTZ / German (Ä Ö Ü ß))
+    - Customization (initially collapsed)
+      - Auto-capitalization
+      - Double-Space Period
+      - Haptic Feedback
+      - Extra Globe Key (temporarily disabled; saved preference retained)
+      - Settings Key
+      - Output Key
+      - AI Key (disabled when AI Actions is off; runtime toolbar additionally needs a usable text model)
+    - Interactive keyboard preview (visible inline; selected layout)
+  - App
+    - History & Storage (initially collapsed)
+      - Voice Notes
+        - Export
+        - Delete (confirmation)
+      - Meetings
+        - Export
+        - Delete (confirmation)
+      - Corrections & Suggestions
+        - Export
+        - Delete (confirmation)
+      - Keep Voice Notes
+      - Export All Data
+      - Delete All Data (confirmation)
+      - Clear Model Cache
+    - App Language
+      - Select app interface language
+    - Setup & Permissions
+      - Conditional setup checklist: microphone, keyboard, Full Access and speech model
+    - Diagnostics
+      - Permissions and Signing (app/keyboard build stamps and historical probe)
+      - Offline Models
+      - Audio and Device
+      - Keyboard Touch Diagnostics
+        - Show Key Touch Areas
+        - Swipe & Touch Counters, Learning and Reset
+          - Aggregate touch/swipe counters and learning/reset controls
+      - Live Dictation
+      - Functional Tests
+        - Refresh all diagnostics
+        - Test microphone without saving audio
+        - Test ASR and AI cleanup / Stop and transcribe
+      - Last Execution Steps
+        - Refresh last execution steps
+      - Export
+        - Cantonese Learning & JSON Export
+          - Aggregate Cantonese learning and vocabulary JSON export
+        - Copy complete diagnostics
+      - Development Traces (non-APPSTORE builds; initially collapsed)
+        - Keyboard lifecycle / Feature milestones counts
+        - Share Development Diagnostics JSON
+        - Copy Development Diagnostics JSON
+        - Refresh Diagnostic Counts
+        - Clear Development Traces (confirmation)
+    - Help
+      - Report a problem: GitHub / email
+    - Version
+    - Altboard-Canto · Source on GitHub
 
-### Speech & AI
+## Ownership and known differences
 
-1. **Language Priority** — numbered drag-to-reorder languages; empty means automatic language choice.
-2. **Active Session** — the only active recording-session toggle, on Settings home.
-3. **Speech Model** — speech-model manager.
-4. **Text Model** — offline text-model manager.
-5. **Dictation** — collapsed inline: Auto-Stop, Live Dictation, Enable Meeting Recording, Cantonese Recognition Corrections.
-6. **Output** — transcript cleanup, output language, tone and text-output settings.
-7. **AI Actions** — collapsed inline: Enabled, then Prompts, Auto Action and Long Press Action when a usable text model is selected. No duplicate model link.
+- Active Session has one Settings-home owner; Dictation does not repeat the toggle.
+- Customization is one collapsed group between conditional Key Order/Microphone Layout and the visible Preview. Haptics is a toggle.
+- History & Storage is initially collapsed under App; current three categories combine corrections/suggestions and exclude downloaded models. See AB-DOC-003.
+- Language order influences supported paths; it does not implement every language or decoder. Qwen speech uses auto-detection.
+- Existing download, recommended model and actively selected model are separate. No file replacement or refusal behavior is implied.
+- Diagnostics has additional technical controls outside Customization. No cleanup or deletion is authorized by documenting them.
+- This map records current source rather than proposed menu changes. Update owners and conditions after bounded source review; regenerate Markdown.
+- Main root pages support left/right swipes in History / Meetings / Settings order, without wrapping; native tabs remain. Phone gesture arbitration is unverified.
+- Output is a single destination inside AI Actions. Local writing style, snippets and clipboard controls are not gated on AI.
+- Temporary user-requested experiment suppresses Altboard Globe including required in-extension visibility; it cannot suppress iOS-owned controls outside the extension.
+- Swipe drawing UIView mounts only after the active trail has more than one point; this is not a confirmed ink-pad fix.
+- Base source is build 123 plus local UI changes, with no new compiled or device-tested build.
 
-### Keyboard
-
-1. **Keyboard Type** — Microphone Only, Symbols, Alphabet.
-2. **Microphone Layout** — only for Microphone Only: Default / Compact.
-3. **Key Order** — only for Alphabet: QWERTY / QWERTZ / German.
-4. **Customization** — collapsed inline: auto-capitalization, double-space period, one haptic toggle, optional Globe, Settings, Output and AI buttons.
-5. Interactive keyboard preview directly below Customization, with no redundant "Preview" label.
-
-There is no visible keyboard-height slider, haptic strength control, haptic test page, or additional keyboard-button submenu. Retain compatibility keys where needed without exposing duplicate controls.
-
-### App
-
-1. **History & Storage** — collapsed inline: local storage categories, export/delete, voice-note retention, all-data export/delete and compiled-cache clearing. Preserve confirmation and active-recording protection.
-2. **App Language** — independent interface language.
-3. **Setup & Permissions**
-4. **Diagnostics**
-5. **Help**
-6. **Version** and source link.
-
-## Source and state ownership
-
-| Area | Source | State owner |
-| --- | --- | --- |
-| Navigation and collapses | `Sayboard/Views/SettingsView.swift` | Local presentation state |
-| Keyboard layout, customization, preview | `KeyboardSettingsView.swift`, `KeyboardCustomizationView.swift` | App Group / `SharedSettings` |
-| Dictation controls | `SettingsNavigationViews.swift` | Speech service / App Group |
-| AI action controls | `LLMSettingsView.swift` | `SharedSettings` / `LLMDownloadService` |
-| Ordered language selection | `SpeechLanguagesSettingsView.swift`, `LanguagePickerView.swift` | `SharedSettings.preferredSpokenLanguages` |
-| History test X | `HistoryListView.swift` | Temporary, unsaved text |
-| Extension layout and host text | `SayboardKeyboard/KeyboardViewController.swift`, `Views/Layouts/AlphabeticKeyboardLayout.swift` | UIKit document proxy |
-| Native keyboard list | `SayboardKeyboard/Views/NativeInputModeSwitchKey.swift` | iOS input mode picker |
-
-## Invariants
-
-- One visible owner per decision; don't duplicate controls or persistent state when inlining a submenu.
-- Keep the keyboard extension's UIKit touch owner and SwiftUI drawing/accessibility separate. Swipe trails are visual feedback, not a separate input mode.
-- The iOS Chinese handwriting keyboard is a system input mode. Altboard's five-key Chinese stroke grid is not a freehand drawing canvas.
-- Keep the host `UIHostingController` across ordinary focus changes; validate geometry and fallback paths before changing lifecycle ownership.
-- `main` uses the existing `.github/workflows/build-unsigned-ipa.yml`; a successful build is not physical-device validation.
+Consult `KNOWN-ISSUES.json` for evidence and pending acceptance checks.

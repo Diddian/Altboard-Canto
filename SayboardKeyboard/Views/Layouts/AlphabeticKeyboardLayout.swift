@@ -1594,8 +1594,19 @@ private final class SwipeTrailState: ObservableObject {
 }
 
 /// UIKit draws the trail without taking ownership of keyboard touches.
-private struct SwipeTrailOverlay: UIViewRepresentable {
+private struct SwipeTrailOverlay: View {
   @ObservedObject var trail: SwipeTrailState
+
+  var body: some View {
+    // Letter keys have already received a swipe before a drawing view is mounted.
+    if self.trail.points.count > 1 {
+      ActiveSwipeTrail(points: self.trail.points)
+    }
+  }
+}
+
+private struct ActiveSwipeTrail: UIViewRepresentable {
+  let points: [LatinSwipePoint]
 
   func makeUIView(context: Context) -> SwipeTrailDrawingView {
     let view = SwipeTrailDrawingView(frame: .zero)
@@ -1606,7 +1617,7 @@ private struct SwipeTrailOverlay: UIViewRepresentable {
   }
 
   func updateUIView(_ view: SwipeTrailDrawingView, context: Context) {
-    view.setPoints(self.trail.points)
+    view.setPoints(self.points)
   }
 }
 

@@ -16,7 +16,7 @@ class SettingsContractTests(unittest.TestCase):
         for heading in ('Section("Speech & AI")', 'Text("App")'):
             self.assertIn(heading, home)
         for path in ("SpeechLanguagesSettingsView(", "DictationSettingsView(inline: true)",
-                     "VoiceOutputSettingsView()", "LLMSettingsView(inline: true)",
+                     "LLMSettingsView(inline: true)",
                      "KeyboardSettingsView(", "DataAndStorageSettingsView(inline: true)", "LLMModelsScreen()",
                      "AppLanguageListView()", "DiagnosticsView()"):
             self.assertIn(path, home)
@@ -28,7 +28,8 @@ class SettingsContractTests(unittest.TestCase):
         layout = read("Sayboard/Views/KeyboardSettingsView.swift")
         self.assertIn('KeyboardCustomizationView(inline: true)', layout)
         self.assertNotIn('KeyboardCustomizationView(', home)
-        self.assertIn('DisclosureGroup("History & Storage"', home)
+        self.assertIn('Label("History & Storage", systemImage: "externaldrive")', home)
+        self.assertNotIn('VoiceOutputSettingsView()', home)
         self.assertEqual(home.count("ActiveSessionToggle()"), 1)
         self.assertNotIn("ActiveSessionToggle()", read("Sayboard/Views/SettingsNavigationViews.swift"))
         self.assertIn('selectedKind: self.keyboardKindBinding, inline: true', home)
@@ -73,8 +74,8 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("KeyboardTestPreview(", layout)
         self.assertNotIn('Text("Preview")', layout)
         self.assertEqual(layout.count("    Section {"), 1)
-        self.assertLess(layout.index('Label("Key Order"'), layout.index('DisclosureGroup("Customization")'))
-        self.assertLess(layout.index('DisclosureGroup("Customization")'), layout.index("KeyboardTestPreview("))
+        self.assertLess(layout.index('Label("Key Order"'), layout.index('Label("Customization"'))
+        self.assertLess(layout.index('Label("Customization"'), layout.index("KeyboardTestPreview("))
         self.assertNotIn("Section(", custom)
         self.assertNotIn("Slider(", custom)
         self.assertNotIn('Text("Strength")', custom)
@@ -98,15 +99,31 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("mode: .ordered(", languages)
         self.assertNotIn("updated.subtracting", languages)
 
-    def test_native_globe_is_optional_except_when_ios_requires_it(self):
+    def test_globe_experiment_suppresses_real_key_and_preview(self):
         keyboard = read("SayboardKeyboard/Views/Layouts/KeyboardChrome.swift")
         state = read("SayboardKeyboard/KeyboardState.swift")
         config = read("Shared/SharedSettings.swift")
-        self.assertIn("self.keyboardState.showGlobeKey || self.keyboardState.needsInputModeSwitchKey",
-                      keyboard)
+        preview = read("Sayboard/Views/KeyboardSettingsView.swift")
+        controller = read("SayboardKeyboard/KeyboardViewController.swift")
+        self.assertIn("static let keyboardGlobeTemporarilyDisabled = true", config)
+        self.assertIn("!SharedSettings.keyboardGlobeTemporarilyDisabled", keyboard)
+        self.assertIn("if self.keyboardState.showsGlobeButton", keyboard)
+        self.assertIn("let showsGlobe = keyboardState.showsGlobeButton", keyboard)
+        self.assertIn("!SharedSettings.keyboardGlobeTemporarilyDisabled", preview)
+        self.assertEqual(preview.count("if self.showsGlobeButton"), 2)
+        self.assertIn("guard !SharedSettings.keyboardGlobeTemporarilyDisabled else { return }", controller)
         self.assertIn("NativeInputModeSwitchKey(", keyboard)
         self.assertIn("var keyboardShowGlobeKey: Bool", config)
         self.assertIn("self.showGlobeKey = self.settings.keyboardShowGlobeKey", state)
+
+    def test_output_has_one_route_and_local_controls_are_not_ai_gated(self):
+        ai = read("Sayboard/Views/LLMSettingsView.swift")
+        self.assertEqual(ai.count("VoiceOutputSettingsView()"), 1)
+        controls = ai.split("private var controls: some View", 1)[1]
+        self.assertLess(controls.index("VoiceOutputSettingsView()"),
+                        controls.index("if self.llmEnabled && self.llmDownloadService.hasUsableModel"))
+        output = read("Sayboard/Views/VoiceOutputSettingsView.swift")
+        self.assertEqual(output.count("TextOutputSection()"), 1)
 
     def test_host_keeps_render_tree_across_focus_changes(self):
         controller = read("SayboardKeyboard/KeyboardViewController.swift")

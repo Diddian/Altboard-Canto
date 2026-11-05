@@ -40,7 +40,7 @@ struct MainTabView: View {
     .modifier(AIProcessingEnabledAlert())
   }
 
-  private enum TabID: String {
+  private enum TabID: String, CaseIterable {
     case history
     case meetings
     case settings
@@ -96,7 +96,11 @@ struct MainTabView: View {
   @AppStorage(SharedKey.freeWordsUsed, store: UserDefaults(suiteName: AppGroup.identifier))
   private var freeWordsUsed = 0
   @Environment(\.scenePhase) private var scenePhase
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @SceneStorage("selectedTab") private var selectedTab = TabID.history.rawValue
+  @State private var historyPath = NavigationPath()
+  @State private var meetingsPath = NavigationPath()
+  @State private var settingsPath = NavigationPath()
   @State private var activeBanner: SetupBanner?
   @State private var settingsStackID = UUID()
   @State private var isPurchaseScreenPresented = false
@@ -137,20 +141,23 @@ struct MainTabView: View {
   private var liquidGlassTabs: some View {
     TabView(selection: self.$selectedTab) {
       Tab("History", image: "tab-history", value: TabID.history.rawValue) {
-        NavigationStack {
+        NavigationStack(path: self.$historyPath) {
           HistoryListView()
+            .gesture(self.pageSwipe(for: .history))
         }
       }
 
       Tab("Meetings", systemImage: "person.3", value: TabID.meetings.rawValue) {
-        NavigationStack {
+        NavigationStack(path: self.$meetingsPath) {
           MeetingRecordsView()
+            .gesture(self.pageSwipe(for: .meetings))
         }
       }
 
       Tab("Settings", image: "tab-settings", value: TabID.settings.rawValue) {
-        NavigationStack {
+        NavigationStack(path: self.$settingsPath) {
           SettingsView()
+            .gesture(self.pageSwipe(for: .settings))
         }
         .id(self.settingsStackID)
       }
@@ -159,24 +166,27 @@ struct MainTabView: View {
 
   private var legacyTabs: some View {
     TabView(selection: self.$selectedTab) {
-      NavigationStack {
+      NavigationStack(path: self.$historyPath) {
         HistoryListView()
+          .gesture(self.pageSwipe(for: .history))
       }
       .tabItem {
         Label("History", image: "tab-history")
       }
       .tag(TabID.history.rawValue)
 
-      NavigationStack {
+      NavigationStack(path: self.$meetingsPath) {
         MeetingRecordsView()
+          .gesture(self.pageSwipe(for: .meetings))
       }
       .tabItem {
         Label("Meetings", systemImage: "person.3")
       }
       .tag(TabID.meetings.rawValue)
 
-      NavigationStack {
+      NavigationStack(path: self.$settingsPath) {
         SettingsView()
+          .gesture(self.pageSwipe(for: .settings))
       }
       .id(self.settingsStackID)
       .tabItem {
@@ -184,6 +194,29 @@ struct MainTabView: View {
       }
       .tag(TabID.settings.rawValue)
     }
+  }
+
+  private func pageSwipe(for tab: TabID) -> some Gesture {
+    DragGesture(minimumDistance: 40)
+      .onEnded { value in
+        // Leave edge-back, vertical scrolling and child controls to their owners.
+        let isAtRoot: Bool = switch tab {
+        case .history: self.historyPath.isEmpty
+        case .meetings: self.meetingsPath.isEmpty
+        case .settings: self.settingsPath.isEmpty
+        }
+        guard !self.isBehindOnboarding, self.selectedTab == tab.rawValue,
+              isAtRoot, let index = TabID.allCases.firstIndex(of: tab),
+              let next = AppPageSwipe.destination(
+                current: index, count: TabID.allCases.count,
+                startX: Double(value.startLocation.x),
+                horizontal: Double(value.translation.width),
+                vertical: Double(value.translation.height)
+              ) else { return }
+        withAnimation(self.reduceMotion ? nil : .easeInOut(duration: 0.2)) {
+          self.selectedTab = TabID.allCases[next].rawValue
+        }
+      }
   }
 
   private static func initialBanner() -> SetupBanner? {
@@ -302,6 +335,7 @@ struct MainTabView: View {
   private func resetSettingsStackIfIdle() {
     guard self.scenePhase != .active || self.selectedTab != TabID.settings.rawValue else { return }
     self.settingsStackID = UUID()
+    self.settingsPath = NavigationPath()
   }
 
   private func handleTabDeepLink(_ url: URL) {

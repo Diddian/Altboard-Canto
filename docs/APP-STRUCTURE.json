@@ -1,0 +1,909 @@
+{
+  "schema_version": 1,
+  "updated_at_berlin": "2026-11-05T17:30:29.493450+01:00",
+  "baseline": {
+    "branch": "main",
+    "commit": "d2fb55443e710ab492231073c9620de715f5eac9",
+    "build": 123,
+    "marketing_version": "1.14.7",
+    "local_changes": "Requested UI patch applied to actual main checkout; not published or device verified."
+  },
+  "scope": "Current app navigation and Settings control families, including conditional and dynamic rows. Dynamic catalogs/checklists are described as families, not a complete enumeration of runtime values. This is a reviewed source map, not a Swift parser or device proof.",
+  "source_owners": {
+    ".github/workflows/build-unsigned-ipa.yml": "65096b8aead06abd32ef5d2024efaa92412a1ff2ec8cbf05946518674e4842fa",
+    "Sayboard/Info.plist": "b79956bd623bd0dc944f99e37b79ce48f80fce2c95f3cddcee986e1a079234a8",
+    "Sayboard/Services/BackgroundAudioSession.swift": "5be28e081ace2775feb0fd36f41b64ce94a64d1220607ee260f036c596fdfc82",
+    "Sayboard/Services/HereticModelCatalog.swift": "866c43dcf25caef0efc1aa8b0867df1647ad6ca215e7e6e74227949535148a81",
+    "Sayboard/Services/LLMDownloadService.swift": "a576570ef29b5353856c42cc0d180e18992ab30ee9ac896f09b78dc1eef14699",
+    "Sayboard/Services/LLMProcessingCoordinator.swift": "9bb6bbbc8226b5497c796177c21a5f40e36ab90ba759281f80a62fb81687431c",
+    "Sayboard/Services/LLMPromptTemplates.swift": "2167a76fb32aabb8edc9a37cf95fd72c36fa1c4d8f89301361e743e2474a0dc2",
+    "Sayboard/Services/LocalUserDataStore.swift": "706d5ce4c65005e7964f947724026954b037d958ec7decdb15db8ed141cefff1",
+    "Sayboard/Services/MeetingRecordingCoordinator.swift": "cf5c142be03ac229671e9e1e3d4684890dddf727f6fc1db071d40565e37fe2f5",
+    "Sayboard/Services/SpeechRecognitionService+Transcription.swift": "3c442714d16713d52862ea6691eb21fa20be5d9d9f50a032c1a2d81ece2cfa9d",
+    "Sayboard/Services/SpeechRecognitionService.swift": "0570b4f258a62f8766aa317e318d377ea5d291c796cad0f5d1ad376278f1ddf6",
+    "Sayboard/Views/AppLanguageListView.swift": "856d1c2e5cf4c660abadddc89152f33a7f4091cece095e76041136923a4f0090",
+    "Sayboard/Views/CantoneseCorrectionsView.swift": "ca572ade7e2149fe3c8ef9eca1615bfc7d4a6e955525aff07901ba8ddea68f4a",
+    "Sayboard/Views/CantoneseRomanizationDiagnosticsView.swift": "9172285f30521cbf54e5d1709d4baebfff154e7d804abeb43d65d6b8945420ad",
+    "Sayboard/Views/DataAndStorageSettingsView.swift": "5db95ad59c285d975661dd8fce4ab723b356e73050a7afb14245bb11fd4fc18f",
+    "Sayboard/Views/DiagnosticsView.swift": "7e700fa667c2f228d43733901ff110e8b46091f515f14bd49dc253cbd14b44fa",
+    "Sayboard/Views/FeedbackSection.swift": "8a836b353a1d702737e8e3e8b1c7b46b2ea332abce82d507d9ee583b9d23f4a9",
+    "Sayboard/Views/HistoryListView.swift": "a0bdda102d434465d28f9948d628b8533a811416f3600ff839f6e4f043e133fb",
+    "Sayboard/Views/KeyboardCustomizationView.swift": "2d50c4a08a6dd697551d902a4df5f2179d0cccfc4d5d7037ff146a211eedba02",
+    "Sayboard/Views/KeyboardSettingsView.swift": "d990dd80b4082c39493fbfd98604eda4ae2372df8dc1803807c153038637197e",
+    "Sayboard/Views/LLMModelsSection.swift": "23269a032c647af4668510648b751ae1020f24584da6d2e61c2628ab689b0ef0",
+    "Sayboard/Views/LLMSettingsView.swift": "29ed8b67f338464665b7cdb2d7fe0ec1bebb40dfcf27429105ef69f67bfa70b0",
+    "Sayboard/Views/MainTabView.swift": "69ff85ba2d92e0d1a1bac6a5be37755ffd2bbf884cfc72c871934c743942abec",
+    "Sayboard/Views/MeetingRecordsView.swift": "8f8d2fefc4e2df02b4962effac79387409353053a2ddf2d26cd064164380131b",
+    "Sayboard/Views/ModelsView.swift": "26c3928fd6a02d8bd2c6ba57a44bffa970146a09597e19734ae7309caa70ae3f",
+    "Sayboard/Views/SettingsNavigationViews.swift": "43f8e16faeb307e0ce4d12218d0d38ec0f9c008c93bea6ee22307358641ccf28",
+    "Sayboard/Views/SettingsView.swift": "5aa6783d5f3bdc5541d800aeceb8bf154027b7f91c7e596c732d1d99a71dfebd",
+    "Sayboard/Views/SetupView.swift": "5ad2b2a598e92f022ceb077f488efed7a49393522076159b0e3f2ef9212fc5f5",
+    "Sayboard/Views/SpeechLanguagesSettingsView.swift": "19adbaec0ad722f9cef78a4c98fb9d4066e8f1d7bea71ccc7b56dc0df3a4f8c1",
+    "Sayboard/Views/SwipeTouchDiagnosticsView.swift": "e7dd17415d55f51bda837113a40b52d035e103b29c9b9de67b08107c33cb56c1",
+    "Sayboard/Views/TextOutputSection.swift": "5123e8fa9052087e1aa9291bd4ebb56472f8644d9407b1dc04bfac5f14d0cdb7",
+    "Sayboard/Views/VoiceOutputSettingsView.swift": "5207d643700a67ac5e930721ee1c3d08ca1d63658f27f1f427f3815c57553535",
+    "SayboardKeyboard/Info.plist": "76843cbbb4c06720b8ae5030844052e5293ac7b6fafff7172b1e6d12a5b19bf4",
+    "SayboardKeyboard/JyutpingDictionary.swift": "bf37665d84d9c195af3200c72f7e744953a704dab89934b9fa5f99df1c542732",
+    "SayboardKeyboard/KeyboardInputView.swift": "6e8f0fc3a69ef5a097b75413e84535e471da5e87f5afd87175cec86690ae2817",
+    "SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift": "bbc0be7a134ccbb62d4e51904dba07a10950d782f1b398d8118e8f3d8d318842",
+    "SayboardKeyboard/KeyboardViewController.swift": "4bec5315e29cd6132dca1df5f08f4227439f1fbcb25f7e4a8d8a269caad088e4",
+    "SayboardKeyboard/LatinWordSuggestions.swift": "e8712b934738277a2268679e831f95aa48cff6ac184a861d95995b1efd167bb1",
+    "SayboardKeyboard/Views/AlphabeticTouchRow.swift": "46e0c242e8788f562c5d3590e7c7da9a5b208db10619a9107c15246f9a3f4bf0",
+    "SayboardKeyboard/Views/ImmediateKeyTouchSurface.swift": "1b7b70ed894b173dde5d7536f84b5542dd199091e1bdd732135086a89f681e8d",
+    "SayboardKeyboard/Views/KeyboardView.swift": "612557b416300af4d61529ee6a57c533b0b442f4c4656001a54a1b4017e98d6c",
+    "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift": "0a7086b3654d22955fd34b480d90f153b247d1f2bd8dc9b688a91e188ff556a2",
+    "SayboardKeyboard/Views/Layouts/KeyboardChrome.swift": "00d032fc6db39544ba6bc457e6007d2f7bcbdad205ec18e1d372912063f9579d",
+    "SayboardKeyboard/Views/NativeInputModeSwitchKey.swift": "71a41fdecc67fe49c2052c19d318fe61298613e37e059e6a803836de4465b57c",
+    "SayboardKeyboard/Views/SpaceBarKey.swift": "ce41d9b1fc120b08efab301f14b5871417e8eb2067b4ea6145ac8063eff7c6ed",
+    "Shared/ConfirmedChoiceLearning.swift": "2c69455a091456f7df57e199d90f4a66c2f21461f91b3c74d82c5dd0f0f8bed2",
+    "Shared/Constants.swift": "d290cc96f4164674d60d996a2c4ade6c28924e65005ee9190945b757080ff204",
+    "Shared/HistoryRecord.swift": "74806098ad737aba1e873fb3e3afadda1bfffd879ba60b5aa45b4d442da41fc9",
+    "Shared/HistoryStore.swift": "5f144962c8198ca2418602cc434bfdc4310f331f7e385913d3f66b21388ecf51",
+    "Shared/KeyboardHostGeometry.swift": "68b038c99e6fd2df9d6eccb37e686105db8e43ad7771f867bafe2ad7557fc778",
+    "Shared/LLMConstants.swift": "76c88ac6b9431e9b01ad393a5c9d1811b4447d9b264c2fda0b3cb832f46ba127",
+    "Shared/LLMDevicePolicy.swift": "f6ca6478f8a51568ed3d86b9c68b575463c5c8531a769bd8be6a44b5bc1d8070",
+    "Shared/LanguagePriority.swift": "65c61ad628deeda4ef6aa019525ea391d9f65b62239a55b7ac442b27a8540693",
+    "Shared/LatinWordSuggestionPolicy.swift": "560fa2c5290b5e097585ecd6a38ebbc4b16dfa8027068e6a468747c009682e04",
+    "Shared/PersonalVocabularyExport.swift": "36a629ae1719c0234830ddfc0e4e1b55e9a559122542dc8d7c279a02a74f0153",
+    "Shared/PreferredVoiceLanguages.swift": "04cce82dc9f9a8b77614f2f2ff89df26edb69e3b77d6f619958111d03b857640",
+    "Shared/SharedSettings.swift": "059bad005c613f8baa62962488e1d40a841989df4981834afdd759bb5333382e",
+    "Shared/VoiceOutputOptions.swift": "97a86b6a81cbc59a603566833a84e42e8f4c2a9b9c024463db5a63bc63a11251",
+    "project.yml": "558bf1088ff071d65fb913f467f42e87acbcc5c293ae8836296877aa068dedbe",
+    "Shared/AppPageSwipe.swift": "f251992289af21f587fab5293478095e88db053bf06c9cff6e5c73065ef08402",
+    "Shared/FeatureDiagnostics.swift": "f823b262681f6656f3d57e29a63e28560f781a8eec2129348f9742cdf6940247",
+    "Shared/KeyboardLifecycleTrace.swift": "158b86e5eb75377a5e710599f8701a2d2f5db103c247dc65dc07eb73e43607db"
+  },
+  "navigation": [
+    {
+      "label": "History",
+      "owner": "Sayboard/Views/MainTabView.swift",
+      "children": [
+        {
+          "label": "Saved voice notes: playback, copy, correction/learning and delete",
+          "owner": "Sayboard/Views/HistoryListView.swift",
+          "id": "history.saved-voice-notes-playback-copy-correction-learning-and-delete"
+        },
+        {
+          "label": "Try your keyboard here (system-selected keyboard; not forced to AltBoard)",
+          "owner": "Sayboard/Views/HistoryListView.swift",
+          "id": "history.try-your-keyboard-here-system-selected-keyboard-not-forced-to-altboard",
+          "note": "Clear text first; close keyboard only when field is empty."
+        }
+      ],
+      "id": "history"
+    },
+    {
+      "label": "Meetings",
+      "owner": "Sayboard/Views/MainTabView.swift",
+      "children": [
+        {
+          "label": "Search meetings",
+          "owner": "Sayboard/Views/MeetingRecordsView.swift",
+          "id": "meetings.search-meetings"
+        },
+        {
+          "label": "Start a new meeting / Stop and save meeting",
+          "owner": "Sayboard/Views/MeetingRecordsView.swift",
+          "id": "meetings.start-a-new-meeting-stop-and-save-meeting"
+        },
+        {
+          "label": "Recording information and 15-minute audio parts",
+          "owner": "Sayboard/Views/MeetingRecordsView.swift",
+          "id": "meetings.recording-information-and-15-minute-audio-parts"
+        },
+        {
+          "label": "Saved meeting",
+          "owner": "Sayboard/Views/MeetingRecordsView.swift",
+          "children": [
+            {
+              "label": "Playback",
+              "owner": "Sayboard/Views/MeetingRecordsView.swift",
+              "id": "meetings.saved-meeting.playback"
+            },
+            {
+              "label": "Rename",
+              "owner": "Sayboard/Views/MeetingRecordsView.swift",
+              "id": "meetings.saved-meeting.rename"
+            },
+            {
+              "label": "Transcript & Files",
+              "owner": "Sayboard/Views/MeetingRecordsView.swift",
+              "id": "meetings.saved-meeting.transcript-files"
+            },
+            {
+              "label": "Delete (confirmation)",
+              "owner": "Sayboard/Views/MeetingRecordsView.swift",
+              "id": "meetings.saved-meeting.delete-confirmation"
+            }
+          ],
+          "id": "meetings.saved-meeting"
+        },
+        {
+          "label": "Transcript & Files",
+          "owner": "Sayboard/Views/MeetingRecordsView.swift",
+          "children": [
+            {
+              "label": "Name and notes / Save Name & Notes",
+              "owner": "Sayboard/Views/MeetingRecordsView.swift",
+              "id": "meetings.transcript-files.name-and-notes-save-name-notes"
+            },
+            {
+              "label": "Combined Transcript / Copy Transcript / Share",
+              "owner": "Sayboard/Views/MeetingRecordsView.swift",
+              "id": "meetings.transcript-files.combined-transcript-copy-transcript-share"
+            },
+            {
+              "label": "Saved Audio Parts",
+              "owner": "Sayboard/Views/MeetingRecordsView.swift",
+              "id": "meetings.transcript-files.saved-audio-parts"
+            }
+          ],
+          "id": "meetings.transcript-files"
+        }
+      ],
+      "id": "meetings"
+    },
+    {
+      "label": "Settings",
+      "owner": "Sayboard/Views/MainTabView.swift",
+      "children": [
+        {
+          "label": "Action Required",
+          "owner": "Sayboard/Views/SettingsView.swift",
+          "children": [
+            {
+              "label": "Complete Setup",
+              "owner": "Sayboard/Views/SettingsView.swift",
+              "id": "settings.action-required.complete-setup"
+            },
+            {
+              "label": "Low storage warning",
+              "owner": "Sayboard/Views/SettingsView.swift",
+              "id": "settings.action-required.low-storage-warning"
+            }
+          ],
+          "condition": "incomplete setup or low storage; rows depend on the condition",
+          "id": "settings.action-required"
+        },
+        {
+          "label": "Purchase section",
+          "owner": "Sayboard/Views/SettingsView.swift",
+          "condition": "APPSTORE configuration only",
+          "id": "settings.purchase-section"
+        },
+        {
+          "label": "Speech & AI",
+          "owner": "Sayboard/Views/SettingsView.swift",
+          "children": [
+            {
+              "label": "Language Priority",
+              "owner": "Sayboard/Views/SpeechLanguagesSettingsView.swift",
+              "children": [
+                {
+                  "label": "Preferred Languages: numbered, draggable ordering",
+                  "owner": "Sayboard/Views/SpeechLanguagesSettingsView.swift",
+                  "id": "settings.speech-ai.language-priority.preferred-languages-numbered-draggable-ordering"
+                },
+                {
+                  "label": "Any language (empty preference)",
+                  "owner": "Sayboard/Views/SpeechLanguagesSettingsView.swift",
+                  "id": "settings.speech-ai.language-priority.any-language-empty-preference"
+                },
+                {
+                  "label": "Unsupported speech-model language warning",
+                  "owner": "Sayboard/Views/SpeechLanguagesSettingsView.swift",
+                  "id": "settings.speech-ai.language-priority.unsupported-speech-model-language-warning"
+                }
+              ],
+              "setting": "SharedKey.preferredSpokenLanguages",
+              "source_anchor": "\"Language Priority\"",
+              "id": "settings.speech-ai.language-priority"
+            },
+            {
+              "label": "Active Session",
+              "owner": "Sayboard/Views/SettingsNavigationViews.swift",
+              "setting": "BackgroundAudioSession.isSessionActive",
+              "source_anchor": "\"Active Session\"",
+              "id": "settings.speech-ai.active-session"
+            },
+            {
+              "label": "Speech Model",
+              "owner": "Sayboard/Views/SettingsView.swift",
+              "children": [
+                {
+                  "label": "Speech Models: filtered catalog, selected/download states",
+                  "owner": "Sayboard/Views/ModelsView.swift",
+                  "id": "settings.speech-ai.speech-model.speech-models-filtered-catalog-selected-download-states"
+                },
+                {
+                  "label": "Advanced: Change Qwen model source",
+                  "owner": "Sayboard/Views/ModelsView.swift",
+                  "id": "settings.speech-ai.speech-model.advanced-change-qwen-model-source"
+                }
+              ],
+              "id": "settings.speech-ai.speech-model"
+            },
+            {
+              "label": "Text Model",
+              "owner": "Sayboard/Views/SettingsView.swift",
+              "children": [
+                {
+                  "label": "Text Models: language filter, recommendation, selected/download states",
+                  "owner": "Sayboard/Views/LLMModelsSection.swift",
+                  "id": "settings.speech-ai.text-model.text-models-language-filter-recommendation-selected-download-states"
+                },
+                {
+                  "label": "Model update notice / Switch back / Remove",
+                  "owner": "Sayboard/Views/LLMModelsSection.swift",
+                  "id": "settings.speech-ai.text-model.model-update-notice-switch-back-remove"
+                }
+              ],
+              "id": "settings.speech-ai.text-model"
+            },
+            {
+              "label": "Dictation",
+              "owner": "Sayboard/Views/SettingsView.swift",
+              "children": [
+                {
+                  "label": "Auto-Stop",
+                  "owner": "Sayboard/Views/SettingsNavigationViews.swift",
+                  "id": "settings.speech-ai.dictation.recording.auto-stop"
+                },
+                {
+                  "label": "Live Dictation",
+                  "owner": "Sayboard/Views/SettingsNavigationViews.swift",
+                  "id": "settings.speech-ai.dictation.live-speech-to-text.live-dictation"
+                },
+                {
+                  "label": "Enable Meeting Recording",
+                  "owner": "Sayboard/Views/SettingsNavigationViews.swift",
+                  "id": "settings.speech-ai.dictation.meetings.enable-meeting-recording"
+                },
+                {
+                  "label": "Cantonese Recognition Corrections",
+                  "owner": "Sayboard/Views/SettingsNavigationViews.swift",
+                  "children": [
+                    {
+                      "label": "Edit speech-recognition correction rules",
+                      "owner": "Sayboard/Views/CantoneseCorrectionsView.swift",
+                      "id": "settings.speech-ai.dictation.meetings.cantonese-recognition-corrections.edit-speech-recognition-correction-rules"
+                    }
+                  ],
+                  "id": "settings.speech-ai.dictation.meetings.cantonese-recognition-corrections"
+                }
+              ],
+              "id": "settings.speech-ai.dictation",
+              "initially_expanded": false
+            },
+            {
+              "label": "AI Actions",
+              "owner": "Sayboard/Views/SettingsView.swift",
+              "children": [
+                {
+                  "label": "Enabled",
+                  "owner": "Sayboard/Views/LLMSettingsView.swift",
+                  "condition": "disabled without usable downloaded text model",
+                  "id": "settings.speech-ai.ai-actions.ai-actions-toggle"
+                },
+                {
+                  "label": "Output",
+                  "owner": "Sayboard/Views/LLMSettingsView.swift",
+                  "children": [
+                    {
+                      "label": "Transcript Cleanup",
+                      "owner": "Sayboard/Views/VoiceOutputSettingsView.swift",
+                      "id": "settings.speech-ai.output.transcript-cleanup"
+                    },
+                    {
+                      "label": "Output Language",
+                      "owner": "Sayboard/Views/VoiceOutputSettingsView.swift",
+                      "id": "settings.speech-ai.output.output-language"
+                    },
+                    {
+                      "label": "Tone",
+                      "owner": "Sayboard/Views/VoiceOutputSettingsView.swift",
+                      "id": "settings.speech-ai.output.tone"
+                    },
+                    {
+                      "label": "Language Code",
+                      "owner": "Sayboard/Views/VoiceOutputSettingsView.swift",
+                      "condition": "custom output language; invalid code warning when needed",
+                      "id": "settings.speech-ai.output.language-code"
+                    },
+                    {
+                      "label": "Formatting",
+                      "owner": "Sayboard/Views/TextOutputSection.swift",
+                      "children": [
+                        {
+                          "label": "Writing Style",
+                          "owner": "Sayboard/Views/TextOutputSection.swift",
+                          "id": "settings.speech-ai.output.formatting.writing-style"
+                        },
+                        {
+                          "label": "Snippets",
+                          "owner": "Sayboard/Views/TextOutputSection.swift",
+                          "id": "settings.speech-ai.output.formatting.snippets"
+                        },
+                        {
+                          "label": "Auto-Copy to Clipboard",
+                          "owner": "Sayboard/Views/TextOutputSection.swift",
+                          "id": "settings.speech-ai.output.formatting.auto-copy-to-clipboard"
+                        }
+                      ],
+                      "id": "settings.speech-ai.output.formatting"
+                    },
+                    {
+                      "label": "Missing text-model notice",
+                      "owner": "Sayboard/Views/VoiceOutputSettingsView.swift",
+                      "condition": "no usable text model",
+                      "id": "settings.speech-ai.output.missing-model-and-offline-ai-notices"
+                    }
+                  ],
+                  "id": "settings.speech-ai.output",
+                  "note": "Single destination inside AI Actions; local formatting stays available without AI/model."
+                },
+                {
+                  "label": "Prompts",
+                  "owner": "Sayboard/Views/LLMSettingsView.swift",
+                  "children": [
+                    {
+                      "label": "Standard Prompts",
+                      "owner": "Sayboard/Views/LLMSettingsView.swift",
+                      "id": "settings.speech-ai.ai-actions.prompts.standard-prompts"
+                    },
+                    {
+                      "label": "Custom Prompts / Add Custom Prompt",
+                      "owner": "Sayboard/Views/LLMSettingsView.swift",
+                      "id": "settings.speech-ai.ai-actions.prompts.custom-prompts-add-custom-prompt"
+                    }
+                  ],
+                  "condition": "AI enabled and usable model installed",
+                  "id": "settings.speech-ai.ai-actions.prompts"
+                },
+                {
+                  "label": "Auto Action",
+                  "owner": "Sayboard/Views/LLMSettingsView.swift",
+                  "condition": "AI enabled and usable model installed; applies to dictation",
+                  "id": "settings.speech-ai.ai-actions.auto-action"
+                },
+                {
+                  "label": "Long Press Action",
+                  "owner": "Sayboard/Views/LLMSettingsView.swift",
+                  "condition": "AI enabled and usable model installed",
+                  "id": "settings.speech-ai.ai-actions.long-press-action"
+                }
+              ],
+              "id": "settings.speech-ai.ai-actions",
+              "initially_expanded": false
+            }
+          ],
+          "id": "settings.speech-ai"
+        },
+        {
+          "label": "Keyboard",
+          "owner": "Sayboard/Views/KeyboardSettingsView.swift",
+          "children": [
+            {
+              "label": "Keyboard Type",
+              "owner": "Sayboard/Views/KeyboardSettingsView.swift",
+              "condition": "Microphone Only / Symbols / Alphabet",
+              "id": "settings.keyboard.keyboard-type"
+            },
+            {
+              "label": "Microphone Layout",
+              "owner": "Sayboard/Views/KeyboardSettingsView.swift",
+              "condition": "Microphone Only; Default / Compact",
+              "id": "settings.keyboard.microphone-layout"
+            },
+            {
+              "label": "Key Order",
+              "owner": "Sayboard/Views/KeyboardSettingsView.swift",
+              "condition": "Alphabet; QWERTY (English) / QWERTZ / German (Ä Ö Ü ß)",
+              "id": "settings.keyboard.key-order"
+            },
+            {
+              "label": "Customization",
+              "owner": "Sayboard/Views/KeyboardSettingsView.swift",
+              "children": [
+                {
+                  "label": "Auto-capitalization",
+                  "owner": "Sayboard/Views/KeyboardCustomizationView.swift",
+                  "setting": "SharedKey.keyboardAutoCapitalizationEnabled",
+                  "source_anchor": "\"Auto-capitalization\"",
+                  "id": "settings.keyboard.customization.auto-capitalization"
+                },
+                {
+                  "label": "Double-Space Period",
+                  "owner": "Sayboard/Views/KeyboardCustomizationView.swift",
+                  "setting": "SharedKey.periodShortcutEnabled",
+                  "source_anchor": "\"Double-Space Period\"",
+                  "id": "settings.keyboard.customization.double-space-period"
+                },
+                {
+                  "label": "Haptic Feedback",
+                  "owner": "Sayboard/Views/KeyboardCustomizationView.swift",
+                  "setting": "SharedKey.keyboardHapticsEnabled",
+                  "source_anchor": "\"Haptic Feedback\"",
+                  "id": "settings.keyboard.customization.haptic-feedback"
+                },
+                {
+                  "label": "Extra Globe Key",
+                  "owner": "Sayboard/Views/KeyboardCustomizationView.swift",
+                  "setting": "SharedKey.keyboardShowGlobeKey",
+                  "source_anchor": "\"Extra Globe Key\"",
+                  "id": "settings.keyboard.customization.extra-globe-key",
+                  "condition": "temporarily disabled; saved preference retained"
+                },
+                {
+                  "label": "Settings Key",
+                  "owner": "Sayboard/Views/KeyboardCustomizationView.swift",
+                  "setting": "SharedKey.keyboardShowSettingsKey",
+                  "source_anchor": "\"Settings Key\"",
+                  "id": "settings.keyboard.customization.settings-key"
+                },
+                {
+                  "label": "Output Key",
+                  "owner": "Sayboard/Views/KeyboardCustomizationView.swift",
+                  "setting": "SharedKey.keyboardShowOutputLanguageButton",
+                  "source_anchor": "\"Output Key\"",
+                  "id": "settings.keyboard.customization.output-key"
+                },
+                {
+                  "label": "AI Key",
+                  "owner": "Sayboard/Views/KeyboardCustomizationView.swift",
+                  "setting": "SharedKey.keyboardShowAIButton",
+                  "source_anchor": "\"AI Key\"",
+                  "condition": "disabled when AI Actions is off; runtime toolbar additionally needs a usable text model",
+                  "id": "settings.keyboard.customization.ai-key"
+                }
+              ],
+              "initially_expanded": false,
+              "id": "settings.keyboard.customization",
+              "icon": "slider.horizontal.3"
+            },
+            {
+              "label": "Interactive keyboard preview",
+              "owner": "Sayboard/Views/KeyboardSettingsView.swift",
+              "condition": "visible inline; selected layout",
+              "id": "settings.keyboard.preview",
+              "note": "No redundant Preview heading."
+            }
+          ],
+          "id": "settings.keyboard"
+        },
+        {
+          "label": "App",
+          "owner": "Sayboard/Views/SettingsView.swift",
+          "children": [
+            {
+              "label": "History & Storage",
+              "owner": "Sayboard/Views/SettingsView.swift",
+              "children": [
+                {
+                  "label": "Voice Notes",
+                  "owner": "Sayboard/Services/LocalUserDataStore.swift",
+                  "children": [
+                    {
+                      "label": "Export",
+                      "owner": "Sayboard/Views/DataAndStorageSettingsView.swift",
+                      "id": "settings.app.history-storage.voice-notes.export"
+                    },
+                    {
+                      "label": "Delete (confirmation)",
+                      "owner": "Sayboard/Views/DataAndStorageSettingsView.swift",
+                      "id": "settings.app.history-storage.voice-notes.delete-confirmation"
+                    }
+                  ],
+                  "id": "settings.app.history-storage.voice-notes"
+                },
+                {
+                  "label": "Meetings",
+                  "owner": "Sayboard/Services/LocalUserDataStore.swift",
+                  "children": [
+                    {
+                      "label": "Export",
+                      "owner": "Sayboard/Views/DataAndStorageSettingsView.swift",
+                      "id": "settings.app.history-storage.meetings.export"
+                    },
+                    {
+                      "label": "Delete (confirmation)",
+                      "owner": "Sayboard/Views/DataAndStorageSettingsView.swift",
+                      "id": "settings.app.history-storage.meetings.delete-confirmation"
+                    }
+                  ],
+                  "id": "settings.app.history-storage.meetings"
+                },
+                {
+                  "label": "Corrections & Suggestions",
+                  "owner": "Sayboard/Services/LocalUserDataStore.swift",
+                  "children": [
+                    {
+                      "label": "Export",
+                      "owner": "Sayboard/Views/DataAndStorageSettingsView.swift",
+                      "id": "settings.app.history-storage.corrections-suggestions.export"
+                    },
+                    {
+                      "label": "Delete (confirmation)",
+                      "owner": "Sayboard/Views/DataAndStorageSettingsView.swift",
+                      "id": "settings.app.history-storage.corrections-suggestions.delete-confirmation"
+                    }
+                  ],
+                  "note": "Current combined category, not separate manual-correction and learned-suggestion rows.",
+                  "id": "settings.app.history-storage.corrections-suggestions"
+                },
+                {
+                  "label": "Keep Voice Notes",
+                  "owner": "Sayboard/Views/DataAndStorageSettingsView.swift",
+                  "id": "settings.app.history-storage.keep-voice-notes"
+                },
+                {
+                  "label": "Export All Data",
+                  "owner": "Sayboard/Views/DataAndStorageSettingsView.swift",
+                  "id": "settings.app.history-storage.export-all-data"
+                },
+                {
+                  "label": "Delete All Data (confirmation)",
+                  "owner": "Sayboard/Views/DataAndStorageSettingsView.swift",
+                  "id": "settings.app.history-storage.delete-all-data-confirmation"
+                },
+                {
+                  "label": "Clear Model Cache",
+                  "owner": "Sayboard/Views/DataAndStorageSettingsView.swift",
+                  "id": "settings.app.history-storage.clear-model-cache"
+                }
+              ],
+              "initially_expanded": false,
+              "id": "settings.app.history-storage",
+              "icon": "externaldrive"
+            },
+            {
+              "label": "App Language",
+              "owner": "Sayboard/Views/SettingsView.swift",
+              "children": [
+                {
+                  "label": "Select app interface language",
+                  "owner": "Sayboard/Views/AppLanguageListView.swift",
+                  "id": "settings.app.app-language.select-app-interface-language"
+                }
+              ],
+              "id": "settings.app.app-language"
+            },
+            {
+              "label": "Setup & Permissions",
+              "owner": "Sayboard/Views/SettingsView.swift",
+              "children": [
+                {
+                  "label": "Conditional setup checklist: microphone, keyboard, Full Access and speech model",
+                  "owner": "Sayboard/Views/SetupView.swift",
+                  "id": "settings.app.setup-permissions.conditional-setup-checklist-microphone-keyboard-full-access-and-speech-model"
+                }
+              ],
+              "id": "settings.app.setup-permissions"
+            },
+            {
+              "label": "Diagnostics",
+              "owner": "Sayboard/Views/SettingsView.swift",
+              "children": [
+                {
+                  "label": "Permissions and Signing (app/keyboard build stamps and historical probe)",
+                  "owner": "Sayboard/Views/DiagnosticsView.swift",
+                  "id": "settings.app.diagnostics.permissions-and-signing-app-keyboard-build-stamps-and-historical-probe"
+                },
+                {
+                  "label": "Offline Models",
+                  "owner": "Sayboard/Views/DiagnosticsView.swift",
+                  "id": "settings.app.diagnostics.offline-models"
+                },
+                {
+                  "label": "Audio and Device",
+                  "owner": "Sayboard/Views/DiagnosticsView.swift",
+                  "id": "settings.app.diagnostics.audio-and-device"
+                },
+                {
+                  "label": "Keyboard Touch Diagnostics",
+                  "owner": "Sayboard/Views/DiagnosticsView.swift",
+                  "children": [
+                    {
+                      "label": "Show Key Touch Areas",
+                      "owner": "Sayboard/Views/DiagnosticsView.swift",
+                      "id": "settings.app.diagnostics.keyboard-touch-diagnostics.show-key-touch-areas"
+                    },
+                    {
+                      "label": "Swipe & Touch Counters, Learning and Reset",
+                      "owner": "Sayboard/Views/DiagnosticsView.swift",
+                      "children": [
+                        {
+                          "label": "Aggregate touch/swipe counters and learning/reset controls",
+                          "owner": "Sayboard/Views/SwipeTouchDiagnosticsView.swift",
+                          "id": "settings.app.diagnostics.keyboard-touch-diagnostics.swipe-touch-counters-learning-and-reset.aggregate-touch-swipe-counters-and-learning-reset-controls"
+                        }
+                      ],
+                      "id": "settings.app.diagnostics.keyboard-touch-diagnostics.swipe-touch-counters-learning-and-reset"
+                    }
+                  ],
+                  "id": "settings.app.diagnostics.keyboard-touch-diagnostics"
+                },
+                {
+                  "label": "Live Dictation",
+                  "owner": "Sayboard/Views/DiagnosticsView.swift",
+                  "id": "settings.app.diagnostics.live-dictation"
+                },
+                {
+                  "label": "Functional Tests",
+                  "owner": "Sayboard/Views/DiagnosticsView.swift",
+                  "children": [
+                    {
+                      "label": "Refresh all diagnostics",
+                      "owner": "Sayboard/Views/DiagnosticsView.swift",
+                      "id": "settings.app.diagnostics.functional-tests.refresh-all-diagnostics"
+                    },
+                    {
+                      "label": "Test microphone without saving audio",
+                      "owner": "Sayboard/Views/DiagnosticsView.swift",
+                      "id": "settings.app.diagnostics.functional-tests.test-microphone-without-saving-audio"
+                    },
+                    {
+                      "label": "Test ASR and AI cleanup / Stop and transcribe",
+                      "owner": "Sayboard/Views/DiagnosticsView.swift",
+                      "id": "settings.app.diagnostics.functional-tests.test-asr-and-ai-cleanup-stop-and-transcribe"
+                    }
+                  ],
+                  "id": "settings.app.diagnostics.functional-tests"
+                },
+                {
+                  "label": "Last Execution Steps",
+                  "owner": "Sayboard/Views/DiagnosticsView.swift",
+                  "children": [
+                    {
+                      "label": "Refresh last execution steps",
+                      "owner": "Sayboard/Views/DiagnosticsView.swift",
+                      "id": "settings.app.diagnostics.last-execution-steps.refresh-last-execution-steps"
+                    }
+                  ],
+                  "id": "settings.app.diagnostics.last-execution-steps"
+                },
+                {
+                  "label": "Export",
+                  "owner": "Sayboard/Views/DiagnosticsView.swift",
+                  "children": [
+                    {
+                      "label": "Cantonese Learning & JSON Export",
+                      "owner": "Sayboard/Views/DiagnosticsView.swift",
+                      "children": [
+                        {
+                          "label": "Aggregate Cantonese learning and vocabulary JSON export",
+                          "owner": "Sayboard/Views/CantoneseRomanizationDiagnosticsView.swift",
+                          "id": "settings.app.diagnostics.export.cantonese-learning-json-export.aggregate-cantonese-learning-and-vocabulary-json-export"
+                        }
+                      ],
+                      "id": "settings.app.diagnostics.export.cantonese-learning-json-export"
+                    },
+                    {
+                      "label": "Copy complete diagnostics",
+                      "owner": "Sayboard/Views/DiagnosticsView.swift",
+                      "id": "settings.app.diagnostics.export.copy-complete-diagnostics"
+                    }
+                  ],
+                  "id": "settings.app.diagnostics.export"
+                },
+                {
+                  "id": "settings.app.diagnostics.development-traces",
+                  "label": "Development Traces",
+                  "owner": "Sayboard/Views/DiagnosticsView.swift",
+                  "condition": "non-APPSTORE builds",
+                  "initially_expanded": false,
+                  "children": [
+                    {
+                      "id": "settings.app.diagnostics.development-traces.0",
+                      "label": "Keyboard lifecycle / Feature milestones counts",
+                      "owner": "Sayboard/Views/DiagnosticsView.swift"
+                    },
+                    {
+                      "id": "settings.app.diagnostics.development-traces.1",
+                      "label": "Share Development Diagnostics JSON",
+                      "owner": "Sayboard/Views/DiagnosticsView.swift"
+                    },
+                    {
+                      "id": "settings.app.diagnostics.development-traces.2",
+                      "label": "Copy Development Diagnostics JSON",
+                      "owner": "Sayboard/Views/DiagnosticsView.swift"
+                    },
+                    {
+                      "id": "settings.app.diagnostics.development-traces.3",
+                      "label": "Refresh Diagnostic Counts",
+                      "owner": "Sayboard/Views/DiagnosticsView.swift"
+                    },
+                    {
+                      "id": "settings.app.diagnostics.development-traces.4",
+                      "label": "Clear Development Traces (confirmation)",
+                      "owner": "Sayboard/Views/DiagnosticsView.swift"
+                    }
+                  ]
+                }
+              ],
+              "id": "settings.app.diagnostics"
+            },
+            {
+              "label": "Help",
+              "owner": "Sayboard/Views/SettingsView.swift",
+              "children": [
+                {
+                  "label": "Report a problem: GitHub / email",
+                  "owner": "Sayboard/Views/FeedbackSection.swift",
+                  "id": "settings.app.help.report-a-problem-github-email"
+                }
+              ],
+              "id": "settings.app.help"
+            },
+            {
+              "label": "Version",
+              "owner": "Sayboard/Views/SettingsView.swift",
+              "id": "settings.app.version"
+            },
+            {
+              "label": "Altboard-Canto · Source on GitHub",
+              "owner": "Sayboard/Views/SettingsView.swift",
+              "id": "settings.app.altboard-canto-source-on-github"
+            }
+          ],
+          "id": "settings.app"
+        }
+      ],
+      "id": "settings"
+    }
+  ],
+  "feature_entry_points": [
+    {
+      "id": "settings",
+      "owners": [
+        "Sayboard/Views/SettingsView.swift",
+        "Sayboard/Views/KeyboardSettingsView.swift",
+        "Sayboard/Views/KeyboardCustomizationView.swift",
+        "Sayboard/Views/SettingsNavigationViews.swift",
+        "Sayboard/Views/SpeechLanguagesSettingsView.swift",
+        "Sayboard/Views/VoiceOutputSettingsView.swift",
+        "Sayboard/Views/TextOutputSection.swift",
+        "Sayboard/Views/LLMSettingsView.swift",
+        "Shared/SharedSettings.swift",
+        "Shared/Constants.swift"
+      ],
+      "checks": [
+        "scripts/test_settings_contract.py"
+      ],
+      "trace": "control → SharedKey / SharedSettings → relevant consumer and preview"
+    },
+    {
+      "id": "keyboard-render-touch",
+      "owners": [
+        "SayboardKeyboard/KeyboardViewController.swift",
+        "SayboardKeyboard/KeyboardInputView.swift",
+        "Shared/KeyboardHostGeometry.swift",
+        "SayboardKeyboard/Views/KeyboardView.swift",
+        "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift",
+        "SayboardKeyboard/Views/AlphabeticTouchRow.swift",
+        "SayboardKeyboard/Views/ImmediateKeyTouchSurface.swift",
+        "SayboardKeyboard/Views/SpaceBarKey.swift",
+        "SayboardKeyboard/Views/Layouts/KeyboardChrome.swift",
+        "SayboardKeyboard/Views/NativeInputModeSwitchKey.swift",
+        "Sayboard/Views/KeyboardSettingsView.swift"
+      ],
+      "checks": [
+        "scripts/test_keyboard_initial_layout.py",
+        "scripts/test_keyboard_safety_contract.py",
+        "scripts/verify-keyboard-host-geometry.swift"
+      ],
+      "trace": "active OS keyboard identity → extension host geometry/lifecycle → effective layout → visuals and touch owner → host insertion"
+    },
+    {
+      "id": "languages-and-learning",
+      "owners": [
+        "Shared/LanguagePriority.swift",
+        "Shared/PreferredVoiceLanguages.swift",
+        "Shared/LatinWordSuggestionPolicy.swift",
+        "Shared/ConfirmedChoiceLearning.swift",
+        "SayboardKeyboard/JyutpingDictionary.swift",
+        "SayboardKeyboard/LatinWordSuggestions.swift",
+        "Sayboard/Views/SpeechLanguagesSettingsView.swift"
+      ],
+      "checks": [
+        "scripts/verify-language-priority.swift",
+        "scripts/verify-latin-suggestions.swift"
+      ],
+      "trace": "ordered preference → supported predictor → context ranking → explicit confirmed-choice learning"
+    },
+    {
+      "id": "speech-and-text-models",
+      "owners": [
+        "Shared/LLMDevicePolicy.swift",
+        "Shared/LLMConstants.swift",
+        "Sayboard/Services/HereticModelCatalog.swift",
+        "Sayboard/Services/LLMPromptTemplates.swift",
+        "Sayboard/Services/LLMProcessingCoordinator.swift",
+        "Sayboard/Services/LLMDownloadService.swift",
+        "Sayboard/Views/ModelsView.swift",
+        "Sayboard/Views/LLMModelsSection.swift",
+        "Shared/VoiceOutputOptions.swift"
+      ],
+      "checks": [
+        "scripts/verify-llm-device-policy.swift"
+      ],
+      "trace": "preferred/input-output languages → memory recommendation → explicit download/selection → inference/prompt → verified output"
+    },
+    {
+      "id": "voice-session-and-meetings",
+      "owners": [
+        "Sayboard/Services/BackgroundAudioSession.swift",
+        "Sayboard/Services/SpeechRecognitionService.swift",
+        "Sayboard/Services/SpeechRecognitionService+Transcription.swift",
+        "Sayboard/Services/MeetingRecordingCoordinator.swift",
+        "SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift",
+        "Sayboard/Views/MeetingRecordsView.swift",
+        "Sayboard/Views/SettingsNavigationViews.swift"
+      ],
+      "checks": [
+        "physical iPhone start/stop/cancel, interruptions, host/document ownership and no duplicate insertion"
+      ],
+      "trace": "one app audio owner → recognizer → App Group session/revision → extension textDocumentProxy; meetings save local parts and combined transcript"
+    },
+    {
+      "id": "storage-and-exports",
+      "owners": [
+        "Sayboard/Services/LocalUserDataStore.swift",
+        "Shared/HistoryStore.swift",
+        "Shared/HistoryRecord.swift",
+        "Shared/PersonalVocabularyExport.swift",
+        "Sayboard/Views/DataAndStorageSettingsView.swift"
+      ],
+      "checks": [
+        "scripts/verify-vocabulary-export.swift",
+        "scripts/test_keyboard_safety_contract.py"
+      ],
+      "trace": "category → export/deletion → persisted history/meeting/vocabulary; never imply downloaded models are included"
+    },
+    {
+      "id": "main-page-swipes",
+      "owners": [
+        "Sayboard/Views/MainTabView.swift",
+        "Shared/AppPageSwipe.swift"
+      ],
+      "checks": [
+        "scripts/verify-app-page-swipe.swift"
+      ],
+      "trace": "Root horizontal gesture → bounded page policy → existing selected tab; child navigation and physical gesture arbitration need device checks."
+    }
+  ],
+  "consistency_notes": [
+    "Active Session has one Settings-home owner; Dictation does not repeat the toggle.",
+    "Customization is one collapsed group between conditional Key Order/Microphone Layout and the visible Preview. Haptics is a toggle.",
+    "History & Storage is initially collapsed under App; current three categories combine corrections/suggestions and exclude downloaded models. See AB-DOC-003.",
+    "Language order influences supported paths; it does not implement every language or decoder. Qwen speech uses auto-detection.",
+    "Existing download, recommended model and actively selected model are separate. No file replacement or refusal behavior is implied.",
+    "Diagnostics has additional technical controls outside Customization. No cleanup or deletion is authorized by documenting them.",
+    "This map records current source rather than proposed menu changes. Update owners and conditions after bounded source review; regenerate Markdown.",
+    "Main root pages support left/right swipes in History / Meetings / Settings order, without wrapping; native tabs remain. Phone gesture arbitration is unverified.",
+    "Output is a single destination inside AI Actions. Local writing style, snippets and clipboard controls are not gated on AI.",
+    "Temporary user-requested experiment suppresses Altboard Globe including required in-extension visibility; it cannot suppress iOS-owned controls outside the extension.",
+    "Swipe drawing UIView mounts only after the active trail has more than one point; this is not a confirmed ink-pad fix.",
+    "Base source is build 123 plus local UI changes, with no new compiled or device-tested build."
+  ]
+}

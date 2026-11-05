@@ -46,6 +46,18 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("self.hostingHeightConstraint, height.constant != target", source)
         self.assertIn("override func viewDidLayoutSubviews()", source)
 
+    def test_drawing_view_exists_only_for_an_active_trail(self):
+        source = LAYOUT.read_text()
+        overlay = source.split("private struct SwipeTrailOverlay: View", 1)[1].split(
+            "private struct ActiveSwipeTrail:", 1)[0]
+        self.assertIn("if self.trail.points.count > 1", overlay)
+        self.assertIn("ActiveSwipeTrail(points: self.trail.points)", overlay)
+        self.assertIn("view.isUserInteractionEnabled = false", source)
+        self.assertIn(".allowsHitTesting(false)", source)
+        touch = (ROOT / "SayboardKeyboard/Views/AlphabeticTouchRow.swift").read_text()
+        finish = touch.split("private func finishTouch(", 1)[1]
+        self.assertIn("self.onSwipePath([])", finish)
+
     def test_one_effective_keyboard_route_and_one_expanded_lookup(self):
         root = ROOT_VIEW.read_text(encoding="utf-8")
         self.assertEqual(root.count("AlphabeticKeyboardLayout(proxy:"), 1)

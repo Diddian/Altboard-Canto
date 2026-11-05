@@ -78,11 +78,6 @@ struct SettingsView: View {
         } label: {
           Label("Dictation", systemImage: "waveform")
         }
-        NavigationLink {
-          VoiceOutputSettingsView()
-        } label: {
-          Label("Output", systemImage: "character.bubble")
-        }
         DisclosureGroup(isExpanded: self.$showsAIActions) {
           if self.showsAIActions {
             LLMSettingsView(inline: true)
@@ -95,10 +90,12 @@ struct SettingsView: View {
       KeyboardSettingsView(selectedKind: self.keyboardKindBinding, inline: true)
 
       Section {
-        DisclosureGroup("History & Storage", isExpanded: self.$showsStorage) {
+        DisclosureGroup(isExpanded: self.$showsStorage) {
           if self.showsStorage {
             DataAndStorageSettingsView(inline: true)
           }
+        } label: {
+          Label("History & Storage", systemImage: "externaldrive")
         }
         NavigationLink {
           AppLanguageListView()

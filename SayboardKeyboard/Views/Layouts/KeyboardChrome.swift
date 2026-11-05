@@ -1,6 +1,11 @@
 import SwiftUI
 
 extension KeyboardState {
+  var showsGlobeButton: Bool {
+    !SharedSettings.keyboardGlobeTemporarilyDisabled
+      && (self.showGlobeKey || self.needsInputModeSwitchKey)
+  }
+
   var showsAIButton: Bool {
     self.showAIButton && self.llmEnabled && self.hasUsableLLMModel
   }
@@ -13,14 +18,13 @@ struct KeyboardChromeMetrics {
   init(keyboardState: KeyboardState) {
     let compact = keyboardState.showOutputLanguageButton || keyboardState.showsAIButton
     let side: CGFloat = (keyboardState.effectiveTypingKind == .alphabetic ? 48 : (compact ? 43 : 45)).kbScaled
-    let wide: CGFloat = 92.kbScaled
-    let showsGlobe = true // Reserve the required system keyboard-switch key.
+    let showsGlobe = keyboardState.showsGlobeButton
 
     self.sideButtonWidth = side
     self.showsGlobe = showsGlobe
-    self.trashWidth = showsGlobe ? side : wide
+    self.trashWidth = side
     self.returnWidth = keyboardState.effectiveTypingKind == .alphabetic
-      ? 102.kbScaled : (showsGlobe ? (side + Self.buttonSpacing + side) : wide)
+      ? 102.kbScaled : side + Self.buttonSpacing + side
   }
 
   @MainActor
@@ -48,8 +52,9 @@ struct KeyboardChromeMetrics {
   func spaceBarWidth(totalWidth: CGFloat) -> CGFloat {
     max(
       44.kbScaled,
-      totalWidth - self.sideButtonWidth - self.trashWidth - self.returnWidth
-        - 3 * Self.buttonSpacing - 8.kbScaled
+      totalWidth - (self.showsGlobe ? self.sideButtonWidth : 0)
+        - self.trashWidth - self.returnWidth
+        - (self.showsGlobe ? 3 : 2) * Self.buttonSpacing - 8.kbScaled
     )
   }
 }
@@ -166,8 +171,8 @@ struct KeyboardBottomRow: View {
           action()
         }
       }
-      // UIKit owns the native input-mode menu, including Apple's Emoji keyboard.
-      if self.keyboardState.showGlobeKey || self.keyboardState.needsInputModeSwitchKey {
+      // The temporary switch experiment also suppresses the required in-extension key.
+      if self.keyboardState.showsGlobeButton {
         // iOS may require a native switch key when multiple keyboards exist.
         NativeInputModeSwitchKey(
           configure: self.keyboardState.configureInputModeListButton
