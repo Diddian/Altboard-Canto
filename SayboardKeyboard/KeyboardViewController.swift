@@ -42,15 +42,12 @@ final class KeyboardViewController: UIInputViewController {
   private var lastObservedHostHasText: Bool?
   private var documentIdentifierUnavailableReported = false
   private var memoryWatchTimer: Timer?
-  private var firstLoadForBuild: Bool?
-  private var lastObservedDocumentInputModeLanguage: String?
 
   var processingTimeoutTimer: Timer?
   var processingStartTime: Date?
   var receivedPingDuringProcessing = false
 
   override func loadView() {
-    self.traceFirstKeyboardLoad()
     let keyboard = KeyboardInputView(frame: .zero, inputViewStyle: .keyboard)
     keyboard.contentHeight = KeyboardMetrics.totalHeight(
       actionBarVisible: false, kind: self.keyboardState.effectiveTypingKind
@@ -68,9 +65,7 @@ final class KeyboardViewController: UIInputViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    // Altboard provides a microphone key; avoid a duplicate system dictation
-    // button below the keyboard on Face ID iPhones.
-    self.hasDictationKey = true
+    // Recovery: retain the system dictation behavior used before build 85.
     self.keyboardState.bootstrapLayoutSettings()
     self.keyboardState.configureInputModeListButton = { [weak self] button in
       guard let self else { return }
@@ -87,7 +82,6 @@ final class KeyboardViewController: UIInputViewController {
     self.setupVoiceProgressObserver()
     self.setupSessionObservers()
     self.setupForegroundObserver()
-    self.setupInputModeObserver()
     self.setupLLMObservers()
     self.setupDictationLockObserver()
     self.recordKeyboardTrace(.hostingMounted)
@@ -126,7 +120,6 @@ final class KeyboardViewController: UIInputViewController {
     self.keyboardState.syncOnboardingPractice(hostProcessID: self.hostProcess?.pid)
     self.hasDeferredAppearanceInsert = true
     self.applyExperimentalLiveUpdate()
-    self.lastObservedDocumentInputModeLanguage = self.textDocumentProxy.documentInputMode?.primaryLanguage
     self.recordKeyboardTrace(.willAppear)
   }
 
@@ -154,7 +147,7 @@ final class KeyboardViewController: UIInputViewController {
   /// One idle-time memory checkpoint roughly every eight seconds while visible.
   /// Never samples per key, never uses host text, and stops on disappearance.
   private func startMemoryWatch() {
-    #if !APPSTORE
+    #if ALTBOARD_DEVELOPMENT_TRACING && !APPSTORE
     guard self.memoryWatchTimer == nil else { return }
     self.memoryWatchTimer = Timer.scheduledTimer(
       timeInterval: 8, target: self, selector: #selector(sampleMemoryWhileVisible),
@@ -177,6 +170,7 @@ final class KeyboardViewController: UIInputViewController {
     _ event: KeyboardLifecycleTrace.Event,
     renderProbe: KeyboardLifecycleTrace.RenderProbe? = nil
   ) {
+    #if ALTBOARD_DEVELOPMENT_TRACING && !APPSTORE
     let bounds = self.viewIfLoaded?.bounds ?? .zero
     KeyboardLifecycleTrace.record(
       event, session: self.keyboardTraceSession,
@@ -190,70 +184,15 @@ final class KeyboardViewController: UIInputViewController {
       nativeSwitchRequired: self.needsInputModeSwitchKey,
       fullAccess: self.keyboardState.hasFullAccess,
       hostBundleHint: SharedSettings().hostBundleId,
-      firstLoadForBuild: self.firstLoadForBuild,
-      inputModeProbe: self.inputModeProbe(for: event),
       renderProbe: renderProbe
     )
-  }
-
-  /// Record before UIKit/SwiftUI keyboard view construction. The marker survives
-  /// extension restarts and is reset by a new build SHA, including IPA updates.
-  private func traceFirstKeyboardLoad() {
-    #if !APPSTORE
-    let build = Bundle.main.infoDictionary?["AltboardBuildSHA"] as? String
-    let defaults = AppGroup.sharedDefaults
-    let marker = "canto.keyboardDiagnostics.firstLoadBuildSHA"
-    if let build, !build.isEmpty, let defaults {
-      self.firstLoadForBuild = defaults.string(forKey: marker) != build
-    }
-    self.recordKeyboardTrace(.loadViewStarting)
-    if self.firstLoadForBuild == true, let build, let defaults {
-      defaults.set(build, forKey: marker)
-      defaults.synchronize()
-    }
     #endif
-  }
-
-  /// These are mode hints from the running extension, not proof that the
-  /// system selected Altboard rather than another keyboard.
-  private func inputModeProbe(
-    for event: KeyboardLifecycleTrace.Event
-  ) -> KeyboardLifecycleTrace.InputModeProbe? {
-    #if !APPSTORE
-    switch event {
-    case .willAppear, .didAppear, .willDisappear, .didDisappear,
-         .documentChanged, .inputModeChanged:
-      let mode = self.textDocumentProxy.documentInputMode
-      let available = UITextInputMode.activeInputModes
-        .compactMap { Self.safeLanguageTag($0.primaryLanguage) }
-      return .init(
-        documentModePresent: mode != nil,
-        documentLanguage: Self.safeLanguageTag(mode?.primaryLanguage),
-        extensionLanguage: Self.safeLanguageTag(self.primaryLanguage),
-        availableLanguages: Array(available.prefix(16)),
-        requestedKeyboardType: self.textDocumentProxy.keyboardType?.rawValue ?? -1
-      )
-    default:
-      return nil
-    }
-    #else
-    return nil
-    #endif
-  }
-
-  private static func safeLanguageTag(_ value: String?) -> String? {
-    guard let value, (1...35).contains(value.utf8.count) else { return nil }
-    let allowed = value.utf8.allSatisfy { byte in
-      (65...90).contains(byte) || (97...122).contains(byte)
-        || (48...57).contains(byte) || byte == 45
-    }
-    return allowed ? value : nil
   }
 
   /// One delayed, cancellable checkpoint per appearance or field transition.
   /// Never poll during typing or retain host text or UIKit touch coordinates.
   private func scheduleRenderCheckpoint(checkpoint: String) {
-    #if !APPSTORE
+    #if ALTBOARD_DEVELOPMENT_TRACING && !APPSTORE
     self.renderProbeGeneration &+= 1
     let generation = self.renderProbeGeneration
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
@@ -274,7 +213,7 @@ final class KeyboardViewController: UIInputViewController {
   }
 
   private func captureRenderCheckpoint(checkpoint: String) {
-    #if !APPSTORE
+    #if ALTBOARD_DEVELOPMENT_TRACING && !APPSTORE
     guard let input = self.viewIfLoaded else { return }
     let hosted = self.hostingController?.viewIfLoaded
     let hostingFrame = hosted.map { $0.convert($0.bounds, to: input) } ?? .zero
@@ -470,22 +409,6 @@ final class KeyboardViewController: UIInputViewController {
         vc.keyboardState.syncVoiceProcessingProgress()
       }
     }
-  }
-
-  private func setupInputModeObserver() {
-    #if !APPSTORE
-    NotificationCenter.default.addObserver(
-      self, selector: #selector(inputModeDidChange),
-      name: UITextInputMode.currentInputModeDidChangeNotification,
-      object: nil
-    )
-    #endif
-  }
-
-  @objc private func inputModeDidChange() {
-    guard self.viewIfLoaded?.window != nil else { return }
-    self.lastObservedDocumentInputModeLanguage = self.textDocumentProxy.documentInputMode?.primaryLanguage
-    self.recordKeyboardTrace(.inputModeChanged)
   }
 
   private func setupForegroundObserver() {
@@ -926,13 +849,6 @@ extension KeyboardViewController {
 
   override func textDidChange(_ textInput: (any UITextInput)?) {
     super.textDidChange(textInput)
-    #if !APPSTORE
-    let modeLanguage = self.textDocumentProxy.documentInputMode?.primaryLanguage
-    if modeLanguage != self.lastObservedDocumentInputModeLanguage {
-      self.lastObservedDocumentInputModeLanguage = modeLanguage
-      self.recordKeyboardTrace(.inputModeChanged)
-    }
-    #endif
     let currentDocument = self.availableDocumentIdentifier()
     let sameDocument = KeyboardDocumentIdentifier.isSameOrUnavailable(
       current: currentDocument, previous: self.lastTouchDocumentID

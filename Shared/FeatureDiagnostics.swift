@@ -35,7 +35,7 @@ enum FeatureDiagnostics {
   private static var fileURL: URL? { AppGroup.containerURL?.appendingPathComponent(filename) }
 
   static func record(_ area: Area, _ event: Event, durationMs: Int? = nil) {
-    #if !APPSTORE
+    #if ALTBOARD_DEVELOPMENT_TRACING && !APPSTORE
     let entry = Entry(
       timestampMs: Int64(Date().timeIntervalSince1970 * 1_000),
       process: Bundle.main.bundleURL.pathExtension == "appex" ? "keyboard" : "app",
@@ -137,6 +137,7 @@ enum FeatureDiagnostics {
     let featureEvents = entries()
     let payload: [String: Any] = [
       "schemaVersion": 1,
+      "captureEnabled": KeyboardLifecycleTrace.captureEnabled,
       "exportedAtMs": Int64(Date().timeIntervalSince1970 * 1_000),
       "build": Bundle.main.infoDictionary?["AltboardBuildSHA"] as? String ?? "unknown",
       "privacy": "No typed text, host content, touch paths, audio, transcripts or credentials",

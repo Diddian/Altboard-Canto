@@ -22,6 +22,19 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
             ], check=True, capture_output=True, text=True)
             subprocess.run([executable], check=True, capture_output=True, text=True)
 
+    def test_recovery_default_writes_nothing_and_keeps_legacy_exports(self):
+        with tempfile.TemporaryDirectory() as directory:
+            executable = str(Path(directory) / "recovery")
+            subprocess.run([
+                "swiftc", "-swift-version", "6", "-strict-concurrency=complete",
+                "-o", executable,
+                *[str(ROOT / path) for path in (
+                    "Shared/KeyboardLifecycleTrace.swift", "Shared/KeyboardDiagnosticReview.swift",
+                    "Shared/KeyboardProcessMemory.swift", "Shared/KeyboardKind.swift",
+                    "scripts/verify-keyboard-recovery.swift")],
+            ], check=True, capture_output=True, text=True)
+            subprocess.run([executable], check=True, capture_output=True, text=True)
+
     def test_diagnostic_correlation_is_additive_and_storage_is_bounded(self):
         trace = (ROOT / "Shared/KeyboardLifecycleTrace.swift").read_text()
         for field in ("systemUptimeMs", "processID", "buildSHA"):
@@ -86,7 +99,7 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("FeatureDiagnostics.record(.keyboardRender, .strokeGridMounted)", layout)
         self.assertIn("FeatureDiagnostics.record(.keyboardRender, .trailOverlayMounted)", layout)
         self.assertIn("FeatureDiagnostics.record(.keyboardRender, .llmPromptMounted)", view)
-        self.assertIn("#if !APPSTORE", diagnostic)
+        self.assertIn("#if ALTBOARD_DEVELOPMENT_TRACING && !APPSTORE", diagnostic)
         self.assertNotIn("touchPath", diagnostic)
 
     def test_delayed_render_probe_inspects_uikit_touch_targets_privately(self):
@@ -153,7 +166,7 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         trace = (ROOT / "Shared/KeyboardLifecycleTrace.swift").read_text()
         controller = HOST.read_text()
         diagnostics = (ROOT / "Sayboard/Views/DiagnosticsView.swift").read_text()
-        self.assertIn("#if !APPSTORE", trace)
+        self.assertIn("#if ALTBOARD_DEVELOPMENT_TRACING && !APPSTORE", trace)
         self.assertIn("private static let maxBytes: off_t = 1_048_576", trace)
         self.assertIn("flock(fd, LOCK_EX)", trace)
         self.assertIn('hostHint: safeHostHint(hostBundleHint)', trace)
@@ -200,34 +213,27 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn('"documentIdentityReview": documentIdentityReview(for: events)', trace)
         self.assertNotIn("identifier.uuidString", trace)
 
-    def test_first_build_keyboard_startup_and_input_mode_observability(self):
-        host = HOST.read_text(encoding="utf-8")
-        trace = (ROOT / "Shared/KeyboardLifecycleTrace.swift").read_text(encoding="utf-8")
-        app = (ROOT / "Sayboard/SayboardApp.swift").read_text(encoding="utf-8")
-        feature = (ROOT / "Shared/FeatureDiagnostics.swift").read_text(encoding="utf-8")
-        self.assertLess(host.index("self.traceFirstKeyboardLoad()"), host.index("let keyboard = KeyboardInputView("))
-        self.assertIn("self.recordKeyboardTrace(.loadViewStarting)", host)
-        self.assertIn("canto.keyboardDiagnostics.firstLoadBuildSHA", host)
-        self.assertIn("self.firstLoadForBuild == true", host)
-        self.assertIn("self.textDocumentProxy.documentInputMode", host)
-        self.assertIn("UITextInputMode.activeInputModes", host)
-        self.assertIn("UITextInputMode.currentInputModeDidChangeNotification", host)
-        self.assertIn("self.recordKeyboardTrace(.inputModeChanged)", host)
-        self.assertIn("availableLanguages: Array(available.prefix(16))", host)
-        self.assertIn("requestedKeyboardType: self.textDocumentProxy.keyboardType?.rawValue ?? -1", host)
-        self.assertIn("case loadViewStarting", trace)
-        self.assertIn("case inputModeChanged", trace)
-        self.assertIn("let firstLoadForBuild: Bool?", trace)
-        self.assertIn("let inputModeProbe: InputModeProbe?", trace)
-        self.assertIn('"inputModeReview": inputModeReview(for: events)', trace)
-        self.assertIn('"schemaVersion": 5', trace)
-        self.assertIn("No callbacks can be guaranteed while iOS runs another keyboard.", trace)
-        self.assertIn("FeatureDiagnostics.record(.appStartup, .started)", app)
-        self.assertIn("FeatureDiagnostics.record(.appStartup, .completed)", app)
-        self.assertIn("area == .appStartup && event == .started", feature)
-        for private_content in ("documentContextBeforeInput", "selectedText",
-                                "hostBundleId", "touchPath", "audioBuffer"):
-            self.assertNotIn(private_content, trace)
+    def test_recovery_removes_input_mode_probes_and_defaults_tracing_off(self):
+        host = HOST.read_text()
+        trace = (ROOT / "Shared/KeyboardLifecycleTrace.swift").read_text()
+        feature = (ROOT / "Shared/FeatureDiagnostics.swift").read_text()
+        for removed in ("documentInputMode", "activeInputModes", "setupInputModeObserver",
+                        "inputModeDidChange", "traceFirstKeyboardLoad", "hasDictationKey = true"):
+            self.assertNotIn(removed, host)
+        for text in (host, trace, feature):
+            self.assertIn("#if ALTBOARD_DEVELOPMENT_TRACING && !APPSTORE", text)
+        self.assertIn('"captureEnabled": captureEnabled', trace)
+        self.assertIn('"captureEnabled": KeyboardLifecycleTrace.captureEnabled', feature)
+        for path in ("project.yml", ".github/workflows/build-unsigned-ipa.yml"):
+            self.assertNotIn("ALTBOARD_DEVELOPMENT_TRACING", (ROOT / path).read_text())
+        import plistlib
+        attributes = plistlib.loads((ROOT / "SayboardKeyboard/Info.plist").read_bytes())["NSExtension"]["NSExtensionAttributes"]
+        self.assertFalse(attributes["IsASCIICapable"])
+        self.assertEqual(attributes["PrimaryLanguage"], "mis")
+        # Keep the subsequent nil-ID crash guard while rolling back system integration.
+        self.assertIn("self.availableDocumentIdentifier()", host)
+        recorder = host.split("private func recordKeyboardTrace(", 1)[1].split("private func scheduleRenderCheckpoint", 1)[0]
+        self.assertLess(recorder.index("#if ALTBOARD_DEVELOPMENT_TRACING"), recorder.index("self.viewIfLoaded"))
 
     def test_memory_diagnostics_sample_only_on_lifecycle_or_idle_timer(self):
         sampler = (ROOT / "Shared/KeyboardProcessMemory.swift").read_text()
@@ -256,7 +262,7 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
     def test_feature_diagnostics_contract(self):
         trace = (ROOT / "Shared/FeatureDiagnostics.swift").read_text()
         screen = (ROOT / "Sayboard/Views/DiagnosticsView.swift").read_text()
-        self.assertIn("#if !APPSTORE", trace)
+        self.assertIn("#if ALTBOARD_DEVELOPMENT_TRACING && !APPSTORE", trace)
         self.assertIn("private static let maxBytes: off_t = 1_048_576", trace)
         self.assertIn("flock(fd, LOCK_EX)", trace)
         self.assertIn("KeyboardLifecycleTrace.exportJSON()", trace)

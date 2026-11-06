@@ -118,6 +118,15 @@ enum KeyboardLifecycleTrace {
   private static let queue = DispatchQueue(label: "app.sayboard.keyboard.lifecycle", qos: .utility)
   private static var fileURL: URL? { AppGroup.containerURL?.appendingPathComponent(filename) }
 
+  // Recovery builds keep historical exports, but do not probe or write new traces.
+  static var captureEnabled: Bool {
+    #if ALTBOARD_DEVELOPMENT_TRACING && !APPSTORE
+    true
+    #else
+    false
+    #endif
+  }
+
   static func record(
     _ event: Event, session: String, requestedMode: KeyboardKind,
     effectiveMode: KeyboardKind, viewWidth: CGFloat, viewHeight: CGFloat,
@@ -126,7 +135,7 @@ enum KeyboardLifecycleTrace {
     hostBundleHint: String?, firstLoadForBuild: Bool? = nil,
     inputModeProbe: InputModeProbe? = nil, renderProbe: RenderProbe? = nil
   ) {
-    #if !APPSTORE
+    #if ALTBOARD_DEVELOPMENT_TRACING && !APPSTORE
     let processMemory = event.samplesProcessMemory
       ? KeyboardProcessMemory.snapshot() : nil
     let entry = Entry(
@@ -389,6 +398,8 @@ enum KeyboardLifecycleTrace {
       "appBuild": Bundle.main.infoDictionary?["AltboardBuildSHA"] as? String ?? "unknown",
       "keyboardBuild": AppGroup.sharedDefaults?.string(forKey: "canto.keyboardBuildSHA") ?? "unknown",
       "captureScope": "keyboard extension only; cannot inspect another active keyboard",
+      "captureEnabled": captureEnabled,
+      "captureStatus": captureEnabled ? "opt-in development tracing" : "disabled for recovery; retained events may be from older builds",
       "privacy": "No keystrokes, host text, touch positions, audio or transcripts",
       "events": events,
       "renderReview": renderReview(for: events),
