@@ -179,6 +179,35 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn('"documentIdentityReview": documentIdentityReview(for: events)', trace)
         self.assertNotIn("identifier.uuidString", trace)
 
+    def test_first_build_keyboard_startup_and_input_mode_observability(self):
+        host = HOST.read_text(encoding="utf-8")
+        trace = (ROOT / "Shared/KeyboardLifecycleTrace.swift").read_text(encoding="utf-8")
+        app = (ROOT / "Sayboard/SayboardApp.swift").read_text(encoding="utf-8")
+        feature = (ROOT / "Shared/FeatureDiagnostics.swift").read_text(encoding="utf-8")
+        self.assertLess(host.index("self.traceFirstKeyboardLoad()"), host.index("let keyboard = KeyboardInputView("))
+        self.assertIn("self.recordKeyboardTrace(.loadViewStarting)", host)
+        self.assertIn("canto.keyboardDiagnostics.firstLoadBuildSHA", host)
+        self.assertIn("self.firstLoadForBuild == true", host)
+        self.assertIn("self.textDocumentProxy.documentInputMode", host)
+        self.assertIn("UITextInputMode.activeInputModes", host)
+        self.assertIn("UITextInputMode.currentInputModeDidChangeNotification", host)
+        self.assertIn("self.recordKeyboardTrace(.inputModeChanged)", host)
+        self.assertIn("availableLanguages: Array(available.prefix(16))", host)
+        self.assertIn("requestedKeyboardType: self.textDocumentProxy.keyboardType.rawValue", host)
+        self.assertIn("case loadViewStarting", trace)
+        self.assertIn("case inputModeChanged", trace)
+        self.assertIn("let firstLoadForBuild: Bool?", trace)
+        self.assertIn("let inputModeProbe: InputModeProbe?", trace)
+        self.assertIn('"inputModeReview": inputModeReview(for: events)', trace)
+        self.assertIn('"schemaVersion": 4', trace)
+        self.assertIn("No callbacks can be guaranteed while iOS runs another keyboard.", trace)
+        self.assertIn("FeatureDiagnostics.record(.appStartup, .started)", app)
+        self.assertIn("FeatureDiagnostics.record(.appStartup, .completed)", app)
+        self.assertIn("area == .appStartup && event == .started", feature)
+        for private_content in ("documentContextBeforeInput", "selectedText",
+                                "hostBundleId", "touchPath", "audioBuffer"):
+            self.assertNotIn(private_content, trace)
+
     def test_memory_diagnostics_sample_only_on_lifecycle_or_idle_timer(self):
         sampler = (ROOT / "Shared/KeyboardProcessMemory.swift").read_text()
         trace = (ROOT / "Shared/KeyboardLifecycleTrace.swift").read_text()

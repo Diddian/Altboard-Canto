@@ -9,6 +9,7 @@ import Glibc
 /// cursor locations, raw host identifiers, audio, or touch paths.
 enum KeyboardLifecycleTrace {
   enum Event: String, Sendable {
+    case loadViewStarting
     case inputViewLoaded
     case hostingMounted
     case willAppear
@@ -18,6 +19,7 @@ enum KeyboardLifecycleTrace {
     case documentChanged
     case documentIdentifierUnavailable
     case documentIdentifierRecovered
+    case inputModeChanged
     case hostTextCleared
     case layoutChanged
     case switchRequirementChanged
@@ -29,8 +31,9 @@ enum KeyboardLifecycleTrace {
 
     var needsImmediateWrite: Bool {
       switch self {
-      case .willAppear, .willDisappear, .didDisappear, .hostTextCleared,
-           .documentIdentifierUnavailable, .documentIdentifierRecovered,
+      case .loadViewStarting, .willAppear, .willDisappear, .didDisappear,
+           .inputModeChanged, .hostTextCleared, .documentIdentifierUnavailable,
+           .documentIdentifierRecovered,
            .memoryWarning, .renderSuspicious, .renderRefreshRequested: true
       default: false
       }
@@ -72,6 +75,16 @@ enum KeyboardLifecycleTrace {
     let letterRowsExpected: Bool
   }
 
+  /// Document input mode is observable only while this extension is running.
+  /// Available languages are installed modes, not the currently selected keyboard.
+  struct InputModeProbe: Codable, Sendable {
+    let documentModePresent: Bool
+    let documentLanguage: String?
+    let extensionLanguage: String?
+    let availableLanguages: [String]
+    let requestedKeyboardType: Int
+  }
+
   private struct Entry: Codable, Sendable {
     let timestampMs: Int64
     let session: String
@@ -90,6 +103,8 @@ enum KeyboardLifecycleTrace {
     let fullAccess: Bool
     let appGroupAvailable: Bool
     let hostHint: String
+    let firstLoadForBuild: Bool?
+    let inputModeProbe: InputModeProbe?
     let processMemory: KeyboardProcessMemory.Snapshot?
     let renderProbe: RenderProbe?
   }
@@ -104,7 +119,8 @@ enum KeyboardLifecycleTrace {
     effectiveMode: KeyboardKind, viewWidth: CGFloat, viewHeight: CGFloat,
     hostWidth: CGFloat, hostHeight: CGFloat, hostingMounted: Bool,
     hostingInWindow: Bool, nativeSwitchRequired: Bool, fullAccess: Bool,
-    hostBundleHint: String?, renderProbe: RenderProbe? = nil
+    hostBundleHint: String?, firstLoadForBuild: Bool? = nil,
+    inputModeProbe: InputModeProbe? = nil, renderProbe: RenderProbe? = nil
   ) {
     #if !APPSTORE
     let processMemory = event.samplesProcessMemory
@@ -121,6 +137,7 @@ enum KeyboardLifecycleTrace {
       nativeSwitchRequired: nativeSwitchRequired, fullAccess: fullAccess,
       appGroupAvailable: AppGroup.containerURL != nil,
       hostHint: safeHostHint(hostBundleHint),
+      firstLoadForBuild: firstLoadForBuild, inputModeProbe: inputModeProbe,
       processMemory: processMemory,
       renderProbe: renderProbe
     )
@@ -331,17 +348,41 @@ enum KeyboardLifecycleTrace {
     ]
   }
 
+  private static func inputModeReview(for events: [[String: Any]]) -> [String: Any] {
+    let checkpoints = events.filter { $0["inputModeProbe"] is [String: Any] }
+    let startup = events.last { ($0["event"] as? String) == Event.loadViewStarting.rawValue }
+    let unavailable = checkpoints.filter {
+      ($0["inputModeProbe"] as? [String: Any])?["documentModePresent"] as? Bool == false
+    }
+    let recent = checkpoints.suffix(12).map { event in
+      [
+        "timestampMs": event["timestampMs"] ?? 0,
+        "session": event["session"] ?? "",
+        "event": event["event"] ?? "",
+        "inputModeProbe": event["inputModeProbe"] ?? [:],
+      ] as [String: Any]
+    }
+    return [
+      "latestStartupFirstLoadForBuild": startup?["firstLoadForBuild"] ?? NSNull(),
+      "checkpointCount": checkpoints.count,
+      "documentModeUnavailableCount": unavailable.count,
+      "recentCheckpoints": recent,
+      "interpretation": "The document mode language can be absent or stale. The extension primary language is its own declaration; available languages are installed modes, not the selected keyboard. No callbacks can be guaranteed while iOS runs another keyboard."
+    ]
+  }
+
   static func exportJSON() -> String {
     let events = entries()
     let document: [String: Any] = [
-      "schemaVersion": 3,
+      "schemaVersion": 4,
       "exportedAtMs": Int64(Date().timeIntervalSince1970 * 1_000),
       "appBuild": Bundle.main.infoDictionary?["AltboardBuildSHA"] as? String ?? "unknown",
       "keyboardBuild": AppGroup.sharedDefaults?.string(forKey: "canto.keyboardBuildSHA") ?? "unknown",
-      "captureScope": "keyboard extension lifecycle; last-known host category only",
+      "captureScope": "keyboard extension only; cannot inspect another active keyboard",
       "privacy": "No keystrokes, host text, touch positions, audio or transcripts",
       "events": events,
       "renderReview": renderReview(for: events),
+      "inputModeReview": inputModeReview(for: events),
       "postSubmitReview": postSubmitReview(for: events),
       "documentIdentityReview": documentIdentityReview(for: events),
       "memoryReview": memoryReview(for: events),

@@ -10,7 +10,7 @@ import Glibc
 enum FeatureDiagnostics {
   enum Area: String, Sendable {
     case speech, liveDictation, voiceOutput, aiActions, speechModel, textModel
-    case meeting, data, language, swipe, chineseInput, bridge, keyboardRender, keyboardEmoji
+    case meeting, data, language, swipe, chineseInput, bridge, keyboardRender, keyboardEmoji, appStartup
   }
 
   enum Event: String, Sendable {
@@ -42,7 +42,7 @@ enum FeatureDiagnostics {
       area: area.rawValue, event: event.rawValue,
       durationMs: durationMs.map { max(0, min(600_000, $0)) }
     )
-    if event == .failed || event == .interrupted {
+    if event == .failed || event == .interrupted || (area == .appStartup && event == .started) {
       queue.sync { append(entry) }
     } else {
       queue.async { append(entry) }
