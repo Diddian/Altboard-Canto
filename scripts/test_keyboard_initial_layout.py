@@ -26,38 +26,30 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("onSwipePath: { path in self.swipeTrail.update(path) }", source)
         self.assertNotIn("@State private var liveSwipePath", source)
 
-    def test_host_settings_before_swiftui_mount_and_heights_stay_in_sync(self):
-        source = HOST.read_text(encoding="utf-8")
-        appear = source.split("override func viewWillAppear(", 1)[1].split(
-            "override func viewWillDisappear(", 1
-        )[0]
-        self.assertNotIn("self.setupKeyboardView()", appear)
-        self.assertIn("self.keyboardState.refresh()", appear)
-        self.assertIn("self.syncFullAccessIfChanged()", appear)
-        self.assertNotIn("controller.rootView =", source)
-        self.assertNotIn("rootNeedsMeasuredRemount", source)
-        self.assertNotIn("constraintsAffectingLayout", source)
-        self.assertNotIn("self.view.superview?.layoutIfNeeded()", source)
-        self.assertIn("hosting.view.topAnchor.constraint(equalTo: self.view.topAnchor)", source)
-        self.assertIn("hosting.sizingOptions = []", source)
-        host = (ROOT / "SayboardKeyboard/KeyboardInputView.swift").read_text()
-        self.assertIn("override func systemLayoutSizeFitting", host)
-        self.assertIn("GeometryReader { bounds in", host)
-        self.assertIn(".frame(width: max(1, width), height: max(1, height)", host)
-        self.assertNotIn("Color.clear", host)
+    def test_system_input_view_and_appearance_time_hosting(self):
+        source = HOST.read_text()
+        load = source.split("override func loadView()", 1)[1].split("override func updateViewConstraints()", 1)[0]
+        self.assertIn("super.loadView()", load)
+        self.assertNotIn("self.inputView =", load)
+        self.assertNotIn("KeyboardInputView(", source)
+        did_load = source.split("override func viewDidLoad()", 1)[1].split("override func viewWillAppear(", 1)[0]
+        self.assertNotIn("self.setupKeyboardView()", did_load)
+        appear = source.split("override func viewWillAppear(", 1)[1].split("override func viewWillDisappear(", 1)[0]
+        self.assertIn("if self.hostingController == nil", appear)
+        self.assertLess(appear.index("self.setupKeyboardView()"), appear.index("self.keyboardState.refresh()"))
+        self.assertIn("UIHostingController<KeyboardView>", source)
+        self.assertNotIn("KeyboardHostingRoot", source)
+        self.assertIn("hosting.view.bottomAnchor.constraint(equalTo: self.view.bottomAnchor)", source)
+        self.assertIn("self.hostingHeightConstraint?.constant = target", source)
         self.assertIn("kind: self.keyboardState.effectiveTypingKind", source)
-        self.assertIn("self.hostingHeightConstraint, height.constant != target", source)
-        self.assertIn("override func viewDidLayoutSubviews()", source)
+        self.assertIn("self.view.superview?.layoutIfNeeded()", source)
+        self.assertNotIn("controller.rootView =", source)
 
     def test_render_probe_distinguishes_blank_root_from_key_rows(self):
-        root = (ROOT / "SayboardKeyboard/KeyboardInputView.swift").read_text()
         view = ROOT_VIEW.read_text()
         layout = LAYOUT.read_text()
         row = (ROOT / "SayboardKeyboard/Views/AlphabeticTouchRow.swift").read_text()
         diagnostic = (ROOT / "Shared/FeatureDiagnostics.swift").read_text()
-        self.assertIn("measured.width > 1 && measured.height > 1 ? .rootReady : .rootWaiting", root)
-        self.assertIn("FeatureDiagnostics.record(.keyboardRender, .rootReady)", root)
-        self.assertIn("GeometryReader { bounds in", root)
         self.assertIn("FeatureDiagnostics.record(.keyboardRender, .layoutMounted)", layout)
         self.assertIn("self.syncExpectedLetterRows()", layout)
         self.assertIn("self.keyboardState.expectsAlphabeticTouchRows = false", layout)
@@ -184,7 +176,7 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         trace = (ROOT / "Shared/KeyboardLifecycleTrace.swift").read_text(encoding="utf-8")
         app = (ROOT / "Sayboard/SayboardApp.swift").read_text(encoding="utf-8")
         feature = (ROOT / "Shared/FeatureDiagnostics.swift").read_text(encoding="utf-8")
-        self.assertLess(host.index("self.traceFirstKeyboardLoad()"), host.index("let keyboard = KeyboardInputView("))
+        self.assertLess(host.index("self.traceFirstKeyboardLoad()"), host.index("super.loadView()"))
         self.assertIn("self.recordKeyboardTrace(.loadViewStarting)", host)
         self.assertIn("canto.keyboardDiagnostics.firstLoadBuildSHA", host)
         self.assertIn("self.firstLoadForBuild == true", host)
@@ -272,5 +264,6 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
 
 
