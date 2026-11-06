@@ -85,6 +85,7 @@ private struct KeyboardSelectionProbeField: UIViewRepresentable {
     private let remembersSelection: Bool
     private let status: Binding<String>
     private weak var field: UITextField?
+    private var activeActivationID: String?
 
     init(remembersSelection: Bool, status: Binding<String>) {
       self.remembersSelection = remembersSelection
@@ -107,11 +108,13 @@ private struct KeyboardSelectionProbeField: UIViewRepresentable {
     deinit { NotificationCenter.default.removeObserver(self) }
 
     func textFieldDidBeginEditing(_ textField: UITextField) {
+      self.activeActivationID = UUID().uuidString
       self.report(.editingBegan, notificationLanguage: nil)
     }
 
     func textFieldDidEndEditing(_ textField: UITextField) {
       self.report(.editingEnded, notificationLanguage: nil)
+      self.activeActivationID = nil
     }
 
     @objc private func inputModeChanged(_ note: Notification) {
@@ -142,7 +145,8 @@ private struct KeyboardSelectionProbeField: UIViewRepresentable {
         notificationLanguage: notificationLanguage,
         keyboardType: field.keyboardType.rawValue,
         fieldIsFirstResponder: field.isFirstResponder,
-        remembersSelection: self.remembersSelection
+        remembersSelection: self.remembersSelection,
+        activationID: self.activeActivationID
       )
     }
   }
@@ -180,6 +184,16 @@ struct KeyboardHandoffMonitorView: View {
               Text(remembered ? "Remembered field" : "Normal field")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+              if let activationID = attempt["activationID"] as? String {
+                Text("Field activation: \(activationID.prefix(8))")
+                  .font(.caption.monospacedDigit())
+                  .foregroundStyle(.secondary)
+              }
+              if let stage = attempt["extensionStage"] as? String {
+                Text("Extension stage: \(stage) (field unconfirmed)")
+                  .font(.caption.monospacedDigit())
+                  .foregroundStyle(.secondary)
+              }
               if let changed = attempt["modeChangedAwayAfterMs"] as? NSNumber {
                 Text("Mode changed away after \(changed.intValue) ms")
                   .font(.caption.monospacedDigit())
@@ -190,7 +204,7 @@ struct KeyboardHandoffMonitorView: View {
         }
       }
       Section {
-        Text("A mis language hint does not prove Altboard launched. 'Launch not observed' is not proof of a crash; iOS may select another keyboard or reuse an existing extension.")
+        Text("A mis language hint is not proof that Altboard launched. Field focus now bounds each observation. Extension events in that interval are unconfirmed, not proof of field ownership.")
           .font(.footnote).foregroundStyle(.secondary)
         Text("Only Altboard test fields can be observed before extension startup. Other apps remain inaccessible.")
           .font(.footnote).foregroundStyle(.secondary)
@@ -206,9 +220,7 @@ struct KeyboardHandoffMonitorView: View {
 
   private func description(for value: String) -> String {
     switch value {
-    case "mountedObserved": "Extension mounted"
-    case "appearanceObserved": "Extension appeared (no new mount)"
-    case "loadStartedOnly": "Extension started; mount not observed"
+    case "extensionDetectedFieldUnconfirmed": "Extension detected; field unconfirmed"
     case "modeChangedAwayBeforeLoad": "Mode changed away before launch"
     case "launchNotObserved": "Launch not observed"
     case "awaitingEvidence": "Awaiting evidence"

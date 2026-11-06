@@ -100,6 +100,7 @@ enum KeyboardLifecycleTrace {
     let keyboardType: Int
     let fieldIsFirstResponder: Bool
     let remembersSelection: Bool
+    let activationID: String?
   }
 
   private struct HostSelectionEntry: Codable, Sendable {
@@ -184,7 +185,8 @@ enum KeyboardLifecycleTrace {
   static func recordHostInputMode(
     _ event: HostSelectionEvent,
     responderLanguage: String?, notificationLanguage: String?,
-    keyboardType: Int, fieldIsFirstResponder: Bool, remembersSelection: Bool
+    keyboardType: Int, fieldIsFirstResponder: Bool, remembersSelection: Bool,
+    activationID: String? = nil
   ) {
     #if !APPSTORE
     let snapshot = HostSelectionSnapshot(
@@ -192,7 +194,8 @@ enum KeyboardLifecycleTrace {
       notificationLanguage: safeLanguageTag(notificationLanguage),
       keyboardType: max(-1, min(255, keyboardType)),
       fieldIsFirstResponder: fieldIsFirstResponder,
-      remembersSelection: remembersSelection
+      remembersSelection: remembersSelection,
+      activationID: activationID.flatMap { UUID(uuidString: $0)?.uuidString }
     )
     let entry = HostSelectionEntry(
       timestampMs: Int64(Date().timeIntervalSince1970 * 1_000),
@@ -457,32 +460,38 @@ enum KeyboardLifecycleTrace {
     ]
   }
 
-  /// Read-only time correlation; host language hints do not identify a keyboard.
+  /// Host field IDs delimit the observation window. Extension event sessions
+  /// are preserved, but cannot establish which text field was on screen.
   private static func handoffReview(for events: [[String: Any]]) -> [String: Any] {
-    let signals: [KeyboardHandoffAnalyzer.Signal] = events.compactMap { item in
+    let signals: [KeyboardHandoffAnalyzer.Signal] = events.flatMap { item -> [KeyboardHandoffAnalyzer.Signal] in
       guard let time = (item["timestampMs"] as? NSNumber)?.int64Value,
-            let name = item["event"] as? String else { return nil }
+            let name = item["event"] as? String else { return [] }
       if (item["process"] as? String) == "app" {
         guard let snapshot = item["hostInputMode"] as? [String: Any],
-              snapshot["fieldIsFirstResponder"] as? Bool == true,
-              let language = snapshot["responderLanguage"] as? String else { return nil }
+              let activationID = snapshot["activationID"] as? String
+        else { return [] }
         let remembers = snapshot["remembersSelection"] as? Bool ?? false
-        if name == "hostProbe.editingBegan" || name == "hostProbe.inputModeChanged" {
-          return .init(time, language == "mis" ? .hostMis : .hostOther,
-                       remembersSelection: remembers)
+        if name == "hostProbe.editingEnded" {
+          return [.init(time, .fieldEnded, remembersSelection: remembers,
+                        activationID: activationID)]
         }
-        return nil
+        guard snapshot["fieldIsFirstResponder"] as? Bool == true else { return [] }
+        if name == "hostProbe.editingBegan" || name == "hostProbe.inputModeChanged" {
+          let language = snapshot["responderLanguage"] as? String
+          return [.init(time, language == "mis" ? .hostMis : .hostOther,
+                        remembersSelection: remembers, activationID: activationID)]
+        }
+        return []
       }
       let kind: KeyboardHandoffAnalyzer.Kind
       switch name {
       case Event.loadViewStarting.rawValue: kind = .extensionStarting
       case Event.hostingMounted.rawValue: kind = .extensionMounted
       case Event.willAppear.rawValue, Event.didAppear.rawValue: kind = .extensionAppearing
-      case Event.renderCheckpoint.rawValue, Event.renderSuspicious.rawValue:
-        kind = .extensionRendered
-      default: return nil
+      case Event.renderCheckpoint.rawValue: kind = .extensionRendered
+      default: return []
       }
-      return .init(time, kind)
+      return [.init(time, kind, sessionID: item["session"] as? String)]
     }
     let attempts = KeyboardHandoffAnalyzer.analyze(
       signals, nowMs: Int64(Date().timeIntervalSince1970 * 1_000)
@@ -490,11 +499,15 @@ enum KeyboardLifecycleTrace {
     let recent: [[String: Any]] = attempts.map { attempt in
       [
         "timestampMs": attempt.timestampMs,
+        "activationID": attempt.activationID,
         "remembersSelection": attempt.remembersSelection,
         "outcome": attempt.outcome.rawValue,
+        "extensionStage": attempt.extensionStage?.rawValue as Any? ?? NSNull(),
+        "extensionSessionID": attempt.extensionSessionID as Any? ?? NSNull(),
         "loadDelayMs": attempt.loadDelayMs.map { $0 as Any } ?? NSNull(),
         "mountDelayMs": attempt.mountDelayMs.map { $0 as Any } ?? NSNull(),
         "modeChangedAwayAfterMs": attempt.changeAwayDelayMs.map { $0 as Any } ?? NSNull(),
+        "focusEndedAfterMs": attempt.focusEndedAfterMs.map { $0 as Any } ?? NSNull(),
       ]
     }
     let counts = Dictionary(grouping: attempts, by: { $0.outcome.rawValue })
@@ -504,7 +517,7 @@ enum KeyboardLifecycleTrace {
       "windowMs": KeyboardHandoffAnalyzer.observationWindowMs,
       "statusCounts": counts,
       "recentAttempts": recent,
-      "interpretation": "Only Altboard host test fields are observed before launch. Language tags are hints, not keyboard identities. Launch not observed does not prove a crash; an already running extension may not issue loadView."
+      "interpretation": "Mode language is not keyboard identity. Matching extension events are only temporal, not proof they belong to that field. Field focus stops matching. Older logs without activation IDs are excluded."
     ]
   }
 
@@ -515,7 +528,7 @@ enum KeyboardLifecycleTrace {
   static func exportJSON() -> String {
     let events = entries()
     let document: [String: Any] = [
-      "schemaVersion": 7,
+      "schemaVersion": 8,
       "exportedAtMs": Int64(Date().timeIntervalSince1970 * 1_000),
       "appBuild": Bundle.main.infoDictionary?["AltboardBuildSHA"] as? String ?? "unknown",
       "keyboardBuild": AppGroup.sharedDefaults?.string(forKey: "canto.keyboardBuildSHA") ?? "unknown",
@@ -531,7 +544,7 @@ enum KeyboardLifecycleTrace {
       "memoryReview": memoryReview(for: events),
     ]
     guard let data = try? JSONSerialization.data(withJSONObject: document, options: [.prettyPrinted, .sortedKeys])
-    else { return "{\"schemaVersion\":7,\"events\":[]}" }
+    else { return "{\"schemaVersion\":8,\"events\":[]}" }
     return String(decoding: data, as: UTF8.self)
   }
 

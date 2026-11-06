@@ -102,8 +102,8 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("fallbackReason: self.initialStateReady", host)
         self.assertIn("let fallbackReason: String?", trace)
         self.assertIn("fallbackReason: startupReady ? fallbackReason : nil", trace)
-        self.assertIn('"schemaVersion": 7', trace)
-        self.assertIn('schemaVersion\\":7', trace)
+        self.assertIn('"schemaVersion": 8', trace)
+        self.assertIn('schemaVersion\\":8', trace)
         writes = trace.split("var needsImmediateWrite: Bool", 1)[1].split(
             "var samplesProcessMemory: Bool", 1
         )[0]
@@ -267,7 +267,7 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("let firstLoadForBuild: Bool?", trace)
         self.assertIn("let inputModeProbe: InputModeProbe?", trace)
         self.assertIn('"inputModeReview": inputModeReview(for: events)', trace)
-        self.assertIn('"schemaVersion": 7', trace)
+        self.assertIn('"schemaVersion": 8', trace)
         self.assertIn("No callbacks can be guaranteed while iOS runs another keyboard.", trace)
         self.assertIn("FeatureDiagnostics.record(.appStartup, .started)", app)
         self.assertIn("FeatureDiagnostics.record(.appStartup, .completed)", app)
@@ -388,7 +388,7 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("fallback: startupReady && requestedMode != effectiveMode", trace)
         self.assertIn("runtimeLanguage: self.primaryLanguage", host)
         self.assertNotIn("AB mis", hud)
-        self.assertIn('"schemaVersion": 7', trace)
+        self.assertIn('"schemaVersion": 8', trace)
         for forbidden in ("documentContextBeforeInput", "selectedText",
                           "touchPath", "textField.text =", "field.text ="):
             self.assertNotIn(forbidden, probe)
@@ -404,14 +404,22 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("KeyboardHandoffAnalyzer.analyze(", trace)
         self.assertIn("static func handoffReview() -> [String: Any]", trace)
         self.assertIn("modeChangedAwayBeforeLoad", analyzer)
+        self.assertIn("extensionDetectedFieldUnconfirmed", analyzer)
+        self.assertIn("signal.kind == .fieldEnded", analyzer)
+        self.assertIn("signal.activationID != activationID", analyzer)
+        self.assertIn("let activationID = snapshot[\"activationID\"] as? String", trace)
+        self.assertIn("self.activeActivationID = UUID().uuidString", probe)
+        self.assertIn("activationID: self.activeActivationID", probe)
+        self.assertIn("Extension detected; field unconfirmed", probe)
+        self.assertNotIn("case mountedObserved", analyzer)
         self.assertIn("launchNotObserved", analyzer)
         self.assertIn("A language tag does not", analyzer)
         self.assertIn('NavigationLink("Handoff Monitor")', diagnostics)
         self.assertIn("KeyboardLifecycleTrace.handoffReview()", probe)
         self.assertIn("struct KeyboardHandoffMonitorView: View", probe)
         self.assertIn("scripts/verify-keyboard-handoff.swift", workflow)
-        self.assertIn('"schemaVersion": 7', trace)
-        self.assertIn('schemaVersion\\":7', trace)
+        self.assertIn('"schemaVersion": 8', trace)
+        self.assertIn('schemaVersion\\":8', trace)
         for private_content in ("documentContextBeforeInput", "selectedText",
                                 "touchPath", "textField.text ="):
             self.assertNotIn(private_content, analyzer)

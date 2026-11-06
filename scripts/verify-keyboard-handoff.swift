@@ -5,45 +5,62 @@ struct VerifyKeyboardHandoff {
   static func main() {
     typealias A = KeyboardHandoffAnalyzer
     let changed = A.analyze([
-      .init(1_000, .hostMis, remembersSelection: false),
-      .init(1_138, .hostOther, remembersSelection: false)
+      .init(1_000, .hostMis, remembersSelection: false, activationID: "normal1"),
+      .init(1_132, .hostOther, remembersSelection: false, activationID: "normal1")
     ], nowMs: 7_000)
     precondition(changed.count == 1)
     precondition(changed[0].outcome == .modeChangedAwayBeforeLoad)
-    precondition(changed[0].changeAwayDelayMs == 138)
+    precondition(changed[0].changeAwayDelayMs == 132)
 
-    let mounted = A.analyze([
-      .init(10_000, .hostMis, remembersSelection: true),
-      .init(10_010, .extensionStarting),
-      .init(10_075, .extensionMounted)
-    ], nowMs: 15_000)
-    precondition(mounted[0].outcome == .mountedObserved)
-    precondition(mounted[0].mountDelayMs == 75)
+    // Real device regression: remembered mis, focus changes to Normal,
+    // and extension mounts after Normal receives focus.
+    let crossed = A.analyze([
+      .init(10_000, .hostMis, remembersSelection: true, activationID: "remembered1"),
+      .init(12_575, .fieldEnded, remembersSelection: true, activationID: "remembered1"),
+      .init(12_579, .hostOther, remembersSelection: false, activationID: "normal2"),
+      .init(12_589, .hostMis, remembersSelection: false, activationID: "normal2"),
+      .init(12_815, .extensionStarting, sessionID: "extension2"),
+      .init(12_864, .extensionMounted, sessionID: "extension2")
+    ], nowMs: 17_000)
+    precondition(crossed.count == 2)
+    precondition(crossed[0].outcome == .launchNotObserved)
+    precondition(crossed[0].mountDelayMs == nil)
+    precondition(crossed[0].focusEndedAfterMs == 2_575)
+    precondition(crossed[1].outcome == .extensionDetectedFieldUnconfirmed)
+    precondition(crossed[1].extensionStage == .mounted)
+    precondition(crossed[1].extensionSessionID == "extension2")
+    precondition(crossed[1].mountDelayMs == 275)
 
-    let partial = A.analyze([
-      .init(20_000, .hostMis, remembersSelection: false),
-      .init(20_100, .extensionStarting)
+    let started = A.analyze([
+      .init(20_000, .hostMis, remembersSelection: true, activationID: "remembered3"),
+      .init(20_100, .extensionStarting, sessionID: "launch3")
     ], nowMs: 25_000)
-    precondition(partial[0].outcome == .loadStartedOnly)
+    precondition(started[0].outcome == .extensionDetectedFieldUnconfirmed)
+    precondition(started[0].extensionStage == .started)
 
-    let noEvents: [A.Signal] = [.init(30_000, .hostMis, remembersSelection: false)]
-    precondition(A.analyze(noEvents, nowMs: 30_200)[0].outcome == .awaitingEvidence)
-    precondition(A.analyze(noEvents, nowMs: 35_000)[0].outcome == .launchNotObserved)
+    let pending = A.analyze([
+      .init(30_000, .hostMis, remembersSelection: false, activationID: "normal4")
+    ], nowMs: 30_200)
+    precondition(pending[0].outcome == .awaitingEvidence)
+    precondition(A.analyze([
+      .init(30_000, .hostMis, remembersSelection: false, activationID: "normal4")
+    ], nowMs: 35_000)[0].outcome == .launchNotObserved)
 
     let deduplicated = A.analyze([
-      .init(40_000, .hostMis, remembersSelection: false),
-      .init(40_100, .hostMis, remembersSelection: false),
-      .init(40_200, .hostOther, remembersSelection: true),
-      .init(40_400, .extensionMounted)
+      .init(40_000, .hostMis, remembersSelection: false, activationID: "normal5"),
+      .init(40_080, .hostMis, remembersSelection: false, activationID: "normal5"),
+      .init(40_100, .hostOther, remembersSelection: true, activationID: "remembered6"),
+      .init(40_200, .extensionMounted, sessionID: "session6")
     ], nowMs: 45_000)
     precondition(deduplicated.count == 1)
-    precondition(deduplicated[0].outcome == .mountedObserved)
+    precondition(deduplicated[0].outcome == .launchNotObserved)
+    precondition(deduplicated[0].extensionStage == nil)
 
-    let reused = A.analyze([
-      .init(49_800, .extensionAppearing),
-      .init(50_000, .hostMis, remembersSelection: true)
-    ], nowMs: 55_000)
-    precondition(reused[0].outcome == .appearanceObserved)
+    // Legacy samples without activation IDs cannot safely identify fields.
+    precondition(A.analyze([
+      .init(49_000, .hostMis, remembersSelection: true),
+      .init(49_100, .extensionMounted)
+    ], nowMs: 54_000).isEmpty)
     print("keyboard-handoff checks passed")
   }
 }
