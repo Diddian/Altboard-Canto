@@ -1,7 +1,6 @@
 
 import Combine
 import Foundation
-import os
 
 @MainActor
 final class LLMDownloadService: ObservableObject {
@@ -83,7 +82,6 @@ final class LLMDownloadService: ObservableObject {
   }
 
   func selectVariant(_ variant: LLMModelVariant) {
-    FeatureDiagnostics.record(.textModel, .selected)
     SharedSettings().defaults.set(true, forKey: Self.manualSelectionKey)
     SharedSettings().selectedLLMVariant = variant
     self.selectedVariant = variant
@@ -95,30 +93,27 @@ final class LLMDownloadService: ObservableObject {
   }
 
   func verifyExistingModels() {
-    var states = self.variantStates
     for variant in LLMModelVariant.allCases {
-      switch states[variant] {
+      switch self.variantStates[variant] {
       case .downloading, .error:
         continue
       case .downloaded, .notDownloaded, .none:
         break
       }
       if LLMModelStorageManager.isDownloaded(variant) {
-        states[variant] = .downloaded
+        self.variantStates[variant] = .downloaded
       } else if self.isDownloadInFlight(variant) {
-        states[variant] = .downloading(progress: 0)
+        self.variantStates[variant] = .downloading(progress: 0)
       } else {
-        states[variant] = .notDownloaded
+        self.variantStates[variant] = .notDownloaded
       }
     }
-    if states != self.variantStates { self.variantStates = states }
     self.ensureValidSelection()
     self.syncHasUsableModel()
   }
 
   func startDownload(variant: LLMModelVariant) {
     guard !self.isDownloadInFlight(variant) else { return }
-    FeatureDiagnostics.record(.textModel, .queued)
 
     self.variantStates[variant] = .downloading(progress: 0)
     self.addVariantToPersistence(variant)
@@ -129,7 +124,6 @@ final class LLMDownloadService: ObservableObject {
   }
 
   func cancelDownload(variant: LLMModelVariant) {
-    FeatureDiagnostics.record(.textModel, .cancelled)
     self.recordUpgradeDecline(for: variant)
     self.enqueueTasks[variant]?.cancel()
     self.enqueueTasks[variant] = nil
@@ -150,10 +144,7 @@ final class LLMDownloadService: ObservableObject {
     self.recordUpgradeDecline(for: variant)
     do {
       try LLMModelStorageManager.delete(variant)
-      FeatureDiagnostics.record(.textModel, .deleted)
-    } catch {
-      FeatureDiagnostics.record(.textModel, .failed)
-    }
+    } catch { }
 
     self.variantStates[variant] = .notDownloaded
 
@@ -262,6 +253,7 @@ final class LLMDownloadService: ObservableObject {
         self.preferredLanguagesDidChange()
       }
   }
+
   private var enqueueTasks = [LLMModelVariant: Task<Void, Never>]()
 
   private func subscribeToDownloadEvents() {
@@ -287,7 +279,6 @@ final class LLMDownloadService: ObservableObject {
 
     case .completed(let type, let variantRawValue, _):
       guard let variant = LLMModelVariant(rawValue: variantRawValue) else { return }
-      FeatureDiagnostics.record(.textModel, .downloaded)
       self.enqueueTasks[variant] = nil
       self.variantStates[variant] = .downloaded
       self.removeVariantFromPersistence(variant)
@@ -300,7 +291,6 @@ final class LLMDownloadService: ObservableObject {
 
     case .failed(_, let variantRawValue, let error):
       guard let variant = LLMModelVariant(rawValue: variantRawValue) else { return }
-      FeatureDiagnostics.record(.textModel, .failed)
       self.enqueueTasks[variant] = nil
       self.variantStates[variant] = .error(message: localizedDownloadError(error))
       self.removeVariantFromPersistence(variant)
@@ -314,10 +304,10 @@ final class LLMDownloadService: ObservableObject {
         entry = pinned
       } else {
         let manifest = try await self.fetchManifest()
-        guard let remote = manifest.llmEntry(for: variant) else {
+        guard let listed = manifest.llmEntry(for: variant) else {
           throw R2DownloadError.manifestMissingVariant(variant.rawValue)
         }
-        entry = remote
+        entry = listed
       }
       guard entry.isLoadableByThisBuild else {
         DiagnosticLog.write("llm: \(variant.rawValue) needs llama.cpp > \(LlamaRuntime.buildNumber)")
@@ -347,7 +337,6 @@ final class LLMDownloadService: ObservableObject {
 
       BackgroundDownloadManager.shared.enqueueDownload(metadata: metadata)
     } catch {
-      FeatureDiagnostics.record(.textModel, .failed)
       if downloadType == .llmUpgrade, case R2DownloadError.insufficientDiskSpace = error {
         self.variantStates[variant] = .notDownloaded
         self.removeVariantFromPersistence(variant)
@@ -370,8 +359,6 @@ final class LLMDownloadService: ObservableObject {
     let current = settings.selectedLLMVariant
 
     guard !settings.isDictationLocked else { return }
-    if LLMDevicePolicy.usesChinese(settings.textProcessingLanguages),
-       !settings.defaults.bool(forKey: Self.manualSelectionKey) { return }
 
     guard self.isDownloaded(current), let successor = current.successor else { return }
     guard !self.isDownloaded(successor) else { return }
@@ -408,7 +395,7 @@ final class LLMDownloadService: ObservableObject {
     let settings = SharedSettings()
     let current = settings.selectedLLMVariant
     guard !self.isDownloaded(current) else {
-      if self.selectedVariant != current { self.selectedVariant = current }
+      self.selectedVariant = current
       return
     }
     if let downloaded = LLMModelVariant.allCases.first(where: { isDownloaded($0) }) {
@@ -466,5 +453,3 @@ final class LLMDownloadService: ObservableObject {
     settings.llmDownloadInProgressVariants = variants
   }
 }
-
-

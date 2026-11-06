@@ -67,14 +67,9 @@ struct HistoryStore: Sendable {
       self.deleteAudioFile(named: record.audioFileName)
       return
     }
-    guard var records = try? self.readRecords() else {
-      self.deleteAudioFile(named: record.audioFileName)
-      return
-    }
+    guard var records = try? self.readRecords() else { return }
     records.insert(record, at: 0)
-    if !self.writeRecords(records) {
-      self.deleteAudioFile(named: record.audioFileName)
-    }
+    self.writeRecords(records)
   }
 
   @discardableResult
@@ -105,28 +100,9 @@ struct HistoryStore: Sendable {
         rules.append(CantoneseCorrectionRule(
           heard: pair.heard, intended: pair.intended
         ))
-        // Three independent, manually corrected recordings also provide
-        // bounded positive evidence for a Chinese word across IME methods.
-        // No full transcript or audio is copied into the keyboard profile.
-        _ = ConfirmedChoiceLearning.rememberConfirmedChinese(
-          pair.intended, defaults: AppGroup.sharedDefaults
-        )
       }
       settings.cantoneseCorrectionRules = rules
       settings.synchronize()
-    }
-    let latinPairs = LatinSpeechCorrectionLearning.recurringRules(in: records)
-    if !latinPairs.isEmpty {
-      var learned = LatinSpeechCorrectionLearning.read(defaults: AppGroup.sharedDefaults)
-      for candidate in latinPairs {
-        guard learned.count < LatinSpeechCorrectionLearning.maximumRules,
-              !learned.contains(where: {
-                $0.language == candidate.language &&
-                $0.heard.caseInsensitiveCompare(candidate.heard) == .orderedSame
-              }) else { continue }
-        learned.append(candidate)
-      }
-      LatinSpeechCorrectionLearning.save(learned, defaults: AppGroup.sharedDefaults)
     }
     return true
   }

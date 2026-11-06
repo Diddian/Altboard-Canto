@@ -30,7 +30,6 @@ extension SpeechRecognitionService {
     let loadState = String(describing: self.activeLoadState)
 
     guard !samples.isEmpty else {
-      FeatureDiagnostics.record(.speech, .failed)
       DiagnosticLog.write("transcribe: ABORT — 0 samples reached the model")
       self.settings.lastDictationOutcome = .engineFailed
       return
@@ -57,19 +56,14 @@ extension SpeechRecognitionService {
 
     switch result {
     case .text: self.settings.lastDictationOutcome = nil
-    case .noSpeech:
-      self.settings.lastDictationOutcome = .noSpeech
-      FeatureDiagnostics.record(.speech, .noSpeech)
-    case .failed:
-      self.settings.lastDictationOutcome = .engineFailed
-      FeatureDiagnostics.record(.speech, .failed)
+    case .noSpeech: self.settings.lastDictationOutcome = .noSpeech
+    case .failed: self.settings.lastDictationOutcome = .engineFailed
     }
 
     if case .text(let output) = result {
       let rawText = CantoneseOutput.normalize(TextSanitizer.sanitize(output.text))
       guard !rawText.isEmpty else {
         self.settings.lastDictationOutcome = .noSpeech
-        FeatureDiagnostics.record(.speech, .noSpeech)
         return
       }
       self.currentRawTranscription = rawText
@@ -77,7 +71,6 @@ extension SpeechRecognitionService {
         in: rawText, allowed: self.recordingSpokenLanguages
       ) {
         self.settings.lastDictationOutcome = .unexpectedLanguage
-        FeatureDiagnostics.record(.speech, .rejected)
         DiagnosticLog.write(
           "asr: refused unexpected script '\(unexpected)' not among user's preferred languages"
         )
@@ -98,11 +91,7 @@ extension SpeechRecognitionService {
       let corrections = CantoneseCorrections.applyDetailed(
         rawText, customRules: savedCorrections
       )
-      let correctedText = LatinSpeechCorrectionLearning.apply(
-        corrections.text,
-        languages: self.recordingSpokenLanguages,
-        defaults: AppGroup.sharedDefaults
-      )
+      let correctedText = corrections.text
       DiagnosticLog.write(
         "voice: saved correction rules=\(savedCorrections.count) matches=\(corrections.matchedRules)"
       )
@@ -116,7 +105,6 @@ extension SpeechRecognitionService {
         } else if options.target != .original {
           // Explicit language must not silently fall back to untranslated text.
           self.settings.lastDictationOutcome = .processingFailed
-          FeatureDiagnostics.record(.voiceOutput, .failed)
           DiagnosticLog.write("voice: selected output language failed; raw speech retained in history")
           return
         }
@@ -150,8 +138,6 @@ extension SpeechRecognitionService {
         self.currentWordBoundaries = nil
       }
 
-      FeatureDiagnostics.record(.speech, .completed,
-        durationMs: Int((CFAbsoluteTimeGetCurrent() - recognitionStarted) * 1_000))
       DiagnosticLog.write("transcribe: SUCCESS \(bridgeText.count) chars -> bridge")
     } else {
       self.currentWordBoundaries = nil
@@ -197,7 +183,6 @@ extension SpeechRecognitionService {
       audioFileName: fileName,
       waveformSamples: waveformSamples,
       originalASR: self.currentRawTranscription.isEmpty ? nil : self.currentRawTranscription,
-      recognitionLanguages: self.recordingSpokenLanguages
     )
     HistoryStore.shared.saveRecord(record)
     HistoryStore.shared.applyRetentionPolicy()

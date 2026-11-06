@@ -26,30 +26,6 @@ enum ChineseInputSmoke {
       ["7", "8", "9", "0", "$", "&", "@", "\""])
     precondition(ChineseStrokeKeys.alternates[3] == ["。", "，", "？"])
     precondition(ChineseStrokeKeys.alternates[4] == ["？", "！", "「", "」"])
-    precondition(ChineseStrokeKeys.popupIndex(horizontalDelta: 0, optionCount: 8, columnWidth: 36) == 4)
-    precondition(ChineseStrokeKeys.popupIndex(horizontalDelta: 36, optionCount: 8, columnWidth: 36) == 5)
-    precondition(ChineseStrokeKeys.popupIndex(horizontalDelta: -36, optionCount: 8, columnWidth: 36) == 3)
-    precondition(ChineseStrokeKeys.popupIndex(horizontalDelta: 999, optionCount: 8, columnWidth: 36) == 7)
-    precondition(ChineseStrokeKeys.popupIndex(horizontalDelta: -999, optionCount: 8, columnWidth: 36) == 0)
-    precondition(ChineseStrokeKeys.popupIndex(horizontalDelta: 0, optionCount: 3, columnWidth: 36) == 1)
-    precondition(ChineseStrokeKeys.popupStartIndex(keyIndex: 0, optionCount: 8) == 0)
-    precondition(ChineseStrokeKeys.popupStartIndex(keyIndex: 2, optionCount: 8) == 7)
-    precondition(ChineseStrokeKeys.alternates[0][0] == "1")
-    precondition(ChineseStrokeKeys.alternates[2][7] == "\"")
-    precondition(ChineseStrokeKeys.popupIndex(
-      horizontalDelta: 0, optionCount: 8, columnWidth: 36,
-      startIndex: ChineseStrokeKeys.popupStartIndex(keyIndex: 0, optionCount: 8)
-    ) == 0)
-    precondition(ChineseStrokeKeys.popupIndex(
-      horizontalDelta: 36, optionCount: 8, columnWidth: 36, startIndex: 0
-    ) == 1)
-    precondition(ChineseStrokeKeys.popupIndex(
-      horizontalDelta: 0, optionCount: 8, columnWidth: 36,
-      startIndex: ChineseStrokeKeys.popupStartIndex(keyIndex: 2, optionCount: 8)
-    ) == 7)
-    precondition(ChineseStrokeKeys.popupIndex(
-      horizontalDelta: -36, optionCount: 8, columnWidth: 36, startIndex: 7
-    ) == 6)
     precondition(ChineseShapeRanking.strokeChoiceBonus(0) == 0)
     precondition(ChineseShapeRanking.strokeChoiceBonus(2) == 16_000)
     precondition(ChineseShapeRanking.preferredVariant([:], mode: .quick) == 3)

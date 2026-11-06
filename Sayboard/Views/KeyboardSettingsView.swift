@@ -1,13 +1,10 @@
 import SwiftUI
 
 struct KeyboardSettingsView: View {
+
   @Binding var selectedKind: KeyboardKind
   var inline = false
-
-  @AppStorage(SharedKey.microphoneKeyboardLayout, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var microphoneLayoutRaw = MicrophoneKeyboardLayout.defaultLayout.rawValue
-  @AppStorage(SharedKey.keyboardLetterArrangement, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var letterArrangementRaw = LetterKeyArrangement.qwertz.rawValue
+  var cantoneseSelected = false
 
   var body: some View {
     Group {
@@ -24,54 +21,108 @@ struct KeyboardSettingsView: View {
   @ViewBuilder
   var sections: some View {
     Section {
-      Picker(selection: self.$selectedKind) {
+      Picker("Keyboard Type", selection: self.$selectedKind) {
         ForEach(KeyboardKind.allCases, id: \.self) { kind in
           Text(LocalizedStringKey(kind.displayNameKey)).tag(kind)
         }
-      } label: {
-        Label("Keyboard Type", systemImage: "keyboard")
       }
-      .pickerStyle(.menu)
+      Toggle("Show Settings Key", isOn: self.$showSettingsKey)
 
       if self.selectedKind == .standard {
-        Picker(selection: self.$microphoneLayoutRaw) {
+        Picker("Microphone Layout", selection: self.$microphoneLayoutRaw) {
           ForEach(MicrophoneKeyboardLayout.allCases, id: \.self) { layout in
             Text(layout.displayName).tag(layout.rawValue)
           }
-        } label: {
-          Label("Microphone Layout", systemImage: "mic")
         }
-        .pickerStyle(.menu)
+        .pickerStyle(.segmented)
       }
 
       if self.selectedKind == .alphabetic {
-        Picker(selection: self.$letterArrangementRaw) {
-          Text("QWERTY (English)").tag(LetterKeyArrangement.qwerty.rawValue)
+        Picker("Key Order", selection: self.$letterArrangementRaw) {
           Text("QWERTZ").tag(LetterKeyArrangement.qwertz.rawValue)
-          Text("German (Ä Ö Ü ß)").tag(LetterKeyArrangement.german.rawValue)
-        } label: {
-          Label("Key Order", systemImage: "rectangle.split.3x1")
+          Text("QWERTY").tag(LetterKeyArrangement.qwerty.rawValue)
         }
-        .pickerStyle(.menu)
+        .pickerStyle(.segmented)
+        Toggle("Auto-capitalize Sentences", isOn: self.$autoCapitalizationEnabled)
+        Toggle("Swipe Typing (English / German)", isOn: self.$swipeTypingEnabled)
+        NavigationLink("All Keyboard Diagnostics") {
+          DiagnosticsView()
+        }
       }
-      DisclosureGroup {
-        KeyboardCustomizationView(inline: true)
-      } label: {
-        Label("Customization", systemImage: "slider.horizontal.3")
+
+      if self.cantoneseSelected || SharedSettings().preferredSpokenLanguages.contains("yue") {
+        NavigationLink {
+          CantoneseCorrectionsView()
+        } label: {
+          Label("Cantonese Word Corrections", systemImage: "text.badge.checkmark")
+        }
       }
+
+      Toggle("Haptic Feedback", isOn: self.$keyboardHapticsEnabled)
+      if self.keyboardHapticsEnabled {
+        VStack(alignment: .leading, spacing: 8) {
+          HStack {
+            Text("Haptic Strength")
+            Spacer()
+            Text("\(Int(self.hapticStrength * 100))%")
+              .monospacedDigit()
+              .foregroundStyle(.secondary)
+          }
+          Slider(value: self.$hapticStrength, in: 0.15...1, step: 0.05)
+            .accessibilityLabel("Haptic Strength")
+          Button("Reset to Default (55%)") {
+            self.hapticStrength = SharedSettings.defaultKeyboardHapticStrength
+          }
+          .font(.subheadline)
+          .disabled(abs(self.hapticStrength - SharedSettings.defaultKeyboardHapticStrength) < 0.001)
+        }
+        Button("Test Haptic") {
+          KeyboardHaptics.key(strength: self.hapticStrength, enabled: true)
+        }
+        Picker("Haptic Method", selection: self.$hapticDriverRaw) {
+          ForEach(KeyboardHapticDriver.allCases, id: \.self) { driver in
+            Text(driver.displayName).tag(driver.rawValue)
+          }
+        }
+      }
+
+      Toggle("Double-Space Period", isOn: self.$periodShortcutEnabled)
+
       KeyboardTestPreview(
         kind: self.selectedKind,
-        microphoneLayout: MicrophoneKeyboardLayout(rawValue: self.microphoneLayoutRaw)
-          ?? .defaultLayout,
-        letterArrangement: LetterKeyArrangement(rawValue: self.letterArrangementRaw)
-          ?? .qwertz
+        microphoneLayout: MicrophoneKeyboardLayout(
+          rawValue: self.microphoneLayoutRaw
+        ) ?? .defaultLayout,
+        letterArrangement: LetterKeyArrangement(
+          rawValue: self.letterArrangementRaw
+        ) ?? .qwertz
       )
-      .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
     } header: {
       Text("Keyboard")
     }
-
+    .sensoryFeedback(.selection, trigger: self.sensoryPulse.count)
   }
+
+  @StateObject private var sensoryPulse = KeyboardSensoryPulse.shared
+  @AppStorage(SharedKey.keyboardShowSettingsKey, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var showSettingsKey = true
+
+  @AppStorage(SharedKey.microphoneKeyboardLayout, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var microphoneLayoutRaw = MicrophoneKeyboardLayout.defaultLayout.rawValue
+  @AppStorage(SharedKey.keyboardHapticDriver, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var hapticDriverRaw = KeyboardHapticDriver.coreHaptics.rawValue
+  @AppStorage(SharedKey.keyboardHapticsEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var keyboardHapticsEnabled = true
+  @AppStorage(SharedKey.keyboardHapticStrength, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var hapticStrength = SharedSettings.defaultKeyboardHapticStrength
+  @AppStorage(SharedKey.periodShortcutEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var periodShortcutEnabled = true
+  @AppStorage(SharedKey.keyboardLetterArrangement, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var letterArrangementRaw = LetterKeyArrangement.qwertz.rawValue
+  @AppStorage(SharedKey.keyboardAutoCapitalizationEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var autoCapitalizationEnabled = true
+  @AppStorage(SharedKey.keyboardSwipeTypingEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var swipeTypingEnabled = false
 }
 
 private struct KeyboardTestPreview: View {
@@ -79,11 +130,6 @@ private struct KeyboardTestPreview: View {
   let microphoneLayout: MicrophoneKeyboardLayout
   let letterArrangement: LetterKeyArrangement
 
-  @AppStorage(SharedKey.keyboardShowGlobeKey, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var showGlobeKey = false
-  @AppStorage(SharedKey.needsInputModeSwitchKey, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var needsInputModeSwitchKey = false
-  private var showsGlobeButton: Bool { true }
   @AppStorage(SharedKey.keyboardHapticsEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
   private var keyboardHapticsEnabled = true
   @AppStorage(SharedKey.keyboardHapticStrength, store: UserDefaults(suiteName: AppGroup.identifier))
@@ -94,13 +140,6 @@ private struct KeyboardTestPreview: View {
   private var hasUsableLLMModel = false
   @AppStorage(SharedKey.keyboardShowSettingsKey, store: UserDefaults(suiteName: AppGroup.identifier))
   private var showSettingsKey = true
-  @AppStorage(SharedKey.keyboardShowOutputLanguageButton, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var showOutputLanguageButton = true
-  private var outputKeyEnabled: Bool {
-    self.showOutputLanguageButton
-  }
-  @AppStorage(SharedKey.keyboardShowAIButton, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var showAIButton = true
 
   private var compact: Bool {
     self.kind == .standard && self.microphoneLayout == .compact
@@ -138,7 +177,7 @@ private struct KeyboardTestPreview: View {
       } else if self.kind == .extended {
         HStack(spacing: 6) {
           if self.showSettingsKey { self.key("gearshape", width: 45) }
-          if self.outputKeyEnabled { self.key("character.bubble", width: 45) }
+          self.key("character.bubble", width: 45)
           Spacer()
           self.key("mic.fill", width: 96, capsule: true)
         }.padding(.horizontal, 6.67).frame(height: 57)
@@ -165,11 +204,9 @@ private struct KeyboardTestPreview: View {
           ZStack {
             HStack(spacing: 6) {
               if self.showSettingsKey { self.key("gearshape", width: side) }
-              if self.outputKeyEnabled { self.key("character.bubble", width: side) }
+              self.key("character.bubble", width: side)
               Spacer(minLength: 0)
-              if self.showAIButton && self.llmEnabled && self.hasUsableLLMModel {
-                self.key("sparkles", width: side)
-              }
+              self.key("sparkles", width: side)
               self.key("delete.left", width: side)
             }
             if self.compact {
@@ -191,10 +228,9 @@ private struct KeyboardTestPreview: View {
 
   private var alphabetToolbar: some View {
     HStack(spacing: 6) {
-      if self.showGlobeKey { self.key("globe", width: 42) }
       if self.showSettingsKey { self.key("gearshape", width: 48) }
-      if self.outputKeyEnabled { self.translatePreview }
-      if self.showAIButton && self.llmEnabled && self.hasUsableLLMModel {
+      self.translatePreview
+      if self.llmEnabled && self.hasUsableLLMModel {
         self.key("sparkles", width: 48)
       }
       Spacer(minLength: 2)
@@ -250,9 +286,7 @@ private struct KeyboardTestPreview: View {
   private var alphabetBottomRow: some View {
     HStack(spacing: 6) {
       self.labelKey("?123", width: 48)
-      if self.showsGlobeButton {
-        self.emojiPreview(width: 48)
-      }
+      self.emojiPreviewKey(width: 48)
       self.labelKey("", height: 45)
       self.key("return.left", width: 102)
     }.padding(.horizontal, 6.67)
@@ -260,20 +294,18 @@ private struct KeyboardTestPreview: View {
 
   private var standardBottomRow: some View {
     HStack(spacing: 6) {
-      if self.showsGlobeButton {
-        self.key("globe", width: 45)
-      }
+      self.emojiPreviewKey(width: 45)
       self.key("trash", width: 45)
       self.labelKey("", height: 45)
       self.key("return.left", width: 96)
     }.padding(.horizontal, 4)
   }
 
-  private func emojiPreview(width: CGFloat) -> some View {
+  private func emojiPreviewKey(width: CGFloat) -> some View {
     Button { self.tap() } label: {
       NativeEmojiGlyph()
         .fill(.primary, style: FillStyle(eoFill: true))
-        .frame(width: 19, height: 19)
+        .frame(width: 20.67, height: 20.67)
         .frame(width: width, height: 45)
         .background(Color(uiColor: KeyboardPalette.keyFill),
                     in: RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -316,5 +348,3 @@ private struct KeyboardTestPreview: View {
     KeyboardHaptics.key(strength: self.hapticStrength, enabled: self.keyboardHapticsEnabled)
   }
 }
-
-

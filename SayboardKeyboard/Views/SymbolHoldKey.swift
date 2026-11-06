@@ -8,7 +8,6 @@ struct SymbolHoldKey: View {
   var fixedWidth: CGFloat? = nil
   var column = 0
   var columnCount = 10
-  var chineseAlternates = false
   let onInsert: (String) -> Void
 
   @State private var pressed = false
@@ -20,7 +19,7 @@ struct SymbolHoldKey: View {
   @State private var highlightTask: Task<Void, Never>?
 
   private var options: [String] {
-    SymbolKeyAlternates.choices(for: self.symbol, chinese: self.chineseAlternates)
+    SymbolKeyAlternates.choices(for: self.symbol)
   }
 
   private var expandsLeft: Bool {
@@ -29,9 +28,7 @@ struct SymbolHoldKey: View {
 
   var body: some View {
     Text(verbatim: self.face ?? self.symbol)
-      .font(.system(size: (self.symbol.count > 2 ? 13 : 18).kbScaled))
-      .lineLimit(1)
-      .minimumScaleFactor(0.8)
+      .font(.system(size: 18.kbScaled))
       .foregroundStyle(.primary)
       .frame(maxWidth: .infinity)
       .frame(width: self.fixedWidth, height: KeyboardChromeMetrics.keyHeight)
@@ -83,10 +80,10 @@ struct SymbolHoldKey: View {
 
   private var alternatesPopup: some View {
     HStack(spacing: 0) {
-      ForEach(0..<self.options.count, id: \.self) { position in
-        let index = self.expandsLeft ? self.options.count - 1 - position : position
-        Text(verbatim: self.options[index])
-          .font(.system(size: 21.kbScaled, weight: .regular))
+      ForEach(Array(self.options.enumerated()), id: \.offset) { index, symbol in
+        Text(verbatim: symbol)
+          .font(.system(size: 21.kbScaled))
+          .fontWidth(.condensed)
           .foregroundStyle(.primary)
           .frame(width: 36.kbScaled, height: 43.kbScaled)
           .background {

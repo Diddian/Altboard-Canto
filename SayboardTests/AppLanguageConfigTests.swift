@@ -30,8 +30,7 @@ private let appLanguageCodes = [
   "sv",
   "tr",
   "uk",
-  "zh-Hans",
-  "zh-Hant",
+  "zh",
 ]
 
 @Suite("AppLanguageConfig.resolveLanguage")
@@ -91,26 +90,10 @@ struct AppLanguageConfigTests {
     #expect(result == "de")
   }
 
-  @Test(arguments: ["zh-CN", "zh-SG", "zh-Hans", "zh-Hans-CN", "zh"])
-  func `simplified chinese region and script`(locale: String) {
-    #expect(AppLanguageConfig.resolveLanguage(from: [locale]) == "zh-Hans")
-  }
-
-  @Test(arguments: ["zh-HK", "zh-MO", "zh-TW", "zh-Hant", "zh-Hant-HK", "yue-Hant-HK"])
-  func `traditional chinese region and script`(locale: String) {
-    #expect(AppLanguageConfig.resolveLanguage(from: [locale]) == "zh-Hant")
-  }
-
   @Test
-  func `script overrides region for chinese`() {
-    #expect(AppLanguageConfig.resolveLanguage(from: ["zh-Hans-HK"]) == "zh-Hans")
-    #expect(AppLanguageConfig.resolveLanguage(from: ["zh-Hant-CN"]) == "zh-Hant")
-  }
-
-  @Test
-  func `old generic chinese choice migrates to simplified`() {
-    #expect(AppLanguageConfig.migratedStoredLanguage("zh") == "zh-Hans")
-    #expect(AppLanguageConfig.migratedStoredLanguage("zh-Hant") == "zh-Hant")
+  func `chinese simplified resolves to zh`() {
+    let result = AppLanguageConfig.resolveLanguage(from: ["zh-Hans-CN"])
+    #expect(result == "zh")
   }
 
   @Test

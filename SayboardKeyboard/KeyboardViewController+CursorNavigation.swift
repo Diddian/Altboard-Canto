@@ -7,10 +7,7 @@ extension KeyboardViewController {
   func moveCursorVertically(_ steps: Int) {
     guard steps != 0 else { return }
     let proxy = self.textDocumentProxy
-    guard let document = self.availableDocumentIdentifier() else {
-      self.resetCursorVerticalState()
-      return
-    }
+    let document = proxy.documentIdentifier
     if self.cursorPreferredDocumentID != document {
       self.resetCursorVerticalState()
     }

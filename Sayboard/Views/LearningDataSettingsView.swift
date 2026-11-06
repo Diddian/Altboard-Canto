@@ -13,7 +13,7 @@ struct LearningDataSettingsView: View {
       Section {
         LabeledContent("Confirmed words", value: "\(self.counts.count)")
         if self.counts.isEmpty {
-          Text("Choose a word in the keyboard to begin building personal suggestions.")
+          Text("No confirmed candidate selections are stored yet.")
             .foregroundStyle(.secondary)
         } else {
           ForEach(self.topWords, id: \.key) { word in
@@ -74,11 +74,11 @@ struct LearningDataSettingsView: View {
   }
 
   private func reload() {
-    self.counts = ConfirmedChoiceLearning.chineseCounts(defaults: AppGroup.sharedDefaults)
+    self.counts = AppGroup.sharedDefaults?.dictionary(forKey: LocalUserDataStore.learnedKeys[0]) as? [String: Int] ?? [:]
   }
 
   private func reset() {
-    LocalUserDataStore.resetLearning()
+    try? LocalUserDataStore.resetLearning()
     self.reload()
   }
 

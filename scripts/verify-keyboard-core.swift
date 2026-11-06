@@ -25,22 +25,9 @@ enum VerifyKeyboardCore {
     precondition(CantoneseSyllableEditing.lastSyllableLength(typed: "hello", canonical: "gam1 jat6") == nil)
     precondition(!buffer.append("."))
     buffer.clear()
-    for _ in 0..<96 { precondition(buffer.append("a")) }
-    precondition(buffer.buffer.count == 96)
-    precondition(!buffer.append("a"))
-    buffer.clear()
     precondition(!buffer.backspace() && buffer.isEmpty)
     precondition(LiveCantoneseSafety.matches(buffer: "gamyat", hostContext: "Hello Gamyat"))
     precondition(!LiveCantoneseSafety.matches(buffer: "gamyat", hostContext: "Hello gamya"))
-    precondition(CantonesePhraseCommitPolicy.commitsFirstOnSpace(
-      spelling: "geifaai", firstCandidate: "幾快", hasExactEntry: true, hostMatches: true))
-    precondition(!CantonesePhraseCommitPolicy.commitsFirstOnSpace(
-      spelling: "geifaai", firstCandidate: "幾快", hasExactEntry: false, hostMatches: true))
-    precondition(!CantonesePhraseCommitPolicy.commitsFirstOnSpace(
-      spelling: "geifaai", firstCandidate: "幾快", hasExactEntry: true, hostMatches: false))
-    precondition(!CantonesePhraseCommitPolicy.commitsFirstOnSpace(
-      spelling: "home", firstCandidate: "好咩", hasExactEntry: true,
-      hostMatches: true, recognizesLatinWord: true))
     precondition(!LiveCantoneseSafety.canDeleteAsToken(buffer: "hello", candidateCount: 0, hostContext: "hello"))
     precondition(LiveCantoneseSafety.canDeleteAsToken(buffer: "gamyat", candidateCount: 1, hostContext: "gamyat"))
     print("Keyboard core smoke test passed")

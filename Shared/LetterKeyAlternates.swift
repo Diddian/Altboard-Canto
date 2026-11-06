@@ -38,8 +38,8 @@ enum LetterKeyAlternates {
 enum LetterKeySecondary {
   private static let rows: [[String]] = [
     ["1","2","3","4","5","6","7","8","9","0"],
-    ["-","/",":",";","(","$","&","@","\""],
-    [")",".",",","?","!","'","~"]
+    ["-","/",":",";","(",")","$","&","@"],
+    ["\"",".",",","?","!","'","~"]
   ]
   static func symbol(row: Int, index: Int) -> String? {
     guard rows.indices.contains(row), rows[row].indices.contains(index) else { return nil }
@@ -117,26 +117,7 @@ enum SymbolKeyAlternates {
     "」": ["』", "”", "’"]
   ]
 
-  /// Chinese symbol alternatives are available only on #+= in Chinese
-  /// contexts. Plain taps and all English/German symbols remain unchanged.
-  private static let chineseVariants: [String: [String]] = [
-    "[": ["「", "『", "【", "〔", "［"],
-    "]": ["」", "』", "】", "〕", "］"],
-    "{": ["《", "〈", "〖", "（"],
-    "}": ["》", "〉", "〗", "）"],
-    "#": ["＃"], "%": ["％", "‰"], "^": ["︿", "∧"],
-    "*": ["＊", "※"], "+": ["＋", "±"], "=": ["＝", "≠"],
-    "'": ["「", "」", "『", "』", "‘", "’"], 
-    "\"": ["「", "」", "『", "』", "“", "”"],
-    "_": ["＿", "—"], "\\": ["＼", "／"], "|": ["｜", "‖"],
-    "~": ["～", "﹏"], "<": ["〈", "《", "＜"],
-    ">": ["〉", "》", "＞"]
-  ]
-
-  static func choices(for symbol: String, chinese: Bool = false) -> [String] {
-    let all = [symbol] + (chinese ? (chineseVariants[symbol] ?? []) : [])
-      + (variants[symbol] ?? [])
-    var seen = Set<String>()
-    return Array(all.filter { seen.insert($0).inserted }.prefix(8))
+  static func choices(for symbol: String) -> [String] {
+    Array(([symbol] + (variants[symbol] ?? [])).prefix(10))
   }
 }

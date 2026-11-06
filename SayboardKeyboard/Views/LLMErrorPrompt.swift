@@ -5,14 +5,11 @@ enum LLMError {
   case noTextBeforeCursor
   case selectText
   case clipboardUnavailable
-  case storageUnavailable
-  case translationTargetRequired
 
   var icon: String {
     switch self {
     case .noTextBeforeCursor, .selectText: "character.cursor.ibeam"
     case .clipboardUnavailable: "doc.on.clipboard"
-    case .storageUnavailable, .translationTargetRequired: "exclamationmark.triangle"
     }
   }
 
@@ -24,16 +21,12 @@ enum LLMError {
       "Select text to rewrite, then tap AI again. If selection is unavailable, copy the text and choose Use Clipboard."
     case .clipboardUnavailable:
       "Clipboard text is unavailable. Copy the text first and retry."
-    case .translationTargetRequired:
-      "Choose an output language with the Output key, then select Translate again."
-    case .storageUnavailable:
-      "AI shared storage is unavailable. Enable Full Access and reopen Altboard."
     }
   }
 
   var buttonTitle: LocalizedStringKey {
     switch self {
-    case .noTextBeforeCursor, .selectText, .clipboardUnavailable, .storageUnavailable, .translationTargetRequired: "OK"
+    case .noTextBeforeCursor, .selectText, .clipboardUnavailable: "OK"
     }
   }
 }
@@ -77,4 +70,3 @@ struct LLMErrorPrompt: View {
     .frame(maxWidth: .infinity, maxHeight: .infinity)
   }
 }
-

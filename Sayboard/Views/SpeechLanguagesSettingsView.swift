@@ -4,7 +4,7 @@ import SwiftUI
 /// also enable the Cantonese candidate bar in the Alphabet keyboard.
 struct SpeechLanguagesSettingsView: View {
   var inline = false
-  var rowsOnly = false
+  var onPreferredLanguagesChanged: (([String]) -> Void)? = nil
 
   var body: some View {
     Group {
@@ -21,33 +21,68 @@ struct SpeechLanguagesSettingsView: View {
   @ViewBuilder
   var sections: some View {
     Group {
-      if self.rowsOnly {
-        VStack(alignment: .leading, spacing: 6) { self.languageSelectionRows }
-      } else {
-        Section {
-          self.languageSelectionRows
-        } header: {
-          Text("Speech & Languages")
-        } footer: {
-          if !self.inline {
-            Text("Cantonese also enables offline Chinese suggestions in Alphabet. Qwen3 voice recognition uses auto-detection.")
+      Section {
+        Button {
+          self.showPreferredLanguagePicker = true
+        } label: {
+          LabeledContent("Languages I Speak") {
+            Text(self.spokenLanguages.isEmpty
+              ? "Any language"
+              : self.spokenLanguages.map { self.locale.capitalizedLanguageName(forLanguageCode: $0) }
+                .joined(separator: ", "))
+              .multilineTextAlignment(.trailing)
+              .lineLimit(2)
           }
         }
+        if !self.unsupportedSpokenLanguages.isEmpty {
+          Label(
+            "The selected speech model may not recognize: \(self.unsupportedSpokenLanguages.joined(separator: ", "))",
+            systemImage: "exclamationmark.triangle"
+          )
+          .font(.footnote)
+          .foregroundStyle(.orange)
+        }
+      } header: {
+        Text("Speech & Languages")
+      } footer: {
+        if !self.inline {
+          Text("Cantonese also enables offline Chinese suggestions in Alphabet. Qwen3 voice recognition uses auto-detection.")
+        }
+      }
 
+      Section {
+        NavigationLink {
+          VoiceOutputSettingsView()
+        } label: {
+          Label("Voice Output & Translation", systemImage: "waveform")
+        }
+      } footer: {
+        if !self.inline {
+          Text("Choose the output language, cleanup and dictation tone.")
+        }
+      }
+
+      Section("Offline Speech Model") {
+        NavigationLink {
+          ModelsView()
+        } label: {
+          LabeledContent("Speech Recognition") {
+            Text(self.speechModels.selectedVariant.displayName)
+              .foregroundStyle(.secondary)
+          }
+        }
       }
     }
     .sheet(isPresented: self.$showPreferredLanguagePicker) {
       LanguagePickerView(
-        mode: .ordered(Binding(
-          get: { self.spokenLanguages },
+        mode: .multi(Binding(
+          get: { Set(self.spokenLanguages) },
           set: { updated in
-            let normalized = PreferredVoiceLanguages.normalized(updated)
-            if normalized != self.spokenLanguages {
-              FeatureDiagnostics.record(.language, .selected)
-            }
-            self.spokenLanguages = normalized
+            let kept = self.spokenLanguages.filter { updated.contains($0) }
+            self.spokenLanguages = kept + updated.subtracting(kept).sorted()
             let settings = SharedSettings()
             settings.preferredSpokenLanguages = self.spokenLanguages
+            self.onPreferredLanguagesChanged?(self.spokenLanguages)
             settings.setPreferredLanguages(
               SpeechModelRecommendation.preferredLanguages(
                 for: settings.selectedVariant, from: self.spokenLanguages
@@ -58,7 +93,6 @@ struct SpeechLanguagesSettingsView: View {
               target: settings.voiceOutputTarget, custom: settings.voiceCustomLanguage
             )
             if !old.isEmpty && !self.spokenLanguages.contains(old) {
-              FeatureDiagnostics.record(.language, .fallback)
               settings.voiceOutputTarget = .original
             }
           }
@@ -70,34 +104,7 @@ struct SpeechLanguagesSettingsView: View {
     }
     .onAppear {
       self.spokenLanguages = SharedSettings().preferredSpokenLanguages
-    }
-  }
-
-  @ViewBuilder
-  private var languageSelectionRows: some View {
-    Button {
-      self.showPreferredLanguagePicker = true
-    } label: {
-      VStack(alignment: .leading, spacing: 3) {
-        Label("Language Priority", systemImage: "globe")
-        Text(self.spokenLanguages.isEmpty
-          ? "Any language"
-          : self.spokenLanguages.enumerated().map {
-              "\($0.offset + 1). " + self.displayName(for: $0.element)
-            }.joined(separator: " · "))
-          .foregroundStyle(.secondary)
-          .multilineTextAlignment(.leading)
-          .lineLimit(2)
-      }
-      .frame(maxWidth: .infinity, alignment: .leading)
-    }
-    if !self.unsupportedSpokenLanguages.isEmpty {
-      Label(
-        "The selected speech model may not recognize: \(self.unsupportedSpokenLanguages.joined(separator: ", "))",
-        systemImage: "exclamationmark.triangle"
-      )
-      .font(.footnote)
-      .foregroundStyle(.orange)
+      self.onPreferredLanguagesChanged?(self.spokenLanguages)
     }
   }
 
@@ -106,13 +113,8 @@ struct SpeechLanguagesSettingsView: View {
   @State private var showPreferredLanguagePicker = false
   @Environment(\.locale) private var locale
 
-  private func displayName(for code: String) -> String {
-    SpeechLanguageNames.name(for: code, locale: self.locale)
-  }
-
   private var unsupportedSpokenLanguages: [String] {
     self.spokenLanguages.filter { !self.speechModels.selectedVariant.supportedLanguages.contains($0) }
-      .map { self.displayName(for: $0) }
+      .map { self.locale.capitalizedLanguageName(forLanguageCode: $0) }
   }
 }
-

@@ -22,27 +22,30 @@ final class PermissionService: ObservableObject {
     guard AppGroup.containerURL != nil else { return false }
     let settings = SharedSettings()
     settings.synchronize()
-    return settings.defaults.double(forKey: SharedKey.keyboardProbeTimestamp) > 0
+    let stamp = settings.defaults.double(forKey: SharedKey.keyboardProbeTimestamp)
+    let age = CFAbsoluteTimeGetCurrent() - stamp
+    // A fresh extension callback is evidence of recent access, not a
+    // permanent entitlement. Treat stale or future timestamps as unknown.
+    return stamp > 0 && age >= 0 && age <= 90
       && settings.defaults.bool(forKey: SharedKey.keyboardProbeFullAccess)
       && settings.defaults.bool(forKey: SharedKey.keyboardProbeGroupAvailable)
   }
 
+  // iOS does not expose a reliable public enumeration of enabled third-party
+  // keyboards. A former extension callback is historical evidence only.
   static func isKeyboardAddedSync() -> Bool {
     let keyboards = UserDefaults.standard.stringArray(forKey: "AppleKeyboards") ?? []
-    let settings = SharedSettings()
-    settings.synchronize()
-    if AppGroup.containerURL != nil
-      && (settings.defaults.double(forKey: SharedKey.keyboardProbeTimestamp) > 0
-        || settings.defaults.bool(forKey: "canto.keyboardOpenedAtLeastOnce"))
-    {
-      return true
-    }
     let installedIdentifiers = Self.installedExtensionIdentifiers()
     return keyboards.contains { entry in
-      installedIdentifiers.contains { id in
-        entry == id || entry.hasPrefix(id + "@")
-      }
+      installedIdentifiers.contains { id in entry == id || entry.hasPrefix(id + "@") }
     }
+  }
+
+  var keyboardInstallationStatus: String {
+    if self.isKeyboardAdded {
+      return "Listed by iOS settings (not independently verified)"
+    }
+    return "Unknown — open iOS Keyboards settings to confirm"
   }
 
   private static func installedExtensionIdentifiers() -> Set<String> {
@@ -109,9 +112,7 @@ final class PermissionService: ObservableObject {
   }
 
   func refreshFullAccess() {
-    self.hasFullAccess = AppGroup.containerURL != nil
-      && self.keyboardReportedFullAccess == true
-      && self.keyboardReportedGroupAvailable == true
+    self.hasFullAccess = Self.hasFullAccessSync()
   }
 
   func testMainSharedContainer() {

@@ -75,7 +75,6 @@ final class SpeechRecognitionService: ObservableObject {
       return
     }
     guard micAuth else {
-      FeatureDiagnostics.record(.speech, .blocked)
       self.errorMessage = "Microphone access is required for voice input."
       return
     }
@@ -96,7 +95,6 @@ final class SpeechRecognitionService: ObservableObject {
     self.currentAudioFileName = "\(UUID().uuidString).caf"
 
     guard self.ensureSessionActive() else {
-      FeatureDiagnostics.record(.speech, .failed)
       return
     }
 
@@ -104,23 +102,12 @@ final class SpeechRecognitionService: ObservableObject {
     self.startAudioCapture()
 
     self.isRecording = true
-    FeatureDiagnostics.record(.speech, .started)
     self.settings.isRecording = true
     self.settings.recordingStartedAt = Date().timeIntervalSinceReferenceDate
     self.armMaxDurationTimer()
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStarted)
     self.scheduleQwenWarmupAfterCapture()
     self.startExperimentalLiveIfNeeded()
-    // A hold may end before the keyboard receives the recording-start
-    // notification. Honor that release exactly once after capture exists.
-    if MicrophoneHoldStopIntent.consume(
-      for: self.settings.dictationSessionToken, defaults: self.settings.defaults
-    ) {
-      Task { @MainActor [weak self] in
-        guard let self, self.isRecording else { return }
-        await self.stopRecording()
-      }
-    }
   }
 
   /// Warm the offline recognizer while the user speaks, not before audio
@@ -184,20 +171,13 @@ final class SpeechRecognitionService: ObservableObject {
       return
     }
     guard self.isRecording else {
-      // Hold release can race an asynchronous start request. Keep its stop
-      // intent until the first audio-capture acknowledgment.
-      if MicrophoneHoldStopIntent.isRequested(
-        for: self.settings.dictationSessionToken, defaults: self.settings.defaults
-      ) { return }
       self.settings.isRecording = false
       TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStopped)
       return
     }
     self.isRecording = false
-    FeatureDiagnostics.record(.speech, .stopped)
     self.settings.recordingStartedAt = 0
     self.isStopping = true
-    MicrophoneHoldStopIntent.clear(defaults: self.settings.defaults)
     TranscriptionBridge.writeVoiceProgress(.stoppingAudio)
 
     self.cancelMaxDurationTimer()
@@ -247,8 +227,6 @@ final class SpeechRecognitionService: ObservableObject {
   }
 
   func cancelRecording() {
-    FeatureDiagnostics.record(.speech, .cancelled)
-    MicrophoneHoldStopIntent.clear(defaults: self.settings.defaults)
     self.liveDictationStatus = "Cancelled"
     self.experimentalLiveTask?.cancel()
     self.experimentalLiveTask = nil

@@ -43,11 +43,9 @@ extension ModelDownloadService {
           return
         }
         self.variantStates[variant] = .downloaded
-        FeatureDiagnostics.record(.speechModel, .downloaded)
         self.removeVariantFromPersistence(variant)
         self.autoSelectIfNeeded(variant: variant)
       } catch {
-        FeatureDiagnostics.record(.speechModel, Task.isCancelled ? .cancelled : .failed)
         self.variantStates[variant] = Task.isCancelled ? .notDownloaded
           : .error(message: "Qwen download failed: \(error.localizedDescription)")
         self.removeVariantFromPersistence(variant)
@@ -81,7 +79,6 @@ extension ModelDownloadService {
 
       BackgroundDownloadManager.shared.enqueueDownload(metadata: metadata)
     } catch {
-      FeatureDiagnostics.record(.speechModel, .failed)
       self.variantStates[variant] = .error(message: localizedDownloadError(error))
       self.removeVariantFromPersistence(variant)
     }
@@ -89,12 +86,10 @@ extension ModelDownloadService {
 
   func loadModelAfterDownload(variant: ModelVariant) async -> Bool {
     guard let modelLoader else {
-      FeatureDiagnostics.record(.speechModel, .unavailable)
       return false
     }
 
     guard let modelFolder = self.modelFolderURL(for: variant) else {
-      FeatureDiagnostics.record(.speechModel, .failed)
       try? ModelStorageManager.delete(variant)
       self.variantStates[variant] = .error(
         message: "Model failed to load. Tap Retry to try again."
@@ -120,7 +115,6 @@ extension ModelDownloadService {
     animationTask.cancel()
 
     if !loaded {
-      FeatureDiagnostics.record(.speechModel, .failed)
       try? ModelStorageManager.delete(variant)
       self.variantStates[variant] = .error(
         message: "Model failed to load. Tap Retry to try again."
@@ -145,14 +139,12 @@ extension ModelDownloadService {
         let modelReady = await self.loadModelAfterDownload(variant: variant)
         guard modelReady else { return }
         self.variantStates[variant] = .downloaded
-        FeatureDiagnostics.record(.speechModel, .downloaded)
         self.removeVariantFromPersistence(variant)
         self.autoSelectIfNeeded(variant: variant)
       }
 
     case .failed(_, let variantRawValue, let error):
       guard let variant = ModelVariant(rawValue: variantRawValue) else { return }
-      FeatureDiagnostics.record(.speechModel, .failed)
       self.enqueueTasks[variant] = nil
       self.variantStates[variant] = .error(message: localizedDownloadError(error))
       self.removeVariantFromPersistence(variant)

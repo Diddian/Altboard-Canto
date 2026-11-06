@@ -4,15 +4,12 @@ struct TranscriptionBridge: Sendable {
 
   static func writeTranscription(_ text: String) {
     guard let url = transcriptionFileURL else {
-      FeatureDiagnostics.record(.bridge, .unavailable)
       return
     }
     do {
       try Data(text.utf8).write(to: url, options: [.atomic, .completeFileProtectionUnlessOpen])
-      FeatureDiagnostics.record(.bridge, .queued)
       DiagnosticLog.write("bridge: wrote \(text.count) chars")
     } catch {
-      FeatureDiagnostics.record(.bridge, .failed)
       DiagnosticLog.write("bridge: WRITE FAILED: \(error.localizedDescription)")
     }
     self.postDarwinNotification(DarwinNotificationName.transcriptionReady)

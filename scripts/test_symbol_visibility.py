@@ -44,57 +44,24 @@ class SymbolVisibilityTests(unittest.TestCase):
     def test_alphabetic_number_symbol_rows_have_nonempty_labels(self):
         src = ALPHABET.read_text()
         for name in (
-            "numbersRow1", "numbersRow2", "symbolsRow1", "symbolsRow2"
+            "numbersRow1", "numbersRow2", "symbolsRow1", "symbolsRow2",
+            "chineseSymbolsRow1", "chineseSymbolsRow2"
         ):
             with self.subTest(name=name):
                 chars = row(src, name)
                 self.assertEqual(len(chars), 10)
                 self.assertTrue(all(chars))
-        alternates = (ROOT / "Shared" / "LetterKeyAlternates.swift").read_text()
-        for c in ("「", "」", "『", "』", "《", "》", "【", "】"):
-            with self.subTest(glyph=c):
-                self.assertIn(c, alternates)
-        for c in ("。", "，", "？", "！"):
+        for c in ("「", "」", "『", "』", "《", "》", "【", "】", "。", "，", "？", "！"):
             with self.subTest(glyph=c):
                 self.assertIn(c, src)
         self.assertIn("self.characterRow(", src)
-        # ?123 key labels stay Western; long press can include Cantonese
-        # punctuation only when the user has selected Chinese.
-        self.assertIn("case .numbers: self.characterRow(Self.numbersRow2,", src)
-        self.assertIn("chineseAlternates: self.usesChinesePunctuation)", src)
-        self.assertIn("chineseAlternates: self.usesChinesePunctuation", src)
+        # ?123 is always native Western punctuation, regardless of language.
+        self.assertIn("case .numbers: self.characterRow(Self.numbersRow2)", src)
         self.assertIn("self.page == .symbols && self.usesChinesePunctuation", src)
         self.assertNotIn("chineseNumbersRow2", src)
-        self.assertNotIn("chineseSymbolsRow1", src)
-        self.assertNotIn("chineseSymbolsRow2", src)
-        self.assertIn("self.characterRow(Self.symbolsRow1, chineseAlternates: self.isChineseSymbolsPage)", src)
-        self.assertIn("self.characterRow(Self.symbolsRow2, chineseAlternates: self.isChineseSymbolsPage)", src)
-        self.assertEqual(row(src, "symbolsRow1"), ["[", "]", "{", "}", "#", "%", "^", "*", "+", "="])
-        self.assertEqual(row(src, "symbolsRow2"), ["_", "\\", "|", "~", "<", ">", "€", "£", "¥", "•"])
-        self.assertIn('["。", "，", "？", "！", self.smartChineseQuote]', src)
-
-    def test_candidate_controls_and_stroke_feedback_are_visible(self):
-        src = ALPHABET.read_text()
-        self.assertIn("self.toggleCandidateGrid()", src)
-        self.assertIn("self.dismissCandidates()", src)
-        self.assertIn("private var expandedLatinCandidateGrid:", src)
-        self.assertIn('Text(verbatim: self.shapeDisplay)', src)
-        self.assertIn('self.expandedLatinSuggestions', src)
-        self.assertIn('let learnable = self.learnableLatinWord', src)
-        self.assertIn('rememberCustom(', src)
-        self.assertIn('self.clearShapeComposition()', src)
-
-    def test_stroke_popups_keep_readable_font_and_filter_unavailable_glyphs(self):
-        stroke = (ROOT / "SayboardKeyboard" / "Views" / "ChineseStrokeGrid.swift").read_text()
-        dictionary = (ROOT / "SayboardKeyboard" / "ChineseShapeDictionary.swift").read_text()
-        self.assertNotIn(".fontWidth(.compressed)", stroke)
-        self.assertNotIn(".fontWidth(.condensed)", stroke)
-        self.assertIn("ChineseStrokeKeys.popupIndex(", stroke)
-        self.assertIn("filter { Self.canDisplay($0.candidate.text) }", dictionary)
-        self.assertIn("0xFFFD", dictionary)
-        hold = (ROOT / "SayboardKeyboard" / "Views" / "SymbolHoldKey.swift").read_text()
-        self.assertIn("var chineseAlternates = false", hold)
-        self.assertNotIn(".fontWidth(.condensed)", hold)
+        bottom = {"。", "，", "？", "！", "「", "」"}
+        top = set(row(src, "chineseSymbolsRow1") + row(src, "chineseSymbolsRow2"))
+        self.assertTrue(top.isdisjoint(bottom), "Chinese #+= rows repeat bottom punctuation")
 
     def test_extended_number_symbol_punctuation_rows(self):
         src = EXTENDED.read_text()

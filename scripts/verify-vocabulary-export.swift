@@ -1,35 +1,30 @@
 import Foundation
 
 @main
-struct VerifyVocabularyExport {
+enum VerifyVocabularyExport {
   static func main() throws {
     let json = try PersonalVocabularyExport.encode(
-      cantonese: ["世一|sai3 jat1": 3, "bad": 0],
-      latin: ["en|brb": 4, "de|safe": 2],
-      romanization: ["sidney": 8],
-      confirmedChinese: ["佢": 5],
-      shapes: ["cangjie|佢": 3, "stroke|佢": 2],
-      shapeGenerations: ["cangjie.3": 4],
-      strokePrefixes: ["nm|佢": 2],
-      manualCorrections: [
+      selections: ["佢|keoi5": 4, "bad": 0, "好|hou2": -1],
+      romanization: ["sidney": 8, "plain": 3],
+      corrections: [
         .init(language: "yue", heard: "餵你", intended: "喂你"),
-        .init(language: "en", heard: "helllo", intended: "hello")
-      ]
+        .init(language: "en", heard: "secret", intended: "example")
+      ],
+      version: "1.14", build: "84", commit: "fixture",
+      keyboardCommit: "baseline"
     )
     let root = try JSONSerialization.jsonObject(with: json) as! [String: Any]
-    precondition(root["schemaVersion"] as? Int == 3)
-    precondition((root["confirmedChineseWords"] as? [String: Int])?["佢"] == 5)
-    precondition((root["shapeSelections"] as? [String: Int])?["stroke|佢"] == 2)
-    precondition((root["shapeGenerationPreferences"] as? [String: Int])?["cangjie.3"] == 4)
-    precondition((root["strokePrefixSelections"] as? [String: Int])?["nm|佢"] == 2)
-    precondition((root["manualSpeechCorrections"] as? [[String: String]])?.count == 2)
-    let cantonese = root["cantoneseSelections"] as! [String: Int]
-    precondition(cantonese["世一|sai3 jat1"] == 3)
-    precondition(cantonese["bad"] == nil)
-    let latin = root["latinSelections"] as! [String: Int]
-    precondition(latin["de|safe"] == 2)
-    precondition(latin["en|brb"] == 4)
-    precondition(String(decoding: json, as: UTF8.self).contains("schemaVersion"))
-    print("Private aggregate vocabulary export verified")
+    precondition(root["schemaVersion"] as? Int == 1)
+    precondition(root["appCommit"] as? String == "fixture")
+    let selected = root["selections"] as! [String: Int]
+    precondition(selected["佢|keoi5"] == 4)
+    precondition(selected["bad"] == nil && selected["好|hou2"] == nil)
+    let corrections = root["manualSpeechCorrections"] as! [[String: String]]
+    precondition(corrections.count == 1)
+    precondition(corrections[0]["language"] == "yue")
+    let unavailable = root["unavailable"] as! [String]
+    precondition(unavailable.contains("laterLatinLearning"))
+    precondition(!String(decoding: json, as: UTF8.self).contains("transcript"))
+    print("Explicit selection and correction export schema passed")
   }
 }

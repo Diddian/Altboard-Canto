@@ -58,8 +58,8 @@ struct MainTabView: View {
     var title: LocalizedStringKey {
       switch self {
       case .micDenied: "No Microphone Access"
-      case .keyboardMissing: "Keyboard Not Added"
-      case .fullAccessMissing: "Full Access Required"
+      case .keyboardMissing: "Keyboard Setup Unconfirmed"
+      case .fullAccessMissing: "Full Access Not Confirmed"
       case .noModel: "No Model Installed"
       case .modelRemovedByUpdate: "Model Update Required"
       case .freeDictationUsedUp: "Free Dictation Used Up"
@@ -70,8 +70,8 @@ struct MainTabView: View {
     var subtitle: LocalizedStringKey {
       switch self {
       case .micDenied: "Enable microphone access so Altboard can hear you. Your audio never leaves your device."
-      case .keyboardMissing: "Altboard needs to be added as a keyboard to use voice dictation in any app."
-      case .fullAccessMissing: "Altboard needs Full Access to hear your voice from the keyboard."
+      case .keyboardMissing: "Check that Altboard is enabled under iOS Keyboard settings. Earlier keyboard reports do not confirm its current status."
+      case .fullAccessMissing: "Open Altboard keyboard and return to confirm recent Full Access. A previous report may be stale."
       case .noModel: "Download a speech recognition model to start using voice input."
       case .modelRemovedByUpdate: "Parakeet v3 has been updated and needs to be downloaded again."
       case .freeDictationUsedUp: "Support Altboard with a one-time purchase to keep dictating."

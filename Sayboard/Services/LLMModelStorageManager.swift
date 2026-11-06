@@ -76,15 +76,6 @@ enum LLMModelStorageManager {
   static func totalDiskUsage() -> Int64 {
     let root = self.modelsRoot
     guard FileManager.default.fileExists(atPath: root.path) else { return 0 }
-    guard let enumerator = FileManager.default.enumerator(at: root, includingPropertiesForKeys: [.fileSizeKey]) else {
-      return 0
-    }
-    var total: Int64 = 0
-    for case let fileURL as URL in enumerator {
-      if let size = try? fileURL.resourceValues(forKeys: [.fileSizeKey]).fileSize {
-        total += Int64(size)
-      }
-    }
-    return total
+    return ModelDirectorySize.bytes(at: root)
   }
 }

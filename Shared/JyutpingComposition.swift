@@ -9,7 +9,7 @@ struct JyutpingComposition: Equatable {
   @discardableResult
   mutating func append(_ key: String) -> Bool {
     let value = key.lowercased()
-    guard value.count == 1, buffer.count < 96,
+    guard value.count == 1, buffer.count < 48,
           value.allSatisfy({ $0.isASCII && ($0.isLetter || "123456".contains($0)) })
     else { return false }
     buffer.append(value)

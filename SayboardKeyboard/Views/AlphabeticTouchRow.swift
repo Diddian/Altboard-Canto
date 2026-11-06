@@ -6,7 +6,6 @@ import UIKit
 /// to a neighbor, and long-press accents are coordinated in one gesture.
 struct AlphabeticTouchRow: View {
   let letters: [String]
-  let appearanceRevision: Int
   let uppercase: Bool
   let horizontalInset: CGFloat
   let topHitInset: CGFloat
@@ -91,7 +90,6 @@ struct AlphabeticTouchRow: View {
         // UIKit reports finger-down immediately; SwiftUI DragGesture.onChanged
         // can wait for gesture recognition, making quick taps feel unpressed.
         ImmediateKeyTouchSurface(
-          resetToken: self.appearanceRevision,
           onBegan: { point in
             self.beginTouch(at: point, width: geometry.size.width, weights: weights)
           },
@@ -118,18 +116,12 @@ struct AlphabeticTouchRow: View {
     }
     .frame(height: self.bandHeight)
     .zIndex(self.activeIndex == nil ? 0 : 10)
-    .onAppear {
-      FeatureDiagnostics.record(.keyboardRender, .letterRowMounted)
+    .onDisappear {
+      self.onSwipePath([])
+      self.releaseHighlightTask?.cancel()
+      self.releasedHighlightIndex = nil
+      self.reset()
     }
-    .onChange(of: self.appearanceRevision) { _, _ in self.cancelTouch() }
-    .onDisappear { self.cancelTouch() }
-  }
-
-  private func cancelTouch() {
-    self.onSwipePath([])
-    self.releaseHighlightTask?.cancel()
-    self.releasedHighlightIndex = nil
-    self.reset()
   }
 
   private func target(at x: CGFloat, width: CGFloat, weights: [Double]) -> Int? {
@@ -393,4 +385,3 @@ private struct KeyboardTouchDebugOverlay: View {
 /// A direct UIKit touch surface for letter keys. Unlike a drag recognizer,
 /// touchesBegan arrives on initial contact, before the finger moves or holds.
 /// This has no animations, timers or delayed state transitions.
-

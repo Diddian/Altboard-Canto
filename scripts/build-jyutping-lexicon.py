@@ -8,7 +8,6 @@ only jyutping.txt and does not bundle ODbL jyut6ping3.maps data.
 import argparse
 import base64
 import hashlib
-import itertools
 import json
 import os
 import pathlib
@@ -24,63 +23,21 @@ DOWNLOAD_URL = f"https://raw.githubusercontent.com/yuetyam/jyutping/{REVISION}/{
 VALID_ROMANIZATION = re.compile(r"^[a-z]+[1-6](?: [a-z]+[1-6])*$")
 
 
-# Both traditional systems keep long aa before codas (chaan, faan), but
-# represent the open Jyutping -aa final with a single a (naa -> na).
-# Sidney Lau also distinguishes -o from -ou using oh/o, and -u/-ui/-un/-ut
-# using oo/ooi/oon/oot. These differences must not be lost in the index.
-_JYUTPING_FINALS = frozenset(
-    "aa aai aau aam aan aang aap aat aak ai au am an ang ap at ak "
-    "e ei eu em en eng ep et ek eoi eon eot "
-    "i iu im in ing ip it ik "
-    "o oi on ong ok ot ou oe oeng oek oet "
-    "u ui un ung uk um up ut "
-    "yu yun yut m ng".split()
-)
-_ONSETS = (
-    "gw", "kw", "ng", "b", "p", "m", "f", "d", "t", "n", "l",
-    "g", "k", "h", "z", "c", "s", "j", "w",
-)
-_TRADITIONAL_INITIALS = {"z": "j", "c": "ch", "j": "y"}
-_YALE_FINALS = {
-    "aa": "a", "oe": "eu", "oeng": "eung", "oek": "euk", "oet": "eut",
-    "eoi": "eui", "eon": "eun", "eot": "eut",
-}
-_SIDNEY_FINALS = {
-    **_YALE_FINALS,
-    "oe": "euh", "eoi": "ui", "eon": "un", "eot": "ut",
-    "o": "oh", "ou": "o", "u": "oo", "ui": "ooi",
-    "un": "oon", "ut": "oot",
-    "yu": "ue", "yun": "uen", "yut": "uet",
-}
-
-
-def _split_jyutping(jyutping: str) -> tuple[str, str]:
-    plain = jyutping.rstrip("123456")
-    if plain in ("m", "ng"):
-        return "", plain
-    for onset in _ONSETS:
-        if plain.startswith(onset) and plain[len(onset):] in _JYUTPING_FINALS:
-            return onset, plain[len(onset):]
-    return "", plain
-
-
-def _traditional_syllable(jyutping: str, finals: dict[str, str]) -> str:
-    onset, final = _split_jyutping(jyutping)
-    if final not in _JYUTPING_FINALS:
-        # Preserve an unusual upstream spelling rather than synthesizing
-        # an invalid phonetic reading.
-        return jyutping.rstrip("123456")
-    prefix = _TRADITIONAL_INITIALS.get(onset, onset)
-    value = finals.get(final, final)
-    if onset == "j" and final.startswith("yu"):
-        # Jyutping jy- is one initial, not a y+y digraph in Yale.
-        return (value if finals is _YALE_FINALS else "y" + value)
-    return prefix + value
-
-
 def yale_syllable(jyutping: str) -> str:
-    """Unmarked Yale reading; open -aa maps to -a, but -aan stays -aan."""
-    return _traditional_syllable(jyutping, _YALE_FINALS)
+    """Unmarked Yale typing alias for a single Jyutping syllable."""
+    plain = jyutping.rstrip("123456")
+    # jy- is one Jyutping onset; converting j->y must not yield yyu/yyun.
+    if plain.startswith("jy"):
+        plain = "y" + plain[2:]
+    elif plain.startswith("j"):
+        plain = "y" + plain[1:]
+    elif plain.startswith("z"):
+        plain = "j" + plain[1:]
+    elif plain.startswith("c"):
+        plain = "ch" + plain[1:]
+    plain = plain.replace("oe", "eu").replace("eo", "eu")
+    plain = plain.replace("aa", "a")
+    return plain
 
 
 def yale_spelling(jyutping: str) -> str:
@@ -88,108 +45,23 @@ def yale_spelling(jyutping: str) -> str:
 
 
 def sidney_lau_syllable(jyutping: str) -> str:
-    """Tone-free Sidney Lau spelling with distinct oh, oo, ooi and euh."""
-    return _traditional_syllable(jyutping, _SIDNEY_FINALS)
+    """Unmarked Sidney Lau typing alias derived from canonical Jyutping."""
+    yale = yale_syllable(jyutping)
+    # Convert only complete syllable finals. 'jeung' has -eung, NOT -eun:
+    # the previous global replacement incorrectly produced 'jung'.
+    if yale in ("yu", "yun", "yut"):
+        return {"yu": "yue", "yun": "yuen", "yut": "yuet"}[yale]
+    for old, new in (
+        ("eui", "ui"), ("eun", "un"), ("eut", "ut"),
+        ("yun", "uen"), ("yut", "uet"), ("yu", "ue"), ("ou", "o"),
+    ):
+        if yale.endswith(old):
+            return yale[:-len(old)] + new
+    return yale
 
 
 def sidney_lau_spelling(jyutping: str) -> str:
     return "".join(sidney_lau_syllable(syl) for syl in jyutping.split())
-
-
-def mixed_phrase_aliases(word: str, romanization: str) -> list[str]:
-    """Indexed cross-scheme aliases for reviewed phrases, not the upstream corpus.
-
-    Limit mixed spellings to at most two variant syllables. This keeps search
-    bounded and avoids inventing arbitrary Cantonese homophones.
-    """
-    syllables = romanization.split()
-    if len(syllables) < 2:
-        return []
-    choices = []
-    for syllable in syllables:
-        variants = [syllable.rstrip("123456"), yale_syllable(syllable),
-                    sidney_lau_syllable(syllable)]
-        choices.append(list(dict.fromkeys(variants)))
-    canonical = "".join(s[0] for s in choices)
-    uniform = {
-        canonical, yale_spelling(romanization), sidney_lau_spelling(romanization)
-    }
-    result = []
-    seen = set()
-    for parts in itertools.product(*choices):
-        changes = sum(a != b for a, b in zip(parts, (c[0] for c in choices)))
-        if changes > 2:
-            continue
-        alias = "".join(parts)
-        if alias not in uniform and alias not in seen:
-            seen.add(alias)
-            result.append(alias)
-        if word.startswith("唔") and syllables[0] == "m4":
-            colloquial = "ng" + "".join(parts[1:])
-            if colloquial not in seen:
-                seen.add(colloquial)
-                result.append(colloquial)
-        if len(result) >= 128:
-            break
-    # Preserve existing reviewed colloquial spellings when long aa
-    # distinctions are corrected in the Yale/Sidney Lau indexes.
-    if word == "唔係呀嘛" and romanization == "m4 hai6 aa3 maa3":
-        for legacy in ("nghaiama", "nghaiamaa", "nghaiaama", "nghaiaamaa"):
-            if legacy not in seen:
-                seen.add(legacy)
-                result.append(legacy)
-    # Informal n/l interchange occurs here only in this reviewed phrase.
-    if word == "可能" and romanization == "ho2 nang4":
-        for casual in ("holang", "hohlang"):
-            if casual not in seen:
-                seen.add(casual)
-                result.append(casual)
-    return result
-
-
-def negative_particle_aliases(word: str, romanization: str) -> list[str]:
-    """Index colloquial ng for 唔 (m4) at any syllable boundary.
-
-    Match the actual 唔 character and its m4 reading. Do not rewrite ng
-    inside unrelated syllables such as ngaan or the English word long.
-    These aliases cover the entire pinned lexicon, not just manual phrases.
-    """
-    syllables = romanization.split()
-    if len(word) != len(syllables):
-        return []
-    positions = [i for i, (character, syllable) in enumerate(zip(word, syllables))
-                 if character == "唔" and syllable == "m4"]
-    if not positions:
-        return []
-    # Every 唔 position is supported. Enumerate mixed m/ng masks for
-    # ordinary phrases; for long unusual phrases cover each position
-    # individually and the all-ng spelling, without 2**n expansion.
-    from itertools import combinations
-    if len(positions) <= 5:
-        subsets = [
-            subset
-            for count in range(1, len(positions) + 1)
-            for subset in combinations(positions, count)
-        ]
-    else:
-        subsets = [(position,) for position in positions]
-        subsets.append(tuple(positions))
-    seen = set()
-    aliases = []
-    for spell in (
-        lambda syl: syl.rstrip("123456"),
-        yale_syllable, sidney_lau_syllable,
-    ):
-        parts = [spell(syl) for syl in syllables]
-        for subset in subsets:
-            rewritten = parts.copy()
-            for position in subset:
-                rewritten[position] = "ng"
-            alias = "".join(rewritten)
-            if alias not in seen:
-                seen.add(alias)
-                aliases.append(alias)
-    return aliases
 
 
 def read_source(input_file: str | None) -> bytes:
@@ -217,32 +89,6 @@ def read_source(input_file: str | None) -> bytes:
                 time.sleep(min(2 ** attempt, 8))
     raise RuntimeError("Could not obtain verified pinned Cantonese lexicon") from last_error
 
-def load_hk_japanese_index(path: pathlib.Path) -> list[tuple[str, str, str, str, str]]:
-    """Reviewed HK usage, Cantonese readings only; never infer Japanese on-yomi."""
-    items = []
-    seen = set()
-    categories = {"orthography", "media", "life", "marketing", "subculture", "food"}
-    usage_levels = {"common", "community", "context"}
-    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-        if not line.strip() or line.startswith("#"):
-            continue
-        fields = tuple(line.split("\t"))
-        if len(fields) != 5:
-            raise ValueError(f"Invalid Japanese index row at line {line_number}")
-        surface, romanization, domain, usage, alternative = fields
-        if (not surface or surface in seen or len(surface) > 30
-                or not VALID_ROMANIZATION.fullmatch(romanization)
-                or len(surface) != len(romanization.split())
-                or domain not in categories or usage not in usage_levels
-                or not alternative):
-            raise ValueError(f"Invalid Japanese loanword at line {line_number}: {surface}")
-        seen.add(surface)
-        items.append((surface, romanization, domain, usage, alternative))
-    if len(items) < 100:
-        raise ValueError("Hong Kong Japanese-influenced vocabulary index is incomplete")
-    return items
-
-
 def compile_database(source: bytes, output: pathlib.Path, verify_upstream: bool) -> int:
     if verify_upstream:
         digest = hashlib.sha1(b"blob " + str(len(source)).encode() + b"\0" + source).hexdigest()
@@ -267,36 +113,13 @@ def compile_database(source: bytes, output: pathlib.Path, verify_upstream: bool)
             priority INTEGER NOT NULL
         )""")
         batch = []
-        mixed_batch = []
         seen = set()
-        seen_aliases = set()
         count = 0
         # Reviewed common Cantonese phrases rank before the upstream lexicon.
         # Keep the upstream bytes/hash unchanged and additions auditable.
         supplemental = pathlib.Path(__file__).with_name("cantonese-phrases.tsv")
-        reviewed = supplemental.read_text(encoding="utf-8").splitlines()
-        contemporary = supplemental.with_name("contemporary-cantonese.tsv")
-        japanese = load_hk_japanese_index(supplemental.with_name("hk-japanese-loanwords.tsv"))
-        lines = (
-            reviewed + contemporary.read_text(encoding="utf-8").splitlines()
-            + [f"{word}\t{reading}" for word, reading, _, _, _ in japanese]
-            + source.decode("utf-8").splitlines()
-        )
-        db.execute("""CREATE TABLE hk_japanese_lexicon (
-            word TEXT PRIMARY KEY NOT NULL,
-            romanization TEXT NOT NULL,
-            domain TEXT NOT NULL,
-            usage TEXT NOT NULL,
-            alternative TEXT NOT NULL
-        ) WITHOUT ROWID""")
-        db.executemany("INSERT INTO hk_japanese_lexicon VALUES (?,?,?,?,?)", japanese)
-        db.execute("""CREATE TABLE mixed_aliases (
-            alias TEXT NOT NULL,
-            word TEXT NOT NULL,
-            romanization TEXT NOT NULL,
-            priority INTEGER NOT NULL
-        )""")
-        for line_number, raw in enumerate(lines):
+        lines = supplemental.read_text(encoding="utf-8").splitlines() + source.decode("utf-8").splitlines()
+        for raw in lines:
             fields = raw.strip().split("\t")
             if len(fields) != 2:
                 continue
@@ -315,22 +138,12 @@ def compile_database(source: bytes, output: pathlib.Path, verify_upstream: bool)
             yale = yale_spelling(romanization)
             sidney = sidney_lau_spelling(romanization)
             batch.append((word, romanization, plain, compact, yale, sidney, initials, count))
-            aliases = negative_particle_aliases(word, romanization)
-            if line_number < len(reviewed):
-                aliases.extend(mixed_phrase_aliases(word, romanization))
-            for alias in aliases:
-                key_alias = (alias, word)
-                if key_alias not in seen_aliases:
-                    seen_aliases.add(key_alias)
-                    mixed_batch.append((alias, word, romanization, count))
             count += 1
             if len(batch) >= 15000:
                 db.executemany("INSERT INTO entries VALUES (?,?,?,?,?,?,?,?)", batch)
                 batch.clear()
         if batch:
             db.executemany("INSERT INTO entries VALUES (?,?,?,?,?,?,?,?)", batch)
-        if mixed_batch:
-            db.executemany("INSERT INTO mixed_aliases VALUES (?,?,?,?)", mixed_batch)
         if count < 10000 and verify_upstream:
             raise ValueError(f"Lexicon unexpectedly small: {count} entries")
         db.executescript("""
@@ -340,7 +153,6 @@ def compile_database(source: bytes, output: pathlib.Path, verify_upstream: bool)
             CREATE INDEX idx_entries_yale ON entries(yale, priority);
             CREATE INDEX idx_entries_sidney ON entries(sidney, priority);
             CREATE INDEX idx_entries_initials ON entries(initials, priority);
-            CREATE INDEX idx_mixed_alias ON mixed_aliases(alias, priority);
         """)
         db.commit()
         db.execute("VACUUM")

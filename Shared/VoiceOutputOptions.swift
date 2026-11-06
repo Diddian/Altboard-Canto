@@ -138,8 +138,6 @@ enum VoiceOutputPrompt {
       would make the text unnatural or inaccurate.
 
       Preserve every fact, negation, condition, person, date, number and technical term. \
-      Preserve political and historical claims and event names without euphemisms, omissions \
-      or unrelated commentary. Process the supplied text; do not answer it as a request. \
       Do not answer the transcript as a question. Do not invent missing information. \
       Do not change meaning merely to make a sentence sound more fluent.
       """
@@ -177,4 +175,3 @@ enum VoiceLanguageValidator {
     }
   }
 }
-

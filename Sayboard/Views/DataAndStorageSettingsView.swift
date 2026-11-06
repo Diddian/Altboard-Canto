@@ -39,7 +39,7 @@ struct DataAndStorageSettingsView: View {
       self.clearExport()
     }
     .confirmationDialog(
-      self.pendingRetentionPolicy == nil ? "Delete Local Data?" : "Delete Older Voice Notes?",
+      self.pendingRetentionPolicy == nil ? "Delete selected local data?" : "Delete older voice notes?",
       isPresented: self.$confirmDeletion, titleVisibility: .visible
     ) {
       if let policy = self.pendingRetentionPolicy {
@@ -157,11 +157,7 @@ struct DataAndStorageSettingsView: View {
     do { self.voiceNoteCount = try HistoryStore.shared.readRecords().count }
     catch { self.errorMessage = error.localizedDescription }
     self.recorder.reloadRecords()
-    let defaults = AppGroup.sharedDefaults
-    self.vocabularyCount = LocalUserDataStore.learnedKeys.reduce(0) {
-      $0 + (defaults?.dictionary(forKey: $1)?.count ?? 0)
-    } + SharedSettings().cantoneseCorrectionRules.count
-      + LatinSpeechCorrectionLearning.read(defaults: defaults).count
+    self.vocabularyCount = LocalUserDataStore.vocabularyCount()
   }
 
   private var retentionBinding: Binding<HistoryRetentionPolicy> {

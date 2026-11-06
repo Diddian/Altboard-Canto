@@ -17,21 +17,48 @@ struct ModelsView: View, Equatable {
           self.noModelBanner
         }
 
-        self.sttContent
+        Picker(selection: self.$selectedTab) {
+          Text("Speech Recognition").tag(ModelTab.speechRecognition)
+          Text("Text Processing").tag(ModelTab.textProcessing)
+        } label: {
+          EmptyView()
+        }
+        .pickerStyle(.segmented)
+        .padding(.vertical, 4)
+
+        switch self.selectedTab {
+        case .speechRecognition:
+          self.sttContent
+        case .textProcessing:
+          LLMModelsSection()
+        }
       }
       .padding()
+      .animation(.easeInOut(duration: 0.25), value: self.selectedTab)
     }
     .background(Color(.systemGroupedBackground))
-    .navigationTitle("Speech Models")
+    .navigationTitle("Models")
     .sheet(isPresented: self.$showLanguagePicker) {
       LanguagePickerView(
         mode: .single(self.$selectedLanguageFilter),
         availableLanguages: SpeechLanguages.all,
       )
     }
+    .sheet(item: self.$languagePrefVariant) { variant in
+      LanguagePickerView(
+        mode: .multi(self.preferenceBinding(for: variant)),
+        availableLanguages: variant.supportedLanguages,
+        titleKey: "Recognize",
+        autoDetectKey: "Auto-detect (any language)",
+        footnoteKey: "Altboard will prioritize these languages. Pick a single language for the most accurate recognition.",
+      )
+    }
     .sensoryFeedback(.selection, trigger: self.selectionHapticTrigger)
     .onChange(of: self.downloadService.selectedVariant) {
       self.syncSelectedVariant()
+    }
+    .onAppear {
+      self.preferences = Self.loadPreferences()
     }
   }
 
@@ -40,10 +67,13 @@ struct ModelsView: View, Equatable {
   }
 
   @EnvironmentObject private var downloadService: ModelDownloadService
+  @SceneStorage(ModelTab.storageKey) private var selectedTab = ModelTab.speechRecognition
   @State private var selectedVariant: ModelVariant?
   @State private var selectedLanguageFilter: String?
   @State private var showLanguagePicker = false
   @State private var selectionHapticTrigger = false
+  @State private var languagePrefVariant: ModelVariant?
+  @State private var preferences: [String: Set<String>] = Self.loadPreferences()
   @Environment(\.locale) private var locale
 
   private var effectiveSelectedVariant: ModelVariant {
@@ -93,6 +123,7 @@ struct ModelsView: View, Equatable {
           }
         }
       }
+      .animation(.easeInOut(duration: 0.35), value: variants)
     }
   }
 
@@ -170,10 +201,30 @@ struct ModelsView: View, Equatable {
     }
   }
 
+  private static func loadPreferences() -> [String: Set<String>] {
+    SharedSettings().preferredLanguagesPerVariant.mapValues(Set.init)
+  }
+
+  private func preferenceBinding(for variant: ModelVariant) -> Binding<Set<String>> {
+    Binding(
+      get: { self.preferences[variant.rawValue] ?? [] },
+      set: { newValue in
+        if newValue.isEmpty {
+          self.preferences.removeValue(forKey: variant.rawValue)
+        } else {
+          self.preferences[variant.rawValue] = newValue
+        }
+        SharedSettings().setPreferredLanguages(newValue, for: variant)
+      },
+    )
+  }
+
   private func syncSelectedVariant() {
     let current = SharedSettings().selectedVariant
     if self.selectedVariant != current {
-      self.selectedVariant = current
+      withAnimation(.easeInOut(duration: 0.35)) {
+        self.selectedVariant = current
+      }
     }
   }
 
@@ -196,14 +247,13 @@ struct ModelsView: View, Equatable {
       variant: variant,
       isActive: isActive,
       downloadState: downloadState,
-      preferredLanguages: SpeechModelRecommendation.preferredLanguages(
-        for: variant, from: SharedSettings().preferredSpokenLanguages
-      ),
-      allowsLanguageEditing: false,
+      preferredLanguages: self.preferences[variant.rawValue] ?? [],
       onSelect: {
         self.selectionHapticTrigger.toggle()
-        self.selectedVariant = variant
-        self.downloadService.selectVariant(variant)
+        withAnimation(.easeInOut(duration: 0.35)) {
+          self.selectedVariant = variant
+          self.downloadService.selectVariant(variant)
+        }
       },
       onDownload: {
         self.downloadService.startDownload(variant: variant)
@@ -216,12 +266,16 @@ struct ModelsView: View, Equatable {
         self.downloadService.startDownload(variant: variant)
       },
       onRemove: {
-        self.downloadService.deleteModel(variant: variant)
-        self.syncSelectedVariant()
+        withAnimation(.easeInOut(duration: 0.35)) {
+          self.downloadService.deleteModel(variant: variant)
+          self.syncSelectedVariant()
+        }
       },
-      onEditLanguages: {},
+      onEditLanguages: {
+        self.preferences = Self.loadPreferences()
+        self.languagePrefVariant = variant
+      },
     )
     .equatable()
   }
 }
-

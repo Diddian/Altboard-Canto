@@ -7,7 +7,6 @@ struct ModelCardView: View, Equatable {
   let isActive: Bool
   let downloadState: ModelDownloadState
   let preferredLanguages: Set<String>
-  var allowsLanguageEditing = true
   let onSelect: () -> Void
   let onDownload: () -> Void
   let onCancel: () -> Void
@@ -58,7 +57,6 @@ struct ModelCardView: View, Equatable {
       && lhs.isActive == rhs.isActive
       && lhs.downloadState == rhs.downloadState
       && lhs.preferredLanguages == rhs.preferredLanguages
-      && lhs.allowsLanguageEditing == rhs.allowsLanguageEditing
   }
 
   @Environment(\.locale) private var locale
@@ -67,7 +65,7 @@ struct ModelCardView: View, Equatable {
   private let cardCornerRadius: CGFloat = 12
 
   private var showsLanguageSelectionRow: Bool {
-    self.allowsLanguageEditing && self.isActive && self.variant.supportsLanguageSelection
+    self.isActive && self.variant.supportsLanguageSelection
   }
 
   private var showsUpdateNotice: Bool {
@@ -215,4 +213,3 @@ struct ModelCardView: View, Equatable {
   }
 
 }
-

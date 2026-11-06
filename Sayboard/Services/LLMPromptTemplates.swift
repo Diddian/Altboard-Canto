@@ -6,8 +6,6 @@ enum LLMPromptTemplates {
   static func systemPrompt(for action: LLMAction, language: String?) -> String {
     let langInstruction = self.languageInstruction(language)
     switch action {
-    case .translate:
-      return "Translate the supplied text. Preserve all facts and return only the translation."
     case .removeRedundancy:
       return self.removeRedundancyPrompt(langInstruction)
     case .rewrite:
@@ -202,5 +200,3 @@ enum LLMPromptTemplates {
     """
   }
 }
-
-

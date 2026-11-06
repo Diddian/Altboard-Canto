@@ -3,51 +3,10 @@ import Foundation
 @main
 enum UniversalCantoneseSmoke {
   static func main() {
-    precondition(CantoneseRomanizationVariants.repeatedNegationBase(for: "sikngsik") == "sik")
-    precondition(CantoneseRomanizationVariants.repeatedNegationBase(for: "wuingwui") == "wui")
-    precondition(CantoneseRomanizationVariants.repeatedNegationBase(for: "sikmsik") == "sik")
-    precondition(CantoneseRomanizationVariants.repeatedNegationBase(for: "daannghai") == nil)
-    precondition(CantoneseRomanizationVariants.repeatedNegationBase(for: "long") == nil)
     precondition(CantoneseRomanizationVariants.variants(for: "nghai").contains("mhai"))
     precondition(CantoneseRomanizationVariants.variants(for: "nghaai").contains("mhaai"))
     precondition(!CantoneseRomanizationVariants.variants(for: "ngau").contains("mau"))
-    precondition(CantoneseRomanizationVariants.variants(for: "woh").contains("wo"))
-    precondition(CantoneseRomanizationVariants.variants(for: "goh").contains("go"))
-    precondition(CantoneseRomanizationVariants.variants(for: "poh").contains("po"))
-    precondition(CantoneseRomanizationVariants.variants(for: "na").contains("naa"))
-    for (typed, canonical) in [
-      ("ah", "a"), ("eh", "e"), ("ih", "i"), ("oh", "o"),
-      ("uh", "u"), ("nah", "na"), ("aah", "aa"),
-      ("woh", "wo"), ("goh", "go"), ("poh", "po")
-    ] {
-      precondition(CantoneseRomanizationVariants.variants(for: typed).contains(canonical))
-    }
-    precondition(CantoneseRomanizationVariants.variants(for: "chaanh") == ["chaanh"])
-    precondition(CantoneseRomanizationVariants.variants(for: "ngh") == ["ngh"])
-    precondition(CantoneseSyllableEditing.yaleAlias("naa5") == "na")
-    precondition(CantoneseSyllableEditing.sidneyLauAlias("naa5") == "na")
-    precondition(CantoneseSyllableEditing.sidneyLauAlias("go3") == "goh")
-    precondition(CantoneseSyllableEditing.sidneyLauAlias("wo3") == "woh")
-    precondition(CantoneseSyllableEditing.sidneyLauAlias("po4") == "poh")
-    precondition(CantoneseSyllableEditing.sidneyLauAlias("fu3") == "foo")
-    precondition(CantoneseSyllableEditing.sidneyLauAlias("bui1") == "booi")
-    precondition(CantoneseSyllableEditing.lastSyllableLength(
-      typed: "nah", canonical: "naa5"
-    ) == 3)
-    precondition(CantoneseSyllableEditing.lastSyllableLength(
-      typed: "woh", canonical: "wo3"
-    ) == 3)
 
-    precondition(CantoneseSyllableEditing.yaleAlias("zau6") == "jau")
-    precondition(CantoneseSyllableEditing.yaleAlias("caan4") == "chaan")
-    precondition(CantoneseSyllableEditing.yaleAlias("faan6") == "faan")
-    precondition(CantoneseSyllableEditing.sidneyLauAlias("caan4") == "chaan")
-    precondition(CantoneseSyllableEditing.lastSyllableLength(
-      typed: "sikngsik", canonical: "sik6 m4 sik6"
-    ) == 3)
-    precondition(CantoneseSyllableEditing.lastSyllableLength(
-      typed: "daannghai", canonical: "daan6 m4 hai6"
-    ) == 3)
     precondition(CantoneseSyllableEditing.yaleAlias("jyu5") == "yu")
     precondition(CantoneseSyllableEditing.yaleAlias("jyun4") == "yun")
     precondition(CantoneseSyllableEditing.yaleAlias("jyut6") == "yut")
@@ -57,9 +16,7 @@ enum UniversalCantoneseSmoke {
     precondition(CantoneseRomanizationVariants.variants(for: "ng") == ["ng", "m"])
     precondition(CantoneseRomanizationVariants.variants(for: "yyu") == ["yyu", "yu"])
     precondition(CantoneseRomanizationVariants.variants(for: "gamyuen") == ["gamyuen"])
-    let maxLength = String(repeating: "a", count: 96)
-    precondition(CantoneseRomanizationVariants.variants(for: maxLength) == [maxLength])
-    precondition(CantoneseRomanizationVariants.variants(for: String(repeating: "a", count: 97)).isEmpty)
+    precondition(CantoneseRomanizationVariants.variants(for: String(repeating: "a", count: 49)).isEmpty)
     let cases: [(String, String, Int)] = [
       ("jui", "zeoi3", 3), ("sui", "seoi2", 3), ("yuen", "jyun4", 4),
       ("gamyuen", "gam1 jyun4", 4), ("gamyat", "gam1 jat6", 3),

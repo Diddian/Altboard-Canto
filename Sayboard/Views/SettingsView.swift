@@ -59,7 +59,7 @@ struct SettingsView: View {
       #endif
 
       Section("Speech & AI") {
-        SpeechLanguagesSettingsView(inline: true, rowsOnly: true)
+        SpeechLanguagesSettingsView(inline: true)
         ActiveSessionToggle()
         NavigationLink {
           ModelsView()

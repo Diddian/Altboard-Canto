@@ -84,7 +84,7 @@ struct MicAnimatedButton: View {
   @ObservedObject var keyboardState: KeyboardState
 
   var body: some View {
-    Button(action: self.handleButtonAction) {
+    Button(action: self.handleTap) {
       self.micButtonLabel
     }
     .buttonStyle(MicButtonStyle(
@@ -94,17 +94,7 @@ struct MicAnimatedButton: View {
       pressedBinding: self.$isPressed,
     ))
     .onChange(of: self.isPressed) { _, isDown in
-      self.handleMicPressChange(isDown: isDown)
-    }
-    .onDisappear {
-      self.holdActivationTask?.cancel()
-      self.holdActivationTask = nil
-      if self.holdStartedRecording {
-        self.requestHeldStop()
-      }
-      self.pressPolicy.cancel()
-      self.holdStartedRecording = false
-      self.suppressButtonAction = false
+      if isDown { KeyboardHaptics.key() }
     }
     .allowsHitTesting(!self.keyboardState.isProcessing)
     .onChange(of: self.keyboardState.isRecording, self.handleRecordingChanged)
@@ -121,10 +111,6 @@ struct MicAnimatedButton: View {
   private static let spinnerDelay = Duration.milliseconds(600)
 
   @State private var isPressed = false
-  @State private var pressPolicy = MicrophonePressPolicy()
-  @State private var holdActivationTask: Task<Void, Never>?
-  @State private var holdStartedRecording = false
-  @State private var suppressButtonAction = false
   @State private var lastStartTapAt: Date?
   @State private var showSpinner = false
   @State private var isMorphing = false
@@ -187,107 +173,6 @@ struct MicAnimatedButton: View {
     }
   }
 
-  private func handleButtonAction() {
-    // A Button action fires only for an accepted tap, not a cancelled touch.
-    // It can run before or after SwiftUI reports the finger-up transition.
-    if self.pressPolicy.isActive {
-      self.holdActivationTask?.cancel()
-      self.holdActivationTask = nil
-      let action = self.pressPolicy.release(at: Date().timeIntervalSinceReferenceDate)
-      self.dispatchRelease(action, buttonActivated: true)
-      return
-    }
-    if self.suppressButtonAction {
-      self.suppressButtonAction = false
-      return
-    }
-    self.handleTap()  // VoiceOver / keyboard activation without a touch-down.
-  }
-
-  private func handleMicPressChange(isDown: Bool) {
-    if isDown {
-      KeyboardHaptics.key()
-      // Keep native Button semantics for accepted taps and VoiceOver.
-      // The pressed-state transition handles long-hold release/cancellation.
-      self.suppressButtonAction = false
-      let initial: MicrophonePressPolicy.InitialState
-      if self.keyboardState.isDictationLocked {
-        initial = .locked
-      } else if self.keyboardState.isRecording {
-        initial = .recording
-      } else if self.keyboardState.isStartingRecording {
-        initial = .starting
-      } else {
-        initial = .idle
-      }
-      guard self.pressPolicy.begin(
-        at: Date().timeIntervalSinceReferenceDate, state: initial
-      ) else { return }
-      self.holdActivationTask?.cancel()
-      if initial == .idle {
-        self.holdActivationTask = Task { @MainActor in
-          do { try await Task.sleep(for: .milliseconds(280)) } catch { return }
-          guard !Task.isCancelled, self.isPressed,
-                self.pressPolicy.activateHold(
-                  at: Date().timeIntervalSinceReferenceDate
-                ) else { return }
-          self.holdStartedRecording = true
-          self.handleTap()
-        }
-      }
-      return
-    }
-
-    self.holdActivationTask?.cancel()
-    self.holdActivationTask = nil
-    let action = self.pressPolicy.release(at: Date().timeIntervalSinceReferenceDate)
-    self.dispatchRelease(action, buttonActivated: false)
-  }
-
-  private func dispatchRelease(
-    _ action: MicrophonePressPolicy.ReleaseAction, buttonActivated: Bool
-  ) {
-    switch action {
-    case .stop:
-      self.suppressButtonAction = true
-      self.holdStartedRecording = false
-      self.requestHeldStop()
-    case .startThenStop:
-      self.suppressButtonAction = true
-      self.holdStartedRecording = true
-      self.handleTap()
-      self.requestHeldStop()
-      self.holdStartedRecording = false
-    case .tap:
-      self.holdStartedRecording = false
-      // A cancelled/dragged-off press must not start audio. Only the Button's
-      // actual action (or VoiceOver activation) confirms a normal tap.
-      if buttonActivated { self.handleTap() }
-    case .none:
-      self.holdStartedRecording = false
-    }
-  }
-
-  private func requestHeldStop() {
-    // Request final transcription, never cancellation. If recording has not
-    // yet been acknowledged, the app consumes this token-scoped stop intent
-    // once capture begins. No duplicate capture engine is created.
-    let settings = SharedSettings()
-    settings.synchronize()
-    let hasToken = MicrophoneHoldStopIntent.request(
-      for: settings.dictationSessionToken, defaults: settings.defaults
-    )
-    if hasToken || self.keyboardState.isRecording {
-      // Always notify the main app, even before the keyboard receives its
-      // recording acknowledgement. The service defers an early stop until
-      // capture starts, and an already-recording session stops at once.
-      self.proxy.stopDictation()
-    } else {
-      self.keyboardState.isStartingRecording = false
-    }
-    self.lastStartTapAt = nil
-  }
-
   private func handleTap() {
     self.keyboardState.clearFinalOutputPreview()
     self.keyboardState.dismissMicHint()
@@ -311,13 +196,11 @@ struct MicAnimatedButton: View {
       // Use the existing Darwin bridge directly; do not open Altboard again.
       self.keyboardState.isStartingRecording = true
       self.lastStartTapAt = Date()
-      MicrophoneHoldStopIntent.clear(defaults: SharedSettings().defaults)
       self.proxy.startDictation()
     } else if let url = DeepLink.dictateURL {
       self.keyboardState.isStartingRecording = true
       self.lastStartTapAt = Date()
       let settings = SharedSettings()
-      MicrophoneHoldStopIntent.clear(defaults: settings.defaults)
       if OperatingSystem.isHostBundleIdBroken {
         self.proxy.resolveHost()
       }
