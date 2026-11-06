@@ -29,8 +29,13 @@ extension KeyboardViewController {
           !update.text.isEmpty else { return }
 
     let proxy = self.textDocumentProxy
+    guard let document = self.availableDocumentIdentifier() else {
+      // Never insert live text when UIKit cannot confirm the destination field.
+      self.blockExperimentalLiveChanges(token: update.sessionToken)
+      return
+    }
     if let owned = self.liveTranscriptionDocumentID {
-      guard owned == proxy.documentIdentifier else {
+      guard owned == document else {
         self.blockExperimentalLiveChanges(token: update.sessionToken)
         return
       }
@@ -68,7 +73,7 @@ extension KeyboardViewController {
       isAddressField: proxy.keyboardType == .URL || proxy.keyboardType == .emailAddress
     ).leading
     proxy.insertText(prefix + update.text)
-    self.liveTranscriptionDocumentID = proxy.documentIdentifier
+    self.liveTranscriptionDocumentID = document
     self.liveTranscriptionPrefix = prefix
     self.liveTranscriptionCommittedRaw = update.text
     self.liveTranscriptionMarkedText = prefix + update.text
@@ -81,7 +86,7 @@ extension KeyboardViewController {
   func completeExperimentalLiveText(_ final: String) -> Bool {
     guard let owned = self.liveTranscriptionDocumentID else { return false }
     defer { self.abandonExperimentalLiveOwnership() }
-    guard owned == self.textDocumentProxy.documentIdentifier else {
+    guard owned == self.availableDocumentIdentifier() else {
       self.keyboardState.showFinalOutputPreview(final)
       return true
     }
@@ -111,7 +116,7 @@ extension KeyboardViewController {
     self.liveTranscriptionBlockedToken = nil
     defer { self.abandonExperimentalLiveOwnership() }
     guard let owned = self.liveTranscriptionDocumentID,
-          owned == self.textDocumentProxy.documentIdentifier,
+          owned == self.availableDocumentIdentifier(),
           self.textDocumentProxy.documentContextBeforeInput?
             .hasSuffix(self.liveTranscriptionMarkedText) == true else { return }
     for _ in self.liveTranscriptionMarkedText { self.textDocumentProxy.deleteBackward() }

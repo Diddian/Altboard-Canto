@@ -40,6 +40,7 @@ final class KeyboardViewController: UIInputViewController {
   private var renderProbeGeneration = 0
   private var missingRowsRefreshAttempted = false
   private var lastObservedHostHasText: Bool?
+  private var documentIdentifierUnavailableReported = false
   private var memoryWatchTimer: Timer?
 
   var processingTimeoutTimer: Timer?
@@ -94,10 +95,12 @@ final class KeyboardViewController: UIInputViewController {
     SharedSettings().defaults.set(true, forKey: "canto.keyboardOpenedAtLeastOnce")
     SharedSettings().synchronize()
     self.keyboardState.refresh()
-    if self.lastTouchDocumentID != self.textDocumentProxy.documentIdentifier {
+    let document = self.availableDocumentIdentifier()
+    if document == nil || self.lastTouchDocumentID != document {
       KeyboardTouchLearning.shared.invalidate()
     }
-    self.lastTouchDocumentID = self.textDocumentProxy.documentIdentifier
+    // Do not reuse field-specific touch state when UIKit cannot identify it.
+    self.lastTouchDocumentID = document
     self.refreshHostInputTraits()
     self.lastObservedHostHasText = self.textDocumentProxy.hasText
     self.syncFullAccessIfChanged()
@@ -846,10 +849,21 @@ extension KeyboardViewController {
 
   override func textDidChange(_ textInput: (any UITextInput)?) {
     super.textDidChange(textInput)
-    let currentDocument = self.textDocumentProxy.documentIdentifier
-    let sameDocument = self.lastTouchDocumentID == currentDocument
-    if !sameDocument {
+    let currentDocument = self.availableDocumentIdentifier()
+    let sameDocument = KeyboardDocumentIdentifier.isSameOrUnavailable(
+      current: currentDocument, previous: self.lastTouchDocumentID
+    )
+    if currentDocument == nil {
+      // Stop associating touch/cursor state with a host whose identity is unknown.
+      // Do this once per transition, not on every keyboard text callback.
+      if self.lastTouchDocumentID != nil {
+        KeyboardTouchLearning.shared.invalidate()
+        self.resetCursorVerticalState()
+        self.lastTouchDocumentID = nil
+      }
+    } else if !sameDocument {
       KeyboardTouchLearning.shared.invalidate()
+      self.resetCursorVerticalState()
       self.lastTouchDocumentID = currentDocument
       // A host can switch fields without another appearance callback.
       self.keyboardState.keyboardAppearanceRevision &+= 1
@@ -908,6 +922,23 @@ extension KeyboardViewController {
       self.lastTracedLayoutKey = signature
       self.recordKeyboardTrace(.layoutChanged)
     }
+  }
+
+  /// UIKit can transiently return nil for this Objective-C UUID property.
+  /// Never access the Swift-imported nonoptional documentIdentifier directly.
+  /// This method does not log or persist the actual identifier.
+  func availableDocumentIdentifier() -> UUID? {
+    let identifier = KeyboardDocumentIdentifier.read(from: self.textDocumentProxy)
+    if identifier == nil {
+      if !self.documentIdentifierUnavailableReported {
+        self.documentIdentifierUnavailableReported = true
+        self.recordKeyboardTrace(.documentIdentifierUnavailable)
+      }
+    } else if self.documentIdentifierUnavailableReported {
+      self.documentIdentifierUnavailableReported = false
+      self.recordKeyboardTrace(.documentIdentifierRecovered)
+    }
+    return identifier
   }
 
   private func refreshHostInputTraits() {

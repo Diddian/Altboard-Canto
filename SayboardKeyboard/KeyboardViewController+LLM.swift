@@ -105,7 +105,7 @@ extension KeyboardViewController {
       self.pendingAutoActionText = clipboardOnly ? nil : directText
       if !clipboardOnly {
         let proxy = self.textDocumentProxy
-        self.llmDocumentIdentifier = proxy.documentIdentifier
+        self.llmDocumentIdentifier = self.availableDocumentIdentifier()
         self.llmSelectionContextBefore = proxy.documentContextBeforeInput
         self.llmSelectionContextAfter = proxy.documentContextAfterInput
         self.llmDirectSelectedText = proxy.selectedText
@@ -120,7 +120,7 @@ extension KeyboardViewController {
       }
       inputText = selected
       self.llmSelectedText = selected
-      self.llmDocumentIdentifier = self.textDocumentProxy.documentIdentifier
+      self.llmDocumentIdentifier = self.availableDocumentIdentifier()
       self.llmSelectionContextBefore = self.textDocumentProxy.documentContextBeforeInput
       self.llmSelectionContextAfter = self.textDocumentProxy.documentContextAfterInput
       self.llmOriginalText = ""
@@ -207,9 +207,10 @@ extension KeyboardViewController {
   }
 
   private func currentLLMFieldMatches() -> Bool {
-    guard let document = self.llmDocumentIdentifier else { return false }
+    guard let document = self.llmDocumentIdentifier,
+          let current = self.availableDocumentIdentifier() else { return false }
     let proxy = self.textDocumentProxy
-    return proxy.documentIdentifier == document
+    return current == document
       && proxy.documentContextBeforeInput == self.llmSelectionContextBefore
       && proxy.documentContextAfterInput == self.llmSelectionContextAfter
       && proxy.selectedText == self.llmDirectSelectedText
@@ -254,7 +255,9 @@ extension KeyboardViewController {
     }
     if let originalSelection = self.llmSelectedText {
       // Never overwrite a changed selection after asynchronous inference.
-      let matches = textDocumentProxy.documentIdentifier == self.llmDocumentIdentifier
+      // Both IDs must exist. nil == nil must never authorize replacement.
+      let matches = self.llmDocumentIdentifier != nil
+        && self.availableDocumentIdentifier() == self.llmDocumentIdentifier
         && textDocumentProxy.selectedText == originalSelection
         && textDocumentProxy.documentContextBeforeInput == self.llmSelectionContextBefore
         && textDocumentProxy.documentContextAfterInput == self.llmSelectionContextAfter

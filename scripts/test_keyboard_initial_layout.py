@@ -147,6 +147,38 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
                       "Clear Development Traces"):
             self.assertIn(label, diagnostics)
 
+    def test_crash_regression_document_identity_is_optional_at_all_call_sites(self):
+        helper = (ROOT / "Shared/KeyboardDocumentIdentifier.swift").read_text()
+        trace = (ROOT / "Shared/KeyboardLifecycleTrace.swift").read_text()
+        host = HOST.read_text()
+        cursor = (ROOT / "SayboardKeyboard/KeyboardViewController+CursorNavigation.swift").read_text()
+        live = (ROOT / "SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift").read_text()
+        llm = (ROOT / "SayboardKeyboard/KeyboardViewController+LLM.swift").read_text()
+
+        self.assertIn('NSSelectorFromString("documentIdentifier")', helper)
+        self.assertIn("proxy.responds(to: selector)", helper)
+        self.assertIn("proxy.perform(selector)?.takeUnretainedValue()", helper)
+        self.assertIn("object as? NSUUID", helper)
+        for source in (host, cursor, live, llm):
+            self.assertNotIn("textDocumentProxy.documentIdentifier", source)
+            self.assertNotIn("proxy.documentIdentifier", source)
+
+        self.assertIn("let currentDocument = self.availableDocumentIdentifier()", host)
+        self.assertIn("KeyboardDocumentIdentifier.isSameOrUnavailable(", host)
+        self.assertIn("if currentDocument == nil {", host)
+        self.assertIn("self.lastTouchDocumentID = nil", host)
+        self.assertIn("self.resetCursorVerticalState()", host)
+        self.assertIn("self.recordKeyboardTrace(.documentIdentifierUnavailable)", host)
+        self.assertIn("self.recordKeyboardTrace(.documentIdentifierRecovered)", host)
+        self.assertIn("guard let document = self.availableDocumentIdentifier() else", cursor)
+        self.assertIn("self.resetCursorVerticalState()", cursor)
+        self.assertIn("guard let document = self.availableDocumentIdentifier() else", live)
+        self.assertIn("self.blockExperimentalLiveChanges(token: update.sessionToken)", live)
+        self.assertIn("self.llmDocumentIdentifier != nil", llm)
+        self.assertIn("self.availableDocumentIdentifier() == self.llmDocumentIdentifier", llm)
+        self.assertIn('"documentIdentityReview": documentIdentityReview(for: events)', trace)
+        self.assertNotIn("identifier.uuidString", trace)
+
     def test_memory_diagnostics_sample_only_on_lifecycle_or_idle_timer(self):
         sampler = (ROOT / "Shared/KeyboardProcessMemory.swift").read_text()
         trace = (ROOT / "Shared/KeyboardLifecycleTrace.swift").read_text()

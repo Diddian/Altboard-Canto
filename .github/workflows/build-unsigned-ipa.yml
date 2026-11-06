@@ -46,6 +46,13 @@ jobs:
           set -euo pipefail
           if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
 
+      - name: Validate keyboard document identity bridge
+        run: |
+          set -euo pipefail
+          swiftc -o "$RUNNER_TEMP/document-identity-smoke" \
+            Shared/KeyboardDocumentIdentifier.swift scripts/verify-keyboard-document-identifier.swift
+          "$RUNNER_TEMP/document-identity-smoke"
+
       - name: Bootstrap llama.cpp framework
         run: |
           set -euo pipefail

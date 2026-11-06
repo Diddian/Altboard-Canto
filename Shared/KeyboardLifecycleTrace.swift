@@ -16,6 +16,8 @@ enum KeyboardLifecycleTrace {
     case willDisappear
     case didDisappear
     case documentChanged
+    case documentIdentifierUnavailable
+    case documentIdentifierRecovered
     case hostTextCleared
     case layoutChanged
     case switchRequirementChanged
@@ -28,6 +30,7 @@ enum KeyboardLifecycleTrace {
     var needsImmediateWrite: Bool {
       switch self {
       case .willAppear, .willDisappear, .didDisappear, .hostTextCleared,
+           .documentIdentifierUnavailable, .documentIdentifierRecovered,
            .memoryWarning, .renderSuspicious, .renderRefreshRequested: true
       default: false
       }
@@ -37,6 +40,7 @@ enum KeyboardLifecycleTrace {
       switch self {
       case .inputViewLoaded, .hostingMounted, .willAppear, .didAppear,
            .willDisappear, .didDisappear, .documentChanged, .hostTextCleared,
+           .documentIdentifierUnavailable, .documentIdentifierRecovered,
            .memoryWarning, .memorySample, .renderCheckpoint, .renderSuspicious,
            .renderRefreshRequested: true
       default: false
@@ -298,6 +302,35 @@ enum KeyboardLifecycleTrace {
     ]
   }
 
+  /// Correlate transient UIKit document-ID gaps with extension lifecycle.
+  /// Never export the document identifier or any host text.
+  private static func documentIdentityReview(for events: [[String: Any]]) -> [String: Any] {
+    let transitionEvents = Set([
+      Event.documentIdentifierUnavailable.rawValue,
+      Event.documentIdentifierRecovered.rawValue
+    ])
+    let transitions: [[String: Any]] = events.compactMap { entry in
+      guard let event = entry["event"] as? String,
+            transitionEvents.contains(event) else { return nil }
+      return [
+        "timestampMs": entry["timestampMs"] ?? 0,
+        "session": entry["session"] ?? "",
+        "processLaunchID": entry["processLaunchID"] ?? "",
+        "event": event
+      ]
+    }
+    return [
+      "unavailableCount": transitions.filter {
+        ($0["event"] as? String) == Event.documentIdentifierUnavailable.rawValue
+      }.count,
+      "recoveredCount": transitions.filter {
+        ($0["event"] as? String) == Event.documentIdentifierRecovered.rawValue
+      }.count,
+      "recentTransitions": Array(transitions.suffix(24)),
+      "interpretation": "A missing ID does not establish a host-field change. A crash report is required to confirm termination."
+    ]
+  }
+
   static func exportJSON() -> String {
     let events = entries()
     let document: [String: Any] = [
@@ -310,6 +343,7 @@ enum KeyboardLifecycleTrace {
       "events": events,
       "renderReview": renderReview(for: events),
       "postSubmitReview": postSubmitReview(for: events),
+      "documentIdentityReview": documentIdentityReview(for: events),
       "memoryReview": memoryReview(for: events),
     ]
     guard let data = try? JSONSerialization.data(withJSONObject: document, options: [.prettyPrinted, .sortedKeys])
