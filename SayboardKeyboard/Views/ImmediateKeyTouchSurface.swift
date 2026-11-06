@@ -2,6 +2,7 @@ import SwiftUI
 import UIKit
 
 struct ImmediateKeyTouchSurface: UIViewRepresentable {
+  var resetToken = 0
   let onBegan: (CGPoint) -> Void
   let onMoved: (CGPoint, CGPoint) -> Void
   let onEnded: (CGPoint) -> Void
@@ -18,6 +19,10 @@ struct ImmediateKeyTouchSurface: UIViewRepresentable {
   }
 
   func updateUIView(_ uiView: ImmediateKeyTouchView, context: Context) {
+    if uiView.resetToken != self.resetToken {
+      uiView.resetToken = self.resetToken
+      uiView.resetActiveTouch()
+    }
     uiView.onBegan = self.onBegan
     uiView.onMoved = self.onMoved
     uiView.onEnded = self.onEnded
@@ -26,6 +31,7 @@ struct ImmediateKeyTouchSurface: UIViewRepresentable {
 }
 
 final class ImmediateKeyTouchView: UIView {
+  var resetToken = 0
   var onBegan: ((CGPoint) -> Void)?
   var onMoved: ((CGPoint, CGPoint) -> Void)?
   var onEnded: ((CGPoint) -> Void)?
@@ -33,6 +39,16 @@ final class ImmediateKeyTouchView: UIView {
 
   private var activeTouch: UITouch?
   private var initialPoint: CGPoint = .zero
+
+  func resetActiveTouch() {
+    self.activeTouch = nil
+    self.initialPoint = .zero
+  }
+
+  override func didMoveToWindow() {
+    super.didMoveToWindow()
+    if self.window == nil { self.resetActiveTouch() }
+  }
 
   override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
     guard self.activeTouch == nil, let touch = touches.first else { return }
@@ -59,3 +75,4 @@ final class ImmediateKeyTouchView: UIView {
     self.onCancelled?()
   }
 }
+

@@ -12,44 +12,64 @@ struct DiagnosticsView: View {
   @State private var testResult = ""
   @State private var rawASRResult = ""
   @State private var breadcrumbs = [String]()
-  @State private var hapticEvents = [String]()
-  @State private var hapticTotal = 0
+  @State private var keyboardTraceCount = 0
+  @State private var featureTraceCount = 0
+  @State private var showsDevelopmentTraces = false
+  @State private var keyboardTraceExportURL: URL?
+  @State private var confirmTraceClear = false
+  @State private var traceExportFailed = false
   @AppStorage(SharedKey.keyboardTouchDebugOverlay,
               store: UserDefaults(suiteName: AppGroup.identifier))
   private var showTouchTargets = false
-  @State private var coreHapticStatus = ""
-  @State private var coreHapticEngine: CHHapticEngine?
-  @StateObject private var sensoryPulse = KeyboardSensoryPulse.shared
 
   var body: some View {
     Form {
       self.permissionsSection
       self.modelsSection
       self.audioSection
-      self.hapticsSection
       self.touchTargetSection
       self.liveDictationSection
       self.testSection
       self.crashSection
+      #if !APPSTORE
+      self.developmentTraceSection
+      #endif
       self.exportSection
     }
     .navigationTitle("Diagnostics")
     .navigationBarTitleDisplayMode(.inline)
     .onAppear(perform: self.refresh)
-    .sensoryFeedback(.selection, trigger: self.sensoryPulse.count)
+    .confirmationDialog("Clear development traces?", isPresented: self.$confirmTraceClear) {
+      Button("Clear Traces", role: .destructive) {
+        FeatureDiagnostics.clearAll()
+        self.keyboardTraceCount = 0
+        self.featureTraceCount = 0
+      }
+    }
+    .sheet(isPresented: Binding(
+      get: { self.keyboardTraceExportURL != nil },
+      set: { if !$0 { self.removeKeyboardTraceExport() } }
+    ), onDismiss: { self.removeKeyboardTraceExport() }) {
+      if let url = self.keyboardTraceExportURL {
+        KeyboardTraceShareSheet(url: url)
+      }
+    }
+    .alert("Development diagnostics export failed", isPresented: self.$traceExportFailed) {
+      Button("OK", role: .cancel) {}
+    }
   }
 
   private var permissionsSection: some View {
     Section {
       LabeledContent("Microphone (iOS)", value: self.micStatus)
-      LabeledContent("Keyboard enabled", value: self.permissions.keyboardInstallationStatus)
+      LabeledContent("Keyboard detected", value: self.yesNo(self.permissions.isKeyboardAdded))
       LabeledContent("Main App Group", value: self.permissions.mainGroupTestResult)
       LabeledContent("App Group ID", value: AppGroup.resolutionDescription)
       LabeledContent("App build", value: self.appBuild)
       LabeledContent("Keyboard build", value: self.keyboardBuild)
       LabeledContent("Keyboard report", value: self.permissions.keyboardProbeSummary)
-      LabeledContent("Full Access (last report)", value: self.report(self.permissions.keyboardReportedFullAccess))
-      LabeledContent("Keyboard App Group (last report)", value: self.report(self.permissions.keyboardReportedGroupAvailable))
+      LabeledContent("Keyboard Full Access", value: self.report(self.permissions.keyboardReportedFullAccess))
+      LabeledContent("Keyboard App Group", value: self.report(self.permissions.keyboardReportedGroupAvailable))
       LabeledContent("Selected keyboard mode", value: SharedSettings().keyboardKind.displayNameKey)
       LabeledContent("Key arrangement", value: SharedSettings().keyboardLetterArrangement.rawValue.uppercased())
       LabeledContent("Keyboard canvas", value: self.fixedKeyboardHeight)
@@ -89,54 +109,6 @@ struct DiagnosticsView: View {
       LabeledContent("iOS", value: UIDevice.current.systemVersion)
     } header: {
       Text("Audio and Device")
-    }
-  }
-
-  private var hapticsSection: some View {
-    Section {
-      LabeledContent("Hardware haptics", value: self.yesNo(CHHapticEngine.capabilitiesForHardware().supportsHaptics))
-      LabeledContent("App Group haptics enabled", value: self.yesNo(SharedSettings().keyboardHapticsEnabled))
-      LabeledContent("Requested events", value: String(self.hapticTotal))
-      LabeledContent("Keyboard Full Access", value: self.report(self.permissions.keyboardReportedFullAccess))
-      LabeledContent("Configured haptic engine", value: SharedSettings().keyboardHapticDriver.displayName)
-      ForEach(KeyboardHaptics.Technique.allCases, id: \.rawValue) { technique in
-        Button("Test " + technique.displayName + " haptic") {
-          KeyboardHaptics.key(enabled: true, technique: technique)
-          self.refreshHaptics()
-        }
-      }
-      Button("Test Core Haptics (app)") {
-        self.testCoreHaptics()
-      }
-      .disabled(!CHHapticEngine.capabilitiesForHardware().supportsHaptics)
-      if !self.coreHapticStatus.isEmpty {
-        Text(self.coreHapticStatus)
-          .font(.footnote)
-          .foregroundStyle(.secondary)
-          .textSelection(.enabled)
-      }
-      if !self.hapticEvents.isEmpty {
-        Text(self.hapticEvents.suffix(20).joined(separator: "\n"))
-          .font(.system(.caption2, design: .monospaced))
-          .textSelection(.enabled)
-      }
-      if !KeyboardInputTrace.events.isEmpty {
-        Text("Keyboard interactions (event names only)")
-          .font(.caption.weight(.medium))
-        Text(KeyboardInputTrace.events.suffix(12).joined(separator: "\n"))
-          .font(.system(.caption2, design: .monospaced))
-          .textSelection(.enabled)
-      }
-      Button("Clear haptic trace") {
-        KeyboardHapticTrace.clear()
-        KeyboardInputTrace.clear()
-        self.refreshHaptics()
-      }
-      Button("Refresh haptic trace", action: self.refreshHaptics)
-    } header: {
-      Text("Haptic Diagnostics")
-    } footer: {
-      Text("Events record calls, not confirmed physical vibration. Core Haptics errors are recorded separately. App and keyboard extension use separate processes; compare both in this trace.")
     }
   }
 
@@ -221,12 +193,42 @@ struct DiagnosticsView: View {
     }
   }
 
+  #if !APPSTORE
+  private var developmentTraceSection: some View {
+    Section {
+      DisclosureGroup("Development Traces", isExpanded: self.$showsDevelopmentTraces) {
+        LabeledContent("Keyboard lifecycle", value: "\(self.keyboardTraceCount)")
+        LabeledContent("Feature milestones", value: "\(self.featureTraceCount)")
+        Button("Share Development Diagnostics JSON") {
+          if let url = FeatureDiagnostics.exportFileURL() {
+            self.keyboardTraceExportURL = url
+          } else {
+            self.traceExportFailed = true
+          }
+        }
+        Button("Copy Development Diagnostics JSON") {
+          UIPasteboard.general.string = FeatureDiagnostics.exportJSON()
+        }
+        Button("Refresh Diagnostic Counts") {
+          self.keyboardTraceCount = KeyboardLifecycleTrace.eventCount
+          self.featureTraceCount = FeatureDiagnostics.eventCount
+        }
+        Button("Clear Development Traces", role: .destructive) {
+          self.confirmTraceClear = true
+        }
+      }
+    } footer: {
+      Text("Local metadata only. Export after a failure. Nothing uploads automatically.")
+    }
+  }
+  #endif
+
   private var exportSection: some View {
     Section {
       NavigationLink {
-        LearningDataSettingsView()
+        CantoneseRomanizationDiagnosticsView()
       } label: {
-        Label("Corrections & Suggestions JSON", systemImage: "square.and.arrow.up")
+        Label("Cantonese Learning & JSON Export", systemImage: "character.book.closed")
       }
       Button("Copy complete diagnostics") {
         UIPasteboard.general.string = self.summary
@@ -234,7 +236,7 @@ struct DiagnosticsView: View {
     } header: {
       Text("Export")
     } footer: {
-      Text("For an iOS crash report: Settings → Privacy & Security → Analytics & Improvements → Analytics Data. Look for an Altboard or Sayboard crash near the failure time.")
+      Text("For a suspected keyboard termination: Settings → Privacy & Security → Analytics & Improvements → Analytics Data. Check JetsamEvent and Altboard or Sayboard crash reports near the failure time. Memory samples are in Development Traces JSON.")
     }
   }
 
@@ -277,38 +279,8 @@ struct DiagnosticsView: View {
     self.permissions.refreshAll()
     self.models.verifyExistingModels()
     self.refreshBreadcrumbs()
-    self.refreshHaptics()
-  }
-
-  private func testCoreHaptics() {
-    guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else {
-      self.coreHapticStatus = "This device has no Core Haptics hardware."
-      return
-    }
-    do {
-      let engine = try CHHapticEngine()
-      self.coreHapticEngine = engine
-      try engine.start()
-      let event = CHHapticEvent(
-        eventType: .hapticTransient,
-        parameters: [
-          CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.85),
-          CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.55)
-        ],
-        relativeTime: 0
-      )
-      let pattern = try CHHapticPattern(events: [event], parameters: [])
-      let player = try engine.makePlayer(with: pattern)
-      try player.start(atTime: 0)
-      self.coreHapticStatus = "Core Haptics started; physically felt vibration still requires confirmation."
-    } catch {
-      self.coreHapticStatus = "Core Haptics error: \(error.localizedDescription)"
-    }
-  }
-
-  private func refreshHaptics() {
-    self.hapticEvents = KeyboardHapticTrace.events
-    self.hapticTotal = KeyboardHapticTrace.total
+    self.keyboardTraceCount = KeyboardLifecycleTrace.eventCount
+    self.featureTraceCount = FeatureDiagnostics.eventCount
   }
 
   private func refreshBreadcrumbs() {
@@ -350,6 +322,12 @@ struct DiagnosticsView: View {
     return "\(Int(height)) pt (fixed iPhone layout)"
   }
 
+  private func removeKeyboardTraceExport() {
+    guard let url = self.keyboardTraceExportURL else { return }
+    self.keyboardTraceExportURL = nil
+    try? FileManager.default.removeItem(at: url)
+  }
+
   private var summary: String {
     [
       "Altboard-Canto Diagnostics",
@@ -378,6 +356,8 @@ struct DiagnosticsView: View {
       "Haptic requested count: \(KeyboardHapticTrace.total)",
       "Haptic request trace (no typed characters):",
       KeyboardHapticTrace.events.joined(separator: "\n"),
+      "Keyboard lifecycle trace events: \(self.keyboardTraceCount)",
+      "Feature diagnostic events: \(self.featureTraceCount)",
       "Keyboard interaction trace (no text):",
       KeyboardInputTrace.events.joined(separator: "\n"),
       "Audio engine: \(self.speech.session.audioEngine.isRunning)",
@@ -391,4 +371,14 @@ struct DiagnosticsView: View {
       self.breadcrumbs.joined(separator: "\n"),
     ].joined(separator: "\n")
   }
+}
+
+private struct KeyboardTraceShareSheet: UIViewControllerRepresentable {
+  let url: URL
+
+  func makeUIViewController(context: Context) -> UIActivityViewController {
+    UIActivityViewController(activityItems: [self.url], applicationActivities: nil)
+  }
+
+  func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }

@@ -138,6 +138,7 @@ private final class AppServices {
 struct SayboardApp: App {
 
   init() {
+    FeatureDiagnostics.record(.appStartup, .started)
     ModelHub.offlineMode = true
     HostApplicationMonitor.start()
     ParakeetV3JointMigration.runIfNeeded()
@@ -157,6 +158,7 @@ struct SayboardApp: App {
     #endif
     Self.markOnboardingCompleteForEstablishedInstall()
     NewNameNotice().settleAtLaunch()
+    FeatureDiagnostics.record(.appStartup, .completed)
   }
 
   @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
@@ -274,7 +276,7 @@ private struct SayboardRootView: View {
     .environmentObject(self.llmDownloadService)
     .environmentObject(self.llmCoordinator)
     .environmentObject(self.pipTutorialService)
-    .environment(\.locale, Locale(identifier: self.appLanguage))
+    .environment(\.locale, Locale(identifier: self.appLanguage == "no" ? "nb" : self.appLanguage))
   }
 
   @ViewBuilder

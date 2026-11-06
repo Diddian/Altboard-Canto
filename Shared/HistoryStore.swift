@@ -56,26 +56,25 @@ struct HistoryStore: Sendable {
   }
 
   func readRecords() throws -> [HistoryRecord] {
-    guard let url = historyFileURL else { throw CocoaError(.fileReadNoSuchFile) }
-    guard FileManager.default.fileExists(atPath: url.path) else { return [] }
-    // A damaged or unexpectedly large manifest must not block the UI with
-    // an unbounded synchronous read. Audio never enters this JSON decoder.
-    let handle = try FileHandle(forReadingFrom: url)
-    defer { try? handle.close() }
-    let data = try handle.read(upToCount: Self.maximumManifestBytes + 1) ?? Data()
-    guard data.count <= Self.maximumManifestBytes else { throw CocoaError(.fileReadTooLarge) }
+    guard let url = historyFileURL, FileManager.default.fileExists(atPath: url.path) else { return [] }
+    let data = try Data(contentsOf: url)
     let records = try JSONDecoder.historyDecoder.decode([HistoryRecord].self, from: data)
     return records.sorted { $0.date > $1.date }
   }
 
-  @discardableResult
-  func saveRecord(_ record: HistoryRecord) -> Bool {
+  func saveRecord(_ record: HistoryRecord) {
     guard SharedSettings().retentionPolicy != .never else {
-      return self.deleteAudioFile(named: record.audioFileName)
+      self.deleteAudioFile(named: record.audioFileName)
+      return
     }
-    guard var records = try? self.readRecords() else { return false }
+    guard var records = try? self.readRecords() else {
+      self.deleteAudioFile(named: record.audioFileName)
+      return
+    }
     records.insert(record, at: 0)
-    return self.writeRecords(records)
+    if !self.writeRecords(records) {
+      self.deleteAudioFile(named: record.audioFileName)
+    }
   }
 
   @discardableResult
@@ -106,21 +105,39 @@ struct HistoryStore: Sendable {
         rules.append(CantoneseCorrectionRule(
           heard: pair.heard, intended: pair.intended
         ))
+        // Three independent, manually corrected recordings also provide
+        // bounded positive evidence for a Chinese word across IME methods.
+        // No full transcript or audio is copied into the keyboard profile.
+        _ = ConfirmedChoiceLearning.rememberConfirmedChinese(
+          pair.intended, defaults: AppGroup.sharedDefaults
+        )
       }
       settings.cantoneseCorrectionRules = rules
       settings.synchronize()
     }
+    let latinPairs = LatinSpeechCorrectionLearning.recurringRules(in: records)
+    if !latinPairs.isEmpty {
+      var learned = LatinSpeechCorrectionLearning.read(defaults: AppGroup.sharedDefaults)
+      for candidate in latinPairs {
+        guard learned.count < LatinSpeechCorrectionLearning.maximumRules,
+              !learned.contains(where: {
+                $0.language == candidate.language &&
+                $0.heard.caseInsensitiveCompare(candidate.heard) == .orderedSame
+              }) else { continue }
+        learned.append(candidate)
+      }
+      LatinSpeechCorrectionLearning.save(learned, defaults: AppGroup.sharedDefaults)
+    }
     return true
   }
 
-  @discardableResult
-  func deleteRecord(id: UUID) -> Bool {
-    guard var records = try? self.readRecords() else { return false }
-    guard let index = records.firstIndex(where: { $0.id == id }) else { return false }
+  func deleteRecord(id: UUID) {
+    guard var records = try? self.readRecords() else { return }
+    guard let index = records.firstIndex(where: { $0.id == id }) else { return }
     let record = records[index]
     records.remove(at: index)
-    guard self.writeRecords(records) else { return false }
-    return self.deleteAudioFile(named: record.audioFileName)
+    guard self.writeRecords(records) else { return }
+    self.deleteAudioFile(named: record.audioFileName)
   }
 
   @discardableResult
@@ -160,20 +177,16 @@ struct HistoryStore: Sendable {
     return records.count - self.retainedRecords(for: policy, in: records).count
   }
 
-  @discardableResult
-  func applyRetentionPolicy() -> Bool {
-    guard let records = try? self.readRecords() else { return false }
+  func applyRetentionPolicy() {
+    guard let records = try? self.readRecords() else { return }
     let retained = self.retainedRecords(for: SharedSettings().retentionPolicy, in: records)
     let retainedIDs = Set(retained.map(\.id))
-    guard self.writeRecords(retained) else { return false }
-    var removedAll = true
+    guard self.writeRecords(retained) else { return }
     for record in records where !retainedIDs.contains(record.id) {
-      if !self.deleteAudioFile(named: record.audioFileName) { removedAll = false }
+      self.deleteAudioFile(named: record.audioFileName)
     }
-    return removedAll
   }
 
-  private static let maximumManifestBytes = 64 * 1024 * 1024
   private let historyFileName = "history.json"
   private let audioDirectoryName = "audio"
 

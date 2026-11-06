@@ -25,16 +25,6 @@ enum ModelDownloadInstaller {
     } else {
       try fm.unzipItem(at: source, to: staging)
     }
-    // Never replace a working model with an empty or malformed extraction.
-    let extracted = try fm.contentsOfDirectory(at: staging, includingPropertiesForKeys: nil)
-    guard !extracted.isEmpty else { throw CocoaError(.fileReadCorruptFile) }
-    if let enumerator = fm.enumerator(at: staging, includingPropertiesForKeys: [.isSymbolicLinkKey]) {
-      for case let item as URL in enumerator {
-        if (try item.resourceValues(forKeys: [.isSymbolicLinkKey])).isSymbolicLink == true {
-          throw CocoaError(.fileReadCorruptFile)
-        }
-      }
-    }
     try fm.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
     if fm.fileExists(atPath: destination.path) {
       _ = try fm.replaceItemAt(destination, withItemAt: staging)

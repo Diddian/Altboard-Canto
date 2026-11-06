@@ -1,7 +1,6 @@
 import Foundation
 
 struct SharedSettings {
-
   init() {
     self.init(defaults: AppGroup.sharedDefaults ?? .standard)
   }
@@ -229,9 +228,26 @@ struct SharedSettings {
     nonmutating set { defaults.set(newValue, forKey: SharedKey.hasPreparedModelOnce) }
   }
 
+  /// Extra in-keyboard Globe is opt-in. The mandatory iOS switch key
+  /// remains available whenever UIInputViewController requires it.
+  var keyboardShowGlobeKey: Bool {
+    get { defaults.bool(forKey: SharedKey.keyboardShowGlobeKey) }
+    nonmutating set { defaults.set(newValue, forKey: SharedKey.keyboardShowGlobeKey) }
+  }
+
   var keyboardShowSettingsKey: Bool {
     get { defaults.object(forKey: SharedKey.keyboardShowSettingsKey) as? Bool ?? true }
     nonmutating set { defaults.set(newValue, forKey: SharedKey.keyboardShowSettingsKey) }
+  }
+
+  var keyboardShowOutputLanguageButton: Bool {
+    get { defaults.object(forKey: SharedKey.keyboardShowOutputLanguageButton) as? Bool ?? true }
+    nonmutating set { defaults.set(newValue, forKey: SharedKey.keyboardShowOutputLanguageButton) }
+  }
+
+  var keyboardShowAIButton: Bool {
+    get { defaults.object(forKey: SharedKey.keyboardShowAIButton) as? Bool ?? true }
+    nonmutating set { defaults.set(newValue, forKey: SharedKey.keyboardShowAIButton) }
   }
 
   var useCustomSpaceBar: Bool {
@@ -279,7 +295,8 @@ struct SharedSettings {
       // With a selected Qwen recognizer, live dictation is the default.
       // An explicit user preference, including OFF, always takes precedence.
       defaults.object(forKey: SharedKey.experimentalLiveDictationEnabled) as? Bool
-        ?? (self.selectedVariant.engine == .qwen3)
+        ?? (self.selectedVariant.engine == .qwen3
+          && ProcessInfo.processInfo.physicalMemory >= 8 * 1_073_741_824)
     }
     nonmutating set { defaults.set(newValue, forKey: SharedKey.experimentalLiveDictationEnabled) }
   }
@@ -409,7 +426,7 @@ struct SharedSettings {
         let raw = defaults.string(forKey: SharedKey.selectedLLMVariant),
         let variant = LLMModelVariant(rawValue: raw)
       else {
-        return .qwen35Small
+        return LLMDevicePolicy.usesChinese(self.textProcessingLanguages) ? .hereticSmall : .qwen35Small
       }
       return variant
     }
@@ -605,3 +622,4 @@ struct SharedSettings {
   }
 
 }
+

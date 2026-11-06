@@ -25,9 +25,43 @@ final class LatinWordSuggestions {
   func fastChoices(for typed: String, preferred: [String], limit: Int = 6)
     -> [LatinWordSuggestion] {
     let codes = LatinWordSuggestionPolicy.preferredCodes(preferred)
+    let languageBoosts = LanguagePriority.boosts(preferred)
     guard (2...32).contains(typed.count) else { return [] }
     var result = [LatinWordSuggestion]()
     var seen = Set<String>()
+    // Previously confirmed custom words must be searchable again, including
+    // a neutral language bucket when both English and German were enabled.
+    let selected = defaults?.dictionary(forKey: storageKey) as? [String: Int] ?? [:]
+    let supported = Set(codes.filter { $0 == "en" || $0 == "de" })
+    let learned = selected.compactMap { key, count -> (LatinWordSuggestion, Int)? in
+      let parts = key.split(separator: "|", maxSplits: 1).map(String.init)
+      guard count > 0, parts.count == 2,
+            supported.contains(parts[0]) || (parts[0] == "und" && !supported.isEmpty),
+            parts[1].hasPrefix(typed.lowercased()),
+            parts[1] != typed.lowercased(),
+            (2...32).contains(parts[1].count) else { return nil }
+      return (LatinWordSuggestion(text: parts[1], language: parts[0]), count)
+    }.sorted {
+      if $0.1 != $1.1 { return $0.1 > $1.1 }
+      let left = languageBoosts[$0.0.language] ?? 0
+      let right = languageBoosts[$1.0.language] ?? 0
+      return left == right ? $0.0.text < $1.0.text : left > right
+    }
+    for item in learned.prefix(min(3, limit)) {
+      let suggestion = item.0
+      if seen.insert(suggestion.text.lowercased()).inserted {
+        result.append(LatinWordSuggestion(
+          text: LatinWordSuggestionPolicy.matchCapitalization(suggestion.text, typed: typed),
+          language: suggestion.language
+        ))
+      }
+    }
+    // A few bounded reviewed slang/shortform completions; never auto-expand.
+    for choice in InformalNgramStore.shared.completions(
+      for: typed, preferred: preferred, limit: min(3, limit)
+    ) where choice.text.lowercased() != typed.lowercased() {
+      if seen.insert(choice.text.lowercased()).inserted { result.append(choice) }
+    }
     for code in codes where code == "en" || code == "de" {
       let words = Self.commonWords[code] ?? []
       let phrases = LatinWordSuggestionPolicy.splitPhraseCorrections(
@@ -50,10 +84,11 @@ final class LatinWordSuggestions {
     return result
   }
 
-  func choices(for typed: String, preferred: [String], limit: Int = 9) -> [LatinWordSuggestion] {
+  func choices(for typed: String, preferred: [String], context: String? = nil,
+               limit: Int = 9) -> [LatinWordSuggestion] {
     guard (2...32).contains(typed.count) else { return [] }
     let codes = LatinWordSuggestionPolicy.preferredCodes(preferred)
-    guard !codes.isEmpty else { return [] }
+    let languageBoosts = LanguagePriority.boosts(preferred)
 
     let available = UITextChecker.availableLanguages
     let installed = LatinWordSuggestionPolicy.checkerLocales(
@@ -96,12 +131,22 @@ final class LatinWordSuggestions {
       }
     }
 
-    // Selected suggestions are learned locally, just as Cantonese choices
-    // already are. There is no collection of uncommitted typed text.
+    // Context only reorders explicit choices; personal selection counts win.
+    // Never retain host text or silently replace an abbreviation.
+    let weights = InformalNgramStore.shared.contextWeights(
+      context: context, current: typed, preferred: preferred
+    )
     let counts = defaults?.dictionary(forKey: storageKey) as? [String: Int] ?? [:]
+    func score(_ candidate: LatinWordSuggestion) -> Int {
+      let token = candidate.text.lowercased()
+        .trimmingCharacters(in: CharacterSet(charactersIn: "."))
+      let saved = (counts[candidate.id] ?? 0)
+        + (candidate.language == "und" ? 0 : (counts["und|" + token] ?? 0))
+      return saved * 32 + (weights[candidate.language + "|" + token] ?? 0)
+        + (languageBoosts[candidate.language] ?? 0)
+    }
     return Array(collected.enumerated().sorted { lhs, rhs in
-      let a = counts[lhs.element.id] ?? 0
-      let b = counts[rhs.element.id] ?? 0
+      let a = score(lhs.element), b = score(rhs.element)
       return a == b ? lhs.offset < rhs.offset : a > b
     }.prefix(max(1, limit)).map(\.element))
   }
@@ -111,9 +156,15 @@ final class LatinWordSuggestions {
   func recognizesWholeWord(_ typed: String, preferred: [String]) -> Bool {
     guard (1...32).contains(typed.count) else { return false }
     let lower = typed.lowercased()
+    if InformalNgramStore.shared.hasTerm(typed, preferred: preferred) { return true }
     let codes = LatinWordSuggestionPolicy.preferredCodes(preferred)
       .filter { $0 == "en" || $0 == "de" }
     guard !codes.isEmpty else { return false }
+    let selected = defaults?.dictionary(forKey: storageKey) as? [String: Int] ?? [:]
+    if (selected["und|" + lower] ?? 0) > 0 ||
+       codes.contains(where: { (selected[$0 + "|" + lower] ?? 0) > 0 }) {
+      return true
+    }
     if codes.contains("en") && (lower == "i" || lower == "a") { return true }
     if codes.contains("en") && SwipeWordLexicon.shared.contains(lower) { return true }
     for code in codes {
@@ -134,20 +185,90 @@ final class LatinWordSuggestions {
     return false
   }
 
+  func nextWords(after context: String?, preferred: [String], limit: Int = 6)
+    -> [LatinWordSuggestion] {
+    let words = InformalNgramStore.shared.nextWords(
+      after: context, preferred: preferred, limit: limit
+    )
+    let counts = defaults?.dictionary(forKey: storageKey) as? [String: Int] ?? [:]
+    // Do not write user context back to the language model. Confirmed Latin
+    // choices can only advance an existing contextual candidate three places.
+    return words.enumerated().sorted { a, b in
+      let aCount = (counts[a.element.id] ?? 0)
+        + (counts["und|" + a.element.text.lowercased()] ?? 0)
+      let bCount = (counts[b.element.id] ?? 0)
+        + (counts["und|" + b.element.text.lowercased()] ?? 0)
+      let aBoost = min(3, max(0, aCount / 2))
+      let bBoost = min(3, max(0, bCount / 2))
+      let left = a.offset - aBoost, right = b.offset - bBoost
+      return left == right ? a.offset < b.offset : left < right
+    }.map(\.element)
+  }
+
   func remember(_ suggestion: LatinWordSuggestion) {
-    var counts = defaults?.dictionary(forKey: storageKey) as? [String: Int] ?? [:]
-    counts[suggestion.id] = min(10_000, (counts[suggestion.id] ?? 0) + 1)
-    if counts.count > 900 {
-      counts = Dictionary(uniqueKeysWithValues:
-        counts.sorted { $0.value > $1.value }.prefix(500).map { ($0.key, $0.value) })
+    guard ["en", "de", "yue", "und"].contains(suggestion.language) else { return }
+    let counts = defaults?.dictionary(forKey: storageKey) as? [String: Int] ?? [:]
+    defaults?.set(
+      ConfirmedChoiceLearning.increment(
+        suggestion.id, in: counts, trimAt: 900, retain: 500
+      ),
+      forKey: storageKey
+    )
+  }
+
+  /// A word selected from a swipe-alternative strip is a confirmed choice.
+  /// Do not learn automatically committed first guesses or ambiguous words
+  /// that could belong to both enabled languages.
+  func rememberSwipeAlternative(_ word: String, preferred: [String]) {
+    let codes = LatinWordSuggestionPolicy.preferredCodes(preferred)
+      .filter { $0 == "en" || $0 == "de" }
+    guard (2...32).contains(word.count), !codes.isEmpty else { return }
+    let matching = codes.filter { code in
+      if code == "en" && SwipeWordLexicon.shared.contains(word.lowercased()) {
+        return true
+      }
+      return Self.commonWords[code]?.contains(where: {
+        $0.caseInsensitiveCompare(word) == .orderedSame
+      }) == true
     }
-    defaults?.set(counts, forKey: storageKey)
+    let selectedLanguage: String?
+    if matching.count == 1 { selectedLanguage = matching[0] }
+    else if codes.count == 1 { selectedLanguage = codes[0] }
+    else { selectedLanguage = "und" }
+    guard let selectedLanguage else { return }
+    remember(LatinWordSuggestion(text: word, language: selectedLanguage))
+  }
+
+  /// An unfamiliar word is added only after the user selects its
+  /// quoted literal. Never learn raw gestures or unconfirmed host text.
+  @discardableResult
+  func rememberCustom(_ word: String, preferred: [String]) -> Bool {
+    let cleaned = word.lowercased()
+    guard (3...32).contains(cleaned.count),
+          let first = cleaned.first, let last = cleaned.last,
+          first.isLetter, last.isLetter,
+          cleaned.allSatisfy({ $0.isLetter || $0 == "'" || $0 == "’" }),
+          defaults != nil
+    else { return false }
+    let codes = LatinWordSuggestionPolicy.preferredCodes(preferred)
+      .filter { $0 == "en" || $0 == "de" }
+    guard !codes.isEmpty else { return false }
+    let matching = codes.filter { code in
+      Self.commonWords[code]?.contains(where: {
+        $0.caseInsensitiveCompare(cleaned) == .orderedSame
+      }) == true
+    }
+    let language = matching.count == 1 ? matching[0] :
+      (codes.count == 1 ? codes[0] : "und")
+    self.remember(LatinWordSuggestion(text: cleaned, language: language))
+    return true
   }
 
   /// Words saved by an explicit alternate tap are eligible for future swipes.
   /// Raw paths and host text are never persisted.
   func learnedSwipeWords(preferred: [String]) -> [String] {
-    let permitted = Set(LatinWordSuggestionPolicy.preferredCodes(preferred))
+    var permitted = Set(LatinWordSuggestionPolicy.preferredCodes(preferred))
+    if !permitted.isDisjoint(with: ["en", "de"]) { permitted.insert("und") }
     let counts = self.defaults?.dictionary(forKey: self.storageKey) as? [String: Int] ?? [:]
     return counts.filter { entry in
       let pieces = entry.key.split(separator: "|", maxSplits: 1).map(String.init)
@@ -160,6 +281,11 @@ final class LatinWordSuggestions {
 
   static let commonWords: [String: [String]] = [
     "en": [
+      // Conversational and informal spellings are valid swipe targets.
+      "aite", "wanna", "gonna", "gotta", "kinda", "sorta", "lemme", "gimme",
+      "dunno", "ain't", "y'all", "nope", "yup", "nah", "bruh", "sus",
+      "lowkey", "highkey", "tho", "cuz", "tbh", "idk", "thinner",
+      "chillin", "vibing", "awesome", "legit", "yikes", "yolo", "btw",
       "about", "above", "after", "again", "also", "always", "another", "answer",
       "anything", "apple", "around", "because", "before", "Berlin", "better",
       "book", "business", "can", "change", "check", "city", "come", "company", "become", "becoming",
@@ -225,6 +351,12 @@ final class LatinWordSuggestions {
       "write", "writing", "year", "yesterday", "your"
     ],
     "de": [
+      // Informal spoken German, including common QWERTZ swipe words.
+      "naja", "joa", "jup", "nö", "krass", "Digga", "Diggi",
+      "Alter", "boah", "Moin", "Jein", "Tschüss", "chillen",
+      "chillig", "Bock", "ähm", "öhm", "läuft", "safe", "stabil",
+      "mega", "geil", "voll", "echt", "quasi", "halt", "achso",
+      "achja", "Brudi", "hammer", "nice", "lol", "nee",
       "aber", "Abend", "alle", "alles", "also", "andere", "Anfang", "Angst",
       "antworten", "Arbeit", "arbeiten", "auch", "auf", "aus", "Bahn",
       "Beispiel", "Berlin", "besser", "bestimmt", "bezahlen", "bitte",
@@ -255,3 +387,4 @@ final class LatinWordSuggestions {
     ]
   ]
 }
+

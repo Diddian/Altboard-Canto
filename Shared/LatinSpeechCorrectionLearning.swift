@@ -55,7 +55,7 @@ enum LatinSpeechCorrectionLearning {
     var counts = [Rule: Int]()
     for record in records {
       guard let corrected = record.userCorrection,
-            let language = unambiguousLanguage([]),
+            let language = unambiguousLanguage(record.recognitionLanguages),
             let rule = singleWordChange(
               heard: record.originalASR ?? record.transcription,
               intended: corrected, language: language

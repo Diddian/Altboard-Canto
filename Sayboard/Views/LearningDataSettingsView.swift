@@ -6,7 +6,6 @@ struct LearningDataSettingsView: View {
   @State private var showExporter = false
   @State private var exportedDocument: LearningDataExportDocument?
   @State private var showResetConfirmation = false
-  @State private var exportError: String?
   @State private var counts = [String: Int]()
 
   var body: some View {
@@ -14,7 +13,7 @@ struct LearningDataSettingsView: View {
       Section {
         LabeledContent("Confirmed words", value: "\(self.counts.count)")
         if self.counts.isEmpty {
-          Text("No confirmed candidate selections are stored yet.")
+          Text("Choose a word in the keyboard to begin building personal suggestions.")
             .foregroundStyle(.secondary)
         } else {
           ForEach(self.topWords, id: \.key) { word in
@@ -63,17 +62,8 @@ struct LearningDataSettingsView: View {
       document: self.exportedDocument,
       contentType: .json,
       defaultFilename: "Altboard-Corrections-and-Suggestions"
-    ) { result in
-      if case .failure(let error) = result { self.exportError = error.localizedDescription }
+    ) { _ in
       self.exportedDocument = nil
-    }
-    .alert("Data Export Failed", isPresented: Binding(
-      get: { self.exportError != nil },
-      set: { if !$0 { self.exportError = nil } }
-    )) {
-      Button("OK", role: .cancel) { self.exportError = nil }
-    } message: {
-      Text(self.exportError ?? "")
     }
   }
 
@@ -84,26 +74,18 @@ struct LearningDataSettingsView: View {
   }
 
   private func reload() {
-    self.counts = AppGroup.sharedDefaults?.dictionary(forKey: LocalUserDataStore.learnedKeys[0]) as? [String: Int] ?? [:]
+    self.counts = ConfirmedChoiceLearning.chineseCounts(defaults: AppGroup.sharedDefaults)
   }
 
   private func reset() {
-    do {
-      try LocalUserDataStore.resetLearning()
-      self.reload()
-    } catch {
-      self.exportError = error.localizedDescription
-    }
+    LocalUserDataStore.resetLearning()
+    self.reload()
   }
 
   private func exportJSON() {
-    do {
-      let data = try LocalUserDataStore.vocabularyData()
-      self.exportedDocument = LearningDataExportDocument(content: data)
-      self.showExporter = true
-    } catch {
-      self.exportError = error.localizedDescription
-    }
+    guard let data = try? LocalUserDataStore.vocabularyData() else { return }
+    self.exportedDocument = LearningDataExportDocument(content: data)
+    self.showExporter = true
   }
 }
 

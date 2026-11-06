@@ -48,8 +48,14 @@ final class ModelDownloadService: ObservableObject {
   }
 
   func selectVariant(_ variant: ModelVariant) {
-    SharedSettings().selectedVariant = variant
-    self.selectedVariant = variant
+    FeatureDiagnostics.record(.speechModel, .selected)
+    let settings = SharedSettings()
+    settings.selectedVariant = variant
+    settings.setPreferredLanguages(
+      SpeechModelRecommendation.preferredLanguages(for: variant, from: settings.preferredSpokenLanguages),
+      for: variant
+    )
+    if self.selectedVariant != variant { self.selectedVariant = variant }
     self.syncHasUsableModel()
   }
 
@@ -95,8 +101,9 @@ final class ModelDownloadService: ObservableObject {
   }
 
   func verifyExistingModels() {
+    var states = self.variantStates
     for variant in ModelVariant.allCases {
-      switch self.variantStates[variant] {
+      switch states[variant] {
       case .downloading, .error:
         continue
       case .downloaded, .notDownloaded, .none:
@@ -104,13 +111,14 @@ final class ModelDownloadService: ObservableObject {
       }
 
       if ModelStorageManager.isDownloaded(variant) {
-        self.variantStates[variant] = .downloaded
+        states[variant] = .downloaded
       } else if BackgroundDownloadManager.shared.hasActiveDownload(variantRawValue: variant.rawValue, downloadType: .stt) {
-        self.variantStates[variant] = .downloading(progress: 0)
+        states[variant] = .downloading(progress: 0)
       } else {
-        self.variantStates[variant] = .notDownloaded
+        states[variant] = .notDownloaded
       }
     }
+    if states != self.variantStates { self.variantStates = states }
     self.ensureValidSelection()
     self.syncHasUsableModel()
   }
@@ -119,11 +127,11 @@ final class ModelDownloadService: ObservableObject {
     let settings = SharedSettings()
     let current = settings.selectedVariant
     guard !self.isDownloaded(current) else {
-      self.selectedVariant = current
+      if self.selectedVariant != current { self.selectedVariant = current }
       return
     }
     if current == .parakeetV3, settings.parakeetV3NeedsRedownload {
-      self.selectedVariant = current
+      if self.selectedVariant != current { self.selectedVariant = current }
       return
     }
     if let downloaded = ModelVariant.allCases.first(where: { isDownloaded($0) }) {
@@ -151,6 +159,7 @@ final class ModelDownloadService: ObservableObject {
     settings.downloadStartedAt = Date()
 
     self.variantStates[variant] = .downloading(progress: 0)
+    FeatureDiagnostics.record(.speechModel, .queued)
 
     self.enqueueTasks[variant] = Task {
       await self.enqueueDownload(variant: variant)
@@ -158,6 +167,7 @@ final class ModelDownloadService: ObservableObject {
   }
 
   func cancelDownload(variant: ModelVariant) {
+    FeatureDiagnostics.record(.speechModel, .cancelled)
     self.enqueueTasks[variant]?.cancel()
     self.enqueueTasks[variant] = nil
 
@@ -175,7 +185,9 @@ final class ModelDownloadService: ObservableObject {
   func deleteModel(variant: ModelVariant) {
     do {
       try ModelStorageManager.delete(variant)
+      FeatureDiagnostics.record(.speechModel, .deleted)
     } catch {
+      FeatureDiagnostics.record(.speechModel, .failed)
       let name = variant.rawValue
       DiagnosticLog.write("models: DELETE FAILED \(name): \(error)")
     }
@@ -253,8 +265,8 @@ final class ModelDownloadService: ObservableObject {
 
   func syncHasUsableModel() {
     let usable = self.hasUsableModel
-    SharedSettings().hasUsableModel = usable
-    let _ = SharedSettings().selectedVariant
+    let settings = SharedSettings()
+    if settings.hasUsableModel != usable { settings.hasUsableModel = usable }
   }
 
   func resetToNotDownloaded(variant: ModelVariant) {
@@ -281,3 +293,4 @@ final class ModelDownloadService: ObservableObject {
     LegacyModelMigration.runIfNeeded()
   }
 }
+

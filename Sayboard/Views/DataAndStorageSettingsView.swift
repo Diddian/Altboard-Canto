@@ -10,7 +10,6 @@ struct DataAndStorageSettingsView: View {
   @State private var voiceNoteCount = 0
   @State private var vocabularyCount = 0
   @State private var pendingDeletion: [LocalUserDataStore.Category] = []
-  @State private var selectedCategories = Set(LocalUserDataStore.Category.allCases)
   @State private var confirmDeletion = false
   @State private var busy = false
   @State private var exportTask: Task<Void, Never>?
@@ -40,7 +39,7 @@ struct DataAndStorageSettingsView: View {
       self.clearExport()
     }
     .confirmationDialog(
-      self.pendingRetentionPolicy == nil ? "Delete selected local data?" : "Delete older voice notes?",
+      self.pendingRetentionPolicy == nil ? "Delete Local Data?" : "Delete Older Voice Notes?",
       isPresented: self.$confirmDeletion, titleVisibility: .visible
     ) {
       if let policy = self.pendingRetentionPolicy {
@@ -50,7 +49,7 @@ struct DataAndStorageSettingsView: View {
       }
     } message: {
       Text(self.pendingRetentionPolicy == nil
-        ? "Permanently delete only: \(self.pendingDeletion.map(\.title).joined(separator: ", ")). Other categories, models and settings stay untouched."
+        ? "Permanently delete the selected recordings, transcripts or vocabulary. Export a copy first if you need one."
         : "Voice notes outside the selected retention period will be permanently deleted.")
     }
     .alert("Data Operation Failed", isPresented: Binding(
@@ -73,26 +72,26 @@ struct DataAndStorageSettingsView: View {
   private var rows: some View {
     Group {
       ForEach(LocalUserDataStore.Category.allCases) { category in
-        Toggle(isOn: Binding(
-          get: { self.selectedCategories.contains(category) },
-          set: { enabled in
-            if enabled { self.selectedCategories.insert(category) }
-            else { self.selectedCategories.remove(category) }
-          }
-        )) {
+        HStack {
           LabeledContent {
             Text("\(self.count(for: category))")
           } label: {
             Text(LocalizedStringKey(category.title))
           }
+          Menu {
+            Button("Export", systemImage: "square.and.arrow.up") { self.export([category]) }
+            Button("Delete", systemImage: "trash", role: .destructive) {
+              self.pendingRetentionPolicy = nil
+              self.pendingDeletion = [category]
+              self.confirmDeletion = true
+            }
+          } label: {
+            Image(systemName: "ellipsis.circle").frame(minWidth: 44, minHeight: 44)
+          }
+          .accessibilityLabel("Manage \(category.title)")
+          .disabled(self.busy || self.recordingActive)
         }
-        .disabled(self.busy || self.recordingActive)
       }
-      Button("Select All Categories") {
-        self.selectedCategories = Set(LocalUserDataStore.Category.allCases)
-      }
-      .disabled(self.busy || self.recordingActive
-                || self.selectedCategories.count == LocalUserDataStore.Category.allCases.count)
       Picker("Keep Voice Notes", selection: self.retentionBinding) {
         ForEach(HistoryRetentionPolicy.allCases, id: \.self) { policy in
           Text(LocalizedStringKey(policy.shortDisplayNameKey)).tag(policy)
@@ -102,26 +101,27 @@ struct DataAndStorageSettingsView: View {
       Divider()
         .padding(.vertical, 4)
       VStack(alignment: .leading, spacing: 0) {
-        Button {
-          self.export(Array(self.selectedCategories))
-        } label: {
-          Label(self.busy ? "Preparing Export…" : "Export Selected Data",
-                systemImage: "square.and.arrow.up")
-            .frame(maxWidth: .infinity, alignment: .leading)
+        Button { self.export(LocalUserDataStore.Category.allCases) } label: {
+          Label {
+            Text(LocalizedStringKey(self.busy ? "Preparing Export…" : "Export All Data"))
+          } icon: {
+            Image(systemName: "square.and.arrow.up")
+          }
+          .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .disabled(self.busy || self.recordingActive || self.selectedCategories.isEmpty)
+        .disabled(self.busy || self.recordingActive)
         .frame(minHeight: 64)
         Divider().padding(.leading, 34)
 
         Button(role: .destructive) {
           self.pendingRetentionPolicy = nil
-          self.pendingDeletion = Array(self.selectedCategories)
+          self.pendingDeletion = LocalUserDataStore.Category.allCases
           self.confirmDeletion = true
         } label: {
-          Label("Delete Selected Data", systemImage: "trash")
+          Label("Delete All Data", systemImage: "trash")
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .disabled(self.busy || self.recordingActive || self.selectedCategories.isEmpty)
+        .disabled(self.busy || self.recordingActive)
         .frame(minHeight: 64)
         Divider().padding(.leading, 34)
 
@@ -134,7 +134,7 @@ struct DataAndStorageSettingsView: View {
         .disabled(self.busy || self.recordingActive)
         .frame(minHeight: 64)
 
-        Text("Only selected data categories are exported or deleted. Models and app settings are kept.")
+        Text("Exports include recordings, transcripts and vocabulary. Models and app settings are kept.")
           .font(.footnote)
           .foregroundStyle(.secondary)
           .fixedSize(horizontal: false, vertical: true)
@@ -157,7 +157,11 @@ struct DataAndStorageSettingsView: View {
     do { self.voiceNoteCount = try HistoryStore.shared.readRecords().count }
     catch { self.errorMessage = error.localizedDescription }
     self.recorder.reloadRecords()
-    self.vocabularyCount = LocalUserDataStore.vocabularyCount()
+    let defaults = AppGroup.sharedDefaults
+    self.vocabularyCount = LocalUserDataStore.learnedKeys.reduce(0) {
+      $0 + (defaults?.dictionary(forKey: $1)?.count ?? 0)
+    } + SharedSettings().cantoneseCorrectionRules.count
+      + LatinSpeechCorrectionLearning.read(defaults: defaults).count
   }
 
   private var retentionBinding: Binding<HistoryRetentionPolicy> {
@@ -175,9 +179,7 @@ struct DataAndStorageSettingsView: View {
     guard !self.recordingActive, !self.busy else { return }
     self.retentionPolicy = policy
     SharedSettings().retentionPolicy = policy
-    if !HistoryStore.shared.applyRetentionPolicy() {
-      self.errorMessage = "Some voice notes could not be removed; check storage and exported backups."
-    }
+    HistoryStore.shared.applyRetentionPolicy()
     self.reload()
   }
 

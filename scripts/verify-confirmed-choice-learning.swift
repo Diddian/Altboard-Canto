@@ -33,8 +33,18 @@ struct VerifyConfirmedChoiceLearning {
     let unchanged = ConfirmedChoiceLearning.increment("", in: bounded)
     precondition(unchanged == bounded)
     precondition(ConfirmedChoiceLearning.chinesePreference("none", counts: seen) == 0)
-    // This helper is CI-only: the baseline keyboard never calls it.
-    precondition(ConfirmedChoiceLearning.chineseCounts(defaults: defaults).count <= 12)
+    let normal = ChineseShapeRanking.score(
+      priority: 100, variant: 3, preferred: 3, count: 0, exact: true
+    )
+    let boosted = ChineseShapeRanking.score(
+      priority: 100, variant: 3, preferred: 3, count: 0,
+      exact: true, sharedCount: 5
+    )
+    let prefix = ChineseShapeRanking.score(
+      priority: 100, variant: 3, preferred: 3, count: 0,
+      exact: false, sharedCount: 8
+    )
+    precondition(boosted < normal && normal < prefix)
     print("Confirmed selection learning verified")
   }
 }

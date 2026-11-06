@@ -12,46 +12,53 @@ final class PermissionService: ObservableObject {
   @Published private(set) var microphoneState = MicrophonePermissionState.undetermined
   @Published private(set) var isKeyboardAdded = false
   @Published private(set) var hasFullAccess = false
-  @Published private(set) var fullAccessEvidence: KeyboardAccessEvidence = .unknown
   @Published private(set) var keyboardProbeTimestamp: TimeInterval = 0
   @Published private(set) var keyboardReportedFullAccess: Bool?
   @Published private(set) var keyboardReportedGroupAvailable: Bool?
   @Published private(set) var audioInputTestResult = "Not tested"
   @Published private(set) var mainGroupTestResult = "Not tested"
 
-  static func currentFullAccessEvidence() -> KeyboardAccessEvidence {
-    guard AppGroup.containerURL != nil else { return .unknown }
-    let settings = SharedSettings()
-    settings.synchronize()
-    let stamp = settings.defaults.double(forKey: SharedKey.keyboardProbeTimestamp)
-    return KeyboardAccessEvidence.assess(
-      at: stamp, now: CFAbsoluteTimeGetCurrent(),
-      fullAccess: stamp > 0 ? settings.defaults.bool(forKey: SharedKey.keyboardProbeFullAccess) : nil,
-      extensionGroupAvailable: settings.defaults.bool(forKey: SharedKey.keyboardProbeGroupAvailable),
-      appGroupAvailable: true
-    )
-  }
-
   static func hasFullAccessSync() -> Bool {
-    currentFullAccessEvidence() == .confirmed
-  }
-
-  // A recent activation proves the keyboard was used recently, not that
-  // it remains installed. No supported host-app API enumerates enabled keyboards.
-  static func isKeyboardAddedSync() -> Bool {
     guard AppGroup.containerURL != nil else { return false }
     let settings = SharedSettings()
     settings.synchronize()
-    return KeyboardAccessEvidence.isRecentReport(
-      at: settings.defaults.double(forKey: SharedKey.keyboardProbeTimestamp),
-      now: CFAbsoluteTimeGetCurrent()
-    )
+    return settings.defaults.double(forKey: SharedKey.keyboardProbeTimestamp) > 0
+      && settings.defaults.bool(forKey: SharedKey.keyboardProbeFullAccess)
+      && settings.defaults.bool(forKey: SharedKey.keyboardProbeGroupAvailable)
   }
 
-  var keyboardInstallationStatus: String {
-    self.isKeyboardAdded
-      ? "Recently opened (current installation not independently verified)"
-      : "Not verified — open Altboard in a text field, then return"
+  static func isKeyboardAddedSync() -> Bool {
+    let keyboards = UserDefaults.standard.stringArray(forKey: "AppleKeyboards") ?? []
+    let settings = SharedSettings()
+    settings.synchronize()
+    if AppGroup.containerURL != nil
+      && (settings.defaults.double(forKey: SharedKey.keyboardProbeTimestamp) > 0
+        || settings.defaults.bool(forKey: "canto.keyboardOpenedAtLeastOnce"))
+    {
+      return true
+    }
+    let installedIdentifiers = Self.installedExtensionIdentifiers()
+    return keyboards.contains { entry in
+      installedIdentifiers.contains { id in
+        entry == id || entry.hasPrefix(id + "@")
+      }
+    }
+  }
+
+  private static func installedExtensionIdentifiers() -> Set<String> {
+    var ids: Set<String> = ["app.sayboard.keyboard"]
+    if let bundleID = Bundle.main.bundleIdentifier {
+      ids.insert(bundleID + ".keyboard")
+    }
+    if let plugIns = Bundle.main.builtInPlugInsURL,
+       let urls = try? FileManager.default.contentsOfDirectory(at: plugIns, includingPropertiesForKeys: nil) {
+      for url in urls where url.pathExtension == "appex" {
+        if let id = Bundle(url: url)?.bundleIdentifier {
+          ids.insert(id)
+        }
+      }
+    }
+    return ids
   }
 
   func refreshAll() {
@@ -102,8 +109,9 @@ final class PermissionService: ObservableObject {
   }
 
   func refreshFullAccess() {
-    self.fullAccessEvidence = Self.currentFullAccessEvidence()
-    self.hasFullAccess = self.fullAccessEvidence == .confirmed
+    self.hasFullAccess = AppGroup.containerURL != nil
+      && self.keyboardReportedFullAccess == true
+      && self.keyboardReportedGroupAvailable == true
   }
 
   func testMainSharedContainer() {

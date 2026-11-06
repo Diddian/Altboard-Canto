@@ -11,75 +11,23 @@ struct SetupView: View {
           isDone: self.checklist.microphoneGranted,
           video: .microphone,
         )
-        self.keyboardAccessRows
+        self.tutorialRow(
+          "Add Altboard Keyboard",
+          systemImage: "keyboard",
+          isDone: self.checklist.keyboardAdded,
+          video: .addKeyboard,
+        )
+        self.tutorialRow(
+          "Allow Full Access for Keyboard",
+          systemImage: "lock.open",
+          isDone: self.checklist.fullAccessGranted,
+          video: .fullAccess,
+        )
         self.modelRow
       } footer: {
         if !self.checklist.isComplete {
-          Text("Unverified keyboard access does not mean Full Access is disabled. Basic typing remains available.")
+          Text("Complete these steps to use dictation.")
         }
-      }
-      Section("Sideloading diagnostics") {
-        Button("Recheck microphone and keyboard") { self.permissionService.refreshAll() }
-        LabeledContent("iOS microphone", value: self.microphoneStatus)
-        LabeledContent("Keyboard enabled", value: self.permissionService.keyboardInstallationStatus)
-        LabeledContent("Main App Group", value: self.permissionService.mainGroupTestResult)
-        LabeledContent("App Group identifier", value: AppGroup.resolutionDescription)
-        LabeledContent("Keyboard extension", value: self.permissionService.keyboardProbeSummary)
-        LabeledContent("Full Access verification", value: self.permissionService.fullAccessEvidence.statusText)
-        LabeledContent("Keyboard Full Access (last report)", value: self.boolStatus(self.permissionService.keyboardReportedFullAccess))
-        LabeledContent("Keyboard App Group (last report)", value: self.boolStatus(self.permissionService.keyboardReportedGroupAvailable))
-
-        if AppGroup.containerURL == nil {
-          Label(
-            "The signed app cannot open its shared App Group. The keyboard cannot receive microphone status or return recognized text.",
-            systemImage: "exclamationmark.triangle"
-          )
-          .font(.footnote).foregroundStyle(.orange)
-        } else if self.permissionService.fullAccessEvidence == .unknown {
-          Text("Open Altboard in Notes, return here, then tap Recheck. An old or absent report cannot prove Full Access is off.")
-            .font(.footnote).foregroundStyle(.secondary)
-        }
-
-      }
-
-      Section {
-        if self.permissionService.microphoneState != .granted {
-          Button("Request or repair microphone access") {
-            if self.permissionService.microphoneState == .undetermined {
-              self.permissionService.requestMicrophonePermission()
-            } else if let url = URL(string: UIApplication.openSettingsURLString) {
-              UIApplication.shared.open(url)
-            }
-          }
-        }
-
-        Button("Test main-app microphone (no audio saved)") {
-          self.permissionService.testAudioInput(session: self.speechService.session)
-        }
-        .disabled(self.speechService.isRecording || self.speechService.isStopping)
-        Text(self.permissionService.audioInputTestResult)
-          .font(.footnote).foregroundStyle(.secondary)
-
-        Button(self.speechService.isRecording ? "Stop test and transcribe" : "Test ASR and AI cleanup in app") {
-          self.runDictationTest()
-        }
-        .disabled(
-          self.speechService.isStopping
-          || (!self.speechService.isRecording
-            && (!self.downloadService.hasUsableModel || self.permissionService.microphoneState != .granted))
-        )
-        if !self.dictationTestResult.isEmpty {
-          Text(self.dictationTestResult)
-            .font(.footnote).textSelection(.enabled)
-        }
-
-        Button("Copy diagnostic summary") {
-          UIPasteboard.general.string = self.diagnosticSummary
-        }
-      } header: {
-        Text("Functional tests")
-      } footer: {
-        Text("The microphone and ASR tests run inside the main app. They bypass keyboard communication so you can isolate the failure.")
       }
     }
     .navigationTitle("Setup")
@@ -88,90 +36,6 @@ struct SetupView: View {
       ModelsView()
     }
     .onAppear { self.permissionService.refreshAll() }
-    .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-      self.permissionService.refreshAll()
-    }
-  }
-
-  @ViewBuilder
-  private var keyboardAccessRows: some View {
-    if self.permissionService.isKeyboardAdded {
-      SetupDoneRow(title: "Altboard Keyboard Opened Recently", systemImage: "keyboard")
-    } else {
-      Button {
-        self.pipTutorialService.playTutorial(.addKeyboard, language: self.selectedAppLanguage,
-                                             thenOpenSettings: true)
-      } label: {
-        Label("Verify Altboard Keyboard Setup", systemImage: "keyboard")
-      }
-    }
-
-    switch self.permissionService.fullAccessEvidence {
-    case .confirmed:
-      SetupDoneRow(title: "Full Access Recently Confirmed", systemImage: "lock.open")
-    case .denied:
-      self.tutorialRow("Allow Full Access for Keyboard",
-                       systemImage: "lock", isDone: false, video: .fullAccess)
-    case .unknown:
-      Label("Full Access Not Verified", systemImage: "questionmark.shield")
-        .foregroundStyle(.secondary)
-      Button("I Enabled Full Access — Recheck") {
-        self.permissionService.refreshAll()
-      }
-      Text("Open the Altboard keyboard once and return to verify. Unknown is not a permission denial.")
-        .font(.footnote)
-        .foregroundStyle(.secondary)
-    }
-  }
-
-  private var microphoneStatus: String {
-    switch self.permissionService.microphoneState {
-    case .granted: "Granted"
-    case .denied: "Denied"
-    case .undetermined: "Not requested"
-    }
-  }
-
-  private func boolStatus(_ value: Bool?) -> String {
-    guard let value else { return "No keyboard report" }
-    return value ? "Yes" : "No"
-  }
-
-  private func runDictationTest() {
-    if self.speechService.isRecording {
-      Task {
-        await self.speechService.stopRecording()
-        let text = self.speechService.currentTranscription
-        self.dictationTestResult = text.isEmpty
-          ? "No recognized text. Check microphone input and speech model."
-          : text
-      }
-      return
-    }
-    self.permissionService.refreshMicrophoneState()
-    self.dictationTestResult = "Starting recording..."
-    Task {
-      await self.speechService.startRecordingAfterModelLoad()
-      self.dictationTestResult = self.speechService.isRecording
-        ? "Recording: speak, then tap Stop test and transcribe."
-        : "Recording could not start. Check microphone and model."
-    }
-  }
-
-  private var diagnosticSummary: String {
-    [
-      "Altboard-Canto device diagnostic",
-      "App bundle: \(Bundle.main.bundleIdentifier ?? "unknown")",
-      "iOS mic: \(self.microphoneStatus)",
-      "Keyboard status: \(self.permissionService.keyboardInstallationStatus)",
-      "Main App Group: \(self.permissionService.mainGroupTestResult)",
-      "App Group identifier: \(AppGroup.resolutionDescription)",
-      "Keyboard report: \(self.permissionService.keyboardProbeSummary)",
-      "Keyboard Full Access last report: \(self.boolStatus(self.permissionService.keyboardReportedFullAccess))",
-      "Keyboard shared group: \(self.boolStatus(self.permissionService.keyboardReportedGroupAvailable))",
-      "Audio engine: \(self.permissionService.audioInputTestResult)",
-      "Transcription: \(self.speechService.currentTranscription.isEmpty ? "None yet" : "Produced")",
-    ].joined(separator: "\n")
   }
 
   private static let defaultLanguage = AppLanguageConfig.fallback
@@ -181,13 +45,9 @@ struct SetupView: View {
   private var hasUsableModel = false
   @AppStorage(SharedKey.parakeetV3NeedsRedownload, store: AppGroup.sharedDefaults ?? .standard)
   private var parakeetV3NeedsRedownload = false
-  @SceneStorage(ModelTab.storageKey) private var modelsTab = ModelTab.speechRecognition
-  @EnvironmentObject private var speechService: SpeechRecognitionService
-  @EnvironmentObject private var downloadService: ModelDownloadService
   @EnvironmentObject private var permissionService: PermissionService
   @EnvironmentObject private var pipTutorialService: PiPTutorialService
   @State private var showsModels = false
-  @State private var dictationTestResult = ""
 
   private var checklist: SetupChecklist {
     SetupChecklist(permissions: self.permissionService, hasUsableModel: self.hasUsableModel)
@@ -200,7 +60,6 @@ struct SetupView: View {
     } else {
       let title: LocalizedStringKey = self.parakeetV3NeedsRedownload ? "Model Update Required" : "Download Speech Model"
       Button {
-        self.modelsTab = .speechRecognition
         self.showsModels = true
       } label: {
         Label(title, systemImage: "arrow.down.circle")
@@ -265,3 +124,4 @@ extension SetupChecklist {
     )
   }
 }
+

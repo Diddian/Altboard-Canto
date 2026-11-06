@@ -1,8 +1,12 @@
 import SwiftUI
 
 extension KeyboardState {
+  var showsGlobeButton: Bool {
+    true // Keep the native keyboard/Emoji picker visible on every layout.
+  }
+
   var showsAIButton: Bool {
-    self.llmEnabled && self.hasUsableLLMModel
+    self.showAIButton && self.llmEnabled && self.hasUsableLLMModel
   }
 
 }
@@ -11,16 +15,15 @@ struct KeyboardChromeMetrics {
 
   @MainActor
   init(keyboardState: KeyboardState) {
-    let compact = keyboardState.selectedVariantSupportsTranslation || keyboardState.showsAIButton
-    let side: CGFloat = (keyboardState.keyboardKind == .alphabetic ? 48 : (compact ? 43 : 45)).kbScaled
-    let wide: CGFloat = 92.kbScaled
-    let showsGlobe = true // Reserve the required system keyboard-switch key.
+    let compact = keyboardState.showOutputLanguageButton || keyboardState.showsAIButton
+    let side: CGFloat = (keyboardState.effectiveTypingKind == .alphabetic ? 48 : (compact ? 43 : 45)).kbScaled
+    let showsGlobe = keyboardState.showsGlobeButton
 
     self.sideButtonWidth = side
     self.showsGlobe = showsGlobe
-    self.trashWidth = showsGlobe ? side : wide
-    self.returnWidth = keyboardState.keyboardKind == .alphabetic
-      ? 102.kbScaled : (showsGlobe ? (side + Self.buttonSpacing + side) : wide)
+    self.trashWidth = side
+    self.returnWidth = keyboardState.effectiveTypingKind == .alphabetic
+      ? 102.kbScaled : side + Self.buttonSpacing + side
   }
 
   @MainActor
@@ -48,8 +51,9 @@ struct KeyboardChromeMetrics {
   func spaceBarWidth(totalWidth: CGFloat) -> CGFloat {
     max(
       44.kbScaled,
-      totalWidth - self.sideButtonWidth - self.trashWidth - self.returnWidth
-        - 3 * Self.buttonSpacing - 8.kbScaled
+      totalWidth - (self.showsGlobe ? self.sideButtonWidth : 0)
+        - self.trashWidth - self.returnWidth
+        - (self.showsGlobe ? 3 : 2) * Self.buttonSpacing - 8.kbScaled
     )
   }
 }
@@ -152,11 +156,13 @@ struct KeyboardBottomRow: View {
   var onCursorTrackingEnded: (() -> Void)? = nil
 
   var body: some View {
-    let traits = self.keyboardState.hostInputTraits
-    let shortcuts = self.keyboardState.keyboardKind == .standard
-      ? [] : traits.bottomShortcuts
-    let returnWidth = shortcuts.count >= 3 ? 78.kbScaled : self.metrics.returnWidth
-    HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
+    GeometryReader { geometry in
+      let traits = self.keyboardState.hostInputTraits
+      let requested = self.keyboardState.effectiveTypingKind == .standard
+        ? [] : traits.bottomShortcuts
+      let shortcuts = self.visibleShortcuts(requested, totalWidth: geometry.size.width)
+      let returnWidth = shortcuts.isEmpty ? self.metrics.returnWidth : 78.kbScaled
+      HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
       if let action = self.onAlphabeticModeSwitch {
         KeyButton(
           content: .symbol(self.alphabeticModeLabel ?? "?123", fontSize: 16),
@@ -170,9 +176,10 @@ struct KeyboardBottomRow: View {
           openEmoji()
         }
         .accessibilityLabel("Open Emoji keyboard")
-      } else {
+      } else if self.keyboardState.showsGlobeButton {
         NativeInputModeSwitchKey(
-          configure: self.keyboardState.configureInputModeListButton
+          configure: self.keyboardState.configureInputModeListButton,
+          iconName: "globe"
         )
         .frame(width: self.metrics.sideButtonWidth,
                height: KeyboardChromeMetrics.keyHeight)
@@ -208,8 +215,7 @@ struct KeyboardBottomRow: View {
       ForEach(Array(shortcuts.enumerated()), id: \.offset) { index, shortcut in
         SymbolHoldKey(
           symbol: shortcut,
-          fixedWidth: shortcut == ".com" ? 45.kbScaled
-            : (shortcuts.count >= 3 ? 34.kbScaled : 43.kbScaled),
+          fixedWidth: (shortcut == ".com" ? 45 : 44).kbScaled,
           column: index,
           columnCount: shortcuts.count
         ) { selected in
@@ -231,11 +237,39 @@ struct KeyboardBottomRow: View {
         self.onTextEdited?()
       }
     }
-    .padding(.horizontal, (self.keyboardState.keyboardKind == .alphabetic ? 6.67 : 4).kbScaled)
+    .padding(.horizontal, (self.keyboardState.effectiveTypingKind == .alphabetic ? 6.67 : 4).kbScaled)
     .padding(.bottom, 4.kbScaled)
     .opacity(self.keyboardState.auxiliaryControlsHidden ? 0 : 1)
     .allowsHitTesting(!self.keyboardState.auxiliaryControlsHidden)
     .animation(.easeOut(duration: 0.22), value: self.keyboardState.auxiliaryControlsHidden)
+    }
+    .frame(height: KeyboardChromeMetrics.keyHeight + 4.kbScaled)
+  }
+
+  /// Native letter keys are narrow, but isolated shortcut buttons retain
+  /// 44pt hit areas. On narrow iPhones, omit optional shortcuts rather than
+  /// compressing Space or Return below a usable touch width.
+  private func visibleShortcuts(_ requested: [String], totalWidth: CGFloat) -> [String] {
+    let padding = (self.keyboardState.effectiveTypingKind == .alphabetic ? 6.67 : 4).kbScaled
+    let leading = self.metrics.trashWidth + self.metrics.sideButtonWidth
+    let gap = KeyboardChromeMetrics.buttonSpacing
+    for count in stride(from: requested.count, through: 0, by: -1) {
+      let selected: [String]
+      if count == 2 && requested.count == 3 && requested.last == ".com" {
+        selected = [requested[0], requested[2]]
+      } else {
+        selected = Array(requested.prefix(count))
+      }
+      let shortcutWidths = selected.reduce(CGFloat(0)) { total, key in
+        total + (key == ".com" ? 45 : 44).kbScaled
+      }
+      let returnWidth = count > 0 ? 78.kbScaled : self.metrics.returnWidth
+      let gapCount = CGFloat(3 + selected.count)
+      let required = 2 * padding + leading + shortcutWidths + returnWidth
+        + gapCount * gap + 75.kbScaled
+      if required <= totalWidth { return selected }
+    }
+    return []
   }
 }
 
@@ -272,3 +306,4 @@ enum KeyboardActions {
     proxy.openURL(url)
   }
 }
+

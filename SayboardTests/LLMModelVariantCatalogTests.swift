@@ -13,7 +13,7 @@ struct LLMModelVariantCatalogTests {
 
   @Test
   func `current holds every variant that has no successor`() {
-    #expect(LLMModelVariant.current == [.qwen35Small, .gemma3OneQAT, .llama32One, .smollm2Medium, .qwen35Large])
+    #expect(LLMModelVariant.current == [.hereticSmall, .hereticBalanced, .hereticLarge, .qwen35Small, .gemma3OneQAT, .llama32One, .smollm2Medium, .qwen35Large])
   }
 
   @Test
@@ -94,7 +94,7 @@ struct LLMModelVariantCatalogTests {
 
   @Test
   func `ranked order of the catalog is pinned`() {
-    let ranked = LLMModelVariant.current.sorted { $0.catalogRank > $1.catalogRank }
+    let ranked = LLMModelVariant.current.filter { $0.hereticTier == nil }.sorted { $0.catalogRank > $1.catalogRank }
     #expect(ranked == [.qwen35Large, .gemma3OneQAT, .smollm2Medium, .qwen35Small, .llama32One])
   }
 
@@ -112,3 +112,4 @@ struct LLMModelVariantCatalogTests {
     #expect(LLMModelVariant.qwen35Large.minRAMBytes == expected)
   }
 }
+

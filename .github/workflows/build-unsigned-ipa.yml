@@ -261,7 +261,7 @@ jobs:
           }
           python3 -c "import sqlite3,sys; db=sqlite3.connect(sys.argv[1]); assert db.execute('SELECT count(*) FROM corpus_ngrams').fetchone()[0]>2000; assert db.execute('PRAGMA quick_check').fetchone()[0]=='ok'" \
             "$APP/PlugIns/SayboardKeyboard.appex/jyutping.sqlite3"
-          python3 -c "import sqlite3,sys; db=sqlite3.connect(sys.argv[1]); assert db.execute('SELECT count(*) FROM informal_terms').fetchone()[0]>=60; assert db.execute('SELECT count(*) FROM informal_ngrams').fetchone()[0]>=150; assert db.execute('SELECT count(*) FROM curated_cantonese_ngrams').fetchone()[0]>=100; assert db.execute('SELECT count(*) FROM curated_cantonese_next').fetchone()[0]>=15" \
+          python3 -c "import sqlite3,sys; db=sqlite3.connect(sys.argv[1]); assert db.execute('SELECT count(*) FROM informal_terms').fetchone()[0]>=60; assert db.execute('SELECT count(*) FROM informal_ngrams').fetchone()[0]>=150; assert db.execute('SELECT count(*) FROM curated_cantonese_ngrams').fetchone()[0]>=100; assert db.execute('SELECT count(*) FROM curated_cantonese_next').fetchone()[0]>=15; assert db.execute('SELECT count(*) FROM hk_japanese_lexicon').fetchone()[0]>=175; assert db.execute(\"SELECT romanization FROM hk_japanese_lexicon WHERE word='の'\").fetchone()[0]=='zi1'" \
             "$APP/PlugIns/SayboardKeyboard.appex/jyutping.sqlite3"
           test -s "$APP/PlugIns/SayboardKeyboard.appex/chinese-shapes.sqlite3" || {
             echo 'ERROR: offline Cangjie, Quick and Stroke lexicon missing'

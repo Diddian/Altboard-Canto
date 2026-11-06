@@ -3,6 +3,7 @@ import SwiftUI
 enum LanguagePickerMode {
   case single(Binding<String?>)
   case multi(Binding<Set<String>>)
+  case ordered(Binding<[String]>)
 }
 
 struct LanguagePickerView: View {
@@ -17,17 +18,22 @@ struct LanguagePickerView: View {
   var body: some View {
     NavigationStack {
       List {
-        Section {
-          if self.searchText.isEmpty {
-            self.headerRow
+        if case .ordered(let binding) = self.mode {
+          self.orderedSections(binding)
+        } else {
+          Section {
+            if self.searchText.isEmpty {
+              self.headerRow
+            }
+            ForEach(self.filteredLanguages, id: \.self) { code in
+              self.languageRow(code: code)
+            }
+          } header: {
+            self.footnoteHeader
           }
-          ForEach(self.filteredLanguages, id: \.self) { code in
-            self.languageRow(code: code)
-          }
-        } header: {
-          self.footnoteHeader
         }
       }
+      .environment(\.editMode, .constant(self.isOrdered ? .active : .inactive))
       .overlay {
         if !self.searchText.isEmpty, self.filteredLanguages.isEmpty {
           ContentUnavailableView.search(text: self.searchText)
@@ -49,11 +55,20 @@ struct LanguagePickerView: View {
   @Environment(\.locale) private var locale
   @State private var searchText = ""
 
+  private var isOrdered: Bool {
+    if case .ordered = self.mode { return true }
+    return false
+  }
+
   private var sortedLanguages: [String] {
     self.availableLanguages.sorted { lhs, rhs in
-      self.locale.capitalizedLanguageName(forLanguageCode: lhs)
-        .localizedCompare(self.locale.capitalizedLanguageName(forLanguageCode: rhs)) == .orderedAscending
+      self.displayName(for: lhs)
+        .localizedCompare(self.displayName(for: rhs)) == .orderedAscending
     }
+  }
+
+  private func displayName(for code: String) -> String {
+    SpeechLanguageNames.name(for: code, locale: self.locale)
   }
 
   private var filteredLanguages: [String] {
@@ -62,7 +77,7 @@ struct LanguagePickerView: View {
     }
     let query = self.searchText.lowercased()
     return self.sortedLanguages.filter { code in
-      let name = self.locale.capitalizedLanguageName(forLanguageCode: code).lowercased()
+      let name = self.displayName(for: code).lowercased()
       return name.contains(query) || code.lowercased().contains(query)
     }
   }
@@ -87,6 +102,8 @@ struct LanguagePickerView: View {
         self.dismiss()
       }
 
+    case .ordered:
+      EmptyView()
     case .multi(let binding):
       self.headerRowContent(titleKey: self.autoDetectKey, isChecked: binding.wrappedValue.isEmpty) {
         binding.wrappedValue = []
@@ -120,6 +137,8 @@ struct LanguagePickerView: View {
         self.dismiss()
       }
 
+    case .ordered:
+      EmptyView()
     case .multi(let binding):
       self.languageRowContent(code: code, isChecked: binding.wrappedValue.contains(code)) {
         var set = binding.wrappedValue
@@ -133,13 +152,59 @@ struct LanguagePickerView: View {
     }
   }
 
+  @ViewBuilder
+  private func orderedSections(_ binding: Binding<[String]>) -> some View {
+    Section {
+      ForEach(binding.wrappedValue, id: \.self) { code in
+        HStack(spacing: 12) {
+          Text("\((binding.wrappedValue.firstIndex(of: code) ?? 0) + 1)")
+            .monospacedDigit().foregroundStyle(.secondary)
+          Text(self.displayName(for: code))
+        }
+      }
+      .onMove { offsets, destination in
+        binding.wrappedValue = LanguagePriority.moving(
+          binding.wrappedValue, offsets: offsets, to: destination
+        )
+      }
+      .onDelete { offsets in
+        var selected = binding.wrappedValue
+        selected.remove(atOffsets: offsets)
+        binding.wrappedValue = selected
+      }
+    } header: {
+      Text("Priority")
+    } footer: {
+      Text("Drag to reorder. Higher languages take priority; all selected languages remain available.")
+    }
+    Section {
+      if self.searchText.isEmpty {
+        Button(self.autoDetectKey) { binding.wrappedValue = [] }
+      }
+      ForEach(self.filteredLanguages.filter { !binding.wrappedValue.contains($0) }, id: \.self) { code in
+        Button {
+          binding.wrappedValue.append(code)
+        } label: {
+          HStack {
+            Text(self.displayName(for: code))
+            Spacer()
+            Image(systemName: "plus.circle")
+          }
+        }
+        .foregroundStyle(.primary)
+      }
+    } header: {
+      Text("Add Language")
+    }
+  }
+
   private func languageRowContent(
     code: String,
     isChecked: Bool,
     action: @escaping () -> Void,
   ) -> some View {
     HStack {
-      Text(self.locale.capitalizedLanguageName(forLanguageCode: code))
+      Text(self.displayName(for: code))
       Spacer()
       if isChecked {
         Image(systemName: "checkmark")
@@ -150,4 +215,25 @@ struct LanguagePickerView: View {
     .onTapGesture(perform: action)
   }
 
+}
+
+
+enum SpeechLanguageNames {
+  static func name(for code: String, locale: Locale) -> String {
+    guard code == "zh" else {
+      return locale.capitalizedLanguageName(forLanguageCode: code)
+    }
+    // SwiftUI's environment locale follows the chosen App language, whereas
+    // String(localized:) may still fall back to the bundle's English locale.
+    let identifier = locale.identifier.replacingOccurrences(of: "_", with: "-").lowercased()
+    if identifier.hasPrefix("zh-hant") || identifier.hasPrefix("zh-hk")
+        || identifier.hasPrefix("zh-mo") || identifier.hasPrefix("yue") {
+      return "普通話"
+    }
+    if identifier.hasPrefix("zh-hans") || identifier.hasPrefix("zh-cn")
+        || identifier.hasPrefix("zh-sg") {
+      return "普通话"
+    }
+    return String(localized: "Mandarin", locale: locale)
+  }
 }

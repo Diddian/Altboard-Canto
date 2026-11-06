@@ -71,6 +71,13 @@ extension ExtendedKeyboardLayout {
         KeyboardLLMActionsToolbar(proxy: self.proxy, keyboardState: self.keyboardState)
       } else {
       HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
+        if self.keyboardState.showGlobeKey {
+          NativeInputModeSwitchKey(
+            configure: self.keyboardState.configureInputModeListButton,
+            iconName: "globe"
+          )
+          .frame(width: self.chrome.sideButtonWidth, height: KeyboardChromeMetrics.keyHeight)
+        }
         if self.keyboardState.showSettingsKey {
           KeyButton(
             content: .systemImage("gearshape"),
@@ -82,15 +89,17 @@ extension ExtendedKeyboardLayout {
             if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
           }
         }
-        TranslateToggleButton(
-          fixedWidth: self.chrome.sideButtonWidth,
-          shape: .pill,
-          compactStyle: true,
-          keyboardState: self.keyboardState,
-          onHiddenSettings: self.keyboardState.showSettingsKey ? nil : {
-            if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
-          }
-        )
+        if self.keyboardState.showOutputLanguageButton {
+          TranslateToggleButton(
+            fixedWidth: self.chrome.sideButtonWidth,
+            shape: .pill,
+            compactStyle: true,
+            keyboardState: self.keyboardState,
+            onHiddenSettings: self.keyboardState.showSettingsKey ? nil : {
+              if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
+            }
+          )
+        }
         if self.keyboardState.showsAIButton { self.aiButton }
         if self.keyboardState.hasLLMHistory { self.undoRedoRow }
         Spacer(minLength: 0)

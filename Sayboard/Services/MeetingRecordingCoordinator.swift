@@ -17,13 +17,18 @@ struct MeetingRecord: Codable, Identifiable {
   var parts: [MeetingAudioPart]
   var transcript: String
   var state: String
-  var title: String? = nil
-  var notes: String? = nil
+  // Optional metadata preserves decoding of recordings made before naming.
+  var title: String?
+  var notes: String?
+  var sequenceNumber: Int? = nil
 
-  var totalDuration: TimeInterval { self.parts.reduce(0) { $0 + $1.duration } }
+  var totalDuration: TimeInterval {
+    self.parts.reduce(0) { $0 + $1.duration }
+  }
+
   var displayTitle: String {
-    let name = (self.title ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-    return name.isEmpty ? "Meeting " + self.startedAt.formatted(date: .abbreviated, time: .shortened) : name
+    let value = (self.title ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+    return value.isEmpty ? "New Meeting \(self.sequenceNumber ?? 1)" : value
   }
 }
 
@@ -33,6 +38,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
   static let shared = MeetingRecordingCoordinator()
   static let partDuration: TimeInterval = 15 * 60
   static let updateSeconds = 8
+  private static let meetingSequenceKey = "canto.meeting.lastSequenceNumber.v1"
 
   @Published private(set) var isRecording = false
   @Published private(set) var isFinalizing = false
@@ -53,37 +59,59 @@ final class MeetingRecordingCoordinator: ObservableObject {
 
   private init() { self.reloadRecords() }
 
-  func start(with service: SpeechRecognitionService) {
+  func start(with service: SpeechRecognitionService, title: String = "", notes: String = "") {
     guard !self.isRecording, !self.isFinalizing, !service.isRecording,
           SharedSettings().experimentalMeetingRecordEnabled,
           SharedSettings().selectedVariant == .qwen3ASR17B,
           let root = Self.meetingsDirectory() else {
+      FeatureDiagnostics.record(.meeting, .blocked)
       self.status = "Enable Meeting Record and select Qwen3-ASR 1.7B; stop other dictation first."
       return
     }
     do { try service.session.startSession() }
-    catch { self.status = "Unable to activate microphone"; return }
+    catch {
+      FeatureDiagnostics.record(.meeting, .failed)
+      self.status = "Unable to activate microphone"
+      return
+    }
     let id = UUID()
     let folder = root.appendingPathComponent(id.uuidString, isDirectory: true)
     let audioDirectory = folder.appendingPathComponent("audio", isDirectory: true)
     do { try FileManager.default.createDirectory(at: audioDirectory, withIntermediateDirectories: true) }
-    catch { self.status = "Cannot create meeting storage"; return }
+    catch {
+      FeatureDiagnostics.record(.meeting, .failed)
+      self.status = "Cannot create meeting storage"
+      return
+    }
     let format = service.session.audioEngine.inputNode.outputFormat(forBus: 0)
     guard self.audioRecorder.startRecording(fileName: "0001.caf", format: format,
                                             directory: audioDirectory) != nil else {
+      FeatureDiagnostics.record(.meeting, .failed)
       self.status = "Cannot open meeting audio file"
       return
     }
     self.speechService = service
     self.currentFormat = format
     self.currentAudioDirectory = audioDirectory
-    self.current = MeetingRecord(id: id, startedAt: Date(), endedAt: nil,
-                                 parts: [], transcript: "", state: "recording")
+    let defaults = SharedSettings().defaults
+    let nextNumber = max(
+      defaults.integer(forKey: Self.meetingSequenceKey),
+      self.records.compactMap(\.sequenceNumber).max() ?? self.records.count
+    ) + 1
+    self.current = MeetingRecord(
+      id: id, startedAt: Date(), endedAt: nil, parts: [],
+      transcript: "", state: "recording",
+      title: Self.normalized(title, limit: 120),
+      notes: Self.normalized(notes, limit: 4000),
+      sequenceNumber: nextNumber
+    )
+    defaults.set(nextNumber, forKey: Self.meetingSequenceKey)
     self.lastPartStartedAt = Date()
     self.accumulator.reset()
     service.session.activateTap(accumulator: self.accumulator, recorder: self.audioRecorder)
     self.elapsed = 0
     self.isRecording = true
+    FeatureDiagnostics.record(.meeting, .started)
     self.status = "Recording on iPhone"
     self.saveManifest()
     self.sessionObservation = service.session.$isSessionActive.sink { [weak self] active in
@@ -129,6 +157,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
     self.sessionObservation?.cancel()
     self.sessionObservation = nil
     self.isFinalizing = true
+    FeatureDiagnostics.record(.meeting, interrupted ? .interrupted : .stopped)
     self.status = "Saving final transcript…"
     let service = self.speechService
     Task { @MainActor [weak self] in
@@ -148,6 +177,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
         self.current = record
         self.saveManifest()
       }
+      FeatureDiagnostics.record(.meeting, .completed)
       self.status = interrupted ? "Recording interrupted; saved available audio" : "Meeting saved"
       self.currentFormat = nil
       self.currentAudioDirectory = nil
@@ -167,6 +197,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
             let count = self.current?.parts.count,
             self.audioRecorder.startRecording(fileName: String(format: "%04d.caf", count + 1),
                                               format: format, directory: directory) != nil else {
+        FeatureDiagnostics.record(.meeting, .failed)
         self.status = "Audio file rotation failed"
         self.stop(interrupted: true)
         return
@@ -200,72 +231,103 @@ final class MeetingRecordingCoordinator: ObservableObject {
     self.saveManifest()
   }
 
+  private static func normalized(_ value: String, limit: Int) -> String {
+    String(value.trimmingCharacters(in: .whitespacesAndNewlines).prefix(limit))
+  }
+
+  /// Update metadata only. Audio files, transcript and recording timestamps
+  /// are not renamed or moved, so existing exported files remain valid.
+  @discardableResult
+  func updateRecord(id: UUID, title: String, notes: String) -> Bool {
+    guard var record = (self.current?.id == id ? self.current : nil)
+      ?? self.records.first(where: { $0.id == id }) else { return false }
+    record.title = Self.normalized(title, limit: 120)
+    record.notes = Self.normalized(notes, limit: 4000)
+    guard self.writeManifest(record) else { return false }
+    if self.current?.id == id { self.current = record }
+    if let index = self.records.firstIndex(where: { $0.id == id }) {
+      self.records[index] = record
+    }
+    return true
+  }
+
   private func saveManifest() {
-    guard let record = self.current,
-          let root = Self.meetingsDirectory(),
-          let data = try? JSONEncoder().encode(record) else { return }
+    guard let record = self.current else { return }
+    _ = self.writeManifest(record)
+  }
+
+  @discardableResult
+  private func writeManifest(_ record: MeetingRecord) -> Bool {
+    guard let root = Self.meetingsDirectory(),
+          let data = try? JSONEncoder().encode(record) else {
+      FeatureDiagnostics.record(.meeting, .failed)
+      return false
+    }
     let folder = root.appendingPathComponent(record.id.uuidString, isDirectory: true)
     let manifest = folder.appendingPathComponent("manifest.json")
-    try? data.write(to: manifest, options: [.atomic, .completeFileProtectionUnlessOpen])
-    let text = folder.appendingPathComponent("transcript.txt")
-    try? record.transcript.write(to: text, atomically: true, encoding: .utf8)
-    try? FileManager.default.setAttributes(
-      [.protectionKey: FileProtectionType.completeUnlessOpen], ofItemAtPath: text.path
-    )
+    do {
+      try data.write(to: manifest, options: [.atomic, .completeFileProtectionUnlessOpen])
+      let transcriptURL = folder.appendingPathComponent("transcript.txt")
+      try record.transcript.write(to: transcriptURL, atomically: true, encoding: .utf8)
+      try FileManager.default.setAttributes(
+        [.protectionKey: FileProtectionType.completeUnlessOpen], ofItemAtPath: transcriptURL.path
+      )
+      return true
+    } catch {
+      FeatureDiagnostics.record(.meeting, .failed)
+      self.status = "Could not save meeting details"
+      return false
+    }
   }
 
   func reloadRecords() {
     guard let root = Self.meetingsDirectory(),
           let folders = try? FileManager.default.contentsOfDirectory(at: root,
                                               includingPropertiesForKeys: nil) else { return }
-    self.records = folders.compactMap { folder -> MeetingRecord? in
+    let loaded = folders.compactMap { folder -> MeetingRecord? in
       guard let data = try? Data(contentsOf: folder.appendingPathComponent("manifest.json"))
       else { return nil }
       return try? JSONDecoder().decode(MeetingRecord.self, from: data)
+    }.sorted { $0.startedAt < $1.startedAt }
+    self.records = loaded.enumerated().map { index, record in
+      var normalized = record
+      if normalized.sequenceNumber == nil { normalized.sequenceNumber = index + 1 }
+      return normalized
     }.sorted { $0.startedAt > $1.startedAt }
   }
 
+  /// Delete only a saved, inactive recording. Audio and transcripts share its folder.
   @discardableResult
-  func updateRecord(id: UUID, title: String, notes: String) -> Bool {
-    guard !self.isRecording, !self.isFinalizing,
-          title.count <= 100, notes.count <= 2_000,
-          let index = self.records.firstIndex(where: { $0.id == id }),
-          let folder = self.meetingFolder(for: self.records[index]) else { return false }
-    var record = self.records[index]
-    record.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
-    record.notes = notes.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard let data = try? JSONEncoder().encode(record) else { return false }
+  func deleteRecord(id: UUID) -> Bool {
+    guard records.contains(where: { $0.id == id }),
+          !(current?.id == id && (isRecording || isFinalizing)),
+          let root = Self.meetingsDirectory() else { return false }
+    let folder = root.appendingPathComponent(id.uuidString, isDirectory: true)
     do {
-      try data.write(to: folder.appendingPathComponent("manifest.json"),
-                     options: [.atomic, .completeFileProtectionUnlessOpen])
-      self.records[index] = record
+      try FileManager.default.removeItem(at: folder)
+      records.removeAll { $0.id == id }
       return true
     } catch {
+      FeatureDiagnostics.record(.meeting, .failed)
+      status = "Could not delete meeting recording"
       return false
     }
   }
 
   @discardableResult
-  func deleteRecord(id: UUID) -> Bool {
-    guard !self.isRecording, !self.isFinalizing,
-          let record = self.records.first(where: { $0.id == id }),
-          let folder = self.meetingFolder(for: record) else { return false }
-    do {
-      try FileManager.default.removeItem(at: folder)
-      self.reloadRecords()
-      return true
-    } catch { return false }
-  }
-
-  @discardableResult
   func deleteAllRecords() -> Bool {
-    guard !self.isRecording, !self.isFinalizing else { return false }
-    self.reloadRecords()
-    var allRemoved = true
-    for record in self.records {
-      if !self.deleteRecord(id: record.id) { allRemoved = false }
+    guard !self.isRecording, !self.isFinalizing,
+          let root = Self.meetingsDirectory() else { return false }
+    do {
+      try FileManager.default.removeItem(at: root)
+      self.records = []
+      self.current = nil
+      return true
+    } catch {
+      FeatureDiagnostics.record(.meeting, .failed)
+      self.status = "Could not delete meeting recordings"
+      return false
     }
-    return allRemoved
   }
 
   func meetingFolder(for record: MeetingRecord) -> URL? {
@@ -279,3 +341,4 @@ final class MeetingRecordingCoordinator: ObservableObject {
     return root
   }
 }
+

@@ -90,6 +90,10 @@ struct SharedSettingsDefaultsTests {
     #expect(SharedSettings(defaults: defaults).keyboardLetterArrangement == .qwerty)
     #expect(LetterKeyArrangement.qwerty.rows.flatMap { $0 }.count == 26)
     #expect(LetterKeyArrangement.qwertz.rows.flatMap { $0 }.count == 26)
+    settings.keyboardLetterArrangement = .german
+    #expect(SharedSettings(defaults: defaults).keyboardLetterArrangement == .german)
+    #expect(LetterKeyArrangement.german.rows[0].contains("Ü"))
+    #expect(LetterKeyArrangement.german.rows[1].contains("Ä"))
   }
 
   @Test
@@ -132,6 +136,26 @@ struct SharedSettingsDefaultsTests {
     #expect(!SharedSettings(defaults: defaults).keyboardShowSettingsKey)
     settings.keyboardShowSettingsKey = true
     #expect(SharedSettings(defaults: defaults).keyboardShowSettingsKey)
+  }
+
+  @Test
+  func optionalKeyboardButtonsDefaultOnAndPersistIndependently() throws {
+    let suiteName = Self.uniqueSuiteName()
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { Self.cleanup(suiteName: suiteName) }
+    let settings = SharedSettings(defaults: defaults)
+    #expect(settings.keyboardShowOutputLanguageButton)
+    #expect(settings.keyboardShowAIButton)
+    #expect(defaults.object(forKey: SharedKey.keyboardShowOutputLanguageButton) == nil)
+    #expect(defaults.object(forKey: SharedKey.keyboardShowAIButton) == nil)
+    settings.keyboardShowOutputLanguageButton = false
+    #expect(!SharedSettings(defaults: defaults).keyboardShowOutputLanguageButton)
+    #expect(SharedSettings(defaults: defaults).keyboardShowAIButton)
+    settings.keyboardShowAIButton = false
+    #expect(!SharedSettings(defaults: defaults).keyboardShowAIButton)
+    settings.keyboardShowOutputLanguageButton = true
+    #expect(SharedSettings(defaults: defaults).keyboardShowOutputLanguageButton)
+    #expect(!SharedSettings(defaults: defaults).keyboardShowAIButton)
   }
 
   @Test

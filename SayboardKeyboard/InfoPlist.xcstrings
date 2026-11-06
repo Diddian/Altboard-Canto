@@ -142,12 +142,6 @@
             "value": "Altboard"
           }
         },
-        "zh": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Altboard"
-          }
-        },
         "bg": {
           "stringUnit": {
             "state": "translated",
@@ -179,6 +173,18 @@
           }
         },
         "sl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altboard"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altboard"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "Altboard"
@@ -328,12 +334,6 @@
             "value": "AltboardKeyboard"
           }
         },
-        "zh": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AltboardKeyboard"
-          }
-        },
         "bg": {
           "stringUnit": {
             "state": "translated",
@@ -365,6 +365,18 @@
           }
         },
         "sl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AltboardKeyboard"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AltboardKeyboard"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "AltboardKeyboard"

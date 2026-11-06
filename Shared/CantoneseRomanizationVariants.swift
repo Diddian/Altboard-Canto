@@ -3,14 +3,32 @@ import Foundation
 /// The regular systems are directly indexed in SQLite. Only narrowly scoped
 /// colloquial aliases remain here, avoiding combinatorial false homophones.
 enum CantoneseRomanizationVariants {
+  /// The grammatical A唔A spelling is A+ng+A (or A+m+A).
+  /// Do not rewrite ng within unrelated syllables.
+  static func repeatedNegationBase(for input: String) -> String? {
+    let source = input.lowercased()
+    guard source.allSatisfy({ $0.isASCII && $0.isLetter }) else { return nil }
+    for marker in ["ng", "m"] {
+      let remainder = source.count - marker.count
+      guard remainder >= 4, remainder.isMultiple(of: 2) else { continue }
+      let half = remainder / 2
+      let first = String(source.prefix(half))
+      if String(source.dropFirst(half).prefix(marker.count)) == marker
+        && String(source.suffix(half)) == first {
+        return first
+      }
+    }
+    return nil
+  }
+
   static func variants(for input: String, limit: Int = 4) -> [String] {
     let source = input.lowercased()
-    guard !source.isEmpty, source.count <= 48,
+    guard !source.isEmpty, source.count <= 96,
           source.allSatisfy({ $0.isASCII && $0.isLetter }) else { return [] }
     var results = [source]
     var seen: Set<String> = [source]
     func append(_ value: String) {
-      guard value.count <= 48, seen.insert(value).inserted else { return }
+      guard value.count <= 96, seen.insert(value).inserted else { return }
       results.append(value)
     }
     if source == "mm" || source == "mmm" { append("m") }
@@ -23,6 +41,24 @@ enum CantoneseRomanizationVariants {
     if source == "nghai" || source == "nghaai" {
       append("m" + source.dropFirst(2))
     }
+    // Yale and informal spellings may end in an unmarked vowel+h.
+    // Only strip a final h following a vowel; preserve genuine initial h,
+    // Cantonese coda consonants and the original exact reading.
+    // The new Yale/Sidney SQLite indexes handle canonical forms first.
+    if source.hasSuffix("h"), let beforeH = source.dropLast().last,
+       "aeiou".contains(beforeH) {
+      append(String(source.dropLast()))
+    }
+    // Short na is a common casual input for long-vowel naa (哪).
+    if source == "na" { append("naa") }
+    // Common colloquial spellings of 唔係呀嘛 (m4 hai6 aa3 maa3).
+    // The extra h is a typed colloquial variant, not a general vowel rule.
+    if ["nghaiahma", "nghaiama", "nghaiaama", "nghaiamaa",
+        "nghaiaamaa", "mhaiama", "mhaiahma"].contains(source) {
+      append("mhaiaamaa")
+    }
+    // A bounded Yale-style rendering of 我 (ngo5), including 我係.
+    if source.hasPrefix("ngoh") { append("ngo" + source.dropFirst(4)) }
     if source.contains("yyu") {
       append(source.replacingOccurrences(of: "yyu", with: "yu"))
     }

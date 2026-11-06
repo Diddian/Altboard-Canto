@@ -15,6 +15,7 @@ struct ChineseStrokeGrid: View {
   @State private var isChoosingSymbol = false
   @State private var highlightedOption = 0
   @State private var currentPoint = CGPoint.zero
+  @State private var touchStartPoint = CGPoint.zero
   @State private var holdTask: Task<Void, Never>?
 
   var body: some View {
@@ -98,11 +99,9 @@ struct ChineseStrokeGrid: View {
         .foregroundStyle(.primary)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
       Text(verbatim: self.keyHint(for: index))
-        .font(.system(size: 8.5.kbScaled, weight: .regular))
-        .fontWidth(.compressed)
+        .font(.system(size: 9.5.kbScaled, weight: .regular))
         .lineLimit(2)
         .multilineTextAlignment(.trailing)
-        .minimumScaleFactor(0.7)
         .foregroundStyle(.secondary)
         .padding(.top, 4.kbScaled)
         .padding(.trailing, 5.kbScaled)
@@ -158,6 +157,7 @@ struct ChineseStrokeGrid: View {
     self.pressedIndex = index
     self.isChoosingSymbol = false
     self.currentPoint = self.gridPoint(point, origin: origin)
+    self.touchStartPoint = self.currentPoint
     KeyboardHaptics.key()
     self.holdTask = Task { @MainActor in
       do { try await Task.sleep(for: .milliseconds(310)) } catch { return }
@@ -235,8 +235,12 @@ struct ChineseStrokeGrid: View {
     let frame = self.popupFrame(for: index, in: size)
     let count = ChineseStrokeKeys.alternates[index].count
     let itemWidth = (frame.width - 16.kbScaled) / CGFloat(count)
-    let localX = point.x - frame.minX - 8.kbScaled
-    return min(count - 1, max(0, Int(floor(localX / itemWidth))))
+    return ChineseStrokeKeys.popupIndex(
+      horizontalDelta: Double(point.x - self.touchStartPoint.x),
+      optionCount: count,
+      columnWidth: Double(itemWidth),
+      startIndex: ChineseStrokeKeys.popupStartIndex(keyIndex: index, optionCount: count)
+    )
   }
 
   private func symbolPopup(for index: Int, in size: CGSize) -> some View {
@@ -245,8 +249,7 @@ struct ChineseStrokeGrid: View {
     return HStack(spacing: 0) {
       ForEach(Array(symbols.enumerated()), id: \.offset) { option, symbol in
         Text(verbatim: symbol)
-          .font(.system(size: 22.kbScaled))
-          .fontWidth(.condensed)
+          .font(.system(size: 21.kbScaled, weight: .regular))
           .foregroundStyle(.primary)
           .frame(maxWidth: .infinity)
           .frame(height: 44.kbScaled)

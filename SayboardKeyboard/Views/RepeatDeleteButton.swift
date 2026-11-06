@@ -41,6 +41,8 @@ struct RepeatDeleteButton: View {
               try? await Task.sleep(for: .milliseconds(self.fastCompositionRepeat ? 310 : 420))
               guard !Task.isCancelled else { return }
               self.didRepeat = true
+              // A held Delete is not evidence for adjacent-key touch correction.
+              KeyboardTouchLearning.shared.invalidate()
               var repeats = 0
               while !Task.isCancelled {
                 let intercepted = self.onDeleteIntercept?() ?? false
@@ -65,7 +67,12 @@ struct RepeatDeleteButton: View {
               // A verified just-swiped word is one undo unit on the first
               // Delete tap. Ordinary text still deletes one character.
               let intercepted = self.onTapDeleteIntercept?() ?? false
-              if !intercepted { self.proxy.deleteBackward() }
+              if !intercepted {
+                KeyboardTouchLearning.shared.recordDelete()
+                self.proxy.deleteBackward()
+              } else {
+                KeyboardTouchLearning.shared.invalidate()
+              }
               self.onHostDeletion?()
             }
             self.pressed = false
@@ -74,6 +81,9 @@ struct RepeatDeleteButton: View {
       .onDisappear {
         self.deletionTask?.cancel()
         self.deletionTask = nil
+        self.didRepeat = false
+        self.pressed = false
+        KeyboardTouchLearning.shared.invalidate()
       }
       .accessibilityLabel("Delete; hold to delete characters, then words")
   }

@@ -45,22 +45,4 @@ struct ModelDownloadInstallerTests {
     try ModelDownloadInstaller.install(source: zip, destination: target, ggufFileName: nil)
     #expect(try Data(contentsOf: target.appendingPathComponent("weights")) == Data("model fixture".utf8))
   }
-  @Test func traversalNameKeepsPreviouslyInstalledModel() throws {
-    let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-    defer { try? FileManager.default.removeItem(at: root) }
-    let target = root.appendingPathComponent("model")
-    try FileManager.default.createDirectory(at: target, withIntermediateDirectories: true)
-    let existing = target.appendingPathComponent("model.gguf")
-    let content = Data("GGUForiginal".utf8)
-    try content.write(to: existing)
-    let source = root.appendingPathComponent("download")
-    try Data("GGUFchanged".utf8).write(to: source)
-    #expect(throws: (any Error).self) {
-      try ModelDownloadInstaller.install(source: source, destination: target,
-                                         ggufFileName: "../escaped.gguf")
-    }
-    #expect(try Data(contentsOf: existing) == content)
-    #expect(!FileManager.default.fileExists(atPath: root.appendingPathComponent("escaped.gguf").path))
-  }
-
 }

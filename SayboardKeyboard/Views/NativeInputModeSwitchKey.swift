@@ -1,11 +1,12 @@
 import SwiftUI
 import UIKit
 
-/// Native system Globe picker. The separate Emoji key opens Altboard's
-/// offline Emoji page; UIKit owns the OS keyboard-switch touch events.
+/// Native system keyboard switcher, including the system Emoji keyboard.
+/// UIKit owns the picker gesture; no custom Emoji catalog is mounted.
 struct NativeInputModeSwitchKey: UIViewRepresentable {
   @Environment(\.colorScheme) private var colorScheme
   let configure: ((UIButton) -> Void)?
+  var iconName = "globe"
 
   private static let iconTag = 7137
   private static let iconSize: CGFloat = 20.67
@@ -27,8 +28,9 @@ struct NativeInputModeSwitchKey: UIViewRepresentable {
     button.backgroundColor = KeyboardPalette.keyFill
     button.layer.cornerRadius = KeyboardChromeMetrics.keyCornerRadius
     button.isAccessibilityElement = true
-    button.accessibilityLabel = "System keyboard picker"
-    button.accessibilityHint = "Tap or hold to switch between installed keyboards."
+    button.accessibilityLabel = self.iconName == "globe"
+      ? "System keyboard picker" : "Keyboard and Emoji picker"
+    button.accessibilityHint = "Hold to choose the system Emoji keyboard or another keyboard."
     // Keep only Apple's selector for tap/hold, without a competing recognizer.
     configure?(button)
     updateUIView(button, context: context)
@@ -40,16 +42,17 @@ struct NativeInputModeSwitchKey: UIViewRepresentable {
     // A dedicated noninteractive child avoids UIKit briefly clearing its
     // UIButton image when the native input-mode picker is activated.
     (button.viewWithTag(Self.iconTag) as? UIImageView)?.image = Self.glyphImage(
-      colorScheme: self.colorScheme
+      colorScheme: self.colorScheme, iconName: self.iconName
     )
   }
 
-  private static func glyphImage(colorScheme: ColorScheme) -> UIImage {
+  private static func glyphImage(colorScheme: ColorScheme, iconName: String) -> UIImage {
     let ink: UIColor = colorScheme == .dark ? .white : .black
     let configuration = UIImage.SymbolConfiguration(
       pointSize: Self.iconSize, weight: .regular
     )
-    return (UIImage(systemName: "globe", withConfiguration: configuration)
+    return (UIImage(systemName: iconName, withConfiguration: configuration)
+      ?? UIImage(systemName: "globe", withConfiguration: configuration)
       ?? UIImage()).withTintColor(ink, renderingMode: .alwaysOriginal)
   }
 }

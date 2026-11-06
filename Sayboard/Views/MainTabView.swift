@@ -58,8 +58,8 @@ struct MainTabView: View {
     var title: LocalizedStringKey {
       switch self {
       case .micDenied: "No Microphone Access"
-      case .keyboardMissing: "Keyboard Setup Unconfirmed"
-      case .fullAccessMissing: "Full Access Not Confirmed"
+      case .keyboardMissing: "Keyboard Not Added"
+      case .fullAccessMissing: "Full Access Required"
       case .noModel: "No Model Installed"
       case .modelRemovedByUpdate: "Model Update Required"
       case .freeDictationUsedUp: "Free Dictation Used Up"
@@ -70,8 +70,8 @@ struct MainTabView: View {
     var subtitle: LocalizedStringKey {
       switch self {
       case .micDenied: "Enable microphone access so Altboard can hear you. Your audio never leaves your device."
-      case .keyboardMissing: "Check that Altboard is enabled under iOS Keyboard settings. Earlier keyboard reports do not confirm its current status."
-      case .fullAccessMissing: "Open Altboard keyboard and return to confirm recent Full Access. A previous report may be stale."
+      case .keyboardMissing: "Altboard needs to be added as a keyboard to use voice dictation in any app."
+      case .fullAccessMissing: "Altboard needs Full Access to hear your voice from the keyboard."
       case .noModel: "Download a speech recognition model to start using voice input."
       case .modelRemovedByUpdate: "Parakeet v3 has been updated and needs to be downloaded again."
       case .freeDictationUsedUp: "Support Altboard with a one-time purchase to keep dictating."
@@ -205,9 +205,8 @@ struct MainTabView: View {
     if NewNameNotice().isDue { return .newName }
     let postponed = OnboardingRecordStore().load().postponedSteps
     if !checklist.microphoneGranted, !postponed.contains(.microphone) { return .micDenied }
-    // A stale extension report is unknown, not proof permission was revoked.
-    if PermissionService.currentFullAccessEvidence() == .denied,
-       !postponed.contains(.keyboard) { return .fullAccessMissing }
+    if !checklist.keyboardAdded, !postponed.contains(.keyboard) { return .keyboardMissing }
+    if !checklist.fullAccessGranted, !postponed.contains(.keyboard) { return .fullAccessMissing }
     if !checklist.hasUsableModel, !postponed.contains(.languages), !Self.isSpeechModelDownloading {
       return SharedSettings().parakeetV3NeedsRedownload ? .modelRemovedByUpdate : .noModel
     }
@@ -224,7 +223,7 @@ struct MainTabView: View {
   }
 
   private func recheckActiveBanner() {
-    guard !self.isBehindOnboarding else { return }
+    guard self.activeBanner != nil else { return }
     self.activeBanner = self.recheckBanner()
   }
 
@@ -248,9 +247,7 @@ struct MainTabView: View {
       [
         SetupBannerAction(title: "Open Models", style: .primary) {
           self.activeBanner = nil
-          self.resetSettingsStackIfIdle()
           self.selectedTab = TabID.settings.rawValue
-          self.settingsPath.append(SettingsDestination.speechModel)
         }
       ]
 
@@ -319,10 +316,8 @@ struct MainTabView: View {
       self.selectedTab = TabID.settings.rawValue
 
     case DeepLink.modelsHost:
-      self.resetSettingsStackIfIdle()
       self.selectedTab = TabID.settings.rawValue
-      self.settingsPath.append(SettingsDestination.speechModel)
-      self.activeBanner = nil
+      self.activeBanner = .noModel
 
     case DeepLink.setupMicHost:
       self.activeBanner = nil

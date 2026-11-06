@@ -66,7 +66,10 @@ struct StandardKeyboardLayout: View {
   private var controlsRow: some View {
     GeometryReader { geometry in
       let sideWidth = self.chrome.sideButtonWidth
-      let reserved = (sideWidth * 4) + (KeyboardChromeMetrics.buttonSpacing * 6) + 16.kbScaled
+      let globeWidth = self.keyboardState.showGlobeKey
+        ? sideWidth + KeyboardChromeMetrics.buttonSpacing : 0
+      let reserved = (sideWidth * 4) + (KeyboardChromeMetrics.buttonSpacing * 6)
+        + globeWidth + 16.kbScaled
       let available = self.keyboardState.auxiliaryControlsHidden
         ? geometry.size.width - 8.kbScaled
         : max(75.kbScaled, geometry.size.width - reserved)
@@ -95,6 +98,13 @@ struct StandardKeyboardLayout: View {
 extension StandardKeyboardLayout {
   private var sideButtons: some View {
     HStack(alignment: .bottom, spacing: KeyboardChromeMetrics.buttonSpacing) {
+      if self.keyboardState.showGlobeKey {
+        NativeInputModeSwitchKey(
+          configure: self.keyboardState.configureInputModeListButton,
+          iconName: "globe"
+        )
+        .frame(width: self.chrome.sideButtonWidth, height: KeyboardChromeMetrics.keyHeight)
+      }
       if self.keyboardState.showSettingsKey {
         KeyButton(
           content: .systemImage("gearshape"),
@@ -105,14 +115,16 @@ extension StandardKeyboardLayout {
           if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
         }
       }
-      TranslateToggleButton(
-        fixedWidth: self.chrome.sideButtonWidth,
-        keyboardState: self.keyboardState,
-        onHiddenSettings: self.keyboardState.showSettingsKey ? nil : {
-          if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
-        }
-      )
+      if self.keyboardState.showOutputLanguageButton {
+        TranslateToggleButton(
+          fixedWidth: self.chrome.sideButtonWidth,
+          keyboardState: self.keyboardState,
+          onHiddenSettings: self.keyboardState.showSettingsKey ? nil : {
+            if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
+          }
+        )
         .transition(.opacity.combined(with: .scale))
+      }
       Spacer(minLength: 0)
       VStack(alignment: .trailing, spacing: 8.5.kbScaled) {
         if self.keyboardState.hasLLMHistory {
@@ -121,9 +133,6 @@ extension StandardKeyboardLayout {
         HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
           if self.keyboardState.showsAIButton {
             self.aiButton.transition(.opacity.combined(with: .scale))
-          } else {
-            // Keep the two right-side slots symmetric even without a local LLM.
-            Color.clear.frame(width: self.chrome.sideButtonWidth)
           }
           RepeatDeleteButton(proxy: self.proxy, fixedWidth: self.chrome.sideButtonWidth)
         }

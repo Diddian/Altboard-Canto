@@ -11,6 +11,7 @@ struct HistoryRecord: Codable, Identifiable, Sendable {
     waveformSamples: [Float] = [],
     originalASR: String? = nil,
     userCorrection: String? = nil,
+    recognitionLanguages: [String] = [],
   ) {
     self.id = id
     self.date = date
@@ -20,6 +21,7 @@ struct HistoryRecord: Codable, Identifiable, Sendable {
     self.waveformSamples = waveformSamples
     self.originalASR = originalASR
     self.userCorrection = userCorrection
+    self.recognitionLanguages = recognitionLanguages
   }
 
   init(from decoder: Decoder) throws {
@@ -32,6 +34,7 @@ struct HistoryRecord: Codable, Identifiable, Sendable {
     self.waveformSamples = (try? container.decode([Float].self, forKey: .waveformSamples)) ?? []
     self.originalASR = try container.decodeIfPresent(String.self, forKey: .originalASR)
     self.userCorrection = try container.decodeIfPresent(String.self, forKey: .userCorrection)
+    self.recognitionLanguages = (try? container.decode([String].self, forKey: .recognitionLanguages)) ?? []
   }
 
   let id: UUID
@@ -44,6 +47,8 @@ struct HistoryRecord: Codable, Identifiable, Sendable {
   let originalASR: String?
   /// Verified spoken words entered explicitly by the user in History.
   let userCorrection: String?
+  /// Preferred speech languages at capture time. Older history defaults to [].
+  let recognitionLanguages: [String]
 
   var displayedTranscription: String {
     self.userCorrection ?? self.transcription
@@ -54,7 +59,8 @@ struct HistoryRecord: Codable, Identifiable, Sendable {
       id: self.id, date: self.date, duration: self.duration,
       transcription: self.transcription, audioFileName: self.audioFileName,
       waveformSamples: self.waveformSamples,
-      originalASR: self.originalASR, userCorrection: correction
+      originalASR: self.originalASR, userCorrection: correction,
+      recognitionLanguages: self.recognitionLanguages
     )
   }
 }

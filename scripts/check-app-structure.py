@@ -1,44 +1,94 @@
 #!/usr/bin/env python3
-"""Verify live navigation owners without publishing a stale menu snapshot."""
+"""Check reviewed source fingerprints and render the documented menu; no Swift parsing."""
 import argparse
+import json
 from pathlib import Path
+import sys
 
-ROOT=Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent
+MAP = ROOT / "docs/APP-STRUCTURE.json"
+MENU = ROOT / "docs/SETTINGS-WORKFLOW-TREE.md"
+
+
+def render(data):
+    lines = [
+        "# AltBoard-Canto: current app and Settings menu", "",
+        "Generated from `APP-STRUCTURE.json`; edit the JSON and run",
+        "`python3 scripts/check-app-structure.py --write`.", "",
+        f"Last installed diagnostic baseline: `{data['baseline']['commit']}` · build {data['baseline']['build']}.",
+        "Live main source may include newer changes; this menu is not device verification.", "",
+        "Conditions and initial expansion state appear in parentheses. Descriptions",
+        "of dynamic lists describe repeated rows, not extra navigation destinations.", "",
+    ]
+
+    def walk(nodes, depth=0):
+        for node in nodes:
+            conditions = []
+            if node.get("condition"):
+                conditions.append(node["condition"])
+            if "initially_expanded" in node:
+                conditions.append("initially expanded" if node["initially_expanded"] else "initially collapsed")
+            suffix = " (" + "; ".join(conditions) + ")" if conditions else ""
+            lines.append("  " * depth + "- " + node["label"] + suffix)
+            walk(node.get("children", []), depth + 1)
+
+    walk(data["navigation"])
+    lines += ["", "## Ownership and known differences", ""]
+    lines += ["- " + note for note in data["consistency_notes"]]
+    lines += ["", "Consult `KNOWN-ISSUES.json` for evidence and pending acceptance checks.", ""]
+    return "\n".join(lines)
+
+
+def validate(data):
+    errors = []
+    owners = data["source_owners"]
+    for relative in owners:
+        path = ROOT / relative
+        if not path.is_file():
+            errors.append(f"Missing owner: {relative}")
+    ids = set()
+
+    def walk(nodes):
+        for node in nodes:
+            if node["id"] in ids:
+                errors.append(f"Duplicate node ID: {node['id']}")
+            ids.add(node["id"])
+            owner = node["owner"]
+            if owner not in owners:
+                errors.append(f"Untracked owner for {node['id']}: {owner}")
+            anchor = node.get("source_anchor")
+            if anchor and (ROOT / owner).is_file():
+                if anchor not in (ROOT / owner).read_text():
+                    errors.append(f"Missing anchor for {node['id']}: {anchor}")
+            walk(node.get("children", []))
+
+    walk(data["navigation"])
+    for feature in data["feature_entry_points"]:
+        for owner in feature["owners"]:
+            if owner not in owners:
+                errors.append(f"Untracked feature owner: {owner}")
+    return errors, len(ids)
+
+
 def main():
-    p=argparse.ArgumentParser()
-    p.add_argument("--check",action="store_true")
-    args=p.parse_args()
-    if not args.check:
-        p.error("Use --check")
-    cases={
-      "Sayboard/Views/MainTabView.swift": ["case history","case meetings","case settings","MeetingRecordsView()"],
-      "Sayboard/Views/SettingsView.swift": ["Section(\"Speech & AI\")",
-           "SpeechLanguagesSettingsView(inline: true, rowsOnly: true)",
-           "DisclosureGroup(isExpanded: self.$showsDictation)",
-           "DisclosureGroup(isExpanded: self.$showsAIActions)",
-           "DisclosureGroup(isExpanded: self.$showsStorage)",
-           "KeyboardSettingsView(", "DataAndStorageSettingsView(inline: true)",
-           "DictationSettingsView(inline: true)", "LLMSettingsView(inline: true)",
-           "AppLanguageListView()", "DiagnosticsView()"],
-      "Sayboard/Views/SettingsNavigationViews.swift": ["struct DictationSettingsView",
-           "struct HelpSettingsView"],
-      "Sayboard/Services/LocalUserDataStore.swift": ["static func export(",
-           "static func delete("]
-    }
-    errors=[]
-    for name,needles in cases.items():
-        file=ROOT/name
-        if not file.is_file():
-            errors.append("Missing "+name)
-            continue
-        s=file.read_text(encoding="utf-8")
-        for needle in needles:
-            if needle not in s: errors.append(name+": missing "+needle)
+    parser = argparse.ArgumentParser(description=__doc__)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--check", action="store_true")
+    mode.add_argument("--write", action="store_true")
+    args = parser.parse_args()
+    data = json.loads(MAP.read_text())
+    errors, count = validate(data)
+    expected = render(data)
+    if args.check and (not MENU.is_file() or MENU.read_text() != expected):
+        errors.append("Menu drift: regenerate SETTINGS-WORKFLOW-TREE.md from the reviewed JSON")
     if errors:
-        for e in errors: print(e)
+        print("\n".join(errors), file=sys.stderr)
         return 1
-    print("Current app routes and data-operation owners verified")
+    if args.write:
+        MENU.write_text(expected)
+    print(f"Verified {count} unique menu nodes and {len(data['source_owners'])} source owners")
     return 0
 
-if __name__=="__main__":
-    raise SystemExit(main())
+
+if __name__ == "__main__":
+    sys.exit(main())

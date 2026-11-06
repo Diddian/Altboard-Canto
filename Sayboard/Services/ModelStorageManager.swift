@@ -43,7 +43,16 @@ enum ModelStorageManager {
   static func totalDiskUsage() -> Int64 {
     let root = self.modelsRoot
     guard FileManager.default.fileExists(atPath: root.path) else { return 0 }
-    return ModelDirectorySize.bytes(at: root)
+    guard let enumerator = FileManager.default.enumerator(at: root, includingPropertiesForKeys: [.fileSizeKey]) else {
+      return 0
+    }
+    var total: Int64 = 0
+    for case let fileURL as URL in enumerator {
+      if let size = try? fileURL.resourceValues(forKeys: [.fileSizeKey]).fileSize {
+        total += Int64(size)
+      }
+    }
+    return total
   }
 
   static func clearCompiledModelCache() {
@@ -54,7 +63,7 @@ enum ModelStorageManager {
       let persistentURL = self.persistentCoreMLCacheURL(),
       fm.fileExists(atPath: persistentURL.path)
     {
-      let size = ModelDirectorySize.bytes(at: persistentURL)
+      let size = Self.directorySize(at: persistentURL)
       totalCleared += size
       do {
         try fm.removeItem(at: persistentURL)
@@ -68,7 +77,7 @@ enum ModelStorageManager {
         let fileType = attrs[.type] as? FileAttributeType,
         fileType != .typeSymbolicLink
       {
-        let size = ModelDirectorySize.bytes(at: cachesURL)
+        let size = Self.directorySize(at: cachesURL)
         totalCleared += size
         do {
           try fm.removeItem(at: cachesURL)
@@ -93,11 +102,11 @@ enum ModelStorageManager {
       let persistentURL = self.persistentCoreMLCacheURL(),
       FileManager.default.fileExists(atPath: persistentURL.path)
     {
-      return ModelDirectorySize.bytes(at: persistentURL)
+      return self.directorySize(at: persistentURL)
     }
     guard let cachesURL = self.compiledModelCacheURL() else { return 0 }
     guard FileManager.default.fileExists(atPath: cachesURL.path) else { return 0 }
-    return ModelDirectorySize.bytes(at: cachesURL)
+    return self.directorySize(at: cachesURL)
   }
 
   static func ensurePersistentCoreMLCache() {
@@ -200,7 +209,7 @@ enum ModelStorageManager {
       return
     }
     DispatchQueue.global(qos: .utility).async {
-      let _ = ModelDirectorySize.bytes(at: trashURL)
+      let _ = self.directorySize(at: trashURL)
       do {
         try FileManager.default.removeItem(at: trashURL)
       } catch { }
@@ -244,6 +253,19 @@ enum ModelStorageManager {
     return appSupportDir
       .appendingPathComponent(self.effectiveBundleId, isDirectory: true)
       .appendingPathComponent(self.persistentCacheDirName, isDirectory: true)
+  }
+
+  private static func directorySize(at url: URL) -> Int64 {
+    guard let enumerator = FileManager.default.enumerator(at: url, includingPropertiesForKeys: [.fileSizeKey]) else {
+      return 0
+    }
+    var total: Int64 = 0
+    for case let fileURL as URL in enumerator {
+      if let size = try? fileURL.resourceValues(forKeys: [.fileSizeKey]).fileSize {
+        total += Int64(size)
+      }
+    }
+    return total
   }
 
   private static func containsONNXModel(at url: URL) -> Bool {

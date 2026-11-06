@@ -14,3 +14,26 @@ enum LiveCantoneseSafety {
     candidateCount > 0 && matches(buffer: buffer, hostContext: hostContext)
   }
 }
+
+
+/// A complete two-character-or-longer phrase takes priority over the raw
+/// romanization. Invalid, incomplete and host-mismatched input stays literal.
+enum CantonesePhraseCommitPolicy {
+  static func hidesLatinLiteral(firstCandidate: String?,
+                                isCurrentComposition: Bool,
+                                hasExactEntry: Bool,
+                                recognizesLatinWord: Bool = false) -> Bool {
+    isCurrentComposition && hasExactEntry && !recognizesLatinWord
+      && (firstCandidate?.count ?? 0) >= 2
+  }
+
+  static func commitsFirstOnSpace(spelling: String, firstCandidate: String?,
+                                  hasExactEntry: Bool, hostMatches: Bool,
+                                  recognizesLatinWord: Bool = false) -> Bool {
+    !spelling.isEmpty && hasExactEntry && hostMatches
+      && hidesLatinLiteral(firstCandidate: firstCandidate,
+                           isCurrentComposition: true,
+                           hasExactEntry: hasExactEntry,
+                           recognizesLatinWord: recognizesLatinWord)
+  }
+}

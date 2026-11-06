@@ -3,7 +3,7 @@ import Foundation
 // Standalone prompt dependencies; no app, model download or inference is started.
 enum ChatTemplate { case chatml, qwenNoThinking, gemma, llama }
 enum LLMAction {
-  case removeRedundancy, rewrite, formal, casual, fixGrammar, simplify
+  case translate, removeRedundancy, rewrite, formal, casual, fixGrammar, simplify
   case continueWriting, shorten, bulletPoints, summarize, expand, addPunctuation
 }
 struct LLMCustomPrompt { let prompt: String }

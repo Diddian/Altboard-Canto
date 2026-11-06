@@ -162,9 +162,7 @@ struct HistoryStorageSettingsView: View {
     }
     .onChange(of: self.selectedRetentionPolicy) { _, selected in
       SharedSettings().retentionPolicy = selected
-      if !HistoryStore.shared.applyRetentionPolicy() {
-        self.showHistoryDeletionError = true
-      }
+      HistoryStore.shared.applyRetentionPolicy()
       self.refreshHistoryInfo()
     }
   }
