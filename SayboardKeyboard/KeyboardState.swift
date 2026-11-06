@@ -65,6 +65,9 @@ final class KeyboardState: ObservableObject {
   /// with Apple's handleInputModeList(from:with:) on all touch events.
   /// The callback captures the controller weakly to avoid a retain cycle.
   var configureInputModeListButton: ((UIButton) -> Void)?
+  #if !APPSTORE
+  var liveDebugAction: ((KeyboardLiveDebugAction) -> Void)?
+  #endif
 
   var appearedAt: CFAbsoluteTime = 0
 

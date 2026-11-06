@@ -21,6 +21,11 @@ struct DiagnosticsView: View {
   @AppStorage(SharedKey.keyboardTouchDebugOverlay,
               store: UserDefaults(suiteName: AppGroup.identifier))
   private var showTouchTargets = false
+  #if !APPSTORE
+  @AppStorage(SharedKey.keyboardLiveDebugHUD,
+              store: UserDefaults(suiteName: AppGroup.identifier))
+  private var liveDebugHUDEnabled = true
+  #endif
 
   var body: some View {
     Form {
@@ -197,6 +202,10 @@ struct DiagnosticsView: View {
   private var developmentTraceSection: some View {
     Section {
       DisclosureGroup("Development Traces", isExpanded: self.$showsDevelopmentTraces) {
+        Toggle("Live Keyboard Debug HUD", isOn: self.$liveDebugHUDEnabled)
+        Text("Neon-green, touch-transparent status over the spacebar. Only event types, never text or touch positions. Reopen the keyboard to apply changes.")
+          .font(.caption)
+          .foregroundStyle(.secondary)
         LabeledContent("Keyboard lifecycle", value: "\(self.keyboardTraceCount)")
         LabeledContent("Feature milestones", value: "\(self.featureTraceCount)")
         Button("Share Development Diagnostics JSON") {
