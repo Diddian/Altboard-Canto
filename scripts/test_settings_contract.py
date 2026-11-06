@@ -157,14 +157,18 @@ class SettingsContractTests(unittest.TestCase):
 
     def test_host_keeps_render_tree_across_focus_changes(self):
         controller = read("SayboardKeyboard/KeyboardViewController.swift")
-        host = read("SayboardKeyboard/KeyboardInputView.swift")
-        self.assertIn("KeyboardHostGeometry()", controller)
-        self.assertIn("self.hostGeometry.update(", controller)
+        self.assertIn("UIHostingController<KeyboardView>", controller)
+        self.assertNotIn("KeyboardHostingRoot", controller)
         self.assertNotIn("controller.rootView =", controller)
         self.assertNotIn("rootNeedsMeasuredRemount", controller)
-        self.assertIn("GeometryReader { bounds in", host)
-        self.assertIn(".frame(width: max(1, width), height: max(1, height)", host)
-        self.assertNotIn("Color.clear", host)
+        appear = controller.split("override func viewWillAppear(", 1)[1].split(
+            "override func viewWillDisappear(", 1)[0]
+        self.assertIn("if self.hostingController == nil", appear)
+        self.assertEqual(appear.count("self.setupKeyboardView()"), 1)
+        setup = controller.split("private func setupKeyboardView()", 1)[1].split(
+            "private func applyKeyboardHeight()", 1)[0]
+        self.assertIn("guard self.hostingController == nil else { return }", setup)
+        self.assertIn("hosting.view.bottomAnchor.constraint(equalTo: self.view.bottomAnchor)", setup)
         self.assertIn("keyboardAppearanceRevision &+= 1", controller)
 
     def test_meeting_tab_uses_existing_local_recorder(self):
