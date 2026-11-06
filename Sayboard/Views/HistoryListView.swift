@@ -34,6 +34,11 @@ struct HistoryListView: View {
         self.loadRecords()
       }
       .onChange(of: self.hasTextModel, initial: true) { if self.hasTextModel { self.isAIOfferClosed = true } }
+      .alert("History Operation Failed", isPresented: self.$historyOperationError) {
+        Button("OK", role: .cancel) {}
+      } message: {
+        Text("History changes could not be fully saved. Check available storage; existing audio may remain.")
+      }
   }
 
   @EnvironmentObject private var playerService: AudioPlayerService
@@ -48,6 +53,7 @@ struct HistoryListView: View {
   @State private var records = [HistoryRecord]()
   @State private var loadedModificationDate: Date?
   @State private var keyboardTestingText = ""
+  @State private var historyOperationError = false
   @FocusState private var isKeyboardTestFocused: Bool
   @Environment(\.scenePhase) private var scenePhase
 
@@ -206,7 +212,11 @@ struct HistoryListView: View {
 
   private func deleteRecord(id: UUID) {
     self.playerService.stop()
-    self.store.deleteRecord(id: id)
+    guard self.store.deleteRecord(id: id) else {
+      self.historyOperationError = true
+      self.loadRecords()
+      return
+    }
     withAnimation(.easeInOut(duration: 0.35)) {
       self.records.removeAll { $0.id == id }
     }

@@ -13,7 +13,9 @@ def main():
     cases={
       "Sayboard/Views/MainTabView.swift": ["case history","case meetings","case settings","MeetingRecordsView()"],
       "Sayboard/Views/SettingsView.swift": ["Section(\"Speech & AI\")",
-           "KeyboardSettingsView(", "DataAndStorageSettingsView(inline: true)",
+           "Section(\"Recording\")", "Section(\"Keyboard\")", "Section(\"Data\")",
+           "KeyboardSettingsView(", "DataAndStorageSettingsView()",
+           "DictationSettingsView()", "LLMSettingsView()",
            "AppLanguageListView()", "DiagnosticsView()"],
       "Sayboard/Views/SettingsNavigationViews.swift": ["struct DictationSettingsView",
            "struct HelpSettingsView"],

@@ -56,20 +56,26 @@ struct HistoryStore: Sendable {
   }
 
   func readRecords() throws -> [HistoryRecord] {
-    guard let url = historyFileURL, FileManager.default.fileExists(atPath: url.path) else { return [] }
-    let data = try Data(contentsOf: url)
+    guard let url = historyFileURL else { throw CocoaError(.fileReadNoSuchFile) }
+    guard FileManager.default.fileExists(atPath: url.path) else { return [] }
+    // A damaged or unexpectedly large manifest must not block the UI with
+    // an unbounded synchronous read. Audio never enters this JSON decoder.
+    let handle = try FileHandle(forReadingFrom: url)
+    defer { try? handle.close() }
+    let data = try handle.read(upToCount: Self.maximumManifestBytes + 1) ?? Data()
+    guard data.count <= Self.maximumManifestBytes else { throw CocoaError(.fileReadTooLarge) }
     let records = try JSONDecoder.historyDecoder.decode([HistoryRecord].self, from: data)
     return records.sorted { $0.date > $1.date }
   }
 
-  func saveRecord(_ record: HistoryRecord) {
+  @discardableResult
+  func saveRecord(_ record: HistoryRecord) -> Bool {
     guard SharedSettings().retentionPolicy != .never else {
-      self.deleteAudioFile(named: record.audioFileName)
-      return
+      return self.deleteAudioFile(named: record.audioFileName)
     }
-    guard var records = try? self.readRecords() else { return }
+    guard var records = try? self.readRecords() else { return false }
     records.insert(record, at: 0)
-    self.writeRecords(records)
+    return self.writeRecords(records)
   }
 
   @discardableResult
@@ -107,13 +113,14 @@ struct HistoryStore: Sendable {
     return true
   }
 
-  func deleteRecord(id: UUID) {
-    guard var records = try? self.readRecords() else { return }
-    guard let index = records.firstIndex(where: { $0.id == id }) else { return }
+  @discardableResult
+  func deleteRecord(id: UUID) -> Bool {
+    guard var records = try? self.readRecords() else { return false }
+    guard let index = records.firstIndex(where: { $0.id == id }) else { return false }
     let record = records[index]
     records.remove(at: index)
-    guard self.writeRecords(records) else { return }
-    self.deleteAudioFile(named: record.audioFileName)
+    guard self.writeRecords(records) else { return false }
+    return self.deleteAudioFile(named: record.audioFileName)
   }
 
   @discardableResult
@@ -153,16 +160,20 @@ struct HistoryStore: Sendable {
     return records.count - self.retainedRecords(for: policy, in: records).count
   }
 
-  func applyRetentionPolicy() {
-    guard let records = try? self.readRecords() else { return }
+  @discardableResult
+  func applyRetentionPolicy() -> Bool {
+    guard let records = try? self.readRecords() else { return false }
     let retained = self.retainedRecords(for: SharedSettings().retentionPolicy, in: records)
     let retainedIDs = Set(retained.map(\.id))
-    guard self.writeRecords(retained) else { return }
+    guard self.writeRecords(retained) else { return false }
+    var removedAll = true
     for record in records where !retainedIDs.contains(record.id) {
-      self.deleteAudioFile(named: record.audioFileName)
+      if !self.deleteAudioFile(named: record.audioFileName) { removedAll = false }
     }
+    return removedAll
   }
 
+  private static let maximumManifestBytes = 64 * 1024 * 1024
   private let historyFileName = "history.json"
   private let audioDirectoryName = "audio"
 

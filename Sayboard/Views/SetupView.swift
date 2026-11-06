@@ -11,22 +11,11 @@ struct SetupView: View {
           isDone: self.checklist.microphoneGranted,
           video: .microphone,
         )
-        self.tutorialRow(
-          "Add Altboard Keyboard",
-          systemImage: "keyboard",
-          isDone: self.checklist.keyboardAdded,
-          video: .addKeyboard,
-        )
-        self.tutorialRow(
-          "Allow Full Access for Keyboard",
-          systemImage: "lock.open",
-          isDone: self.checklist.fullAccessGranted,
-          video: .fullAccess,
-        )
+        self.keyboardAccessRows
         self.modelRow
       } footer: {
         if !self.checklist.isComplete {
-          Text("Complete these steps to use dictation. Basic keyboard typing remains available.")
+          Text("Unverified keyboard access does not mean Full Access is disabled. Basic typing remains available.")
         }
       }
       Section("Sideloading diagnostics") {
@@ -36,6 +25,7 @@ struct SetupView: View {
         LabeledContent("Main App Group", value: self.permissionService.mainGroupTestResult)
         LabeledContent("App Group identifier", value: AppGroup.resolutionDescription)
         LabeledContent("Keyboard extension", value: self.permissionService.keyboardProbeSummary)
+        LabeledContent("Full Access verification", value: self.permissionService.fullAccessEvidence.statusText)
         LabeledContent("Keyboard Full Access (last report)", value: self.boolStatus(self.permissionService.keyboardReportedFullAccess))
         LabeledContent("Keyboard App Group (last report)", value: self.boolStatus(self.permissionService.keyboardReportedGroupAvailable))
 
@@ -45,8 +35,8 @@ struct SetupView: View {
             systemImage: "exclamationmark.triangle"
           )
           .font(.footnote).foregroundStyle(.orange)
-        } else if self.permissionService.keyboardProbeTimestamp == 0 {
-          Text("Open Altboard in Notes, return here, then tap Recheck. No recent report means access cannot be confirmed.")
+        } else if self.permissionService.fullAccessEvidence == .unknown {
+          Text("Open Altboard in Notes, return here, then tap Recheck. An old or absent report cannot prove Full Access is off.")
             .font(.footnote).foregroundStyle(.secondary)
         }
 
@@ -100,6 +90,37 @@ struct SetupView: View {
     .onAppear { self.permissionService.refreshAll() }
     .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
       self.permissionService.refreshAll()
+    }
+  }
+
+  @ViewBuilder
+  private var keyboardAccessRows: some View {
+    if self.permissionService.isKeyboardAdded {
+      SetupDoneRow(title: "Altboard Keyboard Opened Recently", systemImage: "keyboard")
+    } else {
+      Button {
+        self.pipTutorialService.playTutorial(.addKeyboard, language: self.selectedAppLanguage,
+                                             thenOpenSettings: true)
+      } label: {
+        Label("Verify Altboard Keyboard Setup", systemImage: "keyboard")
+      }
+    }
+
+    switch self.permissionService.fullAccessEvidence {
+    case .confirmed:
+      SetupDoneRow(title: "Full Access Recently Confirmed", systemImage: "lock.open")
+    case .denied:
+      self.tutorialRow("Allow Full Access for Keyboard",
+                       systemImage: "lock", isDone: false, video: .fullAccess)
+    case .unknown:
+      Label("Full Access Not Verified", systemImage: "questionmark.shield")
+        .foregroundStyle(.secondary)
+      Button("I Enabled Full Access — Recheck") {
+        self.permissionService.refreshAll()
+      }
+      Text("Open the Altboard keyboard once and return to verify. Unknown is not a permission denial.")
+        .font(.footnote)
+        .foregroundStyle(.secondary)
     }
   }
 

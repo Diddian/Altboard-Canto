@@ -6,6 +6,7 @@ struct LearningDataSettingsView: View {
   @State private var showExporter = false
   @State private var exportedDocument: LearningDataExportDocument?
   @State private var showResetConfirmation = false
+  @State private var exportError: String?
   @State private var counts = [String: Int]()
 
   var body: some View {
@@ -62,8 +63,17 @@ struct LearningDataSettingsView: View {
       document: self.exportedDocument,
       contentType: .json,
       defaultFilename: "Altboard-Corrections-and-Suggestions"
-    ) { _ in
+    ) { result in
+      if case .failure(let error) = result { self.exportError = error.localizedDescription }
       self.exportedDocument = nil
+    }
+    .alert("Data Export Failed", isPresented: Binding(
+      get: { self.exportError != nil },
+      set: { if !$0 { self.exportError = nil } }
+    )) {
+      Button("OK", role: .cancel) { self.exportError = nil }
+    } message: {
+      Text(self.exportError ?? "")
     }
   }
 
@@ -78,14 +88,22 @@ struct LearningDataSettingsView: View {
   }
 
   private func reset() {
-    try? LocalUserDataStore.resetLearning()
-    self.reload()
+    do {
+      try LocalUserDataStore.resetLearning()
+      self.reload()
+    } catch {
+      self.exportError = error.localizedDescription
+    }
   }
 
   private func exportJSON() {
-    guard let data = try? LocalUserDataStore.vocabularyData() else { return }
-    self.exportedDocument = LearningDataExportDocument(content: data)
-    self.showExporter = true
+    do {
+      let data = try LocalUserDataStore.vocabularyData()
+      self.exportedDocument = LearningDataExportDocument(content: data)
+      self.showExporter = true
+    } catch {
+      self.exportError = error.localizedDescription
+    }
   }
 }
 

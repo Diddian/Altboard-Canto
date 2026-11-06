@@ -35,13 +35,15 @@ enum LocalUserDataStore {
                                                 heard: $0.heard, intended: $0.intended)
     }
     let info = Bundle.main.infoDictionary ?? [:]
-    return try PersonalVocabularyExport.encode(
+    let data = try PersonalVocabularyExport.encode(
       selections: selection, romanization: romanization, corrections: rules,
       version: info["CFBundleShortVersionString"] as? String ?? "unknown",
       build: info["CFBundleVersion"] as? String ?? "unknown",
       commit: info["AltboardBuildSHA"] as? String ?? "unstamped",
       keyboardCommit: defaults.string(forKey: SharedKey.keyboardBuildSHA) ?? "not reported"
     )
+    guard data.count <= 2 * 1024 * 1024 else { throw CocoaError(.fileReadTooLarge) }
+    return data
   }
 
   static func resetLearning() throws {
@@ -50,10 +52,16 @@ enum LocalUserDataStore {
   }
 
   static func delete(_ categories: [Category]) throws {
+    let selected = Set(categories)
+    guard !selected.isEmpty else { throw CocoaError(.fileWriteUnknown) }
     guard AppGroup.sharedDefaults != nil, AppGroup.containerURL != nil else {
       throw CocoaError(.fileWriteNoPermission)
     }
-    for category in Set(categories) {
+    guard !MeetingRecordingCoordinator.shared.isRecording,
+          !MeetingRecordingCoordinator.shared.isFinalizing else {
+      throw CocoaError(.fileWriteNoPermission)
+    }
+    for category in Category.allCases where selected.contains(category) {
       switch category {
       case .voiceNotes:
         // Do not remove audio unless the manifest was persisted first.
@@ -82,6 +90,7 @@ enum LocalUserDataStore {
     // A bounded manifest; audio stays on disk and is copied, never loaded as Data.
     guard records.count <= 5_000 else { throw CocoaError(.fileReadTooLarge) }
     let encodedHistory = try JSONEncoder().encode(records)
+    guard encodedHistory.count <= 64 * 1024 * 1024 else { throw CocoaError(.fileReadTooLarge) }
     let audioRoot = selected.contains(.voiceNotes) ? HistoryStore.shared.audioDirectoryURL : nil
     let vocab = selected.contains(.vocabulary) ? try vocabularyData() : nil
 

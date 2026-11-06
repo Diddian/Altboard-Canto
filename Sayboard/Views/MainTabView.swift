@@ -205,8 +205,9 @@ struct MainTabView: View {
     if NewNameNotice().isDue { return .newName }
     let postponed = OnboardingRecordStore().load().postponedSteps
     if !checklist.microphoneGranted, !postponed.contains(.microphone) { return .micDenied }
-    if !checklist.keyboardAdded, !postponed.contains(.keyboard) { return .keyboardMissing }
-    if !checklist.fullAccessGranted, !postponed.contains(.keyboard) { return .fullAccessMissing }
+    // A stale extension report is unknown, not proof permission was revoked.
+    if PermissionService.currentFullAccessEvidence() == .denied,
+       !postponed.contains(.keyboard) { return .fullAccessMissing }
     if !checklist.hasUsableModel, !postponed.contains(.languages), !Self.isSpeechModelDownloading {
       return SharedSettings().parakeetV3NeedsRedownload ? .modelRemovedByUpdate : .noModel
     }
@@ -223,7 +224,7 @@ struct MainTabView: View {
   }
 
   private func recheckActiveBanner() {
-    guard self.activeBanner != nil else { return }
+    guard !self.isBehindOnboarding else { return }
     self.activeBanner = self.recheckBanner()
   }
 
@@ -247,7 +248,9 @@ struct MainTabView: View {
       [
         SetupBannerAction(title: "Open Models", style: .primary) {
           self.activeBanner = nil
+          self.resetSettingsStackIfIdle()
           self.selectedTab = TabID.settings.rawValue
+          self.settingsPath.append(SettingsDestination.speechModel)
         }
       ]
 
@@ -316,8 +319,10 @@ struct MainTabView: View {
       self.selectedTab = TabID.settings.rawValue
 
     case DeepLink.modelsHost:
+      self.resetSettingsStackIfIdle()
       self.selectedTab = TabID.settings.rawValue
-      self.activeBanner = .noModel
+      self.settingsPath.append(SettingsDestination.speechModel)
+      self.activeBanner = nil
 
     case DeepLink.setupMicHost:
       self.activeBanner = nil

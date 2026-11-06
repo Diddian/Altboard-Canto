@@ -1,8 +1,11 @@
 import SwiftUI
 import UIKit
 
-/// Put the decisions users make first. Advanced controls stay in one clearly
-/// named destination instead of a flat page of unrelated toggles.
+enum SettingsDestination: Hashable {
+  case speechModel
+}
+
+// Each setting has one destination. The values still use the original App Group keys.
 struct SettingsView: View {
   @EnvironmentObject private var permissionService: PermissionService
   @AppStorage(SharedKey.hasUsableModel, store: UserDefaults(suiteName: AppGroup.identifier))
@@ -11,9 +14,6 @@ struct SettingsView: View {
   private var keyboardKindRaw = KeyboardKind.standard.rawValue
   @AppStorage(SharedKey.appLanguage) private var appLanguage = AppLanguageConfig.fallback
   @State private var showsLowStorageWarning = false
-  @State private var showsStorage = false
-  @State private var showsDictation = false
-  @State private var showsAIActions = false
 
   private enum Route: Hashable { case setup }
 
@@ -28,22 +28,20 @@ struct SettingsView: View {
     )
   }
 
-  private var setupChecklist: SetupChecklist {
-    SetupChecklist(permissions: self.permissionService, hasUsableModel: self.hasUsableModel)
+  private var setupNeedsAction: Bool {
+    !self.permissionService.hasFullAccess
+      && self.permissionService.fullAccessEvidence == .denied
+      || self.permissionService.microphoneState == .denied
+      || !self.hasUsableModel
   }
 
   var body: some View {
     Form {
-      if !self.setupChecklist.isComplete || self.showsLowStorageWarning {
+      if self.setupNeedsAction || self.showsLowStorageWarning {
         Section("Action Required") {
-          if !self.setupChecklist.isComplete {
+          if self.setupNeedsAction {
             NavigationLink(value: Route.setup) {
-              LabeledContent {
-                Text("\(self.setupChecklist.remainingCount) steps")
-                  .foregroundStyle(.orange)
-              } label: {
-                Label("Complete Setup", systemImage: "checkmark.shield")
-              }
+              Label("Review Setup & Permissions", systemImage: "checkmark.shield")
             }
           }
           if self.showsLowStorageWarning {
@@ -58,12 +56,17 @@ struct SettingsView: View {
       PurchaseSection()
       #endif
 
-      Section("Speech & AI") {
-        SpeechLanguagesSettingsView(inline: true)
+      Section("Recording") {
         ActiveSessionToggle()
+      }
+
+      Section("Speech & AI") {
         NavigationLink {
-          ModelsView()
+          SpeechLanguagesSettingsView()
         } label: {
+          Label("Speech Languages", systemImage: "globe")
+        }
+        NavigationLink(value: SettingsDestination.speechModel) {
           Label("Speech Model", systemImage: "cpu")
         }
         NavigationLink {
@@ -71,32 +74,35 @@ struct SettingsView: View {
         } label: {
           Label("Text Model", systemImage: "text.bubble")
         }
-        DisclosureGroup(isExpanded: self.$showsDictation) {
-          if self.showsDictation {
-            DictationSettingsView(inline: true)
-          }
+        NavigationLink {
+          DictationSettingsView()
         } label: {
           Label("Dictation", systemImage: "waveform")
         }
-        DisclosureGroup(isExpanded: self.$showsAIActions) {
-          if self.showsAIActions {
-            LLMSettingsView(inline: true)
-          }
+        NavigationLink {
+          LLMSettingsView()
         } label: {
           Label("AI Actions", systemImage: "sparkles")
         }
       }
 
-      KeyboardSettingsView(selectedKind: self.keyboardKindBinding, inline: true)
+      Section("Keyboard") {
+        NavigationLink {
+          KeyboardSettingsView(selectedKind: self.keyboardKindBinding)
+        } label: {
+          Label("Keyboard Settings", systemImage: "keyboard")
+        }
+      }
 
-      Section {
-        DisclosureGroup(isExpanded: self.$showsStorage) {
-          if self.showsStorage {
-            DataAndStorageSettingsView(inline: true)
-          }
+      Section("Data") {
+        NavigationLink {
+          DataAndStorageSettingsView()
         } label: {
           Label("History & Storage", systemImage: "externaldrive")
         }
+      }
+
+      Section {
         NavigationLink {
           AppLanguageListView()
         } label: {
@@ -137,12 +143,16 @@ struct SettingsView: View {
       }
     }
     .navigationTitle("Settings")
+    .navigationDestination(for: SettingsDestination.self) { route in
+      switch route {
+      case .speechModel: ModelsView()
+      }
+    }
     .navigationDestination(for: Route.self) { _ in SetupView() }
     .onAppear {
+      self.permissionService.refreshAll()
       self.showsLowStorageWarning = DiskSpace.isLow()
         && !OperatingSystem.isBackgroundNeuralEngineBlocked
     }
   }
 }
-
-
