@@ -87,6 +87,9 @@ enum KeyboardLifecycleTrace {
 
   private struct Entry: Codable, Sendable {
     let timestampMs: Int64
+    let systemUptimeMs: Int64
+    let processID: Int32
+    let buildSHA: String
     let session: String
     let processLaunchID: String
     let event: String
@@ -109,6 +112,7 @@ enum KeyboardLifecycleTrace {
     let renderProbe: RenderProbe?
   }
 
+  private static let buildSHA = Bundle.main.infoDictionary?["AltboardBuildSHA"] as? String ?? "unknown"
   private static let filename = "keyboard-lifecycle-v1.jsonl"
   private static let maxBytes: off_t = 1_048_576
   private static let queue = DispatchQueue(label: "app.sayboard.keyboard.lifecycle", qos: .utility)
@@ -127,6 +131,9 @@ enum KeyboardLifecycleTrace {
       ? KeyboardProcessMemory.snapshot() : nil
     let entry = Entry(
       timestampMs: Int64(Date().timeIntervalSince1970 * 1_000),
+      systemUptimeMs: Int64(ProcessInfo.processInfo.systemUptime * 1_000),
+      processID: ProcessInfo.processInfo.processIdentifier,
+      buildSHA: buildSHA,
       session: session, processLaunchID: KeyboardProcessMemory.processLaunchID,
       event: event.rawValue,
       requestedMode: requestedMode.rawValue, effectiveMode: effectiveMode.rawValue,
@@ -169,7 +176,10 @@ enum KeyboardLifecycleTrace {
     guard flock(fd, LOCK_EX) == 0 else { return }
     defer { _ = flock(fd, LOCK_UN) }
     let size = lseek(fd, 0, SEEK_END)
-    if size > maxBytes { _ = ftruncate(fd, 0) }
+    guard data.count <= Int(maxBytes), size >= 0 else { return }
+    if size + off_t(data.count) > maxBytes {
+      guard ftruncate(fd, 0) == 0 else { return }
+    }
     data.withUnsafeBytes { raw in
       guard let start = raw.baseAddress else { return }
       var written = 0
@@ -374,7 +384,7 @@ enum KeyboardLifecycleTrace {
   static func exportJSON() -> String {
     let events = entries()
     let document: [String: Any] = [
-      "schemaVersion": 4,
+      "schemaVersion": 5,
       "exportedAtMs": Int64(Date().timeIntervalSince1970 * 1_000),
       "appBuild": Bundle.main.infoDictionary?["AltboardBuildSHA"] as? String ?? "unknown",
       "keyboardBuild": AppGroup.sharedDefaults?.string(forKey: "canto.keyboardBuildSHA") ?? "unknown",
@@ -386,6 +396,8 @@ enum KeyboardLifecycleTrace {
       "postSubmitReview": postSubmitReview(for: events),
       "documentIdentityReview": documentIdentityReview(for: events),
       "memoryReview": memoryReview(for: events),
+      "evidenceReview": KeyboardDiagnosticReview.summarize(events),
+      "exportDeviceOSVersion": ProcessInfo.processInfo.operatingSystemVersionString,
     ]
     guard let data = try? JSONSerialization.data(withJSONObject: document, options: [.prettyPrinted, .sortedKeys])
     else { return "{\"schemaVersion\":1,\"events\":[]}" }

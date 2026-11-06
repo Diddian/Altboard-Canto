@@ -1,5 +1,7 @@
 """Regression guards for stable keyboard hosting across focus changes."""
 from pathlib import Path
+import subprocess
+import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -9,6 +11,25 @@ ROOT_VIEW = ROOT / "SayboardKeyboard" / "Views" / "KeyboardView.swift"
 
 
 class KeyboardInitialLayoutTests(unittest.TestCase):
+    def test_diagnostic_evidence_review_behavior(self):
+        with tempfile.TemporaryDirectory() as directory:
+            executable = str(Path(directory) / "diagnostic-review")
+            subprocess.run([
+                "swiftc", "-swift-version", "6", "-strict-concurrency=complete",
+                "-warnings-as-errors", "-o", executable,
+                str(ROOT / "Shared/KeyboardDiagnosticReview.swift"),
+                str(ROOT / "scripts/verify-keyboard-diagnostic-review.swift"),
+            ], check=True, capture_output=True, text=True)
+            subprocess.run([executable], check=True, capture_output=True, text=True)
+
+    def test_diagnostic_correlation_is_additive_and_storage_is_bounded(self):
+        trace = (ROOT / "Shared/KeyboardLifecycleTrace.swift").read_text()
+        for field in ("systemUptimeMs", "processID", "buildSHA"):
+            self.assertIn("let " + field + ":", trace)
+        self.assertIn('"evidenceReview": KeyboardDiagnosticReview.summarize(events)', trace)
+        self.assertIn("size + off_t(data.count) > maxBytes", trace)
+        self.assertIn("guard ftruncate(fd, 0) == 0 else { return }", trace)
+
     def test_letter_rows_remain_visible_and_rehydrate_on_reactivation(self):
         source = LAYOUT.read_text(encoding="utf-8")
         self.assertIn(".id(self.keyboardState.keyboardAppearanceRevision)", source)
@@ -199,7 +220,7 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("let firstLoadForBuild: Bool?", trace)
         self.assertIn("let inputModeProbe: InputModeProbe?", trace)
         self.assertIn('"inputModeReview": inputModeReview(for: events)', trace)
-        self.assertIn('"schemaVersion": 4', trace)
+        self.assertIn('"schemaVersion": 5', trace)
         self.assertIn("No callbacks can be guaranteed while iOS runs another keyboard.", trace)
         self.assertIn("FeatureDiagnostics.record(.appStartup, .started)", app)
         self.assertIn("FeatureDiagnostics.record(.appStartup, .completed)", app)
