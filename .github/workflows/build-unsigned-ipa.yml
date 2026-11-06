@@ -164,6 +164,9 @@ jobs:
           swiftc -o "$RUNNER_TEMP/keyboard-host-geometry-smoke" \
             Shared/KeyboardHostGeometry.swift scripts/verify-keyboard-host-geometry.swift
           "$RUNNER_TEMP/keyboard-host-geometry-smoke"
+          swiftc -o "$RUNNER_TEMP/keyboard-handoff-smoke" \
+            Shared/KeyboardHandoffAnalyzer.swift scripts/verify-keyboard-handoff.swift
+          "$RUNNER_TEMP/keyboard-handoff-smoke"
           swiftc -o "$RUNNER_TEMP/layout-smoke" \
             Shared/KeyboardKind.swift Shared/KeyboardLayoutGeometry.swift \
             scripts/verify-keyboard-layout.swift

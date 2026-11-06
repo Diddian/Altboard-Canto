@@ -457,10 +457,65 @@ enum KeyboardLifecycleTrace {
     ]
   }
 
+  /// Read-only time correlation; host language hints do not identify a keyboard.
+  private static func handoffReview(for events: [[String: Any]]) -> [String: Any] {
+    let signals: [KeyboardHandoffAnalyzer.Signal] = events.compactMap { item in
+      guard let time = (item["timestampMs"] as? NSNumber)?.int64Value,
+            let name = item["event"] as? String else { return nil }
+      if (item["process"] as? String) == "app" {
+        guard let snapshot = item["hostInputMode"] as? [String: Any],
+              snapshot["fieldIsFirstResponder"] as? Bool == true,
+              let language = snapshot["responderLanguage"] as? String else { return nil }
+        let remembers = snapshot["remembersSelection"] as? Bool ?? false
+        if name == "hostProbe.editingBegan" || name == "hostProbe.inputModeChanged" {
+          return .init(time, language == "mis" ? .hostMis : .hostOther,
+                       remembersSelection: remembers)
+        }
+        return nil
+      }
+      let kind: KeyboardHandoffAnalyzer.Kind
+      switch name {
+      case Event.loadViewStarting.rawValue: kind = .extensionStarting
+      case Event.hostingMounted.rawValue: kind = .extensionMounted
+      case Event.willAppear.rawValue, Event.didAppear.rawValue: kind = .extensionAppearing
+      case Event.renderCheckpoint.rawValue, Event.renderSuspicious.rawValue:
+        kind = .extensionRendered
+      default: return nil
+      }
+      return .init(time, kind)
+    }
+    let attempts = KeyboardHandoffAnalyzer.analyze(
+      signals, nowMs: Int64(Date().timeIntervalSince1970 * 1_000)
+    )
+    let recent: [[String: Any]] = attempts.map { attempt in
+      [
+        "timestampMs": attempt.timestampMs,
+        "remembersSelection": attempt.remembersSelection,
+        "outcome": attempt.outcome.rawValue,
+        "loadDelayMs": attempt.loadDelayMs.map { $0 as Any } ?? NSNull(),
+        "mountDelayMs": attempt.mountDelayMs.map { $0 as Any } ?? NSNull(),
+        "modeChangedAwayAfterMs": attempt.changeAwayDelayMs.map { $0 as Any } ?? NSNull(),
+      ]
+    }
+    let counts = Dictionary(grouping: attempts, by: { $0.outcome.rawValue })
+      .mapValues { $0.count }
+    return [
+      "attemptCount": attempts.count,
+      "windowMs": KeyboardHandoffAnalyzer.observationWindowMs,
+      "statusCounts": counts,
+      "recentAttempts": recent,
+      "interpretation": "Only Altboard host test fields are observed before launch. Language tags are hints, not keyboard identities. Launch not observed does not prove a crash; an already running extension may not issue loadView."
+    ]
+  }
+
+  static func handoffReview() -> [String: Any] {
+    handoffReview(for: entries())
+  }
+
   static func exportJSON() -> String {
     let events = entries()
     let document: [String: Any] = [
-      "schemaVersion": 6,
+      "schemaVersion": 7,
       "exportedAtMs": Int64(Date().timeIntervalSince1970 * 1_000),
       "appBuild": Bundle.main.infoDictionary?["AltboardBuildSHA"] as? String ?? "unknown",
       "keyboardBuild": AppGroup.sharedDefaults?.string(forKey: "canto.keyboardBuildSHA") ?? "unknown",
@@ -470,12 +525,13 @@ enum KeyboardLifecycleTrace {
       "renderReview": renderReview(for: events),
       "inputModeReview": inputModeReview(for: events),
       "hostSelectionReview": hostSelectionReview(for: events),
+      "handoffReview": handoffReview(for: events),
       "postSubmitReview": postSubmitReview(for: events),
       "documentIdentityReview": documentIdentityReview(for: events),
       "memoryReview": memoryReview(for: events),
     ]
     guard let data = try? JSONSerialization.data(withJSONObject: document, options: [.prettyPrinted, .sortedKeys])
-    else { return "{\"schemaVersion\":6,\"events\":[]}" }
+    else { return "{\"schemaVersion\":7,\"events\":[]}" }
     return String(decoding: data, as: UTF8.self)
   }
 

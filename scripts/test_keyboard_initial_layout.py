@@ -102,8 +102,8 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("fallbackReason: self.initialStateReady", host)
         self.assertIn("let fallbackReason: String?", trace)
         self.assertIn("fallbackReason: startupReady ? fallbackReason : nil", trace)
-        self.assertIn('"schemaVersion": 6', trace)
-        self.assertIn('schemaVersion\\":6', trace)
+        self.assertIn('"schemaVersion": 7', trace)
+        self.assertIn('schemaVersion\\":7', trace)
         writes = trace.split("var needsImmediateWrite: Bool", 1)[1].split(
             "var samplesProcessMemory: Bool", 1
         )[0]
@@ -267,7 +267,7 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("let firstLoadForBuild: Bool?", trace)
         self.assertIn("let inputModeProbe: InputModeProbe?", trace)
         self.assertIn('"inputModeReview": inputModeReview(for: events)', trace)
-        self.assertIn('"schemaVersion": 6', trace)
+        self.assertIn('"schemaVersion": 7', trace)
         self.assertIn("No callbacks can be guaranteed while iOS runs another keyboard.", trace)
         self.assertIn("FeatureDiagnostics.record(.appStartup, .started)", app)
         self.assertIn("FeatureDiagnostics.record(.appStartup, .completed)", app)
@@ -388,10 +388,33 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("fallback: startupReady && requestedMode != effectiveMode", trace)
         self.assertIn("runtimeLanguage: self.primaryLanguage", host)
         self.assertNotIn("AB mis", hud)
-        self.assertIn('"schemaVersion": 6', trace)
+        self.assertIn('"schemaVersion": 7', trace)
         for forbidden in ("documentContextBeforeInput", "selectedText",
                           "touchPath", "textField.text =", "field.text ="):
             self.assertNotIn(forbidden, probe)
+
+    def test_handoff_monitor_is_exported_without_private_input(self):
+        trace = (ROOT / "Shared/KeyboardLifecycleTrace.swift").read_text()
+        analyzer = (ROOT / "Shared/KeyboardHandoffAnalyzer.swift").read_text()
+        probe = (ROOT / "Sayboard/Views/KeyboardSelectionProbeView.swift").read_text()
+        diagnostics = (ROOT / "Sayboard/Views/DiagnosticsView.swift").read_text()
+        workflow = (ROOT / ".github/workflows/build-unsigned-ipa.yml").read_text()
+        self.assertIn("private static func handoffReview(for events:", trace)
+        self.assertIn('"handoffReview": handoffReview(for: events)', trace)
+        self.assertIn("KeyboardHandoffAnalyzer.analyze(", trace)
+        self.assertIn("static func handoffReview() -> [String: Any]", trace)
+        self.assertIn("modeChangedAwayBeforeLoad", analyzer)
+        self.assertIn("launchNotObserved", analyzer)
+        self.assertIn("A language tag does not", analyzer)
+        self.assertIn('NavigationLink("Handoff Monitor")', diagnostics)
+        self.assertIn("KeyboardLifecycleTrace.handoffReview()", probe)
+        self.assertIn("struct KeyboardHandoffMonitorView: View", probe)
+        self.assertIn("scripts/verify-keyboard-handoff.swift", workflow)
+        self.assertIn('"schemaVersion": 7', trace)
+        self.assertIn('schemaVersion\\":7', trace)
+        for private_content in ("documentContextBeforeInput", "selectedText",
+                                "touchPath", "textField.text ="):
+            self.assertNotIn(private_content, analyzer)
 
     def test_neutral_primary_language_and_interface_fallback(self):
         import plistlib

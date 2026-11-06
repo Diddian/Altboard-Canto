@@ -147,4 +147,74 @@ private struct KeyboardSelectionProbeField: UIViewRepresentable {
     }
   }
 }
+
+/// Read-only developer view of host input-mode to extension handoff.
+struct KeyboardHandoffMonitorView: View {
+  @State private var report: [String: Any] = [:]
+
+  private var attempts: [[String: Any]] {
+    report["recentAttempts"] as? [[String: Any]] ?? []
+  }
+
+  var body: some View {
+    List {
+      Section("Handoff Overview") {
+        LabeledContent("Mode hints observed", value: String(self.report["attemptCount"] as? Int ?? 0))
+        LabeledContent("Correlation window", value: "4 seconds")
+        Button("Refresh Handoff Analysis") { self.refresh() }
+      }
+      Section("Recent Mode Hints") {
+        if self.attempts.isEmpty {
+          Text("No Altboard mode hints recorded in the test fields yet.")
+            .foregroundStyle(.secondary)
+        } else {
+          ForEach(Array(self.attempts.reversed().enumerated()), id: \.offset) { row in
+            let attempt = row.element
+            VStack(alignment: .leading, spacing: 4) {
+              let time = (attempt["timestampMs"] as? NSNumber)?.doubleValue ?? 0
+              Text(Date(timeIntervalSince1970: time / 1_000), style: .time)
+                .font(.caption.monospacedDigit())
+              Text(self.description(for: attempt["outcome"] as? String ?? ""))
+                .font(.subheadline.weight(.semibold))
+              let remembered = attempt["remembersSelection"] as? Bool ?? false
+              Text(remembered ? "Remembered field" : "Normal field")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+              if let changed = attempt["modeChangedAwayAfterMs"] as? NSNumber {
+                Text("Mode changed away after \(changed.intValue) ms")
+                  .font(.caption.monospacedDigit())
+                  .foregroundStyle(.secondary)
+              }
+            }
+          }
+        }
+      }
+      Section {
+        Text("A mis language hint does not prove Altboard launched. 'Launch not observed' is not proof of a crash; iOS may select another keyboard or reuse an existing extension.")
+          .font(.footnote).foregroundStyle(.secondary)
+        Text("Only Altboard test fields can be observed before extension startup. Other apps remain inaccessible.")
+          .font(.footnote).foregroundStyle(.secondary)
+      }
+    }
+    .navigationTitle("Handoff Monitor")
+    .navigationBarTitleDisplayMode(.inline)
+    .onAppear { self.refresh() }
+    .refreshable { self.refresh() }
+  }
+
+  private func refresh() { self.report = KeyboardLifecycleTrace.handoffReview() }
+
+  private func description(for value: String) -> String {
+    switch value {
+    case "mountedObserved": "Extension mounted"
+    case "appearanceObserved": "Extension appeared (no new mount)"
+    case "loadStartedOnly": "Extension started; mount not observed"
+    case "modeChangedAwayBeforeLoad": "Mode changed away before launch"
+    case "launchNotObserved": "Launch not observed"
+    case "awaitingEvidence": "Awaiting evidence"
+    default: "Unknown event"
+    }
+  }
+}
+
 #endif
