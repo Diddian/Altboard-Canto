@@ -262,6 +262,25 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
                 self.assertIn("FeatureDiagnostics.record(" + area, (ROOT / file).read_text())
 
 
+    def test_neutral_primary_language_and_interface_fallback(self):
+        import plistlib
+
+        info = plistlib.loads((ROOT / "SayboardKeyboard/Info.plist").read_bytes())
+        attributes = info["NSExtension"]["NSExtensionAttributes"]
+        self.assertEqual(attributes["PrimaryLanguage"], "mis")
+        self.assertTrue(attributes["IsASCIICapable"])
+        controller = HOST.read_text(encoding="utf-8")
+        self.assertNotIn("self.primaryLanguage =", controller)
+
+        app = (ROOT / "Sayboard/SayboardApp.swift").read_text(encoding="utf-8")
+        constants = (ROOT / "Shared/Constants.swift").read_text(encoding="utf-8")
+        settings = (ROOT / "Sayboard/Views/SettingsView.swift").read_text(encoding="utf-8")
+        self.assertIn('static let fallback = "en"', constants)
+        self.assertIn("AppLanguageConfig.resolveLanguage(from: Locale.preferredLanguages)", app)
+        self.assertIn("if let current = defaults.string(forKey: SharedKey.appLanguage)", app)
+        self.assertIn("AppLanguageListView()", settings)
+
+
 if __name__ == "__main__":
     unittest.main()
 
