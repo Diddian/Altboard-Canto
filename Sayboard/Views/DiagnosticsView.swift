@@ -203,6 +203,9 @@ struct DiagnosticsView: View {
     Section {
       DisclosureGroup("Development Traces", isExpanded: self.$showsDevelopmentTraces) {
         Toggle("Live Keyboard Debug HUD", isOn: self.$liveDebugHUDEnabled)
+        NavigationLink("Keyboard Selection Probe") {
+          KeyboardSelectionProbeView()
+        }
         Text("Neon-green, touch-transparent status over the spacebar. Only event types, never text or touch positions. Reopen the keyboard to apply changes.")
           .font(.caption)
           .foregroundStyle(.secondary)

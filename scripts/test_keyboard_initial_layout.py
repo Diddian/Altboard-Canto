@@ -99,11 +99,11 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
                        "microphoneUnavailable", "speechModelUnavailable"):
             self.assertIn("case " + reason, state)
         self.assertIn("self.basicTypingFallbackReason != nil", state)
-        self.assertIn("fallbackReason: self.keyboardState.basicTypingFallbackReason?.rawValue", host)
+        self.assertIn("fallbackReason: self.initialStateReady", host)
         self.assertIn("let fallbackReason: String?", trace)
-        self.assertIn("fallbackReason: fallbackReason", trace)
-        self.assertIn('"schemaVersion": 5', trace)
-        self.assertIn('schemaVersion\\":5', trace)
+        self.assertIn("fallbackReason: startupReady ? fallbackReason : nil", trace)
+        self.assertIn('"schemaVersion": 6', trace)
+        self.assertIn('schemaVersion\\":6', trace)
         writes = trace.split("var needsImmediateWrite: Bool", 1)[1].split(
             "var samplesProcessMemory: Bool", 1
         )[0]
@@ -267,7 +267,7 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("let firstLoadForBuild: Bool?", trace)
         self.assertIn("let inputModeProbe: InputModeProbe?", trace)
         self.assertIn('"inputModeReview": inputModeReview(for: events)', trace)
-        self.assertIn('"schemaVersion": 5', trace)
+        self.assertIn('"schemaVersion": 6', trace)
         self.assertIn("No callbacks can be guaranteed while iOS runs another keyboard.", trace)
         self.assertIn("FeatureDiagnostics.record(.appStartup, .started)", app)
         self.assertIn("FeatureDiagnostics.record(.appStartup, .completed)", app)
@@ -366,6 +366,32 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         for forbidden in ("touchPath", "documentContextBeforeInput",
                           "selectedText", "rawTyping", "onInsertText"):
             self.assertNotIn(forbidden, hud)
+
+    def test_host_keyboard_selection_probe_records_only_mode_metadata(self):
+        probe = (ROOT / "Sayboard/Views/KeyboardSelectionProbeView.swift").read_text()
+        trace = (ROOT / "Shared/KeyboardLifecycleTrace.swift").read_text()
+        hud = (ROOT / "SayboardKeyboard/KeyboardLiveDebugHUD.swift").read_text()
+        host = HOST.read_text()
+        diagnostics = (ROOT / "Sayboard/Views/DiagnosticsView.swift").read_text()
+        self.assertIn("#if !APPSTORE", probe)
+        self.assertIn("NavigationLink(\"Keyboard Selection Probe\")", diagnostics)
+        self.assertIn("UITextInputMode.currentInputModeDidChangeNotification", probe)
+        self.assertIn("UIResponder.keyboardDidShowNotification", probe)
+        self.assertIn("field.textInputMode?.primaryLanguage", probe)
+        self.assertIn("override var textInputContextIdentifier: String?", probe)
+        self.assertIn("UITextInputMode.clearTextInputContextIdentifier", probe)
+        self.assertIn("KeyboardLifecycleTrace.recordHostInputMode(", probe)
+        self.assertIn("let hostInputMode: HostSelectionSnapshot", trace)
+        self.assertIn("private static func hostSelectionReview", trace)
+        self.assertIn("queue.async { append(entry) }", trace)
+        self.assertIn("startupReady: self.initialStateReady", host)
+        self.assertIn("fallback: startupReady && requestedMode != effectiveMode", trace)
+        self.assertIn("runtimeLanguage: self.primaryLanguage", host)
+        self.assertNotIn("AB mis", hud)
+        self.assertIn('"schemaVersion": 6', trace)
+        for forbidden in ("documentContextBeforeInput", "selectedText",
+                          "touchPath", "textField.text =", "field.text ="):
+            self.assertNotIn(forbidden, probe)
 
     def test_neutral_primary_language_and_interface_fallback(self):
         import plistlib
