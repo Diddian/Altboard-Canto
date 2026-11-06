@@ -162,7 +162,9 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("self.hostGeometry.update(", controller)
         self.assertNotIn("controller.rootView =", controller)
         self.assertNotIn("rootNeedsMeasuredRemount", controller)
-        self.assertIn("self.geometry.size.width > 1", host)
+        self.assertIn("GeometryReader { bounds in", host)
+        self.assertIn(".frame(width: max(1, width), height: max(1, height)", host)
+        self.assertNotIn("Color.clear", host)
         self.assertIn("keyboardAppearanceRevision &+= 1", controller)
 
     def test_meeting_tab_uses_existing_local_recorder(self):
