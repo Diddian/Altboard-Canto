@@ -379,7 +379,7 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("UIResponder.keyboardDidShowNotification", probe)
         self.assertIn("field.textInputMode?.primaryLanguage", probe)
         self.assertIn("override var textInputContextIdentifier: String?", probe)
-        self.assertIn("UITextInputMode.clearTextInputContextIdentifier", probe)
+        self.assertIn("UIResponder.clearTextInputContextIdentifier", probe)
         self.assertIn("KeyboardLifecycleTrace.recordHostInputMode(", probe)
         self.assertIn("let hostInputMode: HostSelectionSnapshot", trace)
         self.assertIn("private static func hostSelectionReview", trace)
