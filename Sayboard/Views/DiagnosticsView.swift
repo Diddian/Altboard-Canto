@@ -236,7 +236,7 @@ struct DiagnosticsView: View {
     } header: {
       Text("Export")
     } footer: {
-      Text("For an iOS crash report: Settings → Privacy & Security → Analytics & Improvements → Analytics Data. Look for an Altboard or Sayboard crash near the failure time.")
+      Text("For a suspected keyboard termination: Settings → Privacy & Security → Analytics & Improvements → Analytics Data. Check JetsamEvent and Altboard or Sayboard crash reports near the failure time. Memory samples are in Development Traces JSON.")
     }
   }
 

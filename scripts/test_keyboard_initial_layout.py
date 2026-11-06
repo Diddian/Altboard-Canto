@@ -147,6 +147,30 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
                       "Clear Development Traces"):
             self.assertIn(label, diagnostics)
 
+    def test_memory_diagnostics_sample_only_on_lifecycle_or_idle_timer(self):
+        sampler = (ROOT / "Shared/KeyboardProcessMemory.swift").read_text()
+        trace = (ROOT / "Shared/KeyboardLifecycleTrace.swift").read_text()
+        host = HOST.read_text()
+        self.assertIn("os_proc_available_memory()", sampler)
+        self.assertIn("task_info(mach_task_self_", sampler)
+        self.assertIn("info.phys_footprint", sampler)
+        self.assertIn("processLaunchID", sampler)
+        self.assertIn("let processMemory: KeyboardProcessMemory.Snapshot?", trace)
+        self.assertIn("event.samplesProcessMemory", trace)
+        self.assertIn("case memorySample", trace)
+        self.assertIn("case .inputViewLoaded, .hostingMounted", trace)
+        self.assertIn('"memoryReview": memoryReview(for: events)', trace)
+        self.assertIn('"recentProcessLaunches": summaries', trace)
+        self.assertIn('"minimumHeadroomMiB": available.min()', trace)
+        self.assertIn("timeInterval: 8", host)
+        self.assertIn("self.startMemoryWatch()", host)
+        self.assertIn("self.stopMemoryWatch()", host)
+        self.assertIn("guard self.viewIfLoaded?.window != nil else { return }", host)
+        self.assertNotIn("keyboardState.textContextRevision", sampler)
+        for forbidden in ("documentContextBeforeInput", "hostBundleId", "touchPath",
+                          "insertText(", "transcript", "audioBuffer"):
+            self.assertNotIn(forbidden, sampler)
+
     def test_feature_diagnostics_contract(self):
         trace = (ROOT / "Shared/FeatureDiagnostics.swift").read_text()
         screen = (ROOT / "Sayboard/Views/DiagnosticsView.swift").read_text()

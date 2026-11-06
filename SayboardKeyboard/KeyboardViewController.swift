@@ -40,6 +40,7 @@ final class KeyboardViewController: UIInputViewController {
   private var renderProbeGeneration = 0
   private var missingRowsRefreshAttempted = false
   private var lastObservedHostHasText: Bool?
+  private var memoryWatchTimer: Timer?
 
   var processingTimeoutTimer: Timer?
   var processingStartTime: Date?
@@ -123,6 +124,7 @@ final class KeyboardViewController: UIInputViewController {
 
   override func viewWillDisappear(_ animated: Bool) {
     super.viewWillDisappear(animated)
+    self.stopMemoryWatch()
     self.renderProbeGeneration &+= 1
     KeyboardTouchLearning.shared.invalidate()
     if self.liveTranscriptionDocumentID != nil {
@@ -139,6 +141,28 @@ final class KeyboardViewController: UIInputViewController {
   override func didReceiveMemoryWarning() {
     self.recordKeyboardTrace(.memoryWarning)
     super.didReceiveMemoryWarning()
+  }
+
+  /// One idle-time memory checkpoint roughly every eight seconds while visible.
+  /// Never samples per key, never uses host text, and stops on disappearance.
+  private func startMemoryWatch() {
+    #if !APPSTORE
+    guard self.memoryWatchTimer == nil else { return }
+    self.memoryWatchTimer = Timer.scheduledTimer(
+      timeInterval: 8, target: self, selector: #selector(sampleMemoryWhileVisible),
+      userInfo: nil, repeats: true
+    )
+    #endif
+  }
+
+  private func stopMemoryWatch() {
+    self.memoryWatchTimer?.invalidate()
+    self.memoryWatchTimer = nil
+  }
+
+  @objc private func sampleMemoryWhileVisible() {
+    guard self.viewIfLoaded?.window != nil else { return }
+    self.recordKeyboardTrace(.memorySample)
   }
 
   private func recordKeyboardTrace(
@@ -857,11 +881,13 @@ extension KeyboardViewController {
     super.viewDidAppear(animated)
     self.insertDeferredAppearanceText()
     self.recordKeyboardTrace(.didAppear)
+    self.startMemoryWatch()
     self.scheduleRenderCheckpoint(checkpoint: "afterAppear")
   }
 
   override func viewDidDisappear(_ animated: Bool) {
     super.viewDidDisappear(animated)
+    self.stopMemoryWatch()
     self.recordKeyboardTrace(.didDisappear)
   }
 

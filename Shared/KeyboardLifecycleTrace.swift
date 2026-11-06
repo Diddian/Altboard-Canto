@@ -20,6 +20,7 @@ enum KeyboardLifecycleTrace {
     case layoutChanged
     case switchRequirementChanged
     case memoryWarning
+    case memorySample
     case renderCheckpoint
     case renderSuspicious
     case renderRefreshRequested
@@ -28,6 +29,16 @@ enum KeyboardLifecycleTrace {
       switch self {
       case .willAppear, .willDisappear, .didDisappear, .hostTextCleared,
            .memoryWarning, .renderSuspicious, .renderRefreshRequested: true
+      default: false
+      }
+    }
+
+    var samplesProcessMemory: Bool {
+      switch self {
+      case .inputViewLoaded, .hostingMounted, .willAppear, .didAppear,
+           .willDisappear, .didDisappear, .documentChanged, .hostTextCleared,
+           .memoryWarning, .memorySample, .renderCheckpoint, .renderSuspicious,
+           .renderRefreshRequested: true
       default: false
       }
     }
@@ -60,6 +71,7 @@ enum KeyboardLifecycleTrace {
   private struct Entry: Codable, Sendable {
     let timestampMs: Int64
     let session: String
+    let processLaunchID: String
     let event: String
     let requestedMode: String
     let effectiveMode: String
@@ -74,6 +86,7 @@ enum KeyboardLifecycleTrace {
     let fullAccess: Bool
     let appGroupAvailable: Bool
     let hostHint: String
+    let processMemory: KeyboardProcessMemory.Snapshot?
     let renderProbe: RenderProbe?
   }
 
@@ -90,9 +103,12 @@ enum KeyboardLifecycleTrace {
     hostBundleHint: String?, renderProbe: RenderProbe? = nil
   ) {
     #if !APPSTORE
+    let processMemory = event.samplesProcessMemory
+      ? KeyboardProcessMemory.snapshot() : nil
     let entry = Entry(
       timestampMs: Int64(Date().timeIntervalSince1970 * 1_000),
-      session: session, event: event.rawValue,
+      session: session, processLaunchID: KeyboardProcessMemory.processLaunchID,
+      event: event.rawValue,
       requestedMode: requestedMode.rawValue, effectiveMode: effectiveMode.rawValue,
       fallback: requestedMode != effectiveMode,
       viewWidth: dimension(viewWidth), viewHeight: dimension(viewHeight),
@@ -101,6 +117,7 @@ enum KeyboardLifecycleTrace {
       nativeSwitchRequired: nativeSwitchRequired, fullAccess: fullAccess,
       appGroupAvailable: AppGroup.containerURL != nil,
       hostHint: safeHostHint(hostBundleHint),
+      processMemory: processMemory,
       renderProbe: renderProbe
     )
     if event.needsImmediateWrite {
@@ -225,10 +242,66 @@ enum KeyboardLifecycleTrace {
     ]
   }
 
+  /// Memory is sampled on lifecycle transitions and an infrequent timer.
+  /// A new process after an unfinished session may be a normal iOS switch;
+  /// only a system JetsamEvent or crash report can confirm termination cause.
+  private static func memoryReview(for events: [[String: Any]]) -> [String: Any] {
+    var samples = [[String: Any]]()
+    var processOrder = [String]()
+    var lastEventByProcess = [String: [String: Any]]()
+    var lastMemoryByProcess = [String: [String: Any]]()
+    var peaks = [String: Int]()
+
+    for event in events {
+      let process = event["processLaunchID"] as? String ?? "legacy"
+      if !processOrder.contains(process) { processOrder.append(process) }
+      lastEventByProcess[process] = event
+      guard let memory = event["processMemory"] as? [String: Any] else { continue }
+      let footprint = memory["footprintMiB"] as? Int
+      if let footprint { peaks[process] = max(peaks[process] ?? 0, footprint) }
+      let sample: [String: Any] = [
+        "processLaunchID": process,
+        "session": event["session"] ?? "",
+        "event": event["event"] ?? "",
+        "timestampMs": event["timestampMs"] ?? 0,
+        "footprintMiB": memory["footprintMiB"] ?? NSNull(),
+        "residentMiB": memory["residentMiB"] ?? NSNull(),
+        "availableMiB": memory["availableMiB"] ?? NSNull(),
+        "estimatedBudgetMiB": memory["estimatedBudgetMiB"] ?? NSNull()
+      ]
+      samples.append(sample)
+      lastMemoryByProcess[process] = sample
+    }
+    let summaries: [[String: Any]] = processOrder.suffix(12).map { process in
+      let lastEvent = lastEventByProcess[process] ?? [:]
+      return [
+        "processLaunchID": process,
+        "lastEvent": lastEvent["event"] ?? "unknown",
+        "lastEventMs": lastEvent["timestampMs"] ?? 0,
+        "lastMemory": lastMemoryByProcess[process] ?? [:],
+        "observedPeakFootprintMiB": peaks[process].map { $0 as Any } ?? NSNull()
+      ]
+    }
+    let available = samples.compactMap { $0["availableMiB"] as? Int }
+    let footprints = samples.compactMap { $0["footprintMiB"] as? Int }
+    return [
+      "sampleCount": samples.count,
+      "processLaunchCount": processOrder.filter { $0 != "legacy" }.count,
+      "memoryWarningCount": events.filter {
+        ($0["event"] as? String) == Event.memoryWarning.rawValue
+      }.count,
+      "peakFootprintMiB": footprints.max().map { $0 as Any } ?? NSNull(),
+      "minimumHeadroomMiB": available.min().map { $0 as Any } ?? NSNull(),
+      "recentSamples": Array(samples.suffix(36)),
+      "recentProcessLaunches": summaries,
+      "interpretation": "Headroom is advisory. New process launches or missing dismissal callbacks do not prove OOM; check device JetsamEvent or crash logs."
+    ]
+  }
+
   static func exportJSON() -> String {
     let events = entries()
     let document: [String: Any] = [
-      "schemaVersion": 2,
+      "schemaVersion": 3,
       "exportedAtMs": Int64(Date().timeIntervalSince1970 * 1_000),
       "appBuild": Bundle.main.infoDictionary?["AltboardBuildSHA"] as? String ?? "unknown",
       "keyboardBuild": AppGroup.sharedDefaults?.string(forKey: "canto.keyboardBuildSHA") ?? "unknown",
@@ -237,6 +310,7 @@ enum KeyboardLifecycleTrace {
       "events": events,
       "renderReview": renderReview(for: events),
       "postSubmitReview": postSubmitReview(for: events),
+      "memoryReview": memoryReview(for: events),
     ]
     guard let data = try? JSONSerialization.data(withJSONObject: document, options: [.prettyPrinted, .sortedKeys])
     else { return "{\"schemaVersion\":1,\"events\":[]}" }
