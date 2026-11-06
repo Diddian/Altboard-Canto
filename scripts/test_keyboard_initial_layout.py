@@ -413,7 +413,7 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("Extension detected; field unconfirmed", probe)
         self.assertNotIn("case mountedObserved", analyzer)
         self.assertIn("launchNotObserved", analyzer)
-        self.assertIn("A language tag does not", analyzer)
+        self.assertIn("an input-mode language identifies the keyboard on screen", analyzer)
         self.assertIn('NavigationLink("Handoff Monitor")', diagnostics)
         self.assertIn("KeyboardLifecycleTrace.handoffReview()", probe)
         self.assertIn("struct KeyboardHandoffMonitorView: View", probe)
