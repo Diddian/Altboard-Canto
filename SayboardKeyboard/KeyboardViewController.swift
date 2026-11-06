@@ -231,7 +231,7 @@ final class KeyboardViewController: UIInputViewController {
         documentLanguage: Self.safeLanguageTag(mode?.primaryLanguage),
         extensionLanguage: Self.safeLanguageTag(self.primaryLanguage),
         availableLanguages: Array(available.prefix(16)),
-        requestedKeyboardType: self.textDocumentProxy.keyboardType.rawValue
+        requestedKeyboardType: self.textDocumentProxy.keyboardType?.rawValue ?? -1
       )
     default:
       return nil

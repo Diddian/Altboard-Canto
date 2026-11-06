@@ -193,7 +193,7 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("UITextInputMode.currentInputModeDidChangeNotification", host)
         self.assertIn("self.recordKeyboardTrace(.inputModeChanged)", host)
         self.assertIn("availableLanguages: Array(available.prefix(16))", host)
-        self.assertIn("requestedKeyboardType: self.textDocumentProxy.keyboardType.rawValue", host)
+        self.assertIn("requestedKeyboardType: self.textDocumentProxy.keyboardType?.rawValue ?? -1", host)
         self.assertIn("case loadViewStarting", trace)
         self.assertIn("case inputModeChanged", trace)
         self.assertIn("let firstLoadForBuild: Bool?", trace)
