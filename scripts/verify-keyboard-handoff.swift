@@ -26,7 +26,7 @@ struct VerifyKeyboardHandoff {
     ], nowMs: 25_000)
     precondition(partial[0].outcome == .loadStartedOnly)
 
-    let noEvents = [.init(30_000, A.Kind.hostMis, remembersSelection: false)]
+    let noEvents: [A.Signal] = [.init(30_000, .hostMis, remembersSelection: false)]
     precondition(A.analyze(noEvents, nowMs: 30_200)[0].outcome == .awaitingEvidence)
     precondition(A.analyze(noEvents, nowMs: 35_000)[0].outcome == .launchNotObserved)
 
