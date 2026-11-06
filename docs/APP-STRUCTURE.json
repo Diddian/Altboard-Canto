@@ -355,7 +355,7 @@
                     }
                   ],
                   "id": "settings.speech-ai.ai-actions.formatting",
-                  "source_anchor": "Label(\"Formatting\", systemImage: \"textformat\")",
+                  "source_anchor": "Label(\"Formatting\", systemImage: \"text.alignleft\")",
                   "initially_expanded": false
                 },
                 {

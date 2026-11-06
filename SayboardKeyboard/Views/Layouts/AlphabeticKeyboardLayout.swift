@@ -180,6 +180,9 @@ struct AlphabeticKeyboardLayout: View {
               .frame(height: KeyboardChromeMetrics.keyHeight + Self.rowSpacing.kbScaled / 2,
                      alignment: .bottom)
           }
+          // Rebuild only the three visual/touch rows after a field switch.
+          // Keep composition, candidates and the bottom row mounted.
+          .id(self.keyboardState.keyboardAppearanceRevision)
           .overlay {
             if self.page == .letters && self.swipeTypingEnabled
               && self.chineseMode == .phonetic {
@@ -243,6 +246,13 @@ struct AlphabeticKeyboardLayout: View {
       FeatureDiagnostics.record(.keyboardRender, .layoutMounted)
       self.isCursorTracking = false
       self.applyHostKeyboardLayout()
+      self.syncExpectedLetterRows()
+    }
+    .onChange(of: self.page) { _, _ in
+      self.syncExpectedLetterRows()
+    }
+    .onChange(of: self.showsEmojiPage) { _, _ in
+      self.syncExpectedLetterRows()
     }
     .onChange(of: self.keyboardState.keyboardAppearanceRevision) { _, _ in
       if self.showsEmojiPage {
@@ -264,6 +274,7 @@ struct AlphabeticKeyboardLayout: View {
       self.refreshAutomaticShift()
     }
     .onChange(of: self.chineseModeRaw) { _, _ in
+      self.syncExpectedLetterRows()
       self.clearComposition()
       self.clearShapeComposition()
       self.swipeTrail.clear()
@@ -289,6 +300,7 @@ struct AlphabeticKeyboardLayout: View {
       self.updateCandidates()
     }
     .onDisappear {
+      self.keyboardState.expectsAlphabeticTouchRows = false
       self.isCursorTracking = false
       self.clearShapeComposition()
       self.swipeTrail.clear()
@@ -1543,6 +1555,12 @@ struct AlphabeticKeyboardLayout: View {
     self.proxy.insertText("\n")
     self.refreshAutomaticShift()
     self.updateCandidates()
+  }
+
+  private func syncExpectedLetterRows() {
+    self.keyboardState.expectsAlphabeticTouchRows =
+      !self.showsEmojiPage && self.page == .letters
+      && !(self.usesShapeMode && self.chineseMode == .stroke)
   }
 
   private func openEmojiPage() {

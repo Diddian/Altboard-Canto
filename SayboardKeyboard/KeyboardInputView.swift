@@ -28,17 +28,25 @@ struct KeyboardHostingRoot: View {
   @ObservedObject var geometry: KeyboardHostGeometry
 
   var body: some View {
-    if self.geometry.size.width > 1, self.geometry.size.height > 1 {
+    // A host may briefly have zero bounds during an input-field transition.
+    // Keep the keyboard mounted; the measured proposal updates on next layout.
+    GeometryReader { bounds in
+      let measured = bounds.size
+      let width = measured.width > 1 ? measured.width : self.geometry.size.width
+      let height = measured.height > 1 ? measured.height : self.geometry.size.height
       KeyboardView(proxy: self.proxy, keyboardState: self.keyboardState)
-        .frame(width: self.geometry.size.width, height: self.geometry.size.height,
-               alignment: .top)
+        .frame(width: max(1, width), height: max(1, height), alignment: .top)
         .onAppear {
-          FeatureDiagnostics.record(.keyboardRender, .rootReady)
+          FeatureDiagnostics.record(
+            .keyboardRender,
+            measured.width > 1 && measured.height > 1 ? .rootReady : .rootWaiting
+          )
         }
-    } else {
-      Color.clear
-        .onAppear {
-          FeatureDiagnostics.record(.keyboardRender, .rootWaiting)
+        .onChange(of: measured) { previous, next in
+          if (previous.width <= 1 || previous.height <= 1)
+            && next.width > 1 && next.height > 1 {
+            FeatureDiagnostics.record(.keyboardRender, .rootReady)
+          }
         }
     }
   }

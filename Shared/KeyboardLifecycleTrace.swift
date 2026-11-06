@@ -22,11 +22,12 @@ enum KeyboardLifecycleTrace {
     case memoryWarning
     case renderCheckpoint
     case renderSuspicious
+    case renderRefreshRequested
 
     var needsImmediateWrite: Bool {
       switch self {
       case .willAppear, .willDisappear, .didDisappear, .hostTextCleared,
-           .memoryWarning, .renderSuspicious: true
+           .memoryWarning, .renderSuspicious, .renderRefreshRequested: true
       default: false
       }
     }
@@ -53,6 +54,7 @@ enum KeyboardLifecycleTrace {
     let touchSurfaceCount: Int
     let touchSurfacesInWindow: Int
     let touchHitTestCount: Int
+    let letterRowsExpected: Bool
   }
 
   private struct Entry: Codable, Sendable {
@@ -187,7 +189,8 @@ enum KeyboardLifecycleTrace {
       Event.hostTextCleared.rawValue, Event.documentChanged.rawValue,
       Event.willAppear.rawValue, Event.didAppear.rawValue,
       Event.willDisappear.rawValue, Event.didDisappear.rawValue,
-      Event.renderCheckpoint.rawValue, Event.renderSuspicious.rawValue
+      Event.renderCheckpoint.rawValue, Event.renderSuspicious.rawValue,
+      Event.renderRefreshRequested.rawValue
     ]
     let recent: [[String: Any]] = events.compactMap { item in
       guard let event = item["event"] as? String, names.contains(event) else { return nil }

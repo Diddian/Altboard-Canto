@@ -49,6 +49,8 @@ final class KeyboardState: ObservableObject {
   @Published var keyboardHapticsEnabled = true
   @Published var textContextRevision = 0
   @Published var keyboardAppearanceRevision = 0
+  // Render-only expectation; does not store host text or touch coordinates.
+  var expectsAlphabeticTouchRows = false
   @Published var hostInputTraits = KeyboardHostInputTraits()
   @Published var keyboardKind = KeyboardKind.standard
   @Published var isDictationLocked = false

@@ -38,6 +38,8 @@ final class KeyboardViewController: UIInputViewController {
   private let keyboardTraceSession = String(UUID().uuidString.prefix(8))
   private var lastTracedLayoutKey = ""
   private var renderProbeGeneration = 0
+  private var missingRowsRefreshAttempted = false
+  private var lastObservedHostHasText: Bool?
 
   var processingTimeoutTimer: Timer?
   var processingStartTime: Date?
@@ -96,9 +98,11 @@ final class KeyboardViewController: UIInputViewController {
     }
     self.lastTouchDocumentID = self.textDocumentProxy.documentIdentifier
     self.refreshHostInputTraits()
+    self.lastObservedHostHasText = self.textDocumentProxy.hasText
     self.syncFullAccessIfChanged()
     // Reset transient gestures without tearing down the visible render tree.
     self.keyboardState.keyboardAppearanceRevision &+= 1
+    self.missingRowsRefreshAttempted = false
     KeyboardHaptics.prepare()
     if self.keyboardState.isRecording {
       self.keyboardState.startLevelPolling()
@@ -231,16 +235,30 @@ final class KeyboardViewController: UIInputViewController {
       hostingLayerCount: hosted?.layer.sublayers?.count ?? 0,
       touchSurfaceCount: touchCount,
       touchSurfacesInWindow: touchInWindow,
-      touchHitTestCount: touchHitCount
+      touchHitTestCount: touchHitCount,
+      letterRowsExpected: self.keyboardState.expectsAlphabeticTouchRows
     )
+    let missingRows = probe.letterRowsExpected && !probe.scanLimited
+      && probe.hostingInWindow && probe.inputHeight >= 30
+      && touchInWindow < 3
     let suspicious = !probe.hostingInWindow || probe.inputHidden
       || probe.hostingHidden || probe.inputAlphaPercent < 1
       || probe.hostingAlphaPercent < 1 || !probe.hostingIntersectsInput
       || probe.inputHeight < 30 || probe.hostingHeight < 30
-      || (touchInWindow > 0 && touchHitCount == 0)
+      || (touchInWindow > 0 && touchHitCount == 0) || missingRows
     self.recordKeyboardTrace(
       suspicious ? .renderSuspicious : .renderCheckpoint, renderProbe: probe
     )
+    // One bounded soft refresh; never replace the composition root.
+    if missingRows && !self.missingRowsRefreshAttempted {
+      self.missingRowsRefreshAttempted = true
+      self.keyboardState.keyboardAppearanceRevision &+= 1
+      hosted?.setNeedsLayout()
+      hosted?.setNeedsDisplay()
+      self.view.setNeedsLayout()
+      self.recordKeyboardTrace(.renderRefreshRequested)
+      self.scheduleRenderCheckpoint(checkpoint: "afterMissingRowsRefresh")
+    }
     #endif
   }
 
@@ -811,15 +829,22 @@ extension KeyboardViewController {
       self.lastTouchDocumentID = currentDocument
       // A host can switch fields without another appearance callback.
       self.keyboardState.keyboardAppearanceRevision &+= 1
+      self.missingRowsRefreshAttempted = false
       self.view.setNeedsLayout()
       self.recordKeyboardTrace(.documentChanged)
       self.scheduleRenderCheckpoint(checkpoint: "afterDocumentChange")
     }
+    let previousHostHasText = self.lastObservedHostHasText
+    let currentHostHasText = self.textDocumentProxy.hasText
+    self.lastObservedHostHasText = currentHostHasText
     let hadHostText = self.keyboardState.hostInputTraits.hasText
     self.refreshHostInputTraits()
-    if sameDocument && hadHostText && !self.keyboardState.hostInputTraits.hasText {
-      // The host may have cleared its compose field after Send.
-      // Record no text, cursor positions, or document identifiers.
+    if sameDocument && ((previousHostHasText == true && !currentHostHasText)
+        || (hadHostText && !self.keyboardState.hostInputTraits.hasText)) {
+      // A cleared compose field is a possible Send transition. Only store
+      // Boolean state; never retain host text or document identifiers.
+      self.keyboardState.keyboardAppearanceRevision &+= 1
+      self.missingRowsRefreshAttempted = false
       self.recordKeyboardTrace(.hostTextCleared)
       self.scheduleRenderCheckpoint(checkpoint: "afterHostTextCleared")
     }
