@@ -93,6 +93,8 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("fallbackReason: self.keyboardState.basicTypingFallbackReason?.rawValue", host)
         self.assertIn("let fallbackReason: String?", trace)
         self.assertIn("fallbackReason: fallbackReason", trace)
+        self.assertIn('"schemaVersion": 5', trace)
+        self.assertIn('schemaVersion\\":5', trace)
         writes = trace.split("var needsImmediateWrite: Bool", 1)[1].split(
             "var samplesProcessMemory: Bool", 1
         )[0]
@@ -256,7 +258,7 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("let firstLoadForBuild: Bool?", trace)
         self.assertIn("let inputModeProbe: InputModeProbe?", trace)
         self.assertIn('"inputModeReview": inputModeReview(for: events)', trace)
-        self.assertIn('"schemaVersion": 4', trace)
+        self.assertIn('"schemaVersion": 5', trace)
         self.assertIn("No callbacks can be guaranteed while iOS runs another keyboard.", trace)
         self.assertIn("FeatureDiagnostics.record(.appStartup, .started)", app)
         self.assertIn("FeatureDiagnostics.record(.appStartup, .completed)", app)

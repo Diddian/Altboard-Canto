@@ -378,7 +378,7 @@ enum KeyboardLifecycleTrace {
   static func exportJSON() -> String {
     let events = entries()
     let document: [String: Any] = [
-      "schemaVersion": 4,
+      "schemaVersion": 5,
       "exportedAtMs": Int64(Date().timeIntervalSince1970 * 1_000),
       "appBuild": Bundle.main.infoDictionary?["AltboardBuildSHA"] as? String ?? "unknown",
       "keyboardBuild": AppGroup.sharedDefaults?.string(forKey: "canto.keyboardBuildSHA") ?? "unknown",
@@ -392,7 +392,7 @@ enum KeyboardLifecycleTrace {
       "memoryReview": memoryReview(for: events),
     ]
     guard let data = try? JSONSerialization.data(withJSONObject: document, options: [.prettyPrinted, .sortedKeys])
-    else { return "{\"schemaVersion\":1,\"events\":[]}" }
+    else { return "{\"schemaVersion\":5,\"events\":[]}" }
     return String(decoding: data, as: UTF8.self)
   }
 
