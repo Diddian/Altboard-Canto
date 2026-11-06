@@ -20,6 +20,7 @@ struct ExtendedKeyboardLayout: View {
         .animation(.easeOut(duration: 0.22), value: self.keyboardState.auxiliaryControlsHidden)
         KeyboardBottomRow(proxy: self.proxy, metrics: self.chrome, keyboardState: self.keyboardState)
       }
+      .padding(.top, 2.kbScaled)
     }
   }
 

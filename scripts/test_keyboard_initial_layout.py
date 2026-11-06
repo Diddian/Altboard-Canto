@@ -58,6 +58,23 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("self.hostingHeightConstraint?.constant = target", height)
         self.assertNotIn("guard hc.constant != target else { return }", height)
 
+    def test_fixed_heights_and_unified_top_corner_radius(self):
+        geometry = (ROOT / "Shared/KeyboardLayoutGeometry.swift").read_text()
+        metrics = (ROOT / "SayboardKeyboard/KeyboardMetrics.swift").read_text()
+        settings = (ROOT / "Sayboard/Views/KeyboardSettingsView.swift").read_text()
+        view = ROOT_VIEW.read_text()
+        extended = (ROOT / "SayboardKeyboard/Views/Layouts/ExtendedKeyboardLayout.swift").read_text()
+        self.assertIn("static let fullTypingHeight: CGFloat = 277", geometry)
+        self.assertIn("static let microphoneCompactHeight: CGFloat = 150", geometry)
+        self.assertNotIn("microphoneDefaultHeight", geometry + metrics + settings)
+        self.assertIn("KeyboardLayoutGeometry.height(", metrics)
+        self.assertIn("KeyboardLayoutGeometry.height(kind: self.kind, microphoneLayout: self.microphoneLayout)", settings)
+        self.assertIn("UnevenRoundedRectangle(", view)
+        self.assertIn("topLeadingRadius: KeyboardLayoutGeometry.topCornerRadius.kbScaled", view)
+        self.assertIn("topTrailingRadius: KeyboardLayoutGeometry.topCornerRadius.kbScaled", view)
+        self.assertIn(".ignoresSafeArea(edges: .bottom)", view)
+        self.assertIn(".padding(.top, 2.kbScaled)", extended)
+
     def test_render_probe_distinguishes_blank_root_from_key_rows(self):
         view = ROOT_VIEW.read_text()
         layout = LAYOUT.read_text()

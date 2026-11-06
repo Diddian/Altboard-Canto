@@ -3,11 +3,10 @@ import Foundation
 /// One fixed iPhone keyboard geometry policy for both the real extension
 /// and the main-app previews. No user-adjustable height multiplier exists.
 enum KeyboardLayoutGeometry {
-  static let microphoneDefaultHeight: CGFloat = 260
-  static let microphoneCompactHeight: CGFloat = 150
-  // In the supplied iPhone screenshots the Altboard keys end about 13pt
-  // above Apple's keys. Keep the 274pt measured content and a 3pt inset.
+  // Fixed extension canvas heights; iOS owns the accessory area below.
   static let fullTypingHeight: CGFloat = 277
+  static let microphoneCompactHeight: CGFloat = 150
+  static let topCornerRadius: CGFloat = 24
 
   static let keyHeight: CGFloat = 45
   static let keySpacing: CGFloat = 6
@@ -21,8 +20,8 @@ enum KeyboardLayoutGeometry {
   static let alphabetSymbolsRowInset: CGFloat = 6.67
   static let alphabetSymbolsWideKeyWidth: CGFloat = 50
   static let alphabetSymbolsGroupGap: CGFloat = 14.67
-  static let alphabetToolbarTopInset: CGFloat = 4
-  static let alphabetToolbarBottomInset: CGFloat = 8
+  static let alphabetToolbarTopInset: CGFloat = 6
+  static let alphabetToolbarBottomInset: CGFloat = 6
   static let alphabetMicWidth: CGFloat = 86
 
   static func height(
@@ -31,7 +30,7 @@ enum KeyboardLayoutGeometry {
   ) -> CGFloat {
     switch kind {
     case .standard:
-      microphoneLayout == .compact ? microphoneCompactHeight : microphoneDefaultHeight
+      microphoneLayout == .compact ? microphoneCompactHeight : fullTypingHeight
     case .extended, .alphabetic:
       fullTypingHeight
     }

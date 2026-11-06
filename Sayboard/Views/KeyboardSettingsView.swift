@@ -107,12 +107,7 @@ private struct KeyboardTestPreview: View {
   }
 
   private var previewHeight: CGFloat {
-    switch self.kind {
-    case .standard: self.compact
-      ? KeyboardLayoutGeometry.microphoneCompactHeight
-      : KeyboardLayoutGeometry.microphoneDefaultHeight
-    case .extended, .alphabetic: KeyboardLayoutGeometry.fullTypingHeight
-    }
+    KeyboardLayoutGeometry.height(kind: self.kind, microphoneLayout: self.microphoneLayout)
   }
 
   var body: some View {
@@ -184,7 +179,9 @@ private struct KeyboardTestPreview: View {
     }
     .frame(height: self.previewHeight, alignment: .top)
     .frame(maxWidth: .infinity)
-    .background(Color(uiColor: KeyboardPalette.backdrop), in: RoundedRectangle(cornerRadius: 14))
+    .background(Color(uiColor: KeyboardPalette.backdrop),
+                in: RoundedRectangle(cornerRadius: KeyboardLayoutGeometry.topCornerRadius,
+                                     style: .continuous))
     .animation(.easeInOut(duration: 0.15), value: self.microphoneLayout)
     .accessibilityLabel("Interactive keyboard layout preview")
   }

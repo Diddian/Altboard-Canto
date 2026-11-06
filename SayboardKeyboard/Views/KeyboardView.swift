@@ -182,9 +182,13 @@ struct KeyboardView: View {
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     .environment(\.keyboardHapticsEnabled, self.keyboardState.keyboardHapticsEnabled)
     .background {
-      Rectangle()
-        .fill(Color(uiColor: KeyboardPalette.backdrop))
-        .ignoresSafeArea()
+      UnevenRoundedRectangle(
+        topLeadingRadius: KeyboardLayoutGeometry.topCornerRadius.kbScaled,
+        topTrailingRadius: KeyboardLayoutGeometry.topCornerRadius.kbScaled,
+        style: .continuous
+      )
+      .fill(Color(uiColor: KeyboardPalette.backdrop))
+      .ignoresSafeArea(edges: .bottom)
     }
     .sensoryFeedback(.selection, trigger: self.sensoryPulse.count)
   }

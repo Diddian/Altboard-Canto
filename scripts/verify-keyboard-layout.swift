@@ -7,11 +7,14 @@ struct VerifyKeyboardLayout {
       let normal = KeyboardLayoutGeometry.height(kind: kind, microphoneLayout: .defaultLayout)
       let compact = KeyboardLayoutGeometry.height(kind: kind, microphoneLayout: .compact)
       if kind == .standard {
-        precondition(normal == 260 && compact == 150)
+        precondition(normal == 277 && compact == 150)
       } else {
         precondition(normal == 277 && compact == 277)
       }
     }
+    precondition(KeyboardLayoutGeometry.alphabetToolbarTopInset == 6)
+    precondition(KeyboardLayoutGeometry.alphabetToolbarBottomInset == 6)
+    precondition(KeyboardLayoutGeometry.topCornerRadius == 24)
     // A separate German layout exposes native Ä, Ö, Ü and ß keys.
     precondition(LetterKeyArrangement.german.rows[0].contains("Ü"))
     precondition(LetterKeyArrangement.german.rows[1].contains("Ö"))
