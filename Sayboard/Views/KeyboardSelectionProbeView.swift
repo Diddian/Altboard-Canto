@@ -9,23 +9,25 @@ struct KeyboardSelectionProbeView: View {
 
   var body: some View {
     Form {
-      Section("Normal iOS Text Field") {
+      Section {
         KeyboardSelectionProbeField(remembersSelection: false, status: self.$plainStatus)
           .frame(height: 40)
         Text(self.plainStatus)
           .font(.system(.caption2, design: .monospaced))
           .textSelection(.enabled)
+      } header: {
+        Text("Normal iOS Text Field")
       } footer: {
         Text("Uses ordinary iOS keyboard selection. Language is a hint, not proof of the selected keyboard's identity.")
       }
-      Section("Field With Remembered Input Mode") {
+      Section {
         KeyboardSelectionProbeField(remembersSelection: true, status: self.$rememberedStatus)
           .frame(height: 40)
         Text(self.rememberedStatus)
           .font(.system(.caption2, design: .monospaced))
           .textSelection(.enabled)
         Button("Clear this test field's remembered keyboard") {
-          UITextInputMode.clearTextInputContextIdentifier(KeyboardProbeContext.identifier)
+          UIResponder.clearTextInputContextIdentifier(KeyboardProbeContext.identifier)
           KeyboardLifecycleTrace.recordHostInputMode(
             .rememberedModeCleared, responderLanguage: nil,
             notificationLanguage: nil, keyboardType: UIKeyboardType.default.rawValue,
@@ -33,6 +35,8 @@ struct KeyboardSelectionProbeView: View {
           )
           self.rememberedStatus = "Remembered test selection cleared"
         }
+      } header: {
+        Text("Field With Remembered Input Mode")
       } footer: {
         Text("UIKit can remember the last input mode for a specific responder. This tests that behavior in Altboard only; it cannot change another app's selection.")
       }
