@@ -4,6 +4,7 @@ import SwiftUI
 /// also enable the Cantonese candidate bar in the Alphabet keyboard.
 struct SpeechLanguagesSettingsView: View {
   var inline = false
+  var rowsOnly = false
   var onPreferredLanguagesChanged: (([String]) -> Void)? = nil
 
   var body: some View {
@@ -21,54 +22,39 @@ struct SpeechLanguagesSettingsView: View {
   @ViewBuilder
   var sections: some View {
     Group {
-      Section {
-        Button {
-          self.showPreferredLanguagePicker = true
-        } label: {
-          LabeledContent("Languages I Speak") {
-            Text(self.spokenLanguages.isEmpty
-              ? "Any language"
-              : self.spokenLanguages.map { self.locale.capitalizedLanguageName(forLanguageCode: $0) }
-                .joined(separator: ", "))
-              .multilineTextAlignment(.trailing)
-              .lineLimit(2)
+      if self.rowsOnly {
+        self.languageSelectionRows
+      } else {
+        Section {
+          self.languageSelectionRows
+        } header: {
+          Text("Speech & Languages")
+        } footer: {
+          if !self.inline {
+            Text("Cantonese also enables offline Chinese suggestions in Alphabet. Qwen3 voice recognition uses auto-detection.")
           }
         }
-        if !self.unsupportedSpokenLanguages.isEmpty {
-          Label(
-            "The selected speech model may not recognize: \(self.unsupportedSpokenLanguages.joined(separator: ", "))",
-            systemImage: "exclamationmark.triangle"
-          )
-          .font(.footnote)
-          .foregroundStyle(.orange)
-        }
-      } header: {
-        Text("Speech & Languages")
-      } footer: {
-        if !self.inline {
-          Text("Cantonese also enables offline Chinese suggestions in Alphabet. Qwen3 voice recognition uses auto-detection.")
-        }
-      }
 
-      Section {
-        NavigationLink {
-          VoiceOutputSettingsView()
-        } label: {
-          Label("Voice Output & Translation", systemImage: "waveform")
+        Section {
+          NavigationLink {
+            VoiceOutputSettingsView()
+          } label: {
+            Label("Voice Output & Translation", systemImage: "waveform")
+          }
+        } footer: {
+          if !self.inline {
+            Text("Choose the output language, cleanup and dictation tone.")
+          }
         }
-      } footer: {
-        if !self.inline {
-          Text("Choose the output language, cleanup and dictation tone.")
-        }
-      }
 
-      Section("Offline Speech Model") {
-        NavigationLink {
-          ModelsView()
-        } label: {
-          LabeledContent("Speech Recognition") {
-            Text(self.speechModels.selectedVariant.displayName)
-              .foregroundStyle(.secondary)
+        Section("Offline Speech Model") {
+          NavigationLink {
+            ModelsView()
+          } label: {
+            LabeledContent("Speech Recognition") {
+              Text(self.speechModels.selectedVariant.displayName)
+                .foregroundStyle(.secondary)
+            }
           }
         }
       }
@@ -105,6 +91,30 @@ struct SpeechLanguagesSettingsView: View {
     .onAppear {
       self.spokenLanguages = SharedSettings().preferredSpokenLanguages
       self.onPreferredLanguagesChanged?(self.spokenLanguages)
+    }
+  }
+
+  @ViewBuilder
+  private var languageSelectionRows: some View {
+    Button {
+      self.showPreferredLanguagePicker = true
+    } label: {
+      LabeledContent("Languages I Speak") {
+        Text(self.spokenLanguages.isEmpty
+          ? "Any language"
+          : self.spokenLanguages.map { self.locale.capitalizedLanguageName(forLanguageCode: $0) }
+            .joined(separator: ", "))
+          .multilineTextAlignment(.trailing)
+          .lineLimit(2)
+      }
+    }
+    if !self.unsupportedSpokenLanguages.isEmpty {
+      Label(
+        "The selected speech model may not recognize: \(self.unsupportedSpokenLanguages.joined(separator: ", "))",
+        systemImage: "exclamationmark.triangle"
+      )
+      .font(.footnote)
+      .foregroundStyle(.orange)
     }
   }
 

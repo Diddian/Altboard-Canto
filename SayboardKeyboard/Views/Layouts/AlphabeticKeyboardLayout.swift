@@ -661,7 +661,7 @@ struct AlphabeticKeyboardLayout: View {
       self.letterRow(self.arrangement.rows[0], inset: Self.edgeInset,
                      top: 0, bottom: Self.rowSpacing / 2, rowIndex: 0)
     case .numbers: self.characterRow(Self.numbersRow1)
-    case .symbols: self.characterRow(self.isChineseSymbolsPage ? Self.chineseSymbolsRow1 : Self.symbolsRow1)
+    case .symbols: self.characterRow(Self.symbolsRow1, chineseAlternates: self.isChineseSymbolsPage)
     }
   }
 
@@ -671,8 +671,9 @@ struct AlphabeticKeyboardLayout: View {
     case .letters:
       self.letterRow(self.arrangement.rows[1], inset: Self.secondInset,
                      top: Self.rowSpacing / 2, bottom: Self.rowSpacing / 2, rowIndex: 1)
-    case .numbers: self.characterRow(Self.numbersRow2)
-    case .symbols: self.characterRow(self.isChineseSymbolsPage ? Self.chineseSymbolsRow2 : Self.symbolsRow2)
+    case .numbers: self.characterRow(Self.numbersRow2,
+      chineseAlternates: self.usesChinesePunctuation)
+    case .symbols: self.characterRow(Self.symbolsRow2, chineseAlternates: self.isChineseSymbolsPage)
     }
   }
 
@@ -730,7 +731,8 @@ struct AlphabeticKeyboardLayout: View {
                 symbol: value,
                 face: self.nativeSymbolFace(value),
                 fixedWidth: punctuationWidth,
-                column: index, columnCount: 5
+                column: index, columnCount: 5,
+                chineseAlternates: self.usesChinesePunctuation
               ) { selected in
                 self.handleCharacter(selected)
               }
@@ -796,12 +798,13 @@ struct AlphabeticKeyboardLayout: View {
     }
   }
 
-  private func characterRow(_ characters: [String]) -> some View {
+  private func characterRow(_ characters: [String], chineseAlternates: Bool = false) -> some View {
     HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
       ForEach(Array(characters.enumerated()), id: \.offset) { index, character in
         SymbolHoldKey(
           symbol: character, face: self.nativeSymbolFace(character),
-          column: index, columnCount: characters.count
+          column: index, columnCount: characters.count,
+          chineseAlternates: chineseAlternates
         ) { value in
           self.handleCharacter(value)
         }
@@ -1326,11 +1329,8 @@ struct AlphabeticKeyboardLayout: View {
     }
   }
 
-  // The #+= page is the ONLY place Chinese punctuation replaces Latin keys.
-  // Keep the top rows disjoint from the bottom 。 ， ？ ！ and paired 「/」 key.
-  private static let chineseSymbolsRow1 = ["〈","〉","〖","〗","〔","〕","【","】","《","》"]
-  private static let chineseSymbolsRow2 = ["『","』","﹏","～","…","、","€","£","¥","•"]
-
+  // Keep the native Latin symbol grid visible on #+=. Chinese contexts
+  // add Traditional Chinese long-press alternatives and a contextual bottom row.
   private static let numbersRow1 = ["1","2","3","4","5","6","7","8","9","0"]
   private static let numbersRow2 = ["-","/",":",";","(",")","$","&","@","\""]
   private static let symbolsRow1 = ["[","]","{","}","#","%","^","*","+","="]

@@ -5,7 +5,7 @@ enum SettingsDestination: Hashable {
   case speechModel
 }
 
-// Each setting has one destination. The values still use the original App Group keys.
+// Preserve the #130 inline disclosure layout and existing App Group setting keys.
 struct SettingsView: View {
   @EnvironmentObject private var permissionService: PermissionService
   @AppStorage(SharedKey.hasUsableModel, store: UserDefaults(suiteName: AppGroup.identifier))
@@ -14,6 +14,9 @@ struct SettingsView: View {
   private var keyboardKindRaw = KeyboardKind.standard.rawValue
   @AppStorage(SharedKey.appLanguage) private var appLanguage = AppLanguageConfig.fallback
   @State private var showsLowStorageWarning = false
+  @State private var showsDictation = false
+  @State private var showsAIActions = false
+  @State private var showsStorage = false
 
   private enum Route: Hashable { case setup }
 
@@ -56,16 +59,9 @@ struct SettingsView: View {
       PurchaseSection()
       #endif
 
-      Section("Recording") {
-        ActiveSessionToggle()
-      }
-
       Section("Speech & AI") {
-        NavigationLink {
-          SpeechLanguagesSettingsView()
-        } label: {
-          Label("Speech Languages", systemImage: "globe")
-        }
+        SpeechLanguagesSettingsView(inline: true, rowsOnly: true)
+        ActiveSessionToggle()
         NavigationLink(value: SettingsDestination.speechModel) {
           Label("Speech Model", systemImage: "cpu")
         }
@@ -74,35 +70,32 @@ struct SettingsView: View {
         } label: {
           Label("Text Model", systemImage: "text.bubble")
         }
-        NavigationLink {
-          DictationSettingsView()
+        DisclosureGroup(isExpanded: self.$showsDictation) {
+          if self.showsDictation {
+            DictationSettingsView(inline: true)
+          }
         } label: {
           Label("Dictation", systemImage: "waveform")
         }
-        NavigationLink {
-          LLMSettingsView()
+        DisclosureGroup(isExpanded: self.$showsAIActions) {
+          if self.showsAIActions {
+            LLMSettingsView(inline: true)
+          }
         } label: {
           Label("AI Actions", systemImage: "sparkles")
         }
       }
 
-      Section("Keyboard") {
-        NavigationLink {
-          KeyboardSettingsView(selectedKind: self.keyboardKindBinding)
-        } label: {
-          Label("Keyboard Settings", systemImage: "keyboard")
-        }
-      }
+      KeyboardSettingsView(selectedKind: self.keyboardKindBinding, inline: true)
 
-      Section("Data") {
-        NavigationLink {
-          DataAndStorageSettingsView()
+      Section {
+        DisclosureGroup(isExpanded: self.$showsStorage) {
+          if self.showsStorage {
+            DataAndStorageSettingsView(inline: true)
+          }
         } label: {
           Label("History & Storage", systemImage: "externaldrive")
         }
-      }
-
-      Section {
         NavigationLink {
           AppLanguageListView()
         } label: {

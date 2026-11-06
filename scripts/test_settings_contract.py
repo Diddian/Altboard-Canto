@@ -20,15 +20,15 @@ class SettingsContractTests(unittest.TestCase):
     def test_settings_have_clear_single_destinations(self):
         s = read("Sayboard/Views/SettingsView.swift")
         for anchor in (
-            'Section("Recording")',
             'Section("Speech & AI")',
-            'Section("Keyboard")',
-            'Section("Data")',
-            "SpeechLanguagesSettingsView()",
-            "DictationSettingsView()",
-            "LLMSettingsView()",
+            "SpeechLanguagesSettingsView(inline: true, rowsOnly: true)",
+            "DictationSettingsView(inline: true)",
+            "LLMSettingsView(inline: true)",
             "KeyboardSettingsView(selectedKind:",
-            "DataAndStorageSettingsView()",
+            "DataAndStorageSettingsView(inline: true)",
+            "DisclosureGroup(isExpanded: self.$showsDictation)",
+            "DisclosureGroup(isExpanded: self.$showsAIActions)",
+            "DisclosureGroup(isExpanded: self.$showsStorage)",
             "LLMModelsScreen()",
             "AppLanguageListView()",
             "DiagnosticsView()",
@@ -37,7 +37,8 @@ class SettingsContractTests(unittest.TestCase):
         self.assertEqual(s.count("ActiveSessionToggle()"), 1)
         self.assertEqual(s.count("LLMModelsScreen()"), 1)
         self.assertEqual(s.count("SettingsDestination.speechModel"), 1)
-        self.assertNotIn("DisclosureGroup(isExpanded: self.$showsAIActions)", s)
+        self.assertEqual(s.count("DisclosureGroup(isExpanded:"), 3)
+        self.assertNotIn("SpeechLanguagesSettingsView()", s)
 
     def test_models_deep_link_opens_models_destination(self):
         s = read("Sayboard/Views/MainTabView.swift")

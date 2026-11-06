@@ -23,7 +23,7 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertEqual(git_blob("Shared/TranscriptionBridge.swift"), "3da17ac32b5b6721d62b83952b60bf7a3f2d3f2c")
 
     def test_letter_rows_remain_visible_and_rehydrate_on_reactivation(self):
-        self.assertEqual(git_blob("SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift"), "1bc7ddcc2df745d061f1e8cb5ee70d47fa27f67a")
+        self.assertEqual(git_blob("SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift"), "ad38c5ea3f55fbaa8a2c0601870267c60c704dda")
 
     def test_host_settings_before_swiftui_mount_and_heights_stay_in_sync(self):
         self.assertEqual(git_blob("SayboardKeyboard/KeyboardState.swift"), "92d98e38e7566501215e2cd42a27a8e06617dc6f")
