@@ -250,6 +250,9 @@ struct AlphabeticKeyboardLayout: View {
     }
     .onChange(of: self.page) { _, _ in
       self.syncExpectedLetterRows()
+      #if !APPSTORE
+      self.keyboardState.liveDebugAction?(.pageChanged)
+      #endif
     }
     .onChange(of: self.showsEmojiPage) { _, _ in
       self.syncExpectedLetterRows()
@@ -266,6 +269,9 @@ struct AlphabeticKeyboardLayout: View {
     }
     .onChange(of: self.keyboardState.hostInputTraits.keyboardType) { _, _ in
       self.applyHostKeyboardLayout()
+      #if !APPSTORE
+      self.keyboardState.liveDebugAction?(.fieldTypeChanged)
+      #endif
     }
     .onChange(of: self.keyboardState.hostInputTraits.contentType) { _, _ in
       self.applyHostKeyboardLayout()
@@ -274,6 +280,9 @@ struct AlphabeticKeyboardLayout: View {
       self.refreshAutomaticShift()
     }
     .onChange(of: self.chineseModeRaw) { _, _ in
+      #if !APPSTORE
+      self.keyboardState.liveDebugAction?(.inputMethodChanged)
+      #endif
       self.syncExpectedLetterRows()
       self.clearComposition()
       self.clearShapeComposition()
@@ -990,9 +999,22 @@ struct AlphabeticKeyboardLayout: View {
       swipeArrangement: self.arrangement,
       swipeRowIndex: rowIndex,
       chineseInputMode: self.chineseMode,
-      onSwipe: { words in self.commitSwipe(words) },
-      onSwipePath: { path in self.swipeTrail.update(path) }
+      onSwipe: { words in
+        #if !APPSTORE
+        self.keyboardState.liveDebugAction?(.swipeCommitted)
+        #endif
+        self.commitSwipe(words)
+      },
+      onSwipePath: { path in
+        self.swipeTrail.update(path)
+        #if !APPSTORE
+        if !path.isEmpty { self.keyboardState.liveDebugAction?(.swipeMoving) }
+        #endif
+      }
     ) { typed in
+      #if !APPSTORE
+      self.keyboardState.liveDebugAction?(.letterTap)
+      #endif
       self.handleCharacter(typed)
       self.lastShiftTap = nil
     }
@@ -1006,6 +1028,9 @@ struct AlphabeticKeyboardLayout: View {
           column: index, columnCount: characters.count,
           chineseAlternates: chineseAlternates
         ) { value in
+          #if !APPSTORE
+          self.keyboardState.liveDebugAction?(.symbolTap)
+          #endif
           self.handleCharacter(value)
         }
       }
@@ -1564,6 +1589,9 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private func openEmojiPage() {
+    #if !APPSTORE
+    self.keyboardState.liveDebugAction?(.emojiOpened)
+    #endif
     self.emojiReturnPage = self.page
     self.clearShapeComposition()
     self.clearComposition()
@@ -1580,6 +1608,9 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private func closeEmojiPage(returningTo page: AlphabeticPage) {
+    #if !APPSTORE
+    self.keyboardState.liveDebugAction?(.emojiClosed)
+    #endif
     self.showsEmojiPage = false
     self.page = page
     self.updateCandidates()

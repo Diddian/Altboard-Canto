@@ -11,6 +11,7 @@ enum KeyboardLiveDebugAction: String {
   case deleteWord = "key.deleteWord"
   case deleteAll = "key.deleteAll"
   case nextKeyboardRequested = "keyboard.next"
+  case globeTouched = "keyboard.globeTouch"
   case micStart = "mic.start"
   case micStop = "mic.stop"
   case micCancel = "mic.cancel"
@@ -37,6 +38,7 @@ final class KeyboardLiveDebugHUD: UIView {
   private var stateLine = "loading"
   private var geometryLine = "AB LIVE | measuring..."
   private var eventCount = 0
+  private var swipeMoveCount = 0
 
   override init(frame: CGRect) {
     super.init(frame: frame)
@@ -90,6 +92,14 @@ final class KeyboardLiveDebugHUD: UIView {
   }
 
   func recordAction(_ action: KeyboardLiveDebugAction) {
+    if action == .swipeMoving {
+      self.swipeMoveCount &+= 1
+      // Show swipe progress without processing every sample on the UI thread.
+      guard self.swipeMoveCount % 6 == 0 else { return }
+      self.appendEvent("swipe.move x\(self.swipeMoveCount)")
+      return
+    }
+    if action == .swipeCommitted { self.swipeMoveCount = 0 }
     self.appendEvent(action.rawValue)
   }
 
@@ -113,7 +123,7 @@ final class KeyboardLiveDebugHUD: UIView {
 
   private func paint(at now: CFAbsoluteTime) {
     self.lastPaintAt = now
-    self.label.text = ([self.geometryLine, self.stateLine] + self.events.suffix(2)).joined(separator: "\n")
+    self.label.text = ([self.geometryLine, self.stateLine] + Array(self.events.suffix(2))).joined(separator: "\n")
   }
 }
 #endif

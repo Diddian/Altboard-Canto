@@ -336,6 +336,35 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
                 self.assertIn("FeatureDiagnostics.record(" + area, (ROOT / file).read_text())
 
 
+    def test_live_keyboard_debug_hud_is_independent_bounded_and_private(self):
+        hud = (ROOT / "SayboardKeyboard/KeyboardLiveDebugHUD.swift").read_text()
+        state = (ROOT / "SayboardKeyboard/KeyboardState.swift").read_text()
+        view = HOST.read_text()
+        layout = LAYOUT.read_text()
+        diagnostics = (ROOT / "Sayboard/Views/DiagnosticsView.swift").read_text()
+        constants = (ROOT / "Shared/Constants.swift").read_text()
+        self.assertIn("#if !APPSTORE", hud)
+        self.assertIn("self.isUserInteractionEnabled = false", hud)
+        self.assertIn("self.accessibilityElementsHidden = true", hud)
+        self.assertIn("green: 1.0, blue: 0.08", hud)
+        self.assertIn("self.events.count - 2", hud)
+        self.assertIn("now - self.lastPaintAt >= 0.10", hud)
+        self.assertIn("KeyboardLiveDebugHUD(frame: .zero)", view)
+        self.assertIn("self.view.bringSubviewToFront(hud)", view)
+        self.assertIn("hud.bottomAnchor.constraint(equalTo: self.view.bottomAnchor", view)
+        self.assertIn("hud.centerXAnchor.constraint(equalTo: self.view.centerXAnchor)", view)
+        self.assertIn("self.liveDebugHUD?.recordLifecycle(", view)
+        self.assertIn("liveDebugAction: ((KeyboardLiveDebugAction) -> Void)?", state)
+        self.assertIn("self.keyboardState.liveDebugAction?(.swipeMoving)", layout)
+        self.assertIn("self.keyboardState.liveDebugAction?(.letterTap)", layout)
+        self.assertIn("SharedKey.keyboardLiveDebugHUD", diagnostics)
+        self.assertIn('Toggle("Live Keyboard Debug HUD"', diagnostics)
+        self.assertIn("keyboardLiveDebugHUD =", constants)
+        self.assertIn("?? true", view)
+        for forbidden in ("touchPath", "documentContextBeforeInput",
+                          "selectedText", "rawTyping", "onInsertText"):
+            self.assertNotIn(forbidden, hud)
+
     def test_neutral_primary_language_and_interface_fallback(self):
         import plistlib
 

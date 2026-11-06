@@ -44,6 +44,9 @@ final class KeyboardViewController: UIInputViewController {
   private var memoryWatchTimer: Timer?
   private var firstLoadForBuild: Bool?
   private var lastObservedDocumentInputModeLanguage: String?
+  #if !APPSTORE
+  private var liveDebugHUD: KeyboardLiveDebugHUD?
+  #endif
 
   var processingTimeoutTimer: Timer?
   var processingStartTime: Date?
@@ -59,6 +62,9 @@ final class KeyboardViewController: UIInputViewController {
     if let inputView = view as? UIInputView {
       inputView.allowsSelfSizing = true
     }
+    #if !APPSTORE
+    self.refreshLiveDebugHUD()
+    #endif
     self.recordKeyboardTrace(.inputViewLoaded)
   }
 
@@ -83,12 +89,20 @@ final class KeyboardViewController: UIInputViewController {
     // button below the keyboard on Face ID iPhones.
     self.hasDictationKey = true
     self.keyboardState.bootstrapLayoutSettings()
+    #if !APPSTORE
+    self.keyboardState.liveDebugAction = { [weak self] event in
+      self?.recordLiveDebugAction(event)
+    }
+    #endif
     self.keyboardState.configureInputModeListButton = { [weak self] button in
       guard let self else { return }
       button.addTarget(
         self, action: #selector(handleInputModeList(from:with:)),
         for: .allTouchEvents
       )
+      #if !APPSTORE
+      button.addTarget(self, action: #selector(recordNativeGlobeTouch), for: .touchDown)
+      #endif
     }
     KeyboardHaptics.prepare()
     Self.activeInstance = self
@@ -112,6 +126,9 @@ final class KeyboardViewController: UIInputViewController {
     if self.hostingController == nil {
       self.setupKeyboardView()
     }
+    #if !APPSTORE
+    self.refreshLiveDebugHUD()
+    #endif
     let document = self.availableDocumentIdentifier()
     if document == nil || self.lastTouchDocumentID != document {
       KeyboardTouchLearning.shared.invalidate()
@@ -207,10 +224,57 @@ final class KeyboardViewController: UIInputViewController {
       inputModeProbe: self.inputModeProbe(for: event),
       renderProbe: renderProbe
     )
+    #if !APPSTORE
+    self.liveDebugHUD?.recordLifecycle(
+      event: event.rawValue,
+      requestedMode: self.keyboardState.keyboardKind.rawValue,
+      effectiveMode: self.keyboardState.effectiveTypingKind.rawValue,
+      fallbackReason: self.keyboardState.basicTypingFallbackReason?.rawValue,
+      actualHeight: bounds.height,
+      targetHeight: KeyboardMetrics.totalHeight(
+        actionBarVisible: self.actionBarVisible, kind: self.keyboardState.effectiveTypingKind
+      ),
+      keyboardType: self.keyboardState.hostInputTraits.keyboardType.rawValue,
+      probe: renderProbe
+    )
+    #endif
   }
 
   /// Record before UIKit/SwiftUI keyboard view construction. The marker survives
   /// extension restarts and is reset by a new build SHA, including IPA updates.
+  #if !APPSTORE
+  private func refreshLiveDebugHUD() {
+    let enabled = (AppGroup.sharedDefaults?.object(forKey: SharedKey.keyboardLiveDebugHUD) as? Bool) ?? true
+    if !enabled {
+      self.liveDebugHUD?.removeFromSuperview()
+      self.liveDebugHUD = nil
+      return
+    }
+    if let hud = self.liveDebugHUD {
+      self.view.bringSubviewToFront(hud)
+      return
+    }
+    let hud = KeyboardLiveDebugHUD(frame: .zero)
+    hud.translatesAutoresizingMaskIntoConstraints = false
+    self.view.addSubview(hud)
+    NSLayoutConstraint.activate([
+      hud.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
+      hud.widthAnchor.constraint(equalTo: self.view.widthAnchor, multiplier: 0.90),
+      hud.bottomAnchor.constraint(equalTo: self.view.bottomAnchor, constant: -14),
+      hud.heightAnchor.constraint(equalToConstant: 42),
+    ])
+    self.liveDebugHUD = hud
+  }
+
+  private func recordLiveDebugAction(_ event: KeyboardLiveDebugAction) {
+    self.liveDebugHUD?.recordAction(event)
+  }
+
+  @objc private func recordNativeGlobeTouch() {
+    self.recordLiveDebugAction(.globeTouched)
+  }
+  #endif
+
   private func traceFirstKeyboardLoad() {
     #if !APPSTORE
     let build = Bundle.main.infoDictionary?["AltboardBuildSHA"] as? String
@@ -810,6 +874,9 @@ extension KeyboardViewController {
     self.hostingHeightConstraint = hostingHeight
 
     self.hostingController = hosting
+    #if !APPSTORE
+    if let hud = self.liveDebugHUD { self.view.bringSubviewToFront(hud) }
+    #endif
     self.recordKeyboardTrace(.hostingMounted)
   }
 
@@ -835,6 +902,9 @@ extension KeyboardViewController {
         self?.previousSpaceTap = nil
         self?.textDocumentProxy.insertText(text)
         self?.refreshHostInputTraits()
+        #if !APPSTORE
+        self?.recordLiveDebugAction(.textCommitted)
+        #endif
       },
       documentContextBeforeInput: { [weak self] in
         self?.textDocumentProxy.documentContextBeforeInput
@@ -842,6 +912,9 @@ extension KeyboardViewController {
       insertSpace: { [weak self] in
         self?.insertSpace()
         self?.refreshHostInputTraits()
+        #if !APPSTORE
+        self?.recordLiveDebugAction(.spaceCommitted)
+        #endif
       },
       deleteBackward: { [weak self] in
         self?.previousSpaceTap = nil
@@ -849,42 +922,69 @@ extension KeyboardViewController {
         // Candidate replacements also call this proxy and must not teach hitboxes.
         self?.textDocumentProxy.deleteBackward()
         self?.refreshHostInputTraits()
+        #if !APPSTORE
+        self?.recordLiveDebugAction(.deleteBackward)
+        #endif
       },
       deleteWordBackward: { [weak self] in
         KeyboardTouchLearning.shared.invalidate()
         self?.deletePreviousWord()
         self?.refreshHostInputTraits()
+        #if !APPSTORE
+        self?.recordLiveDebugAction(.deleteWord)
+        #endif
       },
       deleteAll: { [weak self] in
         self?.previousSpaceTap = nil
         self?.deleteAllText()
         self?.refreshHostInputTraits()
+        #if !APPSTORE
+        self?.recordLiveDebugAction(.deleteAll)
+        #endif
       },
       advanceToNextInputMode: { [weak self] in
+        #if !APPSTORE
+        self?.recordLiveDebugAction(.nextKeyboardRequested)
+        #endif
         self?.advanceToNextInputMode()
       },
       openURL: { [weak self] url in
         self?.openURL(url)
       },
       startDictation: { [weak self] in
+        #if !APPSTORE
+        self?.recordLiveDebugAction(.micStart)
+        #endif
         self?.startDictationViaDarwin()
       },
       stopDictation: { [weak self] in
+        #if !APPSTORE
+        self?.recordLiveDebugAction(.micStop)
+        #endif
         self?.stopDictationViaDarwin()
       },
       cancelDictation: { [weak self] in
+        #if !APPSTORE
+        self?.recordLiveDebugAction(.micCancel)
+        #endif
         self?.cancelDictationViaDarwin()
       },
       resolveHost: { [weak self] in
         self?.saveHostBundleId()
       },
       requestLLMProcessing: { [weak self] action, customPromptId in
+        #if !APPSTORE
+        self?.recordLiveDebugAction(.aiRequest)
+        #endif
         self?.requestLLMProcessing(action: action, customPromptId: customPromptId)
       },
       requestLLMClipboard: { [weak self] in
         self?.requestLLMClipboardProcessing()
       },
       adjustTextPosition: { [weak self] offset in
+        #if !APPSTORE
+        self?.recordLiveDebugAction(.cursorMove)
+        #endif
         KeyboardTouchLearning.shared.invalidate()
         self?.previousSpaceTap = nil
         self?.resetCursorVerticalState()
