@@ -40,6 +40,8 @@ def inspect_ipa(
     path: pathlib.Path,
     *,
     expected_sha: str | None = None,
+    expected_build_number: str | None = None,
+    expected_primary_language: str | None = None,
     expect_native_emoji: bool = False,
     expect_emoji_catalog: bool = False,
     min_entries: int = 10_000,
@@ -87,6 +89,35 @@ def inspect_ipa(
             keyboard_id = extension.get("CFBundleIdentifier")
             if not isinstance(app_id, str) or keyboard_id != app_id + ".keyboard":
                 raise BundleValidationError("Keyboard extension bundle identifier is invalid")
+            app_version = app.get("CFBundleVersion")
+            keyboard_version = extension.get("CFBundleVersion")
+            if not isinstance(app_version, str) or not re.fullmatch(
+                r"[0-9]+(?:\.[0-9]+){0,2}", app_version
+            ):
+                raise BundleValidationError("App CFBundleVersion missing or invalid")
+            if keyboard_version != app_version:
+                raise BundleValidationError("App/keyboard CFBundleVersion mismatch")
+            if expected_build_number is not None and app_version != expected_build_number:
+                raise BundleValidationError("IPA CFBundleVersion differs from Actions run number")
+            registration = extension.get("NSExtension")
+            if not isinstance(registration, dict) or registration.get(
+                "NSExtensionPointIdentifier"
+            ) != "com.apple.keyboard-service":
+                raise BundleValidationError("Keyboard NSExtension registration is invalid")
+            principal = registration.get("NSExtensionPrincipalClass")
+            if not isinstance(principal, str) or not principal.strip():
+                raise BundleValidationError("Keyboard principal class missing")
+            attributes = registration.get("NSExtensionAttributes")
+            if not isinstance(attributes, dict):
+                raise BundleValidationError("Keyboard NSExtensionAttributes missing")
+            primary_language = attributes.get("PrimaryLanguage")
+            if not isinstance(primary_language, str) or not primary_language:
+                raise BundleValidationError("Keyboard PrimaryLanguage missing")
+            if (expected_primary_language is not None
+                    and primary_language != expected_primary_language):
+                raise BundleValidationError("Keyboard PrimaryLanguage differs from expected")
+            if attributes.get("IsASCIICapable") is not True:
+                raise BundleValidationError("Keyboard ASCII capability is not enabled")
             with tempfile.TemporaryDirectory(prefix="altboard-ipa-qa-") as tmp:
                 db_path = pathlib.Path(tmp) / "jyutping.sqlite3"
                 db_path.write_bytes(ipa.read(KEYBOARD + "jyutping.sqlite3"))
@@ -164,6 +195,8 @@ def inspect_ipa(
                 "sha": sha,
                 "app_bundle": app_id,
                 "keyboard_bundle": keyboard_id,
+                "bundle_version": app_version,
+                "primary_language": primary_language,
                 "sqlite_entries": count,
                 "sqlite_indexes": len(indexes),
                 "emoji_mode": ("custom_extension" if expect_emoji_catalog else
@@ -180,6 +213,8 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("ipa", type=pathlib.Path)
     parser.add_argument("--expected-sha", help="Exact 40-character GitHub commit SHA")
+    parser.add_argument("--expected-build-number", help="Exact GitHub Actions run number")
+    parser.add_argument("--expected-primary-language", help="Keyboard registration language")
     parser.add_argument("--expect-native-emoji", action="store_true")
     parser.add_argument("--expect-emoji-catalog", action="store_true")
     parser.add_argument("--expect-merged-shapes", action="store_true")
@@ -187,6 +222,8 @@ def main() -> None:
     try:
         result = inspect_ipa(
             args.ipa, expected_sha=args.expected_sha,
+            expected_build_number=args.expected_build_number,
+            expected_primary_language=args.expected_primary_language,
             expect_native_emoji=args.expect_native_emoji,
             expect_emoji_catalog=args.expect_emoji_catalog,
             expect_merged_shapes=args.expect_merged_shapes

@@ -341,7 +341,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 scripts/verify-ipa-bundle.py             dist/Altboard-Canto-SideStore.ipa             --expected-sha "$GITHUB_SHA"             --expect-emoji-catalog --expect-merged-shapes
+          python3 scripts/verify-ipa-bundle.py \
+            dist/Altboard-Canto-SideStore.ipa \
+            --expected-sha "$GITHUB_SHA" \
+            --expected-build-number "$GITHUB_RUN_NUMBER" \
+            --expected-primary-language mul \
+            --expect-emoji-catalog --expect-merged-shapes
 
       - name: Upload IPA to this Actions run
         uses: actions/upload-artifact@v7

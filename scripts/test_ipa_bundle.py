@@ -17,7 +17,11 @@ SHA = "a" * 40
 
 
 def fixture(directory, *, legacy=False, extension_sha=SHA, missing=None,
-            merged_shapes=False, unicode_license=False):
+            merged_shapes=False, unicode_license=False, app_version="160",
+            extension_version="160", primary_language="mul",
+            extension_point="com.apple.keyboard-service",
+            principal_class="SayboardKeyboard.KeyboardViewController",
+            ascii_capable=True):
     directory = pathlib.Path(directory)
     sqlite_file = directory / "jyutping.sqlite3"
     db = sqlite3.connect(sqlite_file)
@@ -29,11 +33,21 @@ def fixture(directory, *, legacy=False, extension_sha=SHA, missing=None,
     db.close()
     payload = {
         MOD.APP + "Info.plist": plistlib.dumps({
-            "CFBundleIdentifier": "app.sayboard", "AltboardBuildSHA": SHA
+            "CFBundleIdentifier": "app.sayboard", "AltboardBuildSHA": SHA,
+            "CFBundleVersion": app_version,
         }),
         MOD.KEYBOARD + "Info.plist": plistlib.dumps({
             "CFBundleIdentifier": "app.sayboard.keyboard",
-            "AltboardBuildSHA": extension_sha
+            "AltboardBuildSHA": extension_sha,
+            "CFBundleVersion": extension_version,
+            "NSExtension": {
+                "NSExtensionPointIdentifier": extension_point,
+                "NSExtensionPrincipalClass": principal_class,
+                "NSExtensionAttributes": {
+                    "PrimaryLanguage": primary_language,
+                    "IsASCIICapable": ascii_capable,
+                },
+            },
         }),
         MOD.KEYBOARD + "jyutping.sqlite3": sqlite_file.read_bytes(),
     }
@@ -149,6 +163,50 @@ class IPABundleTests(unittest.TestCase):
             with self.assertRaisesRegex(MOD.BundleValidationError, "differs"):
                 MOD.inspect_ipa(ipa, expected_sha="b" * 40, min_entries=1)
 
+
+    def test_build_number_and_registration_pass(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ipa = fixture(tmp)
+            result = MOD.inspect_ipa(
+                ipa, expected_build_number="160", expected_primary_language="mul",
+                min_entries=1
+            )
+            self.assertEqual(result["bundle_version"], "160")
+            self.assertEqual(result["primary_language"], "mul")
+
+    def test_mismatched_bundle_versions_fail(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ipa = fixture(tmp, extension_version="159")
+            with self.assertRaisesRegex(MOD.BundleValidationError, "CFBundleVersion mismatch"):
+                MOD.inspect_ipa(ipa)
+
+    def test_stale_actions_run_number_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ipa = fixture(tmp)
+            with self.assertRaisesRegex(MOD.BundleValidationError, "Actions run number"):
+                MOD.inspect_ipa(ipa, expected_build_number="159")
+
+    def test_wrong_keyboard_language_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ipa = fixture(tmp, primary_language="mis")
+            with self.assertRaisesRegex(MOD.BundleValidationError, "PrimaryLanguage differs"):
+                MOD.inspect_ipa(ipa, expected_primary_language="mul")
+
+    def test_invalid_keyboard_registration_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ipa = fixture(tmp, extension_point="com.apple.invalid")
+            with self.assertRaisesRegex(MOD.BundleValidationError, "registration is invalid"):
+                MOD.inspect_ipa(ipa)
+        with tempfile.TemporaryDirectory() as tmp:
+            ipa = fixture(tmp, principal_class="")
+            with self.assertRaisesRegex(MOD.BundleValidationError, "principal class missing"):
+                MOD.inspect_ipa(ipa)
+
+    def test_ascii_capability_required(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ipa = fixture(tmp, ascii_capable=False)
+            with self.assertRaisesRegex(MOD.BundleValidationError, "ASCII capability"):
+                MOD.inspect_ipa(ipa)
 
 if __name__ == "__main__":
     unittest.main()
