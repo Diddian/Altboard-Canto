@@ -44,7 +44,6 @@
     "Sayboard/Views/VoiceOutputSettingsView.swift": "tracked",
     "SayboardKeyboard/Info.plist": "tracked",
     "SayboardKeyboard/JyutpingDictionary.swift": "tracked",
-    "SayboardKeyboard/KeyboardInputView.swift": "tracked",
     "SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift": "tracked",
     "SayboardKeyboard/KeyboardViewController.swift": "tracked",
     "SayboardKeyboard/LatinWordSuggestions.swift": "tracked",
@@ -792,7 +791,6 @@
       "id": "keyboard-render-touch",
       "owners": [
         "SayboardKeyboard/KeyboardViewController.swift",
-        "SayboardKeyboard/KeyboardInputView.swift",
         "Shared/KeyboardHostGeometry.swift",
         "SayboardKeyboard/Views/KeyboardView.swift",
         "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift",
