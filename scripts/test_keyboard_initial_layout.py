@@ -11,8 +11,14 @@ ROOT_VIEW = ROOT / "SayboardKeyboard" / "Views" / "KeyboardView.swift"
 class KeyboardInitialLayoutTests(unittest.TestCase):
     def test_letter_rows_remain_visible_and_rehydrate_on_reactivation(self):
         source = LAYOUT.read_text(encoding="utf-8")
-        self.assertIn(".id(self.keyboardState.keyboardAppearanceRevision)", source)
-        self.assertIn("Keep composition, candidates and the bottom row mounted.", source)
+        self.assertIn(".id(self.keyboardState.keyboardTouchRowsRecoveryRevision)", source)
+        self.assertNotIn(".id(self.keyboardState.keyboardAppearanceRevision)", source)
+        self.assertIn("Ordinary field switches reset touch state without replacing the rows.", source)
+        state = (ROOT / "SayboardKeyboard/KeyboardState.swift").read_text()
+        host = HOST.read_text(encoding="utf-8")
+        self.assertIn("@Published var keyboardTouchRowsRecoveryRevision = 0", state)
+        self.assertEqual(host.count("keyboardTouchRowsRecoveryRevision &+= 1"), 1)
+        self.assertIn("self.keyboardState.keyboardAppearanceRevision &+= 1", host)
         row = (ROOT / "SayboardKeyboard/Views/AlphabeticTouchRow.swift").read_text()
         self.assertIn(".onChange(of: self.appearanceRevision)", row)
         self.assertIn("resetToken: self.appearanceRevision", row)
@@ -75,6 +81,29 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn(".ignoresSafeArea(edges: .bottom)", view)
         self.assertIn(".padding(.top, 2.kbScaled)", extended)
 
+    def test_fallback_reason_and_diagnostic_writes_are_bounded(self):
+        state = (ROOT / "SayboardKeyboard/KeyboardState.swift").read_text()
+        host = HOST.read_text(encoding="utf-8")
+        trace = (ROOT / "Shared/KeyboardLifecycleTrace.swift").read_text()
+        self.assertIn("enum BasicTypingFallbackReason: String, Sendable", state)
+        for reason in ("fullAccessUnavailable", "appGroupUnavailable",
+                       "microphoneUnavailable", "speechModelUnavailable"):
+            self.assertIn("case " + reason, state)
+        self.assertIn("self.basicTypingFallbackReason != nil", state)
+        self.assertIn("fallbackReason: self.keyboardState.basicTypingFallbackReason?.rawValue", host)
+        self.assertIn("let fallbackReason: String?", trace)
+        self.assertIn("fallbackReason: fallbackReason", trace)
+        writes = trace.split("var needsImmediateWrite: Bool", 1)[1].split(
+            "var samplesProcessMemory: Bool", 1
+        )[0]
+        self.assertIn("case .loadViewStarting, .memoryWarning,", writes)
+        self.assertIn(".renderSuspicious, .renderRefreshRequested: true", writes)
+        for event in (".willAppear", ".willDisappear", ".inputModeChanged",
+                      ".hostTextCleared", ".documentIdentifierUnavailable"):
+            self.assertNotIn(event, writes)
+        self.assertIn("queue.async { append(entry) }", trace)
+        self.assertIn("queue.sync { append(entry) }", trace)
+
     def test_render_probe_distinguishes_blank_root_from_key_rows(self):
         view = ROOT_VIEW.read_text()
         layout = LAYOUT.read_text()
@@ -100,6 +129,12 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("touchInWindow < 3", host)
         self.assertIn("afterMissingRowsRefresh", host)
         self.assertIn("self.missingRowsRefreshAttempted = true", host)
+        self.assertIn("let expectedHeight: Int", lifecycle)
+        self.assertIn("expectedHeight: Self.traceDimension(expectedHeight)", host)
+        self.assertIn("abs(probe.inputHeight - probe.expectedHeight) > 2", host)
+        self.assertIn("abs(probe.hostingHeight - probe.expectedHeight) > 2", host)
+        self.assertIn("self.hostGeometry.update(width: width, height: height)", host)
+        self.assertNotIn("height: KeyboardMetrics.totalHeight(\n        actionBarVisible:", host.split("override func viewDidLayoutSubviews()", 1)[1].split("let hostValid =", 1)[0])
         self.assertIn("let renderProbe: RenderProbe?", lifecycle)
         self.assertIn('"renderReview": renderReview(for: events)', lifecycle)
         self.assertIn('let checkpoint: String', lifecycle)

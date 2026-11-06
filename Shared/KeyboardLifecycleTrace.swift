@@ -31,10 +31,10 @@ enum KeyboardLifecycleTrace {
 
     var needsImmediateWrite: Bool {
       switch self {
-      case .loadViewStarting, .willAppear, .willDisappear, .didDisappear,
-           .inputModeChanged, .hostTextCleared, .documentIdentifierUnavailable,
-           .documentIdentifierRecovered,
-           .memoryWarning, .renderSuspicious, .renderRefreshRequested: true
+      // Keep only indispensable crash/first-load evidence synchronous.
+      // Routine focus, field and mode transitions stay on the background queue.
+      case .loadViewStarting, .memoryWarning,
+           .renderSuspicious, .renderRefreshRequested: true
       default: false
       }
     }
@@ -54,6 +54,7 @@ enum KeyboardLifecycleTrace {
   /// A snapshot of view geometry and hit testing, not a screenshot or input record.
   struct RenderProbe: Codable, Sendable {
     let checkpoint: String
+    let expectedHeight: Int
     let inputWidth: Int
     let inputHeight: Int
     let hostingWidth: Int
@@ -93,6 +94,7 @@ enum KeyboardLifecycleTrace {
     let requestedMode: String
     let effectiveMode: String
     let fallback: Bool
+    let fallbackReason: String?
     let viewWidth: Int
     let viewHeight: Int
     let hostWidth: Int
@@ -116,7 +118,8 @@ enum KeyboardLifecycleTrace {
 
   static func record(
     _ event: Event, session: String, requestedMode: KeyboardKind,
-    effectiveMode: KeyboardKind, viewWidth: CGFloat, viewHeight: CGFloat,
+    effectiveMode: KeyboardKind, fallbackReason: String?,
+    viewWidth: CGFloat, viewHeight: CGFloat,
     hostWidth: CGFloat, hostHeight: CGFloat, hostingMounted: Bool,
     hostingInWindow: Bool, nativeSwitchRequired: Bool, fullAccess: Bool,
     hostBundleHint: String?, firstLoadForBuild: Bool? = nil,
@@ -131,6 +134,7 @@ enum KeyboardLifecycleTrace {
       event: event.rawValue,
       requestedMode: requestedMode.rawValue, effectiveMode: effectiveMode.rawValue,
       fallback: requestedMode != effectiveMode,
+      fallbackReason: fallbackReason,
       viewWidth: dimension(viewWidth), viewHeight: dimension(viewHeight),
       hostWidth: dimension(hostWidth), hostHeight: dimension(hostHeight),
       hostingMounted: hostingMounted, hostingInWindow: hostingInWindow,

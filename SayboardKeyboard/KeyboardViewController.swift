@@ -194,6 +194,7 @@ final class KeyboardViewController: UIInputViewController {
       event, session: self.keyboardTraceSession,
       requestedMode: self.keyboardState.keyboardKind,
       effectiveMode: self.keyboardState.effectiveTypingKind,
+      fallbackReason: self.keyboardState.basicTypingFallbackReason?.rawValue,
       viewWidth: bounds.width, viewHeight: bounds.height,
       hostWidth: self.hostGeometry.size.width,
       hostHeight: self.hostGeometry.size.height,
@@ -316,8 +317,12 @@ final class KeyboardViewController: UIInputViewController {
       }
       stack.append(contentsOf: node.subviews)
     }
+    let expectedHeight = KeyboardMetrics.totalHeight(
+      actionBarVisible: self.actionBarVisible, kind: self.keyboardState.effectiveTypingKind
+    )
     let probe = KeyboardLifecycleTrace.RenderProbe(
       checkpoint: checkpoint,
+      expectedHeight: Self.traceDimension(expectedHeight),
       inputWidth: Self.traceDimension(input.bounds.width),
       inputHeight: Self.traceDimension(input.bounds.height),
       hostingWidth: Self.traceDimension(hosted?.bounds.width ?? 0),
@@ -341,10 +346,14 @@ final class KeyboardViewController: UIInputViewController {
     let missingRows = probe.letterRowsExpected && !probe.scanLimited
       && probe.hostingInWindow && probe.inputHeight >= 30
       && touchInWindow < 3
+    // Detect stable host/SwiftUI height disagreements without rewriting the system constraints.
+    let heightMismatch = probe.hostingInWindow && probe.inputHeight >= 30
+      && (abs(probe.inputHeight - probe.expectedHeight) > 2
+        || abs(probe.hostingHeight - probe.expectedHeight) > 2)
     let suspicious = !probe.hostingInWindow || probe.inputHidden
       || probe.hostingHidden || probe.inputAlphaPercent < 1
       || probe.hostingAlphaPercent < 1 || !probe.hostingIntersectsInput
-      || probe.inputHeight < 30 || probe.hostingHeight < 30
+      || probe.inputHeight < 30 || probe.hostingHeight < 30 || heightMismatch
       || (touchInWindow > 0 && touchHitCount == 0) || missingRows
     self.recordKeyboardTrace(
       suspicious ? .renderSuspicious : .renderCheckpoint, renderProbe: probe
@@ -352,7 +361,7 @@ final class KeyboardViewController: UIInputViewController {
     // One bounded soft refresh; never replace the composition root.
     if missingRows && !self.missingRowsRefreshAttempted {
       self.missingRowsRefreshAttempted = true
-      self.keyboardState.keyboardAppearanceRevision &+= 1
+      self.keyboardState.keyboardTouchRowsRecoveryRevision &+= 1
       hosted?.setNeedsLayout()
       hosted?.setNeedsDisplay()
       self.view.setNeedsLayout()
@@ -1000,14 +1009,10 @@ extension KeyboardViewController {
 
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
-    self.hostGeometry.update(
-      width: self.view.bounds.width,
-      height: KeyboardMetrics.totalHeight(
-        actionBarVisible: self.actionBarVisible, kind: self.keyboardState.effectiveTypingKind
-      )
-    )
     let width = self.view.bounds.width
     let height = self.view.bounds.height
+    // Actual UIKit bounds, not the height Altboard requested from Auto Layout.
+    self.hostGeometry.update(width: width, height: height)
     let hostValid = self.hostGeometry.size.width > 1 && self.hostGeometry.size.height > 1
     let inWindow = self.hostingController?.viewIfLoaded?.window != nil
     let signature = "\(width.isFinite ? Int(width.rounded()) : -1):\(height.isFinite ? Int(height.rounded()) : -1):\(hostValid):\(inWindow)"

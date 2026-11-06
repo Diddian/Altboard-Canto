@@ -180,9 +180,9 @@ struct AlphabeticKeyboardLayout: View {
               .frame(height: KeyboardChromeMetrics.keyHeight + Self.rowSpacing.kbScaled / 2,
                      alignment: .bottom)
           }
-          // Rebuild only the three visual/touch rows after a field switch.
-          // Keep composition, candidates and the bottom row mounted.
-          .id(self.keyboardState.keyboardAppearanceRevision)
+          // Only a confirmed missing-row recovery remounts the UIKit touch rows.
+          // Ordinary field switches reset touch state without replacing the rows.
+          .id(self.keyboardState.keyboardTouchRowsRecoveryRevision)
           .overlay {
             if self.page == .letters && self.swipeTypingEnabled
               && self.chineseMode == .phonetic {

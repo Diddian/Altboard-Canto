@@ -49,6 +49,8 @@ final class KeyboardState: ObservableObject {
   @Published var keyboardHapticsEnabled = true
   @Published var textContextRevision = 0
   @Published var keyboardAppearanceRevision = 0
+  // Only a confirmed missing-row probe forces a new UIKit touch-row tree.
+  @Published var keyboardTouchRowsRecoveryRevision = 0
   // Render-only expectation; does not store host text or touch coordinates.
   var expectsAlphabeticTouchRows = false
   @Published var hostInputTraits = KeyboardHostInputTraits()
@@ -69,10 +71,24 @@ final class KeyboardState: ObservableObject {
   /// Keep typing controls visible while recording in every non-mic mode.
   // A third-party keyboard must retain ordinary typing without microphone,
   // Full Access, a downloaded model, or writable App Group storage.
+  enum BasicTypingFallbackReason: String, Sendable {
+    case fullAccessUnavailable
+    case appGroupUnavailable
+    case microphoneUnavailable
+    case speechModelUnavailable
+  }
+
+  var basicTypingFallbackReason: BasicTypingFallbackReason? {
+    guard self.keyboardKind != .alphabetic else { return nil }
+    if !self.hasFullAccess { return .fullAccessUnavailable }
+    if AppGroup.containerURL == nil { return .appGroupUnavailable }
+    if !self.isMicrophoneAuthorized { return .microphoneUnavailable }
+    if !self.hasUsableModel { return .speechModelUnavailable }
+    return nil
+  }
+
   var requiresBasicTypingFallback: Bool {
-    self.keyboardKind != .alphabetic &&
-      (!self.hasFullAccess || !self.isMicrophoneAuthorized ||
-       !self.hasUsableModel || AppGroup.containerURL == nil)
+    self.basicTypingFallbackReason != nil
   }
 
   var effectiveTypingKind: KeyboardKind {
