@@ -36,7 +36,8 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertNotIn("self.setupKeyboardView()", did_load)
         appear = source.split("override func viewWillAppear(", 1)[1].split("override func viewWillDisappear(", 1)[0]
         self.assertIn("if self.hostingController == nil", appear)
-        self.assertLess(appear.index("self.setupKeyboardView()"), appear.index("self.keyboardState.refresh()"))
+        self.assertLess(appear.index("self.keyboardState.refresh()"), appear.index("self.syncFullAccessIfChanged()"))
+        self.assertLess(appear.index("self.syncFullAccessIfChanged()"), appear.index("self.setupKeyboardView()"))
         self.assertIn("UIHostingController<KeyboardView>", source)
         self.assertNotIn("KeyboardHostingRoot", source)
         self.assertIn("hosting.view.bottomAnchor.constraint(equalTo: self.view.bottomAnchor)", source)
@@ -44,6 +45,18 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("kind: self.keyboardState.effectiveTypingKind", source)
         self.assertIn("self.view.superview?.layoutIfNeeded()", source)
         self.assertNotIn("controller.rootView =", source)
+
+    def test_height_reconciles_outer_and_host_independently(self):
+        source = HOST.read_text(encoding="utf-8")
+        height = source.split("private func applyKeyboardHeight()", 1)[1].split(
+            "private func makeKeyboardProxy()", 1
+        )[0]
+        self.assertIn("let outerNeedsUpdate = self.heightConstraint.map", height)
+        self.assertIn("let hostingNeedsUpdate = self.hostingHeightConstraint.map", height)
+        self.assertIn("guard outerNeedsUpdate || hostingNeedsUpdate else { return }", height)
+        self.assertIn("self.heightConstraint?.constant = target", height)
+        self.assertIn("self.hostingHeightConstraint?.constant = target", height)
+        self.assertNotIn("guard hc.constant != target else { return }", height)
 
     def test_render_probe_distinguishes_blank_root_from_key_rows(self):
         view = ROOT_VIEW.read_text()

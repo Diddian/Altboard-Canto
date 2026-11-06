@@ -107,10 +107,11 @@ final class KeyboardViewController: UIInputViewController {
     Self.activeInstance = self
     SharedSettings().defaults.set(true, forKey: "canto.keyboardOpenedAtLeastOnce")
     SharedSettings().synchronize()
+    self.keyboardState.refresh()
+    self.syncFullAccessIfChanged()
     if self.hostingController == nil {
       self.setupKeyboardView()
     }
-    self.keyboardState.refresh()
     let document = self.availableDocumentIdentifier()
     if document == nil || self.lastTouchDocumentID != document {
       KeyboardTouchLearning.shared.invalidate()
@@ -119,7 +120,6 @@ final class KeyboardViewController: UIInputViewController {
     self.lastTouchDocumentID = document
     self.refreshHostInputTraits()
     self.lastObservedHostHasText = self.textDocumentProxy.hasText
-    self.syncFullAccessIfChanged()
     // Reset transient gestures without tearing down the visible render tree.
     self.keyboardState.keyboardAppearanceRevision &+= 1
     self.missingRowsRefreshAttempted = false
@@ -805,14 +805,14 @@ extension KeyboardViewController {
   }
 
   private func applyKeyboardHeight() {
-    guard let hc = self.heightConstraint else { return }
-    let base = KeyboardMetrics.totalHeight(
+    let target = KeyboardMetrics.totalHeight(
       actionBarVisible: self.actionBarVisible,
       kind: self.keyboardState.effectiveTypingKind
     )
-    let target = base
-    guard hc.constant != target else { return }
-    hc.constant = target
+    let outerNeedsUpdate = self.heightConstraint.map { $0.constant != target } ?? false
+    let hostingNeedsUpdate = self.hostingHeightConstraint.map { $0.constant != target } ?? false
+    guard outerNeedsUpdate || hostingNeedsUpdate else { return }
+    self.heightConstraint?.constant = target
     self.hostingHeightConstraint?.constant = target
     UIView.performWithoutAnimation {
       self.view.layoutIfNeeded()
