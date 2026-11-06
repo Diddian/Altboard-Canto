@@ -208,6 +208,8 @@ jobs:
           for plist in Sayboard/Info.plist SayboardKeyboard/Info.plist; do
             /usr/libexec/PlistBuddy -c "Add :AltboardBuildSHA string $GITHUB_SHA" "$plist" ||
               /usr/libexec/PlistBuddy -c "Set :AltboardBuildSHA $GITHUB_SHA" "$plist"
+            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $GITHUB_RUN_NUMBER" "$plist"
+            test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$plist")" = "$GITHUB_RUN_NUMBER"
           done
 
       - name: Generate Xcode project
