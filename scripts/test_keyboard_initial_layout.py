@@ -81,6 +81,13 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn(".ignoresSafeArea(edges: .bottom)", view)
         self.assertIn(".padding(.top, 2.kbScaled)", extended)
 
+    def test_onboarding_preview_uses_fixed_full_height(self):
+        preview = (ROOT / "Sayboard/Views/Onboarding/KeyboardLayoutPreview.swift").read_text()
+        self.assertIn("KeyboardLayoutGeometry.height(kind: kind, microphoneLayout: .defaultLayout)", preview)
+        self.assertNotIn("KeyboardLayoutGeometry.microphoneDefaultHeight", preview)
+        self.assertNotIn("static let standardHeight", preview)
+        self.assertNotIn("static let extendedHeight", preview)
+
     def test_fallback_reason_and_diagnostic_writes_are_bounded(self):
         state = (ROOT / "SayboardKeyboard/KeyboardState.swift").read_text()
         host = HOST.read_text(encoding="utf-8")
