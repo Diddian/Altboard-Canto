@@ -86,6 +86,29 @@ enum KeyboardLifecycleTrace {
     let requestedKeyboardType: Int
   }
 
+  enum HostSelectionEvent: String, Sendable {
+    case editingBegan
+    case editingEnded
+    case inputModeChanged
+    case keyboardDidShow
+    case rememberedModeCleared
+  }
+
+  private struct HostSelectionSnapshot: Codable, Sendable {
+    let responderLanguage: String?
+    let notificationLanguage: String?
+    let keyboardType: Int
+    let fieldIsFirstResponder: Bool
+    let remembersSelection: Bool
+  }
+
+  private struct HostSelectionEntry: Codable, Sendable {
+    let timestampMs: Int64
+    let process: String
+    let event: String
+    let hostInputMode: HostSelectionSnapshot
+  }
+
   private struct Entry: Codable, Sendable {
     let timestampMs: Int64
     let session: String
@@ -95,6 +118,7 @@ enum KeyboardLifecycleTrace {
     let effectiveMode: String
     let fallback: Bool
     let fallbackReason: String?
+    let startupReady: Bool
     let viewWidth: Int
     let viewHeight: Int
     let hostWidth: Int
@@ -123,6 +147,7 @@ enum KeyboardLifecycleTrace {
     hostWidth: CGFloat, hostHeight: CGFloat, hostingMounted: Bool,
     hostingInWindow: Bool, nativeSwitchRequired: Bool, fullAccess: Bool,
     hostBundleHint: String?, firstLoadForBuild: Bool? = nil,
+    startupReady: Bool = true,
     inputModeProbe: InputModeProbe? = nil, renderProbe: RenderProbe? = nil
   ) {
     #if !APPSTORE
@@ -133,8 +158,9 @@ enum KeyboardLifecycleTrace {
       session: session, processLaunchID: KeyboardProcessMemory.processLaunchID,
       event: event.rawValue,
       requestedMode: requestedMode.rawValue, effectiveMode: effectiveMode.rawValue,
-      fallback: requestedMode != effectiveMode,
-      fallbackReason: fallbackReason,
+      fallback: startupReady && requestedMode != effectiveMode,
+      fallbackReason: startupReady ? fallbackReason : nil,
+      startupReady: startupReady,
       viewWidth: dimension(viewWidth), viewHeight: dimension(viewHeight),
       hostWidth: dimension(hostWidth), hostHeight: dimension(hostHeight),
       hostingMounted: hostingMounted, hostingInWindow: hostingInWindow,
@@ -153,6 +179,39 @@ enum KeyboardLifecycleTrace {
     #endif
   }
 
+  /// This probe runs in our own host app, including when the keyboard extension
+  /// has not started. A language hint is not a third-party keyboard identifier.
+  static func recordHostInputMode(
+    _ event: HostSelectionEvent,
+    responderLanguage: String?, notificationLanguage: String?,
+    keyboardType: Int, fieldIsFirstResponder: Bool, remembersSelection: Bool
+  ) {
+    #if !APPSTORE
+    let snapshot = HostSelectionSnapshot(
+      responderLanguage: safeLanguageTag(responderLanguage),
+      notificationLanguage: safeLanguageTag(notificationLanguage),
+      keyboardType: max(-1, min(255, keyboardType)),
+      fieldIsFirstResponder: fieldIsFirstResponder,
+      remembersSelection: remembersSelection
+    )
+    let entry = HostSelectionEntry(
+      timestampMs: Int64(Date().timeIntervalSince1970 * 1_000),
+      process: "app", event: "hostProbe." + event.rawValue,
+      hostInputMode: snapshot
+    )
+    queue.async { append(entry) }
+    #endif
+  }
+
+  private static func safeLanguageTag(_ raw: String?) -> String? {
+    guard let raw, (1...35).contains(raw.utf8.count) else { return nil }
+    let allowed = raw.utf8.allSatisfy { byte in
+      (65...90).contains(byte) || (97...122).contains(byte)
+        || (48...57).contains(byte) || byte == 45
+    }
+    return allowed ? raw : nil
+  }
+
   private static func dimension(_ value: CGFloat) -> Int {
     guard value.isFinite else { return -1 }
     return max(-1, min(4_096, Int(value.rounded())))
@@ -164,7 +223,18 @@ enum KeyboardLifecycleTrace {
   }
 
   private static func append(_ entry: Entry) {
-    guard let url = fileURL, var data = try? JSONEncoder().encode(entry) else { return }
+    guard let data = try? JSONEncoder().encode(entry) else { return }
+    appendEncoded(data)
+  }
+
+  private static func append(_ entry: HostSelectionEntry) {
+    guard let data = try? JSONEncoder().encode(entry) else { return }
+    appendEncoded(data)
+  }
+
+  private static func appendEncoded(_ encoded: Data) {
+    guard let url = fileURL else { return }
+    var data = encoded
     data.append(10)
     let existed = FileManager.default.fileExists(atPath: url.path)
     let fd = url.path.withCString { open($0, O_RDWR | O_CREAT | O_APPEND, mode_t(0o600)) }
@@ -278,6 +348,8 @@ enum KeyboardLifecycleTrace {
     var peaks = [String: Int]()
 
     for event in events {
+      // Host-app probe records have no extension memory footprint.
+      if (event["process"] as? String) == "app" { continue }
       let process = event["processLaunchID"] as? String ?? "legacy"
       if !processOrder.contains(process) { processOrder.append(process) }
       lastEventByProcess[process] = event
@@ -375,24 +447,35 @@ enum KeyboardLifecycleTrace {
     ]
   }
 
+  private static func hostSelectionReview(for events: [[String: Any]]) -> [String: Any] {
+    let samples = events.filter { ($0["process"] as? String) == "app"
+      && ($0["hostInputMode"] is [String: Any]) }
+    return [
+      "checkpointCount": samples.count,
+      "recentCheckpoints": Array(samples.suffix(32)),
+      "interpretation": "Only Altboard host-app test fields are observed before extension launch. Input-mode language is a hint, not a keyboard identity. Other host apps cannot be observed."
+    ]
+  }
+
   static func exportJSON() -> String {
     let events = entries()
     let document: [String: Any] = [
-      "schemaVersion": 5,
+      "schemaVersion": 6,
       "exportedAtMs": Int64(Date().timeIntervalSince1970 * 1_000),
       "appBuild": Bundle.main.infoDictionary?["AltboardBuildSHA"] as? String ?? "unknown",
       "keyboardBuild": AppGroup.sharedDefaults?.string(forKey: "canto.keyboardBuildSHA") ?? "unknown",
-      "captureScope": "keyboard extension only; cannot inspect another active keyboard",
+      "captureScope": "keyboard extension plus opt-in Altboard host-app test field; other apps unavailable",
       "privacy": "No keystrokes, host text, touch positions, audio or transcripts",
       "events": events,
       "renderReview": renderReview(for: events),
       "inputModeReview": inputModeReview(for: events),
+      "hostSelectionReview": hostSelectionReview(for: events),
       "postSubmitReview": postSubmitReview(for: events),
       "documentIdentityReview": documentIdentityReview(for: events),
       "memoryReview": memoryReview(for: events),
     ]
     guard let data = try? JSONSerialization.data(withJSONObject: document, options: [.prettyPrinted, .sortedKeys])
-    else { return "{\"schemaVersion\":5,\"events\":[]}" }
+    else { return "{\"schemaVersion\":6,\"events\":[]}" }
     return String(decoding: data, as: UTF8.self)
   }
 

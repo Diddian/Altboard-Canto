@@ -44,6 +44,7 @@ final class KeyboardViewController: UIInputViewController {
   private var memoryWatchTimer: Timer?
   private var firstLoadForBuild: Bool?
   private var lastObservedDocumentInputModeLanguage: String?
+  private var initialStateReady = false
   #if !APPSTORE
   private var liveDebugHUD: KeyboardLiveDebugHUD?
   #endif
@@ -123,6 +124,7 @@ final class KeyboardViewController: UIInputViewController {
     SharedSettings().synchronize()
     self.keyboardState.refresh()
     self.syncFullAccessIfChanged()
+    self.initialStateReady = true
     if self.hostingController == nil {
       self.setupKeyboardView()
     }
@@ -211,7 +213,8 @@ final class KeyboardViewController: UIInputViewController {
       event, session: self.keyboardTraceSession,
       requestedMode: self.keyboardState.keyboardKind,
       effectiveMode: self.keyboardState.effectiveTypingKind,
-      fallbackReason: self.keyboardState.basicTypingFallbackReason?.rawValue,
+      fallbackReason: self.initialStateReady
+        ? self.keyboardState.basicTypingFallbackReason?.rawValue : nil,
       viewWidth: bounds.width, viewHeight: bounds.height,
       hostWidth: self.hostGeometry.size.width,
       hostHeight: self.hostGeometry.size.height,
@@ -221,6 +224,7 @@ final class KeyboardViewController: UIInputViewController {
       fullAccess: self.keyboardState.hasFullAccess,
       hostBundleHint: SharedSettings().hostBundleId,
       firstLoadForBuild: self.firstLoadForBuild,
+      startupReady: self.initialStateReady,
       inputModeProbe: self.inputModeProbe(for: event),
       renderProbe: renderProbe
     )
@@ -229,7 +233,10 @@ final class KeyboardViewController: UIInputViewController {
       event: event.rawValue,
       requestedMode: self.keyboardState.keyboardKind.rawValue,
       effectiveMode: self.keyboardState.effectiveTypingKind.rawValue,
-      fallbackReason: self.keyboardState.basicTypingFallbackReason?.rawValue,
+      fallbackReason: self.initialStateReady
+        ? self.keyboardState.basicTypingFallbackReason?.rawValue : nil,
+      runtimeLanguage: self.primaryLanguage,
+      startupReady: self.initialStateReady,
       actualHeight: bounds.height,
       targetHeight: KeyboardMetrics.totalHeight(
         actionBarVisible: self.actionBarVisible, kind: self.keyboardState.effectiveTypingKind

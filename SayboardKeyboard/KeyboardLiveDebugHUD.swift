@@ -70,7 +70,8 @@ final class KeyboardLiveDebugHUD: UIView {
 
   func recordLifecycle(
     event: String, requestedMode: String, effectiveMode: String,
-    fallbackReason: String?, actualHeight: CGFloat, targetHeight: CGFloat,
+    fallbackReason: String?, runtimeLanguage: String?, startupReady: Bool,
+    actualHeight: CGFloat, targetHeight: CGFloat,
     keyboardType: Int, probe: KeyboardLifecycleTrace.RenderProbe?
   ) {
     let reason: String
@@ -81,13 +82,16 @@ final class KeyboardLiveDebugHUD: UIView {
     case "speechModelUnavailable": reason = "model"
     default: reason = "none"
     }
-    self.stateLine = "\(requestedMode)>\(effectiveMode) fb:\(reason) type:\(keyboardType)"
+    self.stateLine = startupReady
+      ? "\(requestedMode)>\(effectiveMode) fb:\(reason) type:\(keyboardType)"
+      : "initializing | access not checked"
     let actual = actualHeight.isFinite ? Int(actualHeight.rounded()) : -1
     let target = targetHeight.isFinite ? Int(targetHeight.rounded()) : -1
     let rows = probe.map {
       $0.letterRowsExpected ? "\($0.touchSurfacesInWindow)/3" : "n/a"
     } ?? "--"
-    self.geometryLine = "AB mis #\(self.eventCount) | \(actual)/\(target)pt | rows \(rows)"
+    let language = runtimeLanguage.flatMap { $0.isEmpty ? nil : $0 } ?? "unknown"
+    self.geometryLine = "AB \(language) #\(self.eventCount) | \(actual)/\(target)pt | rows \(rows)"
     self.appendEvent(event)
   }
 
