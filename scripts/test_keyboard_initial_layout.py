@@ -29,7 +29,9 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("self.thirdKeyRow", source)
         self.assertIn("@StateObject private var swipeTrail = SwipeTrailState()", source)
         self.assertIn("@ObservedObject var trail: SwipeTrailState", source)
-        self.assertIn("onSwipePath: { path in self.swipeTrail.update(path) }", source)
+        self.assertIn("onSwipePath: { path in", source)
+        self.assertIn("self.swipeTrail.update(path)", source)
+        self.assertIn("self.keyboardState.liveDebugAction?(.swipeMoving)", source)
         self.assertNotIn("@State private var liveSwipePath", source)
 
     def test_system_input_view_and_appearance_time_hosting(self):
