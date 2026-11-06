@@ -95,7 +95,7 @@ class InterfaceLocalizationTests(unittest.TestCase):
             self.assertIn(key, strings)
         self.assertNotIn("Diagnostics", strings)
         for key in (
-            "Mandarin", "Voice Notes", "Corrections & Suggestions",
+            "Mandarin", "Preferred Languages", "Voice Notes", "Corrections & Suggestions",
             "Export All Data", "Preparing Export…", "Priority",
             "Drag to reorder. Higher languages take priority; all selected languages remain available.",
             "Exports include recordings, transcripts and vocabulary. Models and app settings are kept.",
@@ -107,6 +107,10 @@ class InterfaceLocalizationTests(unittest.TestCase):
         self.assertEqual(
             strings["Mandarin"]["localizations"]["zh-Hant"]["stringUnit"]["value"], "普通話"
         )
+        language_picker = (ROOT / "Sayboard/Views/LanguagePickerView.swift").read_text()
+        language_settings = (ROOT / "Sayboard/Views/SpeechLanguagesSettingsView.swift").read_text()
+        self.assertIn('return "普通話"', language_picker)
+        self.assertIn("SpeechLanguageNames.name(for: code, locale: self.locale)", language_settings)
 
 if __name__ == "__main__":
     unittest.main()

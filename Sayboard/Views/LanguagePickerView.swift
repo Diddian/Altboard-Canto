@@ -68,8 +68,7 @@ struct LanguagePickerView: View {
   }
 
   private func displayName(for code: String) -> String {
-    code == "zh" ? String(localized: "Mandarin", locale: self.locale)
-      : self.locale.capitalizedLanguageName(forLanguageCode: code)
+    SpeechLanguageNames.name(for: code, locale: self.locale)
   }
 
   private var filteredLanguages: [String] {
@@ -218,3 +217,23 @@ struct LanguagePickerView: View {
 
 }
 
+
+enum SpeechLanguageNames {
+  static func name(for code: String, locale: Locale) -> String {
+    guard code == "zh" else {
+      return locale.capitalizedLanguageName(forLanguageCode: code)
+    }
+    // SwiftUI's environment locale follows the chosen App language, whereas
+    // String(localized:) may still fall back to the bundle's English locale.
+    let identifier = locale.identifier.replacingOccurrences(of: "_", with: "-").lowercased()
+    if identifier.hasPrefix("zh-hant") || identifier.hasPrefix("zh-hk")
+        || identifier.hasPrefix("zh-mo") || identifier.hasPrefix("yue") {
+      return "普通話"
+    }
+    if identifier.hasPrefix("zh-hans") || identifier.hasPrefix("zh-cn")
+        || identifier.hasPrefix("zh-sg") {
+      return "普通话"
+    }
+    return String(localized: "Mandarin", locale: locale)
+  }
+}

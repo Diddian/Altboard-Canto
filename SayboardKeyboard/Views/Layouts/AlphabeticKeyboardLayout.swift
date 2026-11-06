@@ -18,6 +18,8 @@ struct AlphabeticKeyboardLayout: View {
   private var autoCapitalize = true
 
   @State private var page = AlphabeticPage.letters
+  @State private var showsEmojiPage = false
+  @State private var emojiReturnPage = AlphabeticPage.letters
   @State private var lastInputWasSymbol = false
   @State private var shiftActive = true
   @State private var capsLock = false
@@ -135,6 +137,15 @@ struct AlphabeticKeyboardLayout: View {
 
   var body: some View {
     VStack(spacing: 0) {
+      if self.showsEmojiPage {
+        EmojiKeyboardView(
+          proxy: self.proxy,
+          keyboardState: self.keyboardState,
+          onAlphabet: { self.closeEmojiPage(returningTo: .letters) },
+          onNumbers: { self.closeEmojiPage(returningTo: .numbers) },
+          onClose: { self.closeEmojiPage(returningTo: self.emojiReturnPage) }
+        )
+      } else {
       self.toolbar
         // Keep every toolbar button completely inside the keyboard's
         // clipping bounds. A negative offset cut the mic and icons off.
@@ -194,6 +205,7 @@ struct AlphabeticKeyboardLayout: View {
         keyboardState: self.keyboardState,
         alphabeticModeLabel: self.page == .letters ? "?123" : "ABC",
         onAlphabeticModeSwitch: { self.toggleNumberPage() },
+        onEmojiAction: { self.openEmojiPage() },
         showsAlphabetIndicator: self.page == .letters,
         onSpaceAction: { self.handleSpace() },
         onShortcutAction: { self.handleCharacter($0) },
@@ -202,10 +214,11 @@ struct AlphabeticKeyboardLayout: View {
         onCursorTrackingEnded: { self.endCursorTracking() }
       )
       .padding(.top, Self.rowSpacing.kbScaled)
+      }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     .overlay(alignment: .top) {
-      if self.showsCandidateGrid,
+      if !self.showsEmojiPage, self.showsCandidateGrid,
          (!self.expandedCandidates.isEmpty || !self.expandedShapeCandidates.isEmpty
            || !self.expandedLatinSuggestions.isEmpty),
          self.page == .letters {
@@ -232,6 +245,10 @@ struct AlphabeticKeyboardLayout: View {
       self.applyHostKeyboardLayout()
     }
     .onChange(of: self.keyboardState.keyboardAppearanceRevision) { _, _ in
+      if self.showsEmojiPage {
+        self.showsEmojiPage = false
+        FeatureDiagnostics.record(.keyboardEmoji, .cancelled)
+      }
       // Never leave alphabet rows dimmed after a host app or field switch.
       self.isCursorTracking = false
       self.cursorRefreshTask?.cancel()
@@ -1526,6 +1543,29 @@ struct AlphabeticKeyboardLayout: View {
     self.proxy.insertText("\n")
     self.refreshAutomaticShift()
     self.updateCandidates()
+  }
+
+  private func openEmojiPage() {
+    self.emojiReturnPage = self.page
+    self.clearShapeComposition()
+    self.clearComposition()
+    self.swipeAlternatives.removeAll()
+    self.nextCantoneseWords.removeAll()
+    self.nextLatinWords.removeAll()
+    self.swipeTrail.clear()
+    self.latinRefreshTask?.cancel()
+    self.cursorRefreshTask?.cancel()
+    self.activeLatinWord = nil
+    self.showsCandidateGrid = false
+    self.showsEmojiPage = true
+    FeatureDiagnostics.record(.keyboardEmoji, .started)
+  }
+
+  private func closeEmojiPage(returningTo page: AlphabeticPage) {
+    self.showsEmojiPage = false
+    self.page = page
+    self.updateCandidates()
+    FeatureDiagnostics.record(.keyboardEmoji, .completed)
   }
 
   private func toggleNumberPage() {

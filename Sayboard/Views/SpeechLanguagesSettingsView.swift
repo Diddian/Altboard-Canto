@@ -107,8 +107,7 @@ struct SpeechLanguagesSettingsView: View {
   @Environment(\.locale) private var locale
 
   private func displayName(for code: String) -> String {
-    code == "zh" ? String(localized: "Mandarin", locale: self.locale)
-      : self.locale.capitalizedLanguageName(forLanguageCode: code)
+    SpeechLanguageNames.name(for: code, locale: self.locale)
   }
 
   private var unsupportedSpokenLanguages: [String] {

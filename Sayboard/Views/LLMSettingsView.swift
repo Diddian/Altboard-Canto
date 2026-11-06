@@ -44,7 +44,7 @@ struct LLMSettingsView: View {
         TextOutputSection(inline: true)
       }
     } label: {
-      Label("Formatting", systemImage: "textformat")
+      Label("Formatting", systemImage: "text.alignleft")
     }
     if self.llmEnabled && self.llmDownloadService.hasUsableModel {
       NavigationLink {

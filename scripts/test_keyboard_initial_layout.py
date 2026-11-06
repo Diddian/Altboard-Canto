@@ -81,6 +81,7 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("self.scheduleRenderCheckpoint(checkpoint: \"afterHostTextCleared\")", host)
         self.assertIn("case hostTextCleared", lifecycle)
         self.assertIn("postSubmitReview(for: events)", lifecycle)
+        self.assertIn("\"sessionsWithUnmatchedWillDisappear\": missingCompletion.count", lifecycle)
         self.assertIn('self.recordKeyboardTrace(.hostTextCleared)', host)
         self.assertIn("self.renderProbeGeneration &+= 1", host)
         for private_content in ("documentContextBeforeInput", "selectedText", "insertText",

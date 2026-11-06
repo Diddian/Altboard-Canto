@@ -116,7 +116,15 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("var showsGlobeButton: Bool", keyboard)
         self.assertIn("var needsInputModeSwitchKey: Bool", config)
         self.assertIn("if self.keyboardState.showsGlobeButton", keyboard)
-        self.assertIn('iconName = "face.smiling"', native)
+        self.assertIn('iconName = "globe"', native)
+        self.assertIn("self.emojiPreview(width: 48)", preview)
+        self.assertIn('KeyButton(content: .nativeEmojiGlyph', keyboard)
+        self.assertIn("EmojiKeyboardView(", alphabet)
+        self.assertIn('onEmojiAction: { self.openEmojiPage() }', alphabet)
+        self.assertIn('Label("Formatting", systemImage: "text.alignleft")',
+                      read("Sayboard/Views/LLMSettingsView.swift"))
+        storage = read("Sayboard/Views/DataAndStorageSettingsView.swift")
+        self.assertGreaterEqual(storage.count(".frame(minHeight: 64)"), 3)
         self.assertIn('iconName: "globe"', alphabet)
         self.assertIn('if self.keyboardState.showGlobeKey', alphabet)
         self.assertLess(alphabet.index('if self.keyboardState.showGlobeKey'),

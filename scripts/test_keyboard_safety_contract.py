@@ -42,12 +42,21 @@ class KeyboardSafetyContracts(unittest.TestCase):
         self.assertIn("currentLLMFieldMatches()", actions)
         self.assertIn("self.keyboardState.llmError = .storageUnavailable", actions)
 
-    def test_native_globe_replaces_retired_custom_emoji_route(self):
+    def test_version_90_emoji_page_is_separate_from_native_globe(self):
         layout = source("SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift")
         chrome = source("SayboardKeyboard/Views/Layouts/KeyboardChrome.swift")
-        self.assertNotIn("showsEmojiPage", layout)
-        self.assertNotIn("onEmojiAction", layout + chrome)
+        glyph = source("Shared/NativeEmojiGlyph.swift")
+        self.assertIn("EmojiKeyboardView(", layout)
+        self.assertIn("onEmojiAction: { self.openEmojiPage() }", layout)
+        self.assertIn("self.showsEmojiPage = true", layout)
+        self.assertIn("self.showsEmojiPage = false", layout)
+        self.assertIn("case .nativeEmojiGlyph:", source("SayboardKeyboard/Views/KeyButton.swift"))
+        self.assertIn("struct NativeEmojiGlyph: Shape", glyph)
+        self.assertIn("KeyButton(content: .nativeEmojiGlyph", chrome)
         self.assertIn("NativeInputModeSwitchKey(", chrome)
+        self.assertIn('iconName: "globe"', chrome)
+        self.assertIn("if let openEmoji = self.onEmojiAction", chrome)
+        self.assertIn(", keyboardEmoji", source("Shared/FeatureDiagnostics.swift"))
 
     def test_touch_state_does_not_outlive_keyboard(self):
         controller = source("SayboardKeyboard/KeyboardViewController.swift")

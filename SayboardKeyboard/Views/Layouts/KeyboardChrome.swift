@@ -146,6 +146,7 @@ struct KeyboardBottomRow: View {
   @ObservedObject var keyboardState: KeyboardState
   var alphabeticModeLabel: String? = nil
   var onAlphabeticModeSwitch: (() -> Void)? = nil
+  var onEmojiAction: (() -> Void)? = nil
   var showsAlphabetIndicator = true
   var onSpaceAction: (() -> Void)? = nil
   var onShortcutAction: ((String) -> Void)? = nil
@@ -170,10 +171,15 @@ struct KeyboardBottomRow: View {
           action()
         }
       }
-      if self.keyboardState.showsGlobeButton {
-        // iOS may require a native switch key when multiple keyboards exist.
+      if let openEmoji = self.onEmojiAction {
+        KeyButton(content: .nativeEmojiGlyph, fixedWidth: self.metrics.sideButtonWidth) {
+          openEmoji()
+        }
+        .accessibilityLabel("Open Emoji keyboard")
+      } else if self.keyboardState.showsGlobeButton {
         NativeInputModeSwitchKey(
-          configure: self.keyboardState.configureInputModeListButton
+          configure: self.keyboardState.configureInputModeListButton,
+          iconName: "globe"
         )
         .frame(width: self.metrics.sideButtonWidth,
                height: KeyboardChromeMetrics.keyHeight)

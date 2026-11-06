@@ -99,8 +99,8 @@ struct DataAndStorageSettingsView: View {
       }
       .disabled(self.busy || self.recordingActive)
       Divider()
-        .padding(.vertical, 3)
-      VStack(alignment: .leading, spacing: 14) {
+        .padding(.vertical, 4)
+      VStack(alignment: .leading, spacing: 0) {
         Button { self.export(LocalUserDataStore.Category.allCases) } label: {
           Label {
             Text(LocalizedStringKey(self.busy ? "Preparing Export…" : "Export All Data"))
@@ -110,6 +110,9 @@ struct DataAndStorageSettingsView: View {
           .frame(maxWidth: .infinity, alignment: .leading)
         }
         .disabled(self.busy || self.recordingActive)
+        .frame(minHeight: 64)
+        Divider().padding(.leading, 34)
+
         Button(role: .destructive) {
           self.pendingRetentionPolicy = nil
           self.pendingDeletion = LocalUserDataStore.Category.allCases
@@ -119,16 +122,26 @@ struct DataAndStorageSettingsView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .disabled(self.busy || self.recordingActive)
-        Button("Clear Model Cache", role: .destructive) {
+        .frame(minHeight: 64)
+        Divider().padding(.leading, 34)
+
+        Button(role: .destructive) {
           ModelStorageManager.clearCompiledModelCache()
+        } label: {
+          Label("Clear Model Cache", systemImage: "internaldrive")
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .disabled(self.busy || self.recordingActive)
+        .frame(minHeight: 64)
+
         Text("Exports include recordings, transcripts and vocabulary. Models and app settings are kept.")
           .font(.footnote)
           .foregroundStyle(.secondary)
           .fixedSize(horizontal: false, vertical: true)
+          .padding(.top, 12)
+          .padding(.bottom, 10)
       }
-      .padding(.vertical, 8)
+      .padding(.vertical, 6)
     }
   }
 

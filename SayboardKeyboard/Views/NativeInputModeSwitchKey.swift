@@ -6,7 +6,7 @@ import UIKit
 struct NativeInputModeSwitchKey: UIViewRepresentable {
   @Environment(\.colorScheme) private var colorScheme
   let configure: ((UIButton) -> Void)?
-  var iconName = "face.smiling"
+  var iconName = "globe"
 
   private static let iconTag = 7137
   private static let iconSize: CGFloat = 20.67

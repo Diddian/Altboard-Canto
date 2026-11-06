@@ -202,10 +202,23 @@ enum KeyboardLifecycleTrace {
         "renderCheckpoint": (item["renderProbe"] as? [String: Any])?["checkpoint"] ?? ""
       ]
     }
+    // Export-only correlation: iOS may dispose of a keyboard extension
+    // without calling didDisappear, which is not evidence of a crash.
+    var beganDisappearing = Set<String>()
+    var completedDisappearing = Set<String>()
+    for item in events {
+      guard let session = item["session"] as? String,
+            let event = item["event"] as? String else { continue }
+      if event == Event.willDisappear.rawValue { beganDisappearing.insert(session) }
+      if event == Event.didDisappear.rawValue { completedDisappearing.insert(session) }
+    }
+    let missingCompletion = beganDisappearing.subtracting(completedDisappearing)
     return [
       "fieldClearCount": events.filter { ($0["event"] as? String) == Event.hostTextCleared.rawValue }.count,
+      "sessionsWithUnmatchedWillDisappear": missingCompletion.count,
+      "recentUnmatchedSessions": Array(missingCompletion.sorted().prefix(8)),
       "recentTransitions": Array(recent.suffix(80)),
-      "interpretation": "Field clearing is only a possible post-Send signal; correlate with device observations."
+      "interpretation": "Unmatched disappear callbacks can be normal iOS extension disposal. Correlate timestamps with user-observed blank keyboards."
     ]
   }
 
