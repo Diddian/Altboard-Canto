@@ -468,8 +468,7 @@ final class KeyboardViewController: UIInputViewController {
       return
     }
     if self.completeExperimentalLiveText(text) {
-      self.copyFinalTextToClipboardIfEnabled(text)
-      self.keyboardState.showFinalOutputPreview(text)
+        self.keyboardState.showFinalOutputPreview(text)
       FeatureDiagnostics.record(.bridge, .completed)
       return
     }
@@ -481,13 +480,7 @@ final class KeyboardViewController: UIInputViewController {
     DiagnosticLog.write("keyboard: inserting \(text.count) chars into textDocumentProxy")
     self.insertSpacedText(text)
     FeatureDiagnostics.record(.bridge, .completed)
-    self.copyFinalTextToClipboardIfEnabled(text)
     self.keyboardState.showFinalOutputPreview(text)
-  }
-
-  func copyFinalTextToClipboardIfEnabled(_ text: String) {
-    guard SharedSettings().alsoCopyToClipboard else { return }
-    UIPasteboard.general.string = text
   }
 
   func pingMainAppForSessionStatus() {

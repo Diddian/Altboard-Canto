@@ -42,7 +42,9 @@ class SettingsContractTests(unittest.TestCase):
         self.assertEqual(home.count("DisclosureGroup(isExpanded: self.$showsAIActions)"), 1)
         self.assertEqual(home.count("DictationSettingsView(inline: true)"), 1)
         self.assertEqual(home.count("LLMSettingsView(inline: true)"), 1)
-        self.assertIn('Toggle("Enabled", isOn: self.$llmEnabled)', ai)
+        self.assertNotIn('Toggle("Enabled", isOn: self.$llmEnabled)', ai)
+        self.assertIn('LabeledContent("Writing Modes")', ai)
+        self.assertIn('Label("Rewrite & Translate"', home)
         self.assertIn('if self.keyboardTestingText.isEmpty {', history)
         self.assertIn('self.isKeyboardTestFocused = false\n        } else {\n          self.keyboardTestingText = ""', history)
         self.assertIn('"Close test keyboard" : "Clear test text"', history)
@@ -74,15 +76,19 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("KeyboardTestPreview(", layout)
         self.assertNotIn('Text("Preview")', layout)
         self.assertEqual(layout.count("    Section {"), 1)
-        self.assertLess(layout.index('Label("Key Order"'), layout.index('Label("Customization"'))
-        self.assertLess(layout.index('Label("Customization"'), layout.index("KeyboardTestPreview("))
+        self.assertLess(layout.index('Label("Key Order"'), layout.index('Label("Keyboard Customization"'))
+        self.assertLess(layout.index('Label("Keyboard Customization"'), layout.index("KeyboardTestPreview("))
         self.assertNotIn("Section(", custom)
         self.assertNotIn("Slider(", custom)
         self.assertNotIn('Text("Strength")', custom)
-        for control in ('Auto-capitalization', 'Double-Space Period',
-                        'Haptic Feedback', 'Extra Globe Key', 'Settings Key',
-                        'Output Key', 'AI Key'):
-            self.assertIn(control, custom)
+        for control in ('Auto-capitalization', 'Double-Space Period', 'Haptic Feedback'):
+            self.assertIn('Toggle("' + control, layout)
+            self.assertNotIn('Toggle("' + control, custom)
+        for control in ('Extra Globe Key', 'Settings Key', 'Output Key', 'AI Key'):
+            self.assertIn('Toggle("' + control, custom)
+        self.assertNotIn('.disabled(!self.aiEnabled)', custom)
+        self.assertIn('Tap the keys to test haptic feedback.', layout)
+        self.assertEqual(layout.count('if self.showGlobeKey { self.key("globe"'), 3)
         self.assertNotIn('Text("Not yet available")', custom)
 
     def test_settings_routes_have_single_owners(self):
@@ -121,7 +127,7 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn('KeyButton(content: .nativeEmojiGlyph', keyboard)
         self.assertIn("EmojiKeyboardView(", alphabet)
         self.assertIn('onEmojiAction: { self.openEmojiPage() }', alphabet)
-        self.assertIn('Label("Formatting", systemImage: "text.alignleft")',
+        self.assertIn('Label("Writing Style", systemImage: "text.alignleft")',
                       read("Sayboard/Views/LLMSettingsView.swift"))
         storage = read("Sayboard/Views/DataAndStorageSettingsView.swift")
         self.assertGreaterEqual(storage.count(".frame(minHeight: 64)"), 3)
@@ -146,8 +152,29 @@ class SettingsContractTests(unittest.TestCase):
         self.assertNotIn("TextOutputSection(", output)
         self.assertIn("var inline = false", formatting)
         self.assertIn("var inline = false", output)
-        self.assertLess(actions.index("TextOutputSection(inline: true)"),
-                        actions.index("if self.llmEnabled && self.llmDownloadService.hasUsableModel"))
+        self.assertGreater(actions.index("TextOutputSection(inline: true)"),
+                           actions.index('Picker("Long Press Action"'))
+        self.assertIn('Label("Per-App Style"', formatting)
+        self.assertNotIn('Auto-Copy to Clipboard', formatting)
+        self.assertIn('Label("Include Punctuation"', output)
+        self.assertIn('Text(verbatim: self.currentOutputAbbreviation)', output)
+        self.assertIn('WordCorrectionsView()', dictation)
+        self.assertNotIn('Enable Meeting Recording', dictation)
+
+    def test_dictation_final_output_and_ai_key_are_consistent(self):
+        settings = read("Shared/SharedSettings.swift")
+        speech = read("Sayboard/Services/SpeechRecognitionService+Transcription.swift")
+        keyboard = read("SayboardKeyboard/KeyboardViewController.swift")
+        llm_keyboard = read("SayboardKeyboard/KeyboardViewController+LLM.swift")
+        output = read("Sayboard/Views/VoiceOutputSettingsView.swift")
+        language_button = read("SayboardKeyboard/Views/TranslateToggleButton.swift")
+        self.assertIn('voicePunctuationEnabled', settings)
+        self.assertIn('VoicePunctuationPolicy.render(', speech)
+        self.assertIn('get { self.keyboardShowAIButton }', settings)
+        self.assertIn('abbreviatedLabel(customLanguage:', language_button)
+        self.assertIn('Menu {', output)
+        self.assertNotIn('copyFinalTextToClipboardIfEnabled', keyboard + llm_keyboard)
+        self.assertIn('UIPasteboard.general.string = result', llm_keyboard)
 
     def test_no_custom_swipe_to_switch_app_tabs(self):
         tabs = read("Sayboard/Views/MainTabView.swift")
@@ -183,6 +210,7 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn('Image(systemName: "goforward.15")', meeting)
         self.assertIn("MeetingAudioPlayback()", meeting)
         self.assertIn("sequenceNumber", recording)
+        self.assertNotIn("SharedSettings().experimentalMeetingRecordEnabled", recording)
         self.assertIn("static let partDuration: TimeInterval = 15 * 60", recording)
         self.assertIn("static let updateSeconds = 8", recording)
 

@@ -18,8 +18,6 @@ final class LLMDownloadService: ObservableObject {
   @Published var variantStates = [LLMModelVariant: ModelDownloadState]()
   @Published var selectedVariant: LLMModelVariant = SharedSettings().selectedLLMVariant
 
-  @Published var didEnableByDownload = false
-
   var hasUsableModel: Bool {
     self.isDownloaded(SharedSettings().selectedLLMVariant)
   }
@@ -168,9 +166,6 @@ final class LLMDownloadService: ObservableObject {
       }
     }
     self.syncHasUsableModel()
-    if !self.hasUsableModel {
-      settings.llmEnabled = false
-    }
   }
 
   func dismissError(variant: LLMModelVariant) {
@@ -295,8 +290,7 @@ final class LLMDownloadService: ObservableObject {
         self.completeUpgrade(to: variant)
       } else {
         self.autoSelectIfNeeded(variant: variant)
-        self.enableProcessingAfterDownload(variant: variant)
-      }
+          }
 
     case .failed(_, let variantRawValue, let error):
       guard let variant = LLMModelVariant(rawValue: variantRawValue) else { return }
@@ -434,13 +428,6 @@ final class LLMDownloadService: ObservableObject {
     }
     self.refreshAutomaticSelection()
     self.syncHasUsableModel()
-  }
-
-  private func enableProcessingAfterDownload(variant _: LLMModelVariant) {
-    let settings = SharedSettings()
-    guard !settings.llmEnabled else { return }
-    settings.llmEnabled = true
-    self.didEnableByDownload = true
   }
 
   private func isDownloadInFlight(_ variant: LLMModelVariant) -> Bool {

@@ -88,7 +88,11 @@ class InterfaceLocalizationTests(unittest.TestCase):
         for key in (
             "Settings", "History", "Meetings", "App Language",
             "Keyboard", "Speech & AI", "Speech Model", "Text Model",
-            "Dictation", "AI Actions", "History & Storage",
+            "Dictation", "AI Actions", "Rewrite & Translate", "Writing Modes",
+            "Word Corrections", "Speech Corrections", "Phrase Replacements",
+            "Include Punctuation", "Keyboard Customization", "Per-App Style",
+            "Tap the keys to test haptic feedback.", "Edit Language Priority",
+            "French", "Chinese (Simplified)", "Other language", "History & Storage",
             "Setup & Permissions", "Haptic Feedback", "Output Language",
             "Language Priority", "Free Dictation", "No recordings yet",
         ):

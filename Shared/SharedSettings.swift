@@ -350,6 +350,11 @@ struct SharedSettings {
     nonmutating set { defaults.set(newValue, forKey: SharedKey.lastVoiceOutputProcessed) }
   }
 
+  var voicePunctuationEnabled: Bool {
+    get { defaults.object(forKey: SharedKey.voicePunctuationEnabled) as? Bool ?? true }
+    nonmutating set { defaults.set(newValue, forKey: SharedKey.voicePunctuationEnabled) }
+  }
+
   var voiceOutputTarget: VoiceOutputTarget {
     get {
       guard let raw = defaults.string(forKey: SharedKey.voiceOutputTarget) else { return .original }
@@ -376,7 +381,8 @@ struct SharedSettings {
       cleanupEnabled: self.voiceCleanupEnabled,
       target: self.voiceOutputTarget,
       register: self.voiceOutputRegister,
-      customLanguage: self.voiceCustomLanguage
+      customLanguage: self.voiceCustomLanguage,
+      punctuationEnabled: self.voicePunctuationEnabled
     )
   }
 
@@ -489,9 +495,11 @@ struct SharedSettings {
     nonmutating set { defaults.set(newValue, forKey: SharedKey.isLLMProcessing) }
   }
 
+  /// AI rewriting follows the user-controlled keyboard AI Key preference.
+  /// The downloaded model still determines whether actions can execute.
   var llmEnabled: Bool {
-    get { self.defaults.bool(forKey: SharedKey.llmEnabled) }
-    nonmutating set { defaults.set(newValue, forKey: SharedKey.llmEnabled) }
+    get { self.keyboardShowAIButton }
+    nonmutating set { self.keyboardShowAIButton = newValue }
   }
 
   var defaultLLMActionSelection: LLMActionSelection {

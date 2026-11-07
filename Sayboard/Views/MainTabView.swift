@@ -37,7 +37,6 @@ struct MainTabView: View {
       if status == .unlocked { self.isPurchaseScreenPresented = false }
     }
     .purchaseScreen(isPresented: self.$isPurchaseScreenPresented)
-    .modifier(AIProcessingEnabledAlert())
   }
 
   private enum TabID: String, CaseIterable {
@@ -330,25 +329,3 @@ struct MainTabView: View {
     }
   }
 }
-
-private struct AIProcessingEnabledAlert: ViewModifier {
-
-  func body(content: Content) -> some View {
-    content.alert(
-      "AI Text Processing Enabled",
-      isPresented: self.$llmDownloadService.didEnableByDownload,
-    ) {
-      Button("OK") { }
-        .keyboardShortcut(.defaultAction)
-      Button("Turn Off") {
-        SharedSettings().llmEnabled = false
-      }
-    } message: {
-      Text("The AI button is now on the keyboard.")
-    }
-  }
-
-  @EnvironmentObject private var llmDownloadService: LLMDownloadService
-
-}
-

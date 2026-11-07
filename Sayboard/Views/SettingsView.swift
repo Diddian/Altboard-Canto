@@ -83,7 +83,7 @@ struct SettingsView: View {
             LLMSettingsView(inline: true)
           }
         } label: {
-          Label("AI Actions", systemImage: "sparkles")
+          Label("Rewrite & Translate", systemImage: "sparkles")
         }
       }
 

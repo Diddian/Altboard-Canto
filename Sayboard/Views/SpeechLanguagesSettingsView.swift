@@ -75,35 +75,42 @@ struct SpeechLanguagesSettingsView: View {
 
   @ViewBuilder
   private var languageSelectionRows: some View {
-    Button {
-      self.showPreferredLanguagePicker = true
-    } label: {
-      VStack(alignment: .leading, spacing: 3) {
-        Label("Language Priority", systemImage: "globe")
-        Text(self.spokenLanguages.isEmpty
-          ? "Any language"
-          : self.spokenLanguages.enumerated().map {
-              "\($0.offset + 1). " + self.displayName(for: $0.element)
-            }.joined(separator: " · "))
-          .foregroundStyle(.secondary)
-          .multilineTextAlignment(.leading)
-          .lineLimit(2)
+    DisclosureGroup(isExpanded: self.$showsLanguagePriority) {
+      Button {
+        self.showPreferredLanguagePicker = true
+      } label: {
+        VStack(alignment: .leading, spacing: 5) {
+          if self.spokenLanguages.isEmpty {
+            Text("Any language").foregroundStyle(.secondary)
+          } else {
+            ForEach(Array(self.spokenLanguages.enumerated()), id: \.offset) { item in
+              Text("\(item.offset + 1). " + self.displayName(for: item.element))
+                .foregroundStyle(.secondary)
+            }
+          }
+          Label("Edit Language Priority", systemImage: "arrow.up.arrow.down")
+            .font(.footnote)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
       }
-      .frame(maxWidth: .infinity, alignment: .leading)
-    }
-    if !self.unsupportedSpokenLanguages.isEmpty {
-      Label(
-        "The selected speech model may not recognize: \(self.unsupportedSpokenLanguages.joined(separator: ", "))",
-        systemImage: "exclamationmark.triangle"
-      )
-      .font(.footnote)
-      .foregroundStyle(.orange)
+      .buttonStyle(.plain)
+      if !self.unsupportedSpokenLanguages.isEmpty {
+        Label(
+          "The selected speech model may not recognize: \(self.unsupportedSpokenLanguages.joined(separator: ", "))",
+          systemImage: "exclamationmark.triangle"
+        )
+        .font(.footnote)
+        .foregroundStyle(.orange)
+      }
+    } label: {
+      Label("Language Priority", systemImage: "globe")
     }
   }
 
   @EnvironmentObject private var speechModels: ModelDownloadService
   @State private var spokenLanguages = SharedSettings().preferredSpokenLanguages
   @State private var showPreferredLanguagePicker = false
+  @State private var showsLanguagePriority = true
   @Environment(\.locale) private var locale
 
   private func displayName(for code: String) -> String {

@@ -10,7 +10,7 @@ struct LLMSettingsView: View {
         self.controls
       } else {
         Form { self.controls }
-          .navigationTitle("AI Actions")
+          .navigationTitle("Rewrite & Translate")
           .navigationBarTitleDisplayMode(.inline)
       }
     }
@@ -20,15 +20,9 @@ struct LLMSettingsView: View {
       self.customPrompts = shared.llmCustomPrompts
       self.longPressAction = shared.longPressLLMAction
       self.disabledActions = shared.disabledLLMActions
-      if self.llmEnabled, !self.llmDownloadService.hasUsableModel {
-        self.llmEnabled = false
-      }
     }
   }
 
-  @EnvironmentObject private var llmDownloadService: LLMDownloadService
-  @AppStorage(SharedKey.llmEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var llmEnabled = false
   @State private var defaultActionSelection = LLMActionSelection.none
   @State private var customPrompts = [LLMCustomPrompt]()
   @State private var longPressAction = LLMActionSelection.none
@@ -37,36 +31,31 @@ struct LLMSettingsView: View {
 
   @ViewBuilder
   private var controls: some View {
-    Toggle("Enabled", isOn: self.$llmEnabled)
-      .disabled(!self.llmDownloadService.hasUsableModel)
+    NavigationLink {
+      LLMPromptsView()
+    } label: {
+      LabeledContent("Writing Modes") {
+        Text(self.promptsSummary).foregroundStyle(.secondary)
+      }
+    }
+    Picker("Auto Action", selection: self.$defaultActionSelection) {
+      self.actionPickerContent()
+    }
+    .onChange(of: self.defaultActionSelection) { _, newValue in
+      SharedSettings().defaultLLMActionSelection = newValue
+    }
+    Picker("Long Press Action", selection: self.$longPressAction) {
+      self.actionPickerContent()
+    }
+    .onChange(of: self.longPressAction) { _, newValue in
+      SharedSettings().longPressLLMAction = newValue
+    }
     DisclosureGroup(isExpanded: self.$showsFormatting) {
       if self.showsFormatting {
         TextOutputSection(inline: true)
       }
     } label: {
-      Label("Formatting", systemImage: "text.alignleft")
-    }
-    if self.llmEnabled && self.llmDownloadService.hasUsableModel {
-      NavigationLink {
-        LLMPromptsView()
-      } label: {
-        LabeledContent("Prompts") {
-          Text(self.promptsSummary)
-            .foregroundStyle(.secondary)
-        }
-      }
-      Picker("Auto Action", selection: self.$defaultActionSelection) {
-        self.actionPickerContent()
-      }
-      .onChange(of: self.defaultActionSelection) { _, newValue in
-        SharedSettings().defaultLLMActionSelection = newValue
-      }
-      Picker("Long Press Action", selection: self.$longPressAction) {
-        self.actionPickerContent()
-      }
-      .onChange(of: self.longPressAction) { _, newValue in
-        SharedSettings().longPressLLMAction = newValue
-      }
+      Label("Writing Style", systemImage: "text.alignleft")
     }
   }
 
@@ -117,7 +106,7 @@ private struct LLMPromptsView: View {
       self.standardPromptsSection
       self.customPromptsSection
     }
-    .navigationTitle("Prompts")
+    .navigationTitle("Writing Modes")
     .navigationBarTitleDisplayMode(.inline)
     .sheet(item: self.$activeSheet) { sheet in
       self.sheetContent(for: sheet)

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at_berlin": "2026-11-05",
+  "updated_at_berlin": "2026-11-07",
   "baseline": {
     "branch": "main",
     "commit": "7b7aa5c5041805783358fbfeb8a38b09a2922ec4",
@@ -69,7 +69,10 @@
     "Shared/VoiceOutputOptions.swift": "tracked",
     "project.yml": "tracked",
     "Shared/FeatureDiagnostics.swift": "tracked",
-    "Shared/KeyboardLifecycleTrace.swift": "tracked"
+    "Shared/KeyboardLifecycleTrace.swift": "tracked",
+    "Sayboard/Views/WordCorrectionsView.swift": "tracked",
+    "Sayboard/Views/SnippetsView.swift": "tracked",
+    "Shared/VoicePunctuationPolicy.swift": "tracked"
   },
   "navigation": [
     {
@@ -215,7 +218,8 @@
               ],
               "setting": "SharedKey.preferredSpokenLanguages",
               "source_anchor": "\"Language Priority\"",
-              "id": "settings.speech-ai.language-priority"
+              "id": "settings.speech-ai.language-priority",
+              "initially_expanded": true
             },
             {
               "label": "Active Session",
@@ -287,6 +291,13 @@
                       "id": "settings.speech-ai.output.output-language"
                     },
                     {
+                      "id": "settings.speech-ai.output.include-punctuation",
+                      "label": "Include Punctuation",
+                      "owner": "Sayboard/Views/VoiceOutputSettingsView.swift",
+                      "source_anchor": "Label(\"Include Punctuation\", systemImage:",
+                      "children": []
+                    },
+                    {
                       "label": "Tone",
                       "owner": "Sayboard/Views/VoiceOutputSettingsView.swift",
                       "id": "settings.speech-ai.output.tone"
@@ -303,62 +314,49 @@
                   "initially_expanded": false
                 },
                 {
-                  "label": "Enable Meeting Recording",
+                  "id": "settings.speech-ai.dictation.word-corrections",
+                  "label": "Word Corrections",
                   "owner": "Sayboard/Views/SettingsNavigationViews.swift",
-                  "id": "settings.speech-ai.dictation.meetings.enable-meeting-recording"
-                },
-                {
-                  "label": "Cantonese Recognition Corrections",
-                  "owner": "Sayboard/Views/SettingsNavigationViews.swift",
+                  "source_anchor": "Label(\"Word Corrections\", systemImage:",
                   "children": [
                     {
-                      "label": "Edit speech-recognition correction rules",
-                      "owner": "Sayboard/Views/CantoneseCorrectionsView.swift",
-                      "id": "settings.speech-ai.dictation.meetings.cantonese-recognition-corrections.edit-speech-recognition-correction-rules"
+                      "id": "settings.speech-ai.dictation.word-corrections.speech",
+                      "label": "Speech Corrections",
+                      "owner": "Sayboard/Views/WordCorrectionsView.swift",
+                      "source_anchor": "Label(\"Speech Corrections\", systemImage:",
+                      "children": [
+                        {
+                          "id": "settings.speech-ai.dictation.word-corrections.speech.edit",
+                          "label": "Edit Cantonese speech corrections",
+                          "owner": "Sayboard/Views/CantoneseCorrectionsView.swift"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "settings.speech-ai.dictation.word-corrections.phrase",
+                      "label": "Phrase Replacements",
+                      "owner": "Sayboard/Views/WordCorrectionsView.swift",
+                      "source_anchor": "Label(\"Phrase Replacements\", systemImage:",
+                      "children": [
+                        {
+                          "id": "settings.speech-ai.dictation.word-corrections.phrase.edit",
+                          "label": "Edit phrase replacements",
+                          "owner": "Sayboard/Views/SnippetsView.swift"
+                        }
+                      ]
                     }
-                  ],
-                  "id": "settings.speech-ai.dictation.meetings.cantonese-recognition-corrections"
+                  ]
                 }
               ],
               "id": "settings.speech-ai.dictation",
               "initially_expanded": false
             },
             {
-              "label": "AI Actions",
+              "label": "Rewrite & Translate",
               "owner": "Sayboard/Views/SettingsView.swift",
               "children": [
                 {
-                  "label": "Enabled",
-                  "owner": "Sayboard/Views/LLMSettingsView.swift",
-                  "condition": "disabled without usable downloaded text model",
-                  "id": "settings.speech-ai.ai-actions.ai-actions-toggle"
-                },
-                {
-                  "label": "Formatting",
-                  "owner": "Sayboard/Views/LLMSettingsView.swift",
-                  "children": [
-                    {
-                      "label": "Writing Style",
-                      "owner": "Sayboard/Views/TextOutputSection.swift",
-                      "id": "settings.speech-ai.ai-actions.formatting.writing-style"
-                    },
-                    {
-                      "label": "Snippets",
-                      "owner": "Sayboard/Views/TextOutputSection.swift",
-                      "id": "settings.speech-ai.ai-actions.formatting.snippets"
-                    },
-                    {
-                      "label": "Auto-Copy to Clipboard",
-                      "owner": "Sayboard/Views/TextOutputSection.swift",
-                      "id": "settings.speech-ai.ai-actions.formatting.auto-copy-to-clipboard"
-                    }
-                  ],
-                  "id": "settings.speech-ai.ai-actions.formatting",
-                  "source_anchor": "Label(\"Formatting\", systemImage: \"text.alignleft\")",
-                  "initially_expanded": false
-                },
-                {
-                  "label": "Prompts",
+                  "label": "Writing Modes",
                   "owner": "Sayboard/Views/LLMSettingsView.swift",
                   "children": [
                     {
@@ -372,24 +370,39 @@
                       "id": "settings.speech-ai.ai-actions.prompts.custom-prompts-add-custom-prompt"
                     }
                   ],
-                  "condition": "AI enabled and usable model installed",
                   "id": "settings.speech-ai.ai-actions.prompts"
                 },
                 {
                   "label": "Auto Action",
                   "owner": "Sayboard/Views/LLMSettingsView.swift",
-                  "condition": "AI enabled and usable model installed; applies to dictation",
+                  "condition": "configurable now; requires a downloaded text model to run",
                   "id": "settings.speech-ai.ai-actions.auto-action"
                 },
                 {
                   "label": "Long Press Action",
                   "owner": "Sayboard/Views/LLMSettingsView.swift",
-                  "condition": "AI enabled and usable model installed",
+                  "condition": "configurable now; requires a downloaded text model to run",
                   "id": "settings.speech-ai.ai-actions.long-press-action"
+                },
+                {
+                  "label": "Writing Style",
+                  "owner": "Sayboard/Views/LLMSettingsView.swift",
+                  "children": [
+                    {
+                      "label": "Per-App Style",
+                      "owner": "Sayboard/Views/TextOutputSection.swift",
+                      "id": "settings.speech-ai.ai-actions.formatting.writing-style",
+                      "source_anchor": "Label(\"Per-App Style\", systemImage:"
+                    }
+                  ],
+                  "id": "settings.speech-ai.ai-actions.formatting",
+                  "source_anchor": "Label(\"Writing Style\", systemImage:",
+                  "initially_expanded": false
                 }
               ],
               "id": "settings.speech-ai.ai-actions",
-              "initially_expanded": false
+              "initially_expanded": false,
+              "source_anchor": "Label(\"Rewrite & Translate\", systemImage:"
             }
           ],
           "id": "settings.speech-ai"
@@ -417,30 +430,30 @@
               "id": "settings.keyboard.key-order"
             },
             {
-              "label": "Customization",
+              "label": "Auto-capitalization",
+              "owner": "Sayboard/Views/KeyboardSettingsView.swift",
+              "setting": "SharedKey.keyboardAutoCapitalizationEnabled",
+              "source_anchor": "Toggle(\"Auto-capitalization\"",
+              "id": "settings.keyboard.customization.auto-capitalization"
+            },
+            {
+              "label": "Double-Space Period",
+              "owner": "Sayboard/Views/KeyboardSettingsView.swift",
+              "setting": "SharedKey.periodShortcutEnabled",
+              "source_anchor": "Toggle(\"Double-Space Period\"",
+              "id": "settings.keyboard.customization.double-space-period"
+            },
+            {
+              "label": "Haptic Feedback",
+              "owner": "Sayboard/Views/KeyboardSettingsView.swift",
+              "setting": "SharedKey.keyboardHapticsEnabled",
+              "source_anchor": "Toggle(\"Haptic Feedback\"",
+              "id": "settings.keyboard.customization.haptic-feedback"
+            },
+            {
+              "label": "Keyboard Customization",
               "owner": "Sayboard/Views/KeyboardSettingsView.swift",
               "children": [
-                {
-                  "label": "Auto-capitalization",
-                  "owner": "Sayboard/Views/KeyboardCustomizationView.swift",
-                  "setting": "SharedKey.keyboardAutoCapitalizationEnabled",
-                  "source_anchor": "\"Auto-capitalization\"",
-                  "id": "settings.keyboard.customization.auto-capitalization"
-                },
-                {
-                  "label": "Double-Space Period",
-                  "owner": "Sayboard/Views/KeyboardCustomizationView.swift",
-                  "setting": "SharedKey.periodShortcutEnabled",
-                  "source_anchor": "\"Double-Space Period\"",
-                  "id": "settings.keyboard.customization.double-space-period"
-                },
-                {
-                  "label": "Haptic Feedback",
-                  "owner": "Sayboard/Views/KeyboardCustomizationView.swift",
-                  "setting": "SharedKey.keyboardHapticsEnabled",
-                  "source_anchor": "\"Haptic Feedback\"",
-                  "id": "settings.keyboard.customization.haptic-feedback"
-                },
                 {
                   "label": "Extra Globe Key",
                   "owner": "Sayboard/Views/KeyboardCustomizationView.swift",
@@ -474,10 +487,11 @@
               ],
               "initially_expanded": false,
               "id": "settings.keyboard.customization",
-              "icon": "slider.horizontal.3"
+              "icon": "slider.horizontal.3",
+              "source_anchor": "Label(\"Keyboard Customization\", systemImage:"
             },
             {
-              "label": "Interactive keyboard preview",
+              "label": "Interactive keyboard preview (tap keys for haptics; extra Globe when enabled)",
               "owner": "Sayboard/Views/KeyboardSettingsView.swift",
               "condition": "visible inline; selected layout",
               "id": "settings.keyboard.preview",
@@ -877,17 +891,19 @@
   ],
   "consistency_notes": [
     "Active Session has one Settings-home owner; Dictation does not repeat the toggle.",
-    "Customization is one collapsed group between conditional Key Order/Microphone Layout and the visible Preview. Haptics is a toggle.",
+    "Keyboard behavior toggles precede the collapsed Keyboard Customization group; that group contains key visibility controls.",
     "History & Storage is initially collapsed under App; current three categories combine corrections/suggestions and exclude downloaded models. See AB-DOC-003.",
     "Language order influences supported paths; it does not implement every language or decoder. Qwen speech uses auto-detection.",
     "Existing download, recommended model and actively selected model are separate. No file replacement or refusal behavior is implied.",
     "Diagnostics has additional technical controls outside Customization. No cleanup or deletion is authorized by documenting them.",
     "This map records current source rather than proposed menu changes. Update owners and conditions after bounded source review; regenerate Markdown.",
-    "Temporary user-requested experiment suppresses Altboard Globe including required in-extension visibility; it cannot suppress iOS-owned controls outside the extension.",
+    "The native input-mode switch remains available; an optional extra Globe appears in the live keyboard and preview when enabled.",
     "Swipe drawing UIView mounts only after the active trail has more than one point; this is not a confirmed ink-pad fix.",
-    "Dictation owns Output (Transcript Cleanup, Output Language, Tone, custom Language Code). AI Actions owns Formatting (Writing Style, Snippets, Auto-Copy). These are separate inline groups.",
+    "Dictation owns Output (cleanup, compact language selection, punctuation, tone) and Word Corrections (speech rules and phrase replacements). Rewrite & Translate owns writing modes, actions and per-app writing style.",
     "History, Meetings and Settings change using the native tabs only; the custom horizontal page gesture was removed because it conflicted with scrolling and navigation.",
     "Build #124 is the last confirmed installed diagnostic baseline; subsequent source repairs require a new build and physical iPhone acceptance.",
-    "Source owners and anchor checks are structural contracts; existing reference SHAs are historical, never a reason to rewrite current working code."
+    "Source owners and anchor checks are structural contracts; existing reference SHAs are historical, never a reason to rewrite current working code.",
+    "Meetings require a supported speech model but no separate enable switch. Rewrite & Translate is controlled by the Keyboard AI Key and available downloaded model, not by a separate Enabled toggle.",
+    "Automatic clipboard copy is no longer offered; explicit clipboard recovery after changed host inputs remains permitted."
   ]
 }

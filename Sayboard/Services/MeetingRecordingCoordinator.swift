@@ -61,11 +61,10 @@ final class MeetingRecordingCoordinator: ObservableObject {
 
   func start(with service: SpeechRecognitionService, title: String = "", notes: String = "") {
     guard !self.isRecording, !self.isFinalizing, !service.isRecording,
-          SharedSettings().experimentalMeetingRecordEnabled,
           SharedSettings().selectedVariant == .qwen3ASR17B,
           let root = Self.meetingsDirectory() else {
       FeatureDiagnostics.record(.meeting, .blocked)
-      self.status = "Enable Meeting Record and select Qwen3-ASR 1.7B; stop other dictation first."
+      self.status = "Select Qwen3-ASR 1.7B and stop other dictation first."
       return
     }
     do { try service.session.startSession() }

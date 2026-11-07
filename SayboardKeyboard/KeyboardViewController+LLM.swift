@@ -220,7 +220,6 @@ extension KeyboardViewController {
     guard let fallbackText = self.pendingAutoActionText else { return }
     if self.currentLLMFieldMatches() {
       self.keyboardState.llmHistorySuffix = self.insertSpacedText(fallbackText).trailing
-      self.copyFinalTextToClipboardIfEnabled(fallbackText)
     } else {
       UIPasteboard.general.string = fallbackText
       self.keyboardState.showFinalOutputPreview("Input changed. Dictation copied.")
@@ -306,7 +305,6 @@ extension KeyboardViewController {
       textDocumentProxy.insertText(result + kept)
       self.keyboardState.llmHistorySuffix = kept
     }
-    self.copyFinalTextToClipboardIfEnabled(result)
     if self.pendingAutoActionText != nil {
       self.keyboardState.showFinalOutputPreview(result)
     }
@@ -355,7 +353,6 @@ extension KeyboardViewController {
     }
 
     textDocumentProxy.insertText(targetText + suffix)
-    self.copyFinalTextToClipboardIfEnabled(targetText)
     self.keyboardState.llmHistoryIndex = targetIndex
 
     self.isPerformingHistoryNavigation = false

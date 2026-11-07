@@ -3,7 +3,6 @@ import SwiftUI
 
 struct TextOutputSection: View {
   var inline = false
-  var showFooter = true
 
   var body: some View {
     Group {
@@ -13,14 +12,11 @@ struct TextOutputSection: View {
         Section {
           self.controls
         } header: {
-          Text("Formatting")
-        } footer: {
-          if self.showFooter { Text(Self.clipboardFooterMessage) }
+          Text("Writing Style")
         }
       }
     }
     .onAppear {
-      self.snippetCount = self.settings.snippets.count
       self.writingStyle = self.settings.defaultWritingStyle
     }
   }
@@ -28,28 +24,9 @@ struct TextOutputSection: View {
   @ViewBuilder
   private var controls: some View {
     self.writingStyleRow
-    NavigationLink {
-      SnippetsView()
-    } label: {
-      HStack {
-        Label("Snippets", systemImage: "text.quote")
-        Spacer()
-        Text(verbatim: "\(self.snippetCount)")
-          .foregroundStyle(.secondary)
-      }
-    }
-    Toggle(isOn: self.$alsoCopyToClipboard) {
-      Label("Auto-Copy to Clipboard", systemImage: "doc.on.clipboard")
-    }
   }
 
-  private static let clipboardFooterMessage: LocalizedStringKey =
-    "After dictation, the inserted text is also copied to Clipboard."
-
-  @AppStorage(SharedKey.alsoCopyToClipboard, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var alsoCopyToClipboard = false
   @State private var settings = SharedSettings()
-  @State private var snippetCount = 0
   @State private var showStylePicker = false
   @State private var writingStyle = WritingStyle.formal
 
@@ -60,7 +37,7 @@ struct TextOutputSection: View {
         self.showStylePicker = true
       } label: {
         HStack {
-          Label("Writing Style", systemImage: "textformat.size")
+          Label("Per-App Style", systemImage: "textformat.size")
           Spacer()
           Text(LocalizedStringKey(self.writingStyle.displayNameKey))
             .foregroundStyle(.secondary)
@@ -77,7 +54,7 @@ struct TextOutputSection: View {
       NavigationLink {
         WritingStyleListView()
       } label: {
-        Label("Writing Style", systemImage: "textformat.size")
+        Label("Per-App Style", systemImage: "textformat.size")
       }
     }
   }

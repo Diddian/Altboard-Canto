@@ -85,6 +85,23 @@ struct VoiceOutputPipelineTests {
   }
 
   @Test
+  func outputLanguageAbbreviationsMatchKeyboard() {
+    #expect(VoiceOutputTarget.original.abbreviatedLabel(customLanguage: "") == "AUTO")
+    #expect(VoiceOutputTarget.english.abbreviatedLabel(customLanguage: "") == "EN")
+    #expect(VoiceOutputTarget.german.abbreviatedLabel(customLanguage: "") == "DE")
+    #expect(VoiceOutputTarget.cantonese.abbreviatedLabel(customLanguage: "") == "粵")
+    #expect(VoiceOutputTarget.custom.abbreviatedLabel(customLanguage: "fr") == "法")
+    #expect(VoiceOutputTarget.custom.abbreviatedLabel(customLanguage: "zh-Hans") == "簡")
+  }
+
+  @Test
+  func finalPunctuationDoesNotChangeIntermediateSpeech() {
+    let raw = "喂，你好！I am here."
+    #expect(VoicePunctuationPolicy.render(raw, enabled: true) == raw)
+    #expect(VoicePunctuationPolicy.render(raw, enabled: false) == "喂 你好 I am here")
+  }
+
+  @Test
   func customLanguageInputsAreConstrained() {
     #expect(VoiceOutputTarget.customLanguageName("fr") != nil)
     #expect(VoiceOutputTarget.customLanguageName("de") != nil)

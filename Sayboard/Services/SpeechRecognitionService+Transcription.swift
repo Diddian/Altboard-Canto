@@ -190,10 +190,13 @@ extension SpeechRecognitionService {
 
         self.settings.lastVoiceOutputProcessed = options.needsLLM
         TranscriptionBridge.writeVoiceProgress(.finalizing)
-        self.currentTranscription = bridgeText
-        self.settings.chargeFreeWords(WordCounter.count(bridgeText))
-        TranscriptionBridge.writeTranscription(bridgeText)
-        deliveredText = bridgeText
+        let finalOutput = VoicePunctuationPolicy.render(
+          bridgeText, enabled: options.punctuationEnabled
+        )
+        self.currentTranscription = finalOutput
+        self.settings.chargeFreeWords(WordCounter.count(finalOutput))
+        TranscriptionBridge.writeTranscription(finalOutput)
+        deliveredText = finalOutput
         break
       }
       guard let bridgeText = deliveredText else {

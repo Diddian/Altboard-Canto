@@ -118,6 +118,7 @@ enum SharedKey {
   static let isTranslationMode = "isTranslationMode"
   static let voiceCleanupEnabled = "voiceCleanupEnabled"
   static let voiceOutputTarget = "voiceOutputTarget"
+  static let voicePunctuationEnabled = "voicePunctuationEnabled"
   static let voiceOutputRegister = "voiceOutputRegister"
   static let voiceCustomLanguage = "voiceCustomLanguage"
   static let appWritingStyles = "appWritingStyles"

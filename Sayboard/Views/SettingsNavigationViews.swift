@@ -29,20 +29,18 @@ struct DictationSettingsView: View {
     case .session:
       self.sessionRows
     case .meeting:
-      self.meetingRows
+      EmptyView()
     case .all:
       if self.inline {
         self.sessionRows
         self.liveRows
         self.outputRows
-        self.meetingRows
         self.correctionsLink
       } else {
         Section("Recording") { self.sessionRows }
         Section("Live Speech to Text") { self.liveRows }
         Section("Output") { VoiceOutputSettingsView(inline: true) }
-        Section("Meetings") {
-          self.meetingRows
+        Section("Word Corrections") {
           self.correctionsLink
         }
       }
@@ -61,9 +59,9 @@ struct DictationSettingsView: View {
 
   private var correctionsLink: some View {
     NavigationLink {
-      CantoneseCorrectionsView()
+      WordCorrectionsView()
     } label: {
-      Label("Cantonese Recognition Corrections", systemImage: "text.badge.checkmark")
+      Label("Word Corrections", systemImage: "text.badge.checkmark")
     }
   }
 
@@ -82,13 +80,6 @@ struct DictationSettingsView: View {
   private var liveRows: some View {
     Toggle(isOn: self.liveBinding) {
       Label("Live Dictation", systemImage: "waveform")
-    }
-  }
-
-  @ViewBuilder
-  private var meetingRows: some View {
-    Toggle(isOn: self.$experimentalMeetingEnabled) {
-      Label("Enable Meeting Recording", systemImage: "record.circle")
     }
   }
 
@@ -112,10 +103,6 @@ struct DictationSettingsView: View {
   @EnvironmentObject private var speechService: SpeechRecognitionService
   @State private var selectedAutoStopPolicy = SharedSettings().sessionAutoStopPolicy
   @State private var experimentalLiveEnabled = SharedSettings().experimentalLiveDictationEnabled
-  @AppStorage(SharedKey.experimentalMeetingRecordEnabled,
-              store: UserDefaults(suiteName: AppGroup.identifier))
-  private var experimentalMeetingEnabled = false
-
 }
 
 // The Settings home owns the recording-session toggle.

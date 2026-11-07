@@ -8,6 +8,12 @@ struct KeyboardSettingsView: View {
   private var microphoneLayoutRaw = MicrophoneKeyboardLayout.defaultLayout.rawValue
   @AppStorage(SharedKey.keyboardLetterArrangement, store: UserDefaults(suiteName: AppGroup.identifier))
   private var letterArrangementRaw = LetterKeyArrangement.qwertz.rawValue
+  @AppStorage(SharedKey.keyboardAutoCapitalizationEnabled, store: AppGroup.sharedDefaults ?? .standard)
+  private var autoCapitalize = true
+  @AppStorage(SharedKey.periodShortcutEnabled, store: AppGroup.sharedDefaults ?? .standard)
+  private var periodShortcut = true
+  @AppStorage(SharedKey.keyboardHapticsEnabled, store: AppGroup.sharedDefaults ?? .standard)
+  private var hapticsEnabled = true
 
   var body: some View {
     Group {
@@ -54,10 +60,13 @@ struct KeyboardSettingsView: View {
         }
         .pickerStyle(.menu)
       }
+      Toggle("Auto-capitalization", isOn: self.$autoCapitalize)
+      Toggle("Double-Space Period", isOn: self.$periodShortcut)
+      Toggle("Haptic Feedback", isOn: self.$hapticsEnabled)
       DisclosureGroup {
         KeyboardCustomizationView(inline: true)
       } label: {
-        Label("Customization", systemImage: "slider.horizontal.3")
+        Label("Keyboard Customization", systemImage: "slider.horizontal.3")
       }
       KeyboardTestPreview(
         kind: self.selectedKind,
@@ -67,6 +76,9 @@ struct KeyboardSettingsView: View {
           ?? .qwertz
       )
       .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
+      Text("Tap the keys to test haptic feedback.")
+        .font(.footnote)
+        .foregroundStyle(.secondary)
     } header: {
       Text("Keyboard")
     }
@@ -88,8 +100,6 @@ private struct KeyboardTestPreview: View {
   private var keyboardHapticsEnabled = true
   @AppStorage(SharedKey.keyboardHapticStrength, store: UserDefaults(suiteName: AppGroup.identifier))
   private var hapticStrength = SharedSettings.defaultKeyboardHapticStrength
-  @AppStorage(SharedKey.llmEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var llmEnabled = false
   @AppStorage(SharedKey.hasUsableLLMModel, store: UserDefaults(suiteName: AppGroup.identifier))
   private var hasUsableLLMModel = false
   @AppStorage(SharedKey.keyboardShowSettingsKey, store: UserDefaults(suiteName: AppGroup.identifier))
@@ -132,6 +142,7 @@ private struct KeyboardTestPreview: View {
         self.alphabetBottomRow.padding(.top, KeyboardLayoutGeometry.alphabetRowSpacing)
       } else if self.kind == .extended {
         HStack(spacing: 6) {
+          if self.showGlobeKey { self.key("globe", width: 42) }
           if self.showSettingsKey { self.key("gearshape", width: 45) }
           if self.outputKeyEnabled { self.key("character.bubble", width: 45) }
           Spacer()
@@ -159,10 +170,11 @@ private struct KeyboardTestPreview: View {
             - (2 * side + 6) - 3 * 6 - 8)
           ZStack {
             HStack(spacing: 6) {
+              if self.showGlobeKey { self.key("globe", width: side) }
               if self.showSettingsKey { self.key("gearshape", width: side) }
               if self.outputKeyEnabled { self.key("character.bubble", width: side) }
               Spacer(minLength: 0)
-              if self.showAIButton && self.llmEnabled && self.hasUsableLLMModel {
+              if self.showAIButton && self.hasUsableLLMModel {
                 self.key("sparkles", width: side)
               }
               self.key("delete.left", width: side)
@@ -191,7 +203,7 @@ private struct KeyboardTestPreview: View {
       if self.showGlobeKey { self.key("globe", width: 42) }
       if self.showSettingsKey { self.key("gearshape", width: 48) }
       if self.outputKeyEnabled { self.translatePreview }
-      if self.showAIButton && self.llmEnabled && self.hasUsableLLMModel {
+      if self.showAIButton && self.hasUsableLLMModel {
         self.key("sparkles", width: 48)
       }
       Spacer(minLength: 2)

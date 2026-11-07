@@ -43,9 +43,7 @@ struct TranslateToggleButton: View {
   }
 
   private var currentLabel: String {
-    let code = PreferredVoiceLanguages.currentCode(target: self.target, custom: self.customLanguage)
-    return PreferredVoiceLanguages.choices(from: SharedSettings().preferredSpokenLanguages)
-      .first(where: { $0.languageCode == code })?.label ?? self.target.keyboardLabel
+    self.target.abbreviatedLabel(customLanguage: self.customLanguage)
   }
 
   var body: some View {

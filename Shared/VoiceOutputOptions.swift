@@ -39,6 +39,18 @@ enum VoiceOutputTarget: String, CaseIterable, Identifiable, Codable, Sendable {
     return choices[(index + 1) % choices.count]
   }
 
+  func abbreviatedLabel(customLanguage: String) -> String {
+    guard self == .custom else { return self.keyboardLabel }
+    let code = customLanguage.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    switch code {
+    case "fr", "fr-fr": return "法"
+    case "zh-hans", "zh-cn", "zh-sg": return "簡"
+    case "yue", "yue-hk": return "粵"
+    case "zh-hant", "zh-hk": return "繁"
+    default: return code.isEmpty ? "→" : String(code.prefix(3)).uppercased()
+    }
+  }
+
   func targetInstruction(customLanguage: String) -> String? {
     switch self {
     case .original:
@@ -52,6 +64,10 @@ enum VoiceOutputTarget: String, CaseIterable, Identifiable, Codable, Sendable {
     case .traditionalChinese:
       return "Translate into fluent written Traditional Chinese, without Simplified Chinese characters."
     case .custom:
+      let normalized = customLanguage.lowercased()
+      if ["zh-hans", "zh-cn", "zh-sg"].contains(normalized) {
+        return "Translate into natural written Simplified Chinese using Simplified characters."
+      }
       guard let name = Self.customLanguageName(customLanguage) else { return nil }
       return "Translate into natural " + name + "."
     }
@@ -99,6 +115,7 @@ struct VoiceOutputConfiguration: Equatable, Sendable {
   let target: VoiceOutputTarget
   let register: VoiceOutputRegister
   let customLanguage: String
+  var punctuationEnabled: Bool = true
 
   var needsLLM: Bool {
     self.cleanupEnabled || self.target != .original || self.register != .faithful

@@ -31,7 +31,7 @@ of dynamic lists describe repeated rows, not extra navigation destinations.
     - Low storage warning
   - Purchase section (APPSTORE configuration only)
   - Speech & AI
-    - Language Priority
+    - Language Priority (initially expanded)
       - Preferred Languages: numbered, draggable ordering
       - Any language (empty preference)
       - Unsupported speech-model language warning
@@ -48,35 +48,35 @@ of dynamic lists describe repeated rows, not extra navigation destinations.
       - Output (initially collapsed)
         - Transcript Cleanup
         - Output Language
+        - Include Punctuation
         - Tone
         - Language Code (custom output language; invalid code warning when needed)
-      - Enable Meeting Recording
-      - Cantonese Recognition Corrections
-        - Edit speech-recognition correction rules
-    - AI Actions (initially collapsed)
-      - Enabled (disabled without usable downloaded text model)
-      - Formatting (initially collapsed)
-        - Writing Style
-        - Snippets
-        - Auto-Copy to Clipboard
-      - Prompts (AI enabled and usable model installed)
+      - Word Corrections
+        - Speech Corrections
+          - Edit Cantonese speech corrections
+        - Phrase Replacements
+          - Edit phrase replacements
+    - Rewrite & Translate (initially collapsed)
+      - Writing Modes
         - Standard Prompts
         - Custom Prompts / Add Custom Prompt
-      - Auto Action (AI enabled and usable model installed; applies to dictation)
-      - Long Press Action (AI enabled and usable model installed)
+      - Auto Action (configurable now; requires a downloaded text model to run)
+      - Long Press Action (configurable now; requires a downloaded text model to run)
+      - Writing Style (initially collapsed)
+        - Per-App Style
   - Keyboard
     - Keyboard Type (Microphone Only / Symbols / Alphabet)
     - Microphone Layout (Microphone Only; Default / Compact)
     - Key Order (Alphabet; QWERTY (English) / QWERTZ / German (Ä Ö Ü ß))
-    - Customization (initially collapsed)
-      - Auto-capitalization
-      - Double-Space Period
-      - Haptic Feedback
+    - Auto-capitalization
+    - Double-Space Period
+    - Haptic Feedback
+    - Keyboard Customization (initially collapsed)
       - Extra Globe Key (temporarily disabled; saved preference retained)
       - Settings Key
       - Output Key
       - AI Key (disabled when AI Actions is off; runtime toolbar additionally needs a usable text model)
-    - Interactive keyboard preview (visible inline; selected layout)
+    - Interactive keyboard preview (tap keys for haptics; extra Globe when enabled) (visible inline; selected layout)
   - App
     - History & Storage (initially collapsed)
       - Voice Notes
@@ -129,17 +129,19 @@ of dynamic lists describe repeated rows, not extra navigation destinations.
 ## Ownership and known differences
 
 - Active Session has one Settings-home owner; Dictation does not repeat the toggle.
-- Customization is one collapsed group between conditional Key Order/Microphone Layout and the visible Preview. Haptics is a toggle.
+- Keyboard behavior toggles precede the collapsed Keyboard Customization group; that group contains key visibility controls.
 - History & Storage is initially collapsed under App; current three categories combine corrections/suggestions and exclude downloaded models. See AB-DOC-003.
 - Language order influences supported paths; it does not implement every language or decoder. Qwen speech uses auto-detection.
 - Existing download, recommended model and actively selected model are separate. No file replacement or refusal behavior is implied.
 - Diagnostics has additional technical controls outside Customization. No cleanup or deletion is authorized by documenting them.
 - This map records current source rather than proposed menu changes. Update owners and conditions after bounded source review; regenerate Markdown.
-- Temporary user-requested experiment suppresses Altboard Globe including required in-extension visibility; it cannot suppress iOS-owned controls outside the extension.
+- The native input-mode switch remains available; an optional extra Globe appears in the live keyboard and preview when enabled.
 - Swipe drawing UIView mounts only after the active trail has more than one point; this is not a confirmed ink-pad fix.
-- Dictation owns Output (Transcript Cleanup, Output Language, Tone, custom Language Code). AI Actions owns Formatting (Writing Style, Snippets, Auto-Copy). These are separate inline groups.
+- Dictation owns Output (cleanup, compact language selection, punctuation, tone) and Word Corrections (speech rules and phrase replacements). Rewrite & Translate owns writing modes, actions and per-app writing style.
 - History, Meetings and Settings change using the native tabs only; the custom horizontal page gesture was removed because it conflicted with scrolling and navigation.
 - Build #124 is the last confirmed installed diagnostic baseline; subsequent source repairs require a new build and physical iPhone acceptance.
 - Source owners and anchor checks are structural contracts; existing reference SHAs are historical, never a reason to rewrite current working code.
+- Meetings require a supported speech model but no separate enable switch. Rewrite & Translate is controlled by the Keyboard AI Key and available downloaded model, not by a separate Enabled toggle.
+- Automatic clipboard copy is no longer offered; explicit clipboard recovery after changed host inputs remains permitted.
 
 Consult `KNOWN-ISSUES.json` for evidence and pending acceptance checks.

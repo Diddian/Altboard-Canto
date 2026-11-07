@@ -6,6 +6,8 @@ struct VoiceOutputSettingsView: View {
 
   @AppStorage(SharedKey.voiceCleanupEnabled, store: AppGroup.sharedDefaults ?? .standard)
   private var cleanupEnabled = false
+  @AppStorage(SharedKey.voicePunctuationEnabled, store: AppGroup.sharedDefaults ?? .standard)
+  private var punctuationEnabled = true
   @AppStorage(SharedKey.voiceOutputTarget, store: AppGroup.sharedDefaults ?? .standard)
   private var target = VoiceOutputTarget.original.rawValue
   @AppStorage(SharedKey.voiceOutputRegister, store: AppGroup.sharedDefaults ?? .standard)
@@ -27,19 +29,54 @@ struct VoiceOutputSettingsView: View {
     }
   }
 
+  private var currentOutputAbbreviation: String {
+    (VoiceOutputTarget(rawValue: self.target) ?? .original)
+      .abbreviatedLabel(customLanguage: self.customLanguage)
+  }
+
   @ViewBuilder
   private var controls: some View {
     Toggle(isOn: self.$cleanupEnabled) {
       Label("Transcript Cleanup", systemImage: "wand.and.stars")
     }
-    Picker(selection: self.$target) {
-      ForEach(VoiceOutputTarget.allCases) { option in
-        Text(option.title).tag(option.rawValue)
-      }
-    } label: {
+    HStack {
       Label("Output Language", systemImage: "character.bubble")
+      Spacer(minLength: 6)
+      Menu {
+        ForEach(VoiceOutputTarget.allCases.filter { $0 != .custom }) { option in
+          Button {
+            self.target = option.rawValue
+          } label: {
+            Text(option.title)
+            if self.target == option.rawValue { Image(systemName: "checkmark") }
+          }
+        }
+        Divider()
+        Button("French") {
+          self.customLanguage = "fr"
+          self.target = VoiceOutputTarget.custom.rawValue
+        }
+        Button("Chinese (Simplified)") {
+          self.customLanguage = "zh-Hans"
+          self.target = VoiceOutputTarget.custom.rawValue
+        }
+        Button("Other language") {
+          self.customLanguage = ""
+          self.target = VoiceOutputTarget.custom.rawValue
+        }
+      } label: {
+        HStack(spacing: 5) {
+          Text(verbatim: self.currentOutputAbbreviation)
+          Image(systemName: "chevron.up.chevron.down").font(.caption2)
+        }
+        .foregroundStyle(.secondary)
+      }
     }
-    if self.target == VoiceOutputTarget.custom.rawValue {
+    Toggle(isOn: self.$punctuationEnabled) {
+      Label("Include Punctuation", systemImage: "textformat")
+    }
+    if self.target == VoiceOutputTarget.custom.rawValue
+      && !["fr", "zh-Hans"].contains(self.customLanguage) {
       HStack {
         Label("Language Code", systemImage: "character.cursor.ibeam")
         TextField("fr, es, ja, ko", text: self.$customLanguage)
