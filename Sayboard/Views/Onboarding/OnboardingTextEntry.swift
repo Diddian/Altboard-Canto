@@ -11,8 +11,12 @@ enum OnboardingTextEntry {
 }
 
 extension View {
-  func onboardingTextEntry(isActive: Bool, isPractice: Bool = false) -> some View {
-    self.modifier(OnboardingTextEntryMarker(isActive: isActive, isPractice: isPractice))
+  func onboardingTextEntry(
+    isActive: Bool, isPractice: Bool = false, isKeyboardTest: Bool = false
+  ) -> some View {
+    self.modifier(OnboardingTextEntryMarker(
+      isActive: isActive, isPractice: isPractice, isKeyboardTest: isKeyboardTest
+    ))
   }
 }
 
@@ -20,6 +24,7 @@ private struct OnboardingTextEntryMarker: ViewModifier {
 
   let isActive: Bool
   let isPractice: Bool
+  let isKeyboardTest: Bool
 
   func body(content: Content) -> some View {
     content
@@ -37,8 +42,12 @@ private struct OnboardingTextEntryMarker: ViewModifier {
 
   private func mark(_ visible: Bool) {
     OnboardingTextEntry.isVisible = visible
+    let pid = visible ? Int(ProcessInfo.processInfo.processIdentifier) : nil
     if self.isPractice {
-      SharedSettings().onboardingPracticeProcessID = visible ? Int(ProcessInfo.processInfo.processIdentifier) : nil
+      SharedSettings().onboardingPracticeProcessID = pid
+    }
+    if self.isKeyboardTest {
+      SharedSettings().onboardingKeyboardTestProcessID = pid
     }
   }
 }

@@ -273,7 +273,7 @@ private struct KeyboardTestPreview: View {
     HStack(spacing: 6) {
       self.labelKey("?123", width: 48)
       if self.showsGlobeButton {
-        self.emojiPreview(width: 48)
+        self.key("globe", width: 48)
       }
       self.labelKey("", height: 45)
       self.key("return.left", width: 102)
@@ -289,19 +289,6 @@ private struct KeyboardTestPreview: View {
       self.labelKey("", height: 45)
       self.key("return.left", width: 96)
     }.padding(.horizontal, 4)
-  }
-
-  private func emojiPreview(width: CGFloat) -> some View {
-    Button { self.tap() } label: {
-      NativeEmojiGlyph()
-        .fill(.primary, style: FillStyle(eoFill: true))
-        .frame(width: 19, height: 19)
-        .frame(width: width, height: 45)
-        .background(Color(uiColor: KeyboardPalette.keyFill),
-                    in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-    }
-    .buttonStyle(.plain)
-    .accessibilityLabel("Test Emoji key haptic")
   }
 
   private func key(

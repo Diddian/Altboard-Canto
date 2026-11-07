@@ -226,7 +226,8 @@ final class KeyboardState: ObservableObject {
 
   func syncOnboardingPractice(hostProcessID: Int?) {
     self.showsMicHint = self.settings.showsMicHint(hostProcessID: hostProcessID)
-    if self.settings.isOnboardingPracticeHost(hostProcessID) {
+    if self.settings.isOnboardingPracticeHost(hostProcessID)
+        || self.settings.isOnboardingKeyboardTestHost(hostProcessID) {
       TranscriptionBridge.postDarwinNotification(DarwinNotificationName.keyboardShownInPractice)
     }
   }

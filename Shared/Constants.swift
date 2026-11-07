@@ -106,6 +106,8 @@ enum SharedKey {
   static let onboardingRecord = "onboardingRecord"
   static let onboardingPracticePid = "onboardingPracticePid"
   static let onboardingPracticeAt = "onboardingPracticeAt"
+  static let onboardingKeyboardTestPid = "canto.onboardingKeyboardTestPid"
+  static let onboardingKeyboardTestAt = "canto.onboardingKeyboardTestAt"
   static let micHintDismissed = "micHintDismissed"
   static let hasFullAccess = "hasFullAccess"
   static let keyboardProbeTimestamp = "canto.keyboardProbeTimestamp"

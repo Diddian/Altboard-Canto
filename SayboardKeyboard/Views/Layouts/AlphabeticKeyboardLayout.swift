@@ -208,7 +208,6 @@ struct AlphabeticKeyboardLayout: View {
         keyboardState: self.keyboardState,
         alphabeticModeLabel: self.page == .letters ? "?123" : "ABC",
         onAlphabeticModeSwitch: { self.toggleNumberPage() },
-        onEmojiAction: { self.openEmojiPage() },
         showsAlphabetIndicator: self.page == .letters,
         onSpaceAction: { self.handleSpace() },
         onShortcutAction: { self.handleCharacter($0) },

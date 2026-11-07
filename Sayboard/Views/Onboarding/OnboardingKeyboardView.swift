@@ -92,7 +92,7 @@ struct OnboardingKeyboardView: View {
         }
       }
     }
-    .onboardingTextEntry(isActive: self.page == .test, isPractice: true)
+    .onboardingTextEntry(isActive: self.page == .test, isKeyboardTest: true)
     .task(id: self.page) {
       guard self.page == .test else { return }
       await self.watchForAltboard()

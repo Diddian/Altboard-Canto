@@ -217,7 +217,6 @@ struct KeyboardBottomRow: View {
   @ObservedObject var keyboardState: KeyboardState
   var alphabeticModeLabel: String? = nil
   var onAlphabeticModeSwitch: (() -> Void)? = nil
-  var onEmojiAction: (() -> Void)? = nil
   var showsAlphabetIndicator = true
   var onSpaceAction: (() -> Void)? = nil
   var onShortcutAction: ((String) -> Void)? = nil
@@ -242,12 +241,7 @@ struct KeyboardBottomRow: View {
           action()
         }
       }
-      if let openEmoji = self.onEmojiAction {
-        KeyButton(content: .nativeEmojiGlyph, fixedWidth: self.metrics.sideButtonWidth) {
-          openEmoji()
-        }
-        .accessibilityLabel("Open Emoji keyboard")
-      } else if self.keyboardState.showsGlobeButton {
+      if self.keyboardState.showsGlobeButton {
         NativeInputModeSwitchKey(
           configure: self.keyboardState.configureInputModeListButton,
           iconName: "globe"
