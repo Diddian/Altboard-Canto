@@ -40,9 +40,6 @@ final class SpeechRecognitionService: ObservableObject {
   var currentTranscription = ""
   @Published var currentRawTranscription = ""
   var recordingSpokenLanguages = [String]()
-  var recordingOutputOptions = VoiceOutputConfiguration(
-    cleanupEnabled: false, target: .original, register: .faithful, customLanguage: ""
-  )
   var experimentalLiveTask: Task<Void, Never>?
   @Published var liveDictationStatus = "Idle"
   var currentAudioFileName: String?
@@ -83,7 +80,6 @@ final class SpeechRecognitionService: ObservableObject {
     self.errorMessage = nil
     self.currentTranscription = ""
     self.currentRawTranscription = ""
-    self.recordingOutputOptions = self.settings.voiceOutputConfiguration
     self.recordingSpokenLanguages = self.settings.preferredSpokenLanguages
     self.settings.lastVoiceOutputProcessed = false
     self.settings.lastDictationOutcome = nil

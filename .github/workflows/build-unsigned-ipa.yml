@@ -111,6 +111,9 @@ jobs:
           swiftc -o "$RUNNER_TEMP/microphone-press-smoke" \
             Shared/MicrophonePressPolicy.swift scripts/verify-microphone-press.swift
           "$RUNNER_TEMP/microphone-press-smoke"
+          swiftc -o "$RUNNER_TEMP/voice-output-routing-smoke" \
+            Shared/VoiceOutputSelectionPolicy.swift scripts/verify-voice-output-selection.swift
+          "$RUNNER_TEMP/voice-output-routing-smoke"
           swiftc -o "$RUNNER_TEMP/llm-bridge-smoke" \
             Shared/LLMBridge.swift scripts/verify-llm-bridge.swift
           "$RUNNER_TEMP/llm-bridge-smoke"

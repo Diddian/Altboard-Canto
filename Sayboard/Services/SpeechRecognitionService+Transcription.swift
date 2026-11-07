@@ -84,15 +84,9 @@ extension SpeechRecognitionService {
         return
       }
 
-      // Preview is the unmodified ASR result. It is not inserted into
-      // the host app before translation/cleanup completes.
-      let target = self.recordingOutputOptions.target
-      let stage: VoiceProcessingStage = target != .original ? .translating
-        : (self.recordingOutputOptions.needsLLM ? .editing : .finalizing)
-      TranscriptionBridge.writeVoiceProgress(stage, rawPreview: rawText)
-
-      // A conservative built-in greeting correction and editable local
-      // phrase rules run independently of the optional offline LLM.
+      // Recognition languages are captured for this recording, but output
+      // preferences are live App Group settings. A later language selection
+      // must override the preference present when microphone capture began.
       self.settings.synchronize()
       let savedCorrections = self.settings.cantoneseCorrectionRules
       let corrections = CantoneseCorrections.applyDetailed(
@@ -106,43 +100,107 @@ extension SpeechRecognitionService {
       DiagnosticLog.write(
         "voice: saved correction rules=\(savedCorrections.count) matches=\(corrections.matchedRules)"
       )
-      let options = self.recordingOutputOptions
-      self.settings.lastVoiceOutputProcessed = options.needsLLM
-      var finalText = correctedText
-      if options.needsLLM {
-        let processed = await self.llmCoordinator?.processVoiceDictation(correctedText, options: options)
-        if let processed, !processed.isEmpty {
-          finalText = processed
-        } else if options.target != .original {
-          // Explicit language must not silently fall back to untranslated text.
+
+      var deliveredText: String?
+      for attempt in 1...VoiceOutputSelectionPolicy.maximumAttempts {
+        self.settings.synchronize()
+        let options = self.settings.voiceOutputConfiguration
+        let stage: VoiceProcessingStage = options.target != .original ? .translating
+          : (options.needsLLM ? .editing : .finalizing)
+        // Live dictation remains in the spoken language. Only the final
+        // bridge result is translated or cleaned, never the raw preview.
+        TranscriptionBridge.writeVoiceProgress(stage, rawPreview: rawText)
+
+        var finalText = correctedText
+        var modelOutputMissing = false
+        if options.needsLLM {
+          let processed = await self.llmCoordinator?.processVoiceDictation(
+            correctedText, options: options
+          )
+          if let processed, !processed.isEmpty {
+            finalText = processed
+          } else {
+            modelOutputMissing = true
+          }
+        }
+
+        // Offline model loading/inference may take long enough for another
+        // language tap. Never insert output generated for an obsolete target.
+        self.settings.synchronize()
+        switch VoiceOutputSelectionPolicy.decide(
+          processed: options, current: self.settings.voiceOutputConfiguration,
+          attempt: attempt
+        ) {
+        case .retry:
+          FeatureDiagnostics.record(.voiceOutput, .interrupted)
+          DiagnosticLog.write("voice: output preference changed during processing; retrying")
+          continue
+        case .reject:
+          FeatureDiagnostics.record(.voiceOutput, .rejected)
+          self.settings.lastDictationOutcome = .processingFailed
+          DiagnosticLog.write("voice: repeated output changes prevented safe delivery")
+          return
+        case .deliver:
+          break
+        }
+
+        if modelOutputMissing && options.target != .original {
+          // An explicit translation must never fall back to spoken-language text.
           self.settings.lastDictationOutcome = .processingFailed
           FeatureDiagnostics.record(.voiceOutput, .failed)
-          DiagnosticLog.write("voice: selected output language failed; raw speech retained in history")
+          DiagnosticLog.write("voice: selected output language unavailable; raw speech retained in history")
           return
         }
-      }
-      // The user's corrections MUST be the last text operation before the
-      // bridge. Foundation's Hans-Hant transliterator turns the valid Hong
-      // Kong greeting 喂 back into 餵, even after earlier corrections.
-      let displayText = TechnicalTextFormatter.format(CantoneseOutput.normalize(finalText))
-      let styledText = self.styled(displayText, host: stylingHost)
-      let bridgeText: String
-      switch options.target {
-      case .original, .cantonese, .traditionalChinese:
-        let finalCorrection = CantoneseCorrections.applyDetailed(
-          styledText, customRules: savedCorrections
-        )
-        bridgeText = finalCorrection.text
-        DiagnosticLog.write("voice: final user correction matches=\(finalCorrection.matchedRules)")
-      default:
-        bridgeText = styledText
-      }
-      TranscriptionBridge.writeVoiceProgress(.finalizing)
-      self.currentTranscription = bridgeText
 
-      self.settings.chargeFreeWords(WordCounter.count(bridgeText))
+        // Corrections are applied after display normalization for original /
+        // Cantonese targets, preserving the Hong Kong greeting 喂.
+        let displayText = TechnicalTextFormatter.format(CantoneseOutput.normalize(finalText))
+        let styledText = self.styled(displayText, host: stylingHost)
+        let bridgeText: String
+        switch options.target {
+        case .original, .cantonese, .traditionalChinese:
+          let finalCorrection = CantoneseCorrections.applyDetailed(
+            styledText, customRules: savedCorrections
+          )
+          bridgeText = finalCorrection.text
+          DiagnosticLog.write("voice: final user correction matches=\(finalCorrection.matchedRules)")
+        default:
+          bridgeText = styledText
+        }
 
-      TranscriptionBridge.writeTranscription(bridgeText)
+        // Recheck immediately before the irreversible app-to-keyboard handoff.
+        // Excessive changes fail closed rather than committing stale language.
+        self.settings.synchronize()
+        switch VoiceOutputSelectionPolicy.decide(
+          processed: options, current: self.settings.voiceOutputConfiguration,
+          attempt: attempt
+        ) {
+        case .retry:
+          FeatureDiagnostics.record(.voiceOutput, .interrupted)
+          DiagnosticLog.write("voice: output preference changed before delivery; retrying")
+          continue
+        case .reject:
+          FeatureDiagnostics.record(.voiceOutput, .rejected)
+          self.settings.lastDictationOutcome = .processingFailed
+          DiagnosticLog.write("voice: output preference changed too often to deliver")
+          return
+        case .deliver:
+          break
+        }
+
+        self.settings.lastVoiceOutputProcessed = options.needsLLM
+        TranscriptionBridge.writeVoiceProgress(.finalizing)
+        self.currentTranscription = bridgeText
+        self.settings.chargeFreeWords(WordCounter.count(bridgeText))
+        TranscriptionBridge.writeTranscription(bridgeText)
+        deliveredText = bridgeText
+        break
+      }
+      guard let bridgeText = deliveredText else {
+        self.settings.lastDictationOutcome = .processingFailed
+        FeatureDiagnostics.record(.voiceOutput, .failed)
+        return
+      }
 
       if let start = output.firstWordStart, let end = output.lastWordEnd {
         self.currentWordBoundaries = (start: start, end: end)

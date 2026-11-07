@@ -61,6 +61,9 @@ struct TranslateToggleButton: View {
       self.customLanguage = next.languageCode
       self.targetRawValue = next.target.rawValue
       SharedSettings().isTranslationMode = false
+      if self.keyboardState.isRecording || self.keyboardState.isProcessing {
+        FeatureDiagnostics.record(.voiceOutput, .selected)
+      }
     } label: {
       VStack(spacing: 0) {
         Image(systemName: "translate")

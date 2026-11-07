@@ -58,6 +58,22 @@ class KeyboardSafetyContracts(unittest.TestCase):
         self.assertIn("if let openEmoji = self.onEmojiAction", chrome)
         self.assertIn(", keyboardEmoji", source("Shared/FeatureDiagnostics.swift"))
 
+    def test_voice_output_selection_is_checked_before_delivery(self):
+        service = source("Sayboard/Services/SpeechRecognitionService.swift")
+        pipeline = source("Sayboard/Services/SpeechRecognitionService+Transcription.swift")
+        button = source("SayboardKeyboard/Views/TranslateToggleButton.swift")
+        self.assertNotIn("recordingOutputOptions", service)
+        self.assertNotIn("recordingOutputOptions", pipeline)
+        self.assertIn("let options = self.settings.voiceOutputConfiguration", pipeline)
+        self.assertGreaterEqual(pipeline.count("VoiceOutputSelectionPolicy.decide("), 2)
+        self.assertIn("self.settings.synchronize()", pipeline)
+        self.assertLess(
+            pipeline.rindex("VoiceOutputSelectionPolicy.decide("),
+            pipeline.index("TranscriptionBridge.writeTranscription(bridgeText)")
+        )
+        self.assertIn("self.targetRawValue = next.target.rawValue", button)
+        self.assertIn("FeatureDiagnostics.record(.voiceOutput, .selected)", button)
+
     def test_touch_state_does_not_outlive_keyboard(self):
         controller = source("SayboardKeyboard/KeyboardViewController.swift")
         delete = source("SayboardKeyboard/Views/RepeatDeleteButton.swift")

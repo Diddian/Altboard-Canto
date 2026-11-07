@@ -62,6 +62,29 @@ struct VoiceOutputPipelineTests {
   }
 
   @Test
+  func outputLanguageChangesAfterMicOrDuringProcessing() {
+    let original = VoiceOutputConfiguration(
+      cleanupEnabled: false, target: .original, register: .faithful, customLanguage: ""
+    )
+    let german = VoiceOutputConfiguration(
+      cleanupEnabled: false, target: .german, register: .faithful, customLanguage: ""
+    )
+    let english = VoiceOutputConfiguration(
+      cleanupEnabled: false, target: .english, register: .faithful, customLanguage: ""
+    )
+    #expect(VoiceOutputSelectionPolicy.decide(
+      processed: original, current: german, attempt: 1) == .retry)
+    #expect(VoiceOutputSelectionPolicy.decide(
+      processed: german, current: original, attempt: 1) == .retry)
+    #expect(VoiceOutputSelectionPolicy.decide(
+      processed: german, current: english, attempt: 2) == .retry)
+    #expect(VoiceOutputSelectionPolicy.decide(
+      processed: english, current: english, attempt: 3) == .deliver)
+    #expect(VoiceOutputSelectionPolicy.decide(
+      processed: german, current: english, attempt: 3) == .reject)
+  }
+
+  @Test
   func customLanguageInputsAreConstrained() {
     #expect(VoiceOutputTarget.customLanguageName("fr") != nil)
     #expect(VoiceOutputTarget.customLanguageName("de") != nil)
