@@ -37,6 +37,22 @@ class InformalNgramTests(unittest.TestCase):
                         (language, history, token)
                     ).fetchone(), (language, history, token))
                 self.assertGreater(db.execute("SELECT seed_weight FROM curated_cantonese_ngrams WHERE gram='世一'").fetchone()[0], 0)
+                for rare_word in ("罨耷", "噏耷", "褸丘", "烏搲", "污搲",
+                                  "奀挑鬼命", "論盡", "黑瞇擝", "窿窿罅罅"):
+                    with self.subTest(rare=rare_word):
+                        self.assertGreater(db.execute(
+                            "SELECT seed_weight FROM curated_cantonese_words WHERE word=?",
+                            (rare_word,)
+                        ).fetchone()[0], 0)
+                for rare_gram in ("罨耷", "褸丘", "烏搲", "黑瞇", "罅罅"):
+                    self.assertGreater(db.execute(
+                        "SELECT seed_weight FROM curated_cantonese_ngrams WHERE gram=?",
+                        (rare_gram,)
+                    ).fetchone()[0], 0)
+                self.assertIsNotNone(db.execute(
+                    "SELECT word FROM curated_cantonese_next "
+                    "WHERE prefix='好' AND word='罨耷'"
+                ).fetchone())
                 self.assertGreater(db.execute("SELECT seed_weight FROM curated_cantonese_words WHERE word='世一'").fetchone()[0], 0)
                 self.assertGreater(db.execute("SELECT seed_weight FROM curated_cantonese_words WHERE word='壽司'").fetchone()[0], 0)
                 self.assertIsNone(db.execute("SELECT seed_weight FROM curated_cantonese_words WHERE word='本番'").fetchone())

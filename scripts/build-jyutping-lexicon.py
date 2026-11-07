@@ -275,10 +275,13 @@ def compile_database(source: bytes, output: pathlib.Path, verify_upstream: bool)
         # Keep the upstream bytes/hash unchanged and additions auditable.
         supplemental = pathlib.Path(__file__).with_name("cantonese-phrases.tsv")
         reviewed = supplemental.read_text(encoding="utf-8").splitlines()
+        rare_file = supplemental.with_name("hk-rare-cantonese.tsv")
+        rare = [line for line in rare_file.read_text(encoding="utf-8").splitlines()
+                if line.strip() and not line.startswith("#")]
         contemporary = supplemental.with_name("contemporary-cantonese.tsv")
         japanese = load_hk_japanese_index(supplemental.with_name("hk-japanese-loanwords.tsv"))
         lines = (
-            reviewed + contemporary.read_text(encoding="utf-8").splitlines()
+            reviewed + rare + contemporary.read_text(encoding="utf-8").splitlines()
             + [f"{word}\t{reading}" for word, reading, _, _, _ in japanese]
             + source.decode("utf-8").splitlines()
         )
@@ -316,7 +319,7 @@ def compile_database(source: bytes, output: pathlib.Path, verify_upstream: bool)
             sidney = sidney_lau_spelling(romanization)
             batch.append((word, romanization, plain, compact, yale, sidney, initials, count))
             aliases = negative_particle_aliases(word, romanization)
-            if line_number < len(reviewed):
+            if line_number < len(reviewed) + len(rare):
                 aliases.extend(mixed_phrase_aliases(word, romanization))
             for alias in aliases:
                 key_alias = (alias, word)

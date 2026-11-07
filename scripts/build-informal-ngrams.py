@@ -79,6 +79,17 @@ def collect(directory: Path = HERE):
                 if i >= width:
                     history = " ".join(tokens[i-width:i])
                     latin[(actual, history, token)] += 1
+    # Rare HK headwords seed ranking and character n-grams without claiming
+    # observed HKCanCor frequencies. This file can later seed ASR hotwords.
+    for surface, reading in rows(directory / "hk-rare-cantonese.tsv", 2):
+        syllables = reading.split()
+        if (len(surface) > 12 or len(surface) != len(syllables)
+                or not all(is_han(char) for char in surface)
+                or not all(re.fullmatch(r"[a-z]+[1-6]", syl) for syl in syllables)):
+            raise ValueError(f"Invalid rare Cantonese reading: {surface}")
+        words[surface] += 1
+        for width in (1, 2, 3):
+            chars.update(surface[i:i+width] for i in range(len(surface) - width + 1))
     # Only widely used Han-script loanwords add small, editorial fallback
     # weights. Community/niche terms and Japanese kana remain direct lexicon
     # suggestions; none are represented as measured corpus frequencies.

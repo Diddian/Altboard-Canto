@@ -347,5 +347,43 @@ class UniversalCantoneseTests(unittest.TestCase):
             finally:
                 db.close()
 
+    def test_rare_hk_headwords_and_variant_readings(self):
+        rare_file = ROOT / "scripts" / "hk-rare-cantonese.tsv"
+        rows = [
+            tuple(line.split("\t"))
+            for line in rare_file.read_text(encoding="utf-8").splitlines()
+            if line and not line.startswith("#")
+        ]
+        self.assertGreaterEqual(len(rows), 50)
+        self.assertEqual(len(rows), len(set(rows)))
+        existing = set(
+            tuple(line.split("\t"))
+            for line in (ROOT / "scripts" / "cantonese-phrases.tsv")
+                .read_text(encoding="utf-8").splitlines()
+        )
+        self.assertFalse(set(rows) & existing)
+        self.assertTrue({"罨耷", "噏耷", "褸丘", "烏搲", "污搲"}.issubset(
+            {word for word, _ in rows}))
+        with tempfile.TemporaryDirectory() as tmp:
+            database = pathlib.Path(tmp) / "rare.sqlite3"
+            BUILDER.compile_database(b"hello\tnei5 hou2\n", database, verify_upstream=False)
+            with sqlite3.connect(database) as db:
+                for word, reading in rows:
+                    aliases = {
+                        "plain": "".join(char for char in reading if char.isalpha()),
+                        "compact": reading.replace(" ", ""),
+                        "yale": BUILDER.yale_spelling(reading),
+                        "sidney": BUILDER.sidney_lau_spelling(reading),
+                    }
+                    for column, spelling in aliases.items():
+                        with self.subTest(word=word, column=column):
+                            self.assertIsNotNone(db.execute(
+                                f"SELECT 1 FROM entries WHERE {column}=? "
+                                "AND word=? AND romanization=? LIMIT 1",
+                                (spelling, word, reading)
+                            ).fetchone())
+                self.assertEqual(db.execute("PRAGMA quick_check").fetchone(), ("ok",))
+
+
 if __name__ == "__main__":
     unittest.main()
