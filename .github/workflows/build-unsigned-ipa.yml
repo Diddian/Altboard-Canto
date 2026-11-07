@@ -114,6 +114,9 @@ jobs:
           swiftc -o "$RUNNER_TEMP/voice-output-routing-smoke" \
             Shared/VoiceOutputSelectionPolicy.swift scripts/verify-voice-output-selection.swift
           "$RUNNER_TEMP/voice-output-routing-smoke"
+          swiftc -o "$RUNNER_TEMP/live-dictation-notice-smoke" \
+            Shared/LiveDictationNotice.swift scripts/verify-live-dictation-notice.swift
+          "$RUNNER_TEMP/live-dictation-notice-smoke"
           swiftc -o "$RUNNER_TEMP/llm-bridge-smoke" \
             Shared/LLMBridge.swift scripts/verify-llm-bridge.swift
           "$RUNNER_TEMP/llm-bridge-smoke"

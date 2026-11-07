@@ -81,8 +81,12 @@ struct StandardKeyboardLayout: View {
         self.sideButtons
           .padding(.horizontal, 4.kbScaled)
         if self.keyboardState.isRecording {
-          LongRecordingNotice(startedAt: self.keyboardState.recordingStartedAt)
-            .frame(maxWidth: 110.kbScaled)
+          VStack(spacing: 1.kbScaled) {
+            LiveDictationNoticeView()
+            LongRecordingNotice(startedAt: self.keyboardState.recordingStartedAt)
+          }
+          .frame(maxWidth: 155.kbScaled)
+          .allowsHitTesting(false)
         } else if !KeyboardMetrics.isCompactStandard {
           KeyboardStatusStrip(keyboardState: self.keyboardState)
             .frame(width: available, height: KeyboardChromeMetrics.keyHeight)

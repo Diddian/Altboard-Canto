@@ -58,6 +58,40 @@ struct KeyboardChromeMetrics {
   }
 }
 
+/// Short, noninteractive notice that live speech text may be incomplete.
+struct LiveDictationNoticeView: View {
+  @AppStorage(SharedKey.experimentalLiveDictationEnabled,
+              store: AppGroup.sharedDefaults ?? .standard)
+  private var liveEnabled = false
+  @AppStorage(SharedKey.voiceOutputTarget, store: AppGroup.sharedDefaults ?? .standard)
+  private var outputRawValue = VoiceOutputTarget.original.rawValue
+  @AppStorage(SharedKey.voiceCustomLanguage, store: AppGroup.sharedDefaults ?? .standard)
+  private var customLanguage = ""
+
+  private var title: String {
+    let target = VoiceOutputTarget(rawValue: self.outputRawValue) ?? .original
+    let outputCode = PreferredVoiceLanguages.currentCode(
+      target: target, custom: self.customLanguage
+    )
+    let interface = AppLanguageConfig.resolveLanguage(from: Locale.preferredLanguages)
+    return LiveDictationNotice.label(outputCode: outputCode, interfaceCode: interface)
+  }
+
+  var body: some View {
+    if self.liveEnabled {
+      Text(verbatim: self.title)
+        .font(.system(size: 9.kbScaled, weight: .medium))
+        .foregroundStyle(.secondary)
+        .lineLimit(3)
+        .minimumScaleFactor(0.75)
+        .multilineTextAlignment(.center)
+        .frame(maxWidth: .infinity, maxHeight: KeyboardChromeMetrics.keyHeight)
+        .allowsHitTesting(false)
+        .accessibilityLabel(self.title)
+    }
+  }
+}
+
 /// Centered status in the existing control row; no extra keyboard height.
 struct KeyboardStatusStrip: View {
   @ObservedObject var keyboardState: KeyboardState

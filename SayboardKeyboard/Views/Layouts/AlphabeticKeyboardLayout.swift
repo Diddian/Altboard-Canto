@@ -412,9 +412,13 @@ struct AlphabeticKeyboardLayout: View {
             isActive: self.keyboardState.showLLMActions
           )
         }
-        Spacer(minLength: 2.kbScaled)
         if self.keyboardState.isRecording {
+          LiveDictationNoticeView()
+            .layoutPriority(-1)
+            .frame(maxWidth: .infinity)
           LongRecordingNotice(startedAt: self.keyboardState.recordingStartedAt)
+        } else {
+          Spacer(minLength: 2.kbScaled)
         }
         if self.keyboardState.hasFullAccess && self.keyboardState.isMicrophoneAuthorized
             && self.keyboardState.hasUsableModel {

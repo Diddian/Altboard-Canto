@@ -109,6 +109,9 @@ extension ExtendedKeyboardLayout {
       .allowsHitTesting(!self.keyboardState.auxiliaryControlsHidden)
       .animation(.easeOut(duration: 0.22), value: self.keyboardState.auxiliaryControlsHidden)
       if self.keyboardState.isRecording {
+        LiveDictationNoticeView()
+          .layoutPriority(-1)
+          .frame(maxWidth: .infinity)
         LongRecordingNotice(startedAt: self.keyboardState.recordingStartedAt)
       }
       self.micButton

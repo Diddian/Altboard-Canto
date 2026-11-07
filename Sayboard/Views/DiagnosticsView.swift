@@ -133,13 +133,23 @@ struct DiagnosticsView: View {
   }
 
   private var liveDictationSection: some View {
-    Section("Live Dictation") {
+    Section {
       LabeledContent("Enabled", value:
         self.yesNo(SharedSettings().experimentalLiveDictationEnabled))
       LabeledContent("Recognizer state", value: String(describing: self.speech.activeLoadState))
       LabeledContent("Last live step", value: self.speech.liveDictationStatus)
       Text("If the model cannot load during recording, audio is preserved for the normal final transcription. No spoken text is stored in these counters.")
         .font(.footnote).foregroundStyle(.secondary)
+    } header: {
+      let settings = SharedSettings()
+      let selected = PreferredVoiceLanguages.currentCode(
+        target: settings.voiceOutputTarget, custom: settings.voiceCustomLanguage
+      )
+      let interface = UserDefaults.standard.string(forKey: SharedKey.appLanguage)
+        ?? AppLanguageConfig.resolveLanguage(from: Locale.preferredLanguages)
+      Text(verbatim: LiveDictationNotice.label(
+        outputCode: selected, interfaceCode: interface
+      ))
     }
   }
 
