@@ -24,6 +24,11 @@ struct SetupView: View {
           video: .fullAccess,
         )
         self.modelRow
+        Button {
+          self.showsKeyboardGuide = true
+        } label: {
+          Label("Test Altboard Keyboard", systemImage: "keyboard")
+        }
       } footer: {
         if !self.checklist.isComplete {
           Text("Complete these steps to use dictation.")
@@ -34,6 +39,9 @@ struct SetupView: View {
     .navigationBarTitleDisplayMode(.inline)
     .navigationDestination(isPresented: self.$showsModels) {
       ModelsView()
+    }
+    .navigationDestination(isPresented: self.$showsKeyboardGuide) {
+      KeyboardSetupGuideRoute()
     }
     .onAppear { self.permissionService.refreshAll() }
   }
@@ -48,6 +56,7 @@ struct SetupView: View {
   @EnvironmentObject private var permissionService: PermissionService
   @EnvironmentObject private var pipTutorialService: PiPTutorialService
   @State private var showsModels = false
+  @State private var showsKeyboardGuide = false
 
   private var checklist: SetupChecklist {
     SetupChecklist(permissions: self.permissionService, hasUsableModel: self.hasUsableModel)
@@ -87,6 +96,14 @@ struct SetupView: View {
         Label(title, systemImage: systemImage)
       }
     }
+  }
+}
+
+private struct KeyboardSetupGuideRoute: View {
+  @Environment(\.dismiss) private var dismiss
+
+  var body: some View {
+    OnboardingKeyboardView { self.dismiss() }
   }
 }
 

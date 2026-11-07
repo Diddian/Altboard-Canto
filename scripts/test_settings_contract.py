@@ -32,6 +32,10 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("case .keyboard: return false", progress)
         self.assertIn("OnboardingKeyboardView { self.pass(.keyboard) }", routing)
         self.assertNotIn("advancesWhenReady", guide)
+        setup = read("Sayboard/Views/SetupView.swift")
+        self.assertIn('Label("Test Altboard Keyboard", systemImage: "keyboard")', setup)
+        self.assertIn("KeyboardSetupGuideRoute()", setup)
+        self.assertIn("OnboardingKeyboardView { self.dismiss() }", setup)
 
     def test_globe_previews_and_fallback_identity_are_kept_in_sync(self):
         phone = read("Sayboard/Views/Onboarding/KeyboardLayoutPreview.swift")
