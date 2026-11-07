@@ -405,6 +405,10 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("static func handoffReview() -> [String: Any]", trace)
         self.assertIn("modeChangedAwayBeforeLoad", analyzer)
         self.assertIn("extensionDetectedFieldUnconfirmed", analyzer)
+        self.assertIn('language == "mul" || language == "mis"', trace)
+        self.assertIn(".hostLanguageHint", trace)
+        self.assertNotIn(".hostMis", trace)
+        self.assertIn("case hostLanguageHint, hostOther, fieldEnded", analyzer)
         self.assertIn("signal.kind == .fieldEnded", analyzer)
         self.assertIn("signal.activationID != activationID", analyzer)
         self.assertIn("let activationID = snapshot[\"activationID\"] as? String", trace)
@@ -424,12 +428,12 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
                                 "touchPath", "textField.text ="):
             self.assertNotIn(private_content, analyzer)
 
-    def test_neutral_primary_language_and_interface_fallback(self):
+    def test_multilingual_primary_language_and_interface_fallback(self):
         import plistlib
 
         info = plistlib.loads((ROOT / "SayboardKeyboard/Info.plist").read_bytes())
         attributes = info["NSExtension"]["NSExtensionAttributes"]
-        self.assertEqual(attributes["PrimaryLanguage"], "mis")
+        self.assertEqual(attributes["PrimaryLanguage"], "mul")
         self.assertTrue(attributes["IsASCIICapable"])
         controller = HOST.read_text(encoding="utf-8")
         self.assertNotIn("self.primaryLanguage =", controller)

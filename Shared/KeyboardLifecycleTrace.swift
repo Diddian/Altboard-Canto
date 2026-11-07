@@ -478,7 +478,9 @@ enum KeyboardLifecycleTrace {
         guard snapshot["fieldIsFirstResponder"] as? Bool == true else { return [] }
         if name == "hostProbe.editingBegan" || name == "hostProbe.inputModeChanged" {
           let language = snapshot["responderLanguage"] as? String
-          return [.init(time, language == "mis" ? .hostMis : .hostOther,
+          // Legacy mis and current mul are hints, not keyboard identity.
+          let isMultilingualHint = language == "mul" || language == "mis"
+          return [.init(time, isMultilingualHint ? .hostLanguageHint : .hostOther,
                         remembersSelection: remembers, activationID: activationID)]
         }
         return []

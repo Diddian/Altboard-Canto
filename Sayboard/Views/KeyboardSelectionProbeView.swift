@@ -204,7 +204,7 @@ struct KeyboardHandoffMonitorView: View {
         }
       }
       Section {
-        Text("A mis language hint is not proof that Altboard launched. Field focus now bounds each observation. Extension events in that interval are unconfirmed, not proof of field ownership.")
+        Text("A multilingual input-mode hint does not prove Altboard launched. Field focus bounds each observation. Extension events during that interval are unconfirmed, not proof of field ownership.")
           .font(.footnote).foregroundStyle(.secondary)
         Text("Only Altboard test fields can be observed before extension startup. Other apps remain inaccessible.")
           .font(.footnote).foregroundStyle(.secondary)

@@ -6,7 +6,7 @@ enum KeyboardHandoffAnalyzer {
   static let observationWindowMs: Int64 = 4_000
 
   enum Kind: String {
-    case hostMis, hostOther, fieldEnded
+    case hostLanguageHint, hostOther, fieldEnded
     case extensionStarting, extensionMounted, extensionAppearing, extensionRendered
   }
   enum Outcome: String {
@@ -58,7 +58,7 @@ enum KeyboardHandoffAnalyzer {
     }.map(\.element)
 
     var selections = [Signal]()
-    for signal in ordered where signal.kind == .hostMis {
+    for signal in ordered where signal.kind == .hostLanguageHint {
       guard let activationID = signal.activationID else { continue }
       // Editing began and input-mode changed can report the same selection.
       if let prior = selections.last,
@@ -77,7 +77,7 @@ enum KeyboardHandoffAnalyzer {
           return true
         }
         // A new test field ends the previous field's observation window.
-        return (signal.kind == .hostMis || signal.kind == .hostOther)
+        return (signal.kind == .hostLanguageHint || signal.kind == .hostOther)
           && signal.activationID != nil && signal.activationID != activationID
       }
       let modeAway = ordered.first { signal in
