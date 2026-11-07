@@ -68,27 +68,64 @@ struct LiveDictationNoticeView: View {
   @AppStorage(SharedKey.voiceCustomLanguage, store: AppGroup.sharedDefaults ?? .standard)
   private var customLanguage = ""
 
-  private var title: String {
+  private var lines: (listening: String, afterwards: String) {
     let target = VoiceOutputTarget(rawValue: self.outputRawValue) ?? .original
     let outputCode = PreferredVoiceLanguages.currentCode(
       target: target, custom: self.customLanguage
     )
     let interface = AppLanguageConfig.resolveLanguage(from: Locale.preferredLanguages)
-    return LiveDictationNotice.label(outputCode: outputCode, interfaceCode: interface)
+    return LiveDictationNotice.lines(outputCode: outputCode, interfaceCode: interface)
   }
 
   var body: some View {
     if self.liveEnabled {
-      Text(verbatim: self.title)
-        .font(.system(size: 9.kbScaled, weight: .medium))
-        .foregroundStyle(.secondary)
-        .lineLimit(3)
-        .minimumScaleFactor(0.75)
-        .multilineTextAlignment(.center)
-        .frame(maxWidth: .infinity, maxHeight: KeyboardChromeMetrics.keyHeight)
-        .allowsHitTesting(false)
-        .accessibilityLabel(self.title)
+      VStack(spacing: 1.kbScaled) {
+        AnimatedDictationNoticeLine(text: self.lines.listening, size: 9.kbScaled)
+        AnimatedDictationNoticeLine(text: self.lines.afterwards, size: 8.kbScaled)
+      }
+      .foregroundStyle(.secondary)
+      .frame(maxWidth: .infinity, maxHeight: KeyboardChromeMetrics.keyHeight)
+      .allowsHitTesting(false)
+      .accessibilityElement(children: .ignore)
+      .accessibilityLabel(
+        LiveDictationNotice.label(
+          outputCode: PreferredVoiceLanguages.currentCode(
+            target: VoiceOutputTarget(rawValue: self.outputRawValue) ?? .original,
+            custom: self.customLanguage
+          ),
+          interfaceCode: AppLanguageConfig.resolveLanguage(from: Locale.preferredLanguages)
+        )
+      )
     }
+  }
+}
+
+/// Staggered, low-amplitude animation runs only while the recording notice is
+/// visible. VoiceOver reads the whole status rather than individual characters.
+private struct AnimatedDictationNoticeLine: View {
+  let text: String
+  let size: CGFloat
+
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @State private var bouncing = false
+
+  var body: some View {
+    HStack(spacing: 0) {
+      ForEach(Array(self.text.enumerated()), id: \.offset) { index, character in
+        Text(String(character))
+          .font(.system(size: self.size, weight: .medium))
+          .offset(y: self.bouncing && !self.reduceMotion ? -2.kbScaled : 0)
+          .animation(
+            self.reduceMotion ? nil :
+              .easeInOut(duration: 0.55).repeatForever(autoreverses: true)
+                .delay(Double(index) * 0.045),
+            value: self.bouncing
+          )
+      }
+    }
+    .frame(maxWidth: .infinity)
+    .onAppear { self.bouncing = true }
+    .onDisappear { self.bouncing = false }
   }
 }
 

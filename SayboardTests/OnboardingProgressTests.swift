@@ -28,9 +28,15 @@ struct OnboardingProgressTests {
   }
 
   @Test
-  func `an enabled keyboard skips its screen after the full access relaunch`() {
+  func `an enabled keyboard still requires the selection test`() {
     let record = Self.record(passed: [.languages, .microphone])
-    #expect(Self.progress(record, microphone: true, keyboard: true).currentStep == .keyboardType)
+    #expect(Self.progress(record, microphone: true, keyboard: true).currentStep == .keyboard)
+  }
+
+  @Test
+  func `the keyboard test does not require a microphone or speech model`() {
+    let record = Self.record(passed: [.languages, .microphone])
+    #expect(Self.progress(record).currentStep == .keyboard)
   }
 
   @Test
@@ -56,6 +62,17 @@ struct OnboardingProgressTests {
   func `practice waits for a chosen model that is still downloading`() {
     let record = Self.record(passed: Self.beforePractice, chosenModel: Self.chosenModel)
     #expect(Self.progress(record, microphone: true, keyboard: true).currentStep == .practice)
+  }
+
+  @Test
+  func `practice waits for an actual keyboard activation test`() {
+    let record = Self.record(
+      passed: [.languages, .microphone, .keyboardType, .writingStyle],
+      chosenModel: Self.chosenModel
+    )
+    #expect(Self.progress(record, microphone: true, keyboard: true).currentStep == .keyboard)
+    #expect(Self.progress(record, microphone: true, keyboard: true)
+      .nextStep(after: .writingStyle) == nil)
   }
 
   @Test
@@ -192,7 +209,7 @@ struct OnboardingProgressTests {
   @Test
   func `the step indicator counts only the screens this run shows`() {
     let progress = Self.progress(microphone: true, keyboard: true, hasUsableModel: true)
-    #expect(progress.shownSteps(current: .keyboardType) == [.keyboardType, .writingStyle, .practice])
+    #expect(progress.shownSteps(current: .keyboardType) == [.keyboard, .keyboardType, .writingStyle, .practice])
   }
 
   @Test
@@ -200,8 +217,8 @@ struct OnboardingProgressTests {
     let record = Self.record(passed: [.languages, .microphone], chosenModel: Self.chosenModel)
     let progress = Self.progress(record, microphone: true, keyboard: true)
     let steps = progress.shownSteps(current: .keyboardType)
-    #expect(steps == [.languages, .microphone, .keyboardType, .writingStyle, .practice])
-    #expect(steps.firstIndex(of: .keyboardType) == 2)
+    #expect(steps == [.languages, .microphone, .keyboard, .keyboardType, .writingStyle, .practice])
+    #expect(steps.firstIndex(of: .keyboardType) == 3)
   }
 
   @Test

@@ -70,6 +70,8 @@ struct OnboardingProgress: Equatable, Sendable {
   private var canPractice: Bool {
     let hasModel = self.hasUsableModel || (self.record.chosenModel != nil && !self.record.postponedSteps.contains(.languages))
     return self.microphoneGranted && self.keyboardReady && hasModel && !self.isDictationLocked
+      && self.record.passedSteps.contains(.keyboard)
+      && !self.record.postponedSteps.contains(.keyboard)
   }
 
   private func isSkipped(_ step: OnboardingStep) -> Bool {
@@ -77,7 +79,7 @@ struct OnboardingProgress: Equatable, Sendable {
     switch step {
     case .languages: return self.hasUsableModel
     case .microphone: return self.microphoneGranted
-    case .keyboard: return self.keyboardReady
+    case .keyboard: return false // A permission flag is not proof of keyboard selection.
     case .practice: return !self.canPractice
     case .keyboardType, .writingStyle: return false
     }

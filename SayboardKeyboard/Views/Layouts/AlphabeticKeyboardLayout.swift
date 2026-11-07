@@ -394,14 +394,27 @@ struct AlphabeticKeyboardLayout: View {
         }
 
         if self.keyboardState.showOutputLanguageButton {
-          TranslateToggleButton(
-            fixedWidth: self.chrome.sideButtonWidth,
-            compactStyle: true,
-            keyboardState: self.keyboardState,
-            onHiddenSettings: self.keyboardState.showSettingsKey ? nil : {
+          if self.keyboardState.hasFullAccess
+              && self.keyboardState.isMicrophoneAuthorized
+              && self.keyboardState.hasUsableModel {
+            TranslateToggleButton(
+              fixedWidth: self.chrome.sideButtonWidth,
+              compactStyle: true,
+              keyboardState: self.keyboardState,
+              onHiddenSettings: self.keyboardState.showSettingsKey ? nil : {
+                if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
+              }
+            )
+          } else {
+            KeyButton(
+              content: .systemImage("character.bubble"),
+              fixedWidth: self.chrome.sideButtonWidth
+            ) {
               if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
             }
-          )
+            .opacity(0.42)
+            .accessibilityLabel("Output language unavailable. Open Altboard")
+          }
         }
         if self.keyboardState.showsAIButton {
           AIButton(
@@ -411,6 +424,15 @@ struct AlphabeticKeyboardLayout: View {
             longPressEnabled: self.keyboardState.longPressLLMAction.isSet,
             isActive: self.keyboardState.showLLMActions
           )
+        } else if SharedSettings().keyboardShowAIButton {
+          KeyButton(
+            content: .systemImage("sparkles"),
+            fixedWidth: self.chrome.sideButtonWidth
+          ) {
+            if let url = DeepLink.settingsURL { self.proxy.openURL(url) }
+          }
+          .opacity(0.42)
+          .accessibilityLabel("AI actions unavailable. Open Altboard")
         }
         if self.keyboardState.isRecording {
           LiveDictationNoticeView()

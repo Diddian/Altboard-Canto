@@ -58,7 +58,7 @@ struct OnboardingView: View {
   }
 
   private var showsLater: Bool {
-    self.step == .languages || (self.step == .keyboard && !self.progress.keyboardReady)
+    self.step == .languages || self.step == .keyboard
   }
 
   private var stepNumbers: (current: Int, total: Int)? {
@@ -108,7 +108,7 @@ struct OnboardingView: View {
       )
 
     case .keyboard:
-      OnboardingKeyboardView(advancesWhenReady: !self.isGoingBack) { self.pass(.keyboard) }
+      OnboardingKeyboardView { self.pass(.keyboard) }
 
     case .keyboardType:
       OnboardingKeyboardTypeView { self.pass(.keyboardType) }

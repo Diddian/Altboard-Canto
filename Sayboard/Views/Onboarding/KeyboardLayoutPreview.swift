@@ -13,6 +13,14 @@ struct KeyboardLayoutPreview: View {
   static let keyFill = Color(uiColor: KeyboardPalette.keyFill)
 
   let kind: KeyboardKind
+  @AppStorage(SharedKey.keyboardShowGlobeKey, store: AppGroup.sharedDefaults ?? .standard)
+  private var showExtraGlobe = false
+  @AppStorage(SharedKey.keyboardShowOutputLanguageButton, store: AppGroup.sharedDefaults ?? .standard)
+  private var showOutputKey = true
+  @AppStorage(SharedKey.keyboardShowAIButton, store: AppGroup.sharedDefaults ?? .standard)
+  private var showAIKey = true
+  @AppStorage(SharedKey.hasUsableLLMModel, store: AppGroup.sharedDefaults ?? .standard)
+  private var hasUsableLLMModel = false
   @AppStorage(
     SharedKey.keyboardLetterArrangement,
     store: UserDefaults(suiteName: AppGroup.identifier)
@@ -74,6 +82,9 @@ struct KeyboardLayoutPreview: View {
     VStack(spacing: Self.rowSpacing) {
       ZStack(alignment: .top) {
         HStack(alignment: .bottom) {
+          if self.showExtraGlobe {
+            self.symbolKey("globe", width: Self.sideKeyWidth)
+          }
           self.symbolKey("gearshape", width: Self.sideKeyWidth)
           Spacer(minLength: 0)
           self.symbolKey("delete.left", width: Self.sideKeyWidth)
@@ -94,8 +105,18 @@ struct KeyboardLayoutPreview: View {
 
   private var extendedLayout: some View {
     VStack(spacing: Self.rowSpacing) {
-      HStack {
+      HStack(spacing: Self.keySpacing) {
+        if self.showExtraGlobe {
+          self.symbolKey("globe", width: Self.sideKeyWidth)
+        }
         self.symbolKey("gearshape", width: Self.sideKeyWidth, shape: .pill)
+        if self.showOutputKey {
+          self.symbolKey("character.bubble", width: Self.sideKeyWidth)
+        }
+        if self.showAIKey {
+          self.symbolKey("sparkles", width: Self.sideKeyWidth)
+            .opacity(self.hasUsableLLMModel ? 1 : 0.42)
+        }
         Spacer(minLength: 0)
         MicMorphShape(frameIndex: 0)
           .fill(.primary)
@@ -123,8 +144,18 @@ struct KeyboardLayoutPreview: View {
   private var alphabeticLayout: some View {
     VStack(spacing: Self.rowSpacing) {
       HStack(spacing: Self.keySpacing) {
-        self.symbolKey("gearshape", width: Self.sideKeyWidth)
-        Spacer()
+        if self.showExtraGlobe {
+          self.symbolKey("globe", width: 38)
+        }
+        self.symbolKey("gearshape", width: 38)
+        if self.showOutputKey {
+          self.symbolKey("character.bubble", width: 38)
+        }
+        if self.showAIKey {
+          self.symbolKey("sparkles", width: 38)
+            .opacity(self.hasUsableLLMModel ? 1 : 0.42)
+        }
+        Spacer(minLength: 0)
         self.symbolKey("mic.fill", width: 86)
       }
       .padding(.horizontal, Self.edgeInset)

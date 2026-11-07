@@ -145,6 +145,10 @@ private struct KeyboardTestPreview: View {
           if self.showGlobeKey { self.key("globe", width: 42) }
           if self.showSettingsKey { self.key("gearshape", width: 45) }
           if self.outputKeyEnabled { self.key("character.bubble", width: 45) }
+          if self.showAIButton {
+            self.key("sparkles", width: 45)
+              .opacity(self.hasUsableLLMModel ? 1 : 0.42)
+          }
           Spacer()
           self.key("mic.fill", width: 96, capsule: true)
         }.padding(.horizontal, 6.67).frame(height: 57)
@@ -170,7 +174,7 @@ private struct KeyboardTestPreview: View {
           let side: CGFloat = self.showGlobeKey ? 38 : 45
           let leftCount = (self.showGlobeKey ? 1 : 0)
             + (self.showSettingsKey ? 1 : 0) + (self.outputKeyEnabled ? 1 : 0)
-          let rightCount = (self.showAIButton && self.hasUsableLLMModel ? 1 : 0) + 1
+          let rightCount = (self.showAIButton ? 1 : 0) + 1
           let leftWidth = CGFloat(leftCount) * side + CGFloat(max(0, leftCount - 1)) * 6
           let rightWidth = CGFloat(rightCount) * side + CGFloat(max(0, rightCount - 1)) * 6
           let micWidth = max(45, min(160, geometry.size.width
@@ -181,8 +185,9 @@ private struct KeyboardTestPreview: View {
               if self.showSettingsKey { self.key("gearshape", width: side) }
               if self.outputKeyEnabled { self.key("character.bubble", width: side) }
               Spacer(minLength: 0)
-              if self.showAIButton && self.hasUsableLLMModel {
+              if self.showAIButton {
                 self.key("sparkles", width: side)
+                  .opacity(self.hasUsableLLMModel ? 1 : 0.42)
               }
               self.key("delete.left", width: side)
             }
@@ -210,8 +215,9 @@ private struct KeyboardTestPreview: View {
       if self.showGlobeKey { self.key("globe", width: 42) }
       if self.showSettingsKey { self.key("gearshape", width: 48) }
       if self.outputKeyEnabled { self.translatePreview }
-      if self.showAIButton && self.hasUsableLLMModel {
+      if self.showAIButton {
         self.key("sparkles", width: 48)
+          .opacity(self.hasUsableLLMModel ? 1 : 0.42)
       }
       Spacer(minLength: 2)
       self.key("mic.fill", width: KeyboardLayoutGeometry.alphabetMicWidth, capsule: true)

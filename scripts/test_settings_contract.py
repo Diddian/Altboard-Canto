@@ -11,6 +11,46 @@ def read(path):
 
 
 class SettingsContractTests(unittest.TestCase):
+    def test_first_install_guide_requires_current_altboard_activation(self):
+        guide = read("Sayboard/Views/Onboarding/OnboardingKeyboardView.swift")
+        routing = read("Sayboard/Views/OnboardingView.swift")
+        progress = read("Sayboard/Helpers/OnboardingProgress.swift")
+        self.assertIn("case .add", guide)
+        self.assertIn("case .fullAccess", guide)
+        self.assertIn("case .test", guide)
+        self.assertIn("self.page == .test, isPractice: true", guide)
+        self.assertIn("DarwinNotificationName.keyboardShownInPractice", guide)
+        self.assertIn("self.permissionService.keyboardProbeTimestamp >= self.testStartedAt", guide)
+        self.assertIn("self.testText = \"\" // Only typing after Altboard opened counts.", guide)
+        self.assertIn("self.hasSeenAltboard && self.hasFreshFullAccess", guide)
+        self.assertIn("self.confirmedKeyboardVisible", guide)
+        self.assertIn("I can see Altboard\'s keys and action bar", guide)
+        self.assertIn("case .keyboard: return false", progress)
+        self.assertIn("OnboardingKeyboardView { self.pass(.keyboard) }", routing)
+        self.assertNotIn("advancesWhenReady", guide)
+
+    def test_globe_previews_and_fallback_identity_are_kept_in_sync(self):
+        phone = read("Sayboard/Views/Onboarding/KeyboardLayoutPreview.swift")
+        settings = read("Sayboard/Views/KeyboardSettingsView.swift")
+        alphabet = read("SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift")
+        self.assertIn("SharedKey.keyboardShowGlobeKey", phone)
+        self.assertGreaterEqual(phone.count("if self.showExtraGlobe"), 3)
+        self.assertIn('self.symbolKey("sparkles", width: 38)', phone)
+        self.assertIn("if self.showGlobeKey { self.key(\"globe\"", settings)
+        self.assertIn("else if SharedSettings().keyboardShowAIButton", alphabet)
+        self.assertIn("Output language unavailable. Open Altboard", alphabet)
+        self.assertIn("AI actions unavailable. Open Altboard", alphabet)
+
+    def test_listening_animation_respects_accessibility(self):
+        chrome = read("SayboardKeyboard/Views/Layouts/KeyboardChrome.swift")
+        notice = read("Shared/LiveDictationNotice.swift")
+        self.assertIn("AnimatedDictationNoticeLine", chrome)
+        self.assertIn("accessibilityReduceMotion", chrome)
+        self.assertIn("repeatForever(autoreverses: true)", chrome)
+        self.assertIn(".onDisappear { self.bouncing = false }", chrome)
+        self.assertIn("Listening…", notice)
+        self.assertIn("tidy afterwards", notice)
+
     def test_settings_follow_user_tasks(self):
         home = read("Sayboard/Views/SettingsView.swift")
         for heading in ('Section("Speech & AI")', 'Text("App")'):
