@@ -67,10 +67,12 @@ class KeyboardSafetyContracts(unittest.TestCase):
         self.assertIn("let options = self.settings.voiceOutputConfiguration", pipeline)
         self.assertGreaterEqual(pipeline.count("VoiceOutputSelectionPolicy.decide("), 2)
         self.assertIn("self.settings.synchronize()", pipeline)
-        self.assertLess(
-            pipeline.rindex("VoiceOutputSelectionPolicy.decide("),
-            pipeline.index("TranscriptionBridge.writeTranscription(bridgeText)")
-        )
+        last_selection = pipeline.rindex("VoiceOutputSelectionPolicy.decide(")
+        punctuation = pipeline.index("VoicePunctuationPolicy.render(")
+        delivery = pipeline.index("TranscriptionBridge.writeTranscription(finalOutput)")
+        self.assertLess(last_selection, punctuation)
+        self.assertLess(punctuation, delivery)
+        self.assertIn("enabled: options.punctuationEnabled", pipeline)
         self.assertIn("self.targetRawValue = next.target.rawValue", button)
         self.assertIn("FeatureDiagnostics.record(.voiceOutput, .selected)", button)
 

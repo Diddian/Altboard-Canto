@@ -176,6 +176,20 @@ class SettingsContractTests(unittest.TestCase):
         self.assertNotIn('copyFinalTextToClipboardIfEnabled', keyboard + llm_keyboard)
         self.assertIn('UIPasteboard.general.string = result', llm_keyboard)
 
+    def test_unified_word_corrections_and_output_independence(self):
+        word = read("Sayboard/Views/WordCorrectionsView.swift")
+        languages = read("Sayboard/Views/SpeechLanguagesSettingsView.swift")
+        output = read("Sayboard/Views/VoiceOutputSettingsView.swift")
+        self.assertIn("private var combinedEntries: [Entry]", word)
+        self.assertIn("ForEach(self.combinedEntries)", word)
+        self.assertIn("settings.cantoneseCorrectionRules = updated", word)
+        self.assertIn("settings.snippets = updated", word)
+        self.assertIn("settings.snippets = settings.snippets.filter", word)
+        self.assertIn("CantoneseCorrectionsView()", word)
+        self.assertIn("SnippetsView()", word)
+        self.assertNotIn("settings.voiceOutputTarget = .original", languages)
+        self.assertIn("LocalizedStringKey(option.title)", output)
+
     def test_no_custom_swipe_to_switch_app_tabs(self):
         tabs = read("Sayboard/Views/MainTabView.swift")
         self.assertNotIn("pageSwipe(for:", tabs)

@@ -92,7 +92,11 @@ class InterfaceLocalizationTests(unittest.TestCase):
             "Word Corrections", "Speech Corrections", "Phrase Replacements",
             "Include Punctuation", "Keyboard Customization", "Per-App Style",
             "Tap the keys to test haptic feedback.", "Edit Language Priority",
-            "French", "Chinese (Simplified)", "Other language", "History & Storage",
+            "French", "Chinese (Simplified)", "Other language",
+            "Same as spoken (auto)", "Hong Kong Cantonese (繁體)",
+            "Deutsch", "Written Chinese (繁體)",
+            "As spoken", "Casual / natural", "Formal / professional",
+            "History & Storage",
             "Setup & Permissions", "Haptic Feedback", "Output Language",
             "Language Priority", "Free Dictation", "No recordings yet",
         ):

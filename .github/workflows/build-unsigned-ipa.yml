@@ -117,6 +117,9 @@ jobs:
           swiftc -o "$RUNNER_TEMP/voice-punctuation-smoke" \
             Shared/VoicePunctuationPolicy.swift scripts/verify-voice-punctuation.swift
           "$RUNNER_TEMP/voice-punctuation-smoke"
+          swiftc -o "$RUNNER_TEMP/voice-script-smoke" \
+            Shared/VoiceOutputScriptPolicy.swift scripts/verify-voice-script.swift
+          "$RUNNER_TEMP/voice-script-smoke"
           swiftc -o "$RUNNER_TEMP/live-dictation-notice-smoke" \
             Shared/LiveDictationNotice.swift scripts/verify-live-dictation-notice.swift
           "$RUNNER_TEMP/live-dictation-notice-smoke"

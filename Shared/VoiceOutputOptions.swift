@@ -120,6 +120,12 @@ struct VoiceOutputConfiguration: Equatable, Sendable {
   var needsLLM: Bool {
     self.cleanupEnabled || self.target != .original || self.register != .faithful
   }
+
+  var isSimplifiedChinese: Bool {
+    guard self.target == .custom else { return false }
+    let code = self.customLanguage.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    return ["zh-hans", "zh-cn", "zh-sg"].contains(code)
+  }
 }
 
 enum VoiceOutputPrompt {

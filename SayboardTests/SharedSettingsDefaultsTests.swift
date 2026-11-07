@@ -159,6 +159,29 @@ struct SharedSettingsDefaultsTests {
   }
 
   @Test
+  func punctuationIsOptOutAndAIKeyControlsRewriting() throws {
+    let suiteName = Self.uniqueSuiteName()
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { Self.cleanup(suiteName: suiteName) }
+    let settings = SharedSettings(defaults: defaults)
+    #expect(settings.voicePunctuationEnabled)
+    settings.voicePunctuationEnabled = false
+    #expect(!SharedSettings(defaults: defaults).voicePunctuationEnabled)
+
+    #expect(settings.keyboardShowAIButton)
+    #expect(settings.llmEnabled)
+    settings.llmEnabled = false
+    #expect(!SharedSettings(defaults: defaults).keyboardShowAIButton)
+    settings.keyboardShowAIButton = true
+    #expect(SharedSettings(defaults: defaults).llmEnabled)
+
+    // Recording-language preferences do not own the output-language setting.
+    settings.voiceOutputTarget = .german
+    settings.preferredSpokenLanguages = ["yue", "en"]
+    #expect(SharedSettings(defaults: defaults).voiceOutputTarget == .german)
+  }
+
+  @Test
   func swipeTypingRemainsOptInAndKeepsStoredUserChoice() throws {
     let suiteName = Self.uniqueSuiteName()
     let defaults = try #require(UserDefaults(suiteName: suiteName))

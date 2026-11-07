@@ -47,7 +47,7 @@ struct VoiceOutputSettingsView: View {
           Button {
             self.target = option.rawValue
           } label: {
-            Text(option.title)
+            Text(LocalizedStringKey(option.title))
             if self.target == option.rawValue { Image(systemName: "checkmark") }
           }
         }
@@ -91,7 +91,7 @@ struct VoiceOutputSettingsView: View {
     }
     Picker(selection: self.$register) {
       ForEach(VoiceOutputRegister.allCases) { option in
-        Text(option.title).tag(option.rawValue)
+        Text(LocalizedStringKey(option.title)).tag(option.rawValue)
       }
     } label: {
       Label("Tone", systemImage: "text.alignleft")

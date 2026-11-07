@@ -154,7 +154,9 @@ extension SpeechRecognitionService {
 
         // Corrections are applied after display normalization for original /
         // Cantonese targets, preserving the Hong Kong greeting 喂.
-        let displayText = TechnicalTextFormatter.format(CantoneseOutput.normalize(finalText))
+        let displayText = TechnicalTextFormatter.format(
+          CantoneseOutput.normalizeForOutput(finalText, options: options)
+        )
         let styledText = self.styled(displayText, host: stylingHost)
         let bridgeText: String
         switch options.target {
@@ -165,7 +167,8 @@ extension SpeechRecognitionService {
           bridgeText = finalCorrection.text
           DiagnosticLog.write("voice: final user correction matches=\(finalCorrection.matchedRules)")
         default:
-          bridgeText = styledText
+          bridgeText = options.isSimplifiedChinese
+            ? VoiceOutputScriptPolicy.simplify(styledText) : styledText
         }
 
         // Recheck immediately before the irreversible app-to-keyboard handoff.

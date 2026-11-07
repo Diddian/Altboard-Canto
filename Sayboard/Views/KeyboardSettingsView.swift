@@ -165,9 +165,16 @@ private struct KeyboardTestPreview: View {
             .padding(.bottom, 8)
         }
         GeometryReader { geometry in
-          let side = CGFloat(45)
-          let micWidth = max(45, geometry.size.width - 2 * side
-            - (2 * side + 6) - 3 * 6 - 8)
+          // The optional Globe key takes real space in compact preview.
+          // Keep the centered microphone clear of both side-key clusters.
+          let side: CGFloat = self.showGlobeKey ? 38 : 45
+          let leftCount = (self.showGlobeKey ? 1 : 0)
+            + (self.showSettingsKey ? 1 : 0) + (self.outputKeyEnabled ? 1 : 0)
+          let rightCount = (self.showAIButton && self.hasUsableLLMModel ? 1 : 0) + 1
+          let leftWidth = CGFloat(leftCount) * side + CGFloat(max(0, leftCount - 1)) * 6
+          let rightWidth = CGFloat(rightCount) * side + CGFloat(max(0, rightCount - 1)) * 6
+          let micWidth = max(45, min(160, geometry.size.width
+            - 2 * max(leftWidth, rightWidth) - 14))
           ZStack {
             HStack(spacing: 6) {
               if self.showGlobeKey { self.key("globe", width: side) }

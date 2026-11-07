@@ -54,13 +54,8 @@ struct SpeechLanguagesSettingsView: View {
               ),
               for: settings.selectedVariant
             )
-            let old = PreferredVoiceLanguages.currentCode(
-              target: settings.voiceOutputTarget, custom: settings.voiceCustomLanguage
-            )
-            if !old.isEmpty && !self.spokenLanguages.contains(old) {
-              FeatureDiagnostics.record(.language, .fallback)
-              settings.voiceOutputTarget = .original
-            }
+            // Recognition preferences must not reset a separately selected
+            // translation output language.
           }
         )),
         availableLanguages: SpeechLanguages.all,

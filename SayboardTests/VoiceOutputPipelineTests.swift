@@ -102,6 +102,23 @@ struct VoiceOutputPipelineTests {
   }
 
   @Test
+  func simplifiedChineseSelectionDoesNotBecomeTraditionalOnDelivery() {
+    let simplified = VoiceOutputConfiguration(
+      cleanupEnabled: true, target: .custom, register: .faithful,
+      customLanguage: "zh-Hans"
+    )
+    let cantonese = VoiceOutputConfiguration(
+      cleanupEnabled: false, target: .cantonese, register: .faithful,
+      customLanguage: ""
+    )
+    #expect(simplified.isSimplifiedChinese)
+    #expect(!cantonese.isSimplifiedChinese)
+    #expect(VoiceOutputPrompt.systemPrompt(for: simplified).contains("Simplified Chinese"))
+    #expect(VoiceOutputScriptPolicy.simplify("廁所") == "厕所")
+    #expect(!cantonese.isSimplifiedChinese)
+  }
+
+  @Test
   func customLanguageInputsAreConstrained() {
     #expect(VoiceOutputTarget.customLanguageName("fr") != nil)
     #expect(VoiceOutputTarget.customLanguageName("de") != nil)

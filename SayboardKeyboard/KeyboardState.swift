@@ -170,7 +170,7 @@ final class KeyboardState: ObservableObject {
     self.showGlobeKey = self.settings.keyboardShowGlobeKey
     self.showOutputLanguageButton = self.settings.keyboardShowOutputLanguageButton
     self.showAIButton = self.settings.keyboardShowAIButton
-      && self.settings.llmEnabled && self.settings.hasUsableLLMModel
+      && self.settings.hasUsableLLMModel
     self.keyboardKind = self.settings.keyboardKind
     let selectedVariant = self.settings.selectedVariant
     self.selectedVariantSupportsTranslation = selectedVariant.supportsTranslation
