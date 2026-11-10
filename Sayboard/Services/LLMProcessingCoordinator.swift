@@ -45,19 +45,19 @@ final class LLMProcessingCoordinator: ObservableObject {
     let started = CFAbsoluteTimeGetCurrent()
     FeatureDiagnostics.record(.voiceOutput, .started)
     guard !self.isProcessing else {
-      FeatureDiagnostics.record(.voiceOutput, .blocked)
+      FeatureDiagnostics.record(.voiceOutput, .blocked, failureReason: .busy)
       DiagnosticLog.write("voice/llm: already processing")
       return nil
     }
     guard let downloads = self.downloadService, downloads.hasUsableModel else {
-      FeatureDiagnostics.record(.voiceOutput, .unavailable)
+      FeatureDiagnostics.record(.voiceOutput, .unavailable, failureReason: .noTextModel)
       DiagnosticLog.write("voice/llm: offline text model unavailable")
       return nil
     }
     let settings = SharedSettings()
     let variant = settings.selectedLLMVariant
     guard let modelPath = downloads.modelFileURL(for: variant)?.path else {
-      FeatureDiagnostics.record(.voiceOutput, .unavailable)
+      FeatureDiagnostics.record(.voiceOutput, .unavailable, failureReason: .missingModelFile)
       DiagnosticLog.write("voice/llm: selected model file missing")
       return nil
     }
@@ -72,7 +72,7 @@ final class LLMProcessingCoordinator: ObservableObject {
     defer { self.endInferenceBackgroundTask(backgroundTask) }
     await self.prepareForInference(variant: variant, modelPath: modelPath)
     guard self.inferenceService.loadState == .loaded else {
-      FeatureDiagnostics.record(.voiceOutput, .failed)
+      FeatureDiagnostics.record(.voiceOutput, .failed, failureReason: .modelLoadFailed)
       DiagnosticLog.write("voice/llm: offline model load failed")
       return nil
     }
@@ -81,17 +81,17 @@ final class LLMProcessingCoordinator: ObservableObject {
       userText: input, assistantPrefill: ""
     )
     guard let output = result?.trimmingCharacters(in: .whitespacesAndNewlines), !output.isEmpty else {
-      FeatureDiagnostics.record(.voiceOutput, .failed)
+      FeatureDiagnostics.record(.voiceOutput, .failed, failureReason: .inferenceUnavailable)
       DiagnosticLog.write("voice/llm: output missing or timed out")
       return nil
     }
     guard VoiceLanguageValidator.matches(output, target: options.target) else {
-      FeatureDiagnostics.record(.voiceOutput, .rejected)
+      FeatureDiagnostics.record(.voiceOutput, .rejected, failureReason: .invalidTargetLanguage)
       DiagnosticLog.write("voice/llm: generated text did not match selected language")
       return nil
     }
     if input.count >= 30, output.count > max(input.count * 4, input.count + 200) {
-      FeatureDiagnostics.record(.voiceOutput, .rejected)
+      FeatureDiagnostics.record(.voiceOutput, .rejected, failureReason: .oversizedOutput)
       DiagnosticLog.write("voice/llm: output excessively long")
       return nil
     }

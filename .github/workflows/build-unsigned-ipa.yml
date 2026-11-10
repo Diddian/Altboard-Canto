@@ -64,6 +64,13 @@ jobs:
             scripts/verify-recording-policies.swift
           "$RUNNER_TEMP/recording-policies-smoke"
 
+      - name: Verify keyboard lifecycle timing and incomplete callbacks
+        run: |
+          set -euo pipefail
+          swiftc -swift-version 6 -o "$RUNNER_TEMP/lifecycle-timing-smoke" \
+            Shared/KeyboardLifecycleTiming.swift scripts/verify-keyboard-lifecycle-timing.swift
+          "$RUNNER_TEMP/lifecycle-timing-smoke"
+
       - name: Bootstrap llama.cpp framework
         run: |
           set -euo pipefail

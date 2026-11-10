@@ -40,6 +40,17 @@ checklist entries open until verified. A passing pre-build suite is not
 - `T-001–T-018`: legacy feature and iPhone-acceptance history, not replacement
   instructions for current owners. Cross-reference their still-open device issues.
 
+**2026-11-10 continued source batch:** lifecycle-timing observability,
+recoverable export-cancellation staging, unreadable meeting-folder warning,
+model-loading Reduce Motion/low-storage handling, one-row Language Priority,
+explicitly unrated Heretic model quality/speed, and enum-only voice-translation
+failure diagnostics. These source changes are NOT yet compiled or iPhone-tested;
+no workstream completion checkbox is newly granted by this source batch.
+The Turkish-to-Cantonese output failure has no verified root cause;
+collect exported development diagnostics after reproducing the issue (no
+transcript/audio is included in FeatureDiagnostics).
+Do not trigger unsigned IPA on this staging commit. #174 remains usable.
+
 ## T-024 - Consolidated mainline implementation batch (2026-11-10)
 
 **Goal:** accumulate independently reviewable fixes and regression checks before
@@ -152,6 +163,9 @@ new server, duplicate keyboard coordinator, animation engine or model dependency
   host focus, extension relaunch, app/keyboard App Group handshake and the
   historical blank drawing board. Correlate `KeyboardLifecycleTrace` and
   physical-device evidence before replacing loading logic.
+  Source preparation: session-scoped load/mount and appearance/checkpoint
+  timing in export-only development diagnostics; no blank-board fix or
+  physical-device performance result verified.
 - [x] T-023.10 Source review of audio lifecycle complete: session activation
   rollback, tap/converter setup, interruption, restart and audio-writer error
   paths were traced; a separate write-failure flag is prepared.
@@ -170,20 +184,38 @@ new server, duplicate keyboard coordinator, animation engine or model dependency
   Voice Output custom-language code/error feedback, AI availability,
   model downloads, keyboard previews and Diagnostics with long EN/DE/zh-Hant
   labels, larger text and VoiceOver; preserve saved settings.
+  Source preparation: Language Priority is one non-expandable row showing
+  ordered language codes with the existing editor behind one tap;
+  Heretic text-model cards say Quality/Speed Unrated instead of hiding
+  zero-placeholder values. iPhone accessibility/layout remains unverified.
 - [ ] T-023.14 Storage and privacy: verify atomic export/delete/recovery
   across voice notes, meeting parts, corrections and models, interrupted
   operations, App Group permissions and private metadata. No transcript,
   host input, swipe path or raw audio in feature diagnostics.
+  Source preparation: cancelled export propagates to detached archive worker;
+  unreadable meeting manifests retain original files and show a warning.
+  Device export, restore, interruption and deletion paths remain unverified.
 - [ ] T-023.15 Motion/performance: audit long-running keyboard microphone
   animations, reduced-motion paths, offscreen cancellation, layout stability,
   touch latency and repeated observers. Use existing SwiftUI/UIKit primitives;
   Raea is not a keyboard UI dependency.
+  Source preparation: model-loading dots stop for Reduce Motion, and the
+  low-storage warning no longer depends on the Neural Engine policy.
+  Timing is reported as completed lifecycle callbacks, not touch latency.
 - [ ] T-023.16 Language/IME and suggestions: reuse T-012, T-013 and T-021;
   measure Cantonese mixed romanization and EN/DE candidates against current
   dictionaries before changing ranking or introducing another decoder.
+  User-reported Turkish speech may be transcribed despite no Turkish priority:
+  Qwen3 preferences are not a language lock; no recognition fix verified.
 - [ ] T-023.17 Speech models and technical research: reuse T-022 and T-019;
   compare measured Parakeet v3/Core ML, Whisper, Moonshine and Qwen3 to
   Meetily's desktop strategies. No unverified 4x claim or new ONNX default.
+  Existing FIFO/diagnostics optimization is not a measured iPhone speedup.
+  Turkish-to-yue output requires an available offline text LLM; the current
+  coordinator has a short generation deadline. Bounded enum-only failure
+  reasons now distinguish absent model, load/inference failure, invalid
+  target output and concurrent busy state. The reported cause needs actual
+  exported Diagnostics JSON.
 - [x] T-023.18 Strengthen affected deterministic policy tests and verify actual
   CI jobs and artifact metadata. Build #174 passed; its 80,008,179-byte IPA
   matches the published development asset and exact source SHA. The previous

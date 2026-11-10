@@ -38,6 +38,16 @@ struct MeetingRecordsView: View {
           }
           .accessibilityElement(children: .contain)
         }
+        if self.recorder.unreadableRecordCount > 0 {
+          Label(
+            "\(self.recorder.unreadableRecordCount) meeting folder(s) could not be loaded. "
+              + "Original files are preserved. Export data before deleting anything.",
+            systemImage: "externaldrive.badge.exclamationmark"
+          )
+          .font(.footnote)
+          .foregroundStyle(.orange)
+          .fixedSize(horizontal: false, vertical: true)
+        }
         if self.recorder.isRecording, let current = self.recorder.current {
           self.activeMeetingCard(current)
         }

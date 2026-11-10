@@ -246,7 +246,7 @@ enum KeyboardLifecycleTrace {
     guard flock(fd, LOCK_EX) == 0 else { return }
     defer { _ = flock(fd, LOCK_UN) }
     let size = lseek(fd, 0, SEEK_END)
-    if size > maxBytes { _ = ftruncate(fd, 0) }
+    if size >= 0 && size + off_t(data.count) > maxBytes { _ = ftruncate(fd, 0) }
     data.withUnsafeBytes { raw in
       guard let start = raw.baseAddress else { return }
       var written = 0
@@ -523,6 +523,40 @@ enum KeyboardLifecycleTrace {
     ]
   }
 
+  /// Source-local lifecycle timing. Checkpoints are structural, not proof of
+  /// displayed pixels. Missing callbacks remain missing, never zero latency.
+  private static func activationTimingReview(for events: [[String: Any]]) -> [String: Any] {
+    let samples = events.compactMap { item -> KeyboardLifecycleTiming.Signal? in
+      guard let event = item["event"] as? String,
+            let stage = KeyboardLifecycleTiming.Stage(rawValue: event),
+            let session = item["session"] as? String,
+            let timestamp = (item["timestampMs"] as? NSNumber)?.int64Value
+      else { return nil }
+      return .init(timestamp, stage, session: session)
+    }
+    let summary = KeyboardLifecycleTiming.analyze(samples)
+    let recent: [[String: Any]] = summary.recentAppearances.map { sample in
+      [
+        "session": sample.session,
+        "startedAtMs": sample.startedAtMs,
+        "didAppearDelayMs": sample.didAppearDelayMs.map { $0 as Any } ?? NSNull(),
+        "checkpointDelayMs": sample.checkpointDelayMs.map { $0 as Any } ?? NSNull(),
+        "suspiciousRender": sample.suspiciousRender
+      ]
+    }
+    return [
+      "appearanceCount": summary.appearanceCount,
+      "didAppearCount": summary.didAppearCount,
+      "checkpointCount": summary.checkpointCount,
+      "suspiciousAppearanceCount": summary.suspiciousAppearanceCount,
+      "coldMountCount": summary.coldMountCount,
+      "observedP95ColdLoadToMountMs": summary.p95ColdLoadToMountMs.map { $0 as Any } ?? NSNull(),
+      "observedP95AppearanceToCheckpointMs": summary.p95AppearanceToCheckpointMs.map { $0 as Any } ?? NSNull(),
+      "recentAppearances": recent,
+      "interpretation": "Completed callback intervals only, capped at 60 seconds. Checkpoints do not prove pixels, finger-to-glass latency or keyboard selection. Missing or interrupted appearances are excluded from p95 and remain visible in the counts."
+    ]
+  }
+
   static func handoffReview() -> [String: Any] {
     handoffReview(for: entries())
   }
@@ -530,7 +564,7 @@ enum KeyboardLifecycleTrace {
   static func exportJSON() -> String {
     let events = entries()
     let document: [String: Any] = [
-      "schemaVersion": 8,
+      "schemaVersion": 9,
       "exportedAtMs": Int64(Date().timeIntervalSince1970 * 1_000),
       "appBuild": Bundle.main.infoDictionary?["AltboardBuildSHA"] as? String ?? "unknown",
       "keyboardBuild": AppGroup.sharedDefaults?.string(forKey: "canto.keyboardBuildSHA") ?? "unknown",
@@ -544,9 +578,10 @@ enum KeyboardLifecycleTrace {
       "postSubmitReview": postSubmitReview(for: events),
       "documentIdentityReview": documentIdentityReview(for: events),
       "memoryReview": memoryReview(for: events),
+      "activationTimingReview": activationTimingReview(for: events),
     ]
     guard let data = try? JSONSerialization.data(withJSONObject: document, options: [.prettyPrinted, .sortedKeys])
-    else { return "{\"schemaVersion\":8,\"events\":[]}" }
+    else { return "{\"schemaVersion\":9,\"events\":[]}" }
     return String(decoding: data, as: UTF8.self)
   }
 

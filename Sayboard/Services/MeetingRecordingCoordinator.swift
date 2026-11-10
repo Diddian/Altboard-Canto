@@ -46,6 +46,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
   @Published private(set) var status = "Not recording"
   @Published private(set) var current: MeetingRecord?
   @Published private(set) var records = [MeetingRecord]()
+  @Published private(set) var unreadableRecordCount = 0
 
   private let audioRecorder = AudioRecorder()
   private let accumulator = AudioBufferAccumulator(maximumUnreadSamples: 16_000 * 120)
@@ -377,11 +378,23 @@ final class MeetingRecordingCoordinator: ObservableObject {
     guard let root = Self.meetingsDirectory(),
           let folders = try? FileManager.default.contentsOfDirectory(at: root,
                                               includingPropertiesForKeys: nil) else { return }
+    var unreadable = 0
     let loaded = folders.compactMap { folder -> MeetingRecord? in
-      guard let data = try? Data(contentsOf: folder.appendingPathComponent("manifest.json"))
-      else { return nil }
-      return try? JSONDecoder().decode(MeetingRecord.self, from: data)
+      // Preserve unrecognized meeting folders instead of silently hiding
+      // their saved audio after interrupted writes or process termination.
+      guard let folderID = UUID(uuidString: folder.lastPathComponent) else { return nil }
+      guard let data = try? Data(contentsOf: folder.appendingPathComponent("manifest.json")),
+            let record = try? JSONDecoder().decode(MeetingRecord.self, from: data),
+            record.id == folderID else {
+        unreadable += 1
+        return nil
+      }
+      return record
     }.sorted { $0.startedAt < $1.startedAt }
+    if unreadable != self.unreadableRecordCount {
+      self.unreadableRecordCount = unreadable
+      if unreadable > 0 { FeatureDiagnostics.record(.meeting, .fallback) }
+    }
     self.records = loaded.enumerated().map { index, record in
       var normalized = record
       if normalized.sequenceNumber == nil { normalized.sequenceNumber = index + 1 }

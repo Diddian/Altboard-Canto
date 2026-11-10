@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ModelLoadingLabel: View {
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
   var isLoading: Bool
   var lowStorage: Bool
@@ -16,8 +17,9 @@ struct ModelLoadingLabel: View {
       .padding(.horizontal, 12.kbScaled)
       .padding(.top, 4.kbScaled)
       .padding(.bottom, 8.kbScaled)
-      .task(id: self.isLoading) {
-        guard self.isLoading else { return }
+      .accessibilityLabel(self.message)
+      .task(id: self.isLoading && !self.reduceMotion) {
+        guard self.isLoading && !self.reduceMotion else { return }
         self.dotCount = 1
         await self.runDotTimer()
       }
@@ -31,13 +33,13 @@ struct ModelLoadingLabel: View {
   private var labelText: Text {
     let dots = Text(verbatim: String(repeating: ".", count: self.dotCount))
       + Text(verbatim: String(repeating: ".", count: Self.maxDots - self.dotCount)).foregroundColor(.clear)
-    let text = Text(self.message) + dots
+    let text = self.isLoading && !self.reduceMotion ? Text(self.message) + dots : Text(self.message)
     guard self.showsLowStorageWarning else { return text }
     return Text(verbatim: "\u{26A0}\u{FE0F} ") + text
   }
 
   private var showsLowStorageWarning: Bool {
-    self.lowStorage && !OperatingSystem.isBackgroundNeuralEngineBlocked
+    self.lowStorage
   }
 
   private var message: LocalizedStringKey {

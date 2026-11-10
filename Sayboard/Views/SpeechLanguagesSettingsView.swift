@@ -70,42 +70,52 @@ struct SpeechLanguagesSettingsView: View {
 
   @ViewBuilder
   private var languageSelectionRows: some View {
-    DisclosureGroup(isExpanded: self.$showsLanguagePriority) {
-      Button {
-        self.showPreferredLanguagePicker = true
-      } label: {
-        VStack(alignment: .leading, spacing: 5) {
-          if self.spokenLanguages.isEmpty {
-            Text("Any language").foregroundStyle(.secondary)
-          } else {
-            ForEach(Array(self.spokenLanguages.enumerated()), id: \.offset) { item in
-              Text("\(item.offset + 1). " + self.displayName(for: item.element))
-                .foregroundStyle(.secondary)
-            }
-          }
-          Label("Edit Language Priority", systemImage: "arrow.up.arrow.down")
-            .font(.footnote)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-      }
-      .buttonStyle(.plain)
-      if !self.unsupportedSpokenLanguages.isEmpty {
-        Label(
-          "The selected speech model may not recognize: \(self.unsupportedSpokenLanguages.joined(separator: ", "))",
-          systemImage: "exclamationmark.triangle"
-        )
-        .font(.footnote)
-        .foregroundStyle(.orange)
-      }
+    Button {
+      self.showPreferredLanguagePicker = true
     } label: {
-      Label("Language Priority", systemImage: "globe")
+      HStack(spacing: 10) {
+        Label("Language Priority", systemImage: "globe")
+          .foregroundStyle(.primary)
+        Spacer(minLength: 8)
+        Text(verbatim: self.languagePrioritySummary)
+          .font(.subheadline.monospaced())
+          .foregroundStyle(.secondary)
+          .lineLimit(1)
+          .truncationMode(.middle)
+        Image(systemName: "chevron.right")
+          .font(.caption.weight(.semibold))
+          .foregroundStyle(.tertiary)
+      }
+      .contentShape(Rectangle())
+      .frame(minHeight: 44)
     }
+    .buttonStyle(.plain)
+    .accessibilityLabel("Language Priority")
+    .accessibilityValue(self.languagePriorityAccessibilityValue)
+    .accessibilityHint("Open language priority editor to add, remove or reorder languages")
+    if !self.unsupportedSpokenLanguages.isEmpty {
+      Label(
+        "The selected speech model may not recognize: \(self.unsupportedSpokenLanguages.joined(separator: ", "))",
+        systemImage: "exclamationmark.triangle"
+      )
+      .font(.footnote)
+      .foregroundStyle(.orange)
+    }
+  }
+
+  private var languagePrioritySummary: String {
+    let codes = PreferredVoiceLanguages.normalized(self.spokenLanguages)
+    return codes.isEmpty ? "AUTO" : codes.joined(separator: " · ")
+  }
+
+  private var languagePriorityAccessibilityValue: String {
+    self.spokenLanguages.isEmpty ? "Any language" :
+      self.spokenLanguages.map { self.displayName(for: $0) }.joined(separator: ", ")
   }
 
   @EnvironmentObject private var speechModels: ModelDownloadService
   @State private var spokenLanguages = SharedSettings().preferredSpokenLanguages
   @State private var showPreferredLanguagePicker = false
-  @State private var showsLanguagePriority = true
   @Environment(\.locale) private var locale
 
   private func displayName(for code: String) -> String {

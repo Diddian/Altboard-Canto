@@ -100,42 +100,62 @@ enum LocalUserDataStore {
       let historyData = try JSONEncoder().encode(records)
       let audioDirectory = HistoryStore.shared.audioDirectoryURL
       let vocabulary = categories.contains(.vocabulary) ? try self.vocabularyData() : nil
-      // Copy and compress audio off the main actor; no recording enters memory as Data.
-      let exportURL = try await Task.detached(priority: .userInitiated) {
+      // Cancelled exports stop producing an archive, even when the view
+      // disappears. A single worker owns and cleans its temporary directory.
+      let worker = Task.detached(priority: .userInitiated) { () throws -> URL in
         let fm = FileManager.default
         let temporary = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         let folder = temporary.appendingPathComponent("Altboard-Data", isDirectory: true)
         do {
+          try Task.checkCancellation()
           try fm.createDirectory(at: folder, withIntermediateDirectories: true)
           if categories.contains(.voiceNotes) {
             let notes = folder.appendingPathComponent("Voice-Notes", isDirectory: true)
             try fm.createDirectory(at: notes, withIntermediateDirectories: true)
             try historyData.write(to: notes.appendingPathComponent("records.json"), options: .atomic)
             if let audio = audioDirectory, fm.fileExists(atPath: audio.path) {
+              try Task.checkCancellation()
               try fm.copyItem(at: audio, to: notes.appendingPathComponent("Audio", isDirectory: true))
             }
           }
           if categories.contains(.meetings) {
             let meetings = group.appendingPathComponent("meetings", isDirectory: true)
             if fm.fileExists(atPath: meetings.path) {
+              try Task.checkCancellation()
               try fm.copyItem(at: meetings, to: folder.appendingPathComponent("Meetings", isDirectory: true))
             }
           }
           if let vocabulary {
+            try Task.checkCancellation()
             try vocabulary.write(to: folder.appendingPathComponent("Vocabulary.json"), options: .atomic)
           }
+          try Task.checkCancellation()
           let archive = temporary.appendingPathComponent("Altboard-Data.zip")
           try fm.zipItem(at: folder, to: archive)
+          try Task.checkCancellation()
           try fm.removeItem(at: folder)
           try fm.setAttributes([.protectionKey: FileProtectionType.complete], ofItemAtPath: archive.path)
+          try Task.checkCancellation()
           return archive
         } catch {
           try? fm.removeItem(at: temporary)
           throw error
         }
-      }.value
+      }
+      let exportURL = try await withTaskCancellationHandler {
+        try await worker.value
+      } onCancel: {
+        worker.cancel()
+      }
+      if Task.isCancelled {
+        try? FileManager.default.removeItem(at: exportURL.deletingLastPathComponent())
+        throw CancellationError()
+      }
       FeatureDiagnostics.record(.data, .completed)
       return exportURL
+    } catch is CancellationError {
+      FeatureDiagnostics.record(.data, .cancelled)
+      throw CancellationError()
     } catch {
       FeatureDiagnostics.record(.data, .failed)
       throw error

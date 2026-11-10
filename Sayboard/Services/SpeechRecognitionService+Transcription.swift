@@ -180,7 +180,7 @@ extension SpeechRecognitionService {
         if modelOutputMissing && options.target != .original {
           // An explicit translation must never fall back to spoken-language text.
           self.settings.lastDictationOutcome = .processingFailed
-          FeatureDiagnostics.record(.voiceOutput, .failed)
+          FeatureDiagnostics.record(.voiceOutput, .failed, failureReason: .inferenceUnavailable)
           DiagnosticLog.write("voice: selected output language unavailable; raw speech retained in history")
           return
         }

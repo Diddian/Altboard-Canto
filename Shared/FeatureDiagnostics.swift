@@ -31,10 +31,16 @@ enum FeatureDiagnostics {
     let speechEngine: SpeechEngine?
     let audioDurationMs: Int?
     let residentMB: Int?
+    let failureReason: FailureReason?
   }
 
   enum SpeechEngine: String, Codable, Sendable {
     case whisperKit, parakeet, moonshine, qwen3
+  }
+
+  enum FailureReason: String, Codable, Sendable {
+    case busy, noTextModel, missingModelFile, modelLoadFailed
+    case inferenceUnavailable, invalidTargetLanguage, oversizedOutput
   }
 
   private static let filename = "feature-diagnostics-v1.jsonl"
@@ -44,7 +50,8 @@ enum FeatureDiagnostics {
 
   static func record(
     _ area: Area, _ event: Event, durationMs: Int? = nil,
-    speechEngine: SpeechEngine? = nil, audioDurationMs: Int? = nil, residentMB: Int? = nil
+    speechEngine: SpeechEngine? = nil, audioDurationMs: Int? = nil, residentMB: Int? = nil,
+    failureReason: FailureReason? = nil
   ) {
     #if !APPSTORE
     let entry = Entry(
@@ -55,7 +62,8 @@ enum FeatureDiagnostics {
       durationMs: durationMs.map { max(0, min(7_200_000, $0)) },
       speechEngine: speechEngine,
       audioDurationMs: audioDurationMs.map { max(0, min(7_200_000, $0)) },
-      residentMB: residentMB.map { max(0, min(131_072, $0)) }
+      residentMB: residentMB.map { max(0, min(131_072, $0)) },
+      failureReason: failureReason
     )
     if event == .failed || event == .interrupted || (area == .appStartup && event == .started) {
       queue.sync { append(entry) }

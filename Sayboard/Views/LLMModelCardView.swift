@@ -62,13 +62,13 @@ struct LLMModelCardView: View, Equatable {
     if self.dynamicTypeSize.isAccessibilitySize {
       VStack(alignment: .leading, spacing: 6) {
         self.titleAndBadges
-        if self.variant.hereticTier == nil { self.statBars }
+        self.statBars
       }
     } else {
       HStack(alignment: .top) {
         self.titleAndBadges
         Spacer()
-        if self.variant.hereticTier == nil { self.statBars }
+        self.statBars
       }
     }
   }
@@ -89,10 +89,23 @@ struct LLMModelCardView: View, Equatable {
   }
 
   private var statBars: some View {
-    ModelStatBars(stats: [
-      ModelStat(labelKey: "quality", value: self.variant.quality),
-      ModelStat(labelKey: "speed", value: self.variant.speed),
-    ])
+    Group {
+      if self.variant.hereticTier != nil {
+        VStack(alignment: .trailing, spacing: 3) {
+          Text("Quality: Unrated")
+          Text("Speed: Unrated")
+        }
+        .font(.caption2)
+        .foregroundStyle(.secondary)
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("No comparable iPhone benchmark is available for this model")
+      } else {
+        ModelStatBars(stats: [
+          ModelStat(labelKey: "quality", value: self.variant.quality),
+          ModelStat(labelKey: "speed", value: self.variant.speed),
+        ])
+      }
+    }
   }
 
   private var languageTag: some View {

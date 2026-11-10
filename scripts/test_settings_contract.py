@@ -11,6 +11,78 @@ def read(path):
 
 
 class SettingsContractTests(unittest.TestCase):
+    def test_language_priority_is_one_row_with_existing_editor(self):
+        source = read("Sayboard/Views/SpeechLanguagesSettingsView.swift")
+        self.assertIn('self.showPreferredLanguagePicker = true', source)
+        self.assertIn('Text(verbatim: self.languagePrioritySummary)', source)
+        self.assertIn('codes.joined(separator: " · ")', source)
+        self.assertIn('Image(systemName: "chevron.right")', source)
+        self.assertIn('mode: .ordered(Binding(', source)
+        self.assertIn('.accessibilityValue(self.languagePriorityAccessibilityValue)', source)
+        self.assertNotIn("DisclosureGroup(isExpanded: self.$showsLanguagePriority)", source)
+
+    def test_heretic_model_scores_are_explicitly_unrated(self):
+        card = read("Sayboard/Views/LLMModelCardView.swift")
+        variant = read("Shared/LLMConstants.swift")
+        self.assertIn('Text("Quality: Unrated")', card)
+        self.assertIn('Text("Speed: Unrated")', card)
+        self.assertIn('if self.variant.hereticTier != nil', card)
+        self.assertIn('ModelStatBars(stats: [', card)
+        self.assertIn('case .hereticSmall, .hereticBalanced, .hereticLarge: 0', variant)
+
+    def test_voice_output_failure_reasons_are_enum_only(self):
+        diagnostics = read("Shared/FeatureDiagnostics.swift")
+        coordinator = read("Sayboard/Services/LLMProcessingCoordinator.swift")
+        pipeline = read("Sayboard/Services/SpeechRecognitionService+Transcription.swift")
+        self.assertIn('enum FailureReason: String, Codable, Sendable', diagnostics)
+        self.assertIn('let failureReason: FailureReason?', diagnostics)
+        for reason in ('.busy', '.noTextModel', '.missingModelFile',
+                       '.modelLoadFailed', '.inferenceUnavailable',
+                       '.invalidTargetLanguage', '.oversizedOutput'):
+            self.assertIn('failureReason: ' + reason, coordinator)
+        self.assertIn('failureReason: .inferenceUnavailable', pipeline)
+        self.assertNotIn('let rawText: String', diagnostics)
+        self.assertNotIn('let transcript: String', diagnostics)
+
+    def test_cancellable_export_and_orphaned_meeting_recovery_warning(self):
+        data = read("Sayboard/Services/LocalUserDataStore.swift")
+        view = read("Sayboard/Views/DataAndStorageSettingsView.swift")
+        meeting = read("Sayboard/Services/MeetingRecordingCoordinator.swift")
+        records = read("Sayboard/Views/MeetingRecordsView.swift")
+        self.assertIn("withTaskCancellationHandler", data)
+        self.assertIn("worker.cancel()", data)
+        self.assertGreaterEqual(data.count("try Task.checkCancellation()"), 5)
+        self.assertIn("try? fm.removeItem(at: temporary)", data)
+        self.assertIn("catch is CancellationError", data)
+        self.assertIn("FeatureDiagnostics.record(.data, .cancelled)", data)
+        self.assertIn("self.exportTask?.cancel()", view)
+        self.assertIn("onDismiss: { self.clearExport() }", view)
+        self.assertIn("var unreadable = 0", meeting)
+        self.assertIn("record.id == folderID", meeting)
+        self.assertIn("self.unreadableRecordCount = unreadable", meeting)
+        self.assertIn("FeatureDiagnostics.record(.meeting, .fallback)", meeting)
+        self.assertIn("self.recorder.unreadableRecordCount > 0", records)
+        self.assertIn("Original files are preserved.", records)
+
+    def test_loading_label_respects_motion_and_storage_warnings(self):
+        loading = read("SayboardKeyboard/Views/ModelLoadingLabel.swift")
+        self.assertIn("@Environment(\\.accessibilityReduceMotion)", loading)
+        self.assertIn(".task(id: self.isLoading && !self.reduceMotion)", loading)
+        self.assertIn("self.lowStorage", loading)
+        self.assertNotIn("!OperatingSystem.isBackgroundNeuralEngineBlocked", loading)
+        self.assertIn(".accessibilityLabel(self.message)", loading)
+
+    def test_lifecycle_timing_does_not_fabricate_physical_results(self):
+        trace = read("Shared/KeyboardLifecycleTrace.swift")
+        timing = read("Shared/KeyboardLifecycleTiming.swift")
+        self.assertIn('"activationTimingReview": activationTimingReview(for: events)', trace)
+        self.assertIn('"observedP95AppearanceToCheckpointMs"', trace)
+        self.assertIn('"schemaVersion": 9', trace)
+        self.assertIn("activeAppearances.removeValue(forKey: signal.session)", timing)
+        self.assertIn("subtractingReportingOverflow", timing)
+        self.assertIn("guard !numbers.isEmpty else { return nil }", timing)
+        self.assertIn("Checkpoints do not prove pixels", trace)
+
     def test_haptic_reset_and_strength_are_reachable(self):
         settings = read("Sayboard/Views/KeyboardSettingsView.swift")
         shared = read("Shared/SharedSettings.swift")
