@@ -77,10 +77,10 @@ final class MeetingRecordingCoordinator: ObservableObject {
   func start(with service: SpeechRecognitionService, title: String = "", notes: String = "") {
     guard !self.isRecording, !self.isFinalizing, self.translatingRecordID == nil,
           !service.isRecording, !service.isStopping,
-          SharedSettings().selectedVariant == .qwen3ASR17B,
+          SharedSettings().hasUsableModel,
           let root = Self.meetingsDirectory() else {
       FeatureDiagnostics.record(.meeting, .blocked)
-      self.status = "Select Qwen3-ASR 1.7B and stop other dictation first."
+      self.status = "Download and select a speech model. Stop other dictation first."
       return
     }
     let sessionStartedHere = !service.session.isSessionActive
@@ -129,7 +129,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
     self.incompleteAudio = false
     self.backlogOverflowReported = false
     do {
-      try service.session.activateTap(accumulator: self.accumulator, recorder: self.audioRecorder)
+      try service.session.beginCapture(owner: .meeting, accumulator: self.accumulator, recorder: self.audioRecorder)
     } catch {
       FeatureDiagnostics.record(.meeting, .failed)
       self.status = "Microphone audio unavailable; reconnect it and try again."
@@ -161,7 +161,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
           try? await Task.sleep(for: .milliseconds(400))
           continue
         }
-        let result = await service.qwen3Service.transcribe(audioSamples: samples)
+        let result = await service.transcribeSamples(samples)
         // The current decoded chunk is still part of the saved meeting even
         // when Stop was pressed during the native inference call.
         switch result {
@@ -202,7 +202,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
     let finishingDecode = self.decodeTask
     finishingDecode?.cancel()
     self.decodeTask = nil
-    self.speechService?.session.deactivateTap()
+    self.speechService?.session.endCapture(owner: .meeting)
     self.closeCurrentPart()
     self.speechService?.session.endSession()
     self.sessionObservation?.cancel()
@@ -228,7 +228,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
             transcriptIncomplete = true
             break
           }
-          let result = await service.qwen3Service.transcribe(audioSamples: samples)
+          let result = await service.transcribeSamples(samples)
           switch result {
           case .text(let output): self.appendTranscript(output.text)
           case .failed: transcriptIncomplete = true

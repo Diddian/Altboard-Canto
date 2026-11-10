@@ -22,18 +22,25 @@ extension ModelDownloadService {
   }
 
   func enqueueDownload(variant: ModelVariant) async {
-    if variant.engine == .qwen3 {
+    if variant.engine == .qwen3 || variant.engine == .senseVoice {
       do {
-        try await QwenHubDownloader.download(variant: variant) { [weak self] fraction in
-          guard let self, self.enqueueTasks[variant] != nil else { return }
-          guard case .downloading = self.state(for: variant) else { return }
-          self.variantStates[variant] = .downloading(
-            progress: min(max(fraction, 0) * Self.downloadProgressCeiling, Self.downloadProgressCeiling)
-          )
+        if variant.engine == .senseVoice {
+          try await SenseVoiceModelDownloader.download { [weak self] fraction in
+            guard let self, self.enqueueTasks[variant] != nil else { return }
+            self.variantStates[variant] = .downloading(progress: min(fraction * 0.95, 0.95))
+          }
+        } else {
+          try await QwenHubDownloader.download(variant: variant) { [weak self] fraction in
+            guard let self, self.enqueueTasks[variant] != nil else { return }
+            guard case .downloading = self.state(for: variant) else { return }
+            self.variantStates[variant] = .downloading(
+              progress: min(max(fraction, 0) * Self.downloadProgressCeiling, Self.downloadProgressCeiling)
+            )
+          }
         }
         try Task.checkCancellation()
         guard ModelStorageManager.isDownloaded(variant) else {
-          throw QwenHubDownloader.DownloadError.incompatible("Expected Qwen3 ONNX files were not found after download")
+          throw QwenHubDownloader.DownloadError.incompatible("Downloaded speech model files were not verified")
         }
         // Use the same preparing-model progress phase as every other model.
         let modelReady = await self.loadModelAfterDownload(variant: variant)
@@ -49,7 +56,7 @@ extension ModelDownloadService {
       } catch {
         FeatureDiagnostics.record(.speechModel, Task.isCancelled ? .cancelled : .failed)
         self.variantStates[variant] = Task.isCancelled ? .notDownloaded
-          : .error(message: "Qwen download failed: \(error.localizedDescription)")
+          : .error(message: "Speech model download failed: \(error.localizedDescription)")
         self.removeVariantFromPersistence(variant)
       }
       self.enqueueTasks[variant] = nil

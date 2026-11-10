@@ -142,7 +142,7 @@ struct MeetingRecordsView: View {
     .alert("Meeting Model Needed", isPresented: self.$showModelNotice) {
       Button("OK", role: .cancel) {}
     } message: {
-      Text("Meeting recording requires a downloaded Qwen3-ASR 1.7B model. Open Settings → Speech & AI → Speech Model to select it.")
+      Text("Meeting recording requires a downloaded speech model. Open Settings → Speech & AI → Speech Models to select one.")
     }
   }
 
@@ -370,7 +370,7 @@ struct MeetingRecordsView: View {
       return
     }
     let settings = SharedSettings()
-    guard settings.selectedVariant == .qwen3ASR17B, settings.hasUsableModel else {
+    guard settings.hasUsableModel else {
       self.showModelNotice = true
       return
     }

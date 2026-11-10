@@ -21,6 +21,8 @@ enum ModelStorageManager {
       return self.containsONNXModel(at: dir)
     case .qwen3:
       return Qwen3ModelBundle.isValid(directory: dir)
+    case .senseVoice:
+      return SenseVoiceModelBundle.isValid(directory: dir)
     }
   }
 

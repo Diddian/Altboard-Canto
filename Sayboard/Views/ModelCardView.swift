@@ -108,11 +108,23 @@ struct ModelCardView: View, Equatable {
     .animation(.easeInOut(duration: 0.35), value: self.isActive)
   }
 
+  @ViewBuilder
   private var statBars: some View {
-    ModelStatBars(stats: [
-      ModelStat(labelKey: "accuracy", value: self.variant.accuracy),
-      ModelStat(labelKey: "speed", value: self.variant.speed),
-    ])
+    if self.variant == .senseVoiceSmall {
+      VStack(alignment: .trailing, spacing: 2) {
+        Text("Accuracy: Unrated")
+        Text("Speed: Unrated")
+      }
+      .font(.caption2)
+      .foregroundStyle(.secondary)
+      .accessibilityElement(children: .combine)
+      .accessibilityHint("No comparable iPhone benchmark is available yet")
+    } else {
+      ModelStatBars(stats: [
+        ModelStat(labelKey: "accuracy", value: self.variant.accuracy),
+        ModelStat(labelKey: "speed", value: self.variant.speed),
+      ])
+    }
   }
 
   @ViewBuilder

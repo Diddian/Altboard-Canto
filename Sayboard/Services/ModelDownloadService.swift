@@ -48,6 +48,12 @@ final class ModelDownloadService: ObservableObject {
   }
 
   func selectVariant(_ variant: ModelVariant) {
+    guard !MeetingRecordingCoordinator.shared.isRecording,
+          !MeetingRecordingCoordinator.shared.isFinalizing,
+          !SharedSettings().isRecording else {
+      FeatureDiagnostics.record(.speechModel, .blocked)
+      return
+    }
     FeatureDiagnostics.record(.speechModel, .selected)
     let settings = SharedSettings()
     settings.selectedVariant = variant
@@ -141,6 +147,13 @@ final class ModelDownloadService: ObservableObject {
   }
 
   func startDownload(variant: ModelVariant) {
+    guard !MeetingRecordingCoordinator.shared.isRecording,
+          !MeetingRecordingCoordinator.shared.isFinalizing,
+          !SharedSettings().isRecording else {
+      FeatureDiagnostics.record(.speechModel, .blocked)
+      self.variantStates[variant] = .error(message: "Stop recording before downloading a speech model.")
+      return
+    }
     if variant.engine == .qwen3 {
       // Avoid concurrent foreground tasks for the same multi-GB model.
       guard self.enqueueTasks[variant] == nil else { return }
@@ -183,6 +196,12 @@ final class ModelDownloadService: ObservableObject {
   }
 
   func deleteModel(variant: ModelVariant) {
+    guard !MeetingRecordingCoordinator.shared.isRecording,
+          !MeetingRecordingCoordinator.shared.isFinalizing,
+          !SharedSettings().isRecording else {
+      FeatureDiagnostics.record(.speechModel, .blocked)
+      return
+    }
     do {
       try ModelStorageManager.delete(variant)
       FeatureDiagnostics.record(.speechModel, .deleted)

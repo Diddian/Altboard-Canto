@@ -250,6 +250,26 @@ new server, duplicate keyboard coordinator, animation engine or model dependency
   confirmation. Previous installed-device baseline remains historical;
   the current source still requires iPhone visual acceptance. No new tracker.
 
+**Language-model trial integration (2026-11-10; source stage, not accepted):**
+Keep the single AVAudioEngine input tap and owner-exclusive capture for
+dictation and Meetings; both call the same host ASR dispatch. Models are
+downloaded once per variant, not per language. The existing Whisper Tiny/Base
+serve Turkish and Arabic trial input; the pinned 2025-09 SenseVoice Small INT8
+provides an experimental Cantonese/Mandarin/English/Japanese/Korean path.
+Qwen3-ASR 0.6B remains an optional trial. Speech Models exposes explicit
+language filters and downloaded-model selection; language priority is a hint,
+not an allowlist. Automatic mid-conversation model switching is not enabled
+until language confidence, safe memory ownership and same-audio latency/accuracy
+evidence justify it. Preserve previous selected models and the last working IPA.
+
+Validation: schema/model family coverage; checksum-verified download, partial
+download cleanup and canceled downloads; recorder owner isolation and existing
+App Group state; one recognizer per segment and no raw data in diagnostics.
+Gate physical iPhone testing: fresh/cached load times, stop-to-text p50/p95,
+real-time factor, peak process memory, power/thermal behavior, five-language
+ASR on the same synthetic fixture set and separate TR/AR Whisper comparisons.
+This source work does not count as completing T-022/T-023/T-024.
+
 ## T-022 - Mainline performance and reliability optimization (Meetily review, 2026-11-10)
 
 Goal: improve measured iPhone dictation latency, recording throughput, keyboard

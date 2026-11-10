@@ -9,13 +9,20 @@ private struct TapState: @unchecked Sendable {
   let targetFormat: AVAudioFormat
 }
 
+enum UnifiedCaptureOwner: String, Sendable {
+  case dictation, meeting, conversation
+}
+
 enum AudioSessionError: LocalizedError {
   case noInputChannels
   case tapInstallFailed(String)
   case audioConversionUnavailable
+  case alreadyCapturing
 
   var errorDescription: String? {
     switch self {
+    case .alreadyCapturing:
+      "Another voice recording is already using the microphone."
     case .noInputChannels:
       "No audio input available. Microphone access may be restricted."
     case .tapInstallFailed(let reason):
@@ -30,6 +37,7 @@ enum AudioSessionError: LocalizedError {
 final class BackgroundAudioSession: ObservableObject {
 
   @Published private(set) var isSessionActive = false
+  @Published private(set) var captureOwner: UnifiedCaptureOwner?
   private(set) var hasRecordedThisSession = false
 
   var onInterruptionBegan: (() -> Void)?
@@ -90,6 +98,7 @@ final class BackgroundAudioSession: ObservableObject {
       return
     }
 
+    self.deactivateTap()
     self.resetLevelState()
     self.onSessionEnded?()
 
@@ -115,7 +124,26 @@ final class BackgroundAudioSession: ObservableObject {
     }
   }
 
-  func activateTap(accumulator: AudioBufferAccumulator, recorder: AudioRecorder) throws {
+  /// Single capture gate shared by keyboard dictation and Meetings.
+  /// Only the owner that acquired the tap may release it.
+  func beginCapture(
+    owner: UnifiedCaptureOwner, accumulator: AudioBufferAccumulator, recorder: AudioRecorder
+  ) throws {
+    guard self.captureOwner == nil else {
+      FeatureDiagnostics.record(.speechAudio, .blocked)
+      throw AudioSessionError.alreadyCapturing
+    }
+    try self.activateTap(accumulator: accumulator, recorder: recorder)
+    self.captureOwner = owner
+    FeatureDiagnostics.record(.speechAudio, .started)
+  }
+
+  func endCapture(owner: UnifiedCaptureOwner) {
+    guard self.captureOwner == owner else { return }
+    self.deactivateTap()
+  }
+
+  private func activateTap(accumulator: AudioBufferAccumulator, recorder: AudioRecorder) throws {
     let inputNode = self.audioEngine.inputNode
     let hwFormat = inputNode.outputFormat(forBus: 0)
 
@@ -158,6 +186,7 @@ final class BackgroundAudioSession: ObservableObject {
 
   func deactivateTap() {
     self.tapState.withLock { $0 = nil }
+    self.captureOwner = nil
     self.resetLevelState()
     self.logTapDiagnostics()
     self.resetInactivityTimer()

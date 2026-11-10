@@ -58,17 +58,7 @@ extension SpeechRecognitionService {
     FeatureDiagnostics.record(.speechAudio, .completed, durationMs: samples.count / 16)
     let recognitionStarted = CFAbsoluteTimeGetCurrent()
 
-    let result: TranscriptionResult =
-      switch engine {
-      case .whisperKit:
-        await self.whisperService.transcribe(audioSamples: samples)
-      case .parakeet:
-        await self.parakeetService.transcribe(audioSamples: samples)
-      case .moonshine:
-        await self.moonshineService.transcribe(audioSamples: samples)
-      case .qwen3:
-        await self.qwen3Service.transcribe(audioSamples: samples)
-      }
+    let result = await self.transcribeSamples(samples)
 
     let decodeDurationMs = Int((CFAbsoluteTimeGetCurrent() - recognitionStarted) * 1_000)
     let decodeEvent: FeatureDiagnostics.Event

@@ -11,6 +11,55 @@ def read(path):
 
 
 class SettingsContractTests(unittest.TestCase):
+    def test_one_microphone_owner_for_dictation_and_meetings(self):
+        audio = read("Sayboard/Services/BackgroundAudioSession.swift")
+        speech = read("Sayboard/Services/SpeechRecognitionService.swift")
+        meeting = read("Sayboard/Services/MeetingRecordingCoordinator.swift")
+        self.assertIn("enum UnifiedCaptureOwner: String, Sendable", audio)
+        self.assertIn("case dictation, meeting, conversation", audio)
+        self.assertIn("guard self.captureOwner == nil else", audio)
+        self.assertIn("throw AudioSessionError.alreadyCapturing", audio)
+        self.assertIn("guard self.captureOwner == owner else { return }", audio)
+        self.assertIn("self.captureOwner = nil", audio)
+        self.assertIn("self.session.beginCapture(owner: .dictation", speech)
+        self.assertIn("self.session.endCapture(owner: .dictation)", speech)
+        self.assertIn("service.session.beginCapture(owner: .meeting", meeting)
+        self.assertIn("self.speechService?.session.endCapture(owner: .meeting)", meeting)
+        self.assertIn("self.deactivateTap()", audio.split("func endSession()", 1)[1])
+        self.assertEqual(audio.count("inputNode.installTap(onBus: 0"), 1)
+
+    def test_meeting_and_dictation_share_one_asr_dispatch(self):
+        speech = read("Sayboard/Services/SpeechRecognitionService.swift")
+        output = read("Sayboard/Services/SpeechRecognitionService+Transcription.swift")
+        meeting = read("Sayboard/Services/MeetingRecordingCoordinator.swift")
+        self.assertIn("func transcribeSamples(_ samples: [Float]) async -> TranscriptionResult", speech)
+        self.assertIn("case .senseVoice:", speech)
+        self.assertIn("self.senseVoiceService.transcribe(audioSamples: samples)", speech)
+        self.assertIn("await self.transcribeSamples(samples)", output)
+        self.assertIn("await service.transcribeSamples(samples)", meeting)
+        self.assertNotIn("service.qwen3Service.transcribe(", meeting)
+        self.assertNotIn("selectedVariant == .qwen3ASR17B", meeting)
+
+    def test_multilingual_model_download_and_experiment_are_bounded(self):
+        catalog = read("Shared/ModelVariant.swift")
+        models = read("Sayboard/Views/ModelsView.swift")
+        download = read("Sayboard/Services/SenseVoiceModelDownloader.swift")
+        installed = read("Sayboard/Services/SenseVoiceModelBundle.swift")
+        source = read("Sayboard/Services/ModelDownloadService+Execution.swift")
+        self.assertIn('case senseVoiceSmall = "sensevoice-small-yue-int8-2025-09"', catalog)
+        self.assertIn('["yue", "zh", "en", "ja", "ko"]', catalog)
+        self.assertIn('["tr", "ar", "ja"]', read("SayboardTests/ModelVariantCapabilityTests.swift"))
+        for label in ("Türkçe", "日本語", "العربية"):
+            self.assertIn(label, models)
+        self.assertIn("try await SenseVoiceModelDownloader.download", source)
+        self.assertIn("computeSHA256(of: model)", download)
+        self.assertIn("try Task.checkCancellation()", download)
+        self.assertIn('modelSHA256 =', installed)
+        self.assertIn("isDownloaded(variant)", read("Sayboard/Services/ModelDownloadService.swift"))
+        self.assertIn("guard !MeetingRecordingCoordinator.shared.isRecording", read("Sayboard/Services/ModelDownloadService.swift"))
+        self.assertIn("Accuracy: Unrated", read("Sayboard/Views/ModelCardView.swift"))
+        self.assertIn("Speed: Unrated", read("Sayboard/Views/ModelCardView.swift"))
+
     def test_unpreferred_languages_are_not_dropped_before_translation(self):
         source = read("Sayboard/Services/SpeechRecognitionService+Transcription.swift")
         whisper = read("Sayboard/Services/WhisperKitTranscriptionService.swift")

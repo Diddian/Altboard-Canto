@@ -17,6 +17,7 @@ struct ModelsView: View, Equatable {
           self.noModelBanner
         }
 
+        self.languageTrials
         self.sttContent
       }
       .padding()
@@ -55,8 +56,7 @@ struct ModelsView: View, Equatable {
   }
 
   private var filteredAndSortedVariants: [ModelVariant] {
-    // Keep legacy 0.6B data compatible while showing only the 1.7B model card.
-    let available = ModelVariant.allCases.filter { $0 != .qwen3ASR06B }
+    let available = ModelVariant.allCases
     let variants =
       if let language = self.selectedLanguageFilter {
         available.filter { $0.supportedLanguages.contains(language) }
@@ -64,6 +64,47 @@ struct ModelsView: View, Equatable {
         available
       }
     return variants.sorted { self.sortKey(for: $0).precedes(self.sortKey(for: $1)) }
+  }
+
+  private struct TrialLanguage: Identifiable {
+    let code: String
+    let label: String
+    var id: String { code }
+  }
+
+  private let trialLanguages: [TrialLanguage] = [
+    .init(code: "yue", label: "粵語"), .init(code: "en", label: "English"),
+    .init(code: "de", label: "Deutsch"), .init(code: "tr", label: "Türkçe"),
+    .init(code: "ja", label: "日本語"), .init(code: "ar", label: "العربية")
+  ]
+
+  private var languageTrials: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Text("Try speech models by language")
+        .font(.headline)
+      Text("Choose a language, download a compatible model, then select it for dictation. Models are shared between languages; no duplicate downloads. Language preferences never block other speech.")
+        .font(.caption)
+        .foregroundStyle(.secondary)
+      ScrollView(.horizontal) {
+        HStack(spacing: 8) {
+          ForEach(self.trialLanguages) { trial in
+            Button(trial.label) {
+              self.selectedLanguageFilter = trial.code
+            }
+            .buttonStyle(.bordered)
+            .tint(self.selectedLanguageFilter == trial.code ? .accentColor : .secondary)
+            .accessibilityLabel("Show speech models supporting \(trial.label)")
+          }
+        }
+      }
+      .scrollIndicators(.hidden)
+      if let code = self.selectedLanguageFilter {
+        Text("Models for \(self.locale.capitalizedLanguageName(forLanguageCode: code)). Download and select one to test; automatic switching is not enabled.")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+      }
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
   }
 
   private var sttContent: some View {

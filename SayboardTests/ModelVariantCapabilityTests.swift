@@ -16,6 +16,21 @@ struct ModelVariantCapabilityTests {
   }
 
   @Test
+  func `sensevoice supports Cantonese and Japanese but not Turkish or Arabic`() {
+    #expect(ModelVariant.senseVoiceSmall.engine == .senseVoice)
+    #expect(ModelVariant.senseVoiceSmall.supportedLanguages == ["yue", "zh", "en", "ja", "ko"])
+    #expect(!ModelVariant.senseVoiceSmall.supportedLanguages.contains("tr"))
+    #expect(!ModelVariant.senseVoiceSmall.supportedLanguages.contains("ar"))
+  }
+
+  @Test
+  func `whisper tiny and base support Turkish Arabic and Japanese`() {
+    for variant in [ModelVariant.whisperTiny, .whisperBase] {
+      #expect(variant.supportedLanguages.isSuperset(of: ["tr", "ar", "ja"]))
+    }
+  }
+
+  @Test
   func `english-only variants do not support selection`() {
     #expect(!ModelVariant.parakeetV2.supportsLanguageSelection)
     #expect(!ModelVariant.moonshineTiny.supportsLanguageSelection)
@@ -28,7 +43,7 @@ struct ModelVariantCapabilityTests {
   @Test
   func `flag is true exactly for the multilingual whisper and parakeet variants`() {
     let supporting = ModelVariant.allCases.filter(\.supportsLanguageSelection)
-    let expected: Set<ModelVariant> = [.whisperTiny, .whisperBase, .whisperSmall, .whisperTurbo, .parakeetV3]
+    let expected: Set<ModelVariant> = [.whisperTiny, .whisperBase, .whisperSmall, .whisperTurbo, .parakeetV3, .senseVoiceSmall]
     #expect(Set(supporting) == expected)
   }
 }

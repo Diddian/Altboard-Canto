@@ -31,6 +31,7 @@ final class SpeechRecognitionService: ObservableObject {
   let parakeetService = ParakeetTranscriptionService()
   let moonshineService = MoonshineTranscriptionService()
   let qwen3Service = Qwen3TranscriptionService()
+  let senseVoiceService = SenseVoiceTranscriptionService()
   weak var downloadService: ModelDownloadService?
   weak var llmCoordinator: LLMProcessingCoordinator?
 
@@ -53,6 +54,7 @@ final class SpeechRecognitionService: ObservableObject {
     case .parakeet: self.parakeetService.loadState
     case .moonshine: self.moonshineService.loadState
     case .qwen3: self.qwen3Service.loadState
+    case .senseVoice: self.senseVoiceService.loadState
     }
   }
 
@@ -310,6 +312,23 @@ final class SpeechRecognitionService: ObservableObject {
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStopped)
   }
 
+  /// One ASR dispatch for keyboard dictation, Meetings and future Conversation.
+  /// All consumers reuse the existing microphone session and model owners.
+  func transcribeSamples(_ samples: [Float]) async -> TranscriptionResult {
+    switch self.settings.selectedVariant.engine {
+    case .whisperKit:
+      return await self.whisperService.transcribe(audioSamples: samples)
+    case .parakeet:
+      return await self.parakeetService.transcribe(audioSamples: samples)
+    case .moonshine:
+      return await self.moonshineService.transcribe(audioSamples: samples)
+    case .qwen3:
+      return await self.qwen3Service.transcribe(audioSamples: samples)
+    case .senseVoice:
+      return await self.senseVoiceService.transcribe(audioSamples: samples)
+    }
+  }
+
   func loadModelIfAvailable(downloadService: ModelDownloadService) async {
     let selected = self.settings.selectedVariant
     guard let url = downloadService.activeModelFolderURL else { return }
@@ -400,6 +419,8 @@ final class SpeechRecognitionService: ObservableObject {
       await self.moonshineService.waitForLoad()
     case .qwen3:
       await self.qwen3Service.waitForLoad()
+    case .senseVoice:
+      await self.senseVoiceService.waitForLoad()
     }
   }
 
@@ -416,6 +437,7 @@ final class SpeechRecognitionService: ObservableObject {
     await self.parakeetService.unloadModel()
     self.moonshineService.unloadModel()
     self.qwen3Service.unloadModel()
+    self.senseVoiceService.unloadModel()
   }
 
   private func ensureSessionActive() -> Bool {
@@ -567,6 +589,9 @@ extension SpeechRecognitionService: ModelLoading {
     case .qwen3:
       await self.qwen3Service.loadModel(from: url)
       return self.qwen3Service.loadState == .loaded
+    case .senseVoice:
+      await self.senseVoiceService.loadModel(from: url)
+      return self.senseVoiceService.loadState == .loaded
     case .moonshine:
       guard let arch = variant.moonshineModelArch else { return false }
       await self.moonshineService.loadModel(from: url.path, archName: arch)

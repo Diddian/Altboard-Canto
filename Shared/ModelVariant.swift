@@ -5,6 +5,7 @@ enum STTEngine: String, Codable, Sendable {
   case parakeet
   case moonshine
   case qwen3
+  case senseVoice
 
   var sectionTitle: String {
     switch self {
@@ -12,6 +13,7 @@ enum STTEngine: String, Codable, Sendable {
     case .parakeet: "Parakeet"
     case .moonshine: "Moonshine"
     case .qwen3: "Qwen3-ASR"
+    case .senseVoice: "SenseVoice"
     }
   }
 }
@@ -19,6 +21,7 @@ enum STTEngine: String, Codable, Sendable {
 enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
   case qwen3ASR06B = "qwen3-asr-0.6b-onnx"
   case qwen3ASR17B = "qwen3-asr-1.7b-onnx"
+  case senseVoiceSmall = "sensevoice-small-yue-int8-2025-09"
   case whisperTiny = "openai_whisper-tiny"
   case whisperBase = "openai_whisper-base"
   case whisperSmall = "openai_whisper-small"
@@ -39,6 +42,8 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
     switch self {
     case .qwen3ASR17B, .qwen3ASR06B:
       .qwen3
+    case .senseVoiceSmall:
+      .senseVoice
     case .whisperTiny, .whisperBase, .whisperSmall, .whisperTurbo:
       .whisperKit
     case .parakeetV2, .parakeetV3:
@@ -52,6 +57,7 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
     switch self {
     case .qwen3ASR06B: "Qwen3-ASR 0.6B (ONNX)"
     case .qwen3ASR17B: "Qwen3-ASR 1.7B (ONNX)"
+    case .senseVoiceSmall: "SenseVoice Small INT8 (Cantonese)"
     case .whisperTiny: "Whisper Tiny"
     case .whisperBase: "Whisper Base"
     case .whisperSmall: "Whisper Small"
@@ -72,6 +78,8 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
       "Offline multilingual ASR including Cantonese. Downloads directly from a compatible Hugging Face ONNX repository."
     case .qwen3ASR17B:
       "Experimental higher-capacity Cantonese and multilingual ASR. Direct Hugging Face ONNX download; not compatible with MLX or GGUF."
+    case .senseVoiceSmall:
+      "Compact Cantonese-finetuned ONNX model for Cantonese, Mandarin, English, Japanese and Korean. Not Turkish or Arabic. No punctuation model."
     case .whisperTiny: "Lightest multilingual model. Basic accuracy, but supports 100 languages."
 
     case .whisperBase: "Better accuracy than Whisper Tiny. Supports 100 languages."
@@ -112,6 +120,7 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
     switch self {
     case .qwen3ASR06B: 1000
     case .qwen3ASR17B: 3300 // Estimate; actual files vary by the selected repository.
+    case .senseVoiceSmall: 237
     case .whisperTiny: 69
     case .whisperBase: 132
     case .whisperSmall: 445
@@ -130,6 +139,7 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
     switch self {
     case .qwen3ASR06B: 2500
     case .qwen3ASR17B: 6000 // Estimate; peak has not been measured on iPhone.
+    case .senseVoiceSmall: 850 // Conservative initial estimate; measure on iPhone.
     case .whisperTiny: 130
     case .whisperBase: 250
     case .whisperSmall: 850
@@ -148,6 +158,7 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
     switch self {
     case .qwen3ASR06B: 0.75 // Placeholder ordering; not benchmarked.
     case .qwen3ASR17B: 0.85 // Placeholder ordering; not benchmarked.
+    case .senseVoiceSmall: 0.60 // UI sort placeholder only, not a benchmark.
     case .whisperTiny: 0.35
     case .whisperBase: 0.48
     case .whisperSmall: 0.68
@@ -166,6 +177,7 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
     switch self {
     case .qwen3ASR06B: 0.50 // Estimated; no iPhone benchmark yet.
     case .qwen3ASR17B: 0.25 // Estimated; no iPhone benchmark yet.
+    case .senseVoiceSmall: 0.75 // UI sort placeholder only, not an iPhone measurement.
     case .whisperTiny: 0.98
     case .whisperBase: 0.93
     case .whisperSmall: 0.85
@@ -207,7 +219,9 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
   var supportedLanguages: Set<String> {
     switch self {
     case .qwen3ASR17B, .qwen3ASR06B:
-      ["yue", "zh", "en", "de"] // Filter only verified MVP target languages.
+      ["yue", "zh", "en", "de", "ja", "tr", "ar"] // Qwen3 multilingual ASR; device accuracy unverified.
+    case .senseVoiceSmall:
+      ["yue", "zh", "en", "ja", "ko"]
     case .whisperTiny, .whisperBase, .whisperSmall, .whisperTurbo:
       SpeechLanguages.whisper
     case .parakeetV2:
@@ -222,6 +236,7 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
   var languageTagKey: String {
     switch self {
     case .qwen3ASR17B, .qwen3ASR06B: "Cantonese + multilingual"
+    case .senseVoiceSmall: "Cantonese / Japanese + 3"
     case .whisperTiny, .whisperBase, .whisperSmall, .whisperTurbo:
       "100 languages"
     case .parakeetV2:
@@ -244,7 +259,7 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
   var supportsTranslation: Bool {
     switch self.engine {
     case .whisperKit: true
-    case .parakeet, .moonshine, .qwen3: false
+    case .parakeet, .moonshine, .qwen3, .senseVoice: false
     }
   }
 
@@ -252,6 +267,7 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
     switch self.engine {
     case .whisperKit, .parakeet: self.supportedLanguages.count > 1
     case .moonshine, .qwen3: false
+    case .senseVoice: true
     }
   }
 
@@ -273,7 +289,7 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
     return switch self {
     case .whisperTiny, .whisperBase, .whisperSmall, .parakeetV2, .parakeetV3:
       true
-    case .qwen3ASR17B, .qwen3ASR06B, .whisperTurbo, .moonshineTiny, .moonshineBase, .moonshineTinyStreaming, .moonshineSmallStreaming,
+    case .qwen3ASR17B, .qwen3ASR06B, .senseVoiceSmall, .whisperTurbo, .moonshineTiny, .moonshineBase, .moonshineTinyStreaming, .moonshineSmallStreaming,
          .moonshineMediumStreaming:
       false
     }
