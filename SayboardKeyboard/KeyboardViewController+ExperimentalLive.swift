@@ -20,6 +20,10 @@ extension KeyboardViewController {
   func applyExperimentalLiveUpdate() {
     let settings = SharedSettings()
     settings.synchronize()
+    // Live ASR is in the source language. Never commit un-translated text to
+    // the host field when a different output language has been requested.
+    // Final translated output is delivered by the existing bridge after Stop.
+    guard settings.voiceOutputTarget == .original else { return }
     guard settings.experimentalLiveDictationEnabled,
           (self.keyboardState.isRecording || settings.isRecording),
           let update = ExperimentalLiveTranscription.read(),

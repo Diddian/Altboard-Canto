@@ -534,6 +534,5 @@ private struct MeetingRecordDetailView: View {
     }
     .onChange(of: self.name) { _, _ in self.saved = false; self.saveFailed = false }
     .onChange(of: self.notes) { _, _ in self.saved = false; self.saveFailed = false }
-    .onDisappear { self.recorder.cancelTranslation(id: self.record.id) }
   }
 }

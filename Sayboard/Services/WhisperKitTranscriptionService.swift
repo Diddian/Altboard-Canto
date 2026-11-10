@@ -181,13 +181,12 @@ final class WhisperKitTranscriptionService: ObservableObject {
     // Preserve the source language; optional translation happens after ASR.
     let task: DecodingTask = .transcribe
 
-    let preferred = settings.preferredLanguages(for: settings.selectedVariant)
-    let lockedLanguage: String? = preferred.count == 1 ? preferred.first : nil
-
+    // WhisperKit's language parameter locks recognition instead of ranking it.
+    // Always auto-detect so unfamiliar source languages remain usable.
     return DecodingOptions(
       task: task,
-      language: lockedLanguage,
-      detectLanguage: lockedLanguage == nil,
+      language: nil,
+      detectLanguage: true,
       skipSpecialTokens: true,
       wordTimestamps: true,
     )

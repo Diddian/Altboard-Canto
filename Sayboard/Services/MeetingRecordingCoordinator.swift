@@ -463,6 +463,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
 
   func cancelTranslation(id: UUID) {
     guard self.translatingRecordID == id else { return }
+    self.translationStatus = "Pausing translation; saved sections are retained…"
     self.translationTask?.cancel()
   }
 

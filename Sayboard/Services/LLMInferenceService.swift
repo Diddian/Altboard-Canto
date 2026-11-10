@@ -303,7 +303,8 @@ final class LLMInferenceService: ObservableObject {
     }
     defer { llama_sampler_free(sampler) }
 
-    var outputPieces = [String]()
+    var outputBytes = [UInt8]()
+    var generatedTokenCount = 0
     var currentPos = startPos
     var stoppedAtEOS = false
     var hitDeadline = false
@@ -332,7 +333,8 @@ final class LLMInferenceService: ObservableObject {
       }
 
       if let piece = self.piece(vocab: vocab, token: newToken) {
-        outputPieces.append(piece)
+        outputBytes.append(contentsOf: piece)
+        generatedTokenCount += 1
       }
 
       batch.n_tokens = 0
@@ -346,19 +348,21 @@ final class LLMInferenceService: ObservableObject {
 
     guard !hitDeadline else { return nil }
 
-    let raw = outputPieces.joined().trimmingCharacters(in: .whitespacesAndNewlines)
+    // UTF-8 codepoints can span model tokens; decode after assembling all bytes.
+    let raw = String(decoding: outputBytes, as: UTF8.self)
+      .trimmingCharacters(in: .whitespacesAndNewlines)
     DiagnosticLog.write(
-      "llm: generation done, \(outputPieces.count) tok in \(Self.elapsed(since: startedAt))s, eos=\(stoppedAtEOS)"
+      "llm: generation done, \(generatedTokenCount) tok in \(Self.elapsed(since: startedAt))s, eos=\(stoppedAtEOS)"
     )
     return (text: raw, stoppedAtEOS: stoppedAtEOS)
   }
 
-  private nonisolated static func piece(vocab: OpaquePointer?, token: llama_token) -> String? {
+  private nonisolated static func piece(vocab: OpaquePointer?, token: llama_token) -> [UInt8]? {
     var buffer = [CChar](repeating: 0, count: self.pieceBufferSize)
     let written = llama_token_to_piece(vocab, token, &buffer, Int32(self.pieceBufferSize), 0, true)
     guard written > 0 else { return nil }
     let bytes = buffer.prefix(Int(written)).map { UInt8(bitPattern: $0) }
-    return String(bytes: bytes, encoding: .utf8)
+    return bytes
   }
 
   private nonisolated static func makeSampler() -> UnsafeMutablePointer<llama_sampler>? {

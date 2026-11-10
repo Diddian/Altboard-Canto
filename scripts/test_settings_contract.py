@@ -11,6 +11,36 @@ def read(path):
 
 
 class SettingsContractTests(unittest.TestCase):
+    def test_unpreferred_languages_are_not_dropped_before_translation(self):
+        source = read("Sayboard/Services/SpeechRecognitionService+Transcription.swift")
+        whisper = read("Sayboard/Services/WhisperKitTranscriptionService.swift")
+        self.assertIn("FeatureDiagnostics.record(.language, .fallback)", source)
+        self.assertIn("source retained for output processing", source)
+        self.assertNotIn("self.settings.lastDictationOutcome = .unexpectedLanguage", source)
+        self.assertIn("detectLanguage: true", whisper)
+        self.assertIn("language: nil", whisper)
+        self.assertNotIn("lockedLanguage", whisper)
+        keyboard = read("SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift")
+        self.assertIn("guard settings.voiceOutputTarget == .original else { return }", keyboard)
+
+    def test_meeting_translation_continues_after_navigation(self):
+        view = read("Sayboard/Views/MeetingRecordsView.swift")
+        coordinator = read("Sayboard/Services/MeetingRecordingCoordinator.swift")
+        self.assertNotIn(".onDisappear { self.recorder.cancelTranslation", view)
+        self.assertIn("Button(\"Pause Translation\")", view)
+        self.assertIn("self.recorder.cancelTranslation(id: self.record.id)", view)
+        self.assertIn("translationTask?.cancel()", coordinator)
+
+    def test_multilingual_generation_is_bounded_and_utf8_safe(self):
+        inference = read("Sayboard/Services/LLMInferenceService.swift")
+        coordinator = read("Sayboard/Services/LLMProcessingCoordinator.swift")
+        self.assertIn("var outputBytes = [UInt8]()", inference)
+        self.assertIn("outputBytes.append(contentsOf: piece)", inference)
+        self.assertIn("String(decoding: outputBytes, as: UTF8.self)", inference)
+        self.assertNotIn("String(bytes: bytes, encoding: .utf8)", inference)
+        self.assertIn("maxOutputTokens: min(512, max(192, input.utf8.count * 2))", coordinator)
+        self.assertIn("Task.isCancelled ? .cancelled : .failed", coordinator)
+
     def test_saved_meeting_translation_is_separate_and_resumable(self):
         coordinator = read("Sayboard/Services/MeetingRecordingCoordinator.swift")
         view = read("Sayboard/Views/MeetingRecordsView.swift")

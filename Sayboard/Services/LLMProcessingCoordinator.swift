@@ -90,7 +90,9 @@ final class LLMProcessingCoordinator: ObservableObject {
         return false
       }
       guard let translated = await self.processVoiceChunk(chunks[current], options: options) else {
-        FeatureDiagnostics.record(.meetingTranslation, .failed)
+        FeatureDiagnostics.record(
+          .meetingTranslation, Task.isCancelled ? .cancelled : .failed
+        )
         return false
       }
       guard !Task.isCancelled, onTranslated(current + 1, translated) else {
@@ -146,7 +148,8 @@ final class LLMProcessingCoordinator: ObservableObject {
   ) async -> String? {
     let result = await self.runInferenceWithTimeout(
       systemPrompt: VoiceOutputPrompt.compactPrompt(for: options),
-      userText: input, assistantPrefill: ""
+      userText: input, assistantPrefill: "",
+      maxOutputTokens: min(512, max(192, input.utf8.count * 2))
     )
     guard !Task.isCancelled else {
       FeatureDiagnostics.record(.voiceOutput, .cancelled)
@@ -345,7 +348,8 @@ final class LLMProcessingCoordinator: ObservableObject {
   private func runInferenceWithTimeout(
     systemPrompt: String,
     userText: String,
-    assistantPrefill: String
+    assistantPrefill: String,
+    maxOutputTokens: Int? = nil
   ) async -> String? {
     let remaining = UIApplication.shared.backgroundTimeRemaining
     let foregroundBudget: TimeInterval =
@@ -356,7 +360,7 @@ final class LLMProcessingCoordinator: ObservableObject {
     guard deadline >= 5, !Task.isCancelled else { return nil }
     return await self.inferenceService.process(
       systemPrompt: systemPrompt, userText: userText,
-      assistantPrefill: assistantPrefill, maxOutputTokens: nil,
+      assistantPrefill: assistantPrefill, maxOutputTokens: maxOutputTokens,
       deadlineSeconds: deadline
     )
   }

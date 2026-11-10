@@ -108,12 +108,12 @@ extension SpeechRecognitionService {
       if let unexpected = PreferredVoiceLanguages.unexpectedScript(
         in: rawText, allowed: self.recordingSpokenLanguages
       ) {
-        self.settings.lastDictationOutcome = .unexpectedLanguage
-        FeatureDiagnostics.record(.speech, .rejected)
+        // Source preferences are a recognition hint, not an allowlist.
+        // Recognized text must reach translation even when the script is new.
+        FeatureDiagnostics.record(.language, .fallback)
         DiagnosticLog.write(
-          "asr: refused unexpected script '\(unexpected)' not among user's preferred languages"
+          "asr: unpreferred script '\(unexpected)' detected; source retained for output processing"
         )
-        return
       }
 
       // Recognition languages are captured for this recording, but output
