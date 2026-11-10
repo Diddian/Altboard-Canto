@@ -21,6 +21,14 @@ struct MeetingRecord: Codable, Identifiable {
   var title: String?
   var notes: String?
   var sequenceNumber: Int? = nil
+  // Optional fields keep older manifests decodable. Original ASR is immutable;
+  // translation is separate and an interrupted attempt can resume safely.
+  var translatedTranscript: String? = nil
+  var translatedLanguageCode: String? = nil
+  var translationDraftText: String? = nil
+  var translationDraftConfiguration: String? = nil
+  var translationDraftFingerprint: String? = nil
+  var translationDraftNextChunk: Int? = nil
 
   var totalDuration: TimeInterval {
     self.parts.reduce(0) { $0 + $1.duration }
@@ -47,6 +55,9 @@ final class MeetingRecordingCoordinator: ObservableObject {
   @Published private(set) var current: MeetingRecord?
   @Published private(set) var records = [MeetingRecord]()
   @Published private(set) var unreadableRecordCount = 0
+  @Published private(set) var translatingRecordID: UUID?
+  @Published private(set) var translationStatus = ""
+  private var translationTask: Task<Void, Never>?
 
   private let audioRecorder = AudioRecorder()
   private let accumulator = AudioBufferAccumulator(maximumUnreadSamples: 16_000 * 120)
@@ -64,7 +75,8 @@ final class MeetingRecordingCoordinator: ObservableObject {
   private init() { self.reloadRecords() }
 
   func start(with service: SpeechRecognitionService, title: String = "", notes: String = "") {
-    guard !self.isRecording, !self.isFinalizing, !service.isRecording, !service.isStopping,
+    guard !self.isRecording, !self.isFinalizing, self.translatingRecordID == nil,
+          !service.isRecording, !service.isStopping,
           SharedSettings().selectedVariant == .qwen3ASR17B,
           let root = Self.meetingsDirectory() else {
       FeatureDiagnostics.record(.meeting, .blocked)
@@ -250,6 +262,16 @@ final class MeetingRecordingCoordinator: ObservableObject {
       self.currentAudioDirectory = nil
       self.isFinalizing = false
       self.reloadRecords()
+      // Meeting output-language selection is honored after saving raw ASR.
+      // Start only when a text model is available; otherwise the transcript
+      // remains available for an explicit translation from meeting details.
+      if !interrupted, manifestSaved, !transcriptIncomplete,
+         let service, let saved = self.current,
+         !saved.transcript.isEmpty,
+         SharedSettings().voiceOutputTarget != .original,
+         service.llmCoordinator?.downloadService?.hasUsableModel == true {
+        self.translateRecord(id: saved.id, using: service)
+      }
     }
   }
 
@@ -329,6 +351,121 @@ final class MeetingRecordingCoordinator: ObservableObject {
     String(value.trimmingCharacters(in: .whitespacesAndNewlines).prefix(limit))
   }
 
+  /// Opt-in post-recording translation. Changing the keyboard output language
+  /// cannot retroactively alter a stored ASR record. Translation only starts
+  /// here, keeps the original transcript, and saves each confirmed chunk.
+  func translateRecord(id: UUID, using service: SpeechRecognitionService) {
+    guard self.translatingRecordID == nil, !self.isRecording, !self.isFinalizing,
+          let index = self.records.firstIndex(where: { $0.id == id }) else { return }
+    let settings = SharedSettings()
+    settings.synchronize()
+    let options = settings.voiceOutputConfiguration
+    guard options.target != .original else {
+      self.translationStatus = "Choose an output language in Settings first."
+      return
+    }
+    guard let coordinator = service.llmCoordinator,
+          coordinator.downloadService?.hasUsableModel == true else {
+      self.translationStatus = "Download and select a Text Model in Settings to translate offline."
+      FeatureDiagnostics.record(.meetingTranslation, .unavailable)
+      return
+    }
+    let chunks = MeetingTranslationPolicy.chunks(self.records[index].transcript)
+    guard !chunks.isEmpty else {
+      self.translationStatus = "The meeting has no transcript to translate."
+      return
+    }
+    let fingerprint = MeetingTranslationPolicy.sourceFingerprint(
+      self.records[index].transcript
+    )
+    let configuration = [
+      options.target.rawValue, options.customLanguage, options.register.rawValue,
+      options.cleanupEnabled ? "clean" : "raw",
+      options.punctuationEnabled ? "punct" : "plain"
+    ].joined(separator: "|")
+    let language = PreferredVoiceLanguages.currentCode(
+      target: options.target, custom: options.customLanguage
+    )
+    var draft = self.records[index]
+    let resume = MeetingTranslationPolicy.canResume(
+      sourceFingerprint: fingerprint, configurationKey: configuration,
+      savedFingerprint: draft.translationDraftFingerprint,
+      savedConfigurationKey: draft.translationDraftConfiguration,
+      processedChunks: draft.translationDraftNextChunk,
+      totalChunks: chunks.count, savedTranslation: draft.translationDraftText
+    )
+    if !resume {
+      draft.translationDraftText = nil
+      draft.translationDraftNextChunk = 0
+      draft.translationDraftFingerprint = fingerprint
+      draft.translationDraftConfiguration = configuration
+      // Keep the previous successfully translated result until replacement
+      // fully completes; never discard source or previous valid translation.
+    }
+    let initial = draft.translationDraftNextChunk ?? 0
+    guard self.writeManifest(draft, includeTranscript: false) else {
+      self.translationStatus = "Could not save translation progress. Original text is safe."
+      return
+    }
+    self.records[index] = draft
+    self.translatingRecordID = id
+    self.translationStatus = "Translating \(initial) of \(chunks.count) sections…"
+    self.translationTask = Task { @MainActor [weak self] in
+      guard let self else { return }
+      let completed: Bool
+      if initial == chunks.count {
+        completed = true
+      } else {
+        completed = await coordinator.translateMeetingChunks(
+          chunks, startingAt: initial, options: options
+        ) { next, translated in
+          guard !Task.isCancelled, self.translatingRecordID == id,
+                let position = self.records.firstIndex(where: { $0.id == id })
+          else { return false }
+          var updated = self.records[position]
+          updated.translationDraftText = MeetingTranslationPolicy.combined(
+            updated.translationDraftText, next: translated
+          )
+          updated.translationDraftNextChunk = next
+          guard self.writeManifest(updated, includeTranscript: false) else {
+            self.translationStatus = "Could not save translation progress. Original text is safe."
+            return false
+          }
+          self.records[position] = updated
+          self.translationStatus = "Translated \(next) of \(chunks.count) sections…"
+          return true
+        }
+      }
+      if completed, !Task.isCancelled,
+         let position = self.records.firstIndex(where: { $0.id == id }) {
+        var finished = self.records[position]
+        finished.translatedTranscript = finished.translationDraftText
+        finished.translatedLanguageCode = language
+        finished.translationDraftText = nil
+        finished.translationDraftFingerprint = nil
+        finished.translationDraftConfiguration = nil
+        finished.translationDraftNextChunk = nil
+        if self.writeManifest(finished, includeTranscript: false) {
+          self.records[position] = finished
+          self.translationStatus = "Translation saved. Original ASR retained."
+        } else {
+          self.translationStatus = "Translation could not be saved. Resume to retry."
+        }
+      } else if Task.isCancelled {
+        self.translationStatus = "Translation paused. Saved sections can be resumed."
+      } else if !self.translationStatus.hasPrefix("Could not save") {
+        self.translationStatus = "Translation stopped. Saved sections can be resumed."
+      }
+      self.translatingRecordID = nil
+      self.translationTask = nil
+    }
+  }
+
+  func cancelTranslation(id: UUID) {
+    guard self.translatingRecordID == id else { return }
+    self.translationTask?.cancel()
+  }
+
   /// Update metadata only. Audio files, transcript and recording timestamps
   /// are not renamed or moved, so existing exported files remain valid.
   @discardableResult
@@ -351,7 +488,9 @@ final class MeetingRecordingCoordinator: ObservableObject {
   }
 
   @discardableResult
-  private func writeManifest(_ record: MeetingRecord) -> Bool {
+  private func writeManifest(
+    _ record: MeetingRecord, includeTranscript: Bool = true
+  ) -> Bool {
     guard let root = Self.meetingsDirectory(),
           let data = try? JSONEncoder().encode(record) else {
       FeatureDiagnostics.record(.meeting, .failed)
@@ -361,11 +500,13 @@ final class MeetingRecordingCoordinator: ObservableObject {
     let manifest = folder.appendingPathComponent("manifest.json")
     do {
       try data.write(to: manifest, options: [.atomic, .completeFileProtectionUnlessOpen])
-      let transcriptURL = folder.appendingPathComponent("transcript.txt")
-      try record.transcript.write(to: transcriptURL, atomically: true, encoding: .utf8)
-      try FileManager.default.setAttributes(
-        [.protectionKey: FileProtectionType.completeUnlessOpen], ofItemAtPath: transcriptURL.path
-      )
+      if includeTranscript {
+        let transcriptURL = folder.appendingPathComponent("transcript.txt")
+        try record.transcript.write(to: transcriptURL, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes(
+          [.protectionKey: FileProtectionType.completeUnlessOpen], ofItemAtPath: transcriptURL.path
+        )
+      }
       return true
     } catch {
       FeatureDiagnostics.record(.meeting, .failed)
@@ -406,6 +547,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
   @discardableResult
   func deleteRecord(id: UUID) -> Bool {
     guard records.contains(where: { $0.id == id }),
+          self.translatingRecordID != id,
           !(current?.id == id && (isRecording || isFinalizing)),
           let root = Self.meetingsDirectory() else { return false }
     let folder = root.appendingPathComponent(id.uuidString, isDirectory: true)
@@ -423,7 +565,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
 
   @discardableResult
   func deleteAllRecords() -> Bool {
-    guard !self.isRecording, !self.isFinalizing,
+    guard !self.isRecording, !self.isFinalizing, self.translatingRecordID == nil,
           let root = Self.meetingsDirectory() else { return false }
     do {
       try FileManager.default.removeItem(at: root)

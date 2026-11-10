@@ -11,6 +11,58 @@ def read(path):
 
 
 class SettingsContractTests(unittest.TestCase):
+    def test_saved_meeting_translation_is_separate_and_resumable(self):
+        coordinator = read("Sayboard/Services/MeetingRecordingCoordinator.swift")
+        view = read("Sayboard/Views/MeetingRecordsView.swift")
+        shared = read("Shared/MeetingTranslationPolicy.swift")
+        self.assertIn("var translatedTranscript: String? = nil", coordinator)
+        self.assertIn("var translationDraftNextChunk: Int? = nil", coordinator)
+        self.assertIn("func translateRecord(id: UUID, using service: SpeechRecognitionService)", coordinator)
+        self.assertIn("MeetingTranslationPolicy.sourceFingerprint(", coordinator)
+        self.assertIn("MeetingTranslationPolicy.canResume(", coordinator)
+        self.assertIn("self.writeManifest(updated, includeTranscript: false)", coordinator)
+        self.assertIn("self.records[position] = updated", coordinator)
+        self.assertIn("finished.translatedTranscript = finished.translationDraftText", coordinator)
+        self.assertIn("SharedSettings().voiceOutputTarget != .original", coordinator)
+        self.assertIn("self.translateRecord(id: saved.id, using: service)", coordinator)
+        self.assertIn("self.translatingRecordID != id", coordinator)
+        self.assertIn("self.translatingRecordID == nil", coordinator)
+        self.assertIn("let record = try? JSONDecoder().decode(MeetingRecord.self, from: data)", coordinator)
+        self.assertIn('Section("Translated Transcript")', view)
+        self.assertIn("self.recorder.translateRecord(id: self.record.id, using: self.speechService)", view)
+        self.assertIn("self.recorder.cancelTranslation(id: self.record.id)", view)
+        self.assertIn("self.recorder.cancelTranslation(id: self.record.id)", view)
+        self.assertIn("static let maximumChunkCharacters = 180", shared)
+        self.assertNotIn("FeatureDiagnostics.record(.meetingTranslation, .completed,", coordinator)
+
+    def test_translation_model_owner_and_cancellation_are_not_duplicated(self):
+        coordinator = read("Sayboard/Services/LLMProcessingCoordinator.swift")
+        inference = read("Sayboard/Services/LLMInferenceService.swift")
+        pipeline = read("Sayboard/Services/SpeechRecognitionService+Transcription.swift")
+        diagnostics = read("Shared/FeatureDiagnostics.swift")
+        self.assertIn("func translateMeetingChunks(", coordinator)
+        self.assertIn("await self.processVoiceChunk(chunks[current], options: options)", coordinator)
+        self.assertIn("VoiceOutputPrompt.compactPrompt(for: options)", coordinator)
+        self.assertIn("static func compactPrompt(for options: VoiceOutputConfiguration)", read("Shared/VoiceOutputOptions.swift"))
+        self.assertIn("MeetingTranslationPolicy.chunks(input)", coordinator)
+        self.assertIn("onTranslated(current + 1, translated)", coordinator)
+        self.assertIn("self.endVoiceProcessing(backgroundTask)", coordinator)
+        self.assertIn("return await self.inferenceService.process(", coordinator)
+        self.assertNotIn("withTaskGroup(of: String?.self)", coordinator)
+        self.assertIn("let worker = Task.detached(priority: .userInitiated)", inference)
+        self.assertIn("await worker.value", inference)
+        self.assertIn("worker.cancel()", inference)
+        self.assertIn("case meeting, meetingTranslation,", diagnostics)
+        self.assertIn("options.needsLLM && !modelOutputMissing", pipeline)
+        self.assertIn("FeatureDiagnostics.record(.voiceOutput, .fallback)", pipeline)
+
+    def test_cantonese_output_rejects_nonhan_fallback(self):
+        output = read("Shared/VoiceOutputOptions.swift")
+        validator = output.split("enum VoiceLanguageValidator", 1)[1]
+        self.assertIn("if han > 0 { return true }", validator)
+        self.assertNotIn("han > 0 || latin < 8", validator)
+        self.assertIn("CharacterSet.decimalDigits.contains($0)", validator)
+
     def test_language_priority_is_one_row_with_existing_editor(self):
         source = read("Sayboard/Views/SpeechLanguagesSettingsView.swift")
         self.assertIn('self.showPreferredLanguagePicker = true', source)

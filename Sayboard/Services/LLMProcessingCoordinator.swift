@@ -40,66 +40,131 @@ final class LLMProcessingCoordinator: ObservableObject {
   private var requestObserver: DarwinNotificationObserver?
 
   /// Optional cleanup or translation. Spoken dictation is never a Compose prompt.
+  /// Long results are processed in small deterministic slices so the text model
+  /// is not asked to fit an entire recording into a 1K/2K token context.
   func processVoiceDictation(_ input: String, options: VoiceOutputConfiguration) async -> String? {
     guard options.needsLLM, !input.isEmpty else { return nil }
     let started = CFAbsoluteTimeGetCurrent()
     FeatureDiagnostics.record(.voiceOutput, .started)
+    guard let backgroundTask = await self.beginVoiceProcessing() else { return nil }
+    defer { self.endVoiceProcessing(backgroundTask) }
+
+    var output = ""
+    for chunk in MeetingTranslationPolicy.chunks(input) {
+      guard !Task.isCancelled else {
+        FeatureDiagnostics.record(.voiceOutput, .cancelled)
+        return nil
+      }
+      guard let processed = await self.processVoiceChunk(chunk, options: options) else { return nil }
+      output = MeetingTranslationPolicy.combined(output, next: processed)
+    }
+
+    guard !Task.isCancelled else {
+      FeatureDiagnostics.record(.voiceOutput, .cancelled)
+      return nil
+    }
+    FeatureDiagnostics.record(
+      .voiceOutput, .completed,
+      durationMs: Int((CFAbsoluteTimeGetCurrent() - started) * 1_000)
+    )
+    return output
+  }
+
+  /// The meeting record owns progress and persistence. Only the existing
+  /// text-model coordinator owns inference. A failed chunk leaves saved source
+  /// and previously confirmed translation chunks intact for explicit resume.
+  func translateMeetingChunks(
+    _ chunks: [String], startingAt index: Int, options: VoiceOutputConfiguration,
+    onTranslated: @MainActor (Int, String) -> Bool
+  ) async -> Bool {
+    guard options.target != .original, index >= 0, index < chunks.count else { return false }
+    FeatureDiagnostics.record(.meetingTranslation, .started)
+    guard let backgroundTask = await self.beginVoiceProcessing() else {
+      FeatureDiagnostics.record(.meetingTranslation, .failed)
+      return false
+    }
+    defer { self.endVoiceProcessing(backgroundTask) }
+    for current in index..<chunks.count {
+      guard !Task.isCancelled else {
+        FeatureDiagnostics.record(.meetingTranslation, .cancelled)
+        return false
+      }
+      guard let translated = await self.processVoiceChunk(chunks[current], options: options) else {
+        FeatureDiagnostics.record(.meetingTranslation, .failed)
+        return false
+      }
+      guard !Task.isCancelled, onTranslated(current + 1, translated) else {
+        FeatureDiagnostics.record(
+          .meetingTranslation, Task.isCancelled ? .cancelled : .failed
+        )
+        return false
+      }
+    }
+    FeatureDiagnostics.record(.meetingTranslation, .completed)
+    return true
+  }
+
+  private func beginVoiceProcessing() async -> UIBackgroundTaskIdentifier? {
     guard !self.isProcessing else {
       FeatureDiagnostics.record(.voiceOutput, .blocked, failureReason: .busy)
-      DiagnosticLog.write("voice/llm: already processing")
       return nil
     }
     guard let downloads = self.downloadService, downloads.hasUsableModel else {
       FeatureDiagnostics.record(.voiceOutput, .unavailable, failureReason: .noTextModel)
-      DiagnosticLog.write("voice/llm: offline text model unavailable")
       return nil
     }
     let settings = SharedSettings()
     let variant = settings.selectedLLMVariant
     guard let modelPath = downloads.modelFileURL(for: variant)?.path else {
       FeatureDiagnostics.record(.voiceOutput, .unavailable, failureReason: .missingModelFile)
-      DiagnosticLog.write("voice/llm: selected model file missing")
       return nil
     }
     self.isProcessing = true
     settings.isLLMProcessing = true
-    defer {
-      self.inferenceService.unloadModel()
-      settings.isLLMProcessing = false
-      self.isProcessing = false
-    }
     let backgroundTask = self.beginInferenceBackgroundTask()
-    defer { self.endInferenceBackgroundTask(backgroundTask) }
     await self.prepareForInference(variant: variant, modelPath: modelPath)
-    guard self.inferenceService.loadState == .loaded else {
-      FeatureDiagnostics.record(.voiceOutput, .failed, failureReason: .modelLoadFailed)
-      DiagnosticLog.write("voice/llm: offline model load failed")
+    guard !Task.isCancelled, self.inferenceService.loadState == .loaded else {
+      FeatureDiagnostics.record(
+        .voiceOutput, Task.isCancelled ? .cancelled : .failed,
+        failureReason: Task.isCancelled ? nil : .modelLoadFailed
+      )
+      self.endVoiceProcessing(backgroundTask)
       return nil
     }
+    return backgroundTask
+  }
+
+  private func endVoiceProcessing(_ backgroundTask: UIBackgroundTaskIdentifier) {
+    self.inferenceService.unloadModel()
+    SharedSettings().isLLMProcessing = false
+    self.isProcessing = false
+    self.endInferenceBackgroundTask(backgroundTask)
+  }
+
+  private func processVoiceChunk(
+    _ input: String, options: VoiceOutputConfiguration
+  ) async -> String? {
     let result = await self.runInferenceWithTimeout(
-      systemPrompt: VoiceOutputPrompt.systemPrompt(for: options),
+      systemPrompt: VoiceOutputPrompt.compactPrompt(for: options),
       userText: input, assistantPrefill: ""
     )
-    guard let output = result?.trimmingCharacters(in: .whitespacesAndNewlines), !output.isEmpty else {
+    guard !Task.isCancelled else {
+      FeatureDiagnostics.record(.voiceOutput, .cancelled)
+      return nil
+    }
+    guard let output = result?.trimmingCharacters(in: .whitespacesAndNewlines),
+          !output.isEmpty else {
       FeatureDiagnostics.record(.voiceOutput, .failed, failureReason: .inferenceUnavailable)
-      DiagnosticLog.write("voice/llm: output missing or timed out")
       return nil
     }
     guard VoiceLanguageValidator.matches(output, target: options.target) else {
       FeatureDiagnostics.record(.voiceOutput, .rejected, failureReason: .invalidTargetLanguage)
-      DiagnosticLog.write("voice/llm: generated text did not match selected language")
       return nil
     }
     if input.count >= 30, output.count > max(input.count * 4, input.count + 200) {
       FeatureDiagnostics.record(.voiceOutput, .rejected, failureReason: .oversizedOutput)
-      DiagnosticLog.write("voice/llm: output excessively long")
       return nil
     }
-    FeatureDiagnostics.record(.voiceOutput, .completed,
-      durationMs: Int((CFAbsoluteTimeGetCurrent() - started) * 1_000))
-    DictationBreadcrumb.record(
-      "voice/llm: complete in \(String(format: "%.1f", CFAbsoluteTimeGetCurrent() - started))s"
-    )
     return output
   }
 
@@ -274,48 +339,28 @@ final class LLMProcessingCoordinator: ObservableObject {
     return LLMPromptTemplates.systemPrompt(for: request.action, language: language)
   }
 
+  /// The native generation loop already checks an absolute per-call deadline.
+  /// Do not race a second TaskGroup timer against an unstructured inference
+  /// task: that allowed the model/context to be unloaded before decode ended.
   private func runInferenceWithTimeout(
     systemPrompt: String,
     userText: String,
     assistantPrefill: String
   ) async -> String? {
     let remaining = UIApplication.shared.backgroundTimeRemaining
-    let timeout: TimeInterval =
-      if remaining < .greatestFiniteMagnitude {
-        max(remaining - Self.safetyMarginSeconds, 10)
-      } else {
-        Self.inferenceTimeoutSeconds
-      }
-
-    let generationDeadline = min(
-      timeout, SharedSettings().selectedLLMVariant == .hereticLarge ? 60.0 : 15.0
+    let foregroundBudget: TimeInterval =
+      SharedSettings().selectedLLMVariant == .hereticLarge ? 110 : 75
+    let deadline = remaining < .greatestFiniteMagnitude
+      ? min(foregroundBudget, max(0, remaining - Self.safetyMarginSeconds))
+      : foregroundBudget
+    guard deadline >= 5, !Task.isCancelled else { return nil }
+    return await self.inferenceService.process(
+      systemPrompt: systemPrompt, userText: userText,
+      assistantPrefill: assistantPrefill, maxOutputTokens: nil,
+      deadlineSeconds: deadline
     )
-
-    return await withTaskGroup(of: String?.self) { group in
-      group.addTask {
-        await self.inferenceService.process(
-          systemPrompt: systemPrompt,
-          userText: userText,
-          assistantPrefill: assistantPrefill,
-          maxOutputTokens: nil,
-          deadlineSeconds: generationDeadline,
-        )
-      }
-
-      group.addTask {
-        try? await Task.sleep(for: .seconds(timeout))
-        return nil
-      }
-
-      if let result = await group.next() {
-        group.cancelAll()
-        return result
-      }
-
-      group.cancelAll()
-      return nil
-    }
   }
+
 }
 
 

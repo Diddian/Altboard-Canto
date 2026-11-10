@@ -177,12 +177,17 @@ extension SpeechRecognitionService {
           break
         }
 
-        if modelOutputMissing && options.target != .original {
-          // An explicit translation must never fall back to spoken-language text.
-          self.settings.lastDictationOutcome = .processingFailed
-          FeatureDiagnostics.record(.voiceOutput, .failed, failureReason: .inferenceUnavailable)
-          DiagnosticLog.write("voice: selected output language unavailable; raw speech retained in history")
-          return
+        if modelOutputMissing {
+          if options.target != .original {
+            // Never replace requested translated output with source language.
+            self.settings.lastDictationOutcome = .processingFailed
+            FeatureDiagnostics.record(.voiceOutput, .failed, failureReason: .inferenceUnavailable)
+            DiagnosticLog.write("voice: selected output language unavailable; raw speech retained in history")
+            return
+          }
+          // Cleanup is optional. Preserve original-language dictation while
+          // making the missing edit observable rather than claiming it ran.
+          FeatureDiagnostics.record(.voiceOutput, .fallback)
         }
 
         // Corrections are applied after display normalization for original /
@@ -224,7 +229,7 @@ extension SpeechRecognitionService {
           break
         }
 
-        self.settings.lastVoiceOutputProcessed = options.needsLLM
+        self.settings.lastVoiceOutputProcessed = options.needsLLM && !modelOutputMissing
         TranscriptionBridge.writeVoiceProgress(.finalizing)
         let finalOutput = VoicePunctuationPolicy.render(
           bridgeText, enabled: options.punctuationEnabled

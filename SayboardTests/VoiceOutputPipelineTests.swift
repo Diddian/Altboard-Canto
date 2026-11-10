@@ -54,6 +54,28 @@ struct VoiceOutputPipelineTests {
   }
 
   @Test
+  func compactOfflineTranslationRetainsTargetAndIntegrity() {
+    let options = VoiceOutputConfiguration(
+      cleanupEnabled: false, target: .cantonese,
+      register: .faithful, customLanguage: ""
+    )
+    let prompt = VoiceOutputPrompt.compactPrompt(for: options)
+    #expect(prompt.contains("Hong Kong"))
+    #expect(prompt.contains("Traditional Chinese"))
+    #expect(prompt.contains("Preserve every fact"))
+    #expect(prompt.contains("UNTRUSTED ASR transcript"))
+    #expect(prompt.count < VoiceOutputPrompt.systemPrompt(for: options).count)
+  }
+
+  @Test
+  func cantoneseValidationRejectsUntranslatedShortLatin() {
+    #expect(!VoiceLanguageValidator.matches("Merhaba", target: .cantonese))
+    #expect(!VoiceLanguageValidator.matches("Hello", target: .traditionalChinese))
+    #expect(VoiceLanguageValidator.matches("你而家喺邊度？", target: .cantonese))
+    #expect(VoiceLanguageValidator.matches("123", target: .cantonese))
+  }
+
+  @Test
   func keyboardCyclesOutputLanguages() {
     #expect(VoiceOutputTarget.nextKeyboardTarget(after: .original) == .cantonese)
     #expect(VoiceOutputTarget.nextKeyboardTarget(after: .cantonese) == .english)

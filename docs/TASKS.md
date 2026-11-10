@@ -49,7 +49,30 @@ no workstream completion checkbox is newly granted by this source batch.
 The Turkish-to-Cantonese output failure has no verified root cause;
 collect exported development diagnostics after reproducing the issue (no
 transcript/audio is included in FeatureDiagnostics).
-Do not trigger unsigned IPA on this staging commit. #174 remains usable.
+The following implementation batch is intended for a single source-checked unsigned IPA build on `main`; preserve #174 pending physical iPhone acceptance.
+
+**2026-11-10 output-language and recording repair, awaiting build/device evidence:**
+Qwen3 meeting ASR previously saved source-language text without invoking any
+translation step. Saved meetings can now explicitly translate the original
+transcript into the current output language. For complete non-interrupted
+meetings with a selected text model, post-stop translation starts automatically.
+Long inputs use bounded chunks and persist their progress in the existing
+atomic meeting manifest; the original ASR and audio remain unchanged.
+Changing the target or source invalidates old draft progress, not the last
+confirmed translation. Pause, model failure and app interruption retain
+confirmed chunks for explicit resume. The host-app LLM coordinator remains
+the only inference owner; native model workers are cancelled and awaited
+before unloading, replacing the unsafe competing task-group timer.
+The Cantonese output validator refuses non-Han transcripts; optional
+same-language cleanup can fall back to original text without claiming that an
+LLM processed it. Structured Diagnostics remain metadata-only.
+
+Acceptance: source policy and contract tests, exact-SHA Xcode/IPA validation,
+then on-device Settings → Speech & AI → Output target, Text Model availability,
+completed meeting translation/copy, failed-model recovery, Pause/Resume, and
+normal keyboard EN/DE/Yue dictation + Globe. Do not claim verified speed,
+long-recording battery/memory or physical iPhone acceptance from CI alone.
+No new T-022–T-024 checklist item is complete until its original gate passes.
 
 ## T-024 - Consolidated mainline implementation batch (2026-11-10)
 
@@ -211,11 +234,12 @@ new server, duplicate keyboard coordinator, animation engine or model dependency
   compare measured Parakeet v3/Core ML, Whisper, Moonshine and Qwen3 to
   Meetily's desktop strategies. No unverified 4x claim or new ONNX default.
   Existing FIFO/diagnostics optimization is not a measured iPhone speedup.
-  Turkish-to-yue output requires an available offline text LLM; the current
-  coordinator has a short generation deadline. Bounded enum-only failure
-  reasons now distinguish absent model, load/inference failure, invalid
-  target output and concurrent busy state. The reported cause needs actual
-  exported Diagnostics JSON.
+  Saved meeting translation previously did not call the output LLM at all.
+  Translation is now integrated at post-stop and in meeting details with
+  resumable bounded chunks; ordinary dictation has a longer, cancellable
+  text-model deadline. Runtime acceptance and performance measurements
+  remain open. Enum-only failure diagnostics distinguish unavailable models,
+  inference errors, invalid target output and a concurrent busy state.
 - [x] T-023.18 Strengthen affected deterministic policy tests and verify actual
   CI jobs and artifact metadata. Build #174 passed; its 80,008,179-byte IPA
   matches the published development asset and exact source SHA. The previous

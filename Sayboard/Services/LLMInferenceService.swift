@@ -143,7 +143,9 @@ final class LLMInferenceService: ObservableObject {
     let sendableModel = SendablePointer(pointer: model)
     let sendableCtx = SendablePointer(pointer: context)
 
-    return await Task.detached(priority: .userInitiated) {
+    // A cancelling caller must also cancel and await the native worker.
+    // Otherwise unloading the model on timeout can free live llama pointers.
+    let worker = Task.detached(priority: .userInitiated) {
       Self.runInference(
         model: sendableModel.pointer,
         context: sendableCtx.pointer,
@@ -152,7 +154,12 @@ final class LLMInferenceService: ObservableObject {
         maxOutputTokens: maxOutputTokens,
         deadlineSeconds: deadlineSeconds,
       )
-    }.value
+    }
+    return await withTaskCancellationHandler {
+      await worker.value
+    } onCancel: {
+      worker.cancel()
+    }
   }
 
   private struct Prompt: Sendable {

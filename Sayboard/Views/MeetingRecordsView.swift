@@ -82,7 +82,7 @@ struct MeetingRecordsView: View {
         } label: {
           Image(systemName: self.recorder.isRecording ? "stop.circle.fill" : "square.and.pencil")
         }
-        .disabled(self.recorder.isFinalizing)
+        .disabled(self.recorder.isFinalizing || self.recorder.translatingRecordID != nil)
         .accessibilityLabel(self.recorder.isRecording ? "Stop and save meeting" : "Start a new meeting")
       }
     }
@@ -360,7 +360,7 @@ struct MeetingRecordsView: View {
       }
     }
     .buttonStyle(.plain)
-    .disabled(self.recorder.isFinalizing)
+    .disabled(self.recorder.isFinalizing || self.recorder.translatingRecordID != nil)
     .accessibilityLabel(self.recorder.isRecording ? "Stop and save meeting" : "Record meeting")
   }
 
@@ -388,6 +388,11 @@ struct MeetingRecordsView: View {
 
 private struct MeetingRecordDetailView: View {
   let record: MeetingRecord
+  @EnvironmentObject private var speechService: SpeechRecognitionService
+  @AppStorage(SharedKey.voiceOutputTarget, store: AppGroup.sharedDefaults ?? .standard)
+  private var outputTargetRaw = VoiceOutputTarget.original.rawValue
+  @AppStorage(SharedKey.voiceCustomLanguage, store: AppGroup.sharedDefaults ?? .standard)
+  private var outputLanguage = ""
   @ObservedObject private var recorder = MeetingRecordingCoordinator.shared
   @State private var name = ""
   @State private var notes = ""
@@ -396,6 +401,15 @@ private struct MeetingRecordDetailView: View {
 
   private var latest: MeetingRecord {
     self.recorder.records.first(where: { $0.id == self.record.id }) ?? self.record
+  }
+
+  private var selectedTarget: VoiceOutputTarget {
+    VoiceOutputTarget(rawValue: self.outputTargetRaw) ?? .original
+  }
+
+  private var selectedLanguageName: String {
+    let label = self.selectedTarget.title
+    return self.selectedTarget == .custom ? "\(label) (\(self.outputLanguage))" : label
   }
 
   private var folder: URL? {
@@ -449,6 +463,51 @@ private struct MeetingRecordDetailView: View {
           ShareLink("Share Transcript", item: transcript)
         }
       }
+      Section("Translated Transcript") {
+        if let translated = self.latest.translatedTranscript, !translated.isEmpty {
+          LabeledContent("Saved language", value: self.latest.translatedLanguageCode ?? "Unknown")
+          Text(translated)
+            .textSelection(.enabled)
+          Button("Copy Translation") { UIPasteboard.general.string = translated }
+        }
+        if let finished = self.latest.translationDraftNextChunk, finished > 0 {
+          Label(
+            "Translation partially saved (\(finished) sections). Resume with the same language.",
+            systemImage: "arrow.clockwise"
+          )
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+        }
+        if self.recorder.translatingRecordID == self.record.id {
+          ProgressView(self.recorder.translationStatus)
+          Button("Pause Translation") {
+            self.recorder.cancelTranslation(id: self.record.id)
+          }
+          .accessibilityHint("Preserves original transcript and saved translated sections")
+        } else {
+          Button("Translate to \(self.selectedLanguageName)") {
+            self.recorder.translateRecord(id: self.record.id, using: self.speechService)
+          }
+          .disabled(self.selectedTarget == .original
+            || self.latest.transcript.isEmpty
+            || self.recorder.translatingRecordID != nil
+            || self.recorder.isRecording || self.recorder.isFinalizing)
+          if self.selectedTarget == .original {
+            Text("Select an output language in Settings to translate this saved recording.")
+              .font(.footnote)
+              .foregroundStyle(.secondary)
+          } else {
+            Text("Translation uses the selected offline Text Model. The original transcript and audio remain unchanged.")
+              .font(.footnote)
+              .foregroundStyle(.secondary)
+          }
+          if !self.recorder.translationStatus.isEmpty {
+            Text(self.recorder.translationStatus)
+              .font(.footnote)
+              .foregroundStyle(.secondary)
+          }
+        }
+      }
       Section("Saved Audio Parts") {
         ForEach(self.latest.parts) { part in
           if !part.fileName.contains("/"), !part.fileName.contains("\\"),
@@ -475,5 +534,6 @@ private struct MeetingRecordDetailView: View {
     }
     .onChange(of: self.name) { _, _ in self.saved = false; self.saveFailed = false }
     .onChange(of: self.notes) { _, _ in self.saved = false; self.saveFailed = false }
+    .onDisappear { self.recorder.cancelTranslation(id: self.record.id) }
   }
 }

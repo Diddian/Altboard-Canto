@@ -64,6 +64,13 @@ jobs:
             scripts/verify-recording-policies.swift
           "$RUNNER_TEMP/recording-policies-smoke"
 
+      - name: Verify resumable meeting translation policy
+        run: |
+          set -euo pipefail
+          swiftc -swift-version 6 -o "$RUNNER_TEMP/meeting-translation-smoke" \
+            Shared/MeetingTranslationPolicy.swift scripts/verify-meeting-translation.swift
+          "$RUNNER_TEMP/meeting-translation-smoke"
+
       - name: Verify keyboard lifecycle timing and incomplete callbacks
         run: |
           set -euo pipefail
