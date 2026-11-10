@@ -11,6 +11,7 @@ struct DataAndStorageSettingsView: View {
   @State private var vocabularyCount = 0
   @State private var pendingDeletion: [LocalUserDataStore.Category] = []
   @State private var confirmDeletion = false
+  @State private var confirmCacheClear = false
   @State private var busy = false
   @State private var exportTask: Task<Void, Never>?
   @State private var exportURL: URL?
@@ -35,8 +36,8 @@ struct DataAndStorageSettingsView: View {
     }
     .onAppear { self.reload() }
     .onDisappear {
+      // The share sheet still owns its temporary file until dismissal.
       self.exportTask?.cancel()
-      self.clearExport()
     }
     .confirmationDialog(
       self.pendingRetentionPolicy == nil ? "Delete Local Data?" : "Delete Older Voice Notes?",
@@ -126,13 +127,26 @@ struct DataAndStorageSettingsView: View {
         Divider().padding(.leading, 34)
 
         Button(role: .destructive) {
-          ModelStorageManager.clearCompiledModelCache()
+          self.confirmCacheClear = true
         } label: {
           Label("Clear Model Cache", systemImage: "internaldrive")
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .disabled(self.busy || self.recordingActive)
         .frame(minHeight: 64)
+        .confirmationDialog(
+          "Clear Compiled Model Cache?",
+          isPresented: self.$confirmCacheClear,
+          titleVisibility: .visible
+        ) {
+          Button("Clear Cache", role: .destructive) {
+            guard !self.recordingActive, !self.busy else { return }
+            ModelStorageManager.clearCompiledModelCache()
+          }
+          Button("Cancel", role: .cancel) {}
+        } message: {
+          Text("The compiled cache will be rebuilt when needed. Downloaded models are kept.")
+        }
 
         Text("Exports include recordings, transcripts and vocabulary. Models and app settings are kept.")
           .font(.footnote)

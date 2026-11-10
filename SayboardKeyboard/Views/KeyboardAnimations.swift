@@ -144,6 +144,8 @@ struct PulseRings: View {
   let cornerRadius: CGFloat
   let ringSpacing: CGFloat
 
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
   var maxWidth: CGFloat {
     let ringExtent = CGFloat(Self.ringCount) * self.ringSpacing
     let waveOverflow: CGFloat = 8.kbScaled
@@ -178,14 +180,14 @@ struct PulseRings: View {
     }
     .allowsHitTesting(false)
     .animation(
-      .easeInOut(duration: Self.pulseDuration).repeatForever(autoreverses: true),
+      self.reduceMotion ? nil : .easeInOut(duration: Self.pulseDuration).repeatForever(autoreverses: true),
       value: self.isAnimating,
     )
-    .onAppear {
-      self.isAnimating = true
-      withAnimation(.linear(duration: Self.waveDuration).repeatForever(autoreverses: false)) {
-        self.wavePhase = 2 * .pi
-      }
+    .onAppear(perform: self.startAnimation)
+    .onChange(of: self.reduceMotion) { _, _ in self.startAnimation() }
+    .onDisappear {
+      self.isAnimating = false
+      self.wavePhase = 0
     }
   }
 
@@ -201,6 +203,16 @@ struct PulseRings: View {
 
   @State private var isAnimating = false
   @State private var wavePhase = 0.0
+
+  private func startAnimation() {
+    self.isAnimating = false
+    self.wavePhase = 0
+    guard !self.reduceMotion else { return }
+    self.isAnimating = true
+    withAnimation(.linear(duration: Self.waveDuration).repeatForever(autoreverses: false)) {
+      self.wavePhase = 2 * .pi
+    }
+  }
 
   private var isCircle: Bool {
     abs(self.buttonWidth - self.buttonHeight) < 0.5 && self.cornerRadius >= self.buttonHeight / 2 - 0.5
@@ -263,19 +275,30 @@ struct MetaballSpinner: View {
     }
     .rotationEffect(.degrees(self.rotation))
     .frame(width: self.size, height: self.size)
-    .onAppear {
-      withAnimation(.linear(duration: Self.rotationPeriod).repeatForever(autoreverses: false)) {
-        self.rotation = 360
-      }
-      withAnimation(.easeInOut(duration: Self.oscillationPeriod).repeatForever(autoreverses: true)) {
-        self.phase = 1
-      }
+    .onAppear(perform: self.startAnimation)
+    .onChange(of: self.reduceMotion) { _, _ in self.startAnimation() }
+    .onDisappear {
+      self.rotation = 0
+      self.phase = 0
+    }
+  }
+
+  private func startAnimation() {
+    self.rotation = 0
+    self.phase = 0
+    guard !self.reduceMotion else { return }
+    withAnimation(.linear(duration: Self.rotationPeriod).repeatForever(autoreverses: false)) {
+      self.rotation = 360
+    }
+    withAnimation(.easeInOut(duration: Self.oscillationPeriod).repeatForever(autoreverses: true)) {
+      self.phase = 1
     }
   }
 
   private static let rotationPeriod = 0.88
   private static let oscillationPeriod = 1.8
 
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @State private var rotation = 0.0
   @State private var phase = 0.0
 

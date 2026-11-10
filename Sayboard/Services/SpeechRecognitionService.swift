@@ -91,13 +91,34 @@ final class SpeechRecognitionService: ObservableObject {
     ExperimentalLiveTranscription.clear()
     self.currentAudioFileName = "\(UUID().uuidString).caf"
 
+    let sessionStartedHere = !self.session.isSessionActive
     guard self.ensureSessionActive() else {
       FeatureDiagnostics.record(.speech, .failed)
+      self.currentAudioFileName = nil
+      self.settings.dictationSessionToken = nil
+      self.settings.lastDictationOutcome = .activationFailed
+      TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStopped)
       return
     }
 
     self.accumulator.reset()
-    self.startAudioCapture()
+    do {
+      try self.startAudioCapture()
+    } catch {
+      FeatureDiagnostics.record(.speech, .failed)
+      self.errorMessage = error.localizedDescription
+      self.settings.lastDictationOutcome = .activationFailed
+      if let recording = self.audioRecorder.stopRecording() {
+        try? FileManager.default.removeItem(at: recording.url)
+      }
+      self.currentAudioFileName = nil
+      self.settings.dictationSessionToken = nil
+      self.accumulator.reset()
+      self.session.deactivateTap()
+      if sessionStartedHere { self.session.endSession() }
+      TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStopped)
+      return
+    }
 
     self.isRecording = true
     FeatureDiagnostics.record(.speech, .started)
@@ -199,8 +220,9 @@ final class SpeechRecognitionService: ObservableObject {
 
     self.cancelMaxDurationTimer()
     self.session.deactivateTap()
-    let savedSamples = self.accumulator.samples
     await self.stopExperimentalLive()
+    // Only the final recognizer needs these samples now; release the queued copy.
+    let savedSamples = self.accumulator.consumeAll()
     let stylingHost = OnboardingTextEntry.stylingHost(self.settings.hostBundleId)
 
     // Preserve the first words: capture before cold Qwen3 ONNX initialization.
@@ -405,15 +427,18 @@ final class SpeechRecognitionService: ObservableObject {
     }
   }
 
-  private func startAudioCapture() {
+  private func startAudioCapture() throws {
     let inputNode = self.session.audioEngine.inputNode
     let recordingFormat = inputNode.outputFormat(forBus: 0)
 
-    if let fileName = currentAudioFileName {
-      _ = self.audioRecorder.startRecording(fileName: fileName, format: recordingFormat)
+    if let fileName = currentAudioFileName,
+       self.audioRecorder.startRecording(fileName: fileName, format: recordingFormat) == nil {
+      // Dictation still works without a history file; report the fallback.
+      self.currentAudioFileName = nil
+      FeatureDiagnostics.record(.speech, .fallback)
     }
 
-    self.session.activateTap(accumulator: self.accumulator, recorder: self.audioRecorder)
+    try self.session.activateTap(accumulator: self.accumulator, recorder: self.audioRecorder)
     if self.settings.selectedVariant.engine == .parakeet {
       self.parakeetService.warmUpIfEvicted()
     }

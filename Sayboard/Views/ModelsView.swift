@@ -143,6 +143,7 @@ struct ModelsView: View, Equatable {
       .clipShape(Capsule())
     }
     .buttonStyle(.plain)
+    .accessibilityHint("Choose which speech model languages to show")
   }
 
   @ViewBuilder
@@ -154,8 +155,10 @@ struct ModelsView: View, Equatable {
         Image(systemName: "xmark.circle.fill")
           .font(.body)
           .foregroundStyle(.secondary)
+          .frame(minWidth: 44, minHeight: 44)
       }
       .buttonStyle(.plain)
+      .accessibilityLabel("Clear speech model language filter")
     }
   }
 

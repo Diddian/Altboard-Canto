@@ -7,6 +7,10 @@ final class AudioBufferAccumulator: Sendable {
     self.buffer.withLock { $0.snapshot() }
   }
 
+  var sampleCount: Int {
+    self.buffer.withLock { $0.count }
+  }
+
   func append(_ newSamples: [Float]) {
     self.buffer.withLock { $0.append(newSamples) }
   }

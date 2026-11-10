@@ -11,6 +11,62 @@ def read(path):
 
 
 class SettingsContractTests(unittest.TestCase):
+    def test_haptic_reset_and_strength_are_reachable(self):
+        settings = read("Sayboard/Views/KeyboardSettingsView.swift")
+        shared = read("Shared/SharedSettings.swift")
+        self.assertIn('Slider("Haptic Strength"', settings)
+        self.assertIn('Button("Reset Haptic Feedback"', settings)
+        self.assertIn("SharedSettings.defaultKeyboardHapticStrength", settings)
+        self.assertIn("keyboardHapticDriver = .coreHaptics", settings)
+        self.assertIn("var keyboardHapticStrength: Double", shared)
+
+    def test_custom_language_edits_are_confirmed(self):
+        settings = read("Sayboard/Views/VoiceOutputSettingsView.swift")
+        self.assertIn('alert("Other Output Language"', settings)
+        self.assertIn('Button("Apply")', settings)
+        self.assertIn('Button("Cancel", role: .cancel)', settings)
+        self.assertIn("VoiceOutputTarget.customLanguageName(code) != nil", settings)
+        other = settings.split('Button("Other language")', 1)[1].split('} label:', 1)[0]
+        self.assertIn("self.showCustomLanguagePrompt = true", other)
+        self.assertNotIn('self.target = VoiceOutputTarget.custom.rawValue', other)
+
+    def test_speech_model_deep_links_open_model_screen(self):
+        tabs = read("Sayboard/Views/MainTabView.swift")
+        self.assertIn("private enum SettingsRoute: Hashable", tabs)
+        self.assertIn("case .speechModels: ModelsView()", tabs)
+        self.assertIn("self.settingsPath.append(SettingsRoute.speechModels)", tabs)
+        self.assertIn("case DeepLink.modelsHost:", tabs)
+        self.assertEqual(tabs.count(".navigationDestination(for: SettingsRoute.self)"), 2)
+
+    def test_speech_model_filters_are_accessible(self):
+        models = read("Sayboard/Views/ModelsView.swift")
+        self.assertIn("Clear speech model language filter", models)
+        self.assertIn(".frame(minWidth: 44, minHeight: 44)", models)
+
+    def test_meeting_actions_announce_and_preserve_failures(self):
+        meetings = read("Sayboard/Views/MeetingRecordsView.swift")
+        self.assertIn("self.reduceMotion ? nil : .easeInOut", meetings)
+        for label in ("Back 15 seconds", "Forward 15 seconds",
+                      "Pause meeting audio", "Play meeting audio",
+                      "Transcript incomplete. Original audio parts are preserved."):
+            self.assertIn(label, meetings)
+        self.assertIn("Unable to save meeting details. Try again.", meetings)
+        self.assertIn("self.operationError", meetings)
+        self.assertIn("if !self.recorder.deleteRecord(id: id)", meetings)
+
+    def test_compiled_model_cache_requires_confirmation(self):
+        data = read("Sayboard/Views/DataAndStorageSettingsView.swift")
+        self.assertIn("confirmCacheClear", data)
+        self.assertIn('confirmationDialog(\n          "Clear Compiled Model Cache?"', data)
+        self.assertIn('Button("Clear Cache", role: .destructive)', data)
+        self.assertIn("guard !self.recordingActive, !self.busy else { return }", data)
+
+    def test_keyboard_pulse_animations_honor_reduce_motion_and_teardown(self):
+        effects = read("SayboardKeyboard/Views/KeyboardAnimations.swift")
+        self.assertGreaterEqual(effects.count("@Environment(\\.accessibilityReduceMotion)"), 2)
+        self.assertGreaterEqual(effects.count(".onDisappear {"), 2)
+        self.assertIn("guard !self.reduceMotion else { return }", effects)
+
     def test_storage_warning_is_not_hidden_by_neural_engine_policy(self):
         settings = read("Sayboard/Views/SettingsView.swift")
         self.assertIn("self.showsLowStorageWarning = DiskSpace.isLow()", settings)

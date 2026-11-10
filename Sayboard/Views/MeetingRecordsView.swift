@@ -14,6 +14,8 @@ struct MeetingRecordsView: View {
   @State private var renamingID: UUID?
   @State private var renameText = ""
   @State private var showModelNotice = false
+  @State private var operationError: String?
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
   private var filteredRecords: [MeetingRecord] {
     guard !self.searchText.isEmpty else { return self.recorder.records }
@@ -27,6 +29,15 @@ struct MeetingRecordsView: View {
     ScrollView {
       LazyVStack(spacing: 14) {
         self.explanationCard
+        if let operationError = self.operationError {
+          HStack {
+            Label(operationError, systemImage: "exclamationmark.triangle")
+              .foregroundStyle(.orange)
+            Spacer()
+            Button("Dismiss") { self.operationError = nil }
+          }
+          .accessibilityElement(children: .contain)
+        }
         if self.recorder.isRecording, let current = self.recorder.current {
           self.activeMeetingCard(current)
         }
@@ -59,10 +70,10 @@ struct MeetingRecordsView: View {
         Button {
           self.recordAction()
         } label: {
-          Image(systemName: "square.and.pencil")
+          Image(systemName: self.recorder.isRecording ? "stop.circle.fill" : "square.and.pencil")
         }
         .disabled(self.recorder.isFinalizing)
-        .accessibilityLabel("Start a new meeting")
+        .accessibilityLabel(self.recorder.isRecording ? "Stop and save meeting" : "Start a new meeting")
       }
     }
     .searchable(
@@ -90,7 +101,9 @@ struct MeetingRecordsView: View {
       Button("Delete Meeting", role: .destructive) {
         if let id = self.pendingDelete {
           if self.playback.recordID == id { self.playback.stop() }
-          _ = self.recorder.deleteRecord(id: id)
+          if !self.recorder.deleteRecord(id: id) {
+            self.operationError = "Unable to delete meeting. The saved files were not confirmed removed."
+          }
         }
         self.pendingDelete = nil
       }
@@ -106,9 +119,11 @@ struct MeetingRecordsView: View {
       Button("Save") {
         if let id = self.renamingID,
            let original = self.recorder.records.first(where: { $0.id == id }) {
-          _ = self.recorder.updateRecord(
+          if !self.recorder.updateRecord(
             id: id, title: self.renameText, notes: original.notes ?? ""
-          )
+          ) {
+            self.operationError = "Unable to rename meeting. Try again."
+          }
         }
         self.renamingID = nil
       }
@@ -174,7 +189,7 @@ struct MeetingRecordsView: View {
       HStack(alignment: .center, spacing: 12) {
         VStack(alignment: .leading, spacing: 5) {
           Button {
-            withAnimation(.easeInOut(duration: 0.16)) {
+            withAnimation(self.reduceMotion ? nil : .easeInOut(duration: 0.16)) {
               if self.expandedID == record.id {
                 self.expandedID = nil
               } else {
@@ -191,6 +206,8 @@ struct MeetingRecordsView: View {
               .contentShape(Rectangle())
           }
           .buttonStyle(.plain)
+          .accessibilityLabel("Playback controls for \(record.displayTitle)")
+          .accessibilityHint("Expand or collapse playback controls")
           HStack(spacing: 8) {
             Text(record.startedAt.formatted(date: .abbreviated, time: .shortened))
             if !record.transcript.isEmpty {
@@ -208,6 +225,7 @@ struct MeetingRecordsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         Text(Self.time(record.totalDuration))
           .font(.subheadline).monospacedDigit().foregroundStyle(.secondary)
+          .accessibilityLabel("Duration \(Self.time(record.totalDuration))")
         Menu {
           Button("Rename", systemImage: "pencil") {
             self.renameText = record.title ?? ""
@@ -225,9 +243,9 @@ struct MeetingRecordsView: View {
           Image(systemName: "ellipsis")
             .font(.headline)
             .foregroundStyle(.secondary)
-            .frame(width: 30, height: 40)
+            .frame(minWidth: 44, minHeight: 44)
         }
-        .accessibilityLabel("Meeting options")
+        .accessibilityLabel("Meeting options for \(record.displayTitle)")
       }
 
       if self.expandedID == record.id {
@@ -253,6 +271,7 @@ struct MeetingRecordsView: View {
         in: 0...max(1, record.totalDuration)
       )
       .disabled(record.parts.isEmpty)
+      .accessibilityLabel("Playback position for \(record.displayTitle)")
       HStack {
         Text(Self.time(self.playback.recordID == record.id ? self.playback.position : 0))
         Spacer()
@@ -268,12 +287,16 @@ struct MeetingRecordsView: View {
           Image(systemName: "quote.bubble")
             .font(.title3)
         }
+        .accessibilityLabel("View transcript for \(record.displayTitle)")
+        .frame(minWidth: 44, minHeight: 44)
         Spacer()
         Button {
           self.playback.skip(-15, in: record)
         } label: {
           Image(systemName: "gobackward.15").font(.title2)
         }
+        .accessibilityLabel("Back 15 seconds")
+        .frame(minWidth: 44, minHeight: 44)
         Spacer()
         Button {
           self.playback.toggle(record)
@@ -284,18 +307,24 @@ struct MeetingRecordsView: View {
             .frame(minWidth: 48, minHeight: 48)
         }
         .disabled(record.parts.isEmpty)
+        .accessibilityLabel(self.playback.recordID == record.id && self.playback.isPlaying
+          ? "Pause meeting audio" : "Play meeting audio")
         Spacer()
         Button {
           self.playback.skip(15, in: record)
         } label: {
           Image(systemName: "goforward.15").font(.title2)
         }
+        .accessibilityLabel("Forward 15 seconds")
+        .frame(minWidth: 44, minHeight: 44)
         Spacer()
         Button(role: .destructive) {
           self.pendingDelete = record.id
         } label: {
           Image(systemName: "trash").font(.title3)
         }
+        .accessibilityLabel("Delete \(record.displayTitle)")
+        .frame(minWidth: 44, minHeight: 44)
       }
       .buttonStyle(.plain)
       .foregroundStyle(.primary)
@@ -353,6 +382,7 @@ private struct MeetingRecordDetailView: View {
   @State private var name = ""
   @State private var notes = ""
   @State private var saved = false
+  @State private var saveFailed = false
 
   private var latest: MeetingRecord {
     self.recorder.records.first(where: { $0.id == self.record.id }) ?? self.record
@@ -373,14 +403,24 @@ private struct MeetingRecordDetailView: View {
           self.saved = self.recorder.updateRecord(
             id: self.record.id, title: self.name, notes: self.notes
           )
+          self.saveFailed = !self.saved
         }
         if self.saved { Label("Saved", systemImage: "checkmark.circle") }
+        if self.saveFailed {
+          Label("Unable to save meeting details. Try again.", systemImage: "exclamationmark.triangle")
+            .foregroundStyle(.orange)
+        }
         LabeledContent("Started", value: self.latest.startedAt.formatted(
           date: .abbreviated, time: .shortened))
         LabeledContent("Duration", value: MeetingRecordsView.time(self.latest.totalDuration))
       }
 
       Section("Combined Transcript") {
+        if self.latest.state == "partialTranscript" {
+          Label("Transcript incomplete. Original audio parts are preserved.",
+                systemImage: "exclamationmark.triangle")
+            .foregroundStyle(.orange)
+        }
         Text(self.latest.transcript.isEmpty
           ? "The transcript will appear here after recognition finishes."
           : self.latest.transcript)
@@ -418,5 +458,7 @@ private struct MeetingRecordDetailView: View {
       self.name = self.latest.title ?? ""
       self.notes = self.latest.notes ?? ""
     }
+    .onChange(of: self.name) { _, _ in self.saved = false; self.saveFailed = false }
+    .onChange(of: self.notes) { _, _ in self.saved = false; self.saveFailed = false }
   }
 }

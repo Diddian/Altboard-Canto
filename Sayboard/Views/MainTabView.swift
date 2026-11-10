@@ -45,6 +45,10 @@ struct MainTabView: View {
     case settings
   }
 
+  private enum SettingsRoute: Hashable {
+    case speechModels
+  }
+
   private enum SetupBanner {
     case micDenied
     case keyboardMissing
@@ -153,6 +157,11 @@ struct MainTabView: View {
       Tab("Settings", image: "tab-settings", value: TabID.settings.rawValue) {
         NavigationStack(path: self.$settingsPath) {
           SettingsView()
+            .navigationDestination(for: SettingsRoute.self) { route in
+              switch route {
+              case .speechModels: ModelsView()
+              }
+            }
         }
         .id(self.settingsStackID)
       }
@@ -179,6 +188,11 @@ struct MainTabView: View {
 
       NavigationStack(path: self.$settingsPath) {
         SettingsView()
+          .navigationDestination(for: SettingsRoute.self) { route in
+            switch route {
+            case .speechModels: ModelsView()
+            }
+          }
       }
       .id(self.settingsStackID)
       .tabItem {
@@ -246,7 +260,7 @@ struct MainTabView: View {
       [
         SetupBannerAction(title: "Open Models", style: .primary) {
           self.activeBanner = nil
-          self.selectedTab = TabID.settings.rawValue
+          self.openSpeechModels()
         }
       ]
 
@@ -295,6 +309,12 @@ struct MainTabView: View {
     }
   }
 
+  private func openSpeechModels() {
+    self.settingsPath = NavigationPath()
+    self.selectedTab = TabID.settings.rawValue
+    self.settingsPath.append(SettingsRoute.speechModels)
+  }
+
   private func openSystemSettings() {
     if let url = URL(string: UIApplication.openSettingsURLString) {
       UIApplication.shared.open(url)
@@ -315,8 +335,8 @@ struct MainTabView: View {
       self.selectedTab = TabID.settings.rawValue
 
     case DeepLink.modelsHost:
-      self.selectedTab = TabID.settings.rawValue
-      self.activeBanner = .noModel
+      self.activeBanner = nil
+      self.openSpeechModels()
 
     case DeepLink.setupMicHost:
       self.activeBanner = nil

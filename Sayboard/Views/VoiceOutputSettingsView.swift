@@ -14,6 +14,8 @@ struct VoiceOutputSettingsView: View {
   private var register = VoiceOutputRegister.faithful.rawValue
   @AppStorage(SharedKey.voiceCustomLanguage, store: AppGroup.sharedDefaults ?? .standard)
   private var customLanguage = ""
+  @State private var showCustomLanguagePrompt = false
+  @State private var proposedLanguageCode = ""
 
   var body: some View {
     Group {
@@ -26,6 +28,21 @@ struct VoiceOutputSettingsView: View {
         .navigationTitle("Output")
         .navigationBarTitleDisplayMode(.inline)
       }
+    }
+    .alert("Other Output Language", isPresented: self.$showCustomLanguagePrompt) {
+      TextField("Language code (es, ja, ko)", text: self.$proposedLanguageCode)
+        .textInputAutocapitalization(.never)
+        .autocorrectionDisabled()
+      Button("Cancel", role: .cancel) {}
+      Button("Apply") {
+        let code = self.proposedLanguageCode.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard VoiceOutputTarget.customLanguageName(code) != nil else { return }
+        self.customLanguage = code
+        self.target = VoiceOutputTarget.custom.rawValue
+      }
+      .disabled(VoiceOutputTarget.customLanguageName(self.proposedLanguageCode) == nil)
+    } message: {
+      Text("Enter a valid language code. The current output language stays active until you apply it.")
     }
   }
 
@@ -61,8 +78,8 @@ struct VoiceOutputSettingsView: View {
           self.target = VoiceOutputTarget.custom.rawValue
         }
         Button("Other language") {
-          self.customLanguage = ""
-          self.target = VoiceOutputTarget.custom.rawValue
+          self.proposedLanguageCode = self.customLanguage
+          self.showCustomLanguagePrompt = true
         }
       } label: {
         HStack(spacing: 5) {
@@ -79,10 +96,14 @@ struct VoiceOutputSettingsView: View {
       && !["fr", "zh-Hans"].contains(self.customLanguage) {
       HStack {
         Label("Language Code", systemImage: "character.cursor.ibeam")
-        TextField("fr, es, ja, ko", text: self.$customLanguage)
-          .multilineTextAlignment(.trailing)
-          .textInputAutocapitalization(.never)
-          .autocorrectionDisabled()
+        Spacer(minLength: 8)
+        Button {
+          self.proposedLanguageCode = self.customLanguage
+          self.showCustomLanguagePrompt = true
+        } label: {
+          Text(verbatim: self.customLanguage.isEmpty ? "Set code" : self.customLanguage)
+        }
+        .accessibilityLabel("Change output language code")
       }
       if VoiceOutputTarget.customLanguageName(self.customLanguage) == nil {
         Text("Invalid language code")

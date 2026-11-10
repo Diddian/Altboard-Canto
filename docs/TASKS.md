@@ -20,6 +20,67 @@ the versioned task board until Issues are enabled.
 Statuses: [x] code implemented; [ ] pending / requires verification.
 Do not mark device behavior verified without physical iPhone testing.
 
+## T-024 - Consolidated mainline implementation batch (2026-11-10)
+
+**Goal:** accumulate independently reviewable fixes and regression checks before
+the *next single* unsigned IPA build. The approved baseline is successful
+development IPA #171 at `af05cf6f`. Avoid incremental workflow triggers,
+new workflows, parallel branches and claims of completed device QA.
+
+### Completed in source for this batch; CI and iPhone verification pending
+
+- [x] T-024.1 Fix partial `BackgroundAudioSession.startSession()` failure
+  rollback: stop a started engine, remove an attempted tap, release an activated
+  AVAudioSession, reset shared state, and rethrow. Preserve a preexisting active
+  session. Owner: `Sayboard/Services/BackgroundAudioSession.swift`.
+- [x] T-024.2 Fail explicitly if 16 kHz microphone conversion cannot be
+  configured. Propagate errors through the single existing capture owner;
+  stop only sessions started by the failed dictation request.
+- [x] T-024.3 Make a failed dictation history audio-file open a visible
+  diagnostic fallback while preserving transcription; release an unread
+  accumulator when final recognition owns a copied segment.
+- [x] T-024.4 On failed meeting start, delete temporary audio and directory,
+  release the newly started session, reset coordinator pointers, and avoid
+  advancing meeting sequence numbers for aborted capture.
+- [x] T-024.5 Process an unrecognized meeting audio backlog in bounded
+  eight-second finalization chunks rather than one unbounded allocation.
+  Preserve saved audio and mark failed decoding as a partial transcript;
+  never label incomplete transcription as successful.
+- [x] T-024.6 Show semantic VoiceOver labels and sufficient tappable areas for
+  meeting playback/seek/delete, honor Reduce Motion during row expansion,
+  identify partial transcript state, and report rename/delete/save failures.
+- [x] T-024.7 Make the Speech Models filter reset discoverable and accessible.
+  Route the existing "Open Models" setup banner and models deep link to
+  the Speech Models destination rather than only switching tabs.
+- [x] T-024.8 Add an explicit, cancel-safe output-language-code editor;
+  do not overwrite a valid existing output-language choice with an empty
+  or invalid custom-language selection.
+- [x] T-024.9 Expose existing persisted haptic intensity and Reset to default
+  within Keyboard settings, without creating a second haptic engine.
+- [x] T-024.10 Confirm compiled model-cache deletion and keep the export share
+  sheet's temporary file until the share sheet dismisses.
+- [x] T-024.11 Respect Reduce Motion and stop continuous keyboard loading and
+  microphone pulse animations when their views disappear.
+- [x] T-024.12 Add bounded source regression checks to the existing
+  `scripts/test_settings_contract.py` and
+  `scripts/test_keyboard_safety_contract.py`; no new test framework.
+- [ ] T-024.13 Check source tests, Xcode compilation, IPA packaging and exact
+  commit SHA using the **one existing main-branch unsigned IPA workflow**.
+  Do not mark passed before the GitHub job finishes successfully.
+- [ ] T-024.14 Physical iPhone acceptance: microphone permission/recording
+  start failures and recovery; original vs new Active Session; 15-minute
+  meeting rollover and Stop; saved audio after interrupted/partial ASR;
+  EN/DE/Yue typing and dictation; model navigation; haptic reset; VoiceOver;
+  Reduced Motion, cancellation and no blank keyboard.
+- [ ] T-024.15 Measure real-device memory for long recording and Qwen3
+  decode backlog before claiming improvement. Full 2-hour transcript recovery
+  under terminated processes requires a separate resumable saved-audio
+  pipeline, not an unbounded loop or discarded audio.
+
+The source-level review spans release, UX, accessibility, audio reliability,
+data integrity, architecture and regression coverage. It is not an independent
+multi-agent review. Retain the last usable IPA until a new device acceptance.
+
 ## P0-P2 - Cross-functional app audit and optimization (T-023, 2026-11-10)
 
 **Source baseline:** main at `1e7befac`; unsigned IPA #170 succeeded.
@@ -47,9 +108,10 @@ new server, duplicate keyboard coordinator, animation engine or model dependency
   labels for icon keys instead of SF Symbol identifiers. No new touch owner.
 - [x] T-023.6 Respect Reduce Motion during onboarding's directional transition
   and avoid delaying navigation when animation is disabled.
-- [ ] T-023.7 Verify existing `scripts/test_settings_contract.py` contracts,
+- [x] T-023.7 Verify existing `scripts/test_settings_contract.py` contracts,
   Xcode compilation and exact-SHA unsigned IPA through the single workflow.
-  These checkboxes refer to source implementation until CI passes.
+  Workflow #171 succeeded for `af05cf6f` (source before T-024).
+  These checks do not certify new T-024 code or physical-device behavior.
 - [ ] T-023.8 Verify affected Settings/preview/onboarding states on an iPhone:
   low disk warning, denied microphone, keyboard layouts, haptic off/on,
   VoiceOver, Dynamic Type and Reduce Motion.

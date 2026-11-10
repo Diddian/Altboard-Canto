@@ -56,6 +56,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
   private var timer: Timer?
   private var decodeTask: Task<Void, Never>?
   private var sessionObservation: AnyCancellable?
+  private var incompleteTranscript = false
 
   private init() { self.reloadRecords() }
 
@@ -67,6 +68,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
       self.status = "Select Qwen3-ASR 1.7B and stop other dictation first."
       return
     }
+    let sessionStartedHere = !service.session.isSessionActive
     do { try service.session.startSession() }
     catch {
       FeatureDiagnostics.record(.meeting, .failed)
@@ -80,6 +82,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
     catch {
       FeatureDiagnostics.record(.meeting, .failed)
       self.status = "Cannot create meeting storage"
+      self.abortStart(service: service, sessionStartedHere: sessionStartedHere)
       return
     }
     let format = service.session.audioEngine.inputNode.outputFormat(forBus: 0)
@@ -87,6 +90,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
                                             directory: audioDirectory) != nil else {
       FeatureDiagnostics.record(.meeting, .failed)
       self.status = "Cannot open meeting audio file"
+      self.abortStart(service: service, sessionStartedHere: sessionStartedHere, folder: folder)
       return
     }
     self.speechService = service
@@ -104,10 +108,18 @@ final class MeetingRecordingCoordinator: ObservableObject {
       notes: Self.normalized(notes, limit: 4000),
       sequenceNumber: nextNumber
     )
-    defaults.set(nextNumber, forKey: Self.meetingSequenceKey)
     self.lastPartStartedAt = Date()
     self.accumulator.reset()
-    service.session.activateTap(accumulator: self.accumulator, recorder: self.audioRecorder)
+    self.incompleteTranscript = false
+    do {
+      try service.session.activateTap(accumulator: self.accumulator, recorder: self.audioRecorder)
+    } catch {
+      FeatureDiagnostics.record(.meeting, .failed)
+      self.status = "Microphone audio unavailable; reconnect it and try again."
+      self.abortStart(service: service, sessionStartedHere: sessionStartedHere, folder: folder)
+      return
+    }
+    defaults.set(nextNumber, forKey: Self.meetingSequenceKey)
     self.elapsed = 0
     self.isRecording = true
     FeatureDiagnostics.record(.meeting, .started)
@@ -135,11 +147,34 @@ final class MeetingRecordingCoordinator: ObservableObject {
         let result = await service.qwen3Service.transcribe(audioSamples: samples)
         // The current decoded chunk is still part of the saved meeting even
         // when Stop was pressed during the native inference call.
-        if case .text(let output) = result {
+        switch result {
+        case .text(let output):
           self.appendTranscript(output.text)
+        case .failed:
+          self.incompleteTranscript = true
+          FeatureDiagnostics.record(.meeting, .fallback)
+        case .noSpeech:
+          break
         }
       }
     }
+  }
+
+  private func abortStart(
+    service: SpeechRecognitionService,
+    sessionStartedHere: Bool,
+    folder: URL? = nil
+  ) {
+    if let recording = self.audioRecorder.stopRecording() {
+      try? FileManager.default.removeItem(at: recording.url)
+    }
+    if let folder { try? FileManager.default.removeItem(at: folder) }
+    self.accumulator.reset()
+    self.current = nil
+    self.currentFormat = nil
+    self.currentAudioDirectory = nil
+    self.speechService = nil
+    if sessionStartedHere { service.session.endSession() }
   }
 
   func stop(interrupted: Bool = false) {
@@ -163,21 +198,38 @@ final class MeetingRecordingCoordinator: ObservableObject {
       guard let self else { return }
       // Never race a second native decode against an in-flight ASR call.
       await finishingDecode?.value
+      var transcriptIncomplete = self.incompleteTranscript
       if let service, service.activeLoadState == .loaded {
-        let remaining = self.accumulator.consumeAll()
-        if !remaining.isEmpty {
-          let result = await service.qwen3Service.transcribe(audioSamples: remaining)
-          if case .text(let output) = result { self.appendTranscript(output.text) }
+        // Process a bounded slice at a time, even if recognition fell far behind.
+        while self.accumulator.sampleCount > 0 {
+          let available = self.accumulator.sampleCount
+          let count = min(Self.updateSeconds * 16_000, available)
+          guard let samples = self.accumulator.consume(count: count) else {
+            transcriptIncomplete = true
+            break
+          }
+          let result = await service.qwen3Service.transcribe(audioSamples: samples)
+          switch result {
+          case .text(let output): self.appendTranscript(output.text)
+          case .failed: transcriptIncomplete = true
+          case .noSpeech: break
+          }
         }
+      } else if self.accumulator.sampleCount > 0 {
+        transcriptIncomplete = true
       }
+      // All audio has been written to the meeting files; release queued RAM.
+      self.accumulator.reset()
       if var record = self.current {
         record.endedAt = Date()
-        record.state = interrupted ? "interrupted" : "completed"
+        record.state = interrupted ? "interrupted"
+          : (transcriptIncomplete ? "partialTranscript" : "completed")
         self.current = record
         self.saveManifest()
       }
-      FeatureDiagnostics.record(.meeting, .completed)
-      self.status = interrupted ? "Recording interrupted; saved available audio" : "Meeting saved"
+      FeatureDiagnostics.record(.meeting, transcriptIncomplete ? .fallback : .completed)
+      self.status = interrupted ? "Recording interrupted; saved available audio"
+        : (transcriptIncomplete ? "Meeting saved; transcript incomplete, audio retained" : "Meeting saved")
       self.currentFormat = nil
       self.currentAudioDirectory = nil
       self.isFinalizing = false

@@ -12,6 +12,7 @@ private struct TapState: @unchecked Sendable {
 enum AudioSessionError: LocalizedError {
   case noInputChannels
   case tapInstallFailed(String)
+  case audioConversionUnavailable
 
   var errorDescription: String? {
     switch self {
@@ -19,6 +20,8 @@ enum AudioSessionError: LocalizedError {
       "No audio input available. Microphone access may be restricted."
     case .tapInstallFailed(let reason):
       "Audio tap failed: \(reason)"
+    case .audioConversionUnavailable:
+      "The microphone audio format is unavailable. Reconnect the microphone and try again."
     }
   }
 }
@@ -43,20 +46,36 @@ final class BackgroundAudioSession: ObservableObject {
     guard !self.isSessionActive else { return }
     DictationBreadcrumb.record("audio: startSession entered")
     let audioSession = AVAudioSession.sharedInstance()
-    try audioSession.setCategory(
-      .playAndRecord,
-      mode: .default,
-      options: [.mixWithOthers, .defaultToSpeaker, .allowBluetoothA2DP],
-    )
-    try audioSession.setAllowHapticsAndSystemSoundsDuringRecording(true)
-    DictationBreadcrumb.record("audio: activating AVAudioSession")
-    try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
-    DictationBreadcrumb.record("audio: installing persistent input tap")
-    try self.installPersistentTap()
-    DictationBreadcrumb.record("audio: starting AVAudioEngine")
-    self.audioEngine.prepare()
-    try self.audioEngine.start()
-    DictationBreadcrumb.record("audio: AVAudioEngine started")
+    var sessionActivated = false
+    var tapAttempted = false
+    do {
+      try audioSession.setCategory(
+        .playAndRecord,
+        mode: .default,
+        options: [.mixWithOthers, .defaultToSpeaker, .allowBluetoothA2DP],
+      )
+      try audioSession.setAllowHapticsAndSystemSoundsDuringRecording(true)
+      DictationBreadcrumb.record("audio: activating AVAudioSession")
+      try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+      sessionActivated = true
+      DictationBreadcrumb.record("audio: installing persistent input tap")
+      tapAttempted = true
+      try self.installPersistentTap()
+      DictationBreadcrumb.record("audio: starting AVAudioEngine")
+      self.audioEngine.prepare()
+      try self.audioEngine.start()
+      DictationBreadcrumb.record("audio: AVAudioEngine started")
+    } catch {
+      if self.audioEngine.isRunning { self.audioEngine.stop() }
+      if tapAttempted { self.audioEngine.inputNode.removeTap(onBus: 0) }
+      self.tapState.withLock { $0 = nil }
+      if sessionActivated {
+        try? audioSession.setActive(false, options: .notifyOthersOnDeactivation)
+      }
+      self.settings.isSessionActive = false
+      DictationBreadcrumb.record("audio: session activation failed; resources released")
+      throw error
+    }
     self.isSessionActive = true
     self.settings.isSessionActive = true
     self.settings.mainAppHeartbeat = CFAbsoluteTimeGetCurrent()
@@ -96,7 +115,7 @@ final class BackgroundAudioSession: ObservableObject {
     }
   }
 
-  func activateTap(accumulator: AudioBufferAccumulator, recorder: AudioRecorder) {
+  func activateTap(accumulator: AudioBufferAccumulator, recorder: AudioRecorder) throws {
     let inputNode = self.audioEngine.inputNode
     let hwFormat = inputNode.outputFormat(forBus: 0)
 
@@ -108,7 +127,7 @@ final class BackgroundAudioSession: ObservableObject {
         interleaved: false,
       )
     else {
-      return
+      throw AudioSessionError.audioConversionUnavailable
     }
 
     let needsConversion = hwFormat.sampleRate != AudioBufferMath.targetSampleRate || hwFormat.channelCount != 1
@@ -116,7 +135,9 @@ final class BackgroundAudioSession: ObservableObject {
       ? AVAudioConverter(from: hwFormat, to: targetFormat)
       : nil
 
-    if needsConversion, converter == nil { }
+    guard !needsConversion || converter != nil else {
+      throw AudioSessionError.audioConversionUnavailable
+    }
     DiagnosticLog.write(
       "activateTap: hw=\(hwFormat.sampleRate)Hz/\(hwFormat.channelCount)ch "
         + "needsConversion=\(needsConversion) converter=\(converter != nil)"

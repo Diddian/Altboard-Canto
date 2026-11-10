@@ -14,6 +14,8 @@ struct KeyboardSettingsView: View {
   private var periodShortcut = true
   @AppStorage(SharedKey.keyboardHapticsEnabled, store: AppGroup.sharedDefaults ?? .standard)
   private var hapticsEnabled = true
+  @AppStorage(SharedKey.keyboardHapticStrength, store: AppGroup.sharedDefaults ?? .standard)
+  private var hapticStrength = SharedSettings.defaultKeyboardHapticStrength
 
   var body: some View {
     Group {
@@ -65,6 +67,17 @@ struct KeyboardSettingsView: View {
         Toggle("Double-Space Period", isOn: self.$periodShortcut)
       }
       Toggle("Haptic Feedback", isOn: self.$hapticsEnabled)
+      DisclosureGroup {
+        Slider("Haptic Strength", value: self.$hapticStrength, in: 0.15...1.0, step: 0.05)
+          .disabled(!self.hapticsEnabled)
+        Button("Reset Haptic Feedback", systemImage: "arrow.counterclockwise") {
+          self.hapticsEnabled = true
+          self.hapticStrength = SharedSettings.defaultKeyboardHapticStrength
+          SharedSettings().keyboardHapticDriver = .coreHaptics
+        }
+      } label: {
+        Label("Haptic Settings", systemImage: "hand.tap")
+      }
       DisclosureGroup {
         KeyboardCustomizationView(inline: true)
       } label: {

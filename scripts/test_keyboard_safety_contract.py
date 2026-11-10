@@ -11,6 +11,44 @@ def source(path: str) -> str:
 
 
 class KeyboardSafetyContracts(unittest.TestCase):
+    def test_audio_capture_failure_releases_new_session(self):
+        audio = source("Sayboard/Services/BackgroundAudioSession.swift")
+        speech = source("Sayboard/Services/SpeechRecognitionService.swift")
+        self.assertIn("var sessionActivated = false", audio)
+        self.assertIn("var tapAttempted = false", audio)
+        self.assertIn("if self.audioEngine.isRunning { self.audioEngine.stop() }", audio)
+        self.assertIn("if tapAttempted { self.audioEngine.inputNode.removeTap(onBus: 0) }", audio)
+        self.assertIn("if sessionActivated {", audio)
+        self.assertIn("case audioConversionUnavailable", audio)
+        self.assertIn("guard !needsConversion || converter != nil else", audio)
+        self.assertIn("func activateTap(accumulator: AudioBufferAccumulator, recorder: AudioRecorder) throws", audio)
+        self.assertIn("try self.startAudioCapture()", speech)
+        self.assertIn("if sessionStartedHere { self.session.endSession() }", speech)
+        self.assertIn("self.settings.lastDictationOutcome = .activationFailed", speech)
+
+    def test_meeting_start_aborts_without_leaking_state(self):
+        audio = source("Sayboard/Services/MeetingRecordingCoordinator.swift")
+        self.assertIn("let sessionStartedHere = !service.session.isSessionActive", audio)
+        self.assertIn("private func abortStart(", audio)
+        self.assertIn("if sessionStartedHere { service.session.endSession() }", audio)
+        self.assertIn("self.audioRecorder.stopRecording()", audio)
+        self.assertIn("if let folder { try? FileManager.default.removeItem(at: folder) }", audio)
+        self.assertIn("try service.session.activateTap(", audio)
+
+    def test_meeting_finalization_processes_bounded_chunks(self):
+        meeting = source("Sayboard/Services/MeetingRecordingCoordinator.swift")
+        self.assertIn("while self.accumulator.sampleCount > 0", meeting)
+        self.assertIn("min(Self.updateSeconds * 16_000, available)", meeting)
+        self.assertIn("self.accumulator.consume(count: count)", meeting)
+        self.assertNotIn("let remaining = self.accumulator.consumeAll()", meeting)
+        self.assertIn('record.state = interrupted ? "interrupted"', meeting)
+        self.assertIn('"partialTranscript"', meeting)
+        self.assertIn('transcriptIncomplete ? .fallback : .completed', meeting)
+        queue = source("Sayboard/Services/AudioBufferAccumulator.swift")
+        self.assertIn("var sampleCount: Int", queue)
+        speech = source("Sayboard/Services/SpeechRecognitionService.swift")
+        self.assertIn("let savedSamples = self.accumulator.consumeAll()", speech)
+
     def test_delete_all_is_bounded_and_progress_checked(self):
         controller = source("SayboardKeyboard/KeyboardViewController.swift")
         action = controller.split("private func deleteAllText()", 1)[1].split(
