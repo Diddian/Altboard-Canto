@@ -236,6 +236,13 @@ extension SpeechRecognitionService {
   func saveHistoryRecord() {
     guard let fileName = currentAudioFileName else { return }
     guard let result = audioRecorder.stopRecording() else { return }
+    if result.writeFailed {
+      FeatureDiagnostics.record(.speech, .fallback)
+      DictationBreadcrumb.record("history: incomplete audio file discarded; text delivery unaffected")
+      try? FileManager.default.removeItem(at: result.url)
+      self.currentAudioFileName = nil
+      return
+    }
 
     let transcription = self.currentTranscription.isEmpty ? self.currentRawTranscription : self.currentTranscription
     guard !transcription.isEmpty else {

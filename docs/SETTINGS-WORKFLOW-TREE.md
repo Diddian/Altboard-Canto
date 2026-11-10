@@ -50,7 +50,7 @@ of dynamic lists describe repeated rows, not extra navigation destinations.
         - Output Language
         - Include Punctuation
         - Tone
-        - Language Code (custom output language; invalid code warning when needed)
+        - Language Code (Custom output target; valid code required before Apply; Cancel preserves previous choice)
       - Word Corrections
         - Speech Corrections
           - Edit Cantonese speech corrections
@@ -71,6 +71,9 @@ of dynamic lists describe repeated rows, not extra navigation destinations.
     - Auto-capitalization
     - Double-Space Period
     - Haptic Feedback
+    - Haptic Settings (initially collapsed)
+      - Haptic Strength
+      - Reset Haptic Feedback
     - Keyboard Customization (initially collapsed)
       - Extra Globe Key (temporarily disabled; saved preference retained)
       - Settings Key
@@ -91,7 +94,7 @@ of dynamic lists describe repeated rows, not extra navigation destinations.
       - Keep Voice Notes
       - Export All Data
       - Delete All Data (confirmation)
-      - Clear Model Cache
+      - Clear Model Cache (confirmation)
     - App Language
       - Select app interface language
     - Setup & Permissions
@@ -143,5 +146,7 @@ of dynamic lists describe repeated rows, not extra navigation destinations.
 - Source owners and anchor checks are structural contracts; existing reference SHAs are historical, never a reason to rewrite current working code.
 - Meetings require a supported speech model but no separate enable switch. Rewrite & Translate is controlled by the Keyboard AI Key and available downloaded model, not by a separate Enabled toggle.
 - Automatic clipboard copy is no longer offered; explicit clipboard recovery after changed host inputs remains permitted.
+- Keyboard has a separate, collapsed Haptic Settings disclosure for strength and reset; the existing keyboard haptic engine remains the sole owner.
+- Custom voice output language uses Apply/Cancel without replacing the saved target on invalid input; clearing the compiled model cache requires confirmation.
 
 Consult `KNOWN-ISSUES.json` for evidence and pending acceptance checks.

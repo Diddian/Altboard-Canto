@@ -8,6 +8,11 @@ final class AudioRecorder: Sendable {
     let url: URL
     let duration: TimeInterval
     let waveformSamples: [Float]
+    let writeFailed: Bool
+  }
+
+  var hasWriteFailure: Bool {
+    self.state.withLock { $0?.writeFailed ?? false }
   }
 
   func startRecording(fileName: String, format: AVAudioFormat,
@@ -29,7 +34,13 @@ final class AudioRecorder: Sendable {
 
   func appendBuffer(_ buffer: AVAudioPCMBuffer) {
     self.state.withLock { current in
-      try? current?.audioFile.write(from: buffer)
+      if let file = current?.audioFile, current?.writeFailed == false {
+        do {
+          try file.write(from: buffer)
+        } catch {
+          current?.writeFailed = true
+        }
+      }
 
       guard let channelData = buffer.floatChannelData else { return }
       let frameCount = Int(buffer.frameLength)
@@ -51,13 +62,17 @@ final class AudioRecorder: Sendable {
     let duration = Date().timeIntervalSince(snapshot.startTime)
     let url = snapshot.audioFile.url
     let samples = Self.downsamplePeaks(snapshot.bufferPeaks, to: self.waveformSampleCount)
-    return RecordingResult(url: url, duration: duration, waveformSamples: samples)
+    return RecordingResult(
+      url: url, duration: duration, waveformSamples: samples,
+      writeFailed: snapshot.writeFailed
+    )
   }
 
   private struct MutableState {
     let audioFile: AVAudioFile
     let startTime: Date
     var bufferPeaks: ContiguousArray<Float> = []
+    var writeFailed = false
   }
 
   private let waveformSampleCount = 128

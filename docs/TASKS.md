@@ -22,6 +22,24 @@ Neither a checkbox nor an IPA build demonstrates physical iPhone acceptance.
 When reporting progress, give the scope and numerator/denominator; do not
 conflate source implementation, passing CI, and device acceptance.
 
+**90% IPA hold (2026-11-10):** Do not trigger another unsigned IPA while
+T-022, T-023 or T-024 is below 90% of its full task checklist. This is a
+user-imposed strict gate, not an averaged score. The latest code commit
+`3218541` failed Xcode compilation in run #173 (invalid SwiftUI Slider
+initializer). The compiler repair, bounded meeting transcription queue,
+recording-write failure detection and focused regression changes have been
+prepared, but are NOT compiler-tested or device-accepted. Save preparation
+commits to main with GitHub's `[skip ci]` annotation so the existing
+push-triggered IPA workflow does not start. Do not mark source edits as
+compiler/device verification.
+
+**Dependency conflict:** T-022.4/T-022.10, T-023.8, and T-024.14/T-024.15
+require physical iPhone evidence; T-024.13 requires an IPA build. Therefore
+90% of the *full* lists cannot be attained strictly before the very first
+new IPA. Keep these tasks open and do not game the denominator. A separate
+pre-build readiness review can be recorded, but it is not equivalent to 90%
+full-task completion; do not override this hold without a revised decision.
+
 **Current workstream ownership (no duplicate implementation owners):**
 - `T-024`: consolidated app/Settings/audio repairs; gated by CI and device QA.
 - `T-023`: remaining cross-functional audits; exclude repairs already in T-024.
@@ -79,19 +97,23 @@ new workflows, parallel branches and claims of completed device QA.
   `scripts/test_keyboard_safety_contract.py`; no new test framework.
 - [ ] T-024.13 Check source tests, Xcode compilation, IPA packaging and exact
   commit SHA using the **one existing main-branch unsigned IPA workflow**.
-  Run #172 failed because `test_meeting_tab_uses_existing_local_recorder`
-  asserted a static icon that the updated recording button intentionally changes.
-  The test now checks start/stop behaviour and its accessible label. Xcode
-  compilation and packaging must still pass on the repaired commit.
+  Run #172 failed in a stale button-label test. Run #173 passed that step but
+  failed iOS compilation: the haptic Slider must use a trailing label closure.
+  A source fix is prepared, but CI must remain skipped under the 90% hold.
+  Mark verified only after a later authorized build succeeds.
 - [ ] T-024.14 Physical iPhone acceptance: microphone permission/recording
   start failures and recovery; original vs new Active Session; 15-minute
   meeting rollover and Stop; saved audio after interrupted/partial ASR;
   EN/DE/Yue typing and dictation; model navigation; haptic reset; VoiceOver;
   Reduced Motion, cancellation and no blank keyboard.
 - [ ] T-024.15 Measure real-device memory for long recording and Qwen3
-  decode backlog before claiming improvement. Full 2-hour transcript recovery
-  under terminated processes requires a separate resumable saved-audio
-  pipeline, not an unbounded loop or discarded audio.
+  decode backlog before claiming improvement. Source-side preparations cap
+  meeting transcription backlog to two minutes, flag skipped transcription
+  segments, and keep full audio in separately written CAF files. Recorder
+  write failures are surfaced; the stream can still lose audio if disk IO
+  fails. Real memory, capture fidelity and 2-hour recovery remain UNTESTED.
+  Full recovery after process termination still requires a resumable
+  saved-audio pipeline, not an unbounded in-memory loop.
 
 The source-level review spans release, UX, accessibility, audio reliability,
 data integrity, architecture and regression coverage. It is not an independent
@@ -138,16 +160,20 @@ new server, duplicate keyboard coordinator, animation engine or model dependency
   host focus, extension relaunch, app/keyboard App Group handshake and the
   historical blank drawing board. Correlate `KeyboardLifecycleTrace` and
   physical-device evidence before replacing loading logic.
-- [ ] T-023.10 Audio resource lifecycle: examine `BackgroundAudioSession`
-  failures after audio activation or tap installation, clean rollback,
-  interruptions and restart. Keep one microphone tap and no lost recording.
-- [ ] T-023.11 Meeting backlog: profile `AudioSampleQueue` growth while
-  1.7B recognition falls behind, retention and disk-limit handling. Never
-  drop saved audio to make memory counters look better.
-- [ ] T-023.12 Tab navigation/integration: assess
-  `TabBarTapInterceptor` gesture installation, view teardown and implicit
-  seven-tap custom-Space toggle; confirm no duplicate recognizers across
-  tab remounts before changing it.
+- [x] T-023.10 Source review of audio lifecycle complete: session activation
+  rollback, tap/converter setup, interruption, restart and audio-writer error
+  paths were traced; a separate write-failure flag is prepared.
+  Deterministic tests exist, but latest edits are NOT compiled or iPhone-tested.
+  Preserve one tap; T-024.14 owns runtime acceptance.
+- [ ] T-023.11 Source mitigation prepared: cap only the *transcription* FIFO,
+  detect overflow and mark transcript incomplete, while retaining disk-backed
+  meeting audio. Peak memory, disk backpressure and 1.7B decoding on a real
+  iPhone are not measured. Do not claim a verified speed or fidelity gain.
+- [x] T-023.12 Source audit: `MainTabView` uses native `TabView` without
+  instantiating `TabBarTapInterceptor`. The old seven-tap coordinator is
+  retained as an unused source file, not an active navigation owner.
+  It is not evidence of a duplicate live gesture; runtime inspection remains
+  part of T-023.8 and T-024.14.
 - [ ] T-023.13 Settings UX/a11y: validate nested Speech & AI disclosures,
   Voice Output custom-language code/error feedback, AI availability,
   model downloads, keyboard previews and Diagnostics with long EN/DE/zh-Hant
@@ -169,10 +195,11 @@ new server, duplicate keyboard coordinator, animation engine or model dependency
 - [ ] T-023.18 Quality/release: strengthen affected deterministic policy
   tests, inspect actual CI jobs and artifact metadata, and keep a known usable
   SideStore IPA until new device acceptance. Do not equate green CI with QA.
-- [ ] T-023.19 Source-of-truth hygiene: reconcile the older
-  `docs/APP-STRUCTURE.json` / generated Settings workflow tree with current
-  code after completing UX changes. Preserve the existing schema and do not
-  add a second task tracker or historical handoff file.
+- [x] T-023.19 Reconciled the existing Settings map:
+  `docs/APP-STRUCTURE.json` and its generated menu now include haptic
+  strength/reset, the confirmed custom-language editor and model-cache
+  confirmation. Previous installed-device baseline remains historical;
+  the current source still requires iPhone visual acceptance. No new tracker.
 
 ## T-022 - Mainline performance and reliability optimization (Meetily review, 2026-11-10)
 
@@ -211,9 +238,10 @@ or a second swipe/keyboard state machine.
   swipe decoder/brush, EN/DE suggestion latency and Cantonese SQLite lookup
   before editing their active owners. Retain current accessibility and
   keyboard extension lifecycle; resolve observed defects individually.
-- [ ] T-022.8 Review app/extension boundaries, diagnostics persistence,
-  bounded memory, interrupted sessions, privacy and user-data recovery with
-  focused regression tests; avoid duplicate observers, logging systems or polling.
+- [ ] T-022.8 Source review of app/extension state, recorder errors and
+  bounded meeting queue has begun, with regression assertions prepared.
+  Await actual test execution and boundary checks before marking complete;
+  no duplicate listeners, logging architecture or polling should be introduced.
 - [x] T-022.9 Verify Xcode compilation, packaged host+appex, model resources
   and one unsigned SideStore IPA from main through the existing workflow.
   Workflow #170 succeeded for SHA 1e7befac; physical device QA remains open.

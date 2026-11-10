@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at_berlin": "2026-11-07",
+  "updated_at_berlin": "2026-11-10",
   "baseline": {
     "branch": "main",
     "commit": "7b7aa5c5041805783358fbfeb8a38b09a2922ec4",
@@ -305,7 +305,7 @@
                     {
                       "label": "Language Code",
                       "owner": "Sayboard/Views/VoiceOutputSettingsView.swift",
-                      "condition": "custom output language; invalid code warning when needed",
+                      "condition": "Custom output target; valid code required before Apply; Cancel preserves previous choice",
                       "id": "settings.speech-ai.output.language-code"
                     }
                   ],
@@ -451,6 +451,26 @@
               "id": "settings.keyboard.customization.haptic-feedback"
             },
             {
+              "id": "settings.keyboard.haptic-settings",
+              "label": "Haptic Settings",
+              "owner": "Sayboard/Views/KeyboardSettingsView.swift",
+              "initially_expanded": false,
+              "children": [
+                {
+                  "id": "settings.keyboard.haptic-settings.haptic-strength",
+                  "label": "Haptic Strength",
+                  "owner": "Sayboard/Views/KeyboardSettingsView.swift",
+                  "source_anchor": "Text(\"Haptic Strength\")"
+                },
+                {
+                  "id": "settings.keyboard.haptic-settings.reset",
+                  "label": "Reset Haptic Feedback",
+                  "owner": "Sayboard/Views/KeyboardSettingsView.swift",
+                  "source_anchor": "Reset Haptic Feedback"
+                }
+              ]
+            },
+            {
               "label": "Keyboard Customization",
               "owner": "Sayboard/Views/KeyboardSettingsView.swift",
               "children": [
@@ -576,7 +596,7 @@
                   "id": "settings.app.history-storage.delete-all-data-confirmation"
                 },
                 {
-                  "label": "Clear Model Cache",
+                  "label": "Clear Model Cache (confirmation)",
                   "owner": "Sayboard/Views/DataAndStorageSettingsView.swift",
                   "id": "settings.app.history-storage.clear-model-cache"
                 }
@@ -904,6 +924,8 @@
     "Build #124 is the last confirmed installed diagnostic baseline; subsequent source repairs require a new build and physical iPhone acceptance.",
     "Source owners and anchor checks are structural contracts; existing reference SHAs are historical, never a reason to rewrite current working code.",
     "Meetings require a supported speech model but no separate enable switch. Rewrite & Translate is controlled by the Keyboard AI Key and available downloaded model, not by a separate Enabled toggle.",
-    "Automatic clipboard copy is no longer offered; explicit clipboard recovery after changed host inputs remains permitted."
+    "Automatic clipboard copy is no longer offered; explicit clipboard recovery after changed host inputs remains permitted.",
+    "Keyboard has a separate, collapsed Haptic Settings disclosure for strength and reset; the existing keyboard haptic engine remains the sole owner.",
+    "Custom voice output language uses Apply/Cancel without replacing the saved target on invalid input; clearing the compiled model cache requires confirmation."
   ]
 }

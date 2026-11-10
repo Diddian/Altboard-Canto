@@ -48,7 +48,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
   @Published private(set) var records = [MeetingRecord]()
 
   private let audioRecorder = AudioRecorder()
-  private let accumulator = AudioBufferAccumulator()
+  private let accumulator = AudioBufferAccumulator(maximumUnreadSamples: 16_000 * 120)
   private weak var speechService: SpeechRecognitionService?
   private var currentFormat: AVAudioFormat?
   private var currentAudioDirectory: URL?
@@ -57,6 +57,8 @@ final class MeetingRecordingCoordinator: ObservableObject {
   private var decodeTask: Task<Void, Never>?
   private var sessionObservation: AnyCancellable?
   private var incompleteTranscript = false
+  private var incompleteAudio = false
+  private var backlogOverflowReported = false
 
   private init() { self.reloadRecords() }
 
@@ -111,6 +113,8 @@ final class MeetingRecordingCoordinator: ObservableObject {
     self.lastPartStartedAt = Date()
     self.accumulator.reset()
     self.incompleteTranscript = false
+    self.incompleteAudio = false
+    self.backlogOverflowReported = false
     do {
       try service.session.activateTap(accumulator: self.accumulator, recorder: self.audioRecorder)
     } catch {
@@ -199,6 +203,9 @@ final class MeetingRecordingCoordinator: ObservableObject {
       // Never race a second native decode against an in-flight ASR call.
       await finishingDecode?.value
       var transcriptIncomplete = self.incompleteTranscript
+      if self.accumulator.droppedSampleCount > 0 {
+        transcriptIncomplete = true
+      }
       if let service, service.activeLoadState == .loaded {
         // Process a bounded slice at a time, even if recognition fell far behind.
         while self.accumulator.sampleCount > 0 {
@@ -222,14 +229,18 @@ final class MeetingRecordingCoordinator: ObservableObject {
       self.accumulator.reset()
       if var record = self.current {
         record.endedAt = Date()
-        record.state = interrupted ? "interrupted"
-          : (transcriptIncomplete ? "partialTranscript" : "completed")
+        record.state = self.incompleteAudio ? "partialAudio"
+          : (interrupted ? "interrupted"
+            : (transcriptIncomplete ? "partialTranscript" : "completed"))
         self.current = record
         self.saveManifest()
       }
-      FeatureDiagnostics.record(.meeting, transcriptIncomplete ? .fallback : .completed)
-      self.status = interrupted ? "Recording interrupted; saved available audio"
-        : (transcriptIncomplete ? "Meeting saved; transcript incomplete, audio retained" : "Meeting saved")
+      FeatureDiagnostics.record(
+        .meeting, (transcriptIncomplete || self.incompleteAudio) ? .fallback : .completed
+      )
+      self.status = self.incompleteAudio ? "Audio incomplete; saved parts retained"
+        : (interrupted ? "Recording interrupted; saved available audio"
+          : (transcriptIncomplete ? "Meeting saved; transcript incomplete, audio retained" : "Meeting saved"))
       self.currentFormat = nil
       self.currentAudioDirectory = nil
       self.isFinalizing = false
@@ -240,6 +251,17 @@ final class MeetingRecordingCoordinator: ObservableObject {
   private func heartbeat() {
     guard self.isRecording, let start = self.current?.startedAt else { return }
     self.elapsed = Date().timeIntervalSince(start)
+    if self.audioRecorder.hasWriteFailure {
+      self.status = "Audio storage failed; preserving available recording"
+      self.stop(interrupted: true)
+      return
+    }
+    if !self.backlogOverflowReported && self.accumulator.droppedSampleCount > 0 {
+      self.backlogOverflowReported = true
+      self.incompleteTranscript = true
+      FeatureDiagnostics.record(.meeting, .fallback)
+      self.status = "Transcription is behind; full audio is still saved"
+    }
     if Date().timeIntervalSince(self.lastPartStartedAt) >= Self.partDuration {
       self.closeCurrentPart()
       self.lastPartStartedAt = Date()
@@ -260,6 +282,10 @@ final class MeetingRecordingCoordinator: ObservableObject {
   private func closeCurrentPart() {
     guard let saved = self.audioRecorder.stopRecording(),
           var record = self.current else { return }
+    if saved.writeFailed {
+      self.incompleteAudio = true
+      FeatureDiagnostics.record(.meeting, .failed)
+    }
     // Exact-boundary Stop must not create a ninth empty part.
     guard saved.duration >= 0.15 else {
       try? FileManager.default.removeItem(at: saved.url)

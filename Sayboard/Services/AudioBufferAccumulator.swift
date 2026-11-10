@@ -11,6 +11,16 @@ final class AudioBufferAccumulator: Sendable {
     self.buffer.withLock { $0.count }
   }
 
+  var droppedSampleCount: Int {
+    self.buffer.withLock { $0.droppedSamples }
+  }
+
+  init(maximumUnreadSamples: Int? = nil) {
+    self.buffer = OSAllocatedUnfairLock(
+      initialState: AudioSampleQueue(maximumUnreadSamples: maximumUnreadSamples)
+    )
+  }
+
   func append(_ newSamples: [Float]) {
     self.buffer.withLock { $0.append(newSamples) }
   }
@@ -35,5 +45,5 @@ final class AudioBufferAccumulator: Sendable {
     self.buffer.withLock { $0.reset() }
   }
 
-  private let buffer = OSAllocatedUnfairLock<AudioSampleQueue>(initialState: AudioSampleQueue())
+  private let buffer: OSAllocatedUnfairLock<AudioSampleQueue>
 }

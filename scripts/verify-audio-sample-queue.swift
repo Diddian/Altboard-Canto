@@ -43,6 +43,22 @@ struct AudioSampleQueueSmoke {
     queue.reset()
     precondition(queue.count == 0)
     precondition(queue.snapshot().isEmpty)
-    print("AudioSampleQueue: FIFO, bounds, compaction, reset PASS")
+
+    var bounded = AudioSampleQueue(maximumUnreadSamples: 4)
+    bounded.append([1, 2, 3])
+    bounded.append([4, 5, 6])
+    precondition(bounded.snapshot() == [1, 2, 3, 4])
+    precondition(bounded.droppedSamples == 2)
+    precondition(bounded.consume(count: 3) == [1, 2, 3])
+    bounded.append([7, 8, 9])
+    precondition(bounded.snapshot() == [4, 7, 8, 9])
+    precondition(bounded.droppedSamples == 2)
+    precondition(bounded.consume(count: 4) == [4, 7, 8, 9])
+    bounded.append([10])
+    precondition(bounded.snapshot() == [10])
+    precondition(bounded.droppedSamples == 2)
+    bounded.reset()
+    precondition(bounded.count == 0 && bounded.droppedSamples == 0)
+    print("AudioSampleQueue: FIFO, bounds, compaction, cap, overflow, reset PASS")
   }
 }

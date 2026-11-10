@@ -14,7 +14,8 @@ class SettingsContractTests(unittest.TestCase):
     def test_haptic_reset_and_strength_are_reachable(self):
         settings = read("Sayboard/Views/KeyboardSettingsView.swift")
         shared = read("Shared/SharedSettings.swift")
-        self.assertIn('Slider("Haptic Strength"', settings)
+        self.assertIn("Slider(value: self.$hapticStrength", settings)
+        self.assertIn('Text("Haptic Strength")', settings)
         self.assertIn('Button("Reset Haptic Feedback"', settings)
         self.assertIn("SharedSettings.defaultKeyboardHapticStrength", settings)
         self.assertIn("keyboardHapticDriver = .coreHaptics", settings)

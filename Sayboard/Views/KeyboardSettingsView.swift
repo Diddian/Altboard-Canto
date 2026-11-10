@@ -68,8 +68,10 @@ struct KeyboardSettingsView: View {
       }
       Toggle("Haptic Feedback", isOn: self.$hapticsEnabled)
       DisclosureGroup {
-        Slider("Haptic Strength", value: self.$hapticStrength, in: 0.15...1.0, step: 0.05)
-          .disabled(!self.hapticsEnabled)
+        Slider(value: self.$hapticStrength, in: 0.15...1.0, step: 0.05) {
+          Text("Haptic Strength")
+        }
+        .disabled(!self.hapticsEnabled)
         Button("Reset Haptic Feedback", systemImage: "arrow.counterclockwise") {
           self.hapticsEnabled = true
           self.hapticStrength = SharedSettings.defaultKeyboardHapticStrength

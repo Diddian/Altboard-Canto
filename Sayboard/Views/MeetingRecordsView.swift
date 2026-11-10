@@ -421,6 +421,11 @@ private struct MeetingRecordDetailView: View {
                 systemImage: "exclamationmark.triangle")
             .foregroundStyle(.orange)
         }
+        if self.latest.state == "partialAudio" {
+          Label("Some audio could not be saved. Available parts and transcript are preserved.",
+                systemImage: "exclamationmark.triangle")
+            .foregroundStyle(.orange)
+        }
         Text(self.latest.transcript.isEmpty
           ? "The transcript will appear here after recognition finishes."
           : self.latest.transcript)

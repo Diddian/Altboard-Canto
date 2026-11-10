@@ -26,6 +26,31 @@ class KeyboardSafetyContracts(unittest.TestCase):
         self.assertIn("if sessionStartedHere { self.session.endSession() }", speech)
         self.assertIn("self.settings.lastDictationOutcome = .activationFailed", speech)
 
+    def test_audio_file_failure_is_distinguished_from_success(self):
+        recorder = source("Sayboard/Services/AudioRecorder.swift")
+        meeting = source("Sayboard/Services/MeetingRecordingCoordinator.swift")
+        history = source("Sayboard/Services/SpeechRecognitionService+Transcription.swift")
+        self.assertIn("var hasWriteFailure: Bool", recorder)
+        self.assertIn("current?.writeFailed = true", recorder)
+        self.assertIn("writeFailed: snapshot.writeFailed", recorder)
+        self.assertIn("if self.audioRecorder.hasWriteFailure", meeting)
+        self.assertIn('record.state = self.incompleteAudio ? "partialAudio"', meeting)
+        self.assertIn("if result.writeFailed", history)
+        self.assertIn("self.currentAudioFileName = nil", history)
+
+    def test_meeting_backlog_is_bounded_without_truncating_saved_audio(self):
+        recorder = source("Sayboard/Services/MeetingRecordingCoordinator.swift")
+        accumulator = source("Sayboard/Services/AudioBufferAccumulator.swift")
+        queue = source("Sayboard/Services/AudioSampleQueue.swift")
+        self.assertIn("AudioBufferAccumulator(maximumUnreadSamples: 16_000 * 120)", recorder)
+        self.assertIn("self.accumulator.droppedSampleCount", recorder)
+        self.assertIn("self.audioRecorder.hasWriteFailure", recorder)
+        self.assertIn("private(set) var droppedSamples = 0", queue)
+        self.assertIn("var droppedSampleCount: Int", accumulator)
+        self.assertIn("active.recorder.appendBuffer(buffer)", source(
+            "Sayboard/Services/BackgroundAudioSession.swift"
+        ))
+
     def test_meeting_start_aborts_without_leaking_state(self):
         audio = source("Sayboard/Services/MeetingRecordingCoordinator.swift")
         self.assertIn("let sessionStartedHere = !service.session.isSessionActive", audio)
