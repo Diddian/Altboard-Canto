@@ -37,7 +37,9 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("var outputBytes = [UInt8]()", inference)
         self.assertIn("outputBytes.append(contentsOf: piece)", inference)
         self.assertIn("String(decoding: outputBytes, as: UTF8.self)", inference)
-        self.assertNotIn("String(bytes: bytes, encoding: .utf8)", inference)
+        piece_body = inference.split("private nonisolated static func piece(", 1)[1].split("private nonisolated static func makeSampler", 1)[0]
+        self.assertNotIn("String(bytes: bytes, encoding: .utf8)", piece_body)
+        self.assertIn("return bytes", piece_body)
         self.assertIn("maxOutputTokens: min(512, max(192, input.utf8.count * 2))", coordinator)
         self.assertIn("Task.isCancelled ? .cancelled : .failed", coordinator)
 
