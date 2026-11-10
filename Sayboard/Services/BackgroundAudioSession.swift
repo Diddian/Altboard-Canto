@@ -226,49 +226,52 @@ final class BackgroundAudioSession: ObservableObject {
           AppGroup.sharedDefaults?.set(now, forKey: SharedKey.mainAppHeartbeat)
         }
 
-        let active = state.withLock { $0 }
-        guard let active else { return }
+        // Deactivation waits for the last callback before finalization drains
+        // the FIFO or closes the file. Do not retain capture state past this lock.
+        state.withLock { active in
+          guard let active else { return }
 
-        let rms = AudioBufferMath.rms(from: buffer)
-        let filtered = AudioBufferMath.preFilterRMS(min(rms * 14, 1.0), ringBuffer: ringBuf)
-        bridge.writeLevel(AudioBufferMath.smoothLevel(filtered, previous: prevLevel))
+          let rms = AudioBufferMath.rms(from: buffer)
+          let filtered = AudioBufferMath.preFilterRMS(min(rms * 14, 1.0), ringBuffer: ringBuf)
+          bridge.writeLevel(AudioBufferMath.smoothLevel(filtered, previous: prevLevel))
 
-        let shouldFlush = lastFlush.withLock { last -> Bool in
-          if now - last >= 1.0 / 30.0 {
-            last = now
-            return true
+          let shouldFlush = lastFlush.withLock { last -> Bool in
+            if now - last >= 1.0 / 30.0 {
+              last = now
+              return true
+            }
+            return false
           }
-          return false
-        }
-        if shouldFlush {
-          bridge.flushToDefaults()
-        }
-
-        active.recorder.appendBuffer(buffer)
-
-        let samples: [Float] =
-          if let converter = active.converter {
-            AudioBufferMath.resample(
-              buffer,
-              converter: converter,
-              targetFormat: active.targetFormat,
-              diagnostics: diagnostics,
-            )
-          } else {
-            AudioBufferMath.samples(from: buffer)
+          if shouldFlush {
+            bridge.flushToDefaults()
           }
 
-        if !samples.isEmpty { active.accumulator.append(samples) }
+          active.recorder.appendBuffer(buffer)
 
-        diagnostics.withLock { diag in
-          diag.buffers += 1
-          diag.inputFrames += Int(buffer.frameLength)
-          diag.outputFrames += samples.count
-          if diag.inputSampleRate == 0 {
-            diag.inputSampleRate = buffer.format.sampleRate
-            diag.inputChannels = buffer.format.channelCount
+          let samples: [Float] =
+            if let converter = active.converter {
+              AudioBufferMath.resample(
+                buffer,
+                converter: converter,
+                targetFormat: active.targetFormat,
+                diagnostics: diagnostics,
+              )
+            } else {
+              AudioBufferMath.samples(from: buffer)
+            }
+
+          if !samples.isEmpty { active.accumulator.append(samples) }
+
+          diagnostics.withLock { diag in
+            diag.buffers += 1
+            diag.inputFrames += Int(buffer.frameLength)
+            diag.outputFrames += samples.count
+            if diag.inputSampleRate == 0 {
+              diag.inputSampleRate = buffer.format.sampleRate
+              diag.inputChannels = buffer.format.channelCount
+            }
+            if rms > diag.peakRMS { diag.peakRMS = rms }
           }
-          if rms > diag.peakRMS { diag.peakRMS = rms }
         }
       }
     }
@@ -343,3 +346,4 @@ final class BackgroundAudioSession: ObservableObject {
     }
   }
 }
+

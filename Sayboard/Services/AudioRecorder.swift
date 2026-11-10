@@ -25,7 +25,7 @@ final class AudioRecorder: Sendable {
         [.protectionKey: FileProtectionType.completeUnlessOpen],
         ofItemAtPath: fileURL.path,
       )
-      self.state.withLock { $0 = MutableState(audioFile: file, startTime: Date()) }
+      self.state.withLock { $0 = MutableState(audioFile: file) }
       return fileURL
     } catch {
       return nil
@@ -58,10 +58,30 @@ final class AudioRecorder: Sendable {
       current = nil
       return value
     }
+    return self.result(from: snapshot)
+  }
+
+  /// Open the next part before exchanging writers. A failed open leaves the
+  /// old writer active, and callbacks cannot land between stop and start.
+  func rotateRecording(fileName: String, format: AVAudioFormat, directory: URL) throws -> RecordingResult? {
+    let url = directory.appendingPathComponent(fileName)
+    let file = try AVAudioFile(forWriting: url, settings: format.settings)
+    try FileManager.default.setAttributes(
+      [.protectionKey: FileProtectionType.completeUnlessOpen], ofItemAtPath: url.path
+    )
+    let snapshot = self.state.withLock { current -> MutableState? in
+      let previous = current
+      current = MutableState(audioFile: file)
+      return previous
+    }
+    return self.result(from: snapshot)
+  }
+
+  private func result(from snapshot: MutableState?) -> RecordingResult? {
     guard let snapshot else { return nil }
-    let duration = Date().timeIntervalSince(snapshot.startTime)
+    let duration = Double(snapshot.audioFile.length) / snapshot.audioFile.processingFormat.sampleRate
     let url = snapshot.audioFile.url
-    let samples = Self.downsamplePeaks(snapshot.bufferPeaks, to: self.waveformSampleCount)
+    let samples = snapshot.bufferPeaks.waveform(count: self.waveformSampleCount)
     return RecordingResult(
       url: url, duration: duration, waveformSamples: samples,
       writeFailed: snapshot.writeFailed
@@ -70,8 +90,7 @@ final class AudioRecorder: Sendable {
 
   private struct MutableState {
     let audioFile: AVAudioFile
-    let startTime: Date
-    var bufferPeaks: ContiguousArray<Float> = []
+    var bufferPeaks = AudioWaveformPeaks()
     var writeFailed = false
   }
 
@@ -79,35 +98,5 @@ final class AudioRecorder: Sendable {
 
   private let state = OSAllocatedUnfairLock<MutableState?>(initialState: nil)
 
-  private static func downsamplePeaks(
-    _ peaks: ContiguousArray<Float>,
-    to targetCount: Int,
-  ) -> [Float] {
-    guard !peaks.isEmpty else {
-      return Array(repeating: Float(1), count: targetCount)
-    }
-
-    let sourceCount = peaks.count
-    guard sourceCount > targetCount else {
-      return peaks.map { 1 - min($0, 1) }
-    }
-
-    var result = [Float](repeating: 1, count: targetCount)
-    let binSize = Float(sourceCount) / Float(targetCount)
-
-    for bin in 0..<targetCount {
-      let start = Int(Float(bin) * binSize)
-      let end = min(Int(Float(bin + 1) * binSize), sourceCount)
-      guard start < end else { continue }
-
-      var maxVal: Float = 0
-      peaks.withUnsafeBufferPointer { ptr in
-        guard let base = ptr.baseAddress else { return }
-        vDSP_maxmgv(base + start, 1, &maxVal, vDSP_Length(end - start))
-      }
-      result[bin] = 1 - min(maxVal, 1)
-    }
-
-    return result
-  }
 }
+

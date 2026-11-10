@@ -68,7 +68,8 @@ final class SpeechRecognitionService: ObservableObject {
     let micAuth = self.settings.isMicrophoneAuthorized
 
     guard !self.isRecording, !self.isStopping,
-          !MeetingRecordingCoordinator.shared.isRecording else {
+          !MeetingRecordingCoordinator.shared.isRecording,
+          !MeetingRecordingCoordinator.shared.isFinalizing else {
       return
     }
     guard micAuth else {
@@ -214,6 +215,7 @@ final class SpeechRecognitionService: ObservableObject {
     FeatureDiagnostics.record(.speech, .stopped)
     self.settings.recordingStartedAt = 0
     self.isStopping = true
+    let finalizationToken = self.settings.dictationSessionToken
     let finalizationStartedAt = CFAbsoluteTimeGetCurrent()
     MicrophoneHoldStopIntent.clear(defaults: self.settings.defaults)
     TranscriptionBridge.writeVoiceProgress(.stoppingAudio)
@@ -221,6 +223,7 @@ final class SpeechRecognitionService: ObservableObject {
     self.cancelMaxDurationTimer()
     self.session.deactivateTap()
     await self.stopExperimentalLive()
+    guard self.isCurrentDictation(finalizationToken) else { return }
     // Only the final recognizer needs these samples now; release the queued copy.
     let savedSamples = self.accumulator.consumeAll()
     let stylingHost = OnboardingTextEntry.stylingHost(self.settings.hostBundleId)
@@ -252,8 +255,10 @@ final class SpeechRecognitionService: ObservableObject {
       }
     }
 
+    guard self.isCurrentDictation(finalizationToken) else { return }
     TranscriptionBridge.writeVoiceProgress(.transcribing)
     await self.runFinalTranscription(samples: savedSamples, stylingHost: stylingHost)
+    guard self.isCurrentDictation(finalizationToken) else { return }
     let finalizationEvent: FeatureDiagnostics.Event
     switch self.settings.lastDictationOutcome {
     case nil: finalizationEvent = .completed
@@ -274,6 +279,8 @@ final class SpeechRecognitionService: ObservableObject {
   }
 
   func cancelRecording() {
+    guard !MeetingRecordingCoordinator.shared.isRecording,
+          !MeetingRecordingCoordinator.shared.isFinalizing else { return }
     FeatureDiagnostics.record(.speech, .cancelled)
     MicrophoneHoldStopIntent.clear(defaults: self.settings.defaults)
     self.liveDictationStatus = "Cancelled"
@@ -469,7 +476,13 @@ extension SpeechRecognitionService {
 
   func setupSessionCallbacks() {
     self.session.onInterruptionBegan = { [weak self] in
-      Task { @MainActor [weak self] in await self?.stopRecording() }
+      Task { @MainActor [weak self] in
+        if MeetingRecordingCoordinator.shared.isRecording {
+          MeetingRecordingCoordinator.shared.stop(interrupted: true)
+        } else {
+          await self?.stopRecording()
+        }
+      }
     }
     self.session.onSessionEnded = { [weak self] in
       Task { @MainActor [weak self] in await self?.stopRecording() }
@@ -561,3 +574,4 @@ extension SpeechRecognitionService: ModelLoading {
     }
   }
 }
+

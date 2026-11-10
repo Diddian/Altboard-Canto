@@ -4,9 +4,9 @@
 the historical merge base is not a current development baseline.
 Use only `.github/workflows/build-unsigned-ipa.yml` on `main` for unsigned
 SideStore IPAs. Latest verified successful development IPA as of 2026-11-10:
-#171 (`af05cf6f`). Build #172 (`230bdbd`) failed in a Settings source test
-before Xcode compilation; it produced no IPA. Fix that test against the
-recording-state contract before proceeding. Physical iPhone acceptance is pending.
+#171 (`af05cf6f`). Build #172 (`230bdbd`) failed a Settings source test;
+#173 (`3218541`) failed SwiftUI Slider compilation. Both source repairs
+are included in the next development build. Physical iPhone acceptance is pending.
 
 **Historical caution:** Older task descriptions below mention temporary feature
 branches and a custom Emoji catalog. They are archival notes, not current
@@ -22,23 +22,12 @@ Neither a checkbox nor an IPA build demonstrates physical iPhone acceptance.
 When reporting progress, give the scope and numerator/denominator; do not
 conflate source implementation, passing CI, and device acceptance.
 
-**90% IPA hold (2026-11-10):** Do not trigger another unsigned IPA while
-T-022, T-023 or T-024 is below 90% of its full task checklist. This is a
-user-imposed strict gate, not an averaged score. The latest code commit
-`3218541` failed Xcode compilation in run #173 (invalid SwiftUI Slider
-initializer). The compiler repair, bounded meeting transcription queue,
-recording-write failure detection and focused regression changes have been
-prepared, but are NOT compiler-tested or device-accepted. Save preparation
-commits to main with GitHub's `[skip ci]` annotation so the existing
-push-triggered IPA workflow does not start. Do not mark source edits as
-compiler/device verification.
-
-**Dependency conflict:** T-022.4/T-022.10, T-023.8, and T-024.14/T-024.15
-require physical iPhone evidence; T-024.13 requires an IPA build. Therefore
-90% of the *full* lists cannot be attained strictly before the very first
-new IPA. Keep these tasks open and do not game the denominator. A separate
-pre-build readiness review can be recorded, but it is not equivalent to 90%
-full-task completion; do not override this hold without a revised decision.
+**Verification gates:** Pre-build source checks, exact-SHA iOS compilation
+and packaging, and physical-device acceptance are separate gates.
+T-022.4/T-022.10, T-023.8, and T-024.14/T-024.15 require physical iPhone
+evidence; T-024.13 requires a successful IPA build. Keep their original
+checklist entries open until verified. A passing pre-build suite is not
+90% completion of these full workstreams.
 
 **Current workstream ownership (no duplicate implementation owners):**
 - `T-024`: consolidated app/Settings/audio repairs; gated by CI and device QA.
@@ -69,7 +58,8 @@ new workflows, parallel branches and claims of completed device QA.
   stop only sessions started by the failed dictation request.
 - [x] T-024.3 Make a failed dictation history audio-file open a visible
   diagnostic fallback while preserving transcription; release an unread
-  accumulator when final recognition owns a copied segment.
+  accumulator when final recognition owns a copied segment. Bound waveform
+  envelope storage and use written frame counts for recording duration.
 - [x] T-024.4 On failed meeting start, delete temporary audio and directory,
   release the newly started session, reset coordinator pointers, and avoid
   advancing meeting sequence numbers for aborted capture.
@@ -77,6 +67,8 @@ new workflows, parallel branches and claims of completed device QA.
   eight-second finalization chunks rather than one unbounded allocation.
   Preserve saved audio and mark failed decoding as a partial transcript;
   never label incomplete transcription as successful.
+  Rotate audio writers atomically, reject overlapping dictation finalization,
+  stop meeting capture on audio interruption, and preserve manifest-save errors.
 - [x] T-024.6 Show semantic VoiceOver labels and sufficient tappable areas for
   meeting playback/seek/delete, honor Reduce Motion during row expansion,
   identify partial transcript state, and report rename/delete/save failures.
@@ -91,7 +83,8 @@ new workflows, parallel branches and claims of completed device QA.
 - [x] T-024.10 Confirm compiled model-cache deletion and keep the export share
   sheet's temporary file until the share sheet dismisses.
 - [x] T-024.11 Respect Reduce Motion and stop continuous keyboard loading and
-  microphone pulse animations when their views disappear.
+  microphone pulse animations when their views disappear; honor Reduce Motion
+  in the Settings keyboard layout preview.
 - [x] T-024.12 Add bounded source regression checks to the existing
   `scripts/test_settings_contract.py` and
   `scripts/test_keyboard_safety_contract.py`; no new test framework.
@@ -99,8 +92,9 @@ new workflows, parallel branches and claims of completed device QA.
   commit SHA using the **one existing main-branch unsigned IPA workflow**.
   Run #172 failed in a stale button-label test. Run #173 passed that step but
   failed iOS compilation: the haptic Slider must use a trailing label closure.
-  A source fix is prepared, but CI must remain skipped under the 90% hold.
-  Mark verified only after a later authorized build succeeds.
+  The Slider initializer and stale finalization assertions are repaired.
+  Verify the new request-cancellation and bounded-waveform Swift checks before
+  compilation. Mark verified only after the exact-SHA build succeeds.
 - [ ] T-024.14 Physical iPhone acceptance: microphone permission/recording
   start failures and recovery; original vs new Active Session; 15-minute
   meeting rollover and Stop; saved audio after interrupted/partial ASR;
@@ -222,7 +216,9 @@ or a second swipe/keyboard state machine.
   Swift regression coverage to the existing unsigned IPA workflow.
 - [x] T-022.3 Instrument finalization, ASR decode and input-audio durations
   through existing bounded App Group FeatureDiagnostics (no audio or transcript
-  payload). Code-level checks are not physical-device performance results.
+  payload). Versioned decode events also include an enumerated engine,
+  input duration and resident memory sample; the latter is not peak memory.
+  Code-level checks are not physical-device performance results.
 - [ ] T-022.4 On physical iPhone measure cold/warm English and German dictation
   using existing Parakeet v3, Whisper and an identical fixed audio set: stop-to-
   insertion latency, decode latency, real-time factor, peak memory, battery
@@ -238,10 +234,12 @@ or a second swipe/keyboard state machine.
   swipe decoder/brush, EN/DE suggestion latency and Cantonese SQLite lookup
   before editing their active owners. Retain current accessibility and
   keyboard extension lifecycle; resolve observed defects individually.
-- [ ] T-022.8 Source review of app/extension state, recorder errors and
-  bounded meeting queue has begun, with regression assertions prepared.
-  Await actual test execution and boundary checks before marking complete;
-  no duplicate listeners, logging architecture or polling should be introduced.
+- [x] T-022.8 Review app/extension request ownership, recorder errors and
+  bounded meeting queue. Reject cancelled or superseded inference after
+  asynchronous decode/LLM work; drain capture callbacks before closing audio.
+  Settings, keyboard-safety, lifecycle, symbol and IPA-validator Python
+  contracts execute successfully. Pure Swift policies remain part of the
+  exact-SHA CI gate; physical behavior remains T-022.10/T-024.14.
 - [x] T-022.9 Verify Xcode compilation, packaged host+appex, model resources
   and one unsigned SideStore IPA from main through the existing workflow.
   Workflow #170 succeeded for SHA 1e7befac; physical device QA remains open.
@@ -666,3 +664,4 @@ When the repository's GitHub Settings > General > Features > Issues checkbox is
 enabled, create one Issue per T-001…T-013, linking this file and retaining
 subtask checkboxes. Until then, this Markdown file plus the draft PR review
 serve as the issue board; do not claim that GitHub Issues were created.
+

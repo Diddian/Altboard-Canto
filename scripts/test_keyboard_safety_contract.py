@@ -11,6 +11,42 @@ def source(path: str) -> str:
 
 
 class KeyboardSafetyContracts(unittest.TestCase):
+    def test_cancelled_inference_cannot_deliver_or_finalize_another_request(self):
+        speech = source("Sayboard/Services/SpeechRecognitionService.swift")
+        pipeline = source("Sayboard/Services/SpeechRecognitionService+Transcription.swift")
+        self.assertGreaterEqual(speech.count("guard self.isCurrentDictation(finalizationToken)"), 3)
+        decode = pipeline.index("let decodeDurationMs")
+        check = pipeline.index("guard self.isCurrentDictation(requestToken)", decode)
+        self.assertLess(check, pipeline.index("self.currentRawTranscription = rawText"))
+        llm = pipeline.index("await self.llmCoordinator?.processVoiceDictation")
+        check = pipeline.index("guard self.isCurrentDictation(requestToken)", llm)
+        self.assertLess(check, pipeline.index("TranscriptionBridge.writeTranscription(finalOutput)"))
+
+    def test_meeting_and_dictation_finalization_are_mutually_exclusive(self):
+        meeting = source("Sayboard/Services/MeetingRecordingCoordinator.swift")
+        speech = source("Sayboard/Services/SpeechRecognitionService.swift")
+        self.assertIn("!service.isStopping", meeting)
+        self.assertIn("!MeetingRecordingCoordinator.shared.isFinalizing", speech)
+        self.assertIn("MeetingRecordingCoordinator.shared.stop(interrupted: true)", speech)
+
+    def test_meeting_rotation_exchanges_writer_without_a_stop_start_gap(self):
+        meeting = source("Sayboard/Services/MeetingRecordingCoordinator.swift")
+        recorder = source("Sayboard/Services/AudioRecorder.swift")
+        heartbeat = meeting.split("private func heartbeat()", 1)[1].split(
+            "private func closeCurrentPart()", 1)[0]
+        self.assertIn("self.audioRecorder.rotateRecording(", heartbeat)
+        self.assertNotIn("self.closeCurrentPart()", heartbeat)
+        rotate = recorder.split("func rotateRecording(", 1)[1].split("private func result(", 1)[0]
+        self.assertLess(rotate.index("try AVAudioFile("), rotate.index("self.state.withLock"))
+        self.assertNotIn("stopRecording()", rotate)
+        self.assertIn("snapshot.audioFile.length", recorder)
+
+    def test_failed_manifest_is_not_reported_as_a_saved_meeting(self):
+        meeting = source("Sayboard/Services/MeetingRecordingCoordinator.swift")
+        self.assertIn("manifestSaved = self.writeManifest(record)", meeting)
+        self.assertIn("!manifestSaved ? .failed", meeting)
+        self.assertIn("Could not save meeting details; audio files retained", meeting)
+
     def test_audio_capture_failure_releases_new_session(self):
         audio = source("Sayboard/Services/BackgroundAudioSession.swift")
         speech = source("Sayboard/Services/SpeechRecognitionService.swift")
@@ -66,9 +102,10 @@ class KeyboardSafetyContracts(unittest.TestCase):
         self.assertIn("min(Self.updateSeconds * 16_000, available)", meeting)
         self.assertIn("self.accumulator.consume(count: count)", meeting)
         self.assertNotIn("let remaining = self.accumulator.consumeAll()", meeting)
-        self.assertIn('record.state = interrupted ? "interrupted"', meeting)
+        self.assertIn('record.state = self.incompleteAudio ? "partialAudio"', meeting)
+        self.assertIn('interrupted ? "interrupted"', meeting)
         self.assertIn('"partialTranscript"', meeting)
-        self.assertIn('transcriptIncomplete ? .fallback : .completed', meeting)
+        self.assertIn('(transcriptIncomplete || self.incompleteAudio) ? .fallback : .completed', meeting)
         queue = source("Sayboard/Services/AudioBufferAccumulator.swift")
         self.assertIn("var sampleCount: Int", queue)
         speech = source("Sayboard/Services/SpeechRecognitionService.swift")
@@ -148,3 +185,4 @@ class KeyboardSafetyContracts(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

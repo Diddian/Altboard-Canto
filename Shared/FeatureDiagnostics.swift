@@ -16,17 +16,25 @@ enum FeatureDiagnostics {
   enum Event: String, Sendable {
     case started, completed, stopped, cancelled, failed, blocked, fallback
     case selected, queued, downloaded, deleted, slow, noSpeech, rejected
-    case unavailable, interrupted, firstUpdate
+    case unavailable, interrupted, firstUpdate, rotated
     case rootWaiting, rootReady, layoutMounted, letterRowMounted
     case strokeGridMounted, trailOverlayMounted, llmPromptMounted
   }
 
   private struct Entry: Codable, Sendable {
+    let schemaVersion: Int
     let timestampMs: Int64
     let process: String
     let area: String
     let event: String
     let durationMs: Int?
+    let speechEngine: SpeechEngine?
+    let audioDurationMs: Int?
+    let residentMB: Int?
+  }
+
+  enum SpeechEngine: String, Codable, Sendable {
+    case whisperKit, parakeet, moonshine, qwen3
   }
 
   private static let filename = "feature-diagnostics-v1.jsonl"
@@ -34,13 +42,20 @@ enum FeatureDiagnostics {
   private static let queue = DispatchQueue(label: "app.sayboard.featureDiagnostics", qos: .utility)
   private static var fileURL: URL? { AppGroup.containerURL?.appendingPathComponent(filename) }
 
-  static func record(_ area: Area, _ event: Event, durationMs: Int? = nil) {
+  static func record(
+    _ area: Area, _ event: Event, durationMs: Int? = nil,
+    speechEngine: SpeechEngine? = nil, audioDurationMs: Int? = nil, residentMB: Int? = nil
+  ) {
     #if !APPSTORE
     let entry = Entry(
+      schemaVersion: 2,
       timestampMs: Int64(Date().timeIntervalSince1970 * 1_000),
       process: Bundle.main.bundleURL.pathExtension == "appex" ? "keyboard" : "app",
       area: area.rawValue, event: event.rawValue,
-      durationMs: durationMs.map { max(0, min(600_000, $0)) }
+      durationMs: durationMs.map { max(0, min(7_200_000, $0)) },
+      speechEngine: speechEngine,
+      audioDurationMs: audioDurationMs.map { max(0, min(7_200_000, $0)) },
+      residentMB: residentMB.map { max(0, min(131_072, $0)) }
     )
     if event == .failed || event == .interrupted || (area == .appStartup && event == .started) {
       queue.sync { append(entry) }
@@ -136,7 +151,7 @@ enum FeatureDiagnostics {
     } ?? [:]
     let featureEvents = entries()
     let payload: [String: Any] = [
-      "schemaVersion": 1,
+      "schemaVersion": 2,
       "exportedAtMs": Int64(Date().timeIntervalSince1970 * 1_000),
       "build": Bundle.main.infoDictionary?["AltboardBuildSHA"] as? String ?? "unknown",
       "privacy": "No typed text, host content, touch paths, audio, transcripts or credentials",
@@ -176,3 +191,4 @@ enum FeatureDiagnostics {
     KeyboardLifecycleTrace.clear()
   }
 }
+

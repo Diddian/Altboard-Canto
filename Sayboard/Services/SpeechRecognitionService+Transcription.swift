@@ -4,6 +4,22 @@ import Foundation
 
 extension SpeechRecognitionService {
 
+  func isCurrentDictation(_ token: String?) -> Bool {
+    self.settings.synchronize()
+    let current = DictationRequestPolicy.isCurrent(
+      started: token, current: self.settings.dictationSessionToken,
+      cancelled: self.settings.dictationCancellationRequested
+    )
+    if !current {
+      if token != nil && token == self.settings.dictationSessionToken {
+        self.cancelRecording()
+      } else {
+        FeatureDiagnostics.record(.speech, .cancelled)
+      }
+    }
+    return current
+  }
+
   func reportSignalStats(samples: [Float], engine: String, loadState: String) {
     var peak: Float = 0
     var mean: Float = 0
@@ -26,6 +42,8 @@ extension SpeechRecognitionService {
   }
 
   func runFinalTranscription(samples: [Float], stylingHost: String?) async {
+    let requestToken = self.settings.dictationSessionToken
+    guard self.isCurrentDictation(requestToken) else { return }
     let engine = self.settings.selectedVariant.engine
     let loadState = String(describing: self.activeLoadState)
 
@@ -59,7 +77,12 @@ extension SpeechRecognitionService {
     case .noSpeech: decodeEvent = .noSpeech
     case .failed: decodeEvent = .failed
     }
-    FeatureDiagnostics.record(.speechDecode, decodeEvent, durationMs: decodeDurationMs)
+    FeatureDiagnostics.record(
+      .speechDecode, decodeEvent, durationMs: decodeDurationMs,
+      speechEngine: FeatureDiagnostics.SpeechEngine(rawValue: String(describing: engine)),
+      audioDurationMs: samples.count / 16, residentMB: ProcessFootprint.residentMB()
+    )
+    guard self.isCurrentDictation(requestToken) else { return }
     DictationBreadcrumb.record(
       "asr: \(String(describing: engine)) completed in \(String(format: "%.1f", Double(decodeDurationMs) / 1_000))s"
     )
@@ -133,6 +156,7 @@ extension SpeechRecognitionService {
           }
         }
 
+        guard self.isCurrentDictation(requestToken) else { return }
         // Offline model loading/inference may take long enough for another
         // language tap. Never insert output generated for an obsolete target.
         self.settings.synchronize()
@@ -285,3 +309,4 @@ extension SpeechRecognitionService {
     self.historySaveGeneration += 1
   }
 }
+

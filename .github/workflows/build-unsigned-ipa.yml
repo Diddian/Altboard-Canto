@@ -59,6 +59,10 @@ jobs:
           swiftc -swift-version 6 -o "$RUNNER_TEMP/audio-sample-queue-smoke" \
             Sayboard/Services/AudioSampleQueue.swift scripts/verify-audio-sample-queue.swift
           "$RUNNER_TEMP/audio-sample-queue-smoke"
+          swiftc -swift-version 6 -o "$RUNNER_TEMP/recording-policies-smoke" \
+            Shared/DictationRequestPolicy.swift Sayboard/Services/AudioWaveformPeaks.swift \
+            scripts/verify-recording-policies.swift
+          "$RUNNER_TEMP/recording-policies-smoke"
 
       - name: Bootstrap llama.cpp framework
         run: |
@@ -407,6 +411,7 @@ jobs:
           echo "### Direct IPA download" >> "$GITHUB_STEP_SUMMARY"
           echo "[$DIRECT]($DIRECT)" >> "$GITHUB_STEP_SUMMARY"
           echo "Built from commit: \`$GITHUB_SHA\`" >> "$GITHUB_STEP_SUMMARY"
+
 
 
 

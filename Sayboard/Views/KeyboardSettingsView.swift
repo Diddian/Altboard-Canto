@@ -106,6 +106,7 @@ struct KeyboardSettingsView: View {
 }
 
 private struct KeyboardTestPreview: View {
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
   let kind: KeyboardKind
   let microphoneLayout: MicrophoneKeyboardLayout
   let letterArrangement: LetterKeyArrangement
@@ -225,7 +226,7 @@ private struct KeyboardTestPreview: View {
     .background(Color(uiColor: KeyboardPalette.backdrop),
                 in: RoundedRectangle(cornerRadius: KeyboardLayoutGeometry.topCornerRadius,
                                      style: .continuous))
-    .animation(.easeInOut(duration: 0.15), value: self.microphoneLayout)
+    .animation(self.reduceMotion ? nil : .easeInOut(duration: 0.15), value: self.microphoneLayout)
     .accessibilityElement(children: .contain)
     .accessibilityLabel("Interactive keyboard layout preview")
   }
@@ -359,5 +360,6 @@ private struct KeyboardTestPreview: View {
     KeyboardHaptics.key(strength: self.hapticStrength, enabled: self.keyboardHapticsEnabled)
   }
 }
+
 
 

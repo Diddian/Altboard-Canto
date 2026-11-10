@@ -63,7 +63,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
   private init() { self.reloadRecords() }
 
   func start(with service: SpeechRecognitionService, title: String = "", notes: String = "") {
-    guard !self.isRecording, !self.isFinalizing, !service.isRecording,
+    guard !self.isRecording, !self.isFinalizing, !service.isRecording, !service.isStopping,
           SharedSettings().selectedVariant == .qwen3ASR17B,
           let root = Self.meetingsDirectory() else {
       FeatureDiagnostics.record(.meeting, .blocked)
@@ -84,7 +84,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
     catch {
       FeatureDiagnostics.record(.meeting, .failed)
       self.status = "Cannot create meeting storage"
-      self.abortStart(service: service, sessionStartedHere: sessionStartedHere)
+      self.abortStart(service: service, sessionStartedHere: sessionStartedHere, folder: folder)
       return
     }
     let format = service.session.audioEngine.inputNode.outputFormat(forBus: 0)
@@ -227,20 +227,24 @@ final class MeetingRecordingCoordinator: ObservableObject {
       }
       // All audio has been written to the meeting files; release queued RAM.
       self.accumulator.reset()
+      var manifestSaved = false
       if var record = self.current {
         record.endedAt = Date()
         record.state = self.incompleteAudio ? "partialAudio"
           : (interrupted ? "interrupted"
             : (transcriptIncomplete ? "partialTranscript" : "completed"))
         self.current = record
-        self.saveManifest()
+        manifestSaved = self.writeManifest(record)
       }
       FeatureDiagnostics.record(
-        .meeting, (transcriptIncomplete || self.incompleteAudio) ? .fallback : .completed
+        .meeting, !manifestSaved ? .failed
+          : ((transcriptIncomplete || self.incompleteAudio) ? .fallback : .completed)
       )
-      self.status = self.incompleteAudio ? "Audio incomplete; saved parts retained"
+      self.status = !manifestSaved ? "Could not save meeting details; audio files retained"
+        : (self.incompleteAudio ? "Audio incomplete; saved parts retained"
         : (interrupted ? "Recording interrupted; saved available audio"
-          : (transcriptIncomplete ? "Meeting saved; transcript incomplete, audio retained" : "Meeting saved"))
+          : (transcriptIncomplete ? "Meeting saved; transcript incomplete, audio retained" : "Meeting saved")))
+      self.speechService = nil
       self.currentFormat = nil
       self.currentAudioDirectory = nil
       self.isFinalizing = false
@@ -263,13 +267,21 @@ final class MeetingRecordingCoordinator: ObservableObject {
       self.status = "Transcription is behind; full audio is still saved"
     }
     if Date().timeIntervalSince(self.lastPartStartedAt) >= Self.partDuration {
-      self.closeCurrentPart()
-      self.lastPartStartedAt = Date()
       guard let directory = self.currentAudioDirectory,
             let format = self.currentFormat,
-            let count = self.current?.parts.count,
-            self.audioRecorder.startRecording(fileName: String(format: "%04d.caf", count + 1),
-                                              format: format, directory: directory) != nil else {
+            let count = self.current?.parts.count else {
+        self.stop(interrupted: true)
+        return
+      }
+      do {
+        let saved = try self.audioRecorder.rotateRecording(
+          fileName: String(format: "%04d.caf", count + 2), format: format, directory: directory
+        )
+        self.retainPart(saved)
+        self.lastPartStartedAt = Date()
+        FeatureDiagnostics.record(.meeting, .rotated)
+      } catch {
+        self.incompleteAudio = true
         FeatureDiagnostics.record(.meeting, .failed)
         self.status = "Audio file rotation failed"
         self.stop(interrupted: true)
@@ -280,7 +292,11 @@ final class MeetingRecordingCoordinator: ObservableObject {
   }
 
   private func closeCurrentPart() {
-    guard let saved = self.audioRecorder.stopRecording(),
+    self.retainPart(self.audioRecorder.stopRecording())
+  }
+
+  private func retainPart(_ saved: AudioRecorder.RecordingResult?) {
+    guard let saved,
           var record = self.current else { return }
     if saved.writeFailed {
       self.incompleteAudio = true
@@ -383,6 +399,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
     do {
       try FileManager.default.removeItem(at: folder)
       records.removeAll { $0.id == id }
+      if self.current?.id == id { self.current = nil }
       return true
     } catch {
       FeatureDiagnostics.record(.meeting, .failed)
@@ -418,4 +435,5 @@ final class MeetingRecordingCoordinator: ObservableObject {
     return root
   }
 }
+
 
