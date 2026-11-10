@@ -112,8 +112,8 @@ struct VoiceOutputPipelineTests {
     #expect(VoiceOutputTarget.english.abbreviatedLabel(customLanguage: "") == "EN")
     #expect(VoiceOutputTarget.german.abbreviatedLabel(customLanguage: "") == "DE")
     #expect(VoiceOutputTarget.cantonese.abbreviatedLabel(customLanguage: "") == "粵")
-    #expect(VoiceOutputTarget.custom.abbreviatedLabel(customLanguage: "fr") == "法")
-    #expect(VoiceOutputTarget.custom.abbreviatedLabel(customLanguage: "zh-Hans") == "簡")
+    #expect(VoiceOutputTarget.custom.abbreviatedLabel(customLanguage: "fr") == "FR")
+    #expect(VoiceOutputTarget.custom.abbreviatedLabel(customLanguage: "zh-Hans") == "简")
   }
 
   @Test
@@ -138,6 +138,45 @@ struct VoiceOutputPipelineTests {
     #expect(VoiceOutputPrompt.systemPrompt(for: simplified).contains("Simplified Chinese"))
     #expect(VoiceOutputScriptPolicy.simplify("廁所") == "厕所")
     #expect(!cantonese.isSimplifiedChinese)
+  }
+
+  @Test
+  func languageLabelsUseNativeScriptsWithoutChangingLanguageCodes() {
+    #expect(PreferredVoiceLanguages.shortLabel(for: "yue") == "粵")
+    #expect(PreferredVoiceLanguages.shortLabel(for: "zh") == "普")
+    #expect(PreferredVoiceLanguages.shortLabel(for: "ja") == "日")
+    #expect(PreferredVoiceLanguages.shortLabel(for: "ar") == "عر")
+    #expect(PreferredVoiceLanguages.shortLabel(for: "fr") == "FR")
+    #expect(PreferredVoiceLanguages.outputShortLabel(for: "zh") == "繁")
+    #expect(PreferredVoiceLanguages.outputShortLabel(for: "zh-Hans") == "简")
+    #expect(PreferredVoiceLanguages.outputShortLabel(for: "yue") == "粵")
+    #expect(PreferredVoiceLanguages.currentCode(
+      target: .custom, custom: "ja") == "ja")
+  }
+
+  @Test
+  func originalSpeechRetainsWritingSystemUntilExplicitOutputConversion() {
+    let original = VoiceOutputConfiguration(
+      cleanupEnabled: false, target: .original,
+      register: .faithful, customLanguage: ""
+    )
+    let cantonese = VoiceOutputConfiguration(
+      cleanupEnabled: false, target: .cantonese,
+      register: .faithful, customLanguage: ""
+    )
+    let simplified = VoiceOutputConfiguration(
+      cleanupEnabled: false, target: .custom,
+      register: .faithful, customLanguage: "zh-Hans"
+    )
+    let german = VoiceOutputConfiguration(
+      cleanupEnabled: false, target: .german,
+      register: .faithful, customLanguage: ""
+    )
+    #expect(CantoneseOutput.normalizeForOutput("厕所", options: original) == "厕所")
+    #expect(CantoneseOutput.normalizeForOutput("厕所", options: cantonese) == "廁所")
+    #expect(CantoneseOutput.normalizeForOutput("廁所", options: simplified) == "厕所")
+    #expect(CantoneseOutput.normalizeForOutput("德国", options: german) == "德国")
+    #expect(CantoneseOutput.normalizeForOutput("日本語", options: original) == "日本語")
   }
 
   @Test

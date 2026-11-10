@@ -43,11 +43,11 @@ enum VoiceOutputTarget: String, CaseIterable, Identifiable, Codable, Sendable {
     guard self == .custom else { return self.keyboardLabel }
     let code = customLanguage.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     switch code {
-    case "fr", "fr-fr": return "法"
-    case "zh-hans", "zh-cn", "zh-sg": return "簡"
+    case "zh-hans", "zh-cn", "zh-sg": return "简"
+    case "zh-hant", "zh-hk", "zh-tw": return "繁"
     case "yue", "yue-hk": return "粵"
-    case "zh-hant", "zh-hk": return "繁"
-    default: return code.isEmpty ? "→" : String(code.prefix(3)).uppercased()
+    default:
+      return code.isEmpty ? "→" : PreferredVoiceLanguages.shortLabel(for: code)
     }
   }
 

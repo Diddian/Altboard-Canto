@@ -76,6 +76,7 @@ struct ConversationView: View {
     let live = activeSpeaker != nil
     let recent = self.conversation.turns.last
     let speakerOwnsLastTurn = recent?.speaker == side
+    let showsOriginalLanguage = speakerOwnsLastTurn || recent?.targetCode == ""
     let target = side == .other ? self.visitorOutput : self.myOutput
     let code = side == .other ? self.visitorCode : self.myCode
     let targetCode = PreferredVoiceLanguages.currentCode(target: target, custom: code)
@@ -85,7 +86,7 @@ struct ConversationView: View {
       displayText = self.conversation.liveSource.isEmpty
         ? "Listening…" : self.conversation.liveSource
     } else if let recent {
-      if speakerOwnsLastTurn {
+      if showsOriginalLanguage {
         let source = recent.cleanedSourceText ?? recent.sourceText
         displayText = source.isEmpty ? "Recognizing speech…" : source
       } else {
@@ -106,16 +107,18 @@ struct ConversationView: View {
           Text(detected.uppercased())
             .font(.caption.monospaced().weight(.semibold))
             .foregroundStyle(.secondary)
-            .accessibilityLabel("Detected speech language: " + detected)
+            .accessibilityLabel("Detected language: " + detected)
         }
         self.targetPicker(side: side)
       }
 
       ScrollView {
         VStack(alignment: .leading, spacing: 8) {
-          Text(live ? "Live · Original" :
-            (speakerOwnsLastTurn ? "Your speech · Cleaned" :
-              "Translation · " + (recent?.targetCode ?? targetCode).uppercased()))
+          Text(live ? "Live Transcription" :
+            (showsOriginalLanguage ? "Transcript" :
+              "Translation · " + PreferredVoiceLanguages.outputShortLabel(
+                for: recent?.targetCode ?? targetCode
+              )))
             .font(.caption.weight(.semibold))
             .foregroundStyle(.secondary)
           Text(displayText)
@@ -200,7 +203,7 @@ struct ConversationView: View {
       Text("DE").tag(VoiceOutputTarget.german)
       Text("繁").tag(VoiceOutputTarget.traditionalChinese)
       Text("Other").tag(VoiceOutputTarget.custom)
-      Text("Original").tag(VoiceOutputTarget.original)
+      Text("Original Language").tag(VoiceOutputTarget.original)
     }
     .pickerStyle(.menu)
     .disabled(self.conversation.recordingSide != nil || self.conversation.processing)

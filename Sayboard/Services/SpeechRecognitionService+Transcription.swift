@@ -88,7 +88,9 @@ extension SpeechRecognitionService {
     }
 
     if case .text(let output) = result {
-      let rawText = CantoneseOutput.normalize(TextSanitizer.sanitize(output.text))
+      // Keep speech-to-text in its actual source script. Apply script conversion
+      // only to an explicitly selected output language after recognition.
+      let rawText = TextSanitizer.sanitize(output.text)
       guard !rawText.isEmpty else {
         self.settings.lastDictationOutcome = .noSpeech
         FeatureDiagnostics.record(.speech, .noSpeech)

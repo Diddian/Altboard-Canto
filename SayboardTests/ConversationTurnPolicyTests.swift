@@ -57,6 +57,19 @@ struct ConversationTurnPolicyTests {
     #expect(decoded.cleanedSourceText == "Ich habe morgen Zeit.")
   }
 
+  @Test func originalLanguageDoesNotNeedTranslatedText() {
+    let turn = ConversationTurn(
+      id: UUID(), speaker: .me,
+      audioFileName: "110E8400-E29B-41D4-A716-446655440000.caf",
+      duration: 2, targetCode: "",
+      sourceText: "مرحبا", translatedText: nil,
+      detectedLanguageCode: "ar", status: "original"
+    )
+    #expect(!turn.needsRetry)
+    #expect(turn.translatedText == nil)
+    #expect(turn.sourceText == "مرحبا")
+  }
+
   @Test func failedTranslationsRemainRetryableAndKeepOriginal() {
     let turn = ConversationTurn(
       id: UUID(), speaker: .me,

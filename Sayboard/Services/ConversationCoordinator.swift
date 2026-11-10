@@ -222,7 +222,7 @@ final class ConversationCoordinator: ObservableObject {
       FeatureDiagnostics.record(.conversation, .failed)
       return
     }
-    let source = CantoneseOutput.normalize(TextSanitizer.sanitize(output.text))
+    let source = TextSanitizer.sanitize(output.text)
       .trimmingCharacters(in: .whitespacesAndNewlines)
     guard !source.isEmpty else {
       self.turns[index].status = "noSpeech"
@@ -237,48 +237,44 @@ final class ConversationCoordinator: ObservableObject {
     self.turns[index].detectedLanguageCode = identifier.dominantLanguage?.rawValue
     self.turns[index].status = "transcribed"
     _ = self.persistDraft()
-    let textCoordinator = service.llmCoordinator
-    let hasTextModel = textCoordinator?.downloadService?.hasUsableModel == true
-    if hasTextModel, let textCoordinator {
-      self.status = "Cleaning up recognized speech…"
-      let cleanupStarted = CFAbsoluteTimeGetCurrent()
-      let cleanup = VoiceOutputConfiguration(
-        cleanupEnabled: true, target: .original,
-        register: .faithful, customLanguage: ""
-      )
-      if let cleaned = await textCoordinator.processVoiceDictation(source, options: cleanup),
-         !cleaned.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-        self.turns[index].cleanedSourceText = cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
+    let coordinator = service.llmCoordinator
+    let hasTextModel = coordinator?.downloadService?.hasUsableModel == true
+    guard hasTextModel, let coordinator else {
+      if options.target == .original {
+        // Same-language output must remain usable without a text model.
+        self.turns[index].status = "original"
+        self.status = "Transcript saved in original language"
         _ = self.persistDraft()
+        FeatureDiagnostics.record(.conversation, .fallback)
+        return
       }
-      FeatureDiagnostics.record(
-        .speechFinalization, .completed,
-        durationMs: Int((CFAbsoluteTimeGetCurrent() - cleanupStarted) * 1_000)
-      )
-    }
-    if options.target == .original {
-      self.turns[index].status = "original"
-      self.status = "Original transcript saved"
-      _ = self.persistDraft()
-      return
-    }
-    self.status = "Translating to " + self.turns[index].targetCode.uppercased() + "…"
-    guard let coordinator = textCoordinator,
-          hasTextModel else {
       self.turns[index].status = "translationFailed"
       self.status = "Text Model missing. Original saved; translate again after download."
       _ = self.persistDraft()
       FeatureDiagnostics.record(.conversation, .unavailable)
       return
     }
-    let translationStarted = CFAbsoluteTimeGetCurrent()
-    let translation = await coordinator.processVoiceDictation(
-      self.turns[index].cleanedSourceText ?? source, options: options
-    )
-    FeatureDiagnostics.record(
-      .voiceOutput, .completed,
-      durationMs: Int((CFAbsoluteTimeGetCurrent() - translationStarted) * 1_000)
-    )
+
+    self.status = "Preparing transcript and translation…"
+    let turnID = self.turns[index].id
+    // Cleanup and translation run in one already-loaded text-model session.
+    // Save the cleaned speaker text before the listener's translation finishes.
+    let translation = await coordinator.processConversationTurn(source, options: options) {
+      [weak self] cleaned in
+      guard let self, self.turns.indices.contains(index),
+            self.turns[index].id == turnID else { return }
+      self.turns[index].cleanedSourceText = cleaned
+      self.status = options.target == .original
+        ? "Transcript ready" : "Translating…"
+      _ = self.persistDraft()
+    }
+
+    if options.target == .original {
+      self.turns[index].status = "original"
+      self.status = "Transcript saved in original language"
+      _ = self.persistDraft()
+      return
+    }
     if let translation, !translation.isEmpty {
       self.turns[index].translatedText = translation
       self.turns[index].status = "translated"

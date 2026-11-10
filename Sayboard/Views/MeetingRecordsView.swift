@@ -470,7 +470,7 @@ private struct MeetingRecordDetailView: View {
           .foregroundStyle(.secondary)
       }
 
-      Section("Original Transcript") {
+      Section("Transcript") {
         if self.latest.state == "partialTranscript" {
           Label("Transcript incomplete. Original audio parts are preserved.",
                 systemImage: "exclamationmark.triangle")
@@ -486,9 +486,9 @@ private struct MeetingRecordDetailView: View {
           .lineLimit(7)
           .textSelection(.enabled)
         if self.latest.transcript.count > 450 {
-          Button("Read Full Original Transcript") { self.showingFullOriginal = true }
+          Button("Read Full Transcript") { self.showingFullOriginal = true }
         }
-        Text("Source: Automatically recognized speech")
+        Text("Speech-to-text transcription · Original language")
           .font(.caption)
           .foregroundStyle(.secondary)
         Button("Copy Transcript") {
@@ -522,7 +522,7 @@ private struct MeetingRecordDetailView: View {
         }
         if let translated = self.latest.translatedTranscript, !translated.isEmpty {
           LabeledContent("Saved output language",
-                         value: self.latest.translatedLanguageCode ?? "Unknown")
+                         value: PreferredVoiceLanguages.outputShortLabel(for: self.latest.translatedLanguageCode ?? ""))
           Text(self.translatedPreview)
             .foregroundStyle(.blue)
             .lineLimit(6)
@@ -582,7 +582,7 @@ private struct MeetingRecordDetailView: View {
               Text(turn.speaker.title)
                 .font(.headline)
               HStack {
-                Text("Original · ASR").font(.caption.weight(.semibold))
+                Text("Original Language").font(.caption.weight(.semibold))
                 Spacer()
                 Text(turn.detectedLanguageCode?.uppercased() ?? "AUTO")
                   .font(.caption.monospaced())
@@ -592,7 +592,7 @@ private struct MeetingRecordDetailView: View {
                 .foregroundStyle(.primary)
                 .textSelection(.enabled)
               if let translated = turn.translatedText, !translated.isEmpty {
-                Text("Translation · " + turn.targetCode.uppercased())
+                Text("Translation · " + PreferredVoiceLanguages.outputShortLabel(for: turn.targetCode))
                   .font(.caption.weight(.semibold))
                   .foregroundStyle(.blue)
                 Text(translated)
@@ -632,7 +632,7 @@ private struct MeetingRecordDetailView: View {
             .textSelection(.enabled)
             .padding(16)
         }
-        .navigationTitle("Original Transcript")
+        .navigationTitle("Transcript")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
           ToolbarItem(placement: .confirmationAction) {

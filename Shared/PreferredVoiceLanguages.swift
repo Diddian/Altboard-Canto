@@ -18,20 +18,61 @@ enum PreferredVoiceLanguages {
 
   /// Use the language's own writing system where a short label is meaningful.
   static func shortLabel(for code: String) -> String {
-    switch code.lowercased() {
+    // Spoken Mandarin ("zh") is not the same as Traditional written output.
+    // Codes using Latin script retain their native ISO abbreviations.
+    switch LanguagePriority.code(code) {
     case "yue": "粵"
-    case "zh": "繁"
+    case "zh": "普"
     case "ja": "日"
     case "ko": "한"
     case "ru": "РУ"
     case "uk": "УК"
+    case "be": "БЕ"
+    case "bg": "БГ"
+    case "sr": "СР"
+    case "mk": "МК"
+    case "mn": "МН"
+    case "kk": "ҚА"
     case "el": "ΕΛ"
     case "ar": "عر"
+    case "fa": "فا"
     case "he": "עב"
+    case "ur": "ارد"
+    case "ps": "پښ"
+    case "sd": "سن"
     case "hi": "हि"
+    case "ne": "ने"
+    case "mr": "मर"
+    case "sa": "सं"
+    case "bn": "বা"
+    case "as": "অসম"
+    case "gu": "ગુ"
+    case "pa": "ਪੰ"
+    case "ta": "த"
+    case "te": "తె"
+    case "ml": "മ"
+    case "kn": "ಕ"
+    case "si": "සි"
     case "th": "ไทย"
-    default: code.uppercased()
+    case "lo": "ລາວ"
+    case "km": "ខ្មែរ"
+    case "my": "မြန်"
+    case "am": "አማ"
+    case "hy": "ՀՅ"
+    case "ka": "ქა"
+    case "bo": "བོད"
+    case "yi": "יי"
+    default: LanguagePriority.code(code).uppercased()
     }
+  }
+
+  /// Spoken-language preference and output-script labels have different meanings.
+  static func outputShortLabel(for code: String) -> String {
+    let value = code.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    if ["zh-hans", "zh-cn", "zh-sg"].contains(value) { return "简" }
+    if ["zh", "zh-hant", "zh-hk", "zh-tw"].contains(value) { return "繁" }
+    if ["yue", "yue-hk"].contains(value) { return "粵" }
+    return shortLabel(for: code)
   }
 
   static func choices(from preferred: [String]) -> [Choice] {
@@ -46,7 +87,8 @@ enum PreferredVoiceLanguages {
           case "de": .german
           default: .custom
           }
-        return Choice(target: target, languageCode: code, label: shortLabel(for: code))
+        let label = target == .traditionalChinese ? target.keyboardLabel : shortLabel(for: code)
+        return Choice(target: target, languageCode: code, label: label)
       }
   }
 

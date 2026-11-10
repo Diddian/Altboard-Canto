@@ -143,7 +143,7 @@ struct KeyboardStatusStrip: View {
       } else if self.keyboardState.isRecording,
                 let source = self.keyboardState.liveSourcePreview, !source.isEmpty {
         VStack(spacing: 2) {
-          Text("Original · Live").font(.caption2.weight(.semibold))
+          Text("Live Transcription").font(.caption2.weight(.semibold))
             .foregroundStyle(.secondary)
           Text(source)
             .font(.caption2)
@@ -153,7 +153,7 @@ struct KeyboardStatusStrip: View {
             .accessibilityLabel("Live original transcription: \(source)")
         }
       } else if self.keyboardState.isRecording {
-        Text("Listening · original speech will appear here")
+        Text("Listening · speech-to-text will appear here")
           .font(.caption2)
           .foregroundStyle(.secondary)
       } else if self.keyboardState.isStartingRecording && !self.keyboardState.isRecording {
@@ -201,7 +201,7 @@ private struct VoiceProcessingStatusView: View {
         }
       }
       if let raw = self.progress?.rawPreview, !raw.isEmpty {
-        Text("Original: \(raw)")
+        Text("Transcript: \(raw)")
           .font(.caption2)
           .foregroundStyle(.primary)
           .lineLimit(self.compact ? 1 : 2)

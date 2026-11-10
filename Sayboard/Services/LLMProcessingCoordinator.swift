@@ -49,6 +49,66 @@ final class LLMProcessingCoordinator: ObservableObject {
     guard let backgroundTask = await self.beginVoiceProcessing() else { return nil }
     defer { self.endVoiceProcessing(backgroundTask) }
 
+    let output = await self.processVoiceChunks(input, options: options)
+    if output != nil {
+      FeatureDiagnostics.record(
+        .voiceOutput, .completed,
+        durationMs: Int((CFAbsoluteTimeGetCurrent() - started) * 1_000)
+      )
+    }
+    return output
+  }
+
+  /// Both stages share one inference session, rather than repeatedly loading
+  /// and unloading the same model between cleanup and translation.
+  /// The callback publishes the cleaned original before translation completes.
+  func processConversationTurn(
+    _ source: String, options: VoiceOutputConfiguration,
+    onCleaned: @escaping @MainActor (String) -> Void
+  ) async -> String? {
+    guard !source.isEmpty else { return nil }
+    let started = CFAbsoluteTimeGetCurrent()
+    FeatureDiagnostics.record(.conversation, .started)
+    guard let backgroundTask = await self.beginVoiceProcessing() else { return nil }
+    defer { self.endVoiceProcessing(backgroundTask) }
+
+    let cleanupOptions = VoiceOutputConfiguration(
+      cleanupEnabled: true, target: .original,
+      register: .faithful, customLanguage: ""
+    )
+    let cleanupStarted = CFAbsoluteTimeGetCurrent()
+    let cleaned = await self.processVoiceChunks(source, options: cleanupOptions)
+    if let cleaned, !cleaned.isEmpty, !Task.isCancelled {
+      onCleaned(cleaned)
+      FeatureDiagnostics.record(
+        .speechFinalization, .completed,
+        durationMs: Int((CFAbsoluteTimeGetCurrent() - cleanupStarted) * 1_000)
+      )
+    } else if !Task.isCancelled {
+      FeatureDiagnostics.record(.speechFinalization, .fallback)
+    }
+
+    guard !Task.isCancelled, options.target != .original else {
+      return nil
+    }
+    let translateStarted = CFAbsoluteTimeGetCurrent()
+    let translation = await self.processVoiceChunks(cleaned ?? source, options: options)
+    if translation != nil {
+      FeatureDiagnostics.record(
+        .voiceOutput, .completed,
+        durationMs: Int((CFAbsoluteTimeGetCurrent() - translateStarted) * 1_000)
+      )
+      FeatureDiagnostics.record(
+        .conversation, .completed,
+        durationMs: Int((CFAbsoluteTimeGetCurrent() - started) * 1_000)
+      )
+    }
+    return translation
+  }
+
+  private func processVoiceChunks(
+    _ input: String, options: VoiceOutputConfiguration
+  ) async -> String? {
     var output = ""
     for chunk in MeetingTranslationPolicy.chunks(input) {
       guard !Task.isCancelled else {
@@ -58,16 +118,11 @@ final class LLMProcessingCoordinator: ObservableObject {
       guard let processed = await self.processVoiceChunk(chunk, options: options) else { return nil }
       output = MeetingTranslationPolicy.combined(output, next: processed)
     }
-
     guard !Task.isCancelled else {
       FeatureDiagnostics.record(.voiceOutput, .cancelled)
       return nil
     }
-    FeatureDiagnostics.record(
-      .voiceOutput, .completed,
-      durationMs: Int((CFAbsoluteTimeGetCurrent() - started) * 1_000)
-    )
-    return output
+    return output.isEmpty ? nil : output
   }
 
   /// The meeting record owns progress and persistence. Only the existing
@@ -95,7 +150,8 @@ final class LLMProcessingCoordinator: ObservableObject {
         )
         return false
       }
-      guard !Task.isCancelled, onTranslated(current + 1, translated) else {
+      let displayed = CantoneseOutput.normalizeForOutput(translated, options: options)
+      guard !Task.isCancelled, onTranslated(current + 1, displayed) else {
         FeatureDiagnostics.record(
           .meetingTranslation, Task.isCancelled ? .cancelled : .failed
         )
@@ -168,7 +224,8 @@ final class LLMProcessingCoordinator: ObservableObject {
       FeatureDiagnostics.record(.voiceOutput, .rejected, failureReason: .oversizedOutput)
       return nil
     }
-    return output
+    // All output consumers share the same target-specific script formatting.
+    return CantoneseOutput.normalizeForOutput(output, options: options)
   }
 
   private func handleProcessingRequest() async {

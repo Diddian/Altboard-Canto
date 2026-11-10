@@ -9,7 +9,16 @@ enum CantoneseOutput {
       // The selected output script must win over the default HK conversion.
       return VoiceOutputScriptPolicy.simplify(text)
     }
-    return normalize(text)
+    switch options.target {
+    case .cantonese, .traditionalChinese:
+      return normalize(text)
+    case .custom:
+      // An explicit Traditional Chinese output may also be chosen by BCP-47 code.
+      let code = options.customLanguage.lowercased()
+      return ["zh-hant", "zh-hk", "zh-tw"].contains(code) ? normalize(text) : text
+    case .original, .english, .german:
+      return text
+    }
   }
 
   static func normalize(_ text: String) -> String {

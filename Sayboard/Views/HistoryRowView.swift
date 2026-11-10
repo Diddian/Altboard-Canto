@@ -13,11 +13,11 @@ struct HistoryRowView: View {
          let target = self.record.outputLanguageCode, !target.isEmpty,
          !source.isEmpty, source != self.displayedText {
         VStack(alignment: .leading, spacing: 4) {
-          Text("Original · ASR").font(.caption.weight(.semibold))
+          Text("Original Language").font(.caption.weight(.semibold))
             .foregroundStyle(.secondary)
           Text(source).font(.body).foregroundStyle(.primary)
             .textSelection(.enabled)
-          Text("Translation · \(target.uppercased())")
+          Text("Translation · \(PreferredVoiceLanguages.outputShortLabel(for: target))")
             .font(.caption.weight(.semibold)).foregroundStyle(.blue)
           if self.isEditing {
             self.correctionEditor

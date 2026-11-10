@@ -69,7 +69,7 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("liveSourcePreview = String(update.text.suffix(240))", extension)
         self.assertIn("func completeExperimentalLiveText(_ final: String) -> Bool", extension)
         self.assertIn("guard owned == self.availableDocumentIdentifier()", extension)
-        self.assertIn('Text("Original · Live")', chrome)
+        self.assertIn('Text("Live Transcription")', chrome)
         self.assertIn("self.keyboardState.liveSourcePreview", chrome)
         self.assertIn("self.liveSourcePreview = nil", keyboard)
         self.assertIn("ExperimentalLiveTranscription.write(sessionToken: token", speech)
@@ -81,11 +81,12 @@ class SettingsContractTests(unittest.TestCase):
         history = read("Sayboard/Views/HistoryListView.swift")
         self.assertNotIn('Text("ASR 原文")', row)
         self.assertNotIn('Text("你真正講過嘅內容")', row)
-        self.assertIn('Section("Original ASR")', row)
-        self.assertIn('Section("What was actually said")', row)
-        self.assertIn('.sheet(isPresented: self.$isEditing)', row)
-        self.assertIn('ToolbarItem(placement: .cancellationAction)', row)
-        self.assertIn('ToolbarItem(placement: .confirmationAction)', row)
+        self.assertIn('Text("Original Language")', row)
+        self.assertIn("private var correctionEditor: some View", row)
+        self.assertIn("TextEditor(text: self.$correctedDraft)", row)
+        self.assertIn('Button("Cancel")', row)
+        self.assertIn('Button("Save & Learn")', row)
+        self.assertNotIn('.sheet(isPresented: self.$isEditing)', row)
         self.assertIn("self.correctionFocused = false", row)
         self.assertIn("self.isEditing = false", row)
         self.assertIn("self.keyboardTestingText = \"\"", history)
@@ -103,7 +104,7 @@ class SettingsContractTests(unittest.TestCase):
             "owner: .conversation",
             "service.session.endCapture(owner: .conversation)",
             "await service.transcribeSamples(samples)",
-            "await coordinator.processVoiceDictation(",
+            "await coordinator.processConversationTurn(",
             "self.persistDraft()",
             "self.restoreDraft()",
             "func retry(",
@@ -123,8 +124,11 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn('Tab("Conversation", systemImage:', tab)
         self.assertIn("case conversation", tab)
         self.assertIn("rotationEffect(.degrees(180))", ui)
-        self.assertIn("let recent = self.conversation.turns.last(where: { $0.speaker != side })", ui)
-        self.assertIn("self.targetPicker(side: side == .other ? .me : .other)", ui)
+        self.assertIn("let recent = self.conversation.turns.last", ui)
+        self.assertIn("speakerOwnsLastTurn || recent?.targetCode == \"\"", ui)
+        self.assertIn("self.targetPicker(side: side)", ui)
+        self.assertIn("let target = speaker == .me ? self.visitorOutput : self.myOutput", ui)
+        self.assertIn('Text(live ? "Live Transcription"', ui)
         self.assertIn("self.conversation.saveAsMeeting()", ui)
         self.assertIn("ConversationTurnPolicy.validOutput", ui)
         self.assertNotIn("URLSession", coordinator + meeting + ui)
@@ -232,7 +236,7 @@ class SettingsContractTests(unittest.TestCase):
         source = read("Sayboard/Views/SpeechLanguagesSettingsView.swift")
         self.assertIn('self.showPreferredLanguagePicker = true', source)
         self.assertIn('Text(verbatim: self.languagePrioritySummary)', source)
-        self.assertIn('codes.first.map { $0.uppercased() } ?? "AUTO"', source)
+        self.assertIn('codes.first.map { PreferredVoiceLanguages.shortLabel(for: $0) } ?? "AUTO"', source)
         self.assertNotIn('codes.joined(separator: " · ")', source)
         self.assertIn('Image(systemName: "globe")', source)
         self.assertIn('.foregroundStyle(.secondary)', source)
@@ -378,13 +382,11 @@ class SettingsContractTests(unittest.TestCase):
         source = read("Sayboard/Views/KeyboardSettingsView.swift")
         self.assertIn('if self.selectedKind == .alphabetic {\n        Toggle("Auto-capitalization"', source)
         self.assertIn('Toggle("Double-Space Period"', source)
-        self.assertIn('Layout preview only. Keys are not interactive.', source)
-        self.assertIn(".allowsHitTesting(false)", source)
-        self.assertIn(".accessibilityElement(children: .ignore)", source)
+        self.assertIn("Tap preview keys to test haptics.", source)
         preview = source.split("private struct KeyboardTestPreview", 1)[1]
-        self.assertNotIn("Button { self.tap() }", preview)
-        self.assertNotIn("KeyboardHaptics.key(", preview)
-        self.assertNotIn("private func tap()", preview)
+        self.assertIn("Button { KeyboardHaptics.key(technique: .light) }", preview)
+        self.assertNotIn(".allowsHitTesting(false)", preview)
+        self.assertIn(".accessibilityElement(children: .contain)", preview)
         self.assertIn('Image(systemName: image)', preview)
         self.assertIn('Text(verbatim: title)', preview)
 
@@ -392,12 +394,12 @@ class SettingsContractTests(unittest.TestCase):
         settings = read("Sayboard/Views/KeyboardSettingsView.swift")
         phone = read("Sayboard/Views/Onboarding/KeyboardLayoutPreview.swift")
         preview = settings.split("private struct KeyboardTestPreview", 1)[1]
-        self.assertEqual(preview.count('self.key("globe", width: 48)'), 1)
-        self.assertEqual(preview.count('self.key("globe", width: 45)'), 1)
-        self.assertNotIn("showGlobeKey", preview)
+        self.assertEqual(preview.count('if self.showsGlobeButton'), 2)
+        self.assertIn("if self.showExtraGlobeKey", preview)
+        self.assertIn("SharedKey.keyboardShowGlobeKey", preview)
         self.assertNotIn("showExtraGlobe", phone)
-        self.assertIn(".accessibilityLabel(\"Keyboard layout preview; decorative keys only\")", preview)
-        self.assertIn(".allowsHitTesting(false)", preview)
+        self.assertIn(".accessibilityLabel(\"Keyboard preview; tap keys to test haptic feedback\")", preview)
+        self.assertNotIn(".allowsHitTesting(false)", preview)
 
     def test_onboarding_reduce_motion_has_instant_navigation(self):
         source = read("Sayboard/Views/OnboardingView.swift")
@@ -531,9 +533,9 @@ class SettingsContractTests(unittest.TestCase):
         for control in ('Extra Globe Key', 'Settings Key', 'Output Key', 'AI Key'):
             self.assertIn('Toggle("' + control, custom)
         self.assertNotIn('.disabled(!self.aiEnabled)', custom)
-        self.assertIn('Layout preview only. Keys are not interactive.', layout)
+        self.assertIn("Tap preview keys to test haptics.", layout)
         self.assertEqual(layout.count('if self.showsGlobeButton'), 2)
-        self.assertNotIn('if self.showGlobeKey { self.key("globe"', layout)
+        self.assertIn("if self.showExtraGlobeKey", layout)
         self.assertNotIn('Text("Not yet available")', custom)
 
     def test_settings_routes_have_single_owners(self):
