@@ -12,6 +12,8 @@ final class LLMProcessingCoordinator: ObservableObject {
   weak var downloadService: LLMDownloadService?
 
   @Published private(set) var isProcessing = false
+  /// Human-readable, metadata-only error for the latest offline voice request.
+  @Published private(set) var lastVoiceOutputIssue: String?
 
   func setupObservers() {
     self.requestObserver = TranscriptionBridge.observeDarwinNotification(
@@ -44,6 +46,7 @@ final class LLMProcessingCoordinator: ObservableObject {
   /// is not asked to fit an entire recording into a 1K/2K token context.
   func processVoiceDictation(_ input: String, options: VoiceOutputConfiguration) async -> String? {
     guard options.needsLLM, !input.isEmpty else { return nil }
+    self.lastVoiceOutputIssue = nil
     let started = CFAbsoluteTimeGetCurrent()
     FeatureDiagnostics.record(.voiceOutput, .started)
     guard let backgroundTask = await self.beginVoiceProcessing() else { return nil }
@@ -67,25 +70,31 @@ final class LLMProcessingCoordinator: ObservableObject {
     onCleaned: @escaping @MainActor (String) -> Void
   ) async -> String? {
     guard !source.isEmpty else { return nil }
+    self.lastVoiceOutputIssue = nil
     let started = CFAbsoluteTimeGetCurrent()
     FeatureDiagnostics.record(.conversation, .started)
     guard let backgroundTask = await self.beginVoiceProcessing() else { return nil }
     defer { self.endVoiceProcessing(backgroundTask) }
 
-    let cleanupOptions = VoiceOutputConfiguration(
-      cleanupEnabled: true, target: .original,
-      register: .faithful, customLanguage: ""
-    )
-    let cleanupStarted = CFAbsoluteTimeGetCurrent()
-    let cleaned = await self.processVoiceChunks(source, options: cleanupOptions)
-    if let cleaned, !cleaned.isEmpty, !Task.isCancelled {
-      onCleaned(cleaned)
-      FeatureDiagnostics.record(
-        .speechFinalization, .completed,
-        durationMs: Int((CFAbsoluteTimeGetCurrent() - cleanupStarted) * 1_000)
+    var cleaned: String?
+    if options.cleanupEnabled {
+      let cleanupOptions = VoiceOutputConfiguration(
+        cleanupEnabled: true, target: .original,
+        register: .faithful, customLanguage: ""
       )
-    } else if !Task.isCancelled {
-      FeatureDiagnostics.record(.speechFinalization, .fallback)
+      let cleanupStarted = CFAbsoluteTimeGetCurrent()
+      cleaned = await self.processVoiceChunks(source, options: cleanupOptions)
+      if let cleaned, !cleaned.isEmpty, !Task.isCancelled {
+        onCleaned(cleaned)
+        FeatureDiagnostics.record(
+          .speechFinalization, .completed,
+          durationMs: Int((CFAbsoluteTimeGetCurrent() - cleanupStarted) * 1_000)
+        )
+      } else if !Task.isCancelled {
+        FeatureDiagnostics.record(.speechFinalization, .fallback)
+      }
+    } else {
+      onCleaned(source)
     }
 
     guard !Task.isCancelled, options.target != .original else {
@@ -133,6 +142,7 @@ final class LLMProcessingCoordinator: ObservableObject {
     onTranslated: @MainActor (Int, String) -> Bool
   ) async -> Bool {
     guard options.target != .original, index >= 0, index < chunks.count else { return false }
+    self.lastVoiceOutputIssue = nil
     FeatureDiagnostics.record(.meetingTranslation, .started)
     guard let backgroundTask = await self.beginVoiceProcessing() else {
       FeatureDiagnostics.record(.meetingTranslation, .failed)
@@ -152,6 +162,9 @@ final class LLMProcessingCoordinator: ObservableObject {
       }
       let displayed = CantoneseOutput.normalizeForOutput(translated, options: options)
       guard !Task.isCancelled, onTranslated(current + 1, displayed) else {
+        if !Task.isCancelled {
+          self.lastVoiceOutputIssue = "Unable to save the translated section locally."
+        }
         FeatureDiagnostics.record(
           .meetingTranslation, Task.isCancelled ? .cancelled : .failed
         )
@@ -164,16 +177,19 @@ final class LLMProcessingCoordinator: ObservableObject {
 
   private func beginVoiceProcessing() async -> UIBackgroundTaskIdentifier? {
     guard !self.isProcessing else {
+      self.lastVoiceOutputIssue = "The text model is busy. Try again when the current task finishes."
       FeatureDiagnostics.record(.voiceOutput, .blocked, failureReason: .busy)
       return nil
     }
     guard let downloads = self.downloadService, downloads.hasUsableModel else {
+      self.lastVoiceOutputIssue = "No usable text model is selected. Check Settings → Text Model."
       FeatureDiagnostics.record(.voiceOutput, .unavailable, failureReason: .noTextModel)
       return nil
     }
     let settings = SharedSettings()
     let variant = settings.selectedLLMVariant
     guard let modelPath = downloads.modelFileURL(for: variant)?.path else {
+      self.lastVoiceOutputIssue = "The selected text model file is missing."
       FeatureDiagnostics.record(.voiceOutput, .unavailable, failureReason: .missingModelFile)
       return nil
     }
@@ -182,6 +198,9 @@ final class LLMProcessingCoordinator: ObservableObject {
     let backgroundTask = self.beginInferenceBackgroundTask()
     await self.prepareForInference(variant: variant, modelPath: modelPath)
     guard !Task.isCancelled, self.inferenceService.loadState == .loaded else {
+      if !Task.isCancelled {
+        self.lastVoiceOutputIssue = "The text model could not load. Check available memory."
+      }
       FeatureDiagnostics.record(
         .voiceOutput, Task.isCancelled ? .cancelled : .failed,
         failureReason: Task.isCancelled ? nil : .modelLoadFailed
@@ -213,18 +232,22 @@ final class LLMProcessingCoordinator: ObservableObject {
     }
     guard let output = result?.trimmingCharacters(in: .whitespacesAndNewlines),
           !output.isEmpty else {
+      self.lastVoiceOutputIssue = "The text model returned no usable result. Retry or choose a different Text Model."
       FeatureDiagnostics.record(.voiceOutput, .failed, failureReason: .inferenceUnavailable)
       return nil
     }
     guard VoiceLanguageValidator.matches(output, target: options.target) else {
+      self.lastVoiceOutputIssue = "The result was not in the requested language. Try another Text Model."
       FeatureDiagnostics.record(.voiceOutput, .rejected, failureReason: .invalidTargetLanguage)
       return nil
     }
     if input.count >= 30, output.count > max(input.count * 4, input.count + 200) {
+      self.lastVoiceOutputIssue = "The model output was unexpectedly long. Retry with another Text Model."
       FeatureDiagnostics.record(.voiceOutput, .rejected, failureReason: .oversizedOutput)
       return nil
     }
     // All output consumers share the same target-specific script formatting.
+    self.lastVoiceOutputIssue = nil
     return CantoneseOutput.normalizeForOutput(output, options: options)
   }
 

@@ -22,7 +22,7 @@ struct SpeechLanguagesSettingsView: View {
   var sections: some View {
     Group {
       if self.rowsOnly {
-        VStack(alignment: .leading, spacing: 6) { self.languageSelectionRows }
+        self.languageSelectionRows
       } else {
         Section {
           self.languageSelectionRows
@@ -83,7 +83,7 @@ struct SpeechLanguagesSettingsView: View {
           .foregroundStyle(.primary)
         Spacer(minLength: 8)
         Text(verbatim: self.languagePrioritySummary)
-          .font(.subheadline.weight(.semibold))
+          .font(.title3.weight(.semibold))
           .foregroundStyle(Color.accentColor)
           .lineLimit(1)
           .truncationMode(.middle)
@@ -92,7 +92,7 @@ struct SpeechLanguagesSettingsView: View {
           .foregroundStyle(Color.accentColor)
       }
       .contentShape(Rectangle())
-      .frame(minHeight: 44)
+      .frame(height: 44)
     }
     .buttonStyle(.plain)
     .accessibilityLabel("Language Priority")

@@ -502,10 +502,10 @@ private struct MeetingRecordDetailView: View {
       }
       Section("Translation") {
         Picker("Translate to", selection: self.$meetingTarget) {
-          Text("Cantonese · YUE").tag(VoiceOutputTarget.cantonese)
+          Text("粵語 · Cantonese").tag(VoiceOutputTarget.cantonese)
           Text("English · EN").tag(VoiceOutputTarget.english)
           Text("German · DE").tag(VoiceOutputTarget.german)
-          Text("Written Chinese · ZH").tag(VoiceOutputTarget.traditionalChinese)
+          Text("繁體中文 · Written Chinese").tag(VoiceOutputTarget.traditionalChinese)
           Text("Other language").tag(VoiceOutputTarget.custom)
         }
         .disabled(self.recorder.translatingRecordID == self.record.id)
@@ -521,6 +521,8 @@ private struct MeetingRecordDetailView: View {
           }
         }
         if let translated = self.latest.translatedTranscript, !translated.isEmpty {
+          Label("Translation saved on this iPhone", systemImage: "checkmark.circle.fill")
+            .font(.footnote).foregroundStyle(.green)
           LabeledContent("Saved output language",
                          value: PreferredVoiceLanguages.outputShortLabel(for: self.latest.translatedLanguageCode ?? ""))
           Text(self.translatedPreview)
@@ -531,11 +533,12 @@ private struct MeetingRecordDetailView: View {
             Button("Read Full Translation") { self.showingFullTranslation = true }
           }
           Button("Copy Translation") { UIPasteboard.general.string = translated }
-          Text("Saved with this meeting on your iPhone; the original remains unchanged.")
+          ShareLink("Share Translation", item: translated)
+          Text("Stored in Altboard → Meetings → this meeting. Share to save outside the app; the original remains unchanged.")
             .font(.footnote).foregroundStyle(.secondary)
         }
         if let draft = self.latest.translationDraftText, !draft.isEmpty {
-          Text("Translation preview · Saved sections")
+          Text("Partial translation · Saved sections")
             .font(.caption.weight(.semibold))
             .foregroundStyle(.secondary)
           Text(String(draft.prefix(340)) + (draft.count > 340 ? "…" : ""))
@@ -568,8 +571,15 @@ private struct MeetingRecordDetailView: View {
           Text("Offline translation saves separately; your original audio and transcript stay intact.")
             .font(.footnote)
             .foregroundStyle(.secondary)
-          if !self.recorder.translationStatus.isEmpty {
+          if self.recorder.translationStatusRecordID == self.record.id,
+             !self.recorder.translationStatus.isEmpty {
             Text(self.recorder.translationStatus)
+              .font(.footnote)
+              .foregroundStyle(self.recorder.translationStatus.hasPrefix("Translation failed")
+                ? Color.orange : Color.secondary)
+          } else if (self.latest.translatedTranscript ?? "").isEmpty
+             && (self.latest.translationDraftText ?? "").isEmpty {
+            Text("No translation saved yet. Choose a language and tap Translate. The result will appear here.")
               .font(.footnote)
               .foregroundStyle(.secondary)
           }
@@ -661,6 +671,17 @@ private struct MeetingRecordDetailView: View {
     .onAppear {
       self.name = self.latest.title ?? ""
       self.notes = self.latest.notes ?? ""
+      if let savedCode = self.latest.translatedLanguageCode {
+        switch savedCode {
+        case "yue": self.meetingTarget = .cantonese
+        case "de": self.meetingTarget = .german
+        case "en": self.meetingTarget = .english
+        case "zh": self.meetingTarget = .traditionalChinese
+        default:
+          self.meetingTarget = .custom
+          self.outputLanguage = savedCode
+        }
+      }
     }
     .onChange(of: self.name) { _, _ in self.saved = false; self.saveFailed = false }
     .onChange(of: self.notes) { _, _ in self.saved = false; self.saveFailed = false }

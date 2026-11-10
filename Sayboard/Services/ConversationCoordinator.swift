@@ -13,6 +13,7 @@ final class ConversationCoordinator: ObservableObject {
   @Published private(set) var recordingSide: ConversationSpeaker?
   @Published private(set) var processing = false
   @Published private(set) var liveSource = ""
+  @Published private(set) var livePreviewUnavailable = false
   @Published private(set) var status = "Ready to talk"
   @Published private(set) var elapsed: TimeInterval = 0
 
@@ -86,6 +87,7 @@ final class ConversationCoordinator: ObservableObject {
       self.recordingSide = side
       self.elapsed = 0
       self.liveSource = ""
+      self.livePreviewUnavailable = false
       self.startedAt = Date()
       self.status = "Listening · " + side.title
       FeatureDiagnostics.record(.conversation, .started)
@@ -110,11 +112,16 @@ final class ConversationCoordinator: ObservableObject {
             await service.loadModelIfAvailable(downloadService: downloads)
             if self.recordingSide != nil, service.activeLoadState == .loaded {
               self.startLivePreview(using: service)
+            } else if self.recordingSide != nil {
+              self.livePreviewUnavailable = true
+              self.status = "Live text unavailable; recording is saved for transcription after Stop."
+              FeatureDiagnostics.record(.liveDictation, .fallback)
             }
           }
         } else {
-          self.status = "Recording audio; original words will appear after Stop."
-          FeatureDiagnostics.record(.conversation, .fallback)
+          self.livePreviewUnavailable = true
+          self.status = "Live text unavailable due to memory pressure; transcript after Stop."
+          FeatureDiagnostics.record(.liveDictation, .fallback)
         }
       }
       self.limitTask?.cancel()
@@ -161,6 +168,7 @@ final class ConversationCoordinator: ObservableObject {
     self.startedAt = nil
     self.activeID = nil
     self.liveSource = ""
+    self.livePreviewUnavailable = false
     guard let saved, !saved.writeFailed, saved.duration > 0 else {
       self.status = "Audio could not be saved. Nothing was overwritten."
       self.processing = false
@@ -353,10 +361,14 @@ final class ConversationCoordinator: ObservableObject {
   private func startLivePreview(using service: SpeechRecognitionService) {
     self.liveTask?.cancel()
     guard service.activeLoadState == .loaded else { return }
+    self.livePreviewUnavailable = false
     self.liveTask = Task { @MainActor [weak self, weak service] in
       guard let self, let service else { return }
       var offset = 0
-      let frameCount = 48_000 // 3 seconds, never a second recorder
+      let frameCount = service.settings.selectedVariant.engine == .qwen3
+        ? 24_000 : 48_000 // 1.5s on Qwen3, longer on other engines
+      let previewStarted = CFAbsoluteTimeGetCurrent()
+      var didPublishFirstUpdate = false
       while !Task.isCancelled && self.recordingSide != nil {
         guard let samples = self.accumulator.chunk(from: offset, count: frameCount)
         else {
@@ -371,6 +383,11 @@ final class ConversationCoordinator: ObservableObject {
           let raw = TextSanitizer.sanitize(output.text)
           if !raw.isEmpty {
             self.liveSource = ExperimentalSpeechSegments.append(raw, to: self.liveSource)
+            if !didPublishFirstUpdate {
+              didPublishFirstUpdate = true
+              FeatureDiagnostics.record(.liveDictation, .firstUpdate,
+                durationMs: Int((CFAbsoluteTimeGetCurrent() - previewStarted) * 1_000))
+            }
           }
         }
       }
@@ -420,7 +437,7 @@ final class ConversationCoordinator: ObservableObject {
           let restored = try? JSONDecoder().decode([ConversationTurn].self, from: data)
     else { return }
     self.turns = restored
-    self.status = "Unsaved conversation restored. Retry interrupted turns or save as Meeting."
+    self.status = "Previous conversation restored. Use ⋯ to save it as a Meeting or clear it."
     FeatureDiagnostics.record(.conversation, .fallback)
   }
 

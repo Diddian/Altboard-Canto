@@ -34,7 +34,7 @@ extension SpeechRecognitionService {
         if case .text(let output) = result {
           // The native Qwen decoder may prefix each chunk with a language
           // header. Clean every chunk before it reaches the host input field.
-          let cleaned = CantoneseOutput.normalize(TextSanitizer.sanitize(output.text))
+          let cleaned = TextSanitizer.sanitize(output.text)
           if !cleaned.isEmpty {
             combined = ExperimentalSpeechSegments.append(cleaned, to: combined)
             revision += 1

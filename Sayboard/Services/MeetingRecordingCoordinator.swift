@@ -58,6 +58,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
   @Published private(set) var unreadableRecordCount = 0
   @Published private(set) var translatingRecordID: UUID?
   @Published private(set) var translationStatus = ""
+  @Published private(set) var translationStatusRecordID: UUID?
   private var translationTask: Task<Void, Never>?
 
   private let audioRecorder = AudioRecorder()
@@ -343,7 +344,9 @@ final class MeetingRecordingCoordinator: ObservableObject {
 
   private func appendTranscript(_ raw: String) {
     guard var record = self.current else { return }
-    let clean = CantoneseOutput.normalize(TextSanitizer.sanitize(raw))
+    // Source transcripts must keep their original writing system. Only
+    // explicit translation output is converted to the requested script.
+    let clean = TextSanitizer.sanitize(raw)
     guard !clean.isEmpty else { return }
     record.transcript = ExperimentalSpeechSegments.append(clean, to: record.transcript)
     self.current = record
@@ -363,6 +366,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
   ) {
     guard self.translatingRecordID == nil, !self.isRecording, !self.isFinalizing,
           let index = self.records.firstIndex(where: { $0.id == id }) else { return }
+    self.translationStatusRecordID = id
     let settings = SharedSettings()
     settings.synchronize()
     let options = selectedOptions ?? settings.voiceOutputConfiguration
@@ -453,14 +457,17 @@ final class MeetingRecordingCoordinator: ObservableObject {
         finished.translationDraftNextChunk = nil
         if self.writeManifest(finished, includeTranscript: false) {
           self.records[position] = finished
-          self.translationStatus = "Translation saved. Original ASR retained."
+          self.translationStatus = "Translation saved with this meeting. Open Translation to copy or share."
         } else {
           self.translationStatus = "Translation could not be saved. Resume to retry."
         }
       } else if Task.isCancelled {
         self.translationStatus = "Translation paused. Saved sections can be resumed."
       } else if !self.translationStatus.hasPrefix("Could not save") {
-        self.translationStatus = "Translation stopped. Saved sections can be resumed."
+        let count = self.records.first(where: { $0.id == id })?.translationDraftNextChunk ?? 0
+        let details = coordinator.lastVoiceOutputIssue ??
+          "The text model could not complete the request. Try again or select another Text Model."
+        self.translationStatus = "Translation failed · \(count) of \(chunks.count) sections saved. " + details
       }
       self.translatingRecordID = nil
       self.translationTask = nil
