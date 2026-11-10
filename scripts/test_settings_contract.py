@@ -89,9 +89,10 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn('enum FailureReason: String, Codable, Sendable', diagnostics)
         self.assertIn('let failureReason: FailureReason?', diagnostics)
         for reason in ('.busy', '.noTextModel', '.missingModelFile',
-                       '.modelLoadFailed', '.inferenceUnavailable',
-                       '.invalidTargetLanguage', '.oversizedOutput'):
+                       '.inferenceUnavailable', '.invalidTargetLanguage',
+                       '.oversizedOutput'):
             self.assertIn('failureReason: ' + reason, coordinator)
+        self.assertIn('failureReason: Task.isCancelled ? nil : .modelLoadFailed', coordinator)
         self.assertIn('failureReason: .inferenceUnavailable', pipeline)
         self.assertNotIn('let rawText: String', diagnostics)
         self.assertNotIn('let transcript: String', diagnostics)
