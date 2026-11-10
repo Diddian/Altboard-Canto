@@ -1,12 +1,12 @@
 # Altboard-Canto development tasks
 
-**Active development branch: `main`.** The integrated keyboard code through
-`26dc7cdc30e346a2d3f428f8be600d1e912fa573` is now on `main`.
-Use the single `.github/workflows/build-unsigned-ipa.yml` on `main` for
-future unsigned SideStore IPAs. The last successful branch IPA before this
-merge was #68 (`7583397`); the user installed/tested it and reported
-additional bugs, addressed in code at `26dc7cdc`. Main-branch device QA remains
-pending; a successful Actions build alone is not iPhone validation.
+**Active development branch: `main`.** Read GitHub HEAD before implementation;
+the historical merge base is not a current development baseline.
+Use only `.github/workflows/build-unsigned-ipa.yml` on `main` for unsigned
+SideStore IPAs. Latest verified successful development IPA as of 2026-11-10:
+#171 (`af05cf6f`). Build #172 (`230bdbd`) failed in a Settings source test
+before Xcode compilation; it produced no IPA. Fix that test against the
+recording-state contract before proceeding. Physical iPhone acceptance is pending.
 
 **Historical caution:** Older task descriptions below mention temporary feature
 branches and a custom Emoji catalog. They are archival notes, not current
@@ -17,8 +17,21 @@ the retired catalog without a new reviewed request.
 GitHub Issues are disabled in this repository (GitHub API 410). This file is
 the versioned task board until Issues are enabled.
 
-Statuses: [x] code implemented; [ ] pending / requires verification.
-Do not mark device behavior verified without physical iPhone testing.
+Statuses: [x] code implemented in source; [ ] pending / requires verification.
+Neither a checkbox nor an IPA build demonstrates physical iPhone acceptance.
+When reporting progress, give the scope and numerator/denominator; do not
+conflate source implementation, passing CI, and device acceptance.
+
+**Current workstream ownership (no duplicate implementation owners):**
+- `T-024`: consolidated app/Settings/audio repairs; gated by CI and device QA.
+- `T-023`: remaining cross-functional audits; exclude repairs already in T-024.
+- `T-022`: model performance measurements and alternative backend evaluation.
+- `T-019`: experimental incremental keyboard dictation, after T-022 safety evidence.
+- `T-020`: meeting capture/finalization; T-024 fixes are prerequisites.
+- `T-021`: active swipe and native Globe/Emoji follow-up; earlier T-016 is historical.
+- `T-007`: historical meeting-transcription plan; T-020 owns current development.
+- `T-001–T-018`: legacy feature and iPhone-acceptance history, not replacement
+  instructions for current owners. Cross-reference their still-open device issues.
 
 ## T-024 - Consolidated mainline implementation batch (2026-11-10)
 
@@ -66,7 +79,10 @@ new workflows, parallel branches and claims of completed device QA.
   `scripts/test_keyboard_safety_contract.py`; no new test framework.
 - [ ] T-024.13 Check source tests, Xcode compilation, IPA packaging and exact
   commit SHA using the **one existing main-branch unsigned IPA workflow**.
-  Do not mark passed before the GitHub job finishes successfully.
+  Run #172 failed because `test_meeting_tab_uses_existing_local_recorder`
+  asserted a static icon that the updated recording button intentionally changes.
+  The test now checks start/stop behaviour and its accessible label. Xcode
+  compilation and packaging must still pass on the repaired commit.
 - [ ] T-024.14 Physical iPhone acceptance: microphone permission/recording
   start failures and recovery; original vs new Active Session; 15-minute
   meeting rollover and Stop; saved audio after interrupted/partial ASR;

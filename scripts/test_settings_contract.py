@@ -352,7 +352,11 @@ class SettingsContractTests(unittest.TestCase):
         recording = read("Sayboard/Services/MeetingRecordingCoordinator.swift")
         self.assertIn('Tab("Meetings"', tabs)
         self.assertNotIn('Tab("Models"', tabs)
-        self.assertIn('Image(systemName: "square.and.pencil")', meeting)
+        # Test the action and state-dependent accessible label, not an icon asset.
+        self.assertIn("self.recordAction()", meeting)
+        self.assertIn('self.recorder.isRecording ? "Stop and save meeting" : "Start a new meeting"', meeting)
+        self.assertIn("self.recorder.stop()", meeting)
+        self.assertIn("self.recorder.start(with: self.speechService)", meeting)
         self.assertIn(".searchable(", meeting)
         self.assertIn('Image(systemName: "gobackward.15")', meeting)
         self.assertIn('Image(systemName: "goforward.15")', meeting)
