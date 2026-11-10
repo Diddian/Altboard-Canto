@@ -74,11 +74,14 @@ struct SpeechLanguagesSettingsView: View {
       self.showPreferredLanguagePicker = true
     } label: {
       HStack(spacing: 10) {
-        Label("Language Priority", systemImage: "globe")
+        Image(systemName: "globe")
+          .foregroundStyle(.secondary)
+          .accessibilityHidden(true)
+        Text("Language Priority")
           .foregroundStyle(.primary)
         Spacer(minLength: 8)
         Text(verbatim: self.languagePrioritySummary)
-          .font(.subheadline.monospaced())
+          .font(.subheadline.monospaced().weight(.semibold))
           .foregroundStyle(.secondary)
           .lineLimit(1)
           .truncationMode(.middle)
@@ -95,7 +98,7 @@ struct SpeechLanguagesSettingsView: View {
     .accessibilityHint("Open language priority editor to add, remove or reorder languages")
     if !self.unsupportedSpokenLanguages.isEmpty {
       Label(
-        "The selected speech model may not recognize: \(self.unsupportedSpokenLanguages.joined(separator: ", "))",
+        "Some preferred languages may not be supported by the selected speech model.",
         systemImage: "exclamationmark.triangle"
       )
       .font(.footnote)
@@ -105,7 +108,7 @@ struct SpeechLanguagesSettingsView: View {
 
   private var languagePrioritySummary: String {
     let codes = PreferredVoiceLanguages.normalized(self.spokenLanguages)
-    return codes.isEmpty ? "AUTO" : codes.joined(separator: " · ")
+    return codes.first.map { $0.uppercased() } ?? "AUTO"
   }
 
   private var languagePriorityAccessibilityValue: String {

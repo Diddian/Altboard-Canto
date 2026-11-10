@@ -4,9 +4,9 @@
 the historical merge base is not a current development baseline.
 Use only `.github/workflows/build-unsigned-ipa.yml` on `main` for unsigned
 SideStore IPAs. Latest verified successful development IPA as of 2026-11-10:
-#174 (`0fc0939f`). Xcode compilation, App Group entitlements, exact-SHA
+#182 (`cb491b3`). Xcode compilation, App Group entitlements, exact-SHA
 IPA validation, artifact upload and development release publication passed.
-#171 remains available as a previous Actions artifact. Physical iPhone acceptance is pending.
+#179 remains a previous usable IPA. Physical iPhone acceptance is pending.
 
 **Historical caution:** Older task descriptions below mention temporary feature
 branches and a custom Emoji catalog. They are archival notes, not current
@@ -73,6 +73,43 @@ completed meeting translation/copy, failed-model recovery, Pause/Resume, and
 normal keyboard EN/DE/Yue dictation + Globe. Do not claim verified speed,
 long-recording battery/memory or physical iPhone acceptance from CI alone.
 No new T-022–T-024 checklist item is complete until its original gate passes.
+
+**2026-11-10 UX source staging after #182 (no IPA requested):**
+Language Priority must render only the *first* preferred code in uppercase
+(e.g., YUE), with AUTO for an empty list; its sheet retains the full
+ordered editor and the VoiceOver value announces every language.
+Use a semantic secondary icon tint rather than forcing white.
+The Settings and onboarding keyboard previews are decorative only:
+exactly one illustrated system Globe in the bottom row, no duplicate
+optional Extra Globe, no tappable preview buttons or haptic actions.
+Live keyboard Globe/Emoji/UIKit behavior and persisted Extra Globe
+settings are unchanged. The older T-023.4/T-023.5 checked interactive
+preview behavior is historical and explicitly superseded by this
+user-approved visual-only requirement. New visual/VoiceOver acceptance
+remains open under T-023.8/T-023.13. Do not start a new IPA until the
+user has assessed #182.
+
+**Provisional Conversation Tab UX after #182 device acceptance:**
+Keep native MainTabView ownership; proposed order History / Conversation /
+Meetings / Settings. The portrait conversation surface uses two balanced
+speaker panels excluding safe areas and the tab bar; rotate the upper
+panel 180 degrees for the facing speaker. Each side has its own Mic button,
+source-language hint, translated text and explicit status, but both buttons
+use the existing single capture owner, never simultaneous input. First
+version is turn-based sentence translation using the shared segment,
+offline ASR, output translation and recording pipelines; no speculative
+dual-microphone speaker attribution or automatic model hot-swapping.
+Output-language controls remain local to each conversation, source
+language defaults to auto-detect with user preference hints. A deliberate
+Save as Meeting action persists source/translation and audio; cancel
+must preserve recoverable confirmed segments without auto-upload.
+Use system fonts with Dynamic Type: translated text approx 28–32pt
+before scaling, source 14–16pt, status 12–14pt, Mic hit areas >=56pt,
+other interactive targets >=44pt; test Arabic RTL, Cantonese/Japanese
+line breaks, high contrast, Reduce Motion, overflow and small iPhones.
+Accept only after observable speaker turn, transcript, translation,
+pause/cancel, recovery, offline latency, memory and privacy checks.
+This is a design brief, NOT implemented navigation or a task checkbox.
 
 ## T-024 - Consolidated mainline implementation batch (2026-11-10)
 
@@ -208,7 +245,7 @@ new server, duplicate keyboard coordinator, animation engine or model dependency
   model downloads, keyboard previews and Diagnostics with long EN/DE/zh-Hant
   labels, larger text and VoiceOver; preserve saved settings.
   Source preparation: Language Priority is one non-expandable row showing
-  ordered language codes with the existing editor behind one tap;
+  only its first uppercase preferred code with the existing editor behind one tap;
   Heretic text-model cards say Quality/Speed Unrated instead of hiding
   zero-placeholder values. iPhone accessibility/layout remains unverified.
 - [ ] T-023.14 Storage and privacy: verify atomic export/delete/recovery

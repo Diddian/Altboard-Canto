@@ -93,9 +93,7 @@ struct KeyboardSettingsView: View {
           ?? .qwertz
       )
       .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
-      Text(self.hapticsEnabled
-        ? "Tap the keys to test haptic feedback."
-        : "Haptic feedback is off. Turn it on to test the keys.")
+      Text("Layout preview only. Keys are not interactive.")
         .font(.footnote)
         .foregroundStyle(.secondary)
     } header: {
@@ -111,15 +109,9 @@ private struct KeyboardTestPreview: View {
   let microphoneLayout: MicrophoneKeyboardLayout
   let letterArrangement: LetterKeyArrangement
 
-  @AppStorage(SharedKey.keyboardShowGlobeKey, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var showGlobeKey = false
-  @AppStorage(SharedKey.needsInputModeSwitchKey, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var needsInputModeSwitchKey = false
+  // The static preview shows one native system-switch key in the bottom row.
+  // The optional Extra Globe control belongs to the real keyboard only.
   private var showsGlobeButton: Bool { true }
-  @AppStorage(SharedKey.keyboardHapticsEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var keyboardHapticsEnabled = true
-  @AppStorage(SharedKey.keyboardHapticStrength, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var hapticStrength = SharedSettings.defaultKeyboardHapticStrength
   @AppStorage(SharedKey.hasUsableLLMModel, store: UserDefaults(suiteName: AppGroup.identifier))
   private var hasUsableLLMModel = false
   @AppStorage(SharedKey.keyboardShowSettingsKey, store: UserDefaults(suiteName: AppGroup.identifier))
@@ -162,7 +154,6 @@ private struct KeyboardTestPreview: View {
         self.alphabetBottomRow.padding(.top, KeyboardLayoutGeometry.alphabetRowSpacing)
       } else if self.kind == .extended {
         HStack(spacing: 6) {
-          if self.showGlobeKey { self.key("globe", width: 42) }
           if self.showSettingsKey { self.key("gearshape", width: 45) }
           if self.outputKeyEnabled { self.key("character.bubble", width: 45) }
           if self.showAIButton {
@@ -189,11 +180,10 @@ private struct KeyboardTestPreview: View {
             .padding(.bottom, 8)
         }
         GeometryReader { geometry in
-          // The optional Globe key takes real space in compact preview.
-          // Keep the centered microphone clear of both side-key clusters.
-          let side: CGFloat = self.showGlobeKey ? 38 : 45
-          let leftCount = (self.showGlobeKey ? 1 : 0)
-            + (self.showSettingsKey ? 1 : 0) + (self.outputKeyEnabled ? 1 : 0)
+          // The preview uses only the bottom-row system Globe.
+          let side: CGFloat = 45
+          let leftCount = (self.showSettingsKey ? 1 : 0)
+            + (self.outputKeyEnabled ? 1 : 0)
           let rightCount = (self.showAIButton ? 1 : 0) + 1
           let leftWidth = CGFloat(leftCount) * side + CGFloat(max(0, leftCount - 1)) * 6
           let rightWidth = CGFloat(rightCount) * side + CGFloat(max(0, rightCount - 1)) * 6
@@ -201,7 +191,6 @@ private struct KeyboardTestPreview: View {
             - 2 * max(leftWidth, rightWidth) - 14))
           ZStack {
             HStack(spacing: 6) {
-              if self.showGlobeKey { self.key("globe", width: side) }
               if self.showSettingsKey { self.key("gearshape", width: side) }
               if self.outputKeyEnabled { self.key("character.bubble", width: side) }
               Spacer(minLength: 0)
@@ -227,13 +216,13 @@ private struct KeyboardTestPreview: View {
                 in: RoundedRectangle(cornerRadius: KeyboardLayoutGeometry.topCornerRadius,
                                      style: .continuous))
     .animation(self.reduceMotion ? nil : .easeInOut(duration: 0.15), value: self.microphoneLayout)
-    .accessibilityElement(children: .contain)
-    .accessibilityLabel("Interactive keyboard layout preview")
+    .allowsHitTesting(false)
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel("Keyboard layout preview; decorative keys only")
   }
 
   private var alphabetToolbar: some View {
     HStack(spacing: 6) {
-      if self.showGlobeKey { self.key("globe", width: 42) }
       if self.showSettingsKey { self.key("gearshape", width: 48) }
       if self.outputKeyEnabled { self.translatePreview }
       if self.showAIButton {
@@ -248,18 +237,14 @@ private struct KeyboardTestPreview: View {
   }
 
   private var translatePreview: some View {
-    Button { self.tap() } label: {
-      VStack(spacing: 0) {
-        Image(systemName: "translate").font(.system(size: 17))
-        Text("AUTO").font(.system(size: 8, weight: .bold, design: .rounded))
-      }
-      .foregroundStyle(.primary)
-      .frame(width: 48, height: 45)
-      .background(Color(uiColor: KeyboardPalette.keyFill),
-                  in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+    VStack(spacing: 0) {
+      Image(systemName: "translate").font(.system(size: 17))
+      Text("AUTO").font(.system(size: 8, weight: .bold, design: .rounded))
     }
-    .buttonStyle(.plain)
-    .accessibilityLabel("Test translation key haptic")
+    .foregroundStyle(.primary)
+    .frame(width: 48, height: 45)
+    .background(Color(uiColor: KeyboardPalette.keyFill),
+                in: RoundedRectangle(cornerRadius: 8, style: .continuous))
   }
 
   private func letterRow(_ letters: [String], inset: CGFloat) -> some View {
@@ -270,18 +255,14 @@ private struct KeyboardTestPreview: View {
   }
 
   private func letter(_ title: String) -> some View {
-    Button { self.tap() } label: {
-      Text(verbatim: title)
-        .font(.system(size: 21, weight: .regular, design: .default))
-        .foregroundStyle(.primary)
-        .offset(y: -1.2)
-        .frame(maxWidth: .infinity)
-        .frame(height: 45)
-        .background(Color(uiColor: KeyboardPalette.keyFill),
-                    in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-    }
-    .buttonStyle(.plain)
-    .accessibilityLabel("Test " + title + " key haptic")
+    Text(verbatim: title)
+      .font(.system(size: 21, weight: .regular, design: .default))
+      .foregroundStyle(.primary)
+      .offset(y: -1.2)
+      .frame(maxWidth: .infinity)
+      .frame(height: 45)
+      .background(Color(uiColor: KeyboardPalette.keyFill),
+                  in: RoundedRectangle(cornerRadius: 8, style: .continuous))
   }
 
   private func previewTextRow(_ titles: [String]) -> some View {
@@ -315,50 +296,25 @@ private struct KeyboardTestPreview: View {
   private func key(
     _ image: String, width: CGFloat, height: CGFloat = 45, capsule: Bool = false
   ) -> some View {
-    Button { self.tap() } label: {
-      Image(systemName: image)
-        .font(.system(size: 18))
-        .foregroundStyle(.primary)
-        .frame(width: width, height: height)
-        .background(Color(uiColor: KeyboardPalette.keyFill),
-                    in: RoundedRectangle(cornerRadius: capsule || height == 96 ? height / 2 : 8,
-                                        style: .continuous))
-    }
-    .buttonStyle(.plain)
-    .accessibilityLabel("Test " + self.previewKeyName(image) + " key haptic")
-  }
-
-  private func previewKeyName(_ symbol: String) -> String {
-    switch symbol {
-    case "globe": "Globe"
-    case "gearshape": "Settings"
-    case "character.bubble": "Output language"
-    case "sparkles": "AI actions"
-    case "mic.fill": "Microphone"
-    case "delete.left", "trash": "Delete"
-    case "return.left": "Return"
-    case "shift.fill": "Shift"
-    default: symbol
-    }
+    Image(systemName: image)
+      .font(.system(size: 18))
+      .foregroundStyle(.primary)
+      .frame(width: width, height: height)
+      .background(Color(uiColor: KeyboardPalette.keyFill),
+                  in: RoundedRectangle(cornerRadius: capsule || height == 96 ? height / 2 : 8,
+                                      style: .continuous))
   }
 
   private func labelKey(_ title: String, width: CGFloat? = nil, height: CGFloat = 45) -> some View {
-    Button { self.tap() } label: {
-      Text(verbatim: title)
-        .font(.system(size: 16))
-        .foregroundStyle(.primary)
-        .frame(maxWidth: width == nil ? .infinity : nil)
-        .frame(width: width, height: height)
-        .background(Color(uiColor: KeyboardPalette.keyFill),
-                    in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-    }
-    .buttonStyle(.plain)
-    .accessibilityLabel("Test " + (title.isEmpty ? "space" : title) + " haptic")
+    Text(verbatim: title)
+      .font(.system(size: 16))
+      .foregroundStyle(.primary)
+      .frame(maxWidth: width == nil ? .infinity : nil)
+      .frame(width: width, height: height)
+      .background(Color(uiColor: KeyboardPalette.keyFill),
+                  in: RoundedRectangle(cornerRadius: 8, style: .continuous))
   }
 
-  private func tap() {
-    KeyboardHaptics.key(strength: self.hapticStrength, enabled: self.keyboardHapticsEnabled)
-  }
 }
 
 
