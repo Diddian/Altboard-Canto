@@ -37,6 +37,7 @@ extension SpeechRecognitionService {
     }
 
     self.reportSignalStats(samples: samples, engine: String(describing: engine), loadState: loadState)
+    FeatureDiagnostics.record(.speechAudio, .completed, durationMs: samples.count / 16)
     let recognitionStarted = CFAbsoluteTimeGetCurrent()
 
     let result: TranscriptionResult =
@@ -51,8 +52,16 @@ extension SpeechRecognitionService {
         await self.qwen3Service.transcribe(audioSamples: samples)
       }
 
+    let decodeDurationMs = Int((CFAbsoluteTimeGetCurrent() - recognitionStarted) * 1_000)
+    let decodeEvent: FeatureDiagnostics.Event
+    switch result {
+    case .text: decodeEvent = .completed
+    case .noSpeech: decodeEvent = .noSpeech
+    case .failed: decodeEvent = .failed
+    }
+    FeatureDiagnostics.record(.speechDecode, decodeEvent, durationMs: decodeDurationMs)
     DictationBreadcrumb.record(
-      "asr: \(String(describing: engine)) completed in \(String(format: "%.1f", CFAbsoluteTimeGetCurrent() - recognitionStarted))s"
+      "asr: \(String(describing: engine)) completed in \(String(format: "%.1f", Double(decodeDurationMs) / 1_000))s"
     )
 
     switch result {

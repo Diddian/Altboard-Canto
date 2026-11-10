@@ -9,7 +9,7 @@ import Glibc
 /// Do not accept text, paths, host identifiers, prompts or typed characters.
 enum FeatureDiagnostics {
   enum Area: String, Sendable {
-    case speech, liveDictation, voiceOutput, aiActions, speechModel, textModel
+    case speech, speechAudio, speechDecode, speechFinalization, liveDictation, voiceOutput, aiActions, speechModel, textModel
     case meeting, data, language, swipe, chineseInput, bridge, keyboardRender, keyboardEmoji, appStartup
   }
 

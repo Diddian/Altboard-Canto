@@ -53,6 +53,13 @@ jobs:
             Shared/KeyboardDocumentIdentifier.swift scripts/verify-keyboard-document-identifier.swift
           "$RUNNER_TEMP/document-identity-smoke"
 
+      - name: Verify audio FIFO and bounded compaction
+        run: |
+          set -euo pipefail
+          swiftc -swift-version 6 -o "$RUNNER_TEMP/audio-sample-queue-smoke" \
+            Sayboard/Services/AudioSampleQueue.swift scripts/verify-audio-sample-queue.swift
+          "$RUNNER_TEMP/audio-sample-queue-smoke"
+
       - name: Bootstrap llama.cpp framework
         run: |
           set -euo pipefail

@@ -20,6 +20,53 @@ the versioned task board until Issues are enabled.
 Statuses: [x] code implemented; [ ] pending / requires verification.
 Do not mark device behavior verified without physical iPhone testing.
 
+## T-022 - Mainline performance and reliability optimization (Meetily review, 2026-11-10)
+
+Goal: improve measured iPhone dictation latency, recording throughput, keyboard
+responsiveness and recovery without changing default model selection or removing
+Cantonese, keyboard accessibility, App Group state or offline operation.
+Meetily's claimed 4x speedup has no equivalent iPhone baseline. Its desktop
+GPU/Flash-Attention configuration is not directly portable to iOS. Altboard
+already supports Parakeet TDT v2/v3 through FluidAudio/Core ML.
+The current iOS 27 CPU fallback must not be bypassed without a background-ASR
+acceptance test. Keep T-019/T-021 ownership; do not create duplicate engines
+or a second swipe/keyboard state machine.
+
+- [x] T-022.1 Review Meetily v0.4.1 code (Whisper GPU backends, INT8 ONNX
+  Parakeet, VAD, model reuse, worker ordering) against Altboard main at
+  4915b55; record adoption constraints before adding dependencies.
+- [x] T-022.2 Replace repeated front-of-array sample removal with an
+  amortized FIFO queue for host-app dictation/meeting buffers. Preserve order,
+  chunk offsets, single microphone tap, reset and unread audio. Add deterministic
+  Swift regression coverage to the existing unsigned IPA workflow.
+- [x] T-022.3 Instrument finalization, ASR decode and input-audio durations
+  through existing bounded App Group FeatureDiagnostics (no audio or transcript
+  payload). Code-level checks are not physical-device performance results.
+- [ ] T-022.4 On physical iPhone measure cold/warm English and German dictation
+  using existing Parakeet v3, Whisper and an identical fixed audio set: stop-to-
+  insertion latency, decode latency, real-time factor, peak memory, battery
+  and background acceptance. Preserve Qwen3 for Cantonese and code-switching.
+- [ ] T-022.5 Only if T-022.4 shows benefit, prototype a separate opt-in
+  Parakeet v3 INT8 ONNX backend with the existing sherpa-onnx package. Verify
+  the exact model assets, licenses, iOS compatibility, memory and background
+  behavior. Do not change the default model or silently download large assets.
+- [ ] T-022.6 Evaluate speech-activity segmentation against the current audio
+  path using matched English/German clips. Reject any VAD setting that loses
+  quiet consonants, word boundaries, pauses or speech on Stop/Cancel.
+- [ ] T-022.7 Profile keyboard activation, Globe switching, touch ownership,
+  swipe decoder/brush, EN/DE suggestion latency and Cantonese SQLite lookup
+  before editing their active owners. Retain current accessibility and
+  keyboard extension lifecycle; resolve observed defects individually.
+- [ ] T-022.8 Review app/extension boundaries, diagnostics persistence,
+  bounded memory, interrupted sessions, privacy and user-data recovery with
+  focused regression tests; avoid duplicate observers, logging systems or polling.
+- [ ] T-022.9 Verify Xcode compilation, packaged host+appex, model resources
+  and one unsigned SideStore IPA from main through the existing workflow.
+  Previous usable IPA stays available; no Release Candidate label.
+- [ ] T-022.10 Accept on physical iPhone only after English, German and
+  Cantonese dictation, cancellation, keyboard switching, swipe and meeting
+  recording pass, including long-recording memory and uninterrupted audio.
+
 ## P0 (next implementation) — Fast Live Dictation on the normal microphone (T-019)
 
 **Status: experimental code prepared, pending Xcode and physical iPhone verification.** User-confirmed target:

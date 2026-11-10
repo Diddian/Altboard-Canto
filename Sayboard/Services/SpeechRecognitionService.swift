@@ -193,6 +193,7 @@ final class SpeechRecognitionService: ObservableObject {
     FeatureDiagnostics.record(.speech, .stopped)
     self.settings.recordingStartedAt = 0
     self.isStopping = true
+    let finalizationStartedAt = CFAbsoluteTimeGetCurrent()
     MicrophoneHoldStopIntent.clear(defaults: self.settings.defaults)
     TranscriptionBridge.writeVoiceProgress(.stoppingAudio)
 
@@ -231,6 +232,14 @@ final class SpeechRecognitionService: ObservableObject {
 
     TranscriptionBridge.writeVoiceProgress(.transcribing)
     await self.runFinalTranscription(samples: savedSamples, stylingHost: stylingHost)
+    let finalizationEvent: FeatureDiagnostics.Event
+    switch self.settings.lastDictationOutcome {
+    case nil: finalizationEvent = .completed
+    case .some(.noSpeech): finalizationEvent = .noSpeech
+    default: finalizationEvent = .failed
+    }
+    FeatureDiagnostics.record(.speechFinalization, finalizationEvent,
+      durationMs: Int((CFAbsoluteTimeGetCurrent() - finalizationStartedAt) * 1_000))
 
     self.saveHistoryRecord()
 
