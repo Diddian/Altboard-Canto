@@ -4,9 +4,9 @@
 the historical merge base is not a current development baseline.
 Use only `.github/workflows/build-unsigned-ipa.yml` on `main` for unsigned
 SideStore IPAs. Latest verified successful development IPA as of 2026-11-10:
-#171 (`af05cf6f`). Build #172 (`230bdbd`) failed a Settings source test;
-#173 (`3218541`) failed SwiftUI Slider compilation. Both source repairs
-are included in the next development build. Physical iPhone acceptance is pending.
+#174 (`0fc0939f`). Xcode compilation, App Group entitlements, exact-SHA
+IPA validation, artifact upload and development release publication passed.
+#171 remains available as a previous Actions artifact. Physical iPhone acceptance is pending.
 
 **Historical caution:** Older task descriptions below mention temporary feature
 branches and a custom Emoji catalog. They are archival notes, not current
@@ -88,13 +88,11 @@ new workflows, parallel branches and claims of completed device QA.
 - [x] T-024.12 Add bounded source regression checks to the existing
   `scripts/test_settings_contract.py` and
   `scripts/test_keyboard_safety_contract.py`; no new test framework.
-- [ ] T-024.13 Check source tests, Xcode compilation, IPA packaging and exact
-  commit SHA using the **one existing main-branch unsigned IPA workflow**.
-  Run #172 failed in a stale button-label test. Run #173 passed that step but
-  failed iOS compilation: the haptic Slider must use a trailing label closure.
-  The Slider initializer and stale finalization assertions are repaired.
-  Verify the new request-cancellation and bounded-waveform Swift checks before
-  compilation. Mark verified only after the exact-SHA build succeeds.
+- [x] T-024.13 Verify source checks, Xcode compilation, App Group entitlements,
+  IPA packaging and exact commit SHA through the existing unsigned IPA workflow.
+  Build #174 succeeded for `0fc0939f604202a32a09150b1909e2981d52a66e`.
+  Request-cancellation, bounded-waveform and audio FIFO Swift checks passed.
+  Physical iPhone behavior remains T-024.14/T-024.15.
 - [ ] T-024.14 Physical iPhone acceptance: microphone permission/recording
   start failures and recovery; original vs new Active Session; 15-minute
   meeting rollover and Stop; saved audio after interrupted/partial ASR;
@@ -186,9 +184,10 @@ new server, duplicate keyboard coordinator, animation engine or model dependency
 - [ ] T-023.17 Speech models and technical research: reuse T-022 and T-019;
   compare measured Parakeet v3/Core ML, Whisper, Moonshine and Qwen3 to
   Meetily's desktop strategies. No unverified 4x claim or new ONNX default.
-- [ ] T-023.18 Quality/release: strengthen affected deterministic policy
-  tests, inspect actual CI jobs and artifact metadata, and keep a known usable
-  SideStore IPA until new device acceptance. Do not equate green CI with QA.
+- [x] T-023.18 Strengthen affected deterministic policy tests and verify actual
+  CI jobs and artifact metadata. Build #174 passed; its 80,008,179-byte IPA
+  matches the published development asset and exact source SHA. The previous
+  #171 artifact remains available. Physical acceptance remains T-023.8/T-024.14.
 - [x] T-023.19 Reconciled the existing Settings map:
   `docs/APP-STRUCTURE.json` and its generated menu now include haptic
   strength/reset, the confirmed custom-language editor and model-cache
