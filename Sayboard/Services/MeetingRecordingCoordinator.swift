@@ -29,6 +29,7 @@ struct MeetingRecord: Codable, Identifiable {
   var translationDraftConfiguration: String? = nil
   var translationDraftFingerprint: String? = nil
   var translationDraftNextChunk: Int? = nil
+  var conversationTurns: [ConversationTurn]? = nil
 
   var totalDuration: TimeInterval {
     self.parts.reduce(0) { $0 + $1.duration }
@@ -77,6 +78,8 @@ final class MeetingRecordingCoordinator: ObservableObject {
   func start(with service: SpeechRecognitionService, title: String = "", notes: String = "") {
     guard !self.isRecording, !self.isFinalizing, self.translatingRecordID == nil,
           !service.isRecording, !service.isStopping,
+          ConversationCoordinator.shared.recordingSide == nil,
+          !ConversationCoordinator.shared.processing,
           SharedSettings().hasUsableModel,
           let root = Self.meetingsDirectory() else {
       FeatureDiagnostics.record(.meeting, .blocked)
@@ -354,14 +357,17 @@ final class MeetingRecordingCoordinator: ObservableObject {
   /// Opt-in post-recording translation. Changing the keyboard output language
   /// cannot retroactively alter a stored ASR record. Translation only starts
   /// here, keeps the original transcript, and saves each confirmed chunk.
-  func translateRecord(id: UUID, using service: SpeechRecognitionService) {
+  func translateRecord(
+    id: UUID, using service: SpeechRecognitionService,
+    options selectedOptions: VoiceOutputConfiguration? = nil
+  ) {
     guard self.translatingRecordID == nil, !self.isRecording, !self.isFinalizing,
           let index = self.records.firstIndex(where: { $0.id == id }) else { return }
     let settings = SharedSettings()
     settings.synchronize()
-    let options = settings.voiceOutputConfiguration
+    let options = selectedOptions ?? settings.voiceOutputConfiguration
     guard options.target != .original else {
-      self.translationStatus = "Choose an output language in Settings first."
+      self.translationStatus = "Choose a translation language for this recording."
       return
     }
     guard let coordinator = service.llmCoordinator,
@@ -542,6 +548,79 @@ final class MeetingRecordingCoordinator: ObservableObject {
       if normalized.sequenceNumber == nil { normalized.sequenceNumber = index + 1 }
       return normalized
     }.sorted { $0.startedAt > $1.startedAt }
+  }
+
+  /// Import a finished local two-party session without deleting its draft.
+  /// Original ASR and translated segments remain distinct, and every CAF
+  /// part is copied before the manifest becomes visible to the Meetings list.
+  @discardableResult
+  func saveConversation(
+    turns: [ConversationTurn], audioDirectory: URL
+  ) -> Bool {
+    guard !turns.isEmpty, !self.isRecording, !self.isFinalizing,
+          self.translatingRecordID == nil,
+          let root = Self.meetingsDirectory() else { return false }
+    let id = UUID()
+    let folder = root.appendingPathComponent(id.uuidString, isDirectory: true)
+    let destination = folder.appendingPathComponent("audio", isDirectory: true)
+    let fm = FileManager.default
+    do {
+      try fm.createDirectory(at: destination, withIntermediateDirectories: true)
+      var parts: [MeetingAudioPart] = []
+      var offset: TimeInterval = 0
+      for (index, turn) in turns.enumerated() {
+        guard ConversationTurnPolicy.validAudioFileName(turn.audioFileName)
+        else { throw ConversationSaveError.invalidFilename }
+        let original = audioDirectory.appendingPathComponent(turn.audioFileName)
+        let copy = destination.appendingPathComponent(turn.audioFileName)
+        try fm.copyItem(at: original, to: copy)
+        parts.append(MeetingAudioPart(
+          number: index + 1, fileName: turn.audioFileName,
+          startOffset: offset, duration: turn.duration
+        ))
+        offset += turn.duration
+      }
+      let transcript = turns.map { turn in
+        turn.speaker.title + " · Original: " +
+          (turn.sourceText.isEmpty ? "[Audio saved; recognition pending]" : turn.sourceText)
+      }.joined(separator: "\n\n")
+      let translations = turns.compactMap { turn -> String? in
+        guard let translated = turn.translatedText, !translated.isEmpty else { return nil }
+        return turn.speaker.title + " · " + turn.targetCode.uppercased() + ": " + translated
+      }.joined(separator: "\n\n")
+      let defaults = SharedSettings().defaults
+      let sequence = max(
+        defaults.integer(forKey: Self.meetingSequenceKey),
+        self.records.compactMap(\.sequenceNumber).max() ?? self.records.count
+      ) + 1
+      var record = MeetingRecord(
+        id: id,
+        startedAt: Date().addingTimeInterval(-offset),
+        endedAt: Date(),
+        parts: parts, transcript: transcript, state: "completed",
+        title: "Conversation " + Date().formatted(date: .abbreviated, time: .shortened),
+        notes: "Offline two-party conversation",
+        sequenceNumber: sequence
+      )
+      record.conversationTurns = turns
+      if !translations.isEmpty {
+        record.translatedTranscript = translations
+        record.translatedLanguageCode = "mixed"
+      }
+      guard self.writeManifest(record) else { throw ConversationSaveError.manifest }
+      defaults.set(sequence, forKey: Self.meetingSequenceKey)
+      self.reloadRecords()
+      FeatureDiagnostics.record(.conversation, .completed)
+      return true
+    } catch {
+      try? fm.removeItem(at: folder)
+      FeatureDiagnostics.record(.conversation, .failed)
+      return false
+    }
+  }
+
+  private enum ConversationSaveError: Error {
+    case invalidFilename, manifest
   }
 
   /// Delete only a saved, inactive recording. Audio and transcripts share its folder.

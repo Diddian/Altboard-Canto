@@ -71,7 +71,9 @@ final class SpeechRecognitionService: ObservableObject {
 
     guard !self.isRecording, !self.isStopping,
           !MeetingRecordingCoordinator.shared.isRecording,
-          !MeetingRecordingCoordinator.shared.isFinalizing else {
+          !MeetingRecordingCoordinator.shared.isFinalizing,
+          ConversationCoordinator.shared.recordingSide == nil,
+          !ConversationCoordinator.shared.processing else {
       return
     }
     guard micAuth else {
@@ -501,13 +503,22 @@ extension SpeechRecognitionService {
       Task { @MainActor [weak self] in
         if MeetingRecordingCoordinator.shared.isRecording {
           MeetingRecordingCoordinator.shared.stop(interrupted: true)
+        } else if ConversationCoordinator.shared.recordingSide != nil, let self {
+          await ConversationCoordinator.shared.stop(using: self)
         } else {
           await self?.stopRecording()
         }
       }
     }
     self.session.onSessionEnded = { [weak self] in
-      Task { @MainActor [weak self] in await self?.stopRecording() }
+      Task { @MainActor [weak self] in
+        guard let self else { return }
+        if ConversationCoordinator.shared.recordingSide != nil {
+          await ConversationCoordinator.shared.stop(using: self)
+        } else if self.isRecording {
+          await self.stopRecording()
+        }
+      }
     }
   }
 

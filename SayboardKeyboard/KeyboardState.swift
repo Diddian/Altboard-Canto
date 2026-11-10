@@ -43,6 +43,7 @@ final class KeyboardState: ObservableObject {
   @Published var llmError: LLMError?
   @Published var dictationOutcome: DictationOutcome?
   @Published var finalOutputPreview: String?
+  @Published var liveSourcePreview: String?
   private var finalPreviewGeneration = UUID()
   @Published var voiceProcessingProgress: VoiceProcessingProgress?
   @Published var needsInputModeSwitchKey = false
@@ -133,6 +134,7 @@ final class KeyboardState: ObservableObject {
   func clearFinalOutputPreview() {
     self.finalPreviewGeneration = UUID()
     self.finalOutputPreview = nil
+    self.liveSourcePreview = nil
   }
 
   func clearLLMHistory() {

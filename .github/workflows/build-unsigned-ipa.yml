@@ -71,6 +71,13 @@ jobs:
             Shared/MeetingTranslationPolicy.swift scripts/verify-meeting-translation.swift
           "$RUNNER_TEMP/meeting-translation-smoke"
 
+      - name: Verify conversation turn ownership and saved language metadata
+        run: |
+          set -euo pipefail
+          swiftc -swift-version 6 -o "$RUNNER_TEMP/conversation-turn-smoke" \
+            Shared/VoiceOutputOptions.swift Shared/ConversationTurn.swift scripts/verify-conversation-turns.swift
+          "$RUNNER_TEMP/conversation-turn-smoke"
+
       - name: Verify keyboard lifecycle timing and incomplete callbacks
         run: |
           set -euo pipefail

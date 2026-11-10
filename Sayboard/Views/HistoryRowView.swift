@@ -9,14 +9,27 @@ struct HistoryRowView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
       self.headerRow
-      if self.isEditing {
-        self.correctionEditor
+      if let source = self.record.originalASR,
+         let target = self.record.outputLanguageCode, !target.isEmpty,
+         !source.isEmpty, source != self.displayedText {
+        VStack(alignment: .leading, spacing: 4) {
+          Text("Original · ASR").font(.caption.weight(.semibold))
+            .foregroundStyle(.secondary)
+          Text(source).font(.body).foregroundStyle(.primary)
+            .textSelection(.enabled)
+          Text("Translation · \(target.uppercased())")
+            .font(.caption.weight(.semibold)).foregroundStyle(.blue)
+          self.transcriptionText.foregroundStyle(.blue)
+        }
       } else {
         self.transcriptionText
       }
       self.audioPlayerControls
     }
     .padding(.vertical, 4)
+    .sheet(isPresented: self.$isEditing) {
+      self.correctionSheet
+    }
   }
 
   @EnvironmentObject private var playerService: AudioPlayerService
@@ -108,59 +121,68 @@ struct HistoryRowView: View {
     .accessibilityLabel("Correct recognized speech")
   }
 
-  private var correctionEditor: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      Text("ASR 原文")
-        .font(.caption)
-        .foregroundStyle(.secondary)
-      Text(self.record.originalASR ?? self.record.transcription)
-        .font(.subheadline)
-        .textSelection(.enabled)
-        .foregroundStyle(.secondary)
-      Text("你真正講過嘅內容")
-        .font(.caption.weight(.semibold))
-      TextEditor(text: self.$correctedDraft)
-        .font(.body)
-        .frame(minHeight: 100)
-        .scrollContentBackground(.hidden)
-        .padding(7)
-        .background(Color(.secondarySystemBackground),
-                    in: RoundedRectangle(cornerRadius: 9))
-        .focused(self.$correctionFocused)
-        .accessibilityLabel("Corrected spoken words")
-      HStack(spacing: 15) {
-        Button("Cancel") {
-          self.isEditing = false
-          self.correctionFocused = false
+  private var correctionSheet: some View {
+    NavigationStack {
+      Form {
+        Section("Original ASR") {
+          Text(self.record.originalASR ?? self.record.transcription)
+            .font(.subheadline)
+            .textSelection(.enabled)
         }
-        .buttonStyle(.bordered)
-        Button("Save & Learn") {
-          if self.onCorrection(self.correctedDraft) {
-            self.isEditing = false
-            self.correctionFocused = false
-            self.correctionError = nil
-          } else {
-            self.correctionError = "Unable to save locally. Check shared storage."
+        Section("What was actually said") {
+          TextEditor(text: self.$correctedDraft)
+            .font(.body)
+            .frame(minHeight: 140)
+            .focused(self.$correctionFocused)
+            .accessibilityLabel("Corrected spoken words")
+          Text("Repeated, verified phrases improve local corrections. This does not retrain ASR model weights.")
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+        }
+        if let correctionError {
+          Label(correctionError, systemImage: "exclamationmark.triangle")
+            .foregroundStyle(.red)
+        }
+      }
+      .navigationTitle("Correct Transcript")
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .cancellationAction) {
+          Button("Cancel", systemImage: "xmark") {
+            self.cancelCorrection()
           }
+          .accessibilityHint("Dismisses the editor and keyboard without saving")
         }
-        .buttonStyle(.borderedProminent)
-        .disabled(self.correctedDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        ToolbarItem(placement: .confirmationAction) {
+          Button("Save & Learn") {
+            self.correctionFocused = false
+            if self.onCorrection(self.correctedDraft) {
+              self.correctionError = nil
+              self.isEditing = false
+            } else {
+              self.correctionError = "Unable to save locally. Check shared storage."
+            }
+          }
+          .disabled(self.correctedDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        }
       }
-      if let correctionError {
-        Text(correctionError).font(.footnote).foregroundStyle(.red)
-      }
-      Text("Repeated, verified phrases improve local corrections. "
-           + "This does not retrain ASR model weights.")
-        .font(.caption2)
-        .foregroundStyle(.secondary)
+      .interactiveDismissDisabled(false)
+      .onAppear { self.correctionFocused = true }
+      .onDisappear { self.correctionFocused = false }
     }
+  }
+
+  private func cancelCorrection() {
+    self.correctionFocused = false
+    self.correctionError = nil
+    self.isEditing = false
   }
 
   private func startCorrection() {
     self.correctedDraft = self.displayedText
     self.isEditing = true
     self.correctionError = nil
-    self.correctionFocused = true
+    self.correctionFocused = false
   }
 
   private var copyButton: some View {

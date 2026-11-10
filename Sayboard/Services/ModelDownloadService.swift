@@ -50,6 +50,8 @@ final class ModelDownloadService: ObservableObject {
   func selectVariant(_ variant: ModelVariant) {
     guard !MeetingRecordingCoordinator.shared.isRecording,
           !MeetingRecordingCoordinator.shared.isFinalizing,
+          ConversationCoordinator.shared.recordingSide == nil,
+          !ConversationCoordinator.shared.processing,
           !SharedSettings().isRecording else {
       FeatureDiagnostics.record(.speechModel, .blocked)
       return
@@ -149,6 +151,8 @@ final class ModelDownloadService: ObservableObject {
   func startDownload(variant: ModelVariant) {
     guard !MeetingRecordingCoordinator.shared.isRecording,
           !MeetingRecordingCoordinator.shared.isFinalizing,
+          ConversationCoordinator.shared.recordingSide == nil,
+          !ConversationCoordinator.shared.processing,
           !SharedSettings().isRecording else {
       FeatureDiagnostics.record(.speechModel, .blocked)
       self.variantStates[variant] = .error(message: "Stop recording before downloading a speech model.")
@@ -198,6 +202,8 @@ final class ModelDownloadService: ObservableObject {
   func deleteModel(variant: ModelVariant) {
     guard !MeetingRecordingCoordinator.shared.isRecording,
           !MeetingRecordingCoordinator.shared.isFinalizing,
+          ConversationCoordinator.shared.recordingSide == nil,
+          !ConversationCoordinator.shared.processing,
           !SharedSettings().isRecording else {
       FeatureDiagnostics.record(.speechModel, .blocked)
       return

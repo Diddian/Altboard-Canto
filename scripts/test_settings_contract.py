@@ -60,6 +60,83 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("Accuracy: Unrated", read("Sayboard/Views/ModelCardView.swift"))
         self.assertIn("Speed: Unrated", read("Sayboard/Views/ModelCardView.swift"))
 
+    def test_live_original_is_visible_before_final_translation(self):
+        extension = read("SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift")
+        keyboard = read("SayboardKeyboard/KeyboardState.swift")
+        chrome = read("SayboardKeyboard/Views/Layouts/KeyboardChrome.swift")
+        speech = read("Sayboard/Services/SpeechRecognitionService+ExperimentalLive.swift")
+        self.assertNotIn("guard settings.voiceOutputTarget == .original else { return }", extension)
+        self.assertIn("liveSourcePreview = String(update.text.suffix(240))", extension)
+        self.assertIn("func completeExperimentalLiveText(_ final: String) -> Bool", extension)
+        self.assertIn("guard owned == self.availableDocumentIdentifier()", extension)
+        self.assertIn('Text("Original · Live")', chrome)
+        self.assertIn("self.keyboardState.liveSourcePreview", chrome)
+        self.assertIn("self.liveSourcePreview = nil", keyboard)
+        self.assertIn("ExperimentalLiveTranscription.write(sessionToken: token", speech)
+        self.assertNotIn("proxy.insertText(", chrome)
+
+    def test_history_correction_is_english_and_keyboard_safe(self):
+        row = read("Sayboard/Views/HistoryRowView.swift")
+        history = read("Sayboard/Views/HistoryListView.swift")
+        self.assertNotIn('Text("ASR 原文")', row)
+        self.assertNotIn('Text("你真正講過嘅內容")', row)
+        self.assertIn('Section("Original ASR")', row)
+        self.assertIn('Section("What was actually said")', row)
+        self.assertIn('.sheet(isPresented: self.$isEditing)', row)
+        self.assertIn('ToolbarItem(placement: .cancellationAction)', row)
+        self.assertIn('ToolbarItem(placement: .confirmationAction)', row)
+        self.assertIn("self.correctionFocused = false", row)
+        self.assertIn("self.isEditing = false", row)
+        self.assertIn("self.keyboardTestingText = \"\"", history)
+        self.assertIn("self.isKeyboardTestFocused = false", history)
+
+    def test_conversation_reuses_audio_capture_asr_translation_and_meeting(self):
+        coordinator = read("Sayboard/Services/ConversationCoordinator.swift")
+        meeting = read("Sayboard/Services/MeetingRecordingCoordinator.swift")
+        shared = read("Shared/ConversationTurn.swift")
+        tab = read("Sayboard/Views/MainTabView.swift")
+        ui = read("Sayboard/Views/ConversationView.swift")
+        diagnostics = read("Shared/FeatureDiagnostics.swift")
+        for snippet in (
+            "service.session.beginCapture(",
+            "owner: .conversation",
+            "service.session.endCapture(owner: .conversation)",
+            "await service.transcribeSamples(samples)",
+            "await coordinator.processVoiceDictation(",
+            "self.persistDraft()",
+            "self.restoreDraft()",
+            "func retry(",
+            "func saveAsMeeting() -> Bool",
+            "MeetingRecordingCoordinator.shared.saveConversation(",
+            "VoiceOutputConfiguration",
+            "os_proc_available_memory()",
+        ):
+            self.assertIn(snippet, coordinator)
+        self.assertIn("func saveConversation(", meeting)
+        self.assertIn("record.conversationTurns = turns", meeting)
+        self.assertIn("ConversationTurnPolicy.validAudioFileName", meeting)
+        self.assertIn("var conversationTurns: [ConversationTurn]? = nil", meeting)
+        self.assertIn("static func validOutput(", shared)
+        self.assertIn("case meeting, meetingTranslation, conversation,", diagnostics)
+        self.assertEqual(tab.count('ConversationView()'), 2)
+        self.assertIn('Tab("Conversation", systemImage:', tab)
+        self.assertIn("case conversation", tab)
+        self.assertIn("rotationEffect(.degrees(180))", ui)
+        self.assertIn("self.conversation.saveAsMeeting()", ui)
+        self.assertIn("ConversationTurnPolicy.validOutput", ui)
+        self.assertNotIn("URLSession", coordinator + meeting + ui)
+
+    def test_conversation_output_languages_do_not_change_globals(self):
+        view = read("Sayboard/Views/ConversationView.swift")
+        coordinator = read("Sayboard/Services/ConversationCoordinator.swift")
+        meeting = read("Sayboard/Services/MeetingRecordingCoordinator.swift")
+        self.assertIn("self.captureOptions = options", coordinator)
+        self.assertIn("self.captureOptions ?? Self.defaultOutput(for: side)", coordinator)
+        self.assertIn("ConversationTurnPolicy.validOutput(", coordinator)
+        self.assertIn("let options = selectedOptions ?? settings.voiceOutputConfiguration", meeting)
+        self.assertIn("target: self.selectedTarget", view if "target: self.selectedTarget" in view else read("Sayboard/Views/MeetingRecordsView.swift"))
+        self.assertNotIn("settings.voiceOutputTarget =", coordinator + view)
+
     def test_unpreferred_languages_are_not_dropped_before_translation(self):
         source = read("Sayboard/Services/SpeechRecognitionService+Transcription.swift")
         whisper = read("Sayboard/Services/WhisperKitTranscriptionService.swift")
@@ -98,7 +175,8 @@ class SettingsContractTests(unittest.TestCase):
         shared = read("Shared/MeetingTranslationPolicy.swift")
         self.assertIn("var translatedTranscript: String? = nil", coordinator)
         self.assertIn("var translationDraftNextChunk: Int? = nil", coordinator)
-        self.assertIn("func translateRecord(id: UUID, using service: SpeechRecognitionService)", coordinator)
+        self.assertIn("func translateRecord(", coordinator)
+        self.assertIn("options selectedOptions: VoiceOutputConfiguration? = nil", coordinator)
         self.assertIn("MeetingTranslationPolicy.sourceFingerprint(", coordinator)
         self.assertIn("MeetingTranslationPolicy.canResume(", coordinator)
         self.assertIn("self.writeManifest(updated, includeTranscript: false)", coordinator)
@@ -109,8 +187,11 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("self.translatingRecordID != id", coordinator)
         self.assertIn("self.translatingRecordID == nil", coordinator)
         self.assertIn("let record = try? JSONDecoder().decode(MeetingRecord.self, from: data)", coordinator)
-        self.assertIn('Section("Translated Transcript")', view)
-        self.assertIn("self.recorder.translateRecord(id: self.record.id, using: self.speechService)", view)
+        self.assertIn('Section("Translation")', view)
+        self.assertIn("self.recorder.translateRecord(", view)
+        self.assertIn("options: self.translationOptions", view)
+        self.assertIn('Picker("Translate to", selection: self.$meetingTarget)', view)
+        self.assertNotIn("Select an output language in Settings to translate this saved recording.", view)
         self.assertIn("self.recorder.cancelTranslation(id: self.record.id)", view)
         self.assertIn("self.recorder.cancelTranslation(id: self.record.id)", view)
         self.assertIn("static let maximumChunkCharacters = 180", shared)
@@ -133,7 +214,7 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("let worker = Task.detached(priority: .userInitiated)", inference)
         self.assertIn("await worker.value", inference)
         self.assertIn("worker.cancel()", inference)
-        self.assertIn("case meeting, meetingTranslation,", diagnostics)
+        self.assertIn("case meeting, meetingTranslation, conversation,", diagnostics)
         self.assertIn("options.needsLLM && !modelOutputMissing", pipeline)
         self.assertIn("FeatureDiagnostics.record(.voiceOutput, .fallback)", pipeline)
 
@@ -406,9 +487,8 @@ class SettingsContractTests(unittest.TestCase):
         self.assertNotIn('Toggle("Enabled", isOn: self.$llmEnabled)', ai)
         self.assertIn('LabeledContent("Writing Modes")', ai)
         self.assertIn('Label("Rewrite & Translate"', home)
-        self.assertIn('if self.keyboardTestingText.isEmpty {', history)
-        self.assertIn('self.isKeyboardTestFocused = false\n        } else {\n          self.keyboardTestingText = ""', history)
-        self.assertIn('"Close test keyboard" : "Clear test text"', history)
+        self.assertIn('self.isKeyboardTestFocused = false\n        self.keyboardTestingText = ""', history)
+        self.assertIn('"Close test keyboard and clear test text"', history)
         self.assertIn("Settings → Speech & AI → Speech Model",
                       read("Sayboard/Views/MeetingRecordsView.swift"))
 

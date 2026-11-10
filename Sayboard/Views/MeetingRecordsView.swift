@@ -389,10 +389,9 @@ struct MeetingRecordsView: View {
 private struct MeetingRecordDetailView: View {
   let record: MeetingRecord
   @EnvironmentObject private var speechService: SpeechRecognitionService
-  @AppStorage(SharedKey.voiceOutputTarget, store: AppGroup.sharedDefaults ?? .standard)
-  private var outputTargetRaw = VoiceOutputTarget.original.rawValue
-  @AppStorage(SharedKey.voiceCustomLanguage, store: AppGroup.sharedDefaults ?? .standard)
-  private var outputLanguage = ""
+  // Per-record translation must not silently change the global keyboard output.
+  @State private var meetingTarget = VoiceOutputTarget.cantonese
+  @State private var outputLanguage = "tr"
   @ObservedObject private var recorder = MeetingRecordingCoordinator.shared
   @State private var name = ""
   @State private var notes = ""
@@ -403,8 +402,24 @@ private struct MeetingRecordDetailView: View {
     self.recorder.records.first(where: { $0.id == self.record.id }) ?? self.record
   }
 
-  private var selectedTarget: VoiceOutputTarget {
-    VoiceOutputTarget(rawValue: self.outputTargetRaw) ?? .original
+  private var selectedTarget: VoiceOutputTarget { self.meetingTarget }
+
+  private var translationOptions: VoiceOutputConfiguration {
+    let settings = SharedSettings()
+    let options = settings.voiceOutputConfiguration
+    return VoiceOutputConfiguration(
+      cleanupEnabled: options.cleanupEnabled,
+      target: self.selectedTarget,
+      register: options.register,
+      customLanguage: self.selectedTarget == .custom ? self.outputLanguage : "",
+      punctuationEnabled: options.punctuationEnabled
+    )
+  }
+
+  private var canTranslate: Bool {
+    self.selectedTarget != .original &&
+      (self.selectedTarget != .custom ||
+       VoiceOutputTarget.customLanguageName(self.outputLanguage) != nil)
   }
 
   private var selectedLanguageName: String {
@@ -439,7 +454,7 @@ private struct MeetingRecordDetailView: View {
         LabeledContent("Duration", value: MeetingRecordsView.time(self.latest.totalDuration))
       }
 
-      Section("Combined Transcript") {
+      Section("Original Transcript") {
         if self.latest.state == "partialTranscript" {
           Label("Transcript incomplete. Original audio parts are preserved.",
                 systemImage: "exclamationmark.triangle")
@@ -453,7 +468,11 @@ private struct MeetingRecordDetailView: View {
         Text(self.latest.transcript.isEmpty
           ? "The transcript will appear here after recognition finishes."
           : self.latest.transcript)
+          .foregroundStyle(.primary)
           .textSelection(.enabled)
+        Text("Source: Automatically recognized speech")
+          .font(.caption)
+          .foregroundStyle(.secondary)
         Button("Copy Transcript") {
           UIPasteboard.general.string = self.latest.transcript
         }
@@ -463,20 +482,39 @@ private struct MeetingRecordDetailView: View {
           ShareLink("Share Transcript", item: transcript)
         }
       }
-      Section("Translated Transcript") {
+      Section("Translation") {
+        Picker("Translate to", selection: self.$meetingTarget) {
+          Text("Cantonese · YUE").tag(VoiceOutputTarget.cantonese)
+          Text("English · EN").tag(VoiceOutputTarget.english)
+          Text("German · DE").tag(VoiceOutputTarget.german)
+          Text("Written Chinese · ZH").tag(VoiceOutputTarget.traditionalChinese)
+          Text("Other language").tag(VoiceOutputTarget.custom)
+        }
+        .disabled(self.recorder.translatingRecordID == self.record.id)
+        if self.selectedTarget == .custom {
+          TextField("Language code, e.g. tr, ja, ar", text: self.$outputLanguage)
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+            .disabled(self.recorder.translatingRecordID == self.record.id)
+          if VoiceOutputTarget.customLanguageName(self.outputLanguage) == nil {
+            Text("Enter a valid two- or three-letter language code.")
+              .font(.footnote)
+              .foregroundStyle(.orange)
+          }
+        }
         if let translated = self.latest.translatedTranscript, !translated.isEmpty {
-          LabeledContent("Saved language", value: self.latest.translatedLanguageCode ?? "Unknown")
+          LabeledContent("Saved output language",
+                         value: self.latest.translatedLanguageCode ?? "Unknown")
           Text(translated)
+            .foregroundStyle(.blue)
             .textSelection(.enabled)
           Button("Copy Translation") { UIPasteboard.general.string = translated }
         }
-        if let finished = self.latest.translationDraftNextChunk, finished > 0 {
-          Label(
-            "Translation partially saved (\(finished) sections). Resume with the same language.",
-            systemImage: "arrow.clockwise"
-          )
-          .font(.footnote)
-          .foregroundStyle(.secondary)
+        if let count = self.latest.translationDraftNextChunk, count > 0 {
+          Label("Saved \(count) translated sections. Tap Translate to resume.",
+                systemImage: "arrow.clockwise")
+            .font(.footnote)
+            .foregroundStyle(.secondary)
         }
         if self.recorder.translatingRecordID == self.record.id {
           ProgressView(self.recorder.translationStatus)
@@ -486,25 +524,50 @@ private struct MeetingRecordDetailView: View {
           .accessibilityHint("Preserves original transcript and saved translated sections")
         } else {
           Button("Translate to \(self.selectedLanguageName)") {
-            self.recorder.translateRecord(id: self.record.id, using: self.speechService)
+            self.recorder.translateRecord(
+              id: self.record.id, using: self.speechService,
+              options: self.translationOptions
+            )
           }
-          .disabled(self.selectedTarget == .original
-            || self.latest.transcript.isEmpty
+          .disabled(!self.canTranslate || self.latest.transcript.isEmpty
             || self.recorder.translatingRecordID != nil
             || self.recorder.isRecording || self.recorder.isFinalizing)
-          if self.selectedTarget == .original {
-            Text("Select an output language in Settings to translate this saved recording.")
-              .font(.footnote)
-              .foregroundStyle(.secondary)
-          } else {
-            Text("Translation uses the selected offline Text Model. The original transcript and audio remain unchanged.")
-              .font(.footnote)
-              .foregroundStyle(.secondary)
-          }
+          Text("Offline translation saves separately; your original audio and transcript stay intact.")
+            .font(.footnote)
+            .foregroundStyle(.secondary)
           if !self.recorder.translationStatus.isEmpty {
             Text(self.recorder.translationStatus)
               .font(.footnote)
               .foregroundStyle(.secondary)
+          }
+        }
+      }
+      if let turns = self.latest.conversationTurns, !turns.isEmpty {
+        Section("Conversation Turns") {
+          ForEach(turns) { turn in
+            VStack(alignment: .leading, spacing: 6) {
+              Text(turn.speaker.title)
+                .font(.headline)
+              HStack {
+                Text("Original · ASR").font(.caption.weight(.semibold))
+                Spacer()
+                Text(turn.detectedLanguageCode?.uppercased() ?? "AUTO")
+                  .font(.caption.monospaced())
+              }
+              .foregroundStyle(.secondary)
+              Text(turn.sourceText.isEmpty ? "Audio saved; recognition pending." : turn.sourceText)
+                .foregroundStyle(.primary)
+                .textSelection(.enabled)
+              if let translated = turn.translatedText, !translated.isEmpty {
+                Text("Translation · " + turn.targetCode.uppercased())
+                  .font(.caption.weight(.semibold))
+                  .foregroundStyle(.blue)
+                Text(translated)
+                  .foregroundStyle(.blue)
+                  .textSelection(.enabled)
+              }
+            }
+            .padding(.vertical, 6)
           }
         }
       }

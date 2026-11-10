@@ -111,6 +111,43 @@ Accept only after observable speaker turn, transcript, translation,
 pause/cancel, recovery, offline latency, memory and privacy checks.
 This is a design brief, NOT implemented navigation or a task checkbox.
 
+**2026-11-10 integrated conversational translation test candidate (device gate OPEN):**
+The keyboard now shows recognized original-language speech during live
+dictation, including when a translated output is selected. Host text updates
+retain document-ID/suffix ownership; confirmed final translation replaces
+only owned text, never unrelated host text. A slow decoder can still delay
+first visible text; do not claim real-time performance from source inspection.
+Meeting details now select their own translation language (YUE/EN/DE/ZH or
+validated custom code such as TR/JA/AR), independently of keyboard Settings.
+Original ASR is primary/white in dark mode; translations use semantic blue.
+History adds optional output-language metadata without changing old JSON
+records, corrects English copy labels, and puts Cancel / Save & Learn in a
+keyboard-safe editor sheet. The History test-field X clears and dismisses.
+
+The new Conversation Tab is an **opt-in on-device experiment**, not an RC.
+It reuses existing AVAudioSession, capture owner, shared ASR dispatch and
+offline LLM rather than installing another tap or service. Upper speaker
+panel rotates 180 degrees; each person has a separate turn button and
+target. Default: friend Turkish to Cantonese, user Cantonese to Turkish.
+Turn language is frozen at capture, including time-limit or interruption
+stops; only one turn/mic can run at once. Source and translated text are
+saved separately with language metadata, per-turn encrypted App Group audio,
+retries and a recoverable local draft. Save as Meeting copies verified CAFs
+and writes the original/translated segments into existing meeting records;
+the source draft is deleted only after successful import. Export-only
+metadata diagnostics never contain source speech, translations or audio.
+
+**Acceptance NOT YET GRANTED:** Pre-build regression and Swift model smoke,
+Xcode compilation, exact-SHA IPA and runtime on iPhone 17 Pro Max. Mandatory
+device checks: live Japanese/Turkish original visible before translation,
+final YUE delivery/replacement and host-focus safety; saved Meeting
+translation without global Setting change; prior Meeting manifest decodes;
+History cancel/save with keyboard open, focus restoration and English labels;
+conversation two speakers EN/YUE/TR, interruption, auto-stop, app relaunch,
+translation failure/retry, Save as Meeting audio & metadata, dynamic type/
+RTL VoiceOver and privacy. Measure latency/memory/thermal; no implied 90%
+or release readiness. Preserve #182 and earlier IPA until accepted.
+
 ## T-024 - Consolidated mainline implementation batch (2026-11-10)
 
 **Goal:** accumulate independently reviewable fixes and regression checks before

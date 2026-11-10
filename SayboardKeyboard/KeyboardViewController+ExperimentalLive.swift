@@ -20,10 +20,9 @@ extension KeyboardViewController {
   func applyExperimentalLiveUpdate() {
     let settings = SharedSettings()
     settings.synchronize()
-    // Live ASR is in the source language. Never commit un-translated text to
-    // the host field when a different output language has been requested.
-    // Final translated output is delivered by the existing bridge after Stop.
-    guard settings.voiceOutputTarget == .original else { return }
+    // Display the original words while recording, even with a translation
+    // target selected. The existing final bridge replaces only owned text.
+    // Cross-field changes must never delete unrelated host content.
     guard settings.experimentalLiveDictationEnabled,
           (self.keyboardState.isRecording || settings.isRecording),
           let update = ExperimentalLiveTranscription.read(),
@@ -32,6 +31,7 @@ extension KeyboardViewController {
           self.liveTranscriptionBlockedToken != update.sessionToken,
           !update.text.isEmpty else { return }
 
+    self.keyboardState.liveSourcePreview = String(update.text.suffix(240))
     let proxy = self.textDocumentProxy
     guard let document = self.availableDocumentIdentifier() else {
       // Never insert live text when UIKit cannot confirm the destination field.

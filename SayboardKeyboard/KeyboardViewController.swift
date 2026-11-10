@@ -618,6 +618,7 @@ final class KeyboardViewController: UIInputViewController {
         vc.keyboardState.isProcessing = false
         vc.keyboardState.voiceProcessingProgress = nil
         vc.keyboardState.clearFinalOutputPreview()
+        vc.keyboardState.liveSourcePreview = nil
         vc.keyboardState.isRecording = true
         vc.liveTranscriptionBlockedToken = nil
         Self.blockedLiveSessionToken = nil
@@ -640,6 +641,7 @@ final class KeyboardViewController: UIInputViewController {
         }
         vc.cancelProcessingTimeout()
         vc.keyboardState.stopLevelPolling()
+        vc.keyboardState.liveSourcePreview = nil
         vc.keyboardState.isRecording = false
         vc.keyboardState.recordingStartedAt = 0
         vc.keyboardState.isStartingRecording = false
@@ -766,6 +768,7 @@ extension KeyboardViewController {
 
   func cancelDictationViaDarwin() {
     self.cancelExperimentalLiveText()
+    self.keyboardState.liveSourcePreview = nil
     self.staleFallbackTimer?.invalidate()
     self.staleFallbackTimer = nil
     self.cancelProcessingTimeout()

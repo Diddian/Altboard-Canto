@@ -41,6 +41,7 @@ struct MainTabView: View {
 
   private enum TabID: String, CaseIterable {
     case history
+    case conversation
     case meetings
     case settings
   }
@@ -101,6 +102,7 @@ struct MainTabView: View {
   @Environment(\.scenePhase) private var scenePhase
   @SceneStorage("selectedTab") private var selectedTab = TabID.history.rawValue
   @State private var historyPath = NavigationPath()
+  @State private var conversationPath = NavigationPath()
   @State private var meetingsPath = NavigationPath()
   @State private var settingsPath = NavigationPath()
   @State private var activeBanner: SetupBanner?
@@ -148,6 +150,12 @@ struct MainTabView: View {
         }
       }
 
+      Tab("Conversation", systemImage: "bubble.left.and.bubble.right", value: TabID.conversation.rawValue) {
+        NavigationStack(path: self.$conversationPath) {
+          ConversationView()
+        }
+      }
+
       Tab("Meetings", systemImage: "person.3", value: TabID.meetings.rawValue) {
         NavigationStack(path: self.$meetingsPath) {
           MeetingRecordsView()
@@ -177,6 +185,14 @@ struct MainTabView: View {
         Label("History", image: "tab-history")
       }
       .tag(TabID.history.rawValue)
+
+      NavigationStack(path: self.$conversationPath) {
+        ConversationView()
+      }
+      .tabItem {
+        Label("Conversation", systemImage: "bubble.left.and.bubble.right")
+      }
+      .tag(TabID.conversation.rawValue)
 
       NavigationStack(path: self.$meetingsPath) {
         MeetingRecordsView()

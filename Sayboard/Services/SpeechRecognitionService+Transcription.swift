@@ -296,7 +296,12 @@ extension SpeechRecognitionService {
       audioFileName: fileName,
       waveformSamples: waveformSamples,
       originalASR: self.currentRawTranscription.isEmpty ? nil : self.currentRawTranscription,
-      recognitionLanguages: self.recordingSpokenLanguages
+      recognitionLanguages: self.recordingSpokenLanguages,
+      outputLanguageCode: self.settings.lastVoiceOutputProcessed
+        ? PreferredVoiceLanguages.currentCode(
+          target: self.settings.voiceOutputConfiguration.target,
+          custom: self.settings.voiceOutputConfiguration.customLanguage
+        ) : nil
     )
     HistoryStore.shared.saveRecord(record)
     HistoryStore.shared.applyRetentionPolicy()

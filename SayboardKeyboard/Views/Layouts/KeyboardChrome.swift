@@ -140,6 +140,22 @@ struct KeyboardStatusStrip: View {
         VoiceProcessingStatusView(
           progress: self.keyboardState.voiceProcessingProgress, compact: self.compact
         )
+      } else if self.keyboardState.isRecording,
+                let source = self.keyboardState.liveSourcePreview, !source.isEmpty {
+        VStack(spacing: 2) {
+          Text("Original · Live").font(.caption2.weight(.semibold))
+            .foregroundStyle(.secondary)
+          Text(source)
+            .font(.caption2)
+            .foregroundStyle(.primary)
+            .lineLimit(self.compact ? 1 : 2)
+            .truncationMode(.head)
+            .accessibilityLabel("Live original transcription: \(source)")
+        }
+      } else if self.keyboardState.isRecording {
+        Text("Listening · original speech will appear here")
+          .font(.caption2)
+          .foregroundStyle(.secondary)
       } else if self.keyboardState.isStartingRecording && !self.keyboardState.isRecording {
         Text(self.compact ? "Activating…" : "Activating microphone…")
           .font(.caption2.weight(.medium))
@@ -184,12 +200,12 @@ private struct VoiceProcessingStatusView: View {
             .lineLimit(1)
         }
       }
-      if !self.compact, let raw = self.progress?.rawPreview, !raw.isEmpty {
-        Text("Raw: \(raw)")
+      if let raw = self.progress?.rawPreview, !raw.isEmpty {
+        Text("Original: \(raw)")
           .font(.caption2)
-          .foregroundStyle(.tertiary)
-          .lineLimit(1)
-          .truncationMode(.tail)
+          .foregroundStyle(.primary)
+          .lineLimit(self.compact ? 1 : 2)
+          .truncationMode(.head)
       }
     }
     .frame(maxWidth: .infinity, alignment: .center)
