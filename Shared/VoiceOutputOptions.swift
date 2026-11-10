@@ -1,6 +1,67 @@
 import Foundation
 import NaturalLanguage
 
+/// Shared display-only language shorthand. Does not affect model language IDs.
+enum VoiceLanguageAbbreviation {
+  /// Use the language's own writing system where a short label is meaningful.
+  private static func normalizedCode(_ code: String) -> String {
+    let value = code.trimmingCharacters(in: .whitespacesAndNewlines)
+      .lowercased().replacingOccurrences(of: "_", with: "-")
+    if value == "zh-hk" || value.hasPrefix("zh-hant-hk") { return "yue" }
+    let base = value.split(separator: "-").first.map(String.init) ?? ""
+    return base == "cmn" ? "zh" : base
+  }
+
+  static func shortLabel(for code: String) -> String {
+    // Spoken Mandarin ("zh") is not the same as Traditional written output.
+    // Codes using Latin script retain their native ISO abbreviations.
+    switch Self.normalizedCode(code) {
+    case "yue": "粵"
+    case "zh": "普"
+    case "ja": "日"
+    case "ko": "한"
+    case "ru": "РУ"
+    case "uk": "УК"
+    case "be": "БЕ"
+    case "bg": "БГ"
+    case "sr": "СР"
+    case "mk": "МК"
+    case "mn": "МН"
+    case "kk": "ҚА"
+    case "el": "ΕΛ"
+    case "ar": "عر"
+    case "fa": "فا"
+    case "he": "עב"
+    case "ur": "ارد"
+    case "ps": "پښ"
+    case "sd": "سن"
+    case "hi": "हि"
+    case "ne": "ने"
+    case "mr": "मर"
+    case "sa": "सं"
+    case "bn": "বা"
+    case "as": "অসম"
+    case "gu": "ગુ"
+    case "pa": "ਪੰ"
+    case "ta": "த"
+    case "te": "తె"
+    case "ml": "മ"
+    case "kn": "ಕ"
+    case "si": "සි"
+    case "th": "ไทย"
+    case "lo": "ລາວ"
+    case "km": "ខ្មែរ"
+    case "my": "မြန်"
+    case "am": "አማ"
+    case "hy": "ՀՅ"
+    case "ka": "ქა"
+    case "bo": "བོད"
+    case "yi": "יי"
+    default: Self.normalizedCode(code).uppercased()
+    }
+  }
+}
+
 enum VoiceOutputTarget: String, CaseIterable, Identifiable, Codable, Sendable {
   case original
   case cantonese
@@ -47,7 +108,7 @@ enum VoiceOutputTarget: String, CaseIterable, Identifiable, Codable, Sendable {
     case "zh-hant", "zh-hk", "zh-tw": return "繁"
     case "yue", "yue-hk": return "粵"
     default:
-      return code.isEmpty ? "→" : PreferredVoiceLanguages.shortLabel(for: code)
+      return code.isEmpty ? "→" : VoiceLanguageAbbreviation.shortLabel(for: code)
     }
   }
 
