@@ -46,7 +46,7 @@ enum SenseVoiceModelDownloader {
       )
       let data = try Data(contentsOf: tokens)
       guard (100_000...1_000_000).contains(data.count),
-            String(data: data.prefix(100), encoding: .utf8)?.contains("<unk> 0") == true
+            data.starts(with: Data("<unk> 0".utf8))
       else { throw DownloadError.invalidTokenizer }
       try Task.checkCancellation()
       try SenseVoiceModelBundle.modelSHA256.write(

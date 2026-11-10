@@ -94,7 +94,8 @@ class KeyboardSafetyContracts(unittest.TestCase):
         self.assertIn("if sessionStartedHere { service.session.endSession() }", audio)
         self.assertIn("self.audioRecorder.stopRecording()", audio)
         self.assertIn("if let folder { try? FileManager.default.removeItem(at: folder) }", audio)
-        self.assertIn("try service.session.activateTap(", audio)
+        self.assertIn("try service.session.beginCapture(owner: .meeting", audio)
+        self.assertIn("self.speechService?.session.endCapture(owner: .meeting)", audio)
 
     def test_meeting_finalization_processes_bounded_chunks(self):
         meeting = source("Sayboard/Services/MeetingRecordingCoordinator.swift")
