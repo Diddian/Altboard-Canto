@@ -108,12 +108,21 @@ struct DictationSettingsView: View {
 // The Settings home owns the recording-session toggle.
 struct ActiveSessionToggle: View {
   @EnvironmentObject private var speechService: SpeechRecognitionService
+  @State private var activationError: String?
 
   var body: some View {
     Toggle(isOn: self.sessionBinding) {
       Label("Active Session", systemImage: "mic")
     }
     .tint(.orange)
+    .alert("Active Session Unavailable", isPresented: Binding(
+      get: { self.activationError != nil },
+      set: { if !$0 { self.activationError = nil } }
+    )) {
+      Button("OK", role: .cancel) { self.activationError = nil }
+    } message: {
+      Text(self.activationError ?? "Check microphone access and try again.")
+    }
   }
 
   private var sessionBinding: Binding<Bool> {
@@ -121,7 +130,12 @@ struct ActiveSessionToggle: View {
       get: { self.speechService.isSessionActive },
       set: { enabled in
         if enabled {
-          try? self.speechService.session.startSession()
+          do {
+            try self.speechService.session.startSession()
+          } catch {
+            FeatureDiagnostics.record(.speech, .failed)
+            self.activationError = error.localizedDescription
+          }
         } else {
           self.speechService.session.endSession()
         }

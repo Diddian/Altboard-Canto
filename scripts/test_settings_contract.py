@@ -11,6 +11,34 @@ def read(path):
 
 
 class SettingsContractTests(unittest.TestCase):
+    def test_storage_warning_is_not_hidden_by_neural_engine_policy(self):
+        settings = read("Sayboard/Views/SettingsView.swift")
+        self.assertIn("self.showsLowStorageWarning = DiskSpace.isLow()", settings)
+        self.assertNotIn("&& !OperatingSystem.isBackgroundNeuralEngineBlocked", settings)
+
+    def test_active_session_failure_is_visible_and_diagnosed(self):
+        source = read("Sayboard/Views/SettingsNavigationViews.swift")
+        self.assertIn('alert("Active Session Unavailable"', source)
+        self.assertIn("try self.speechService.session.startSession()", source)
+        self.assertIn("self.activationError = error.localizedDescription", source)
+        self.assertIn("FeatureDiagnostics.record(.speech, .failed)", source)
+        self.assertNotIn("try? self.speechService.session.startSession()", source)
+
+    def test_keyboard_preview_controls_and_feedback_match_state(self):
+        source = read("Sayboard/Views/KeyboardSettingsView.swift")
+        self.assertIn('if self.selectedKind == .alphabetic {\n        Toggle("Auto-capitalization"', source)
+        self.assertIn('Toggle("Double-Space Period"', source)
+        self.assertIn('Haptic feedback is off. Turn it on to test the keys.', source)
+        self.assertIn(".accessibilityElement(children: .contain)", source)
+        self.assertIn('case "delete.left", "trash": "Delete"', source)
+        self.assertIn('case "mic.fill": "Microphone"', source)
+
+    def test_onboarding_reduce_motion_has_instant_navigation(self):
+        source = read("Sayboard/Views/OnboardingView.swift")
+        self.assertIn("@Environment(\\.accessibilityReduceMotion) private var reduceMotion", source)
+        self.assertIn("self.reduceMotion ? .opacity", source)
+        self.assertEqual(source.count("withAnimation(self.reduceMotion ? nil : Self.stepAnimation)"), 2)
+
     def test_first_install_guide_requires_current_altboard_activation(self):
         guide = read("Sayboard/Views/Onboarding/OnboardingKeyboardView.swift")
         routing = read("Sayboard/Views/OnboardingView.swift")

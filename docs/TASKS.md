@@ -20,6 +20,82 @@ the versioned task board until Issues are enabled.
 Statuses: [x] code implemented; [ ] pending / requires verification.
 Do not mark device behavior verified without physical iPhone testing.
 
+## P0-P2 - Cross-functional app audit and optimization (T-023, 2026-11-10)
+
+**Source baseline:** main at `1e7befac`; unsigned IPA #170 succeeded.
+This is a source-based first audit across Settings, keyboard, onboarding, model
+and audio boundaries, not a rendered UI or physical-device certification.
+Review lenses: UX/motion, frontend, accessibility, animation performance,
+integration, backend, security/privacy, data integrity, performance,
+AI efficiency, QA, test automation, technical/linguistic source research,
+documentation and release. The existing app owns every implementation; no
+new server, duplicate keyboard coordinator, animation engine or model dependency.
+
+### P0 - Settings and onboarding: first bounded implementation
+
+- [x] T-023.1 Establish main SHA, source owners, current Settings navigation
+  contract, run #170 and the active task board; read routed project sources.
+- [x] T-023.2 Show low-storage warning based on `DiskSpace.isLow()` regardless
+  of iOS 27 Neural Engine policy. Owner: `Sayboard/Views/SettingsView.swift`.
+- [x] T-023.3 Show a recoverable error when Active Session activation throws;
+  record existing speech failure diagnostic rather than swallowing the error.
+  Owner: `Sayboard/Views/SettingsNavigationViews.swift`.
+- [x] T-023.4 Display Auto-capitalization and Double-Space Period only for
+  Alphabet; preserve persisted preferences when switching layouts. Show
+  haptic-off feedback in the interactive preview.
+- [x] T-023.5 Preserve VoiceOver navigation within the preview and use semantic
+  labels for icon keys instead of SF Symbol identifiers. No new touch owner.
+- [x] T-023.6 Respect Reduce Motion during onboarding's directional transition
+  and avoid delaying navigation when animation is disabled.
+- [ ] T-023.7 Verify existing `scripts/test_settings_contract.py` contracts,
+  Xcode compilation and exact-SHA unsigned IPA through the single workflow.
+  These checkboxes refer to source implementation until CI passes.
+- [ ] T-023.8 Verify affected Settings/preview/onboarding states on an iPhone:
+  low disk warning, denied microphone, keyboard layouts, haptic off/on,
+  VoiceOver, Dynamic Type and Reduce Motion.
+
+### P0/P1 - Remaining code and interaction audits
+
+- [ ] T-023.9 Keyboard startup/switching: trace UIKit controller ownership,
+  host focus, extension relaunch, app/keyboard App Group handshake and the
+  historical blank drawing board. Correlate `KeyboardLifecycleTrace` and
+  physical-device evidence before replacing loading logic.
+- [ ] T-023.10 Audio resource lifecycle: examine `BackgroundAudioSession`
+  failures after audio activation or tap installation, clean rollback,
+  interruptions and restart. Keep one microphone tap and no lost recording.
+- [ ] T-023.11 Meeting backlog: profile `AudioSampleQueue` growth while
+  1.7B recognition falls behind, retention and disk-limit handling. Never
+  drop saved audio to make memory counters look better.
+- [ ] T-023.12 Tab navigation/integration: assess
+  `TabBarTapInterceptor` gesture installation, view teardown and implicit
+  seven-tap custom-Space toggle; confirm no duplicate recognizers across
+  tab remounts before changing it.
+- [ ] T-023.13 Settings UX/a11y: validate nested Speech & AI disclosures,
+  Voice Output custom-language code/error feedback, AI availability,
+  model downloads, keyboard previews and Diagnostics with long EN/DE/zh-Hant
+  labels, larger text and VoiceOver; preserve saved settings.
+- [ ] T-023.14 Storage and privacy: verify atomic export/delete/recovery
+  across voice notes, meeting parts, corrections and models, interrupted
+  operations, App Group permissions and private metadata. No transcript,
+  host input, swipe path or raw audio in feature diagnostics.
+- [ ] T-023.15 Motion/performance: audit long-running keyboard microphone
+  animations, reduced-motion paths, offscreen cancellation, layout stability,
+  touch latency and repeated observers. Use existing SwiftUI/UIKit primitives;
+  Raea is not a keyboard UI dependency.
+- [ ] T-023.16 Language/IME and suggestions: reuse T-012, T-013 and T-021;
+  measure Cantonese mixed romanization and EN/DE candidates against current
+  dictionaries before changing ranking or introducing another decoder.
+- [ ] T-023.17 Speech models and technical research: reuse T-022 and T-019;
+  compare measured Parakeet v3/Core ML, Whisper, Moonshine and Qwen3 to
+  Meetily's desktop strategies. No unverified 4x claim or new ONNX default.
+- [ ] T-023.18 Quality/release: strengthen affected deterministic policy
+  tests, inspect actual CI jobs and artifact metadata, and keep a known usable
+  SideStore IPA until new device acceptance. Do not equate green CI with QA.
+- [ ] T-023.19 Source-of-truth hygiene: reconcile the older
+  `docs/APP-STRUCTURE.json` / generated Settings workflow tree with current
+  code after completing UX changes. Preserve the existing schema and do not
+  add a second task tracker or historical handoff file.
+
 ## T-022 - Mainline performance and reliability optimization (Meetily review, 2026-11-10)
 
 Goal: improve measured iPhone dictation latency, recording throughput, keyboard
@@ -60,8 +136,9 @@ or a second swipe/keyboard state machine.
 - [ ] T-022.8 Review app/extension boundaries, diagnostics persistence,
   bounded memory, interrupted sessions, privacy and user-data recovery with
   focused regression tests; avoid duplicate observers, logging systems or polling.
-- [ ] T-022.9 Verify Xcode compilation, packaged host+appex, model resources
+- [x] T-022.9 Verify Xcode compilation, packaged host+appex, model resources
   and one unsigned SideStore IPA from main through the existing workflow.
+  Workflow #170 succeeded for SHA 1e7befac; physical device QA remains open.
   Previous usable IPA stays available; no Release Candidate label.
 - [ ] T-022.10 Accept on physical iPhone only after English, German and
   Cantonese dictation, cancellation, keyboard switching, swipe and meeting

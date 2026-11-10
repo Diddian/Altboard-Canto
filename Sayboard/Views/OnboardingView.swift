@@ -13,7 +13,8 @@ struct OnboardingView: View {
         if let step = self.step {
           self.screen(for: step)
             .id(step)
-            .transition(.push(from: self.isGoingBack ? .leading : .trailing))
+            .transition(self.reduceMotion ? .opacity
+              : .push(from: self.isGoingBack ? .leading : .trailing))
         }
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -26,6 +27,7 @@ struct OnboardingView: View {
     .onAppear(perform: self.start)
   }
 
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @EnvironmentObject private var permissionService: PermissionService
   @AppStorage(SharedKey.hasUsableModel, store: UserDefaults(suiteName: AppGroup.identifier))
   private var hasUsableModel = false
@@ -155,7 +157,7 @@ struct OnboardingView: View {
 
   private func show(_ next: OnboardingStep, goingBack: Bool) {
     guard goingBack != self.isGoingBack else {
-      withAnimation(Self.stepAnimation) { self.step = next }
+      withAnimation(self.reduceMotion ? nil : Self.stepAnimation) { self.step = next }
       return
     }
     self.pendingStep = next
@@ -165,7 +167,7 @@ struct OnboardingView: View {
   private func showPendingStep() {
     guard let next = self.pendingStep else { return }
     self.pendingStep = nil
-    withAnimation(Self.stepAnimation) { self.step = next }
+    withAnimation(self.reduceMotion ? nil : Self.stepAnimation) { self.step = next }
   }
 
 }

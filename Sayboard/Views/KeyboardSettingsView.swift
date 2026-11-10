@@ -60,8 +60,10 @@ struct KeyboardSettingsView: View {
         }
         .pickerStyle(.menu)
       }
-      Toggle("Auto-capitalization", isOn: self.$autoCapitalize)
-      Toggle("Double-Space Period", isOn: self.$periodShortcut)
+      if self.selectedKind == .alphabetic {
+        Toggle("Auto-capitalization", isOn: self.$autoCapitalize)
+        Toggle("Double-Space Period", isOn: self.$periodShortcut)
+      }
       Toggle("Haptic Feedback", isOn: self.$hapticsEnabled)
       DisclosureGroup {
         KeyboardCustomizationView(inline: true)
@@ -76,7 +78,9 @@ struct KeyboardSettingsView: View {
           ?? .qwertz
       )
       .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
-      Text("Tap the keys to test haptic feedback.")
+      Text(self.hapticsEnabled
+        ? "Tap the keys to test haptic feedback."
+        : "Haptic feedback is off. Turn it on to test the keys.")
         .font(.footnote)
         .foregroundStyle(.secondary)
     } header: {
@@ -207,6 +211,7 @@ private struct KeyboardTestPreview: View {
                 in: RoundedRectangle(cornerRadius: KeyboardLayoutGeometry.topCornerRadius,
                                      style: .continuous))
     .animation(.easeInOut(duration: 0.15), value: self.microphoneLayout)
+    .accessibilityElement(children: .contain)
     .accessibilityLabel("Interactive keyboard layout preview")
   }
 
@@ -304,7 +309,21 @@ private struct KeyboardTestPreview: View {
                                         style: .continuous))
     }
     .buttonStyle(.plain)
-    .accessibilityLabel("Test " + image + " key haptic")
+    .accessibilityLabel("Test " + self.previewKeyName(image) + " key haptic")
+  }
+
+  private func previewKeyName(_ symbol: String) -> String {
+    switch symbol {
+    case "globe": "Globe"
+    case "gearshape": "Settings"
+    case "character.bubble": "Output language"
+    case "sparkles": "AI actions"
+    case "mic.fill": "Microphone"
+    case "delete.left", "trash": "Delete"
+    case "return.left": "Return"
+    case "shift.fill": "Shift"
+    default: symbol
+    }
   }
 
   private func labelKey(_ title: String, width: CGFloat? = nil, height: CGFloat = 45) -> some View {

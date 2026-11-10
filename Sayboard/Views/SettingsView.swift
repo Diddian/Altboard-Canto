@@ -140,7 +140,6 @@ struct SettingsView: View {
     .navigationDestination(for: Route.self) { _ in SetupView() }
     .onAppear {
       self.showsLowStorageWarning = DiskSpace.isLow()
-        && !OperatingSystem.isBackgroundNeuralEngineBlocked
     }
   }
 }
