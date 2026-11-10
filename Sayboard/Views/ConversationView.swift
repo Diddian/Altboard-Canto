@@ -1,16 +1,26 @@
 import SwiftUI
+import NaturalLanguage
 
-/// Offline face-to-face translation. The two panels share one microphone
-/// capture owner and one text-model coordinator; no simultaneous ASR jobs.
+/// Face-to-face subtitles: both parties see live source, then each sees
+/// the result intended for them. The speaker sees the cleaned original;
+/// the listener sees only the translated text.
 struct ConversationView: View {
   @EnvironmentObject private var speechService: SpeechRecognitionService
   @ObservedObject private var conversation = ConversationCoordinator.shared
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
-  @State private var visitorOutput = VoiceOutputTarget.cantonese
-  @State private var myOutput = VoiceOutputTarget.custom
-  @State private var visitorCode = "yue"
-  @State private var myCode = "tr"
+  @State private var visitorOutput = VoiceOutputTarget.german
+  @State private var myOutput = VoiceOutputTarget.cantonese
+  @State private var visitorCode = "de"
+  @State private var myCode = "yue"
   @State private var showingDiscard = false
+
+  private var liveLanguage: String? {
+    let text = self.conversation.liveSource
+    guard text.count >= 12 else { return nil }
+    let recognizer = NLLanguageRecognizer()
+    recognizer.processString(text)
+    return recognizer.dominantLanguage?.rawValue
+  }
 
   var body: some View {
     GeometryReader { geometry in
@@ -58,125 +68,83 @@ struct ConversationView: View {
     } message: {
       Text("Only the current unsaved conversation draft will be deleted.")
     }
-    .safeAreaInset(edge: .bottom) {
-      HStack(spacing: 12) {
-        Label(self.conversation.status, systemImage: "waveform")
-          .font(.caption)
-          .lineLimit(2)
-          .foregroundStyle(.secondary)
-        Spacer(minLength: 0)
-        Button {
-          _ = self.conversation.saveAsMeeting()
-        } label: {
-          Label("Save as Meeting", systemImage: "square.and.arrow.down")
-            .font(.caption.weight(.semibold))
-        }
-        .buttonStyle(.bordered)
-        .disabled(self.conversation.turns.isEmpty
-          || self.conversation.recordingSide != nil || self.conversation.processing)
-      }
-      .padding(.horizontal, 16)
-      .padding(.vertical, 5)
-      .background(.thinMaterial)
-    }
   }
 
   private func panel(side: ConversationSpeaker) -> some View {
-    // Each half faces the recipient. Show the opposite speaker's
-    // original and translation so a Turkish-speaking visitor sees Turkish
-    // above, while the user reads Cantonese below.
-    let recent = self.conversation.turns.last(where: { $0.speaker != side })
-    let recording = self.conversation.recordingSide == side
-    let target = side == .other ? self.myOutput : self.visitorOutput
-    let code = side == .other ? self.myCode : self.visitorCode
-    let translatedTo = (recent?.targetCode ?? PreferredVoiceLanguages.currentCode(
-      target: target, custom: code
-    )).uppercased()
-    return VStack(alignment: .leading, spacing: 8) {
-      HStack(spacing: 8) {
-        Text(side.title)
-          .font(.headline)
-        Spacer()
-        self.targetPicker(side: side == .other ? .me : .other)
+    let activeSpeaker = self.conversation.recordingSide
+    let isSpeaking = activeSpeaker == side
+    let live = activeSpeaker != nil
+    let recent = self.conversation.turns.last
+    let speakerOwnsLastTurn = recent?.speaker == side
+    let target = side == .other ? self.visitorOutput : self.myOutput
+    let code = side == .other ? self.visitorCode : self.myCode
+    let targetCode = PreferredVoiceLanguages.currentCode(target: target, custom: code)
+    let detected = live ? self.liveLanguage : recent?.detectedLanguageCode
+    let displayText: String
+    if live {
+      displayText = self.conversation.liveSource.isEmpty
+        ? "Listening…" : self.conversation.liveSource
+    } else if let recent {
+      if speakerOwnsLastTurn {
+        let source = recent.cleanedSourceText ?? recent.sourceText
+        displayText = source.isEmpty ? "Recognizing speech…" : source
+      } else {
+        displayText = recent.translatedText ?? (
+          self.conversation.processing ? "Preparing translation…" :
+            "Translation unavailable. Retry the saved turn."
+        )
       }
-      VStack(alignment: .leading, spacing: 5) {
-        HStack {
-          Text(recording ? "Original · Live" : "Original · ASR")
+    } else {
+      displayText = "Tap the microphone to begin."
+    }
+
+    return VStack(alignment: .leading, spacing: 10) {
+      HStack(spacing: 8) {
+        Text(side.title).font(.headline)
+        Spacer(minLength: 8)
+        if let detected, !detected.isEmpty {
+          Text(detected.uppercased())
+            .font(.caption.monospaced().weight(.semibold))
+            .foregroundStyle(.secondary)
+            .accessibilityLabel("Detected speech language: " + detected)
+        }
+        self.targetPicker(side: side)
+      }
+
+      ScrollView {
+        VStack(alignment: .leading, spacing: 8) {
+          Text(live ? "Live · Original" :
+            (speakerOwnsLastTurn ? "Your speech · Cleaned" :
+              "Translation · " + (recent?.targetCode ?? targetCode).uppercased()))
             .font(.caption.weight(.semibold))
             .foregroundStyle(.secondary)
-          Spacer()
-          if let detected = recent?.detectedLanguageCode {
-            Text(detected.uppercased())
-              .font(.caption2.monospaced())
-              .foregroundStyle(.secondary)
-              .accessibilityLabel("Estimated source language: " + detected)
-          } else {
-            Text("AUTO").font(.caption2.monospaced()).foregroundStyle(.secondary)
-          }
-        }
-        ScrollView {
-          Text(recording
-            ? (self.conversation.liveSource.isEmpty
-              ? "Listening… original words appear after recognition."
-              : self.conversation.liveSource)
-            : (recent?.sourceText.isEmpty == false
-              ? recent!.sourceText
-              : "Tap the microphone to record a turn."))
-            .font(.system(size: 20, weight: .regular))
+          Text(displayText)
+            .font(.system(size: 25, weight: .regular))
             .foregroundStyle(.primary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .textSelection(.enabled)
         }
-        .frame(maxHeight: .infinity)
-        Divider()
-        Text("Translation · " + translatedTo)
-          .font(.caption.weight(.semibold))
-          .foregroundStyle(.blue)
-        ScrollView {
-          Text(recent?.translatedText ?? (
-            self.conversation.processing ? "Processing offline…" :
-              (recent?.sourceText.isEmpty == false ? "Translation not available yet." :
-                "Translation will appear here.")
-          ))
-          .font(.system(size: 28, weight: .medium))
-          .foregroundStyle(.blue)
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .textSelection(.enabled)
-        }
-        .frame(maxHeight: .infinity)
+        .frame(maxWidth: .infinity, alignment: .leading)
       }
-      HStack(spacing: 10) {
-        if let recent, recent.needsRetry, !recording, !self.conversation.processing {
+
+      if !self.conversation.status.isEmpty {
+        Text(self.conversation.status)
+          .font(.caption2)
+          .foregroundStyle(.secondary)
+          .lineLimit(1)
+          .frame(maxWidth: .infinity, alignment: .center)
+      }
+      HStack {
+        if let recent, recent.needsRetry, !live, !self.conversation.processing,
+           !speakerOwnsLastTurn {
           Button("Retry") {
             Task { await self.conversation.retry(recent.id, using: self.speechService) }
           }
           .buttonStyle(.bordered)
-          .accessibilityHint("Uses saved audio or source text without recording again")
         }
-        Spacer()
-        Button {
-          if recording {
-            Task {
-              await self.conversation.stop(using: self.speechService)
-            }
-          } else {
-            self.conversation.start(
-              side, using: self.speechService, options: self.output(side: side)
-            )
-          }
-        } label: {
-          Label(recording ? "Stop" : "Speak",
-                systemImage: recording ? "stop.fill" : "mic.fill")
-            .font(.headline)
-            .frame(minWidth: 80, minHeight: 50)
-        }
-        .buttonStyle(.borderedProminent)
-        .tint(recording ? .red : .accentColor)
-        .disabled(self.conversation.processing ||
-          (self.conversation.recordingSide != nil && !recording) ||
-          !ConversationTurnPolicy.validOutput(target: target, custom: code))
-        .accessibilityLabel(recording ? "Stop " + side.title + " recording"
-          : "Record " + side.title + " speaking")
+        Spacer(minLength: 0)
+        self.recordButton(side: side, recording: isSpeaking, target: target, code: code)
+        Spacer(minLength: 0)
       }
     }
     .padding(14)
@@ -185,15 +153,52 @@ struct ConversationView: View {
     .padding(.horizontal, 12)
   }
 
+  private func recordButton(
+    side: ConversationSpeaker, recording: Bool,
+    target: VoiceOutputTarget, code: String
+  ) -> some View {
+    Button {
+      if recording {
+        Task { await self.conversation.stop(using: self.speechService) }
+      } else {
+        self.conversation.start(side, using: self.speechService,
+          options: self.output(for: side))
+      }
+    } label: {
+      ZStack {
+        Circle()
+          .fill(Color(uiColor: .tertiarySystemBackground))
+          .frame(width: 70, height: 70)
+        Circle()
+          .fill(Color.red)
+          .frame(width: 58, height: 58)
+        if recording {
+          RoundedRectangle(cornerRadius: 5)
+            .fill(.white)
+            .frame(width: 22, height: 22)
+        }
+      }
+    }
+    .buttonStyle(.plain)
+    .disabled(self.conversation.processing ||
+      (self.conversation.recordingSide != nil && !recording) ||
+      !ConversationTurnPolicy.validOutput(
+        target: self.output(for: side).target,
+        custom: self.output(for: side).customLanguage
+      ))
+    .accessibilityLabel(recording ? "Stop " + side.title + " recording"
+      : "Record " + side.title + " speaking")
+  }
+
   @ViewBuilder
   private func targetPicker(side: ConversationSpeaker) -> some View {
     let binding: Binding<VoiceOutputTarget> =
       side == .other ? self.$visitorOutput : self.$myOutput
     Picker("Translate to", selection: binding) {
-      Text("YUE").tag(VoiceOutputTarget.cantonese)
+      Text("粵").tag(VoiceOutputTarget.cantonese)
       Text("EN").tag(VoiceOutputTarget.english)
       Text("DE").tag(VoiceOutputTarget.german)
-      Text("ZH").tag(VoiceOutputTarget.traditionalChinese)
+      Text("繁").tag(VoiceOutputTarget.traditionalChinese)
       Text("Other").tag(VoiceOutputTarget.custom)
       Text("Original").tag(VoiceOutputTarget.original)
     }
@@ -210,11 +215,12 @@ struct ConversationView: View {
     }
   }
 
-  private func output(side: ConversationSpeaker) -> VoiceOutputConfiguration {
-    let target = side == .other ? self.visitorOutput : self.myOutput
-    let code = side == .other ? self.visitorCode : self.myCode
+  /// The requested output belongs to the person listening, never the speaker.
+  private func output(for speaker: ConversationSpeaker) -> VoiceOutputConfiguration {
+    let target = speaker == .me ? self.visitorOutput : self.myOutput
+    let code = speaker == .me ? self.visitorCode : self.myCode
     return VoiceOutputConfiguration(
-      cleanupEnabled: false,
+      cleanupEnabled: true,
       target: target,
       register: .faithful,
       customLanguage: target == .custom ? code : ""

@@ -19,17 +19,20 @@ struct HistoryRowView: View {
             .textSelection(.enabled)
           Text("Translation · \(target.uppercased())")
             .font(.caption.weight(.semibold)).foregroundStyle(.blue)
-          self.transcriptionText.foregroundStyle(.blue)
+          if self.isEditing {
+            self.correctionEditor
+          } else {
+            self.transcriptionText.foregroundStyle(.blue)
+          }
         }
+      } else if self.isEditing {
+        self.correctionEditor
       } else {
         self.transcriptionText
       }
       self.audioPlayerControls
     }
     .padding(.vertical, 4)
-    .sheet(isPresented: self.$isEditing) {
-      self.correctionSheet
-    }
   }
 
   @EnvironmentObject private var playerService: AudioPlayerService
@@ -121,55 +124,46 @@ struct HistoryRowView: View {
     .accessibilityLabel("Correct recognized speech")
   }
 
-  private var correctionSheet: some View {
-    NavigationStack {
-      Form {
-        Section("Original ASR") {
-          Text(self.record.originalASR ?? self.record.transcription)
-            .font(.subheadline)
-            .textSelection(.enabled)
-        }
-        Section("What was actually said") {
-          TextEditor(text: self.$correctedDraft)
-            .font(.body)
-            .frame(minHeight: 140)
-            .focused(self.$correctionFocused)
-            .accessibilityLabel("Corrected spoken words")
-          Text("Repeated, verified phrases improve local corrections. This does not retrain ASR model weights.")
-            .font(.footnote)
-            .foregroundStyle(.secondary)
-        }
-        if let correctionError {
-          Label(correctionError, systemImage: "exclamationmark.triangle")
-            .foregroundStyle(.red)
-        }
+  private var correctionEditor: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      Text("Correct Transcript")
+        .font(.subheadline.weight(.semibold))
+      TextEditor(text: self.$correctedDraft)
+        .font(.body)
+        .frame(minHeight: 110, maxHeight: 210)
+        .focused(self.$correctionFocused)
+        .accessibilityLabel("Corrected spoken words")
+        .overlay(RoundedRectangle(cornerRadius: 8)
+          .stroke(Color.secondary.opacity(0.25)))
+      if let correctionError = self.correctionError {
+        Label(correctionError, systemImage: "exclamationmark.triangle")
+          .font(.footnote)
+          .foregroundStyle(.red)
       }
-      .navigationTitle("Correct Transcript")
-      .navigationBarTitleDisplayMode(.inline)
-      .toolbar {
-        ToolbarItem(placement: .cancellationAction) {
-          Button("Cancel", systemImage: "xmark") {
-            self.cancelCorrection()
+      HStack {
+        Button("Cancel") { self.cancelCorrection() }
+          .buttonStyle(.bordered)
+        Spacer()
+        Button("Save & Learn") {
+          self.correctionFocused = false
+          if self.onCorrection(self.correctedDraft) {
+            self.correctionError = nil
+            self.isEditing = false
+          } else {
+            self.correctionError = "Unable to save locally. Check shared storage."
           }
-          .accessibilityHint("Dismisses the editor and keyboard without saving")
         }
-        ToolbarItem(placement: .confirmationAction) {
-          Button("Save & Learn") {
-            self.correctionFocused = false
-            if self.onCorrection(self.correctedDraft) {
-              self.correctionError = nil
-              self.isEditing = false
-            } else {
-              self.correctionError = "Unable to save locally. Check shared storage."
-            }
-          }
-          .disabled(self.correctedDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-        }
+        .buttonStyle(.borderedProminent)
+        .disabled(self.correctedDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
       }
-      .interactiveDismissDisabled(false)
-      .onAppear { self.correctionFocused = true }
-      .onDisappear { self.correctionFocused = false }
+      Text("Corrections stay on this iPhone and improve local matching; they do not retrain the speech model.")
+        .font(.footnote)
+        .foregroundStyle(.secondary)
     }
+    .padding(12)
+    .background(Color(uiColor: .tertiarySystemBackground),
+                in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    .onAppear { self.correctionFocused = true }
   }
 
   private func cancelCorrection() {
@@ -182,7 +176,7 @@ struct HistoryRowView: View {
     self.correctedDraft = self.displayedText
     self.isEditing = true
     self.correctionError = nil
-    self.correctionFocused = false
+    self.correctionFocused = true
   }
 
   private var copyButton: some View {

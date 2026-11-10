@@ -16,6 +16,24 @@ enum PreferredVoiceLanguages {
     let label: String
   }
 
+  /// Use the language's own writing system where a short label is meaningful.
+  static func shortLabel(for code: String) -> String {
+    switch code.lowercased() {
+    case "yue": "粵"
+    case "zh": "繁"
+    case "ja": "日"
+    case "ko": "한"
+    case "ru": "РУ"
+    case "uk": "УК"
+    case "el": "ΕΛ"
+    case "ar": "عر"
+    case "he": "עב"
+    case "hi": "हि"
+    case "th": "ไทย"
+    default: code.uppercased()
+    }
+  }
+
   static func choices(from preferred: [String]) -> [Choice] {
     let codes = normalized(preferred)
     return [Choice(target: .original, languageCode: "", label: "AUTO")]
@@ -28,13 +46,7 @@ enum PreferredVoiceLanguages {
           case "de": .german
           default: .custom
           }
-        let label: String =
-          switch code {
-          case "yue": "粵"
-          case "zh": "繁"
-          default: code.uppercased()
-          }
-        return Choice(target: target, languageCode: code, label: label)
+        return Choice(target: target, languageCode: code, label: shortLabel(for: code))
       }
   }
 

@@ -397,12 +397,25 @@ private struct MeetingRecordDetailView: View {
   @State private var notes = ""
   @State private var saved = false
   @State private var saveFailed = false
+  @State private var showingFullOriginal = false
+  @State private var showingFullTranslation = false
 
   private var latest: MeetingRecord {
     self.recorder.records.first(where: { $0.id == self.record.id }) ?? self.record
   }
 
   private var selectedTarget: VoiceOutputTarget { self.meetingTarget }
+
+  private var originalPreview: String {
+    let text = self.latest.transcript
+    guard !text.isEmpty else { return "The transcript will appear here after recognition finishes." }
+    return String(text.prefix(450)) + (text.count > 450 ? "…" : "")
+  }
+
+  private var translatedPreview: String {
+    let text = self.latest.translatedTranscript ?? ""
+    return String(text.prefix(340)) + (text.count > 340 ? "…" : "")
+  }
 
   private var translationOptions: VoiceOutputConfiguration {
     let settings = SharedSettings()
@@ -452,6 +465,9 @@ private struct MeetingRecordDetailView: View {
         LabeledContent("Started", value: self.latest.startedAt.formatted(
           date: .abbreviated, time: .shortened))
         LabeledContent("Duration", value: MeetingRecordsView.time(self.latest.totalDuration))
+        Text("Saved privately on this iPhone in Altboard → Meetings. Use Share to export a copy.")
+          .font(.footnote)
+          .foregroundStyle(.secondary)
       }
 
       Section("Original Transcript") {
@@ -465,11 +481,13 @@ private struct MeetingRecordDetailView: View {
                 systemImage: "exclamationmark.triangle")
             .foregroundStyle(.orange)
         }
-        Text(self.latest.transcript.isEmpty
-          ? "The transcript will appear here after recognition finishes."
-          : self.latest.transcript)
+        Text(self.originalPreview)
           .foregroundStyle(.primary)
+          .lineLimit(7)
           .textSelection(.enabled)
+        if self.latest.transcript.count > 450 {
+          Button("Read Full Original Transcript") { self.showingFullOriginal = true }
+        }
         Text("Source: Automatically recognized speech")
           .font(.caption)
           .foregroundStyle(.secondary)
@@ -505,10 +523,25 @@ private struct MeetingRecordDetailView: View {
         if let translated = self.latest.translatedTranscript, !translated.isEmpty {
           LabeledContent("Saved output language",
                          value: self.latest.translatedLanguageCode ?? "Unknown")
-          Text(translated)
+          Text(self.translatedPreview)
             .foregroundStyle(.blue)
+            .lineLimit(6)
             .textSelection(.enabled)
+          if translated.count > 340 {
+            Button("Read Full Translation") { self.showingFullTranslation = true }
+          }
           Button("Copy Translation") { UIPasteboard.general.string = translated }
+          Text("Saved with this meeting on your iPhone; the original remains unchanged.")
+            .font(.footnote).foregroundStyle(.secondary)
+        }
+        if let draft = self.latest.translationDraftText, !draft.isEmpty {
+          Text("Translation preview · Saved sections")
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(.secondary)
+          Text(String(draft.prefix(340)) + (draft.count > 340 ? "…" : ""))
+            .foregroundStyle(.blue)
+            .lineLimit(6)
+            .textSelection(.enabled)
         }
         if let count = self.latest.translationDraftNextChunk, count > 0 {
           Label("Saved \(count) translated sections. Tap Translate to resume.",
@@ -591,6 +624,40 @@ private struct MeetingRecordDetailView: View {
     }
     .navigationTitle(self.latest.displayTitle)
     .navigationBarTitleDisplayMode(.inline)
+    .sheet(isPresented: self.$showingFullOriginal) {
+      NavigationStack {
+        ScrollView {
+          Text(self.latest.transcript)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .textSelection(.enabled)
+            .padding(16)
+        }
+        .navigationTitle("Original Transcript")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+          ToolbarItem(placement: .confirmationAction) {
+            Button("Done") { self.showingFullOriginal = false }
+          }
+        }
+      }
+    }
+    .sheet(isPresented: self.$showingFullTranslation) {
+      NavigationStack {
+        ScrollView {
+          Text(self.latest.translatedTranscript ?? "")
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .textSelection(.enabled)
+            .padding(16)
+        }
+        .navigationTitle("Translation")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+          ToolbarItem(placement: .confirmationAction) {
+            Button("Done") { self.showingFullTranslation = false }
+          }
+        }
+      }
+    }
     .onAppear {
       self.name = self.latest.title ?? ""
       self.notes = self.latest.notes ?? ""

@@ -20,6 +20,7 @@ struct ConversationTurn: Identifiable, Codable, Sendable {
   let duration: TimeInterval
   let targetCode: String
   var sourceText: String
+  var cleanedSourceText: String? = nil
   var translatedText: String?
   var detectedLanguageCode: String?
   var status: String

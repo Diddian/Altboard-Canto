@@ -75,19 +75,21 @@ struct SpeechLanguagesSettingsView: View {
     } label: {
       HStack(spacing: 10) {
         Image(systemName: "globe")
-          .foregroundStyle(.secondary)
+          .font(.system(size: 18, weight: .regular))
+          .frame(width: 24)
+          .foregroundStyle(Color.accentColor)
           .accessibilityHidden(true)
         Text("Language Priority")
           .foregroundStyle(.primary)
         Spacer(minLength: 8)
         Text(verbatim: self.languagePrioritySummary)
-          .font(.subheadline.monospaced().weight(.semibold))
-          .foregroundStyle(.secondary)
+          .font(.subheadline.weight(.semibold))
+          .foregroundStyle(Color.accentColor)
           .lineLimit(1)
           .truncationMode(.middle)
         Image(systemName: "chevron.right")
           .font(.caption.weight(.semibold))
-          .foregroundStyle(.tertiary)
+          .foregroundStyle(Color.accentColor)
       }
       .contentShape(Rectangle())
       .frame(minHeight: 44)
@@ -108,7 +110,7 @@ struct SpeechLanguagesSettingsView: View {
 
   private var languagePrioritySummary: String {
     let codes = PreferredVoiceLanguages.normalized(self.spokenLanguages)
-    return codes.first.map { $0.uppercased() } ?? "AUTO"
+    return codes.first.map { PreferredVoiceLanguages.shortLabel(for: $0) } ?? "AUTO"
   }
 
   private var languagePriorityAccessibilityValue: String {

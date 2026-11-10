@@ -35,9 +35,26 @@ struct ConversationTurnPolicyTests {
     #expect(decoded.count == 1)
     #expect(decoded[0].speaker == .other)
     #expect(decoded[0].sourceText == fixture.sourceText)
+    #expect(decoded[0].cleanedSourceText == nil)
     #expect(decoded[0].translatedText == fixture.translatedText)
     #expect(decoded[0].targetCode == "yue")
     #expect(!decoded[0].needsRetry)
+  }
+
+  @Test func cleanedSpeechSurvivesRoundTripAndKeepsOriginal() throws {
+    var fixture = ConversationTurn(
+      id: UUID(), speaker: .other,
+      audioFileName: "110E8400-E29B-41D4-A716-446655440000.caf",
+      duration: 2, targetCode: "yue",
+      sourceText: "Ich habe, äh, morgen Zeit.",
+      translatedText: "我聽日得閒。",
+      detectedLanguageCode: "de", status: "translated"
+    )
+    fixture.cleanedSourceText = "Ich habe morgen Zeit."
+    let decoded = try JSONDecoder().decode(ConversationTurn.self,
+      from: JSONEncoder().encode(fixture))
+    #expect(decoded.sourceText == fixture.sourceText)
+    #expect(decoded.cleanedSourceText == "Ich habe morgen Zeit.")
   }
 
   @Test func failedTranslationsRemainRetryableAndKeepOriginal() {
