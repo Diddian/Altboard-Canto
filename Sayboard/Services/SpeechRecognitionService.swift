@@ -117,7 +117,7 @@ final class SpeechRecognitionService: ObservableObject {
       self.currentAudioFileName = nil
       self.settings.dictationSessionToken = nil
       self.accumulator.reset()
-      self.session.deactivateTap()
+      self.session.endCapture(owner: .dictation)
       if sessionStartedHere { self.session.endSession() }
       TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStopped)
       return
@@ -223,7 +223,7 @@ final class SpeechRecognitionService: ObservableObject {
     TranscriptionBridge.writeVoiceProgress(.stoppingAudio)
 
     self.cancelMaxDurationTimer()
-    self.session.deactivateTap()
+    self.session.endCapture(owner: .dictation)
     await self.stopExperimentalLive()
     guard self.isCurrentDictation(finalizationToken) else { return }
     // Only the final recognizer needs these samples now; release the queued copy.
@@ -290,7 +290,7 @@ final class SpeechRecognitionService: ObservableObject {
     self.experimentalLiveTask = nil
     ExperimentalLiveTranscription.clear()
     self.cancelMaxDurationTimer()
-    self.session.deactivateTap()
+    self.session.endCapture(owner: .dictation)
     if let recording = self.audioRecorder.stopRecording() {
       try? FileManager.default.removeItem(at: recording.url)
     }
@@ -467,7 +467,7 @@ final class SpeechRecognitionService: ObservableObject {
       FeatureDiagnostics.record(.speech, .fallback)
     }
 
-    try self.session.activateTap(accumulator: self.accumulator, recorder: self.audioRecorder)
+    try self.session.beginCapture(owner: .dictation, accumulator: self.accumulator, recorder: self.audioRecorder)
     if self.settings.selectedVariant.engine == .parakeet {
       self.parakeetService.warmUpIfEvicted()
     }
