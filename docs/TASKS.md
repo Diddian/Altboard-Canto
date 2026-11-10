@@ -126,9 +126,12 @@ keyboard-safe editor sheet. The History test-field X clears and dismisses.
 
 The new Conversation Tab is an **opt-in on-device experiment**, not an RC.
 It reuses existing AVAudioSession, capture owner, shared ASR dispatch and
-offline LLM rather than installing another tap or service. Upper speaker
-panel rotates 180 degrees; each person has a separate turn button and
-target. Default: friend Turkish to Cantonese, user Cantonese to Turkish.
+offline LLM rather than installing another tap or service. Upper participant panel rotates 180 degrees and displays the user's
+speech translated into Turkish; lower user panel displays the visitor's
+speech translated into Cantonese. Both panels also display their incoming
+source transcript. Each speaker has a separate turn button and the recipient
+chooses a target on their own display. Default: friend Turkish to Cantonese,
+user Cantonese to Turkish.
 Turn language is frozen at capture, including time-limit or interruption
 stops; only one turn/mic can run at once. Source and translated text are
 saved separately with language metadata, per-turn encrypted App Group audio,

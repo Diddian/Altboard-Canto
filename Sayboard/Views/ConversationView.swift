@@ -82,10 +82,13 @@ struct ConversationView: View {
   }
 
   private func panel(side: ConversationSpeaker) -> some View {
-    let recent = self.conversation.turns.last(where: { $0.speaker == side })
+    // Each half faces the recipient. Show the opposite speaker's
+    // original and translation so a Turkish-speaking visitor sees Turkish
+    // above, while the user reads Cantonese below.
+    let recent = self.conversation.turns.last(where: { $0.speaker != side })
     let recording = self.conversation.recordingSide == side
-    let target = side == .other ? self.visitorOutput : self.myOutput
-    let code = side == .other ? self.visitorCode : self.myCode
+    let target = side == .other ? self.myOutput : self.visitorOutput
+    let code = side == .other ? self.myCode : self.visitorCode
     let translatedTo = (recent?.targetCode ?? PreferredVoiceLanguages.currentCode(
       target: target, custom: code
     )).uppercased()
@@ -94,7 +97,7 @@ struct ConversationView: View {
         Text(side.title)
           .font(.headline)
         Spacer()
-        self.targetPicker(side: side)
+        self.targetPicker(side: side == .other ? .me : .other)
       }
       VStack(alignment: .leading, spacing: 5) {
         HStack {

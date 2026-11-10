@@ -73,7 +73,8 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("self.keyboardState.liveSourcePreview", chrome)
         self.assertIn("self.liveSourcePreview = nil", keyboard)
         self.assertIn("ExperimentalLiveTranscription.write(sessionToken: token", speech)
-        self.assertNotIn("proxy.insertText(", chrome)
+        status_strip = chrome.split("struct KeyboardStatusStrip: View", 1)[1].split("struct KeyboardBottomRow: View", 1)[0]
+        self.assertNotIn("proxy.insertText(", status_strip)
 
     def test_history_correction_is_english_and_keyboard_safe(self):
         row = read("Sayboard/Views/HistoryRowView.swift")
@@ -122,6 +123,8 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn('Tab("Conversation", systemImage:', tab)
         self.assertIn("case conversation", tab)
         self.assertIn("rotationEffect(.degrees(180))", ui)
+        self.assertIn("let recent = self.conversation.turns.last(where: { $0.speaker != side })", ui)
+        self.assertIn("self.targetPicker(side: side == .other ? .me : .other)", ui)
         self.assertIn("self.conversation.saveAsMeeting()", ui)
         self.assertIn("ConversationTurnPolicy.validOutput", ui)
         self.assertNotIn("URLSession", coordinator + meeting + ui)
@@ -147,7 +150,7 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("language: nil", whisper)
         self.assertNotIn("lockedLanguage", whisper)
         keyboard = read("SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift")
-        self.assertIn("guard settings.voiceOutputTarget == .original else { return }", keyboard)
+        self.assertNotIn("guard settings.voiceOutputTarget == .original else { return }", keyboard)
 
     def test_meeting_translation_continues_after_navigation(self):
         view = read("Sayboard/Views/MeetingRecordsView.swift")
