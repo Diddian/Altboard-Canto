@@ -644,6 +644,9 @@ final class KeyboardViewController: UIInputViewController {
         settings.synchronize()
         guard settings.isRecording,
               settings.dictationSessionToken == vc.dictationRequestToken else { return }
+        // Stop can be requested before the capture acknowledgment arrives.
+        // Do not reactivate the recording UI during finalization.
+        guard !vc.keyboardState.isProcessing else { return }
         vc.staleFallbackTimer?.invalidate()
         vc.staleFallbackTimer = nil
         vc.pingValidator.cancel()
@@ -870,6 +873,11 @@ extension KeyboardViewController {
     self.staleFallbackTimer?.invalidate()
     self.staleFallbackTimer = nil
     self.saveHostBundleId()
+    // A Stop request ends the microphone interaction immediately; the host
+    // retains ownership of audio capture and reports the final result later.
+    self.keyboardState.isRecording = false
+    self.keyboardState.isStartingRecording = false
+    self.keyboardState.recordingStartedAt = 0
     self.keyboardState.isProcessing = true
     self.keyboardState.syncVoiceProcessingProgress()
     self.keyboardState.syncModelLoading()
