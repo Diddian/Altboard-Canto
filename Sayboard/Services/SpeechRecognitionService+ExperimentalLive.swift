@@ -20,6 +20,12 @@ extension SpeechRecognitionService {
       var firstReadyRecorded = false
       var modelReadyRecorded = false
       var firstWindow = self.settings.liveFirstWindowSamples
+      // Partial recognition always retains spoken-language output; the final
+      // requested target is translated after Stop and ownership verification.
+      let sourceOptions = VoiceOutputConfiguration(
+        cleanupEnabled: false, target: .original,
+        register: .faithful, customLanguage: ""
+      )
 
       while !Task.isCancelled && self.isRecording {
         if self.activeLoadState == .loaded && !modelReadyRecorded {
@@ -62,7 +68,7 @@ extension SpeechRecognitionService {
         if case .text(let output) = result {
           let cleaned = CantoneseOutput.normalizeDictation(
             TextSanitizer.sanitize(output.text),
-            options: self.settings.voiceOutputConfiguration,
+            options: sourceOptions,
             preferredLanguages: self.recordingSpokenLanguages
           )
           if !cleaned.isEmpty {

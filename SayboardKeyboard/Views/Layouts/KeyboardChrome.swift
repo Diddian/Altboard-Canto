@@ -141,7 +141,9 @@ struct KeyboardStatusStrip: View {
     Group {
       if self.keyboardState.isProcessing {
         VoiceProcessingStatusView(
-          progress: self.keyboardState.voiceProcessingProgress, compact: self.compact
+          progress: self.keyboardState.voiceProcessingProgress,
+          sourcePreview: self.keyboardState.liveSourcePreview,
+          compact: self.compact
         )
       } else if self.keyboardState.isRecording,
                 let source = self.keyboardState.liveSourcePreview, !source.isEmpty {
@@ -188,6 +190,7 @@ struct KeyboardStatusStrip: View {
 
 private struct VoiceProcessingStatusView: View {
   let progress: VoiceProcessingProgress?
+  let sourcePreview: String?
   var compact = false
 
   var body: some View {
@@ -203,7 +206,7 @@ private struct VoiceProcessingStatusView: View {
             .lineLimit(1)
         }
       }
-      if let raw = self.progress?.rawPreview, !raw.isEmpty {
+      if let raw = self.progress?.rawPreview ?? self.sourcePreview, !raw.isEmpty {
         Text("Transcript: \(raw)")
           .font(.caption2)
           .foregroundStyle(.primary)

@@ -25,22 +25,27 @@ extension KeyboardViewController {
     guard settings.experimentalLiveDictationEnabled,
           (self.keyboardState.isRecording || settings.isRecording),
           let update = ExperimentalLiveTranscription.read(),
-          LiveDeliveryPolicy.accepts(
-            token: update.sessionToken,
-            requestToken: self.dictationRequestToken,
-            currentToken: settings.dictationSessionToken,
-            revision: update.revision,
-            lastRevision: self.liveTranscriptionRevision,
-            updatedAt: update.updatedAt,
-            now: Date().timeIntervalSinceReferenceDate,
-            destinationEpoch: settings.dictationDestinationEpoch,
-            currentEpoch: self.keyboardState.documentEpoch
-          ),
+          update.sessionToken == self.dictationRequestToken,
+          update.sessionToken == settings.dictationSessionToken,
+          update.revision > self.liveTranscriptionRevision,
           self.liveTranscriptionBlockedToken != update.sessionToken,
           Self.blockedLiveSessionToken != update.sessionToken,
           !update.text.isEmpty else { return }
 
+    // Display recognized source-language speech even when the insertion
+    // destination has changed. Never write without the stronger field gate.
     self.keyboardState.liveSourcePreview = String(update.text.suffix(240))
+    guard LiveDeliveryPolicy.accepts(
+      token: update.sessionToken,
+      requestToken: self.dictationRequestToken,
+      currentToken: settings.dictationSessionToken,
+      revision: update.revision,
+      lastRevision: self.liveTranscriptionRevision,
+      updatedAt: update.updatedAt,
+      now: Date().timeIntervalSinceReferenceDate,
+      destinationEpoch: settings.dictationDestinationEpoch,
+      currentEpoch: self.keyboardState.documentEpoch
+    ) else { return }
     let proxy = self.textDocumentProxy
     guard let document = self.availableDocumentIdentifier() else {
       // Never insert live text when UIKit cannot confirm the destination field.
