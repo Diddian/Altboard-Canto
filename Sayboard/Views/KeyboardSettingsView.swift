@@ -116,7 +116,7 @@ struct KeyboardSettingsView: View {
         showAIButton: self.showAIButton
       )
       .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
-      Text("Tap preview keys to test haptics. Emoji stays beside ?123. iOS may require a Globe in the action bar even when Extra Globe is off.")
+      Text("Tap preview keys to test haptics. The Emoji key beside ?123 opens the iOS keyboard picker; hold to choose Emoji. iOS may require a Globe in the action bar even when Extra Globe is off.")
         .font(.footnote)
         .foregroundStyle(.secondary)
     } header: {
