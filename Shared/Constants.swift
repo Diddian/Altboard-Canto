@@ -159,6 +159,8 @@ enum SharedKey {
   static let experimentalMeetingRecordEnabled = "canto.dictation.experimentalMeetingEnabled"
   static let keyboardHapticDriver = "keyboardHapticDriver"
   static let keyboardAutoCapitalizationEnabled = "keyboardAutoCapitalizationEnabled"
+  static let keyboardAutoCorrectionEnabled = "canto.keyboard.autoCorrectionEnabled.v1"
+  static let keyboardSpellCheckingEnabled = "canto.keyboard.spellCheckingEnabled.v1"
   static let keyboardTypingLanguage = "keyboardTypingLanguage" // Legacy: ignored by Alphabet.
   static let keyboardRomanizationScheme = "keyboardRomanizationScheme"
   static let keyboardHapticStrength = "keyboardHapticStrength"

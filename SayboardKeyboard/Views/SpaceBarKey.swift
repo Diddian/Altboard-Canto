@@ -88,7 +88,7 @@ struct SpaceBarKey: View {
     self.onTrackingBegan?()
     self.lastReportedCharOffset = 0
     self.lastReportedLineOffset = 0
-    KeyboardHaptics.key(strength: 0.75)
+    KeyboardHaptics.key(strength: 0.75, playsSound: false)
   }
 
   private func handleDragChanged(_ value: DragGesture.Value) {

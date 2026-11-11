@@ -319,6 +319,17 @@ struct SharedSettings {
     nonmutating set { defaults.set(newValue.rawValue, forKey: SharedKey.keyboardRomanizationScheme) }
   }
 
+  /// Opt-in corrections; normal word suggestions remain available.
+  var keyboardAutoCorrectionEnabled: Bool {
+    get { defaults.bool(forKey: SharedKey.keyboardAutoCorrectionEnabled) }
+    nonmutating set { defaults.set(newValue, forKey: SharedKey.keyboardAutoCorrectionEnabled) }
+  }
+
+  var keyboardSpellCheckingEnabled: Bool {
+    get { defaults.bool(forKey: SharedKey.keyboardSpellCheckingEnabled) }
+    nonmutating set { defaults.set(newValue, forKey: SharedKey.keyboardSpellCheckingEnabled) }
+  }
+
   var periodShortcutEnabled: Bool {
     get { defaults.object(forKey: SharedKey.periodShortcutEnabled) as? Bool ?? true }
     nonmutating set { defaults.set(newValue, forKey: SharedKey.periodShortcutEnabled) }

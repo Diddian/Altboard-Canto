@@ -156,8 +156,11 @@ enum KeyboardHaptics {
   static func key(
     strength override: Double? = nil,
     enabled overrideEnabled: Bool? = nil,
-    technique: Technique = .automatic
+    technique: Technique = .automatic,
+    playsSound: Bool = true
   ) {
+    // iOS honors Keyboard Feedback > Sound independently of haptics.
+    if playsSound { UIDevice.current.playInputClick() }
     let settings = SharedSettings()
     let enabled = overrideEnabled ?? settings.keyboardHapticsEnabled
     let strength = min(1.0, max(0.15, override ?? settings.keyboardHapticStrength))

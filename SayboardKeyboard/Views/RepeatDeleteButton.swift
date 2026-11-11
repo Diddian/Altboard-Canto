@@ -50,7 +50,7 @@ struct RepeatDeleteButton: View {
                   if repeats < 24 {
                     self.proxy.deleteBackward()
                   } else {
-                    if repeats == 24 { KeyboardHaptics.key() }
+                    if repeats == 24 { KeyboardHaptics.key(playsSound: false) }
                     self.proxy.deleteWordBackward()
                   }
                   self.onHostDeletion?()

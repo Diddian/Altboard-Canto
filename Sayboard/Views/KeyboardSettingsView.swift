@@ -12,6 +12,10 @@ struct KeyboardSettingsView: View {
   private var autoCapitalize = true
   @AppStorage(SharedKey.periodShortcutEnabled, store: AppGroup.sharedDefaults ?? .standard)
   private var periodShortcut = true
+  @AppStorage(SharedKey.keyboardAutoCorrectionEnabled, store: AppGroup.sharedDefaults ?? .standard)
+  private var autoCorrectionEnabled = false
+  @AppStorage(SharedKey.keyboardSpellCheckingEnabled, store: AppGroup.sharedDefaults ?? .standard)
+  private var spellCheckingEnabled = false
   @AppStorage(SharedKey.keyboardHapticsEnabled, store: AppGroup.sharedDefaults ?? .standard)
   private var hapticsEnabled = true
   @AppStorage(SharedKey.keyboardHapticStrength, store: AppGroup.sharedDefaults ?? .standard)
@@ -72,6 +76,8 @@ struct KeyboardSettingsView: View {
       }
       if self.selectedKind == .alphabetic {
         Toggle("Auto-capitalization", isOn: self.$autoCapitalize)
+        Toggle("Auto-Correction", isOn: self.$autoCorrectionEnabled)
+        Toggle("Spell Check", isOn: self.$spellCheckingEnabled)
         Toggle("Double-Space Period", isOn: self.$periodShortcut)
       }
       Toggle("Haptic Feedback", isOn: self.$hapticsEnabled)

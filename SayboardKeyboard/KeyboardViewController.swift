@@ -4,6 +4,11 @@ import ObjectiveC
 import SwiftUI
 import UIKit
 
+/// One native audio-enabled root; all existing SwiftUI key views remain unchanged.
+private final class AltboardAudioInputView: UIInputView, UIInputViewAudioFeedback {
+  var enableInputClicksWhenVisible: Bool { true }
+}
+
 final class KeyboardViewController: UIInputViewController {
 
   static var llmCompleteObserver: DarwinNotificationObserver?
@@ -57,6 +62,7 @@ final class KeyboardViewController: UIInputViewController {
   override func loadView() {
     self.traceFirstKeyboardLoad()
     super.loadView()
+    self.inputView = AltboardAudioInputView(frame: self.view.bounds, inputViewStyle: .keyboard)
     view.backgroundColor = .clear
     view.isOpaque = false
     view.clipsToBounds = true
