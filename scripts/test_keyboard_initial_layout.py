@@ -273,7 +273,12 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("No callbacks can be guaranteed while iOS runs another keyboard.", trace)
         self.assertIn("FeatureDiagnostics.record(.appStartup, .started)", app)
         self.assertIn("FeatureDiagnostics.record(.appStartup, .completed)", app)
-        self.assertIn("area == .appStartup && event == .started", feature)
+        # Startup milestones are emitted by the app through the shared,
+        # bounded diagnostics recorder; no special-case startup filter is needed.
+        self.assertIn("FeatureDiagnostics.record(.appStartup, .started)", app)
+        self.assertIn("FeatureDiagnostics.record(.appStartup, .completed)", app)
+        self.assertIn("area: area.rawValue, event: event.rawValue", feature)
+        self.assertIn("queue.async { append(entry) }", feature)
         for private_content in ("documentContextBeforeInput", "selectedText",
                                 "hostBundleId", "touchPath", "audioBuffer"):
             self.assertNotIn(private_content, trace)
