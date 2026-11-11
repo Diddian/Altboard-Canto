@@ -190,6 +190,26 @@ struct VoiceOutputPipelineTests {
   }
 
   @Test
+  func restoresCantoneseFirstLiveAndFinalScriptWithoutChangingOtherTargets() {
+    let original = VoiceOutputConfiguration(
+      cleanupEnabled: false, target: .original, register: .faithful, customLanguage: ""
+    )
+    let simplified = VoiceOutputConfiguration(
+      cleanupEnabled: false, target: .custom, register: .faithful, customLanguage: "zh-Hans"
+    )
+    #expect(CantoneseOutput.normalizeDictation("厕所", options: original,
+      preferredLanguages: ["yue", "en", "de"]) == "廁所")
+    #expect(CantoneseOutput.normalizeDictation("厕所", options: original,
+      preferredLanguages: ["zh", "de"]) == "厕所")
+    #expect(CantoneseOutput.normalizeDictation("廁所", options: simplified,
+      preferredLanguages: ["yue"]) == "厕所")
+    #expect(CantoneseOutput.normalizeDictation("シド、上だ。", options: original,
+      preferredLanguages: ["yue"]) == "シド、上だ。")
+    #expect(CantoneseOutput.normalizeDictation("Berlin ist schön.", options: original,
+      preferredLanguages: ["yue", "de"]) == "Berlin ist schön.")
+  }
+
+  @Test
   func customLanguageInputsAreConstrained() {
     #expect(VoiceOutputTarget.customLanguageName("fr") != nil)
     #expect(VoiceOutputTarget.customLanguageName("de") != nil)

@@ -7,18 +7,24 @@ extension SpeechRecognitionService {
           self.settings.selectedVariant.engine == .qwen3,
           let token = self.settings.dictationSessionToken,
           !token.isEmpty, self.experimentalLiveTask == nil else { return }
-    self.liveDictationStatus = "Waiting for first 1.5-second audio chunk and Qwen model"
+    self.liveDictationStatus = "Waiting for first audio chunk and Qwen model"
     FeatureDiagnostics.record(.liveDictation, .started)
+    let liveStartedAt = CFAbsoluteTimeGetCurrent()
     self.experimentalLiveTask = Task { @MainActor [weak self] in
       guard let self else { return }
       var readOffset = 0
       var revision = 0
       var combined = ""
       var reportedSlow = false
+      var hasAttemptedFirst = false
       // Shorten first-text capture delay without starting concurrent 1.7B
       // inference jobs. Native offline decode time remains device-dependent.
-      let frameCount = 24_000  // 1.5 s at 16 kHz
+      // The first chunk is one second; later chunks are 1.5 seconds.
+      // Inference stays serialized and decode time remains device-dependent.
       while !Task.isCancelled && self.isRecording {
+        let frameCount = LiveDictationChunkPolicy.samples(
+          isQwen: true, hasAttemptedFirst: hasAttemptedFirst
+        )
         guard self.activeLoadState == .loaded,
               let samples = self.accumulator.chunk(from: readOffset, count: frameCount)
         else {
@@ -27,6 +33,7 @@ extension SpeechRecognitionService {
           continue
         }
         readOffset += samples.count
+        hasAttemptedFirst = true
         self.liveDictationStatus = "Transcribing live segment"
         let started = CFAbsoluteTimeGetCurrent()
         let result = await self.qwen3Service.transcribe(audioSamples: samples)
@@ -34,14 +41,21 @@ extension SpeechRecognitionService {
         if case .text(let output) = result {
           // The native Qwen decoder may prefix each chunk with a language
           // header. Clean every chunk before it reaches the host input field.
-          let cleaned = TextSanitizer.sanitize(output.text)
+          let cleaned = CantoneseOutput.normalizeDictation(
+            TextSanitizer.sanitize(output.text),
+            options: self.settings.voiceOutputConfiguration,
+            preferredLanguages: self.recordingSpokenLanguages
+          )
           if !cleaned.isEmpty {
             combined = ExperimentalSpeechSegments.append(cleaned, to: combined)
             revision += 1
             ExperimentalLiveTranscription.write(sessionToken: token,
                                                  revision: revision, text: combined)
             self.liveDictationStatus = "Live update " + String(revision) + " delivered"
-            if revision == 1 { FeatureDiagnostics.record(.liveDictation, .firstUpdate) }
+            if revision == 1 {
+              FeatureDiagnostics.record(.liveDictation, .firstUpdate,
+                durationMs: Int((CFAbsoluteTimeGetCurrent() - liveStartedAt) * 1_000))
+            }
           }
         }
         // Diagnostic is duration only. No text or audio is logged.
@@ -54,7 +68,7 @@ extension SpeechRecognitionService {
           self.liveDictationStatus = "Live recognition behind recording: "
             + String(format: "%.1fs decode", decodeSeconds)
         }
-        DiagnosticLog.write("experimental live: 1.5s chunk decoded in "
+        DiagnosticLog.write("experimental live: audio chunk decoded in "
           + String(format: "%.1f", decodeSeconds) + "s")
       }
     }

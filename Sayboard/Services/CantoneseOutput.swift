@@ -21,6 +21,17 @@ enum CantoneseOutput {
     }
   }
 
+  /// Honor a Cantonese-first recognition preference for the ORIGINAL dictation
+  /// target without changing German/English text or an explicit Simplified target.
+  static func normalizeDictation(
+    _ text: String, options: VoiceOutputConfiguration, preferredLanguages: [String]
+  ) -> String {
+    if options.target == .original, preferredLanguages.first == "yue" {
+      return normalize(text)
+    }
+    return normalizeForOutput(text, options: options)
+  }
+
   static func normalize(_ text: String) -> String {
     let scalars = text.unicodeScalars
     let containsHan = scalars.contains { (0x3400...0x9FFF).contains($0.value) }
