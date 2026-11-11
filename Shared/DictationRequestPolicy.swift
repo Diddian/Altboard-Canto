@@ -35,8 +35,10 @@ enum DictationRequestPolicy {
     keyboardActive: Bool, appActive: Bool, heartbeat: TimeInterval,
     now: TimeInterval, practiceFocused: Bool
   ) -> Bool {
-    practiceFocused || (hasRecentAudioHeartbeat(heartbeat, now: now)
-      && (keyboardActive || appActive))
+    // Try the app-owned session first even if iOS paused an idle heartbeat.
+    // A bounded handshake will detect stale state and open the app if needed.
+    practiceFocused || appActive
+      || (keyboardActive && hasRecentAudioHeartbeat(heartbeat, now: now))
   }
 
   static func shouldOpenColdFallback(

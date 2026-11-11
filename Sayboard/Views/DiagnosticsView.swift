@@ -23,7 +23,7 @@ struct DiagnosticsView: View {
   private var showTouchTargets = false
   @AppStorage(SharedKey.liveFirstWindowSamples,
               store: AppGroup.sharedDefaults ?? .standard)
-  private var liveFirstWindowSamples = LiveDictationChunkPolicy.firstQwenSamples
+  private var liveFirstWindowSamples = LiveDictationChunkPolicy.deviceDefaultFirstWindowSamples
   #if !APPSTORE
   @AppStorage(SharedKey.keyboardLiveDebugHUD,
               store: UserDefaults(suiteName: AppGroup.identifier))
@@ -141,6 +141,8 @@ struct DiagnosticsView: View {
         self.yesNo(SharedSettings().experimentalLiveDictationEnabled))
       LabeledContent("Recognizer state", value: String(describing: self.speech.activeLoadState))
       LabeledContent("Last live step", value: self.speech.liveDictationStatus)
+      LabeledContent("Device-tier default",
+        value: String(LiveDictationChunkPolicy.deviceDefaultFirstWindowSamples / 16) + " ms")
       Picker("First recognition window", selection: self.$liveFirstWindowSamples) {
         Text("0.1 s (experimental)").tag(1_600)
         Text("0.2 s (experimental)").tag(3_200)
@@ -155,7 +157,7 @@ struct DiagnosticsView: View {
       LabeledContent("Mic → first decoded words", value: LiveDictationLatency.label(.firstDecoded))
       LabeledContent("Mic → first update sent", value: LiveDictationLatency.label(.firstPublished))
       LabeledContent("Mic → first text in host", value: LiveDictationLatency.label(.firstHostInsert))
-      Text("0.1/0.2/0.5/1.0 s are test windows, not promised display latency. Very short chunks may have no recognizable words and retry using the original audio. Compare cold and warm starts in Instagram.")
+      Text("Device tiers use RAM, not measured Qwen decoding speed. 0.1/0.2/0.5/1.0 s are test windows, not promised display latency. Very short chunks may have no recognizable words and retry using the original audio. Compare cold and warm starts in Instagram.")
         .font(.footnote).foregroundStyle(.secondary)
       Text("If the model cannot load during recording, audio is preserved for the normal final transcription. No spoken text is stored in these counters.")
         .font(.footnote).foregroundStyle(.secondary)
