@@ -93,7 +93,7 @@ struct KeyboardSettingsView: View {
           ?? .qwertz
       )
       .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
-      Text("Tap preview keys to test haptics. The bottom Globe is always available for iOS keyboard switching.")
+      Text("Tap preview keys to test haptics. Extra Globe appears at the far left only when enabled.")
         .font(.footnote)
         .foregroundStyle(.secondary)
     } header: {
@@ -111,9 +111,10 @@ private struct KeyboardTestPreview: View {
   let microphoneLayout: MicrophoneKeyboardLayout
   let letterArrangement: LetterKeyArrangement
 
-  // The native bottom-row Globe is required for keyboard switching.
-  // Extra Globe is a separate, optional shortcut in the upper control row.
-  private var showsGlobeButton: Bool { true }
+  // UIKit alone decides whether an in-keyboard system switch is required.
+  // Extra Globe is a separate, opt-in action-row shortcut.
+  @AppStorage(SharedKey.needsInputModeSwitchKey, store: AppGroup.sharedDefaults ?? .standard)
+  private var systemSwitchRequired = false
   @AppStorage(SharedKey.keyboardShowGlobeKey, store: AppGroup.sharedDefaults ?? .standard)
   private var showExtraGlobeKey = false
   @AppStorage(SharedKey.hasUsableLLMModel, store: UserDefaults(suiteName: AppGroup.identifier))
@@ -303,7 +304,7 @@ private struct KeyboardTestPreview: View {
   private var alphabetBottomRow: some View {
     HStack(spacing: 6) {
       self.labelKey("?123", width: 48)
-      if self.showsGlobeButton {
+      if self.systemSwitchRequired {
         self.key("globe", width: 48)
       }
       self.labelKey("", height: 45)
@@ -313,7 +314,7 @@ private struct KeyboardTestPreview: View {
 
   private var standardBottomRow: some View {
     HStack(spacing: 6) {
-      if self.showsGlobeButton {
+      if self.systemSwitchRequired {
         self.key("globe", width: 45)
       }
       self.key("trash", width: 45)
