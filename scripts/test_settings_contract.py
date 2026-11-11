@@ -228,6 +228,23 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("translationDraftText", view)
         self.assertNotIn("No translation saved yet.", view)
 
+    def test_conversation_beta_status_uses_native_badge_on_both_tab_modes(self):
+        tabs = read("Sayboard/Views/MainTabView.swift")
+        screen = read("Sayboard/Views/ConversationView.swift")
+        self.assertEqual(tabs.count('.badge("Beta")'), 2)
+        liquid = tabs.split('Tab("Conversation", systemImage:', 1)[1].split(
+            'Tab("Meetings", systemImage:', 1
+        )[0]
+        legacy = tabs.split('Label("Conversation", systemImage:', 1)[1].split(
+            'Label("Meetings", systemImage:', 1
+        )[0]
+        self.assertIn('.badge("Beta")', liquid)
+        self.assertIn('.badge("Beta")', legacy)
+        self.assertIn('ConversationView()', liquid)
+        self.assertIn('ConversationView()', legacy)
+        self.assertNotIn('.navigationTitle("Conversation")', screen)
+        self.assertIn('.toolbar(.hidden, for: .navigationBar)', screen)
+
     def test_conversation_output_languages_do_not_change_globals(self):
         view = read("Sayboard/Views/ConversationView.swift")
         coordinator = read("Sayboard/Services/ConversationCoordinator.swift")

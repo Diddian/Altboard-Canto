@@ -155,6 +155,7 @@ struct MainTabView: View {
           ConversationView()
         }
       }
+      .badge("Beta")
 
       Tab("Meetings", systemImage: "person.3", value: TabID.meetings.rawValue) {
         NavigationStack(path: self.$meetingsPath) {
@@ -192,6 +193,7 @@ struct MainTabView: View {
       .tabItem {
         Label("Conversation", systemImage: "bubble.left.and.bubble.right")
       }
+      .badge("Beta")
       .tag(TabID.conversation.rawValue)
 
       NavigationStack(path: self.$meetingsPath) {
