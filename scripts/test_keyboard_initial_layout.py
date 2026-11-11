@@ -314,6 +314,15 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn('"patternsForReview": patterns(in: featureEvents)', trace)
         self.assertIn('event == "started" || event == "queued"', trace)
         self.assertIn("KeyboardHapticTrace.events", trace)
+        self.assertIn("KeyboardHapticTrace.clear()", trace)
+        record = trace.split("static func record(", 1)[1].split(
+            "private static func append(", 1
+        )[0]
+        self.assertIn("queue.async { append(entry) }", record)
+        self.assertNotIn("queue.sync", record)
+        self.assertIn('private static let maxBytes: off_t = 1_048_576', trace)
+        self.assertIn("flock(fd, LOCK_EX)", trace)
+        self.assertIn("flock(fd, LOCK_SH)", trace)
         self.assertIn('DisclosureGroup("Development Traces"', screen)
         for sensitive in ("documentContextBeforeInput", "selectedText", "audioSamples",
                           "request.text", "request.prompt", "hostBundleId", "touchPath"):
