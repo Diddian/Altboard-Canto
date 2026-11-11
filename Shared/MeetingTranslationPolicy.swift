@@ -53,6 +53,13 @@ enum MeetingTranslationPolicy {
     return processedChunks == 0 || !(savedTranslation ?? "").isEmpty
   }
 
+  static func hasMatchingSavedOutput(
+    _ saved: String?, savedLanguage: String?, targetLanguage: String
+  ) -> Bool {
+    savedLanguage == targetLanguage && !(saved ?? "")
+      .trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+  }
+
   static func combined(_ current: String?, next: String) -> String {
     let clean = next.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !clean.isEmpty else { return current ?? "" }

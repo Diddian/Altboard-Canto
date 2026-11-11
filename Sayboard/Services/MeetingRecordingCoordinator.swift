@@ -396,6 +396,15 @@ final class MeetingRecordingCoordinator: ObservableObject {
     let language = PreferredVoiceLanguages.currentCode(
       target: options.target, custom: options.customLanguage
     )
+    if self.records[index].translationDraftNextChunk == nil &&
+       MeetingTranslationPolicy.hasMatchingSavedOutput(
+         self.records[index].translatedTranscript,
+         savedLanguage: self.records[index].translatedLanguageCode,
+         targetLanguage: language
+       ) {
+      self.translationStatus = ""
+      return
+    }
     var draft = self.records[index]
     let resume = MeetingTranslationPolicy.canResume(
       sourceFingerprint: fingerprint, configurationKey: configuration,
@@ -457,7 +466,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
         finished.translationDraftNextChunk = nil
         if self.writeManifest(finished, includeTranscript: false) {
           self.records[position] = finished
-          self.translationStatus = "Translation saved with this meeting. Open Translation to copy or share."
+          self.translationStatus = ""
         } else {
           self.translationStatus = "Translation could not be saved. Resume to retry."
         }
@@ -467,7 +476,12 @@ final class MeetingRecordingCoordinator: ObservableObject {
         let count = self.records.first(where: { $0.id == id })?.translationDraftNextChunk ?? 0
         let details = coordinator.lastVoiceOutputIssue ??
           "The text model could not complete the request. Try again or select another Text Model."
-        self.translationStatus = "Translation failed · \(count) of \(chunks.count) sections saved. " + details
+        DiagnosticLog.write("meeting translation incomplete: " + details)
+        let previous = self.records.first(where: { $0.id == id })?.translatedTranscript
+        self.translationStatus = (previous ?? "").isEmpty
+          ? (count > 0 ? "Translation incomplete; saved sections can resume."
+            : "Translation not available yet.")
+          : "Translation not updated; previous version preserved."
       }
       self.translatingRecordID = nil
       self.translationTask = nil

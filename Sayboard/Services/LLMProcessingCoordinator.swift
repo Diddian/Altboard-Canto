@@ -221,11 +221,27 @@ final class LLMProcessingCoordinator: ObservableObject {
   private func processVoiceChunk(
     _ input: String, options: VoiceOutputConfiguration
   ) async -> String? {
-    let result = await self.runInferenceWithTimeout(
-      systemPrompt: VoiceOutputPrompt.compactPrompt(for: options),
-      userText: input, assistantPrefill: "",
-      maxOutputTokens: min(512, max(192, input.utf8.count * 2))
-    )
+    var result: String?
+    for attempt in 1...VoiceOutputPrompt.maximumTranslationAttempts {
+      guard !Task.isCancelled else { return nil }
+      result = await self.runInferenceWithTimeout(
+        systemPrompt: attempt == 1 ? VoiceOutputPrompt.compactPrompt(for: options)
+          : VoiceOutputPrompt.retryPrompt(for: options),
+        userText: input, assistantPrefill: "",
+        maxOutputTokens: min(512, max(192, input.utf8.count * 2))
+      )
+      guard !Task.isCancelled else { return nil }
+      if let candidate = result?.trimmingCharacters(in: .whitespacesAndNewlines),
+         !candidate.isEmpty,
+         VoiceLanguageValidator.matches(candidate, target: options.target),
+         (input.count < 30 || candidate.count <= max(input.count * 4, input.count + 200)) {
+        self.lastVoiceOutputIssue = nil
+        return CantoneseOutput.normalizeForOutput(candidate, options: options)
+      }
+      if attempt < VoiceOutputPrompt.maximumTranslationAttempts {
+        FeatureDiagnostics.record(.voiceOutput, .fallback)
+      }
+    }
     guard !Task.isCancelled else {
       FeatureDiagnostics.record(.voiceOutput, .cancelled)
       return nil

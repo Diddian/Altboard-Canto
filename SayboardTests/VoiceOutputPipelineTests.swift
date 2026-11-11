@@ -76,6 +76,16 @@ struct VoiceOutputPipelineTests {
   }
 
   @Test
+  func rejectsJapaneseAndUntranslatedGermanIntro() {
+    #expect(!VoiceLanguageValidator.matches("シド、上だ。それはなんの冗談？", target: .cantonese))
+    #expect(!VoiceLanguageValidator.matches("Ja, 我暫可以哋理解。", target: .cantonese))
+    #expect(!VoiceLanguageValidator.matches("안녕하세요我", target: .traditionalChinese))
+    #expect(VoiceLanguageValidator.matches("係，我聽得明。", target: .cantonese))
+    #expect(VoiceLanguageValidator.matches("我用 iPhone 17 Pro Max。", target: .cantonese))
+    #expect(VoiceOutputPrompt.maximumTranslationAttempts == 2)
+  }
+
+  @Test
   func keyboardCyclesOutputLanguages() {
     #expect(VoiceOutputTarget.nextKeyboardTarget(after: .original) == .cantonese)
     #expect(VoiceOutputTarget.nextKeyboardTarget(after: .cantonese) == .english)

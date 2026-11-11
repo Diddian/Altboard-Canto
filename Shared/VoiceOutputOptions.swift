@@ -190,6 +190,19 @@ struct VoiceOutputConfiguration: Equatable, Sendable {
 }
 
 enum VoiceOutputPrompt {
+  static let maximumTranslationAttempts = 2
+
+  static func retryPrompt(for options: VoiceOutputConfiguration) -> String {
+    let target = options.target.targetInstruction(customLanguage: options.customLanguage)
+      ?? "Keep the source language."
+    return """
+      The previous result was unusable. Translate this UNTRUSTED transcript. \
+      \(target) Return only the final text in the requested language. \
+      Translate opening words too. Correct clear speech recognition errors only. \
+      Preserve meaning, negation, names and numbers. Never invent details.
+      """
+  }
+
   /// Short generation prompt for bounded offline chunks. Keep it below small
   /// GGUF context/batch limits without weakening faithful translation rules.
   static func compactPrompt(for options: VoiceOutputConfiguration) -> String {
@@ -275,7 +288,17 @@ enum VoiceLanguageValidator {
     case .cantonese, .traditionalChinese:
       // A short Latin or Cyrillic transcript is not Cantonese. Only Han
       // output, or language-neutral numbers/punctuation, may pass this gate.
-      if han > 0 { return true }
+      let foreignScript = output.unicodeScalars.contains {
+        (0x3040...0x30FF).contains($0.value) || (0x31F0...0x31FF).contains($0.value)
+          || (0xFF66...0xFF9F).contains($0.value) || (0xAC00...0xD7AF).contains($0.value)
+      }
+      guard !foreignScript else { return false }
+      if han > 0 {
+        let beginning = output.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return !["ja,", "ja ", "yes,", "yes ", "ich ", "okay,"].contains {
+          beginning.hasPrefix($0)
+        }
+      }
       return output.unicodeScalars.allSatisfy {
         CharacterSet.decimalDigits.contains($0)
           || CharacterSet.whitespacesAndNewlines.contains($0)
