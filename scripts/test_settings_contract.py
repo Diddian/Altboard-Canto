@@ -201,7 +201,7 @@ class SettingsContractTests(unittest.TestCase):
         host = read("SayboardKeyboard/KeyboardViewController.swift")
         diagnostics = read("Sayboard/Views/DiagnosticsView.swift")
         self.assertIn("static let firstQwenSamples = 24_000", policy)
-        self.assertIn("static let firstWindowOptions = [3_200, 8_000, 16_000, 24_000]", policy)
+        self.assertIn("static let firstWindowOptions = [1_600, 3_200, 8_000, 16_000, 24_000]", policy)
         self.assertIn("static func retryFirstWindow(after samples: Int)", policy)
         self.assertIn("let firstWindow = self.settings.liveFirstWindowSamples", speech.replace("var firstWindow", "let firstWindow")) 
         self.assertIn("if firstChunk && !published", speech)

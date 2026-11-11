@@ -23,6 +23,7 @@ final class KeyboardViewController: UIInputViewController {
   var llmSelectedText: String?
   var llmDirectSelectedText: String?
   var dictationRequestToken: String?
+  var dictationDocumentID: UUID?
   var llmRequestID: UUID?
   var llmDocumentIdentifier: UUID?
   var llmSelectionContextBefore: String?
@@ -148,6 +149,7 @@ final class KeyboardViewController: UIInputViewController {
     }
     // Do not reuse field-specific touch state when UIKit cannot identify it.
     self.lastTouchDocumentID = document
+    self.recoverActiveDictationAfterReentry()
     self.refreshHostInputTraits()
     self.lastObservedHostHasText = self.textDocumentProxy.hasText
     // Reset transient gestures without tearing down the visible render tree.
@@ -462,6 +464,9 @@ final class KeyboardViewController: UIInputViewController {
   func insertTranscribedText() {
     let delivery = TranscriptionBridge.readDelivery(matching: self.dictationRequestToken,
       destinationEpoch: self.keyboardState.documentEpoch)
+      ?? TranscriptionBridge.readDelivery(
+        matching: self.dictationRequestToken, allowAnyDestination: true
+      )
     guard let delivery, !delivery.text.isEmpty else {
       DiagnosticLog.write("keyboard: NO TEXT available to insert")
       let settings = SharedSettings()
@@ -472,10 +477,20 @@ final class KeyboardViewController: UIInputViewController {
       return
     }
     let text = delivery.text
+    let settings = SharedSettings()
+    let currentDocument = self.availableDocumentIdentifier()
     guard delivery.canInsert(requestToken: self.dictationRequestToken,
                              currentEpoch: self.keyboardState.documentEpoch),
-          self.availableDocumentIdentifier() != nil else {
-      self.keyboardState.showFinalOutputPreview("Dictation saved in History; input changed.")
+          self.dictationDocumentID != nil,
+          currentDocument == self.dictationDocumentID,
+          DictationRequestPolicy.isSameDestination(
+            sessionToken: self.dictationRequestToken,
+            document: currentDocument,
+            fingerprint: settings.dictationDestinationFingerprint
+          ) else {
+      // Keep the pending delivery in the outbox and in History. A new keyboard
+      // can stop capture, but may not write into an unverified host field.
+      self.keyboardState.showFinalOutputPreview(delivery.text)
       FeatureDiagnostics.record(.bridge, .rejected,
         operationID: delivery.sessionToken, phase: .rejected)
       return
@@ -750,16 +765,62 @@ final class KeyboardViewController: UIInputViewController {
   func prepareDictationDestination() {
     let settings = SharedSettings()
     self.dictationRequestToken = settings.dictationSessionToken
-    settings.dictationDestinationEpoch = self.availableDocumentIdentifier() == nil
+    self.dictationDocumentID = self.availableDocumentIdentifier()
+    settings.dictationDestinationEpoch = self.dictationDocumentID == nil
       ? nil : self.keyboardState.documentEpoch
+    settings.dictationDestinationFingerprint = DictationRequestPolicy.destinationFingerprint(
+      sessionToken: self.dictationRequestToken, document: self.dictationDocumentID
+    )
     settings.synchronize()
   }
 
-  private func startDictationViaDarwin() {
-    guard !self.keyboardState.isProcessing, !self.keyboardState.isRecording else { return }
-    self.saveHostBundleId()
+  /// Restore capture control after iOS recreates the keyboard extension.
+  /// Only a matching request-bound field fingerprint restores text ownership.
+  /// A different field may still stop/cancel, but receives preview-only output.
+  func recoverActiveDictationAfterReentry() {
     let settings = SharedSettings()
     settings.synchronize()
+    guard !settings.dictationCancellationRequested,
+          (settings.isRecording || settings.isKeyboardRequestRecent()),
+          let token = settings.dictationSessionToken,
+          UUID(uuidString: token) != nil else { return }
+    if self.dictationRequestToken == token, self.dictationDocumentID != nil { return }
+    self.dictationRequestToken = token
+    let document = self.availableDocumentIdentifier()
+    if DictationRequestPolicy.isSameDestination(
+      sessionToken: token, document: document,
+      fingerprint: settings.dictationDestinationFingerprint
+    ), let epoch = settings.dictationDestinationEpoch {
+      self.dictationDocumentID = document
+      self.keyboardState.documentEpoch = epoch
+    } else {
+      self.dictationDocumentID = nil
+      self.liveTranscriptionBlockedToken = token
+      Self.blockedLiveSessionToken = token
+      FeatureDiagnostics.record(.bridge, .fallback, operationID: token)
+    }
+    self.keyboardState.isSessionActive = settings.isSessionActive
+    self.keyboardState.isRecording = settings.isRecording
+    self.keyboardState.isStartingRecording = !settings.isRecording
+    self.keyboardState.recordingStartedAt = settings.recordingStartedAt
+  }
+
+  private func startDictationViaDarwin() {
+    let settings = SharedSettings()
+    settings.synchronize()
+    // A recreated keyboard must not rearm a capture that is already running.
+    if settings.isRecording && settings.isSessionActive
+        && !settings.dictationCancellationRequested,
+       let token = settings.dictationSessionToken,
+       UUID(uuidString: token) != nil {
+      self.recoverActiveDictationAfterReentry()
+      self.pingMainAppForSessionStatus()
+      return
+    }
+    guard !self.keyboardState.isProcessing, !self.keyboardState.isRecording,
+          !self.keyboardState.isStartingRecording else { return }
+    self.saveHostBundleId()
+    self.keyboardState.isStartingRecording = true
     let token = UUID().uuidString
     settings.dictationSessionToken = token
     LiveDictationLatency.begin(token: token)
@@ -769,9 +830,22 @@ final class KeyboardViewController: UIInputViewController {
     self.warmStartSessionAcknowledged = false
     self.staleFallbackTimer?.invalidate()
     self.staleFallbackTimer = nil
-    TranscriptionBridge.postDarwinNotification(DarwinNotificationName.requestStartDictation)
-    self.pingMainAppForSessionStatus()
-    self.scheduleWarmStartCheck(token: token, retryCount: 0)
+    let direct = DictationRequestPolicy.shouldRequestWarmSession(
+      keyboardActive: self.keyboardState.isSessionActive,
+      appActive: settings.isSessionActive,
+      heartbeat: settings.mainAppHeartbeat,
+      now: CFAbsoluteTimeGetCurrent(),
+      practiceFocused: HistoryKeyboardTestSession.isFocused
+    )
+    if direct {
+      TranscriptionBridge.postDarwinNotification(DarwinNotificationName.requestStartDictation)
+      self.pingMainAppForSessionStatus()
+      self.scheduleWarmStartCheck(token: token, retryCount: 0)
+    } else {
+      // Cold activation opens the app with the SAME token and destination.
+      // Only the controller creates a request; the mic view never rearms.
+      self.openDictateDeepLinkFallback(reason: "cold audio session")
+    }
   }
 
   private func scheduleWarmStartCheck(token: String, retryCount: Int) {
@@ -845,6 +919,7 @@ final class KeyboardViewController: UIInputViewController {
 extension KeyboardViewController {
 
   func cancelDictationViaDarwin() {
+    if self.dictationRequestToken == nil { self.recoverActiveDictationAfterReentry() }
     self.cancelExperimentalLiveText()
     self.keyboardState.liveSourcePreview = nil
     self.staleFallbackTimer?.invalidate()
@@ -863,13 +938,16 @@ extension KeyboardViewController {
       settings.keyboardRequestedDictation = false
       settings.dictationCancellationRequested = true
       settings.dictationDestinationEpoch = nil
+      settings.dictationDestinationFingerprint = nil
       settings.synchronize()
     }
     self.dictationRequestToken = nil
+    self.dictationDocumentID = nil
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.requestCancelDictation)
   }
 
   func stopDictationViaDarwin() {
+    if self.dictationRequestToken == nil { self.recoverActiveDictationAfterReentry() }
     self.staleFallbackTimer?.invalidate()
     self.staleFallbackTimer = nil
     self.saveHostBundleId()

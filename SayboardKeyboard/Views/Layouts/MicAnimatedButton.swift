@@ -308,37 +308,8 @@ struct MicAnimatedButton: View {
     } else if self.keyboardState.isDictationLocked {
       if let url = DeepLink.unlockURL { self.proxy.openURL(url) }
     } else {
-      let settings = SharedSettings()
-      settings.synchronize()
-      let direct = DictationRequestPolicy.shouldRequestWarmSession(
-        keyboardActive: self.keyboardState.isSessionActive,
-        appActive: settings.isSessionActive,
-        heartbeat: settings.mainAppHeartbeat,
-        now: CFAbsoluteTimeGetCurrent(),
-        practiceFocused: HistoryKeyboardTestSession.isFocused
-      )
-      if direct {
-        // The keyboard may be a new UIKit instance while the app's audio
-        // session is still alive. Recheck shared state on every mic tap.
-        self.keyboardState.isStartingRecording = true
-        MicrophoneHoldStopIntent.clear(defaults: settings.defaults)
-        self.proxy.startDictation()
-      } else if let url = DeepLink.dictateURL {
-        self.keyboardState.isStartingRecording = true
-        MicrophoneHoldStopIntent.clear(defaults: settings.defaults)
-        if OperatingSystem.isHostBundleIdBroken {
-          self.proxy.resolveHost()
-        }
-        settings.dictationCancellationRequested = false
-        settings.keyboardRequestedDictationAt = CFAbsoluteTimeGetCurrent()
-        settings.keyboardRequestedDictation = true
-        settings.dictationSessionToken = UUID().uuidString
-        if let token = settings.dictationSessionToken {
-          LiveDictationLatency.begin(token: token)
-        }
-        settings.synchronize()
-        self.proxy.openURL(url)
-      }
+      // The controller owns both cold and warm requests, token and destination.
+      self.proxy.startDictation()
     }
   }
 

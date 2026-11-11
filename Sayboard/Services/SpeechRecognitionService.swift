@@ -638,7 +638,16 @@ extension SpeechRecognitionService {
           TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationLockChanged)
           return
         }
-            await self.startRecordingAfterModelLoad()
+        if self.isRecording {
+          // Replayed Darwin starts are acknowledgements, not new captures.
+          guard self.activeDictationToken == self.settings.dictationSessionToken else {
+            FeatureDiagnostics.record(.speech, .rejected)
+            return
+          }
+          TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStarted)
+          return
+        }
+        await self.startRecordingAfterModelLoad()
       }
     }
 

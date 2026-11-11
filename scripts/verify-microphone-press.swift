@@ -47,6 +47,31 @@ struct VerifyMicrophonePress {
     precondition(MicrophoneHoldStopIntent.request(for: "old-session", defaults: defaults))
     MicrophoneHoldStopIntent.clear(defaults: defaults)
     precondition(!MicrophoneHoldStopIntent.isRequested(for: "old-session", defaults: defaults))
+
+    // Fresh UIKit controllers can recover the same field without persisting its ID.
+    let token = UUID().uuidString
+    let field = UUID()
+    let fingerprint = DictationRequestPolicy.destinationFingerprint(
+      sessionToken: token, document: field
+    )
+    precondition(fingerprint != nil)
+    precondition(DictationRequestPolicy.isSameDestination(
+      sessionToken: token, document: field, fingerprint: fingerprint
+    ))
+    precondition(!DictationRequestPolicy.isSameDestination(
+      sessionToken: token, document: UUID(), fingerprint: fingerprint
+    ))
+    precondition(!DictationRequestPolicy.isSameDestination(
+      sessionToken: UUID().uuidString, document: field, fingerprint: fingerprint
+    ))
+    precondition(!DictationRequestPolicy.isSameDestination(
+      sessionToken: token, document: nil, fingerprint: fingerprint
+    ))
+    precondition(DictationRequestPolicy.destinationFingerprint(
+      sessionToken: nil, document: field
+    ) == nil)
+    precondition(LiveDictationChunkPolicy.firstWindowOptions.first == 1_600)
+    precondition(LiveDictationChunkPolicy.retryFirstWindow(after: 1_600) == 3_200)
     print("Microphone tap, hold, release and token-scoped stop checks passed")
   }
 }

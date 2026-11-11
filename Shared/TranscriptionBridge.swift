@@ -28,7 +28,10 @@ struct TranscriptionBridge: Sendable {
     }
   }
 
-  static func readDelivery(matching token: String? = nil, destinationEpoch: UUID? = nil) -> DictationDelivery? {
+  static func readDelivery(
+    matching token: String? = nil, destinationEpoch: UUID? = nil,
+    allowAnyDestination: Bool = false
+  ) -> DictationDelivery? {
     guard let folder = deliveryDirectory else { return nil }
     let files = (try? FileManager.default.contentsOfDirectory(at: folder,
       includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
@@ -42,7 +45,8 @@ struct TranscriptionBridge: Sendable {
             let result = try? JSONDecoder().decode(DictationDelivery.self, from: bytes),
             result.schemaVersion == 1 else { continue }
       if latest == nil { latest = result }
-      if let token, result.sessionToken == token, result.destinationEpoch == destinationEpoch { return result }
+      if let token, result.sessionToken == token,
+         (allowAnyDestination || result.destinationEpoch == destinationEpoch) { return result }
     }
     // A scoped request must never fall back to a result from another field/session.
     return token == nil && destinationEpoch == nil ? latest : nil

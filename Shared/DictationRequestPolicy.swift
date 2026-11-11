@@ -1,6 +1,25 @@
 import Foundation
+import CryptoKit
 
 enum DictationRequestPolicy {
+  /// An ephemeral request-bound fingerprint identifies only the input field.
+  /// Never persist or log a UIKit document UUID or any host text.
+  static func destinationFingerprint(sessionToken: String?, document: UUID?) -> String? {
+    guard let sessionToken, UUID(uuidString: sessionToken) != nil,
+          let document else { return nil }
+    let input = Data("altboard-destination-v1:\(sessionToken):\(document.uuidString)".utf8)
+    return Data(SHA256.hash(data: input)).base64EncodedString()
+  }
+
+  static func isSameDestination(
+    sessionToken: String?, document: UUID?, fingerprint: String?
+  ) -> Bool {
+    guard let fingerprint, !fingerprint.isEmpty,
+          let actual = destinationFingerprint(sessionToken: sessionToken, document: document)
+    else { return false }
+    return actual == fingerprint
+  }
+
   static func isCurrent(started: String?, current: String?, cancelled: Bool) -> Bool {
     guard let started, !started.isEmpty, !cancelled else { return false }
     return started == current

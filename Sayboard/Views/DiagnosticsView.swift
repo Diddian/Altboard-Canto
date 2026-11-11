@@ -142,6 +142,7 @@ struct DiagnosticsView: View {
       LabeledContent("Recognizer state", value: String(describing: self.speech.activeLoadState))
       LabeledContent("Last live step", value: self.speech.liveDictationStatus)
       Picker("First recognition window", selection: self.$liveFirstWindowSamples) {
+        Text("0.1 s (experimental)").tag(1_600)
         Text("0.2 s (experimental)").tag(3_200)
         Text("0.5 s (experimental)").tag(8_000)
         Text("1.0 s (experimental)").tag(16_000)
@@ -154,7 +155,7 @@ struct DiagnosticsView: View {
       LabeledContent("Mic → first decoded words", value: LiveDictationLatency.label(.firstDecoded))
       LabeledContent("Mic → first update sent", value: LiveDictationLatency.label(.firstPublished))
       LabeledContent("Mic → first text in host", value: LiveDictationLatency.label(.firstHostInsert))
-      Text("0.2/0.5/1.0 s are test windows, not promised display latency. Very short chunks may have no recognizable words and retry using the original audio. Compare cold and warm starts in Instagram.")
+      Text("0.1/0.2/0.5/1.0 s are test windows, not promised display latency. Very short chunks may have no recognizable words and retry using the original audio. Compare cold and warm starts in Instagram.")
         .font(.footnote).foregroundStyle(.secondary)
       Text("If the model cannot load during recording, audio is preserved for the normal final transcription. No spoken text is stored in these counters.")
         .font(.footnote).foregroundStyle(.secondary)

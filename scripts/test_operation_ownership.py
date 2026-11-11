@@ -46,6 +46,43 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertLess(body.index("ConversationCoordinator.shared.recordingSide == nil"), body.index("self.session.endSession()"))
         self.assertIn("await cancelledLive?.value", body)
 
+
+    def test_cold_and_warm_microphone_share_one_request_owner(self):
+        controller = source("SayboardKeyboard/KeyboardViewController.swift")
+        mic = function("SayboardKeyboard/Views/Layouts/MicAnimatedButton.swift",
+                       "private func handleTap()", "private func handleRecordingChanged")
+        start = function("SayboardKeyboard/KeyboardViewController.swift",
+                         "private func startDictationViaDarwin()", "private func scheduleWarmStartCheck")
+        self.assertIn("self.proxy.startDictation()", mic)
+        self.assertNotIn("settings.dictationSessionToken = UUID()", mic)
+        self.assertNotIn("DeepLink.dictateURL", mic)
+        self.assertIn("self.prepareDictationDestination()", start)
+        self.assertIn('self.openDictateDeepLinkFallback(reason: "cold audio session")', start)
+        self.assertIn("self.recoverActiveDictationAfterReentry()", start)
+        self.assertIn("self.keyboardState.isStartingRecording = true", start)
+        self.assertIn("self.recoverActiveDictationAfterReentry()", controller)
+
+    def test_recreated_keyboard_can_stop_without_claiming_another_field(self):
+        controller = source("SayboardKeyboard/KeyboardViewController.swift")
+        settings = source("Shared/SharedSettings.swift")
+        bridge = source("Shared/TranscriptionBridge.swift")
+        service = source("Sayboard/Services/SpeechRecognitionService.swift")
+        restore = function("SayboardKeyboard/KeyboardViewController.swift",
+                           "func recoverActiveDictationAfterReentry()", "private func startDictationViaDarwin")
+        self.assertIn("DictationRequestPolicy.isSameDestination(", restore)
+        self.assertIn("self.dictationDocumentID = nil", restore)
+        self.assertIn("self.liveTranscriptionBlockedToken = token", restore)
+        self.assertIn("self.keyboardState.documentEpoch = epoch", restore)
+        self.assertIn("func stopDictationViaDarwin()", controller)
+        self.assertIn("TranscriptionBridge.requestStop(for: self.dictationRequestToken)", controller)
+        self.assertIn("TranscriptionBridge.requestCancellation(for: cancelled)", controller)
+        self.assertIn("settings.dictationDestinationFingerprint = nil", controller)
+        self.assertIn("var dictationDestinationFingerprint: String?", settings)
+        self.assertIn("allowAnyDestination || result.destinationEpoch == destinationEpoch", bridge)
+        self.assertIn("guard self.activeDictationToken == self.settings.dictationSessionToken", service)
+        self.assertIn("self.dictationDocumentID != nil", controller)
+        self.assertIn("DictationRequestPolicy.isSameDestination(", controller)
+
     def test_extension_timeout_cannot_reset_host_runtime(self):
         body = function("SayboardKeyboard/KeyboardViewController+Timeout.swift", "func resetProcessingState()")
         self.assertNotIn("settings.isRecording =", body)

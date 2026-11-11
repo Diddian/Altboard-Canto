@@ -151,7 +151,8 @@ jobs:
             Shared/InformalNgramPolicy.swift scripts/verify-informal-ngram.swift
           "$RUNNER_TEMP/informal-ngram-smoke"
           swiftc -o "$RUNNER_TEMP/microphone-press-smoke" \
-            Shared/MicrophonePressPolicy.swift scripts/verify-microphone-press.swift
+            Shared/MicrophonePressPolicy.swift Shared/DictationRequestPolicy.swift \
+            Shared/LiveDictationChunkPolicy.swift scripts/verify-microphone-press.swift
           "$RUNNER_TEMP/microphone-press-smoke"
           swiftc -o "$RUNNER_TEMP/voice-output-routing-smoke" \
             Shared/VoiceOutputSelectionPolicy.swift scripts/verify-voice-output-selection.swift

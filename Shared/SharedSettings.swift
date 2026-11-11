@@ -596,6 +596,14 @@ struct SharedSettings {
     nonmutating set { self.defaults.set(newValue?.uuidString, forKey: "dictationDestinationEpoch") }
   }
 
+  /// Request-scoped, irreversible field check; never the UIKit identifier.
+  var dictationDestinationFingerprint: String? {
+    get { self.defaults.string(forKey: "canto.dictation.destinationFingerprint.v1") }
+    nonmutating set {
+      self.defaults.set(newValue, forKey: "canto.dictation.destinationFingerprint.v1")
+    }
+  }
+
   var dictationSessionToken: String? {
     get { self.defaults.string(forKey: SharedKey.dictationSessionToken) }
     nonmutating set { defaults.set(newValue, forKey: SharedKey.dictationSessionToken) }
