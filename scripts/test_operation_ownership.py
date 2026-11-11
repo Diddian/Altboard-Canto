@@ -166,6 +166,36 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("self.postDarwinNotification(DarwinNotificationName.transcriptionReady)", bridge)
         self.assertNotIn("dropFirst(64)", bridge)
 
+    def test_final_delivery_uses_captured_identity_after_shared_token_clears(self):
+        final = function(
+            "SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift",
+            "func completeExperimentalLiveText(", "func cancelExperimentalLiveText()"
+        )
+        self.assertIn("LiveFinalDeliveryPolicy.mayReconcile(", final)
+        self.assertNotIn("SharedSettings().dictationSessionToken", final)
+        self.assertIn("cancelled: cancellationRequested", final)
+        self.assertIn("LiveFinalReconciliation.plan(", final)
+        insertion = function("SayboardKeyboard/KeyboardViewController.swift",
+                             "func insertTranscribedText()", "func pingMainAppForSessionStatus")
+        self.assertIn("!settings.dictationCancellationRequested", insertion)
+        self.assertIn("delivery, cancellationRequested: settings.dictationCancellationRequested", insertion)
+        policy = source("Shared/OperationContracts.swift")
+        self.assertIn("delivery.canInsert(requestToken: requestToken", policy)
+        self.assertIn("requestDocument == ownedDocument", policy)
+        self.assertIn("blockedToken != delivery.sessionToken", policy)
+
+    def test_bounded_cross_process_lock_and_result_owner(self):
+        bridge = source("Shared/LLMBridge.swift")
+        self.assertIn("LOCK_EX | LOCK_NB", bridge)
+        self.assertIn("for attempt in 0..<5", bridge)
+        self.assertIn("usleep(2_000)", bridge)
+        self.assertIn("self.readRequest()?.requestID == requestID", bridge)
+        self.assertNotIn("flock(fd, LOCK_EX) == 0", bridge)
+        verification = source("scripts/verify-llm-bridge.swift")
+        self.assertIn("holder.waitUntilExit()", verification)
+        self.assertIn("waited < 0.15", verification)
+        self.assertIn("preserved == malformed", verification)
+
     def test_haptic_disable_does_not_prewarm_engine(self):
         body = function("Shared/KeyboardHaptics.swift", "static func prepare()")
         self.assertLess(body.index("guard settings.keyboardHapticsEnabled"), body.index("KeyboardCoreHaptic.prewarm"))

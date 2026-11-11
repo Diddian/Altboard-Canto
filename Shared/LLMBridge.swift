@@ -135,7 +135,8 @@ struct LLMBridge: Sendable {
     }
     // Serialize terminal publication with cancellation and request handoff.
     return self.withBridgeLock {
-      guard let phase = self.readStatus(matching: requestID)?.phase,
+      guard self.readRequest()?.requestID == requestID,
+            let phase = self.readStatus(matching: requestID)?.phase,
             phase == .accepted || phase == .running,
             !self.hasResult() else { return false }
       do {
@@ -211,12 +212,17 @@ struct LLMBridge: Sendable {
     let path = root.appendingPathComponent("llm-bridge-v1.lock").path
     let fd = open(path, O_CREAT | O_RDWR, mode_t(0o600))
     guard fd >= 0 else { return nil }
-    defer {
-      _ = flock(fd, LOCK_UN)
-      _ = close(fd)
+    defer { _ = close(fd) }
+    // A synchronous flock(LOCK_EX) can freeze an extension input callback if
+    // the host is suspended while holding the lock. Bound the wait to 10 ms.
+    for attempt in 0..<5 {
+      if flock(fd, LOCK_EX | LOCK_NB) == 0 {
+        defer { _ = flock(fd, LOCK_UN) }
+        return operation()
+      }
+      if attempt < 4 { usleep(2_000) }
     }
-    guard flock(fd, LOCK_EX) == 0 else { return nil }
-    return operation()
+    return nil
   }
 
   private static let requestFileName = "llm_request.json"

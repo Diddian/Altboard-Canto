@@ -133,6 +133,59 @@ enum VerifyOperationContracts {
       from: Data("\"future-state\"".utf8))
     precondition(future == .interrupted)
     precondition(ConversationTurnPolicy.maximumRecoverySeconds > ConversationTurnPolicy.maximumCaptureSeconds)
+    // Real host stop sequence: final T/E is saved, the app then clears the
+    // shared mutable token, and keyboard reconciliation uses delivery T/E.
+    let finalToken = UUID().uuidString
+    let finalEpoch = UUID()
+    let finalDocument = UUID()
+    let finalDelivery = DictationDelivery(
+      schemaVersion: 1, resultID: UUID(), sessionToken: finalToken,
+      destinationEpoch: finalEpoch, text: "corrected text"
+    )
+    let sharedTokenAfterHostStop: String? = nil
+    precondition(sharedTokenAfterHostStop == nil)
+    func canFinish(
+      _ payload: DictationDelivery = finalDelivery,
+      request: String? = finalToken, owner: String? = finalToken,
+      epoch: UUID = finalEpoch, doc: UUID? = finalDocument,
+      before: String? = "prior misstyped", blocked: String? = nil,
+      cancelled: Bool = false
+    ) -> Bool {
+      LiveFinalDeliveryPolicy.mayReconcile(
+        delivery: payload, requestToken: request, ownerToken: owner,
+        currentEpoch: epoch, ownerEpoch: finalEpoch,
+        requestDocument: finalDocument, ownedDocument: finalDocument,
+        currentDocument: doc, anchor: "misstyped", before: before,
+        expectedAfter: "", after: "", selectedText: nil,
+        blockedToken: blocked, blockedKeyboardToken: nil,
+        cancelled: cancelled
+      )
+    }
+    precondition(canFinish())
+    precondition(LiveFinalReconciliation.plan(
+      partial: "misstyped", final: finalDelivery.text, marked: "misstyped",
+      prefix: "", before: "prior misstyped"
+    ) == .replace("corrected text"))
+    precondition(!canFinish(request: UUID().uuidString))
+    precondition(!canFinish(owner: UUID().uuidString))
+    precondition(!canFinish(epoch: UUID()))
+    precondition(!canFinish(doc: UUID()))
+    precondition(!canFinish(doc: nil))
+    precondition(!canFinish(before: "changed host text"))
+    precondition(!canFinish(blocked: finalToken))
+    precondition(!canFinish(cancelled: true))
+    precondition(!canFinish(DictationDelivery(
+      schemaVersion: 1, resultID: UUID(), sessionToken: UUID().uuidString,
+      destinationEpoch: finalEpoch, text: "foreign"
+    )))
+    precondition(!canFinish(DictationDelivery(
+      schemaVersion: 1, resultID: UUID(), sessionToken: finalToken,
+      destinationEpoch: UUID(), text: "other epoch"
+    )))
+    precondition(!canFinish(DictationDelivery(
+      schemaVersion: 2, resultID: UUID(), sessionToken: finalToken,
+      destinationEpoch: finalEpoch, text: "wrong schema"
+    )))
     precondition(OperationPhase.busy.isTerminal && !OperationPhase.accepted.isTerminal)
     precondition(!OperationPolicy.mayTransition(from: .accepted, to: .busy))
     precondition(LiveFinalReconciliation.plan(

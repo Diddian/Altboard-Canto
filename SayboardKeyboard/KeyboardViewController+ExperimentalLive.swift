@@ -107,22 +107,33 @@ extension KeyboardViewController {
   /// Never append the same final transcript twice. Replace live words only
   /// when the whole owned prefix is visible and verified; otherwise append a
   /// confirmed missing suffix, or expose the final result for manual review.
-  func completeExperimentalLiveText(_ final: String) -> Bool {
-    guard let owned = self.liveTranscriptionDocumentID else { return false }
+  func completeExperimentalLiveText(
+    _ delivery: DictationDelivery, cancellationRequested: Bool
+  ) -> Bool {
+    guard self.liveTranscriptionDocumentID != nil else { return false }
     defer { self.abandonExperimentalLiveOwnership() }
+    let final = delivery.text
     let proxy = self.textDocumentProxy
-    guard self.liveTranscriptionOwnerToken == self.dictationRequestToken,
-          self.liveTranscriptionOwnerToken == SharedSettings().dictationSessionToken,
-          LiveDeliveryPolicy.matchesField(
-            ownedDocument: owned, currentDocument: self.availableDocumentIdentifier(),
-            ownedEpoch: self.liveTranscriptionDocumentEpoch,
-            currentEpoch: self.keyboardState.documentEpoch,
-            anchor: String(self.liveTranscriptionMarkedText.suffix(24)),
-            before: proxy.documentContextBeforeInput,
-            expectedAfter: self.liveTranscriptionContextAfter,
-            after: proxy.documentContextAfterInput,
-            selectedText: proxy.selectedText
-          ) else {
+    // The host clears SharedSettings.dictationSessionToken before notifying
+    // the keyboard. Validate the immutable delivery, not the cleared flag.
+    guard LiveFinalDeliveryPolicy.mayReconcile(
+      delivery: delivery, requestToken: self.dictationRequestToken,
+      ownerToken: self.liveTranscriptionOwnerToken,
+      currentEpoch: self.keyboardState.documentEpoch,
+      ownerEpoch: self.liveTranscriptionDocumentEpoch,
+      requestDocument: self.dictationDocumentID,
+      ownedDocument: self.liveTranscriptionDocumentID,
+      currentDocument: self.availableDocumentIdentifier(),
+      anchor: String(self.liveTranscriptionMarkedText.suffix(24)),
+      before: proxy.documentContextBeforeInput,
+      expectedAfter: self.liveTranscriptionContextAfter,
+      after: proxy.documentContextAfterInput,
+      selectedText: proxy.selectedText,
+      blockedToken: self.liveTranscriptionBlockedToken,
+      blockedKeyboardToken: Self.blockedLiveSessionToken,
+      cancelled: cancellationRequested
+    ) else {
+      FeatureDiagnostics.record(.bridge, .fallback, operationID: delivery.sessionToken)
       self.keyboardState.showFinalOutputPreview(final)
       return true
     }

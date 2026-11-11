@@ -476,7 +476,10 @@ final class KeyboardViewController: UIInputViewController {
       return
     }
     let text = delivery.text
-    guard delivery.canInsert(requestToken: self.dictationRequestToken,
+    let settings = SharedSettings()
+    settings.synchronize()
+    guard !settings.dictationCancellationRequested,
+          delivery.canInsert(requestToken: self.dictationRequestToken,
                              currentEpoch: self.keyboardState.documentEpoch),
           self.dictationDocumentID != nil,
           self.availableDocumentIdentifier() == self.dictationDocumentID else {
@@ -501,8 +504,10 @@ final class KeyboardViewController: UIInputViewController {
       FeatureDiagnostics.record(.bridge, .fallback)
       return
     }
-    if self.completeExperimentalLiveText(text) {
-        self.keyboardState.showFinalOutputPreview(text)
+    if self.completeExperimentalLiveText(
+      delivery, cancellationRequested: settings.dictationCancellationRequested
+    ) {
+      self.keyboardState.showFinalOutputPreview(text)
       FeatureDiagnostics.record(.bridge, .completed)
       return
     }

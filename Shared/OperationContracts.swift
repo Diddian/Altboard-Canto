@@ -110,3 +110,35 @@ enum LiveFinalReconciliation {
     return .replace(prefix + final)
   }
 }
+
+enum LiveFinalDeliveryPolicy {
+  /// A final transcript is delivered after the host may have cleared its
+  /// mutable session flag. Only the immutable delivery, captured request and
+  /// the current UIKit destination can authorize reconciliation.
+  static func mayReconcile(
+    delivery: DictationDelivery,
+    requestToken: String?, ownerToken: String?,
+    currentEpoch: UUID, ownerEpoch: UUID?,
+    requestDocument: UUID?, ownedDocument: UUID?, currentDocument: UUID?,
+    anchor: String, before: String?,
+    expectedAfter: String?, after: String?, selectedText: String?,
+    blockedToken: String?, blockedKeyboardToken: String?,
+    cancelled: Bool
+  ) -> Bool {
+    guard !cancelled,
+          delivery.canInsert(requestToken: requestToken, currentEpoch: currentEpoch),
+          UUID(uuidString: delivery.sessionToken) != nil,
+          ownerToken == delivery.sessionToken,
+          ownerEpoch == currentEpoch,
+          let requestDocument, requestDocument == ownedDocument,
+          blockedToken != delivery.sessionToken,
+          blockedKeyboardToken != delivery.sessionToken else { return false }
+
+    return LiveDeliveryPolicy.matchesField(
+      ownedDocument: ownedDocument, currentDocument: currentDocument,
+      ownedEpoch: ownerEpoch, currentEpoch: currentEpoch,
+      anchor: anchor, before: before,
+      expectedAfter: expectedAfter, after: after, selectedText: selectedText
+    )
+  }
+}
