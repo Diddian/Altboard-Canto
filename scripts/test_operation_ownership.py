@@ -218,7 +218,9 @@ class OperationOwnershipTests(unittest.TestCase):
             self.assertIn(guard, live)
         controller = source("SayboardKeyboard/KeyboardViewController.swift")
         self.assertIn("if Self.blockedLiveSessionToken != settings.dictationSessionToken", controller)
-        self.assertIn("self.availableDocumentIdentifier() == self.dictationDocumentID", controller)
+        self.assertIn("currentDocument == self.dictationDocumentID", controller)
+        self.assertIn("DictationRequestPolicy.isSameDestination(", controller)
+        self.assertIn("fingerprint: settings.dictationDestinationFingerprint", controller)
 
     def test_meeting_does_not_end_a_borrowed_audio_session(self):
         body = function("Sayboard/Services/MeetingRecordingCoordinator.swift", "func start(", "private func heartbeat()")
