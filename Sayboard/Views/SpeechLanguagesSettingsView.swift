@@ -74,13 +74,13 @@ struct SpeechLanguagesSettingsView: View {
       self.showPreferredLanguagePicker = true
     } label: {
       HStack(spacing: 10) {
-        Image(systemName: "globe")
-          .font(.system(size: 18, weight: .regular))
-          .frame(width: 24)
-          .foregroundStyle(Color.accentColor)
-          .accessibilityHidden(true)
-        Text("Language Priority")
-          .foregroundStyle(.primary)
+        Label {
+          Text("Language Priority").foregroundStyle(.primary)
+        } icon: {
+          Image(systemName: "globe")
+            .foregroundStyle(Color.accentColor)
+            .accessibilityHidden(true)
+        }
         Spacer(minLength: 8)
         Text(verbatim: self.languagePrioritySummary)
           .font(.body.weight(.semibold))
@@ -92,7 +92,6 @@ struct SpeechLanguagesSettingsView: View {
           .foregroundStyle(Color.accentColor)
       }
       .contentShape(Rectangle())
-      .frame(height: 31)
     }
     .buttonStyle(.plain)
     .accessibilityLabel("Language Priority")

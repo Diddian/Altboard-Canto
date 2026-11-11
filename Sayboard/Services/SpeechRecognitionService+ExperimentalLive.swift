@@ -19,7 +19,7 @@ extension SpeechRecognitionService {
       var hasAttemptedFirst = false
       // Shorten first-text capture delay without starting concurrent 1.7B
       // inference jobs. Native offline decode time remains device-dependent.
-      // The first chunk is one second; later chunks are 1.5 seconds.
+      // A 1.5-second first chunk restores the earlier reliable recognizer context.
       // Inference stays serialized and decode time remains device-dependent.
       while !Task.isCancelled && self.isRecording {
         let frameCount = LiveDictationChunkPolicy.samples(
@@ -33,6 +33,7 @@ extension SpeechRecognitionService {
           continue
         }
         readOffset += samples.count
+        let firstChunk = !hasAttemptedFirst
         hasAttemptedFirst = true
         self.liveDictationStatus = "Transcribing live segment"
         let started = CFAbsoluteTimeGetCurrent()
@@ -56,6 +57,14 @@ extension SpeechRecognitionService {
               FeatureDiagnostics.record(.liveDictation, .firstUpdate,
                 durationMs: Int((CFAbsoluteTimeGetCurrent() - liveStartedAt) * 1_000))
             }
+          }
+        }
+        if firstChunk && revision == 0 {
+          switch result {
+          case .text, .noSpeech:
+            FeatureDiagnostics.record(.liveDictation, .noSpeech, operationID: token)
+          case .failed:
+            FeatureDiagnostics.record(.liveDictation, .failed, operationID: token)
           }
         }
         // Diagnostic is duration only. No text or audio is logged.

@@ -11,6 +11,56 @@ def read(path):
 
 
 class SettingsContractTests(unittest.TestCase):
+    def test_language_priority_uses_native_form_row_geometry(self):
+        source = read("Sayboard/Views/SpeechLanguagesSettingsView.swift")
+        selection = source.split("private var languageSelectionRows", 1)[1].split(
+            "private var languagePrioritySummary", 1
+        )[0]
+        self.assertIn('Text("Language Priority")', selection)
+        self.assertIn('Label {', selection)
+        self.assertNotIn(".frame(height: 31)", selection)
+        self.assertNotIn('.frame(width: 24)', selection)
+
+    def test_keyboard_option_toggle_and_preview_share_one_state_owner(self):
+        parent = read("Sayboard/Views/KeyboardSettingsView.swift")
+        editor = read("Sayboard/Views/KeyboardCustomizationView.swift")
+        self.assertIn('showGlobe: self.$showExtraGlobeKey', parent)
+        self.assertIn('showSettingsKey: self.$showSettingsKey', parent)
+        self.assertIn('showOutputButton: self.$showOutputLanguageButton', parent)
+        self.assertIn('showAIButton: self.$showAIButton', parent)
+        for property_name in ('showExtraGlobeKey', 'showSettingsKey',
+                              'showOutputLanguageButton', 'showAIButton'):
+            self.assertIn(f'{property_name}: self.{property_name}', parent)
+        self.assertEqual(parent.count("@AppStorage(SharedKey.keyboardShowGlobeKey"), 1)
+        self.assertIn("@Binding var showGlobe: Bool", editor)
+        self.assertNotIn("@AppStorage(SharedKey.keyboardShowGlobeKey", editor)
+        self.assertIn('if self.systemSwitchRequired && !self.showExtraGlobeKey', parent)
+
+    def test_conversation_symmetric_controls_and_live_prewarm(self):
+        view = read("Sayboard/Views/ConversationView.swift")
+        owner = read("Sayboard/Services/ConversationCoordinator.swift")
+        speech = read("Sayboard/Services/SpeechRecognitionService.swift")
+        events = read("Shared/FeatureDiagnostics.swift")
+        policy = read("Shared/LiveDictationChunkPolicy.swift")
+        self.assertIn('.toolbar(.hidden, for: .navigationBar)', view)
+        self.assertIn('.overlay(alignment: .bottomTrailing)', view)
+        self.assertIn('self.conversationOptions', view)
+        self.assertNotIn('ToolbarItem(placement: .topBarTrailing)', view)
+        self.assertIn('if target != .original', view)
+        self.assertIn('self.conversation.prepareLivePreview(using: self.speechService)', view)
+        self.assertIn('func prepareLivePreview(using service: SpeechRecognitionService)', owner)
+        self.assertIn('self.warmupTask == nil', owner)
+        self.assertIn('service.activeLoadState == .unloaded', owner)
+        self.assertIn('if self.recordingSide != nil { self.startLivePreview(using: service) }', owner)
+        self.assertIn('await self.warmupTask?.value', owner)
+        self.assertIn('guard self.liveTask == nil', owner)
+        self.assertIn('case .noSpeech:', owner)
+        self.assertIn('static let firstQwenSamples = 24_000', policy)
+        self.assertIn('failureReason: .insufficientMemory', owner)
+        self.assertIn('failureReason: .insufficientMemory', speech)
+        self.assertIn('insufficientMemory', events)
+        self.assertNotIn('URLSession', owner + view)
+
     def test_one_microphone_owner_for_dictation_and_meetings(self):
         audio = read("Sayboard/Services/BackgroundAudioSession.swift")
         speech = read("Sayboard/Services/SpeechRecognitionService.swift")
@@ -129,7 +179,7 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("speakerOwnsLastTurn || recent?.targetCode == \"\"", ui)
         self.assertIn("self.targetPicker(side: side)", ui)
         self.assertIn("self.visibleSource(self.conversation.liveSource, spokenBy: activeSpeaker ?? side)", ui)
-        self.assertIn("let isTranslating = !live && isReceiver && !showsOriginalLanguage", ui)
+        self.assertIn("if target != .original", ui)
         self.assertIn("let target = speaker == .me ? self.visitorOutput : self.myOutput", ui)
         self.assertIn('Text(self.localeText(live ? "live"', ui)
         self.assertIn('Live-Transkription', ui)

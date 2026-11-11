@@ -115,28 +115,8 @@ final class ConversationCoordinator: ObservableObject {
       // Partial words are visible while recording when a warmed model is
       // available. Never run two native ASR decodes concurrently.
       self.startLivePreview(using: service)
-      if service.activeLoadState != .loaded,
-         let downloads = service.downloadService {
-        let availableMB = Int(os_proc_available_memory() / 1_048_576)
-        let minimumMB = max(2_400,
-          Int(Double(SharedSettings().selectedVariant.ramRequirementMB) * 0.58))
-        if availableMB >= minimumMB {
-          self.warmupTask = Task { @MainActor [weak self, weak service] in
-            guard let self, let service else { return }
-            await service.loadModelIfAvailable(downloadService: downloads)
-            if self.recordingSide != nil, service.activeLoadState == .loaded {
-              self.startLivePreview(using: service)
-            } else if self.recordingSide != nil {
-              self.livePreviewUnavailable = true
-              self.status = "Live text unavailable; recording is saved for transcription after Stop."
-              FeatureDiagnostics.record(.liveDictation, .fallback)
-            }
-          }
-        } else {
-          self.livePreviewUnavailable = true
-          self.status = "Live text unavailable due to memory pressure; transcript after Stop."
-          FeatureDiagnostics.record(.liveDictation, .fallback)
-        }
+      if service.activeLoadState != .loaded {
+        self.scheduleLivePreviewWarmup(using: service)
       }
       self.limitTask?.cancel()
       self.limitTask = Task { @MainActor [weak self, weak service] in
@@ -182,6 +162,9 @@ final class ConversationCoordinator: ObservableObject {
     }
     let samples = self.accumulator.consumeAll()
     self.accumulator.reset()
+    if self.liveTask != nil {
+      FeatureDiagnostics.record(.liveDictation, .stopped, operationID: identifier.uuidString)
+    }
     self.liveTask?.cancel()
     await self.liveTask?.value
     self.liveTask = nil
@@ -393,10 +376,58 @@ final class ConversationCoordinator: ObservableObject {
     return true
   }
 
+  /// Prepare the selected offline recognizer when Conversation becomes visible.
+  /// Reuse the same task after recording begins; do not start a second load.
+  func prepareLivePreview(using service: SpeechRecognitionService) {
+    guard self.recordingSide == nil, !self.processing,
+          !LocalUserDataStore.isExporting,
+          !service.isModelInUse, !service.isStopping,
+          service.llmCoordinator?.isProcessing != true,
+          MeetingRecordingCoordinator.shared.translatingRecordID == nil,
+          !MeetingRecordingCoordinator.shared.isFinalizing else { return }
+    self.scheduleLivePreviewWarmup(using: service)
+  }
+
+  private func scheduleLivePreviewWarmup(using service: SpeechRecognitionService) {
+    guard self.warmupTask == nil, service.activeLoadState == .unloaded else { return }
+    guard let downloads = service.downloadService else {
+      if self.recordingSide != nil {
+        self.livePreviewUnavailable = true
+        self.status = "Live text unavailable; downloaded speech model not found."
+        FeatureDiagnostics.record(.liveDictation, .fallback, failureReason: .missingModelFile)
+      }
+      return
+    }
+    let availableMB = Int(os_proc_available_memory() / 1_048_576)
+    let minimumMB = max(2_400,
+      Int(Double(SharedSettings().selectedVariant.ramRequirementMB) * 0.58))
+    guard availableMB >= minimumMB else {
+      if self.recordingSide != nil {
+        self.livePreviewUnavailable = true
+        self.status = "Live text unavailable due to memory pressure; transcript after Stop."
+        FeatureDiagnostics.record(.liveDictation, .fallback, failureReason: .insufficientMemory)
+      }
+      return
+    }
+    self.warmupTask = Task { @MainActor [weak self, weak service] in
+      guard let self, let service else { return }
+      await service.loadModelIfAvailable(downloadService: downloads)
+      if service.activeLoadState == .loaded {
+        if self.recordingSide != nil { self.startLivePreview(using: service) }
+      } else if self.recordingSide != nil {
+        self.livePreviewUnavailable = true
+        self.status = "Live text unavailable; recording is saved for transcription after Stop."
+        FeatureDiagnostics.record(.liveDictation, .fallback, failureReason: .modelLoadFailed)
+      }
+      self.warmupTask = nil
+    }
+  }
+
   private func startLivePreview(using service: SpeechRecognitionService) {
-    self.liveTask?.cancel()
-    guard service.activeLoadState == .loaded else { return }
+    guard self.liveTask == nil, service.activeLoadState == .loaded else { return }
     self.livePreviewUnavailable = false
+    let operationID = self.activeID?.uuidString
+    FeatureDiagnostics.record(.liveDictation, .started, operationID: operationID)
     self.liveTask = Task { @MainActor [weak self, weak service] in
       guard let self, let service else { return }
       var offset = 0
@@ -415,19 +446,28 @@ final class ConversationCoordinator: ObservableObject {
           continue
         }
         offset += samples.count
+        let firstChunk = !hasAttemptedFirst
         hasAttemptedFirst = true
         let result = await service.transcribeSamples(samples)
         guard !Task.isCancelled, self.recordingSide != nil else { break }
-        if case .text(let output) = result {
+        switch result {
+        case .text(let output):
           let raw = TextSanitizer.sanitize(output.text)
           if !raw.isEmpty {
             self.liveSource = ExperimentalSpeechSegments.append(raw, to: self.liveSource)
             if !didPublishFirstUpdate {
               didPublishFirstUpdate = true
               FeatureDiagnostics.record(.liveDictation, .firstUpdate,
-                durationMs: Int((CFAbsoluteTimeGetCurrent() - previewStarted) * 1_000))
+                durationMs: Int((CFAbsoluteTimeGetCurrent() - previewStarted) * 1_000),
+                operationID: operationID)
             }
+          } else if firstChunk {
+            FeatureDiagnostics.record(.liveDictation, .noSpeech, operationID: operationID)
           }
+        case .noSpeech:
+          if firstChunk { FeatureDiagnostics.record(.liveDictation, .noSpeech, operationID: operationID) }
+        case .failed:
+          if firstChunk { FeatureDiagnostics.record(.liveDictation, .failed, operationID: operationID) }
         }
       }
     }

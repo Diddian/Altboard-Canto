@@ -34,36 +34,14 @@ struct ConversationView: View {
           .frame(height: panelHeight)
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-    .navigationTitle("Conversation")
-    .navigationBarTitleDisplayMode(.inline)
-    .toolbar {
-      ToolbarItem(placement: .topBarTrailing) {
-        Menu {
-          Toggle("Clean Up Speech After Recording", isOn: self.$cleanupEnabled)
-            .disabled(self.conversation.recordingSide != nil || self.conversation.processing)
-          if let last = self.conversation.turns.last, last.needsRetry {
-            Button("Retry Last Turn", systemImage: "arrow.clockwise") {
-              Task { await self.conversation.retry(last.id, using: self.speechService) }
-            }.disabled(self.conversation.processing || self.conversation.recordingSide != nil)
-          }
-          Button("Save as Meeting", systemImage: "square.and.arrow.down") {
-            _ = self.conversation.saveAsMeeting()
-          }
-          .disabled(self.conversation.turns.isEmpty
-            || self.conversation.recordingSide != nil || self.conversation.processing)
-          Button("Discard Conversation", systemImage: "trash", role: .destructive) {
-            self.showingDiscard = true
-          }
-          .disabled(self.conversation.turns.isEmpty
-            || self.conversation.recordingSide != nil || self.conversation.processing)
-        } label: {
-          Image(systemName: "ellipsis.circle")
-            .frame(minWidth: 44, minHeight: 44)
-        }
-        .accessibilityLabel("Conversation options")
+      .overlay(alignment: .bottomTrailing) {
+        self.conversationOptions
+          .padding(.trailing, 20)
+          .padding(.bottom, 12)
       }
     }
+    .toolbar(.hidden, for: .navigationBar)
+    .onAppear { self.conversation.prepareLivePreview(using: self.speechService) }
     .confirmationDialog(
       "Discard unsaved conversation?",
       isPresented: self.$showingDiscard,
@@ -78,6 +56,33 @@ struct ConversationView: View {
     }
   }
 
+  private var conversationOptions: some View {
+    Menu {
+      Toggle("Clean Up Speech After Recording", isOn: self.$cleanupEnabled)
+        .disabled(self.conversation.recordingSide != nil || self.conversation.processing)
+      if let last = self.conversation.turns.last, last.needsRetry {
+        Button("Retry Last Turn", systemImage: "arrow.clockwise") {
+          Task { await self.conversation.retry(last.id, using: self.speechService) }
+        }.disabled(self.conversation.processing || self.conversation.recordingSide != nil)
+      }
+      Button("Save as Meeting", systemImage: "square.and.arrow.down") {
+        _ = self.conversation.saveAsMeeting()
+      }
+      .disabled(self.conversation.turns.isEmpty
+        || self.conversation.recordingSide != nil || self.conversation.processing)
+      Button("Discard Conversation", systemImage: "trash", role: .destructive) {
+        self.showingDiscard = true
+      }
+      .disabled(self.conversation.turns.isEmpty
+        || self.conversation.recordingSide != nil || self.conversation.processing)
+    } label: {
+      Image(systemName: "ellipsis.circle")
+        .frame(minWidth: 44, minHeight: 44)
+        .contentShape(Rectangle())
+    }
+    .accessibilityLabel("Conversation options")
+  }
+
   private func panel(side: ConversationSpeaker) -> some View {
     let activeSpeaker = self.conversation.recordingSide
     let isSpeaking = activeSpeaker == side
@@ -89,7 +94,6 @@ struct ConversationView: View {
     let code = side == .other ? self.visitorCode : self.myCode
     let detected = live ? self.liveLanguage : recent?.detectedLanguageCode
     let isReceiver = recent != nil && !speakerOwnsLastTurn
-    let isTranslating = !live && isReceiver && !showsOriginalLanguage
     let displayText: String
     if live {
       displayText = self.conversation.liveSource.isEmpty
@@ -121,7 +125,7 @@ struct ConversationView: View {
             .foregroundStyle(.secondary)
             .accessibilityLabel(self.localeText("detected", target: target) + ": " + self.nativeLanguageName(detected))
         }
-        if isTranslating {
+        if target != .original {
           Image(systemName: "arrow.left.arrow.right")
             .font(.caption).foregroundStyle(.secondary).accessibilityHidden(true)
         }

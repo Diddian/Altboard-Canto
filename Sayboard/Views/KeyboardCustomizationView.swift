@@ -3,14 +3,12 @@ import SwiftUI
 /// One place for optional keyboard behaviors, separate from layout selection.
 struct KeyboardCustomizationView: View {
   var inline = false
-  @AppStorage(SharedKey.keyboardShowGlobeKey, store: AppGroup.sharedDefaults ?? .standard)
-  private var showGlobe = false
-  @AppStorage(SharedKey.keyboardShowSettingsKey, store: AppGroup.sharedDefaults ?? .standard)
-  private var showSettingsKey = true
-  @AppStorage(SharedKey.keyboardShowOutputLanguageButton, store: AppGroup.sharedDefaults ?? .standard)
-  private var showOutputButton = true
-  @AppStorage(SharedKey.keyboardShowAIButton, store: AppGroup.sharedDefaults ?? .standard)
-  private var showAIButton = true
+  // The parent Settings view owns the persisted toggles. Share its live bindings
+  // with the preview instead of creating a second AppStorage observer.
+  @Binding var showGlobe: Bool
+  @Binding var showSettingsKey: Bool
+  @Binding var showOutputButton: Bool
+  @Binding var showAIButton: Bool
 
   var body: some View {
     Group {

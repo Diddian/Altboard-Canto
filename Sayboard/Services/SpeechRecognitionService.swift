@@ -204,6 +204,8 @@ final class SpeechRecognitionService: ObservableObject {
       guard availableMB >= minimumMB else {
         if wantsLive {
           self.liveDictationStatus = "Insufficient memory to warm Qwen while recording"
+          FeatureDiagnostics.record(.liveDictation, .fallback,
+            failureReason: .insufficientMemory)
         }
         DictationBreadcrumb.record(
           "qwen: deferred warmup (available \(availableMB)MB, budget \(minimumMB)MB)"
@@ -221,6 +223,10 @@ final class SpeechRecognitionService: ObservableObject {
       if wantsLive {
         self.liveDictationStatus = self.activeLoadState == .loaded
           ? "Recognizer ready" : "Recognizer could not load"
+        if self.activeLoadState != .loaded {
+          FeatureDiagnostics.record(.liveDictation, .fallback,
+            failureReason: .modelLoadFailed)
+        }
       }
       DictationBreadcrumb.record(
         "qwen: concurrent warmup ended in state \(String(describing: self.activeLoadState))"

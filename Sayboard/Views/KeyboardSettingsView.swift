@@ -16,6 +16,14 @@ struct KeyboardSettingsView: View {
   private var hapticsEnabled = true
   @AppStorage(SharedKey.keyboardHapticStrength, store: AppGroup.sharedDefaults ?? .standard)
   private var hapticStrength = SharedSettings.defaultKeyboardHapticStrength
+  @AppStorage(SharedKey.keyboardShowGlobeKey, store: AppGroup.sharedDefaults ?? .standard)
+  private var showExtraGlobeKey = false
+  @AppStorage(SharedKey.keyboardShowSettingsKey, store: AppGroup.sharedDefaults ?? .standard)
+  private var showSettingsKey = true
+  @AppStorage(SharedKey.keyboardShowOutputLanguageButton, store: AppGroup.sharedDefaults ?? .standard)
+  private var showOutputLanguageButton = true
+  @AppStorage(SharedKey.keyboardShowAIButton, store: AppGroup.sharedDefaults ?? .standard)
+  private var showAIButton = true
 
   var body: some View {
     Group {
@@ -81,7 +89,13 @@ struct KeyboardSettingsView: View {
         Label("Haptic Settings", systemImage: "hand.tap")
       }
       DisclosureGroup {
-        KeyboardCustomizationView(inline: true)
+        KeyboardCustomizationView(
+          inline: true,
+          showGlobe: self.$showExtraGlobeKey,
+          showSettingsKey: self.$showSettingsKey,
+          showOutputButton: self.$showOutputLanguageButton,
+          showAIButton: self.$showAIButton
+        )
       } label: {
         Label("Keyboard Customization", systemImage: "slider.horizontal.3")
       }
@@ -90,7 +104,11 @@ struct KeyboardSettingsView: View {
         microphoneLayout: MicrophoneKeyboardLayout(rawValue: self.microphoneLayoutRaw)
           ?? .defaultLayout,
         letterArrangement: LetterKeyArrangement(rawValue: self.letterArrangementRaw)
-          ?? .qwertz
+          ?? .qwertz,
+        showExtraGlobeKey: self.showExtraGlobeKey,
+        showSettingsKey: self.showSettingsKey,
+        showOutputLanguageButton: self.showOutputLanguageButton,
+        showAIButton: self.showAIButton
       )
       .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
       Text("Tap preview keys to test haptics. Extra Globe appears at the far left only when enabled.")
@@ -110,24 +128,20 @@ private struct KeyboardTestPreview: View {
   let kind: KeyboardKind
   let microphoneLayout: MicrophoneKeyboardLayout
   let letterArrangement: LetterKeyArrangement
+  let showExtraGlobeKey: Bool
+  let showSettingsKey: Bool
+  let showOutputLanguageButton: Bool
+  let showAIButton: Bool
 
   // UIKit alone decides whether an in-keyboard system switch is required.
   // Extra Globe is a separate, opt-in action-row shortcut.
   @AppStorage(SharedKey.needsInputModeSwitchKey, store: AppGroup.sharedDefaults ?? .standard)
   private var systemSwitchRequired = false
-  @AppStorage(SharedKey.keyboardShowGlobeKey, store: AppGroup.sharedDefaults ?? .standard)
-  private var showExtraGlobeKey = false
   @AppStorage(SharedKey.hasUsableLLMModel, store: UserDefaults(suiteName: AppGroup.identifier))
   private var hasUsableLLMModel = false
-  @AppStorage(SharedKey.keyboardShowSettingsKey, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var showSettingsKey = true
-  @AppStorage(SharedKey.keyboardShowOutputLanguageButton, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var showOutputLanguageButton = true
   private var outputKeyEnabled: Bool {
     self.showOutputLanguageButton
   }
-  @AppStorage(SharedKey.keyboardShowAIButton, store: UserDefaults(suiteName: AppGroup.identifier))
-  private var showAIButton = true
 
   private var compact: Bool {
     self.kind == .standard && self.microphoneLayout == .compact
