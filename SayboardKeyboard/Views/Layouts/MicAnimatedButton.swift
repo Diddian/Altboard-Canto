@@ -306,27 +306,37 @@ struct MicAnimatedButton: View {
       self.proxy.cancelDictation()
     } else if self.keyboardState.isDictationLocked {
       if let url = DeepLink.unlockURL { self.proxy.openURL(url) }
-    } else if self.keyboardState.isSessionActive || HistoryKeyboardTestSession.isFocused {
-      // The containing app is already foregrounded in its History test field.
-      // Use the existing Darwin bridge directly; do not open Altboard again.
-      self.keyboardState.isStartingRecording = true
-      self.lastStartTapAt = Date()
-      MicrophoneHoldStopIntent.clear(defaults: SharedSettings().defaults)
-      self.proxy.startDictation()
-    } else if let url = DeepLink.dictateURL {
-      self.keyboardState.isStartingRecording = true
-      self.lastStartTapAt = Date()
+    } else {
       let settings = SharedSettings()
-      MicrophoneHoldStopIntent.clear(defaults: settings.defaults)
-      if OperatingSystem.isHostBundleIdBroken {
-        self.proxy.resolveHost()
-      }
-      settings.dictationCancellationRequested = false
-      settings.keyboardRequestedDictationAt = CFAbsoluteTimeGetCurrent()
-      settings.keyboardRequestedDictation = true
-      settings.dictationSessionToken = UUID().uuidString
       settings.synchronize()
-      self.proxy.openURL(url)
+      let direct = DictationRequestPolicy.shouldRequestWarmSession(
+        keyboardActive: self.keyboardState.isSessionActive,
+        appActive: settings.isSessionActive,
+        heartbeat: settings.mainAppHeartbeat,
+        now: CFAbsoluteTimeGetCurrent(),
+        practiceFocused: HistoryKeyboardTestSession.isFocused
+      )
+      if direct {
+        // The keyboard may be a new UIKit instance while the app's audio
+        // session is still alive. Recheck shared state on every mic tap.
+        self.keyboardState.isStartingRecording = true
+        self.lastStartTapAt = Date()
+        MicrophoneHoldStopIntent.clear(defaults: settings.defaults)
+        self.proxy.startDictation()
+      } else if let url = DeepLink.dictateURL {
+        self.keyboardState.isStartingRecording = true
+        self.lastStartTapAt = Date()
+        MicrophoneHoldStopIntent.clear(defaults: settings.defaults)
+        if OperatingSystem.isHostBundleIdBroken {
+          self.proxy.resolveHost()
+        }
+        settings.dictationCancellationRequested = false
+        settings.keyboardRequestedDictationAt = CFAbsoluteTimeGetCurrent()
+        settings.keyboardRequestedDictation = true
+        settings.dictationSessionToken = UUID().uuidString
+        settings.synchronize()
+        self.proxy.openURL(url)
+      }
     }
   }
 
