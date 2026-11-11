@@ -207,6 +207,7 @@ final class ConversationCoordinator: ObservableObject {
   ) async {
     defer { self.processing = false }
     guard self.turns.indices.contains(index) else { return }
+    let turnID = self.turns[index].id
     self.status = "Recognizing original speech…"
     if service.activeLoadState != .loaded, let downloads = service.downloadService {
       await service.loadModelIfAvailable(downloadService: downloads)
@@ -220,6 +221,9 @@ final class ConversationCoordinator: ObservableObject {
     }
     let started = CFAbsoluteTimeGetCurrent()
     let result = await service.transcribeSamples(samples)
+    // Late recognition cannot mutate a different speaker's saved turn.
+    guard self.processing, self.turns.indices.contains(index),
+          self.turns[index].id == turnID else { return }
     FeatureDiagnostics.record(
       .conversation, .completed,
       durationMs: Int((CFAbsoluteTimeGetCurrent() - started) * 1_000),
@@ -266,7 +270,6 @@ final class ConversationCoordinator: ObservableObject {
     }
 
     self.status = "Preparing transcript and translation…"
-    let turnID = self.turns[index].id
     // Cleanup and translation run in one already-loaded text-model session.
     // Save the cleaned speaker text before the listener's translation finishes.
     let translation = await coordinator.processConversationTurn(source, options: options) {
@@ -280,6 +283,9 @@ final class ConversationCoordinator: ObservableObject {
         ? "Transcript ready" : "Translating…"
       _ = self.persistDraft()
     }
+
+    guard self.processing, self.turns.indices.contains(index),
+          self.turns[index].id == turnID else { return }
 
     if options.target == .original {
       self.turns[index].status = .original
@@ -324,6 +330,8 @@ final class ConversationCoordinator: ObservableObject {
       let output = await coordinator.processVoiceDictation(
         turn.cleanedSourceText ?? turn.sourceText, options: options
       )
+      guard self.processing, self.turns.indices.contains(index),
+            self.turns[index].id == turnID else { return }
       if let output, !output.isEmpty {
         self.turns[index].translatedText = output
         self.turns[index].status = .translated
@@ -428,7 +436,8 @@ final class ConversationCoordinator: ObservableObject {
   private func startLivePreview(using service: SpeechRecognitionService) {
     guard self.liveTask == nil, service.activeLoadState == .loaded else { return }
     self.livePreviewUnavailable = false
-    let operationID = self.activeID?.uuidString
+    let sessionID = self.activeID
+    let operationID = sessionID?.uuidString
     FeatureDiagnostics.record(.liveDictation, .started, operationID: operationID)
     self.liveTask = Task { @MainActor [weak self, weak service] in
       guard let self, let service else { return }
@@ -436,7 +445,8 @@ final class ConversationCoordinator: ObservableObject {
       let previewStarted = CFAbsoluteTimeGetCurrent()
       var didPublishFirstUpdate = false
       var hasAttemptedFirst = false
-      while !Task.isCancelled && self.recordingSide != nil {
+      while !Task.isCancelled && self.recordingSide != nil
+              && self.activeID == sessionID {
         let frameCount = LiveDictationChunkPolicy.samples(
           isQwen: service.settings.selectedVariant.engine == .qwen3,
           hasAttemptedFirst: hasAttemptedFirst
@@ -451,7 +461,8 @@ final class ConversationCoordinator: ObservableObject {
         let firstChunk = !hasAttemptedFirst
         hasAttemptedFirst = true
         let result = await service.transcribeSamples(samples)
-        guard !Task.isCancelled, self.recordingSide != nil else { break }
+        guard !Task.isCancelled, self.recordingSide != nil,
+              self.activeID == sessionID else { break }
         switch result {
         case .text(let output):
           let raw = TextSanitizer.sanitize(output.text)

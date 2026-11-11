@@ -58,7 +58,14 @@ enum VerifyOperationContracts {
     let b = LLMRequest(text: "second", action: .rewrite, customPromptId: nil, language: "en")
     precondition(LLMBridge.writeRequest(a))
     precondition(LLMBridge.readStatus(matching: a.requestID)?.phase == .requested)
-    LLMBridge.writeStatus(.accepted, requestID: a.requestID)
+    // A second keyboard cannot replace another pending request.
+    precondition(!LLMBridge.writeRequest(b))
+    precondition(LLMBridge.readRequest()?.requestID == a.requestID)
+    precondition(LLMBridge.writeStatus(.accepted, requestID: a.requestID))
+    // A replayed Darwin notification must not turn the active job into busy.
+    precondition(!LLMBridge.writeStatus(.busy, requestID: a.requestID))
+    LLMBridge.clearRequest(matching: a.requestID)
+    precondition(LLMBridge.readRequest()?.requestID == a.requestID)
     LLMBridge.writeStatus(.busy, requestID: b.requestID)
     precondition(LLMBridge.readStatus(matching: a.requestID)?.phase == .accepted)
     precondition(LLMBridge.readStatus(matching: b.requestID)?.phase == .busy)
@@ -68,10 +75,26 @@ enum VerifyOperationContracts {
     precondition(LLMBridge.readStatus(matching: a.requestID)?.phase == .completed)
     LLMBridge.clearResult(matching: b.requestID)
     precondition(LLMBridge.readResult(matching: a.requestID) == "result")
+    precondition(!LLMBridge.writeRequest(b))
     LLMBridge.clearResult(matching: a.requestID)
     precondition(!LLMBridge.hasResult())
     LLMBridge.clearRequest(matching: a.requestID)
     precondition(LLMBridge.readRequest() == nil)
+    let nextRequest = LLMRequest(text: "next", action: .rewrite,
+      customPromptId: nil, language: "en")
+    precondition(LLMBridge.writeRequest(nextRequest))
+    precondition(LLMBridge.readRequest()?.requestID == nextRequest.requestID)
+    // Preserve unreadable pending data rather than overwriting it.
+    precondition(LLMBridge.writeStatus(.cancelled, requestID: nextRequest.requestID))
+    LLMBridge.clearRequest(matching: nextRequest.requestID)
+    let malformedURL = AppGroup.containerURL!.appendingPathComponent("llm_request.json")
+    try Data("malformed-pending-request".utf8).write(to: malformedURL, options: .atomic)
+    let blocked = LLMRequest(text: "must not overwrite", action: .rewrite,
+      customPromptId: nil, language: "de")
+    precondition(!LLMBridge.writeRequest(blocked))
+    let preservedPendingBytes = try Data(contentsOf: malformedURL)
+    precondition(preservedPendingBytes == Data("malformed-pending-request".utf8))
+    try FileManager.default.removeItem(at: malformedURL)
 
     precondition(TranscriptionBridge.writeTranscription("synthetic final text"))
     let pending = TranscriptionBridge.readDelivery()!
@@ -110,7 +133,129 @@ enum VerifyOperationContracts {
       from: Data("\"future-state\"".utf8))
     precondition(future == .interrupted)
     precondition(ConversationTurnPolicy.maximumRecoverySeconds > ConversationTurnPolicy.maximumCaptureSeconds)
+    // Real host stop sequence: final T/E is saved, the app then clears the
+    // shared mutable token, and keyboard reconciliation uses delivery T/E.
+    let finalToken = UUID().uuidString
+    let finalEpoch = UUID()
+    let finalDocument = UUID()
+    let finalDelivery = DictationDelivery(
+      schemaVersion: 1, resultID: UUID(), sessionToken: finalToken,
+      destinationEpoch: finalEpoch, text: "corrected text"
+    )
+    let sharedTokenAfterHostStop: String? = nil
+    precondition(sharedTokenAfterHostStop == nil)
+    func canFinish(
+      _ payload: DictationDelivery = finalDelivery,
+      request: String? = finalToken, owner: String? = finalToken,
+      epoch: UUID = finalEpoch, doc: UUID? = finalDocument,
+      before: String? = "prior misstyped", blocked: String? = nil,
+      cancelled: Bool = false
+    ) -> Bool {
+      LiveFinalDeliveryPolicy.mayReconcile(
+        delivery: payload, requestToken: request, ownerToken: owner,
+        currentEpoch: epoch, ownerEpoch: finalEpoch,
+        requestDocument: finalDocument, ownedDocument: finalDocument,
+        currentDocument: doc, anchor: "misstyped", before: before,
+        expectedAfter: "", after: "", selectedText: nil,
+        blockedToken: blocked, blockedKeyboardToken: nil,
+        cancelled: cancelled
+      )
+    }
+    precondition(canFinish())
+    precondition(LiveFinalReconciliation.plan(
+      partial: "misstyped", final: finalDelivery.text, marked: "misstyped",
+      prefix: "", before: "prior misstyped"
+    ) == .replace("corrected text"))
+    precondition(!canFinish(request: UUID().uuidString))
+    precondition(!canFinish(owner: UUID().uuidString))
+    precondition(!canFinish(epoch: UUID()))
+    precondition(!canFinish(doc: UUID()))
+    precondition(!canFinish(doc: nil))
+    precondition(!canFinish(before: "changed host text"))
+    precondition(!canFinish(blocked: finalToken))
+    precondition(!canFinish(cancelled: true))
+    precondition(!canFinish(DictationDelivery(
+      schemaVersion: 1, resultID: UUID(), sessionToken: UUID().uuidString,
+      destinationEpoch: finalEpoch, text: "foreign"
+    )))
+    precondition(!canFinish(DictationDelivery(
+      schemaVersion: 1, resultID: UUID(), sessionToken: finalToken,
+      destinationEpoch: UUID(), text: "other epoch"
+    )))
+    precondition(!canFinish(DictationDelivery(
+      schemaVersion: 2, resultID: UUID(), sessionToken: finalToken,
+      destinationEpoch: finalEpoch, text: "wrong schema"
+    )))
     precondition(OperationPhase.busy.isTerminal && !OperationPhase.accepted.isTerminal)
+    precondition(!OperationPolicy.mayTransition(from: .accepted, to: .busy))
+    precondition(LiveFinalReconciliation.plan(
+      partial: "hello", final: "hello", marked: " hello",
+      prefix: " ", before: " hello"
+    ) == .unchanged)
+    precondition(LiveFinalReconciliation.plan(
+      partial: "hello", final: "hello world", marked: " hello",
+      prefix: " ", before: " hello"
+    ) == .append(" world"))
+    precondition(LiveFinalReconciliation.plan(
+      partial: "goood", final: "good", marked: " goood",
+      prefix: " ", before: " goood"
+    ) == .replace(" good"))
+    precondition(LiveFinalReconciliation.plan(
+      partial: "goood", final: "good", marked: " goood",
+      prefix: " ", before: "truncated ood"
+    ) == .review)
+    precondition(OperationPolicy.mayTransition(from: nil, to: .requested))
+    precondition(OperationPolicy.mayTransition(from: .requested, to: .accepted))
+    precondition(OperationPolicy.mayTransition(from: .accepted, to: .completed))
+    precondition(!OperationPolicy.mayTransition(from: .completed, to: .failed))
+    precondition(!OperationPolicy.mayTransition(from: .cancelled, to: .running))
+    precondition(!OperationPolicy.mayTransition(from: nil, to: .completed))
+    let liveToken = UUID().uuidString
+    let liveEpoch = UUID()
+    precondition(LiveDeliveryPolicy.accepts(
+      token: liveToken, requestToken: liveToken, currentToken: liveToken,
+      revision: 2, lastRevision: 1, updatedAt: 99, now: 100,
+      destinationEpoch: liveEpoch, currentEpoch: liveEpoch
+    ))
+    precondition(!LiveDeliveryPolicy.accepts(
+      token: liveToken, requestToken: liveToken, currentToken: liveToken,
+      revision: 2, lastRevision: 2, updatedAt: 99, now: 100,
+      destinationEpoch: liveEpoch, currentEpoch: liveEpoch
+    ))
+    precondition(!LiveDeliveryPolicy.accepts(
+      token: liveToken, requestToken: liveToken, currentToken: liveToken,
+      revision: 3, lastRevision: 2, updatedAt: 10, now: 100,
+      destinationEpoch: liveEpoch, currentEpoch: liveEpoch
+    ))
+    let document = UUID()
+    precondition(LiveDeliveryPolicy.matchesField(
+      ownedDocument: document, currentDocument: document,
+      ownedEpoch: liveEpoch, currentEpoch: liveEpoch,
+      anchor: "sample", before: "a sample",
+      expectedAfter: " tail", after: " tail", selectedText: nil
+    ))
+    precondition(!LiveDeliveryPolicy.matchesField(
+      ownedDocument: document, currentDocument: UUID(),
+      ownedEpoch: liveEpoch, currentEpoch: liveEpoch,
+      anchor: "sample", before: "a sample",
+      expectedAfter: " tail", after: " tail", selectedText: nil
+    ))
+    precondition(!LiveDeliveryPolicy.matchesField(
+      ownedDocument: document, currentDocument: document,
+      ownedEpoch: liveEpoch, currentEpoch: UUID(),
+      anchor: "sample", before: "a sample",
+      expectedAfter: " tail", after: " tail", selectedText: nil
+    ))
+    precondition(!LiveDeliveryPolicy.matchesField(
+      ownedDocument: document, currentDocument: document,
+      ownedEpoch: liveEpoch, currentEpoch: liveEpoch,
+      anchor: "sample", before: "a sample",
+      expectedAfter: " tail", after: "changed", selectedText: nil
+    ))
+    LLMBridge.clearStatus(matching: a.requestID)
+    precondition(LLMBridge.readStatus(matching: a.requestID)?.phase == .completed)
+    precondition(!LLMBridge.writeStatus(.failed, requestID: a.requestID))
+    precondition(!LLMBridge.writeResult("late", requestID: a.requestID))
     print("Operation identity, bridge acknowledgement, resource guards and legacy recovery: PASS")
   }
 }

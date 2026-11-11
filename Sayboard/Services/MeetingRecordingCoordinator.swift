@@ -79,6 +79,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
   private var timer: Timer?
   private var decodeTask: Task<Void, Never>?
   private var sessionObservation: AnyCancellable?
+  private var sessionStartedHere = false
   private var incompleteTranscript = false
   private var incompleteAudio = false
   private var backlogOverflowReported = false
@@ -89,6 +90,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
     guard !LocalUserDataStore.isExporting,
           !self.isRecording, !self.isFinalizing, self.translatingRecordID == nil,
           !service.isRecording, !service.isStopping,
+          service.session.captureOwner == nil,
           service.llmCoordinator?.isProcessing != true,
           ConversationCoordinator.shared.recordingSide == nil,
           !ConversationCoordinator.shared.processing,
@@ -99,7 +101,9 @@ final class MeetingRecordingCoordinator: ObservableObject {
       return
     }
     let sessionStartedHere = !service.session.isSessionActive
-    do { try service.session.startSession() }
+    do {
+      if sessionStartedHere { try service.session.startSession() }
+    }
     catch {
       FeatureDiagnostics.record(.meeting, .failed)
       self.status = "Unable to activate microphone"
@@ -151,6 +155,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
       self.abortStart(service: service, sessionStartedHere: sessionStartedHere, folder: folder)
       return
     }
+    self.sessionStartedHere = sessionStartedHere
     defaults.set(nextNumber, forKey: Self.meetingSequenceKey)
     self.elapsed = 0
     self.isRecording = true
@@ -219,7 +224,8 @@ final class MeetingRecordingCoordinator: ObservableObject {
     self.decodeTask = nil
     self.speechService?.session.endCapture(owner: .meeting)
     self.closeCurrentPart()
-    self.speechService?.session.endSession()
+    if self.sessionStartedHere { self.speechService?.session.endSession() }
+    self.sessionStartedHere = false
     self.sessionObservation?.cancel()
     self.sessionObservation = nil
     self.isFinalizing = true

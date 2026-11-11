@@ -25,11 +25,19 @@ extension KeyboardViewController {
     guard settings.experimentalLiveDictationEnabled,
           (self.keyboardState.isRecording || settings.isRecording),
           let update = ExperimentalLiveTranscription.read(),
-          update.sessionToken == settings.dictationSessionToken,
-          update.sessionToken == self.dictationRequestToken,
-          settings.dictationDestinationEpoch == self.keyboardState.documentEpoch,
-          update.revision > self.liveTranscriptionRevision,
+          LiveDeliveryPolicy.accepts(
+            token: update.sessionToken,
+            requestToken: self.dictationRequestToken,
+            currentToken: settings.dictationSessionToken,
+            revision: update.revision,
+            lastRevision: self.liveTranscriptionRevision,
+            updatedAt: update.updatedAt,
+            now: Date().timeIntervalSinceReferenceDate,
+            destinationEpoch: settings.dictationDestinationEpoch,
+            currentEpoch: self.keyboardState.documentEpoch
+          ),
           self.liveTranscriptionBlockedToken != update.sessionToken,
+          Self.blockedLiveSessionToken != update.sessionToken,
           !update.text.isEmpty else { return }
 
     self.keyboardState.liveSourcePreview = String(update.text.suffix(240))
@@ -40,7 +48,18 @@ extension KeyboardViewController {
       return
     }
     if let owned = self.liveTranscriptionDocumentID {
-      guard owned == document else {
+      let anchor = String(self.liveTranscriptionMarkedText.suffix(24))
+      guard self.liveTranscriptionOwnerToken == update.sessionToken,
+            LiveDeliveryPolicy.matchesField(
+              ownedDocument: owned, currentDocument: document,
+              ownedEpoch: self.liveTranscriptionDocumentEpoch,
+              currentEpoch: self.keyboardState.documentEpoch,
+              anchor: anchor,
+              before: proxy.documentContextBeforeInput,
+              expectedAfter: self.liveTranscriptionContextAfter,
+              after: proxy.documentContextAfterInput,
+              selectedText: proxy.selectedText
+            ) else {
         self.blockExperimentalLiveChanges(token: update.sessionToken)
         return
       }
@@ -55,13 +74,6 @@ extension KeyboardViewController {
       }
       // UITextDocumentProxy exposes only bounded context in many hosts.
       // A short exact suffix plus document ID is enough for append-only input.
-      let anchor = String(self.liveTranscriptionMarkedText.suffix(24))
-      guard !anchor.isEmpty,
-            proxy.documentContextBeforeInput?.hasSuffix(anchor) == true,
-            proxy.selectedText?.isEmpty ?? true else {
-        self.blockExperimentalLiveChanges(token: update.sessionToken)
-        return
-      }
       proxy.insertText(added)
       self.liveTranscriptionCommittedRaw = update.text
       self.liveTranscriptionMarkedText += added
@@ -83,6 +95,9 @@ extension KeyboardViewController {
       durationMs: LiveDictationLatency.elapsedMs(.firstHostInsert),
       operationID: update.sessionToken)
     self.liveTranscriptionDocumentID = document
+    self.liveTranscriptionDocumentEpoch = self.keyboardState.documentEpoch
+    self.liveTranscriptionOwnerToken = update.sessionToken
+    self.liveTranscriptionContextAfter = proxy.documentContextAfterInput
     self.liveTranscriptionPrefix = prefix
     self.liveTranscriptionCommittedRaw = update.text
     self.liveTranscriptionMarkedText = prefix + update.text
@@ -92,43 +107,76 @@ extension KeyboardViewController {
   /// Never append the same final transcript twice. Replace live words only
   /// when the whole owned prefix is visible and verified; otherwise append a
   /// confirmed missing suffix, or expose the final result for manual review.
-  func completeExperimentalLiveText(_ final: String) -> Bool {
-    guard let owned = self.liveTranscriptionDocumentID else { return false }
+  func completeExperimentalLiveText(
+    _ delivery: DictationDelivery, cancellationRequested: Bool
+  ) -> Bool {
+    guard self.liveTranscriptionDocumentID != nil else { return false }
     defer { self.abandonExperimentalLiveOwnership() }
-    guard owned == self.availableDocumentIdentifier() else {
-      self.keyboardState.showFinalOutputPreview(final)
-      return true
-    }
+    let final = delivery.text
     let proxy = self.textDocumentProxy
-    if final == self.liveTranscriptionCommittedRaw { return true }
-    let anchor = String(self.liveTranscriptionMarkedText.suffix(24))
-    guard !anchor.isEmpty,
-          proxy.documentContextBeforeInput?.hasSuffix(anchor) == true,
-          proxy.selectedText?.isEmpty ?? true else {
+    // The host clears SharedSettings.dictationSessionToken before notifying
+    // the keyboard. Validate the immutable delivery, not the cleared flag.
+    guard LiveFinalDeliveryPolicy.mayReconcile(
+      delivery: delivery, requestToken: self.dictationRequestToken,
+      ownerToken: self.liveTranscriptionOwnerToken,
+      currentEpoch: self.keyboardState.documentEpoch,
+      ownerEpoch: self.liveTranscriptionDocumentEpoch,
+      requestDocument: self.dictationDocumentID,
+      ownedDocument: self.liveTranscriptionDocumentID,
+      currentDocument: self.availableDocumentIdentifier(),
+      anchor: String(self.liveTranscriptionMarkedText.suffix(24)),
+      before: proxy.documentContextBeforeInput,
+      expectedAfter: self.liveTranscriptionContextAfter,
+      after: proxy.documentContextAfterInput,
+      selectedText: proxy.selectedText,
+      blockedToken: self.liveTranscriptionBlockedToken,
+      blockedKeyboardToken: Self.blockedLiveSessionToken,
+      cancelled: cancellationRequested
+    ) else {
+      FeatureDiagnostics.record(.bridge, .fallback, operationID: delivery.sessionToken)
       self.keyboardState.showFinalOutputPreview(final)
       return true
     }
-    if final.hasPrefix(self.liveTranscriptionCommittedRaw) {
-      proxy.insertText(String(final.dropFirst(self.liveTranscriptionCommittedRaw.count)))
-    } else if proxy.documentContextBeforeInput?.hasSuffix(self.liveTranscriptionMarkedText) == true {
-      // Full context is available, so a bounded verified replacement is safe.
+    let plan = LiveFinalReconciliation.plan(
+      partial: self.liveTranscriptionCommittedRaw, final: final,
+      marked: self.liveTranscriptionMarkedText,
+      prefix: self.liveTranscriptionPrefix,
+      before: proxy.documentContextBeforeInput
+    )
+    switch plan {
+    case .unchanged:
+      break
+    case .append(let suffix):
+      proxy.insertText(suffix)
+    case .replace(let replacement):
       for _ in self.liveTranscriptionMarkedText { proxy.deleteBackward() }
-      proxy.insertText(self.liveTranscriptionPrefix + final)
-    } else {
-      // Context truncated: do not erase unrelated material to correct a word.
+      proxy.insertText(replacement)
+    case .review:
+      // A truncated host context must never trigger destructive correction.
       self.keyboardState.showFinalOutputPreview(final)
     }
     return true
   }
 
   func cancelExperimentalLiveText() {
-    self.liveTranscriptionBlockedToken = nil
+    // A delayed partial notification must not reinsert cancelled speech.
+    self.liveTranscriptionBlockedToken =
+      self.liveTranscriptionOwnerToken ?? self.dictationRequestToken
     defer { self.abandonExperimentalLiveOwnership() }
+    let proxy = self.textDocumentProxy
     guard let owned = self.liveTranscriptionDocumentID,
-          owned == self.availableDocumentIdentifier(),
-          self.textDocumentProxy.documentContextBeforeInput?
-            .hasSuffix(self.liveTranscriptionMarkedText) == true else { return }
-    for _ in self.liveTranscriptionMarkedText { self.textDocumentProxy.deleteBackward() }
+          self.liveTranscriptionOwnerToken == self.dictationRequestToken,
+          LiveDeliveryPolicy.matchesField(
+            ownedDocument: owned, currentDocument: self.availableDocumentIdentifier(),
+            ownedEpoch: self.liveTranscriptionDocumentEpoch,
+            currentEpoch: self.keyboardState.documentEpoch,
+            anchor: self.liveTranscriptionMarkedText,
+            before: proxy.documentContextBeforeInput,
+            expectedAfter: self.liveTranscriptionContextAfter,
+            after: proxy.documentContextAfterInput,
+            selectedText: proxy.selectedText
+          ) else { return }
+    for _ in self.liveTranscriptionMarkedText { proxy.deleteBackward() }
   }
 
   private func blockExperimentalLiveChanges(token: String) {
@@ -136,8 +184,11 @@ extension KeyboardViewController {
     self.abandonExperimentalLiveOwnership()
   }
 
-  private func abandonExperimentalLiveOwnership() {
+  func abandonExperimentalLiveOwnership() {
     self.liveTranscriptionDocumentID = nil
+    self.liveTranscriptionDocumentEpoch = nil
+    self.liveTranscriptionOwnerToken = nil
+    self.liveTranscriptionContextAfter = nil
     self.liveTranscriptionMarkedText = ""
     self.liveTranscriptionCommittedRaw = ""
     self.liveTranscriptionPrefix = ""
