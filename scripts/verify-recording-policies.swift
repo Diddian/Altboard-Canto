@@ -29,8 +29,14 @@ struct RecordingPolicyChecks {
       keyboardActive: false, appActive: false, heartbeat: 0,
       now: now, practiceFocused: true
     ))
-    precondition(!p.shouldRequestWarmSession(
+    // A live app-owned session must get a bounded warm handshake even if
+    // iOS paused its idle audio heartbeat while the user switched apps.
+    precondition(p.shouldRequestWarmSession(
       keyboardActive: true, appActive: true, heartbeat: 16.9,
+      now: now, practiceFocused: false
+    ))
+    precondition(!p.shouldRequestWarmSession(
+      keyboardActive: false, appActive: false, heartbeat: 16.9,
       now: now, practiceFocused: false
     ))
     func cold(
