@@ -532,6 +532,17 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("SharedSettings.defaultKeyboardHapticStrength", settings)
         self.assertIn("keyboardHapticDriver = .coreHaptics", settings)
         self.assertIn("var keyboardHapticStrength: Double", shared)
+        haptics = read("Shared/KeyboardHaptics.swift")
+        self.assertIn('unavailableError = "engine-prewarm-failed:', haptics)
+        play = haptics.split("static func play(strength:", 1)[1].split(
+            "/// The keyboard's standard output", 1
+        )[0]
+        self.assertLess(
+            play.index("if let unavailableError { return unavailableError }"),
+            play.index("let newEngine = try CHHapticEngine()")
+        )
+        self.assertIn("KeyboardSensoryPulse.shared.trigger()", haptics)
+        self.assertIn("private static var generation: UInt64", haptics)
 
     def test_custom_language_edits_are_confirmed(self):
         settings = read("Sayboard/Views/VoiceOutputSettingsView.swift")
