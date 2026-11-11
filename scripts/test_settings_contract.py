@@ -743,6 +743,46 @@ class SettingsContractTests(unittest.TestCase):
         self.assertNotIn("ActiveSessionToggle()", read("Sayboard/Views/SettingsNavigationViews.swift"))
         self.assertIn('selectedKind: self.keyboardKindBinding, inline: true', home)
 
+    def test_history_empty_state_does_not_block_keyboard_test_field(self):
+        history = read("Sayboard/Views/HistoryListView.swift")
+        overlay = history.split(".overlay {", 1)[1].split(".navigationTitle", 1)[0]
+        self.assertIn("self.emptyState", overlay)
+        self.assertIn(".allowsHitTesting(false)", overlay)
+        self.assertNotIn(".onTapGesture", overlay)
+        field = history.split("private var keyboardTestingField:", 1)[1].split(
+            "private var recordsList:", 1
+        )[0]
+        self.assertIn('TextField("Try your keyboard here"', field)
+        self.assertIn(".focused(self.$isKeyboardTestFocused)", field)
+        self.assertIn(".accessibilityLabel(\"Keyboard test input\")", field)
+
+    def test_microphone_stop_preserves_audio_and_shows_processing(self):
+        mic = read("SayboardKeyboard/Views/Layouts/MicAnimatedButton.swift")
+        host = read("SayboardKeyboard/KeyboardViewController.swift")
+        state = read("SayboardKeyboard/KeyboardState.swift")
+        service = read("Sayboard/Services/SpeechRecognitionService.swift")
+        tap = mic.split("private func handleTap()", 1)[1].split(
+            "private func handleRecordingChanged", 1
+        )[0]
+        self.assertIn(
+            "if self.keyboardState.isRecording || self.keyboardState.isStartingRecording", tap
+        )
+        self.assertIn("self.requestHeldStop()", tap)
+        self.assertEqual(tap.count("self.proxy.cancelDictation()"), 1)
+        self.assertNotIn("timeIntervalSince(tapAt)", tap)
+        stop = host.split("func stopDictationViaDarwin()", 1)[1].split(
+            "private func setupSessionLifecycleObservers", 1
+        )[0]
+        self.assertLess(
+            stop.index("self.keyboardState.isRecording = false"),
+            stop.index("self.keyboardState.isProcessing = true")
+        )
+        self.assertIn("TranscriptionBridge.requestStop(for: self.dictationRequestToken)", stop)
+        self.assertIn("guard !vc.keyboardState.isProcessing else { return }", host)
+        self.assertIn("if update.stage == .stoppingAudio", state)
+        self.assertIn("await self.runFinalTranscription(samples: savedSamples", service)
+        self.assertIn("MicrophoneHoldStopIntent.consume(", service)
+
     def test_inline_actions_and_test_field_clear(self):
         home = read("Sayboard/Views/SettingsView.swift")
         history = read("Sayboard/Views/HistoryListView.swift")
