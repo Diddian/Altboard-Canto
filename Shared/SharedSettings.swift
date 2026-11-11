@@ -285,6 +285,14 @@ struct SharedSettings {
     }
   }
 
+  /// Reset only haptic preferences; other keyboard choices are unaffected.
+  /// Both host and extension read these values from the existing App Group.
+  func resetKeyboardHaptics() {
+    self.keyboardHapticsEnabled = true
+    self.keyboardHapticStrength = Self.defaultKeyboardHapticStrength
+    self.keyboardHapticDriver = .coreHaptics
+  }
+
   var keyboardAutoCapitalizationEnabled: Bool {
     get { defaults.object(forKey: SharedKey.keyboardAutoCapitalizationEnabled) as? Bool ?? true }
     nonmutating set { defaults.set(newValue, forKey: SharedKey.keyboardAutoCapitalizationEnabled) }
