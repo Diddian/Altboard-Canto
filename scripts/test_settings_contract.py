@@ -277,7 +277,11 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn('.badge("Beta")', liquid)
         self.assertIn('.badge("Beta")', legacy)
         self.assertIn('ConversationView()', liquid)
-        self.assertIn('ConversationView()', legacy)
+        # Legacy's NavigationStack comes before its tabItem label.
+        legacy_stack = tabs.split('private var legacyTabs: some View', 1)[1].split(
+            'NavigationStack(path: self.$meetingsPath)', 1
+        )[0]
+        self.assertIn('ConversationView()', legacy_stack)
         self.assertNotIn('.navigationTitle("Conversation")', screen)
         self.assertIn('.toolbar(.hidden, for: .navigationBar)', screen)
 
