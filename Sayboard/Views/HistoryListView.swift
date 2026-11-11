@@ -10,8 +10,9 @@ struct HistoryListView: View {
       .overlay {
         if self.records.isEmpty, !self.showsSetupCard, !self.showsAIOffer {
           self.emptyState
-            .contentShape(Rectangle())
-            .onTapGesture { self.isKeyboardTestFocused = false }
+            // The empty-state decoration must not intercept the test TextField
+            // placed by safeAreaInset or dismiss its focus on touch-down.
+            .allowsHitTesting(false)
         }
       }
       .navigationTitle("History")
