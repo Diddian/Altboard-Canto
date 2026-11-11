@@ -87,7 +87,6 @@ struct ConversationView: View {
     let showsOriginalLanguage = speakerOwnsLastTurn || recent?.targetCode == ""
     let target = side == .other ? self.visitorOutput : self.myOutput
     let code = side == .other ? self.visitorCode : self.myCode
-    let targetCode = PreferredVoiceLanguages.currentCode(target: target, custom: code)
     let detected = live ? self.liveLanguage : recent?.detectedLanguageCode
     let isReceiver = recent != nil && !speakerOwnsLastTurn
     let isTranslating = !live && isReceiver && !showsOriginalLanguage
