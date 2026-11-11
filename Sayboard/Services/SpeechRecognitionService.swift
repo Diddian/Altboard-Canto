@@ -334,7 +334,11 @@ final class SpeechRecognitionService: ObservableObject {
     FeatureDiagnostics.record(.speechFinalization, finalizationEvent,
       durationMs: Int((CFAbsoluteTimeGetCurrent() - finalizationStartedAt) * 1_000))
 
-    self.saveHistoryRecord()
+    // A recognizer or post-processing failure must not discard valid audio.
+    // An explicit no-speech result retains the prior silence-handling policy.
+    let retainUndecodedAudio = self.settings.lastDictationOutcome == .engineFailed
+      || self.settings.lastDictationOutcome == .processingFailed
+    self.saveHistoryRecord(preserveUntranscribedAudio: retainUndecodedAudio)
 
     self.isStopping = false
     self.settings.isRecording = false
