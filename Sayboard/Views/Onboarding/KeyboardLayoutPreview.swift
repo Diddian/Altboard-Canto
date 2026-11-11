@@ -142,7 +142,9 @@ struct KeyboardLayoutPreview: View {
   private var alphabeticLayout: some View {
     VStack(spacing: Self.rowSpacing) {
       HStack(spacing: Self.keySpacing) {
-        if self.showExtraGlobeKey { self.symbolKey("globe", width: 38) }
+        if self.showExtraGlobeKey || self.systemSwitchRequired {
+          self.symbolKey("globe", width: 38)
+        }
         self.symbolKey("gearshape", width: 38)
         if self.showOutputKey {
           self.symbolKey("character.bubble", width: 38)
@@ -168,7 +170,7 @@ struct KeyboardLayoutPreview: View {
       .padding(.horizontal, KeyboardLayoutGeometry.alphabetSpecialRowInset)
       HStack(spacing: Self.keySpacing) {
         self.textKey("?123", width: 48, size: 16)
-        if self.systemSwitchRequired && !self.showExtraGlobeKey { self.nativeGlobeKey(width: 48) }
+        self.emojiKey(width: 48)
         ZStack(alignment: .bottomTrailing) {
           Color.clear
           Text("A")
@@ -209,10 +211,10 @@ struct KeyboardLayoutPreview: View {
     .padding(.horizontal, inset ?? Self.edgeInset)
   }
 
-  private func nativeGlobeKey(width: CGFloat) -> some View {
-    Image(systemName: "globe")
-      .font(.system(size: 19, weight: .regular))
-      .foregroundStyle(.primary)
+  private func emojiKey(width: CGFloat) -> some View {
+    NativeEmojiGlyph()
+      .fill(.primary, style: FillStyle(eoFill: true))
+      .frame(width: 18.67, height: 18.67)
       .frame(width: width, height: Self.keyHeight)
       .background(Self.keyFill,
         in: RoundedRectangle(cornerRadius: Self.keyRadius, style: .continuous))

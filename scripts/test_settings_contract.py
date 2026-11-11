@@ -61,6 +61,21 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn('insufficientMemory', events)
         self.assertNotIn('URLSession', owner + view)
 
+    def test_unpreferred_qwen_headers_are_cleaned_at_shared_ingress(self):
+        sanitizer = read("Shared/TextSanitizer.swift")
+        tests = read("SayboardTests/TextSanitizerTests.swift")
+        final = read("Sayboard/Services/SpeechRecognitionService+Transcription.swift")
+        live = read("Sayboard/Services/SpeechRecognitionService+ExperimentalLive.swift")
+        conversation = read("Sayboard/Services/ConversationCoordinator.swift")
+        self.assertIn('qwenLanguageHeaderPattern', sanitizer)
+        self.assertIn('ASR[ \\t_]+text', sanitizer)
+        self.assertNotIn('(?:Cantonese|English|German|Chinese|Mandarin|Yue)', sanitizer)
+        self.assertIn('language French<asr_text>Bonjour', tests)
+        self.assertIn('language Japanese → ASR text →', tests)
+        self.assertIn('qwen3DoesNotEraseRealSpokenWords', tests)
+        for owner in (final, live, conversation):
+            self.assertIn('TextSanitizer.sanitize(', owner)
+
     def test_one_microphone_owner_for_dictation_and_meetings(self):
         audio = read("Sayboard/Services/BackgroundAudioSession.swift")
         speech = read("Sayboard/Services/SpeechRecognitionService.swift")
@@ -483,7 +498,9 @@ class SettingsContractTests(unittest.TestCase):
         settings = read("Sayboard/Views/KeyboardSettingsView.swift")
         phone = read("Sayboard/Views/Onboarding/KeyboardLayoutPreview.swift")
         preview = settings.split("private struct KeyboardTestPreview", 1)[1]
-        self.assertEqual(preview.count('if self.systemSwitchRequired && !self.showExtraGlobeKey'), 2)
+        self.assertEqual(preview.count('if self.systemSwitchRequired && !self.showExtraGlobeKey'), 1)
+        self.assertIn("self.emojiPreviewKey", preview)
+        self.assertIn("NativeEmojiGlyph()", preview)
         self.assertIn("if self.showExtraGlobeKey", preview)
         self.assertIn("let showExtraGlobeKey: Bool", preview)
         self.assertIn("showExtraGlobeKey: self.showExtraGlobeKey", settings)
@@ -529,10 +546,11 @@ class SettingsContractTests(unittest.TestCase):
         alphabet = read("SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift")
         self.assertIn("showExtraGlobeKey", phone)
         self.assertEqual(phone.count('self.symbolKey("globe", width: Self.sideKeyWidth)'), 3)
-        self.assertEqual(phone.count("self.nativeGlobeKey(width: 48)"), 1)
+        self.assertIn("self.emojiKey(width: 48)", phone)
+        self.assertNotIn("nativeGlobeKey(width: 48)", phone)
         self.assertIn('self.symbolKey("sparkles", width: 38)', phone)
         self.assertNotIn("self.showGlobeKey", settings)
-        self.assertEqual(settings.count('if self.systemSwitchRequired && !self.showExtraGlobeKey'), 2)
+        self.assertEqual(settings.count('if self.systemSwitchRequired && !self.showExtraGlobeKey'), 1)
         self.assertIn('self.key("globe", width: 48)', settings)
         self.assertIn("else if SharedSettings().keyboardShowAIButton", alphabet)
         self.assertIn("Output language unavailable. Open Altboard", alphabet)
@@ -665,7 +683,7 @@ class SettingsContractTests(unittest.TestCase):
             self.assertIn('Toggle("' + control, custom)
         self.assertNotIn('.disabled(!self.aiEnabled)', custom)
         self.assertIn("Tap preview keys to test haptics.", layout)
-        self.assertEqual(layout.count('if self.systemSwitchRequired && !self.showExtraGlobeKey'), 2)
+        self.assertEqual(layout.count('if self.systemSwitchRequired && !self.showExtraGlobeKey'), 1)
         self.assertIn("if self.showExtraGlobeKey", layout)
         self.assertNotIn('Text("Not yet available")', custom)
 
@@ -704,10 +722,14 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("if self.keyboardState.showsGlobeButton", keyboard)
         self.assertIn('iconName = "globe"', native)
         self.assertIn('self.key("globe", width: 48)', preview)
-        self.assertNotIn('KeyButton(content: .nativeEmojiGlyph', keyboard)
-        self.assertNotIn('var onEmojiAction:', keyboard)
+        self.assertIn('KeyButton(content: .nativeEmojiGlyph', keyboard)
+        self.assertIn('var onEmojiAction:', keyboard)
+        self.assertIn('if let openEmoji = self.onEmojiAction', keyboard)
         self.assertIn("EmojiKeyboardView(", alphabet)
-        self.assertNotIn('onEmojiAction: { self.openEmojiPage() }', alphabet)
+        self.assertIn('onEmojiAction: { self.openEmojiPage() }', alphabet)
+        self.assertIn('self.showsEmojiPage = true', alphabet)
+        self.assertIn('self.showsEmojiPage = false', alphabet)
+        self.assertIn('keyboardState.effectiveTypingKind == .alphabetic', keyboard)
         self.assertIn('Label("Writing Style", systemImage: "text.alignleft")',
                       read("Sayboard/Views/LLMSettingsView.swift"))
         storage = read("Sayboard/Views/DataAndStorageSettingsView.swift")
@@ -716,9 +738,10 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn('if self.keyboardState.showGlobeKey', alphabet)
         self.assertLess(alphabet.index('if self.keyboardState.showGlobeKey'),
                         alphabet.index('if self.keyboardState.showSettingsKey'))
-        self.assertEqual(preview.count("if self.systemSwitchRequired"), 2)
+        self.assertEqual(preview.count("if self.systemSwitchRequired"), 1)
+        self.assertIn('if self.showExtraGlobeKey || self.systemSwitchRequired', preview)
         self.assertIn("NativeInputModeSwitchKey(", keyboard)
-        self.assertIn("if self.keyboardState.showGlobeKey",
+        self.assertIn("self.keyboardState.needsInputModeSwitchKey",
           read("SayboardKeyboard/Views/KeyboardLLMActionsToolbar.swift"))
         self.assertIn("SharedKey.needsInputModeSwitchKey", preview)
         self.assertIn("SharedKey.keyboardShowGlobeKey",

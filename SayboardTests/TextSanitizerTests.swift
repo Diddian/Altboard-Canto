@@ -55,6 +55,25 @@ struct TextSanitizerTests {
   }
 
   @Test
+  func qwen3UnpreferredLanguageHeaders() {
+    #expect(TextSanitizer.sanitize("language French<asr_text>Bonjour") == "Bonjour")
+    #expect(TextSanitizer.sanitize("language Japanese → ASR text → こんにちは") == "こんにちは")
+    #expect(TextSanitizer.sanitize("language Spanish -> ASR text -> Hola") == "Hola")
+    #expect(TextSanitizer.sanitize("language Chinese (Mandarin)<|asr_text|>你好") == "你好")
+    #expect(TextSanitizer.sanitize("<|language|>Arabic<|asr_text|>مرحبا") == "مرحبا")
+    #expect(TextSanitizer.sanitize("language: French → ASR text → Salut") == "Salut")
+  }
+
+  @Test
+  func qwen3DoesNotEraseRealSpokenWords() {
+    #expect(TextSanitizer.sanitize("language French is actual speech") ==
+      "language French is actual speech")
+    #expect(TextSanitizer.sanitize("I said language German → ASR text") ==
+      "I said language German → ASR text")
+    #expect(TextSanitizer.sanitize("Say ASR text in German") == "Say ASR text in German")
+  }
+
+  @Test
   func `live qwen chunks remove each repeated header`() {
     let first = TextSanitizer.sanitize("language Cantonese<asr_text>咁你睇唔睇到？")
     let second = TextSanitizer.sanitize("language Cantonese<asr_text>其實我而。")

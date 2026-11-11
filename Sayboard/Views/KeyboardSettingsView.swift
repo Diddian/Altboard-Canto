@@ -111,7 +111,7 @@ struct KeyboardSettingsView: View {
         showAIButton: self.showAIButton
       )
       .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
-      Text("Tap preview keys to test haptics. Extra Globe appears at the far left only when enabled.")
+      Text("Tap preview keys to test haptics. Emoji stays beside ?123. iOS may require a Globe in the action bar even when Extra Globe is off.")
         .font(.footnote)
         .foregroundStyle(.secondary)
     } header: {
@@ -244,7 +244,7 @@ private struct KeyboardTestPreview: View {
 
   private var alphabetToolbar: some View {
     HStack(spacing: 6) {
-      if self.showExtraGlobeKey { self.key("globe", width: 48) }
+      if self.showExtraGlobeKey || self.systemSwitchRequired { self.key("globe", width: 48) }
       if self.showSettingsKey { self.key("gearshape", width: 48) }
       if self.outputKeyEnabled { self.translatePreview }
       if self.showAIButton {
@@ -318,12 +318,23 @@ private struct KeyboardTestPreview: View {
   private var alphabetBottomRow: some View {
     HStack(spacing: 6) {
       self.labelKey("?123", width: 48)
-      if self.systemSwitchRequired && !self.showExtraGlobeKey {
-        self.key("globe", width: 48)
-      }
+      self.emojiPreviewKey
       self.labelKey("", height: 45)
       self.key("return.left", width: 102)
     }.padding(.horizontal, 6.67)
+  }
+
+  private var emojiPreviewKey: some View {
+    Button { KeyboardHaptics.key() } label: {
+      NativeEmojiGlyph()
+        .fill(.primary, style: FillStyle(eoFill: true))
+        .frame(width: 18.67, height: 18.67)
+        .frame(width: 48, height: 45)
+        .background(Color(uiColor: KeyboardPalette.keyFill),
+                    in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel("Emoji key preview")
   }
 
   private var standardBottomRow: some View {

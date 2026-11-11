@@ -6,6 +6,13 @@ enum TextSanitizer {
   static func sanitize(_ text: String) -> String {
     var result = text
 
+    // A Qwen language header is model metadata, not dictated speech.
+    // Detect the ASR marker rather than limiting cleanup to preferred languages.
+    result = self.qwenLanguageHeaderPattern.stringByReplacingMatches(
+      in: result,
+      range: NSRange(result.startIndex..., in: result)
+    )
+
     result = self.qwenControlHeaderPattern.stringByReplacingMatches(
       in: result,
       range: NSRange(result.startIndex..., in: result)
@@ -32,9 +39,17 @@ enum TextSanitizer {
     return result
   }
 
+  // Only remove a leading language label if a recognizer control marker follows.
+  // Accept any detected language, including languages outside the preference list.
+  private static let qwenLanguageHeaderPattern: NSRegularExpression =
+    try! NSRegularExpression(
+      pattern: #"^\s*(?:language[ \t]*[:\x{FF1A}]?[ \t]+|<\|language\|>[ \t]*)[^\r\n<>]{1,64}?(?:(?:->|=>|\x{2192}|\x{27A1}|\x{279C})[ \t]*)?(?:<asr_text>|<\|asr_text\|>|<text_sentinel>|<\|text_sentinel\|>|ASR[ \t_]+text)[ \t]*(?:(?:->|=>|\x{2192}|\x{27A1}|\x{279C}|[:\x{FF1A}])[ \t]*)?"#,
+      options: [.caseInsensitive]
+    )
+
   private static let qwenControlHeaderPattern: NSRegularExpression =
     try! NSRegularExpression(
-      pattern: #"^\s*(?:language\s+(?:Cantonese|English|German|Chinese|Mandarin|Yue)\s*)?(?:<asr_text>|<\|asr_text\|>|<text_sentinel>|<\|text_sentinel\|>)\s*"#,
+      pattern: #"^\s*(?:<asr_text>|<\|asr_text\|>|<text_sentinel>|<\|text_sentinel\|>)[ \t]*(?:(?:->|=>|\x{2192}|\x{27A1}|\x{279C})[ \t]*)?"#,
       options: [.caseInsensitive]
     )
 

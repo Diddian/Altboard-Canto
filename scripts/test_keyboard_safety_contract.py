@@ -143,17 +143,23 @@ class KeyboardSafetyContracts(unittest.TestCase):
         self.assertIn("currentLLMFieldMatches()", actions)
         self.assertIn("self.keyboardState.llmError = .storageUnavailable", actions)
 
-    def test_alphabet_uses_native_globe_and_does_not_mount_custom_emoji_key(self):
+    def test_alphabet_has_dedicated_emoji_key_and_native_globe_action(self):
         layout = source("SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift")
         chrome = source("SayboardKeyboard/Views/Layouts/KeyboardChrome.swift")
         controller = source("SayboardKeyboard/KeyboardViewController.swift")
         self.assertIn("KeyboardBottomRow(", layout)
-        self.assertNotIn("onEmojiAction: { self.openEmojiPage() }", layout)
+        self.assertIn("onEmojiAction: { self.openEmojiPage() }", layout)
+        self.assertIn("EmojiKeyboardView(", layout)
+        self.assertIn("self.showsEmojiPage = true", layout)
+        self.assertIn("self.showsEmojiPage = false", layout)
+        self.assertIn("self.keyboardState.needsInputModeSwitchKey", layout)
         self.assertIn("NativeInputModeSwitchKey(", chrome)
         self.assertIn('iconName: "globe"', chrome)
         self.assertIn("if self.keyboardState.showsGlobeButton", chrome)
-        self.assertNotIn("KeyButton(content: .nativeEmojiGlyph", chrome)
-        self.assertNotIn("if let openEmoji = self.onEmojiAction", chrome)
+        self.assertIn("KeyButton(content: .nativeEmojiGlyph", chrome)
+        self.assertIn("if let openEmoji = self.onEmojiAction", chrome)
+        self.assertIn("keyboardState.effectiveTypingKind == .alphabetic", chrome)
+        self.assertIn("else if self.keyboardState.showsGlobeButton", chrome)
         self.assertIn("#selector(handleInputModeList(from:with:))", controller)
         self.assertIn(", keyboardEmoji", source("Shared/FeatureDiagnostics.swift"))
 

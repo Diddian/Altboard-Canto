@@ -17,7 +17,10 @@ struct KeyboardChromeMetrics {
   init(keyboardState: KeyboardState) {
     let compact = keyboardState.showOutputLanguageButton || keyboardState.showsAIButton
     let side: CGFloat = (keyboardState.effectiveTypingKind == .alphabetic ? 48 : (compact ? 43 : 45)).kbScaled
-    let showsGlobe = keyboardState.showsGlobeButton
+    // Alphabetic always reserves the dedicated Emoji key beside ?123.
+    // Other layouts reserve this slot only for the required system Globe.
+    let showsGlobe = keyboardState.effectiveTypingKind == .alphabetic
+      || keyboardState.showsGlobeButton
 
     self.sideButtonWidth = side
     self.showsGlobe = showsGlobe
@@ -233,6 +236,7 @@ struct KeyboardBottomRow: View {
   @ObservedObject var keyboardState: KeyboardState
   var alphabeticModeLabel: String? = nil
   var onAlphabeticModeSwitch: (() -> Void)? = nil
+  var onEmojiAction: (() -> Void)? = nil
   var showsAlphabetIndicator = true
   var onSpaceAction: (() -> Void)? = nil
   var onShortcutAction: ((String) -> Void)? = nil
@@ -257,7 +261,12 @@ struct KeyboardBottomRow: View {
           action()
         }
       }
-      if self.keyboardState.showsGlobeButton {
+      if let openEmoji = self.onEmojiAction {
+        KeyButton(content: .nativeEmojiGlyph, fixedWidth: self.metrics.sideButtonWidth) {
+          openEmoji()
+        }
+        .accessibilityLabel("Open Emoji keyboard")
+      } else if self.keyboardState.showsGlobeButton {
         NativeInputModeSwitchKey(
           configure: self.keyboardState.configureInputModeListButton,
           iconName: "globe"

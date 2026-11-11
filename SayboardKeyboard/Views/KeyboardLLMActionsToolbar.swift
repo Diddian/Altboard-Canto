@@ -9,7 +9,9 @@ struct KeyboardLLMActionsToolbar: View {
 
   var body: some View {
     HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
-      if self.keyboardState.showGlobeKey {
+      if self.keyboardState.showGlobeKey ||
+          (self.keyboardState.effectiveTypingKind == .alphabetic
+            && self.keyboardState.needsInputModeSwitchKey) {
         NativeInputModeSwitchKey(
           configure: self.keyboardState.configureInputModeListButton,
           iconName: "globe"

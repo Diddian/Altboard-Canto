@@ -208,6 +208,7 @@ struct AlphabeticKeyboardLayout: View {
         keyboardState: self.keyboardState,
         alphabeticModeLabel: self.page == .letters ? "?123" : "ABC",
         onAlphabeticModeSwitch: { self.toggleNumberPage() },
+        onEmojiAction: { self.openEmojiPage() },
         showsAlphabetIndicator: self.page == .letters,
         onSpaceAction: { self.handleSpace() },
         onShortcutAction: { self.handleCharacter($0) },
@@ -341,6 +342,16 @@ struct AlphabeticKeyboardLayout: View {
 
   private var toolbar: some View {
     HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
+      // Required native switch remains on the action row in every letter state.
+      if self.keyboardState.showGlobeKey || self.keyboardState.needsInputModeSwitchKey {
+        if !self.keyboardState.showLLMActions {
+          NativeInputModeSwitchKey(
+            configure: self.keyboardState.configureInputModeListButton,
+            iconName: "globe"
+          )
+          .frame(width: self.chrome.sideButtonWidth, height: KeyboardChromeMetrics.keyHeight)
+        }
+      }
       if self.keyboardState.showLLMActions {
         KeyboardLLMActionsToolbar(proxy: self.proxy, keyboardState: self.keyboardState)
       } else if self.page == .letters && !self.swipeAlternatives.isEmpty {
@@ -380,13 +391,6 @@ struct AlphabeticKeyboardLayout: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Dismiss candidate suggestions")
       } else {
-        if self.keyboardState.showGlobeKey {
-          NativeInputModeSwitchKey(
-            configure: self.keyboardState.configureInputModeListButton,
-            iconName: "globe"
-          )
-          .frame(width: self.chrome.sideButtonWidth, height: KeyboardChromeMetrics.keyHeight)
-        }
         if self.keyboardState.showSettingsKey {
           KeyButton(content: .systemImage("gearshape"),
                     fixedWidth: self.chrome.sideButtonWidth) {
