@@ -39,6 +39,8 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         load = source.split("override func loadView()", 1)[1].split("override func updateViewConstraints()", 1)[0]
         self.assertIn("super.loadView()", load)
         self.assertNotIn("self.inputView =", load)
+        self.assertIn("super.loadView()", load)
+        self.assertIn("extension UIInputView: @retroactive UIInputViewAudioFeedback", source)
         self.assertNotIn("KeyboardInputView(", source)
         did_load = source.split("override func viewDidLoad()", 1)[1].split("override func viewWillAppear(", 1)[0]
         self.assertNotIn("self.setupKeyboardView()", did_load)

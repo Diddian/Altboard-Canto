@@ -1603,8 +1603,7 @@ struct AlphabeticKeyboardLayout: View {
     if self.autoCorrectionEnabled && self.page == .letters
         && !self.usesShapeMode
         && !self.keyboardState.hostInputTraits.disallowsAutoCorrection
-        && (!self.offersCantonese || self.composition.isEmpty
-            || self.recognizedLatinSpelling == self.composition.buffer),
+        && (!self.offersCantonese || self.composition.isEmpty || self.isLatinGrid),
        let context = self.proxy.documentContextBeforeInput(),
        let typed = LatinWordSuggestionPolicy.trailingWord(in: context),
        LatinWordSuggestionPolicy.canReplace(typed, in: context),

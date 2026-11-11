@@ -273,7 +273,9 @@ final class ConversationCoordinator: ObservableObject {
       [weak self] cleaned in
       guard let self, self.turns.indices.contains(index),
             self.turns[index].id == turnID else { return }
-      self.turns[index].cleanedSourceText = cleaned
+      // A single-pass translation does not independently produce a cleaned
+      // source transcript; keep the original rather than mislabeling it.
+      self.turns[index].cleanedSourceText = cleaned == source ? nil : cleaned
       self.status = options.target == .original
         ? "Transcript ready" : "Translating…"
       _ = self.persistDraft()

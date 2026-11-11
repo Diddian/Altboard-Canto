@@ -34,12 +34,14 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn('private var spellCheckingEnabled = false', settings)
         self.assertIn('var keyboardAutoCorrectionEnabled: Bool', shared)
         self.assertIn('var keyboardSpellCheckingEnabled: Bool', shared)
-        self.assertIn('UIInputView, UIInputViewAudioFeedback', controller)
+        self.assertIn('extension UIInputView: @retroactive UIInputViewAudioFeedback', controller)
         self.assertIn('enableInputClicksWhenVisible: Bool { true }', controller)
+        self.assertNotIn('self.inputView =', controller)
         self.assertIn('UIDevice.current.playInputClick()', haptics)
         self.assertIn('spellCheckEnabled && typed.count >= 3', latin)
         self.assertIn('func automaticCorrection(for typed:', latin)
         self.assertIn('self.autoCorrectionEnabled && self.page == .letters', layout)
+        self.assertIn('self.composition.isEmpty || self.isLatinGrid', layout)
         self.assertIn('LatinWordSuggestionPolicy.canReplace(typed, in: context)', layout)
 
     def test_one_pass_conversation_translation_uses_voice_output(self):
