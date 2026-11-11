@@ -99,6 +99,14 @@ struct ConversationView: View {
       displayText = self.conversation.liveSource.isEmpty
         ? self.localeText(self.conversation.livePreviewUnavailable ? "liveUnavailable" : "listening", target: target)
         : self.visibleSource(self.conversation.liveSource, spokenBy: activeSpeaker ?? side)
+    } else if self.conversation.processing,
+              let recent, recent.sourceText.isEmpty,
+              !self.conversation.liveSource.isEmpty {
+      // Both panels retain the latest recognized source while the final
+      // transcript or target-language translation is being prepared.
+      displayText = self.visibleSource(
+        self.conversation.liveSource, spokenBy: recent.speaker
+      )
     } else if let recent {
       if showsOriginalLanguage {
         let source = recent.cleanedSourceText ?? recent.sourceText
