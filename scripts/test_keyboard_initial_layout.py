@@ -326,7 +326,7 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         # A diagnostic record cannot accept arbitrary typed text, host content
         # or a caller-defined string key. Only bounded enum/number fields exist.
         entry = trace.split("private struct Entry: Codable, Sendable {", 1)[1].split(
-            "\\n  }", 1
+            "  }", 1
         )[0]
         fields = [
             line.strip() for line in entry.splitlines()
