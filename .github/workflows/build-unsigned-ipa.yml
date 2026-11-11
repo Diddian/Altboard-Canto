@@ -403,7 +403,30 @@ jobs:
             --expected-primary-language mul \
             --expect-emoji-catalog --expect-merged-shapes
 
+      # TEST-labelled integration builds are only available as a run artifact.
+      # Do not replace the last usable rolling development IPA before iPhone QA.
+      - name: Package named A-E TEST IPA
+        if: contains(github.event.head_commit.message, '[TEST IPA]')
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp dist/Altboard-Canto-SideStore.ipa dist/Altboard-Canto-TEST.ipa
+          unzip -t dist/Altboard-Canto-TEST.ipa | tail -n 1
+          echo "### A-E integration TEST IPA" >> "$GITHUB_STEP_SUMMARY"
+          echo "Source: \`$GITHUB_SHA\` · iPhone acceptance pending" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload A-E TEST IPA
+        if: contains(github.event.head_commit.message, '[TEST IPA]')
+        uses: actions/upload-artifact@v7
+        with:
+          name: Altboard-Canto-TEST-IPA
+          path: dist/Altboard-Canto-TEST.ipa
+          archive: false
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Upload IPA to this Actions run
+        if: ${{ !contains(github.event.head_commit.message, '[TEST IPA]') }}
         uses: actions/upload-artifact@v7
         with:
           name: Altboard-Canto-Unsigned-IPA
@@ -416,6 +439,7 @@ jobs:
       # Keep prior branch preview releases (including #68) untouched.
       # Only main publishes to its own stable development URL.
       - name: Publish direct IPA to rolling development release
+        if: ${{ !contains(github.event.head_commit.message, '[TEST IPA]') }}
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
