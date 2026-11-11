@@ -2,7 +2,7 @@ import SwiftUI
 
 extension KeyboardState {
   var showsGlobeButton: Bool {
-    true // Keep the native keyboard/Emoji picker visible on every layout.
+    self.needsInputModeSwitchKey && !self.showGlobeKey // The optional top Globe replaces the required bottom switch.
   }
 
   var showsAIButton: Bool {
@@ -332,8 +332,9 @@ struct KeyboardBottomRow: View {
   /// compressing Space or Return below a usable touch width.
   private func visibleShortcuts(_ requested: [String], totalWidth: CGFloat) -> [String] {
     let padding = (self.keyboardState.effectiveTypingKind == .alphabetic ? 6.67 : 4).kbScaled
-    let leading = self.metrics.trashWidth + self.metrics.sideButtonWidth
     let gap = KeyboardChromeMetrics.buttonSpacing
+    let leading = self.metrics.trashWidth
+      + (self.metrics.showsGlobe ? self.metrics.sideButtonWidth : 0)
     for count in stride(from: requested.count, through: 0, by: -1) {
       let selected: [String]
       if count == 2 && requested.count == 3 && requested.last == ".com" {
@@ -345,7 +346,7 @@ struct KeyboardBottomRow: View {
         total + (key == ".com" ? 45 : 44).kbScaled
       }
       let returnWidth = count > 0 ? 78.kbScaled : self.metrics.returnWidth
-      let gapCount = CGFloat(3 + selected.count)
+      let gapCount = CGFloat((self.metrics.showsGlobe ? 3 : 2) + selected.count)
       let required = 2 * padding + leading + shortcutWidths + returnWidth
         + gapCount * gap + 75.kbScaled
       if required <= totalWidth { return selected }

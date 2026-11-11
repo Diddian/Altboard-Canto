@@ -175,6 +175,50 @@ class KeyboardSafetyContracts(unittest.TestCase):
         self.assertIn("self.targetRawValue = next.target.rawValue", button)
         self.assertIn("FeatureDiagnostics.record(.voiceOutput, .selected)", button)
 
+    def test_resumed_armed_mic_uses_app_owned_live_session(self):
+        mic = source("SayboardKeyboard/Views/Layouts/MicAnimatedButton.swift")
+        policy = source("Shared/DictationRequestPolicy.swift")
+        ping = source("SayboardKeyboard/PingValidator.swift")
+        audio = source("Sayboard/Services/BackgroundAudioSession.swift")
+        tap = mic.split("private func handleTap()", 1)[1].split(
+            "private func handleRecordingChanged", 1
+        )[0]
+        self.assertIn("DictationRequestPolicy.shouldRequestWarmSession(", tap)
+        self.assertIn("appActive: settings.isSessionActive", tap)
+        self.assertIn("heartbeat: settings.mainAppHeartbeat", tap)
+        self.assertLess(tap.index("self.proxy.startDictation()"),
+                        tap.index("self.proxy.openURL(url)", tap.index("let direct =")))
+        self.assertIn("hasRecentAudioHeartbeat", policy)
+        self.assertIn("lastHeartbeat.withLock", audio)
+        self.assertNotIn("settings.isSessionActive = false", ping)
+        self.assertNotIn("settings.isRecording = false", ping)
+        self.assertIn("keyboardState.isRecording = false", ping)
+        self.assertLess(ping.index("DictationRequestPolicy.hasRecentAudioHeartbeat("),
+                        ping.index("keyboardState.isRecording = false"))
+
+    def test_armed_mic_fallback_is_token_scoped_and_cancels_on_hide(self):
+        controller = source("SayboardKeyboard/KeyboardViewController.swift")
+        policy = source("Shared/DictationRequestPolicy.swift")
+        start = controller.split("private func startDictationViaDarwin()", 1)[1].split(
+            "private func openDictateDeepLinkFallback", 1
+        )[0]
+        disappearance = controller.split("override func viewWillDisappear", 1)[1].split(
+            "override func didReceiveMemoryWarning", 1
+        )[0]
+        self.assertIn("let token = UUID().uuidString", start)
+        self.assertIn("DictationRequestPolicy.isCurrent(", start)
+        self.assertIn("DictationRequestPolicy.shouldOpenColdFallback(", start)
+        self.assertIn("self.viewIfLoaded?.window != nil", start)
+        self.assertIn("audioAlive && retryCount == 0", start)
+        self.assertIn("self.scheduleWarmStartCheck(token: token, retryCount: 1)", start)
+        self.assertIn("self.warmStartSessionAcknowledged", start)
+        self.assertIn("self.staleFallbackTimer?.invalidate()", disappearance)
+        self.assertIn("self.pingValidator.cancel()", disappearance)
+        self.assertNotIn("settings.isSessionActive = false", controller)
+        self.assertIn("&& keyboardVisible && !recording && !appAcknowledged", policy)
+        self.assertIn("settings.dictationCancellationRequested = true", controller)
+        self.assertIn("vc.warmStartSessionAcknowledged = true", controller)
+
     def test_touch_state_does_not_outlive_keyboard(self):
         controller = source("SayboardKeyboard/KeyboardViewController.swift")
         delete = source("SayboardKeyboard/Views/RepeatDeleteButton.swift")

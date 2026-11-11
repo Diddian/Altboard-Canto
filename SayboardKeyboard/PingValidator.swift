@@ -14,12 +14,22 @@ final class PingValidator {
       DispatchQueue.main.async {
         guard let self, !self.responseReceived else { return }
         guard keyboardState.isSessionActive else { return }
+        let settings = SharedSettings()
+        settings.synchronize()
+        if DictationRequestPolicy.hasRecentAudioHeartbeat(
+          settings.mainAppHeartbeat, now: CFAbsoluteTimeGetCurrent()
+        ) {
+          // A delayed Darwin reply is not proof that the main app is dead.
+          DiagnosticLog.write("keyboard: session ping delayed; live audio state retained")
+          return
+        }
+        // Recover a stale keyboard view locally. Only the containing app
+        // owns and may clear the persisted AVAudioSession lifecycle flags.
         keyboardState.isSessionActive = false
         keyboardState.isRecording = false
-        let settings = SharedSettings()
-        settings.isSessionActive = false
-        settings.isRecording = false
-        settings.synchronize()
+        keyboardState.isStartingRecording = false
+        keyboardState.stopLevelPolling()
+        DiagnosticLog.write("keyboard: no recent audio heartbeat; local state reset")
       }
     }
   }

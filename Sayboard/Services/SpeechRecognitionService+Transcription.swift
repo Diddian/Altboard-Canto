@@ -185,7 +185,9 @@ extension SpeechRecognitionService {
         // Corrections are applied after display normalization for original /
         // Cantonese targets, preserving the Hong Kong greeting 喂.
         let displayText = TechnicalTextFormatter.format(
-          CantoneseOutput.normalizeForOutput(finalText, options: options)
+          CantoneseOutput.normalizeDictation(
+            finalText, options: options, preferredLanguages: self.recordingSpokenLanguages
+          )
         )
         let styledText = self.styled(displayText, host: stylingHost)
         let bridgeText: String

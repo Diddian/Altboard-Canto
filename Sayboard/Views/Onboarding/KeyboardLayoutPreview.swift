@@ -13,6 +13,10 @@ struct KeyboardLayoutPreview: View {
   static let keyFill = Color(uiColor: KeyboardPalette.keyFill)
 
   let kind: KeyboardKind
+  @AppStorage(SharedKey.keyboardShowGlobeKey, store: AppGroup.sharedDefaults ?? .standard)
+  private var showExtraGlobeKey = false
+  @AppStorage(SharedKey.needsInputModeSwitchKey, store: AppGroup.sharedDefaults ?? .standard)
+  private var systemSwitchRequired = false
   @AppStorage(SharedKey.keyboardShowOutputLanguageButton, store: AppGroup.sharedDefaults ?? .standard)
   private var showOutputKey = true
   @AppStorage(SharedKey.keyboardShowAIButton, store: AppGroup.sharedDefaults ?? .standard)
@@ -79,7 +83,8 @@ struct KeyboardLayoutPreview: View {
   private var standardLayout: some View {
     VStack(spacing: Self.rowSpacing) {
       ZStack(alignment: .top) {
-        HStack(alignment: .bottom) {
+        HStack(alignment: .bottom, spacing: Self.keySpacing) {
+          if self.showExtraGlobeKey { self.symbolKey("globe", width: Self.sideKeyWidth) }
           self.symbolKey("gearshape", width: Self.sideKeyWidth)
           Spacer(minLength: 0)
           self.symbolKey("delete.left", width: Self.sideKeyWidth)
@@ -101,6 +106,7 @@ struct KeyboardLayoutPreview: View {
   private var extendedLayout: some View {
     VStack(spacing: Self.rowSpacing) {
       HStack(spacing: Self.keySpacing) {
+        if self.showExtraGlobeKey { self.symbolKey("globe", width: Self.sideKeyWidth) }
         self.symbolKey("gearshape", width: Self.sideKeyWidth, shape: .pill)
         if self.showOutputKey {
           self.symbolKey("character.bubble", width: Self.sideKeyWidth)
@@ -136,6 +142,7 @@ struct KeyboardLayoutPreview: View {
   private var alphabeticLayout: some View {
     VStack(spacing: Self.rowSpacing) {
       HStack(spacing: Self.keySpacing) {
+        if self.showExtraGlobeKey { self.symbolKey("globe", width: 38) }
         self.symbolKey("gearshape", width: 38)
         if self.showOutputKey {
           self.symbolKey("character.bubble", width: 38)
@@ -161,7 +168,7 @@ struct KeyboardLayoutPreview: View {
       .padding(.horizontal, KeyboardLayoutGeometry.alphabetSpecialRowInset)
       HStack(spacing: Self.keySpacing) {
         self.textKey("?123", width: 48, size: 16)
-        self.nativeGlobeKey(width: 48)
+        if self.systemSwitchRequired && !self.showExtraGlobeKey { self.nativeGlobeKey(width: 48) }
         ZStack(alignment: .bottomTrailing) {
           Color.clear
           Text("A")
@@ -182,7 +189,9 @@ struct KeyboardLayoutPreview: View {
 
   private var bottomRow: some View {
     HStack(spacing: Self.keySpacing) {
-      self.symbolKey("globe", width: Self.sideKeyWidth)
+      if self.systemSwitchRequired && !self.showExtraGlobeKey {
+        self.symbolKey("globe", width: Self.sideKeyWidth)
+      }
       self.symbolKey("trash", width: Self.sideKeyWidth)
       Color.clear
         .frame(maxWidth: .infinity)

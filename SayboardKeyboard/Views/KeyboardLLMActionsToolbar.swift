@@ -9,6 +9,14 @@ struct KeyboardLLMActionsToolbar: View {
 
   var body: some View {
     HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
+      if self.keyboardState.showGlobeKey {
+        NativeInputModeSwitchKey(
+          configure: self.keyboardState.configureInputModeListButton,
+          iconName: "globe"
+        )
+        .frame(width: KeyboardChromeMetrics(keyboardState: self.keyboardState).sideButtonWidth,
+               height: KeyboardChromeMetrics.keyHeight)
+      }
       KeyButton(content: .systemImage("xmark"),
                 fixedWidth: 32.kbScaled) {
         self.keyboardState.showLLMActions = false

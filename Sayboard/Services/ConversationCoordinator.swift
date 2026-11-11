@@ -365,11 +365,14 @@ final class ConversationCoordinator: ObservableObject {
     self.liveTask = Task { @MainActor [weak self, weak service] in
       guard let self, let service else { return }
       var offset = 0
-      let frameCount = service.settings.selectedVariant.engine == .qwen3
-        ? 24_000 : 48_000 // 1.5s on Qwen3, longer on other engines
       let previewStarted = CFAbsoluteTimeGetCurrent()
       var didPublishFirstUpdate = false
+      var hasAttemptedFirst = false
       while !Task.isCancelled && self.recordingSide != nil {
+        let frameCount = LiveDictationChunkPolicy.samples(
+          isQwen: service.settings.selectedVariant.engine == .qwen3,
+          hasAttemptedFirst: hasAttemptedFirst
+        )
         guard let samples = self.accumulator.chunk(from: offset, count: frameCount)
         else {
           do { try await Task.sleep(for: .milliseconds(130)) }
@@ -377,6 +380,7 @@ final class ConversationCoordinator: ObservableObject {
           continue
         }
         offset += samples.count
+        hasAttemptedFirst = true
         let result = await service.transcribeSamples(samples)
         guard !Task.isCancelled, self.recordingSide != nil else { break }
         if case .text(let output) = result {
