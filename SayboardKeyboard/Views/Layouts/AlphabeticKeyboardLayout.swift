@@ -1212,6 +1212,7 @@ struct AlphabeticKeyboardLayout: View {
         // Query the dictionary once. The expanded grid used to repeat the
         // same SQLite/beam-search work immediately after a compact lookup.
         let gridVisible = self.showsCandidateGrid
+        let startedAt = ProcessInfo.processInfo.systemUptime
         let ranked = JyutpingDictionary.shared.candidates(
           for: prefix, limit: gridVisible ? 200 : 12
         )
@@ -1224,6 +1225,10 @@ struct AlphabeticKeyboardLayout: View {
             prefix, preferred: SharedSettings().preferredSpokenLanguages
           )
         guard !Task.isCancelled, self.composition.buffer == prefix else { return }
+        let durationMs = Int((ProcessInfo.processInfo.systemUptime - startedAt) * 1_000)
+        if durationMs >= 24 {
+          FeatureDiagnostics.record(.chineseInput, .slow, durationMs: durationMs)
+        }
         var transaction = Transaction(animation: nil)
         transaction.disablesAnimations = true
         withTransaction(transaction) {
@@ -1277,12 +1282,17 @@ struct AlphabeticKeyboardLayout: View {
             LatinWordSuggestionPolicy.trailingWord(
               in: self.proxy.documentContextBeforeInput()
             ) == typed else { return }
+      let startedAt = ProcessInfo.processInfo.systemUptime
       let values = LatinWordSuggestions.shared.choices(
         for: typed, preferred: preferred,
         context: self.proxy.documentContextBeforeInput(), limit: 48,
         spellCheckEnabled: self.spellCheckingEnabled
       )
       guard !Task.isCancelled, self.activeLatinWord == typed else { return }
+      let durationMs = Int((ProcessInfo.processInfo.systemUptime - startedAt) * 1_000)
+      if durationMs >= 45 {
+        FeatureDiagnostics.record(.language, .slow, durationMs: durationMs)
+      }
       let compact = Array(values.prefix(9))
       var noAnimation = Transaction(animation: nil)
       noAnimation.disablesAnimations = true
