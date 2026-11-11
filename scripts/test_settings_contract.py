@@ -531,7 +531,7 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn('Button("Reset Haptic Feedback"', settings)
         self.assertIn("SharedSettings().resetKeyboardHaptics()", settings)
         self.assertIn("func resetKeyboardHaptics()", shared)
-        reset = shared.split("func resetKeyboardHaptics()", 1)[1].split("\\n  }", 1)[0]
+        reset = shared.split("func resetKeyboardHaptics()", 1)[1].split("  }", 1)[0]
         self.assertIn("self.keyboardHapticsEnabled = true", reset)
         self.assertIn("self.keyboardHapticStrength = Self.defaultKeyboardHapticStrength", reset)
         self.assertIn("self.keyboardHapticDriver = .coreHaptics", reset)
