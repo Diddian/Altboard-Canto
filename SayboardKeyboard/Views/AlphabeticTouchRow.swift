@@ -190,7 +190,7 @@ struct AlphabeticTouchRow: View {
         self.swipePoint(point), arrangement: self.swipeArrangement,
         width: self.swipeWidth(for: width)
       )
-      if LatinSwipeDecoder.gestureLength(self.swipeSession.points) >= 16 {
+      if self.swipeSession.travelDistance >= 16 {
         // No new gesture recognizer. The already captured UIKit points draw
         // into a noninteractive Canvas above the three letter rows.
         self.onSwipePath(self.swipeSession.points)
