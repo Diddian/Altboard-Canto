@@ -14,10 +14,22 @@ final class PingValidator {
       DispatchQueue.main.async {
         guard let self, !self.responseReceived else { return }
         guard keyboardState.isSessionActive else { return }
-        // A slow or missed Darwin reply is not permission to end the
-        // main app's AVAudioSession. Its owner emits authoritative lifecycle
-        // notifications; a keyboard must never clear persisted audio state.
-        DiagnosticLog.write("keyboard: session status ping timed out; state preserved")
+        let settings = SharedSettings()
+        settings.synchronize()
+        if DictationRequestPolicy.hasRecentAudioHeartbeat(
+          settings.mainAppHeartbeat, now: CFAbsoluteTimeGetCurrent()
+        ) {
+          // A delayed Darwin reply is not proof that the main app is dead.
+          DiagnosticLog.write("keyboard: session ping delayed; live audio state retained")
+          return
+        }
+        // Recover a stale keyboard view locally. Only the containing app
+        // owns and may clear the persisted AVAudioSession lifecycle flags.
+        keyboardState.isSessionActive = false
+        keyboardState.isRecording = false
+        keyboardState.isStartingRecording = false
+        keyboardState.stopLevelPolling()
+        DiagnosticLog.write("keyboard: no recent audio heartbeat; local state reset")
       }
     }
   }
