@@ -66,7 +66,7 @@ final class LLMProcessingCoordinator: ObservableObject {
   ) async -> String? {
     guard !source.isEmpty, !Task.isCancelled else { return nil }
     if options.target == .original && !options.needsLLM {
-      onCleaned(source)
+      onCleaned(VoicePunctuationPolicy.render(source, enabled: options.punctuationEnabled))
       return nil
     }
     self.lastVoiceOutputIssue = nil
@@ -86,11 +86,11 @@ final class LLMProcessingCoordinator: ObservableObject {
         let cleaned = await self.processVoiceChunks(source, options: options)
         guard !Task.isCancelled else { return nil }
         if let cleaned, !cleaned.isEmpty {
-          onCleaned(cleaned)
+          onCleaned(VoicePunctuationPolicy.render(cleaned, enabled: options.punctuationEnabled))
           FeatureDiagnostics.record(.speechFinalization, .completed,
             durationMs: Int((CFAbsoluteTimeGetCurrent() - cleanedStarted) * 1_000))
         } else {
-          onCleaned(source)
+          onCleaned(VoicePunctuationPolicy.render(source, enabled: options.punctuationEnabled))
           FeatureDiagnostics.record(.speechFinalization, .fallback)
         }
       } else {
@@ -112,7 +112,9 @@ final class LLMProcessingCoordinator: ObservableObject {
         durationMs: Int((CFAbsoluteTimeGetCurrent() - started) * 1_000)
       )
     }
-    return translation
+    return translation.map {
+      VoicePunctuationPolicy.render($0, enabled: options.punctuationEnabled)
+    }
   }
 
   private func processVoiceChunks(
@@ -163,7 +165,10 @@ final class LLMProcessingCoordinator: ObservableObject {
         )
         return false
       }
-      let displayed = CantoneseOutput.normalizeForOutput(translated, options: options)
+      // The chunk is already normalized by processVoiceChunk.
+      let displayed = VoicePunctuationPolicy.render(
+        translated, enabled: options.punctuationEnabled
+      )
       guard !Task.isCancelled, onTranslated(current + 1, displayed) else {
         if !Task.isCancelled {
           self.lastVoiceOutputIssue = "Unable to save the translated section locally."
@@ -236,7 +241,9 @@ final class LLMProcessingCoordinator: ObservableObject {
       guard !Task.isCancelled else { return nil }
       if let candidate = result?.trimmingCharacters(in: .whitespacesAndNewlines),
          !candidate.isEmpty,
-         VoiceLanguageValidator.matches(candidate, target: options.target),
+         VoiceLanguageValidator.matches(
+           candidate, target: options.target, customLanguage: options.customLanguage
+         ),
          (input.count < 30 || candidate.count <= max(input.count * 4, input.count + 200)) {
         self.lastVoiceOutputIssue = nil
         return CantoneseOutput.normalizeForOutput(candidate, options: options)
@@ -255,7 +262,9 @@ final class LLMProcessingCoordinator: ObservableObject {
       FeatureDiagnostics.record(.voiceOutput, .failed, failureReason: .inferenceUnavailable)
       return nil
     }
-    guard VoiceLanguageValidator.matches(output, target: options.target) else {
+    guard VoiceLanguageValidator.matches(
+      output, target: options.target, customLanguage: options.customLanguage
+    ) else {
       self.lastVoiceOutputIssue = "The result was not in the requested language. Try another Text Model."
       FeatureDiagnostics.record(.voiceOutput, .rejected, failureReason: .invalidTargetLanguage)
       return nil
@@ -341,23 +350,36 @@ final class LLMProcessingCoordinator: ObservableObject {
       assistantPrefill: prefill,
     )
 
-    // The keyboard may have cancelled or replaced the request while inference ran.
-    guard !Task.isCancelled,
-          LLMBridge.readRequest()?.requestID == validated.request.requestID else {
-      LLMBridge.writeStatus(.cancelled, requestID: validated.request.requestID)
-      FeatureDiagnostics.record(.aiActions, .cancelled)
-      return
-    }
-
     if let result, !result.isEmpty {
+      var normalizedResult = result
       if validated.request.action == .translate,
          let rawTarget = validated.request.translationTarget,
-         let target = VoiceOutputTarget(rawValue: rawTarget),
-         !VoiceLanguageValidator.matches(result, target: target) {
-        FeatureDiagnostics.record(.aiActions, .rejected)
+         let target = VoiceOutputTarget(rawValue: rawTarget) {
+        let outputOptions = VoiceOutputConfiguration(
+          cleanupEnabled: false, target: target, register: .faithful,
+          customLanguage: validated.request.customTranslationLanguage ?? ""
+        )
+        guard VoiceLanguageValidator.matches(
+          result, target: target, customLanguage: outputOptions.customLanguage
+        ) else {
+          FeatureDiagnostics.record(.aiActions, .rejected)
+          return
+        }
+        normalizedResult = CantoneseOutput.normalizeForOutput(result, options: outputOptions)
+      }
+      let finalResult = self.styled(
+        normalizedResult, action: validated.request.action, host: stylingHost, settings: settings
+      )
+      // Check the live request and cancellation before the irreversible App Group write.
+      guard LLMOperationPolicy.canPublish(
+        requestID: validated.request.requestID,
+        currentRequestID: LLMBridge.readRequest()?.requestID,
+        cancelled: Task.isCancelled
+      ) else {
+        LLMBridge.writeStatus(.cancelled, requestID: validated.request.requestID)
+        FeatureDiagnostics.record(.aiActions, .cancelled)
         return
       }
-      let finalResult = self.styled(result, action: validated.request.action, host: stylingHost, settings: settings)
       if LLMBridge.writeResult(finalResult, requestID: validated.request.requestID) {
         TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingComplete)
         FeatureDiagnostics.record(.aiActions, .completed)

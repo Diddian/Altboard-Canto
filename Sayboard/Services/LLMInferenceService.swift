@@ -43,8 +43,12 @@ final class LLMInferenceService: ObservableObject {
   }
 
   func matchesLoadedModel(variant: LLMModelVariant, path: String) -> Bool {
-    self.loadState == .loaded && self.currentVariant == variant
-      && self.currentModelPath == path && self.model != nil && self.context != nil
+    LLMOperationPolicy.matchesLoadedModel(
+      requestedVariant: variant, requestedPath: path,
+      loadedVariant: self.currentVariant, loadedPath: self.currentModelPath,
+      isLoaded: self.loadState == .loaded,
+      hasModel: self.model != nil, hasContext: self.context != nil
+    )
   }
 
   func loadModel(variant: LLMModelVariant, path: String) async {

@@ -227,6 +227,28 @@ struct VoiceOutputPipelineTests {
   }
 
   @Test
+  func customChineseOutputRejectsUntranslatedLatinAndPreservesScript() {
+    #expect(!VoiceLanguageValidator.matches("Hallo", target: .custom, customLanguage: "zh-Hans"))
+    #expect(VoiceLanguageValidator.matches("廁所", target: .custom, customLanguage: "zh-Hans"))
+    #expect(!VoiceLanguageValidator.matches("Hello", target: .custom, customLanguage: "yue-HK"))
+    #expect(VoiceLanguageValidator.matches("喺邊度？", target: .custom, customLanguage: "yue-HK"))
+    #expect(!VoiceLanguageValidator.matches("bonjour", target: .custom, customLanguage: "!!"))
+    let simplified = VoiceOutputConfiguration(
+      cleanupEnabled: false, target: .custom, register: .faithful,
+      customLanguage: "zh-Hans"
+    )
+    #expect(CantoneseOutput.normalizeForOutput("廁所", options: simplified) == "厕所")
+  }
+
+  @Test
+  func outputPunctuationIsAppliedOnceAtFinalDelivery() {
+    let source = "喂，你好！I am here."
+    #expect(VoicePunctuationPolicy.render(source, enabled: true) == source)
+    #expect(VoicePunctuationPolicy.render(source, enabled: false) == "喂 你好 I am here")
+    #expect(VoicePunctuationPolicy.render("你好", enabled: false) == "你好")
+  }
+
+  @Test
   func customLanguageInputsAreConstrained() {
     #expect(VoiceOutputTarget.customLanguageName("fr") != nil)
     #expect(VoiceOutputTarget.customLanguageName("de") != nil)

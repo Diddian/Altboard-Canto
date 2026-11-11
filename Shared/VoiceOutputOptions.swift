@@ -268,13 +268,37 @@ enum VoiceOutputPrompt {
 
 /// Conservative validation for user-selected translation output languages.
 enum VoiceLanguageValidator {
-  static func matches(_ output: String, target: VoiceOutputTarget) -> Bool {
+  static func matches(
+    _ output: String, target: VoiceOutputTarget, customLanguage: String = ""
+  ) -> Bool {
     guard !output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
-    if target == .original || target == .custom { return true }
+    if target == .original { return true }
     let han = output.unicodeScalars.filter { (0x3400...0x9FFF).contains($0.value) }.count
     let latin = output.unicodeScalars.filter {
       (65...90).contains($0.value) || (97...122).contains($0.value)
     }.count
+    if target == .custom {
+      let code = customLanguage.trimmingCharacters(in: .whitespacesAndNewlines)
+        .lowercased().replacingOccurrences(of: "_", with: "-")
+      guard VoiceOutputTarget.customLanguageName(code) != nil else { return false }
+      if ["zh-hans", "zh-cn", "zh-sg", "zh-hant", "zh-hk", "zh-tw",
+          "yue", "yue-hk"].contains(code) {
+        return Self.matches(output, target: code.hasPrefix("yue") ? .cantonese : .traditionalChinese)
+      }
+      // Short snippets are too ambiguous for language classification.
+      // Reject long, confidently wrong-language output without guessing.
+      guard output.count >= 60,
+            let expected = NLLanguage(rawValue: String(code.split(separator: "-")[0])) else {
+        return true
+      }
+      let recognizer = NLLanguageRecognizer()
+      recognizer.processString(output)
+      let hypotheses = recognizer.languageHypotheses(withMaximum: 3)
+      if let strongest = hypotheses.max(by: { $0.value < $1.value }),
+         strongest.key != expected, strongest.value > 0.90,
+         (hypotheses[expected] ?? 0) < 0.05 { return false }
+      return true
+    }
     switch target {
     case .german, .english:
       if han >= 3 && han * 2 > latin { return false }
