@@ -226,7 +226,7 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("firstWindowSamples: firstWindow", coordinator)
         self.assertIn("service.activeLoadState != .loaded", coordinator)
         self.assertIn("service.activeLoadState == .loading", coordinator)
-        self.assertIn("Retain the last live source", coordinator)
+        self.assertIn("Keep the source preview visible while ASR/translation finalizes", coordinator)
         self.assertIn("self.conversation.processing,", view)
         self.assertIn("sourcePreview: self.keyboardState.liveSourcePreview", chrome)
         self.assertIn("options: sourceOptions", live)
