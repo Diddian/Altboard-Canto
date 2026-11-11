@@ -645,6 +645,8 @@ final class KeyboardViewController: UIInputViewController {
           return
         }
         vc.cancelProcessingTimeout()
+        vc.staleFallbackTimer?.invalidate()
+        vc.staleFallbackTimer = nil
         vc.keyboardState.stopLevelPolling()
         vc.keyboardState.liveSourcePreview = nil
         vc.keyboardState.isRecording = false
@@ -804,6 +806,7 @@ extension KeyboardViewController {
     self.keyboardState.liveSourcePreview = nil
     self.staleFallbackTimer?.invalidate()
     self.staleFallbackTimer = nil
+    self.warmStartSessionAcknowledged = false
     self.cancelProcessingTimeout()
     self.keyboardState.isStartingRecording = false
     self.keyboardState.isRecording = false
@@ -818,6 +821,8 @@ extension KeyboardViewController {
   }
 
   func stopDictationViaDarwin() {
+    self.staleFallbackTimer?.invalidate()
+    self.staleFallbackTimer = nil
     self.saveHostBundleId()
     self.keyboardState.isProcessing = true
     self.keyboardState.syncVoiceProcessingProgress()
@@ -837,6 +842,7 @@ extension KeyboardViewController {
         guard let vc = Self.activeInstance else { return }
         let isProc = vc.keyboardState.isProcessing
         vc.pingValidator.cancel()
+        vc.warmStartSessionAcknowledged = true
         vc.keyboardState.isSessionActive = true
         if isProc || vc.keyboardState.isLLMProcessing {
           vc.receivedPingDuringProcessing = true
@@ -854,6 +860,7 @@ extension KeyboardViewController {
         let finalizing = vc.keyboardState.isProcessing
         if !finalizing { vc.cancelProcessingTimeout() }
         vc.keyboardState.stopLevelPolling()
+        vc.warmStartSessionAcknowledged = false
         vc.keyboardState.isSessionActive = false
         vc.keyboardState.isRecording = false
         vc.keyboardState.recordingStartedAt = 0
