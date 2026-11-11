@@ -835,13 +835,19 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("if self.keyboardState.showsGlobeButton", keyboard)
         self.assertIn('iconName = "globe"', native)
         self.assertIn('self.key("globe", width: 48)', preview)
-        self.assertIn('KeyButton(content: .nativeEmojiGlyph', keyboard)
+        bottom = keyboard.split("struct KeyboardBottomRow: View", 1)[1]
+        emoji = bottom.split("if self.onEmojiAction != nil", 1)[1].split(
+            "} else if self.keyboardState.showsGlobeButton", 1
+        )[0]
+        self.assertIn("NativeInputModeSwitchKey(", emoji)
+        self.assertIn('iconName: "nativeEmoji"', emoji)
+        self.assertIn("configure: self.keyboardState.configureInputModeListButton", emoji)
+        self.assertNotIn("openEmoji()", emoji)
+        self.assertNotIn("KeyButton(", emoji)
         self.assertIn('var onEmojiAction:', keyboard)
-        self.assertIn('if let openEmoji = self.onEmojiAction', keyboard)
-        self.assertIn("EmojiKeyboardView(", alphabet)
+        # The old page still exists in a cross-worker file, but the key must
+        # never invoke its callback. Removal belongs to integration.
         self.assertIn('onEmojiAction: { self.openEmojiPage() }', alphabet)
-        self.assertIn('self.showsEmojiPage = true', alphabet)
-        self.assertIn('self.showsEmojiPage = false', alphabet)
         self.assertIn('keyboardState.effectiveTypingKind == .alphabetic', keyboard)
         self.assertIn('Label("Writing Style", systemImage: "text.alignleft")',
                       read("Sayboard/Views/LLMSettingsView.swift"))
@@ -860,6 +866,12 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("SharedKey.keyboardShowGlobeKey",
           read("Sayboard/Views/Onboarding/KeyboardLayoutPreview.swift"))
         self.assertIn("#selector(handleInputModeList(from:with:))", controller)
+        self.assertIn("for: .allTouchEvents", controller)
+        self.assertIn("button.removeTarget(self", controller)
+        self.assertIn("button.addTarget(", controller)
+        self.assertIn("configure?(button)", native)
+        self.assertIn("NativeEmojiGlyph().path(in:", native)
+        self.assertIn("button.isAccessibilityElement = true", native)
 
     def test_output_and_formatting_have_one_owner(self):
         dictation = read("Sayboard/Views/SettingsNavigationViews.swift")
