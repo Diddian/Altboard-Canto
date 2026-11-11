@@ -34,7 +34,7 @@ enum OperationPolicy {
     case .requested: return previous == .requested
     case .accepted: return previous == .requested || previous == .accepted
     case .running: return true
-    case .busy, .rejected: return previous == .requested || previous == .accepted
+    case .busy, .rejected: return previous == .requested
     case .completed, .cancelled, .failed: return true
     }
   }
@@ -85,5 +85,28 @@ enum LiveDeliveryPolicy {
           before?.hasSuffix(anchor) == true,
           expectedAfter == after else { return false }
     return selectedText?.isEmpty ?? true
+  }
+}
+
+enum LiveFinalPlan: Equatable {
+  case unchanged
+  case append(String)
+  case replace(String)
+  case review
+}
+
+enum LiveFinalReconciliation {
+  static func plan(
+    partial: String, final: String, marked: String,
+    prefix: String, before: String?
+  ) -> LiveFinalPlan {
+    guard !partial.isEmpty, !marked.isEmpty, !final.isEmpty else { return .review }
+    if partial == final { return .unchanged }
+    if final.hasPrefix(partial) {
+      return .append(String(final.dropFirst(partial.count)))
+    }
+    // Correction is destructive only when the full owned insertion is visible.
+    guard before?.hasSuffix(marked) == true else { return .review }
+    return .replace(prefix + final)
   }
 }

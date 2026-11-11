@@ -1,5 +1,10 @@
 
 import Foundation
+#if canImport(Darwin)
+import Darwin
+#elseif canImport(Glibc)
+import Glibc
+#endif
 
 struct LLMRequest: Codable, Sendable {
   var requestID = UUID()
@@ -26,6 +31,10 @@ struct LLMBridge: Sendable {
 
   @discardableResult
   static func writeStatus(_ phase: OperationPhase, requestID: UUID) -> Bool {
+    self.withBridgeLock { self.writeStatusUnlocked(phase, requestID: requestID) } ?? false
+  }
+
+  private static func writeStatusUnlocked(_ phase: OperationPhase, requestID: UUID) -> Bool {
     guard let folder = AppGroup.containerURL?.appendingPathComponent("text-job-status", isDirectory: true)
     else { return false }
     guard OperationPolicy.mayTransition(
@@ -46,7 +55,14 @@ struct LLMBridge: Sendable {
           ((try? $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast)
             > ((try? $1.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast)
         }
-        for file in sorted.dropFirst(64) { try? FileManager.default.removeItem(at: file) }
+        // Only remove terminal markers; an active request has no replacement.
+        for file in sorted.dropFirst(64) {
+          if let bytes = try? Data(contentsOf: file),
+             let old = try? JSONDecoder().decode(LLMJobStatus.self, from: bytes),
+             old.phase.isTerminal {
+            try? FileManager.default.removeItem(at: file)
+          }
+        }
       }
       return true
     } catch {
@@ -81,19 +97,26 @@ struct LLMBridge: Sendable {
       FeatureDiagnostics.record(.bridge, .unavailable)
       return false
     }
-    do {
-      let data = try JSONEncoder().encode(request)
-      try data.write(to: url, options: [.atomic, .completeFileProtectionUnlessOpen])
-      guard self.writeStatus(.requested, requestID: request.requestID) else {
-        self.clearRequest(matching: request.requestID)
+    // Only one request can own the legacy single-slot bridge at a time.
+    // A second keyboard must never erase another keyboard's pending work.
+    return self.withBridgeLock {
+      // A corrupt/unreadable request is still someone else's pending data.
+      guard !FileManager.default.fileExists(atPath: url.path),
+            !self.hasResult() else { return false }
+      do {
+        let data = try JSONEncoder().encode(request)
+        try data.write(to: url, options: [.atomic, .completeFileProtectionUnlessOpen])
+        guard self.writeStatusUnlocked(.requested, requestID: request.requestID) else {
+          try? FileManager.default.removeItem(at: url)
+          return false
+        }
+        FeatureDiagnostics.record(.bridge, .queued)
+        return true
+      } catch {
+        FeatureDiagnostics.record(.bridge, .failed)
         return false
       }
-      FeatureDiagnostics.record(.bridge, .queued)
-      return true
-    } catch {
-      FeatureDiagnostics.record(.bridge, .failed)
-      return false
-    }
+    } ?? false
   }
 
   static func readRequest() -> LLMRequest? {
@@ -106,29 +129,31 @@ struct LLMBridge: Sendable {
 
   @discardableResult
   static func writeResult(_ text: String, requestID: UUID) -> Bool {
-    // Ignore late or repeated results after a terminal outcome.
-    guard let phase = self.readStatus(matching: requestID)?.phase,
-          phase != .completed,
-          OperationPolicy.mayTransition(from: phase, to: .completed) else { return false }
     guard let url = resultFileURL else {
       FeatureDiagnostics.record(.bridge, .unavailable)
       return false
     }
-    do {
-      let payload = LLMResult(requestID: requestID, text: text)
-      try JSONEncoder().encode(payload).write(
-        to: url, options: [.atomic, .completeFileProtectionUnlessOpen]
-      )
-      guard self.writeStatus(.completed, requestID: requestID) else {
-        self.clearResult(matching: requestID)
+    // Serialize terminal publication with cancellation and request handoff.
+    return self.withBridgeLock {
+      guard let phase = self.readStatus(matching: requestID)?.phase,
+            phase == .accepted || phase == .running,
+            !self.hasResult() else { return false }
+      do {
+        let payload = LLMResult(requestID: requestID, text: text)
+        try JSONEncoder().encode(payload).write(
+          to: url, options: [.atomic, .completeFileProtectionUnlessOpen]
+        )
+        guard self.writeStatusUnlocked(.completed, requestID: requestID) else {
+          try? FileManager.default.removeItem(at: url)
+          return false
+        }
+        FeatureDiagnostics.record(.bridge, .queued)
+        return true
+      } catch {
+        FeatureDiagnostics.record(.bridge, .failed)
         return false
       }
-      FeatureDiagnostics.record(.bridge, .queued)
-      return true
-    } catch {
-      FeatureDiagnostics.record(.bridge, .failed)
-      return false
-    }
+    } ?? false
   }
 
   static func readResult(matching requestID: UUID?) -> String? {
@@ -145,23 +170,53 @@ struct LLMBridge: Sendable {
   }
 
   static func clearRequest(matching requestID: UUID) {
-    guard self.readRequest()?.requestID == requestID else { return }
-    self.clearRequest()
+    _ = self.withBridgeLock {
+      guard self.readRequest()?.requestID == requestID else { return false }
+      // Duplicate Darwin delivery cannot clear an accepted in-flight job.
+      if let phase = self.readStatus(matching: requestID)?.phase,
+         !phase.isTerminal { return false }
+      guard let url = requestFileURL else { return false }
+      try? FileManager.default.removeItem(at: url)
+      return true
+    }
   }
 
   static func clearRequest() {
-    guard let url = requestFileURL else { return }
-    try? FileManager.default.removeItem(at: url)
+    guard let request = self.readRequest() else { return }
+    self.clearRequest(matching: request.requestID)
   }
 
   static func clearResult(matching requestID: UUID) {
-    guard self.readResult(matching: requestID) != nil else { return }
-    self.clearResult()
+    _ = self.withBridgeLock {
+      guard self.readResult(matching: requestID) != nil,
+            let url = resultFileURL else { return false }
+      try? FileManager.default.removeItem(at: url)
+      return true
+    }
   }
 
   static func clearResult() {
-    guard let url = resultFileURL else { return }
-    try? FileManager.default.removeItem(at: url)
+    // Recover the recorded owner; do not blindly erase another job's result.
+    guard let url = resultFileURL,
+          let data = try? Data(contentsOf: url),
+          let result = try? JSONDecoder().decode(LLMResult.self, from: data)
+    else { return }
+    self.clearResult(matching: result.requestID)
+  }
+
+  /// The single-slot App Group bridge requires a cross-process lease.
+  /// The file carries no user content. Acquire it only for bounded JSON IO.
+  private static func withBridgeLock<T>(_ operation: () -> T) -> T? {
+    guard let root = AppGroup.containerURL else { return nil }
+    let path = root.appendingPathComponent("llm-bridge-v1.lock").path
+    let fd = open(path, O_CREAT | O_RDWR, mode_t(0o600))
+    guard fd >= 0 else { return nil }
+    defer {
+      _ = flock(fd, LOCK_UN)
+      _ = close(fd)
+    }
+    guard flock(fd, LOCK_EX) == 0 else { return nil }
+    return operation()
   }
 
   private static let requestFileName = "llm_request.json"

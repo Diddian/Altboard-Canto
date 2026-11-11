@@ -126,29 +126,31 @@ extension KeyboardViewController {
       self.keyboardState.showFinalOutputPreview(final)
       return true
     }
-    if final == self.liveTranscriptionCommittedRaw { return true }
-    let anchor = String(self.liveTranscriptionMarkedText.suffix(24))
-    guard !anchor.isEmpty,
-          proxy.documentContextBeforeInput?.hasSuffix(anchor) == true,
-          proxy.selectedText?.isEmpty ?? true else {
-      self.keyboardState.showFinalOutputPreview(final)
-      return true
-    }
-    if final.hasPrefix(self.liveTranscriptionCommittedRaw) {
-      proxy.insertText(String(final.dropFirst(self.liveTranscriptionCommittedRaw.count)))
-    } else if proxy.documentContextBeforeInput?.hasSuffix(self.liveTranscriptionMarkedText) == true {
-      // Full context is available, so a bounded verified replacement is safe.
+    let plan = LiveFinalReconciliation.plan(
+      partial: self.liveTranscriptionCommittedRaw, final: final,
+      marked: self.liveTranscriptionMarkedText,
+      prefix: self.liveTranscriptionPrefix,
+      before: proxy.documentContextBeforeInput
+    )
+    switch plan {
+    case .unchanged:
+      break
+    case .append(let suffix):
+      proxy.insertText(suffix)
+    case .replace(let replacement):
       for _ in self.liveTranscriptionMarkedText { proxy.deleteBackward() }
-      proxy.insertText(self.liveTranscriptionPrefix + final)
-    } else {
-      // Context truncated: do not erase unrelated material to correct a word.
+      proxy.insertText(replacement)
+    case .review:
+      // A truncated host context must never trigger destructive correction.
       self.keyboardState.showFinalOutputPreview(final)
     }
     return true
   }
 
   func cancelExperimentalLiveText() {
-    self.liveTranscriptionBlockedToken = nil
+    // A delayed partial notification must not reinsert cancelled speech.
+    self.liveTranscriptionBlockedToken =
+      self.liveTranscriptionOwnerToken ?? self.dictationRequestToken
     defer { self.abandonExperimentalLiveOwnership() }
     let proxy = self.textDocumentProxy
     guard let owned = self.liveTranscriptionDocumentID,

@@ -58,7 +58,14 @@ enum VerifyOperationContracts {
     let b = LLMRequest(text: "second", action: .rewrite, customPromptId: nil, language: "en")
     precondition(LLMBridge.writeRequest(a))
     precondition(LLMBridge.readStatus(matching: a.requestID)?.phase == .requested)
-    LLMBridge.writeStatus(.accepted, requestID: a.requestID)
+    // A second keyboard cannot replace another pending request.
+    precondition(!LLMBridge.writeRequest(b))
+    precondition(LLMBridge.readRequest()?.requestID == a.requestID)
+    precondition(LLMBridge.writeStatus(.accepted, requestID: a.requestID))
+    // A replayed Darwin notification must not turn the active job into busy.
+    precondition(!LLMBridge.writeStatus(.busy, requestID: a.requestID))
+    LLMBridge.clearRequest(matching: a.requestID)
+    precondition(LLMBridge.readRequest()?.requestID == a.requestID)
     LLMBridge.writeStatus(.busy, requestID: b.requestID)
     precondition(LLMBridge.readStatus(matching: a.requestID)?.phase == .accepted)
     precondition(LLMBridge.readStatus(matching: b.requestID)?.phase == .busy)
@@ -68,10 +75,26 @@ enum VerifyOperationContracts {
     precondition(LLMBridge.readStatus(matching: a.requestID)?.phase == .completed)
     LLMBridge.clearResult(matching: b.requestID)
     precondition(LLMBridge.readResult(matching: a.requestID) == "result")
+    precondition(!LLMBridge.writeRequest(b))
     LLMBridge.clearResult(matching: a.requestID)
     precondition(!LLMBridge.hasResult())
     LLMBridge.clearRequest(matching: a.requestID)
     precondition(LLMBridge.readRequest() == nil)
+    let nextRequest = LLMRequest(text: "next", action: .rewrite,
+      customPromptId: nil, language: "en")
+    precondition(LLMBridge.writeRequest(nextRequest))
+    precondition(LLMBridge.readRequest()?.requestID == nextRequest.requestID)
+    // Preserve unreadable pending data rather than overwriting it.
+    precondition(LLMBridge.writeStatus(.cancelled, requestID: nextRequest.requestID))
+    LLMBridge.clearRequest(matching: nextRequest.requestID)
+    let malformedURL = AppGroup.containerURL!.appendingPathComponent("llm_request.json")
+    try Data("malformed-pending-request".utf8).write(to: malformedURL, options: .atomic)
+    let blocked = LLMRequest(text: "must not overwrite", action: .rewrite,
+      customPromptId: nil, language: "de")
+    precondition(!LLMBridge.writeRequest(blocked))
+    let preservedPendingBytes = try Data(contentsOf: malformedURL)
+    precondition(preservedPendingBytes == Data("malformed-pending-request".utf8))
+    try FileManager.default.removeItem(at: malformedURL)
 
     precondition(TranscriptionBridge.writeTranscription("synthetic final text"))
     let pending = TranscriptionBridge.readDelivery()!
@@ -111,6 +134,23 @@ enum VerifyOperationContracts {
     precondition(future == .interrupted)
     precondition(ConversationTurnPolicy.maximumRecoverySeconds > ConversationTurnPolicy.maximumCaptureSeconds)
     precondition(OperationPhase.busy.isTerminal && !OperationPhase.accepted.isTerminal)
+    precondition(!OperationPolicy.mayTransition(from: .accepted, to: .busy))
+    precondition(LiveFinalReconciliation.plan(
+      partial: "hello", final: "hello", marked: " hello",
+      prefix: " ", before: " hello"
+    ) == .unchanged)
+    precondition(LiveFinalReconciliation.plan(
+      partial: "hello", final: "hello world", marked: " hello",
+      prefix: " ", before: " hello"
+    ) == .append(" world"))
+    precondition(LiveFinalReconciliation.plan(
+      partial: "goood", final: "good", marked: " goood",
+      prefix: " ", before: " goood"
+    ) == .replace(" good"))
+    precondition(LiveFinalReconciliation.plan(
+      partial: "goood", final: "good", marked: " goood",
+      prefix: " ", before: "truncated ood"
+    ) == .review)
     precondition(OperationPolicy.mayTransition(from: nil, to: .requested))
     precondition(OperationPolicy.mayTransition(from: .requested, to: .accepted))
     precondition(OperationPolicy.mayTransition(from: .accepted, to: .completed))

@@ -492,7 +492,8 @@ final class KeyboardViewController: UIInputViewController {
       self.keyboardState.clearLLMHistory()
     }
 
-    if self.liveTranscriptionBlockedToken != nil || Self.blockedLiveSessionToken != nil {
+    if self.liveTranscriptionBlockedToken == delivery.sessionToken
+        || Self.blockedLiveSessionToken == delivery.sessionToken {
       self.abandonExperimentalLiveOwnership()
       Self.blockedLiveSessionToken = nil
       self.liveTranscriptionBlockedToken = nil
@@ -770,6 +771,10 @@ final class KeyboardViewController: UIInputViewController {
     let settings = SharedSettings()
     settings.synchronize()
     let token = UUID().uuidString
+    // A blocked previous session must not suppress a fresh request.
+    self.liveTranscriptionBlockedToken = nil
+    Self.blockedLiveSessionToken = nil
+    self.abandonExperimentalLiveOwnership()
     settings.dictationSessionToken = token
     LiveDictationLatency.begin(token: token)
     self.prepareDictationDestination()

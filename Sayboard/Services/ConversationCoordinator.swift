@@ -284,6 +284,9 @@ final class ConversationCoordinator: ObservableObject {
       _ = self.persistDraft()
     }
 
+    guard self.processing, self.turns.indices.contains(index),
+          self.turns[index].id == turnID else { return }
+
     if options.target == .original {
       self.turns[index].status = .original
       self.status = "Transcript saved in original language"
@@ -327,6 +330,8 @@ final class ConversationCoordinator: ObservableObject {
       let output = await coordinator.processVoiceDictation(
         turn.cleanedSourceText ?? turn.sourceText, options: options
       )
+      guard self.processing, self.turns.indices.contains(index),
+            self.turns[index].id == turnID else { return }
       if let output, !output.isEmpty {
         self.turns[index].translatedText = output
         self.turns[index].status = .translated

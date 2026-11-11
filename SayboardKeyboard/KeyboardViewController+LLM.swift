@@ -146,12 +146,15 @@ extension KeyboardViewController {
       customTranslationLanguage: action == .translate ? customLanguage : nil,
     )
     self.llmRequestID = request.requestID
-    // Prevent an earlier response from being reused by the next action.
-    LLMBridge.clearResult()
-    LLMBridge.clearRequest()
+    // The bridge checks for previous requests/results under a cross-process
+    // lock. Never delete a different keyboard's unfinished output.
     guard LLMBridge.writeRequest(request) else {
+      let occupied = LLMBridge.readRequest() != nil || LLMBridge.hasResult()
       self.keyboardState.llmError = .storageUnavailable
       self.insertPendingAutoActionFallback()
+      self.keyboardState.showFinalOutputPreview(occupied
+        ? "Another text action is pending. No previous result was removed."
+        : "Text storage unavailable. Original text retained.")
       self.keyboardState.clearLLMHistory()
       self.finishLLMInsertion()
       return
