@@ -500,24 +500,39 @@ private struct TwoDotOrbitProcessing: View {
 
   var body: some View {
     TimelineView(.animation(minimumInterval: 1.0 / 25.0, paused: self.reduceMotion)) { timeline in
-      let angle = timeline.date.timeIntervalSinceReferenceDate * (2 * Double.pi / 1.35)
-      let radius = self.size * 0.24
-      let dot = self.size * 0.23
       Canvas { context, extent in
-        let origin = CGPoint(x: extent.width / 2, y: extent.height / 2)
-        for offset in [0.0, Double.pi] {
-          let phase = self.reduceMotion ? offset : angle + offset
-          let rect = CGRect(
-            x: origin.x + radius * cos(phase) - dot / 2,
-            y: origin.y + radius * sin(phase) - dot / 2,
-            width: dot, height: dot
-          )
-          context.fill(Path(ellipseIn: rect), with: .foreground)
-        }
+        Self.drawDots(
+          in: &context,
+          extent: extent,
+          timestamp: timeline.date.timeIntervalSinceReferenceDate,
+          diameter: self.size,
+          reduceMotion: self.reduceMotion
+        )
       }
     }
     .frame(width: self.size, height: self.size)
     .accessibilityHidden(true)
     .allowsHitTesting(false)
   }
-}
+
+  // Keep the Canvas drawing math separate from SwiftUI's view-builder type
+  // inference. Positions and reduce-motion behavior remain unchanged.
+  private static func drawDots(
+    in context: inout GraphicsContext,
+    extent: CGSize,
+    timestamp: TimeInterval,
+    diameter: CGFloat,
+    reduceMotion: Bool
+  ) {
+    let angle: Double = timestamp * (2.0 * Double.pi / 1.35)
+    let radius: CGFloat = diameter * 0.24
+    let dot: CGFloat = diameter * 0.23
+    let origin = CGPoint(x: extent.width / 2, y: extent.height / 2)
+    for offset in [0.0, Double.pi] {
+      let phase: Double = reduceMotion ? offset : angle + offset
+      let x: CGFloat = origin.x + radius * CGFloat(cos(phase)) - dot / 2
+      let y: CGFloat = origin.y + radius * CGFloat(sin(phase)) - dot / 2
+      let rect = CGRect(x: x, y: y, width: dot, height: dot)
+      context.fill(Path(ellipseIn: rect), with: .foreground)
+    }
+  }
