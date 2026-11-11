@@ -86,7 +86,7 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn('self.conversation.prepareLivePreview(using: self.speechService)', view)
         self.assertIn('func prepareLivePreview(using service: SpeechRecognitionService)', owner)
         self.assertIn('self.warmupTask == nil', owner)
-        self.assertIn('service.activeLoadState == .unloaded', owner)
+        self.assertIn('service.activeLoadState != .loaded', owner)
         self.assertIn('if self.recordingSide != nil { self.startLivePreview(using: service) }', owner)
         self.assertIn('await self.warmupTask?.value', owner)
         self.assertIn('guard self.liveTask == nil', owner)
