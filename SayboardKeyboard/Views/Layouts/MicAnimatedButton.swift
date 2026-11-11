@@ -334,6 +334,9 @@ struct MicAnimatedButton: View {
         settings.keyboardRequestedDictationAt = CFAbsoluteTimeGetCurrent()
         settings.keyboardRequestedDictation = true
         settings.dictationSessionToken = UUID().uuidString
+        if let token = settings.dictationSessionToken {
+          LiveDictationLatency.begin(token: token)
+        }
         settings.synchronize()
         self.proxy.openURL(url)
       }

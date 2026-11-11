@@ -16,7 +16,7 @@ enum FeatureDiagnostics {
   enum Event: String, Sendable {
     case started, completed, stopped, cancelled, failed, blocked, fallback
     case selected, queued, downloaded, deleted, slow, noSpeech, rejected
-    case unavailable, interrupted, firstUpdate, rotated
+    case unavailable, interrupted, firstUpdate, firstChunkReady, firstHostInsert, rotated
     case rootWaiting, rootReady, layoutMounted, letterRowMounted
     case strokeGridMounted, trailOverlayMounted, llmPromptMounted
   }
@@ -175,6 +175,7 @@ enum FeatureDiagnostics {
         "hapticRequestCount": KeyboardHapticTrace.total,
         "hapticRequestSamples": KeyboardHapticTrace.events,
         "swipeTouchCounters": swipeCounters,
+        "liveDictationLatencyMs": LiveDictationLatency.exportDurationsMs(),
       ] as [String: Any],
     ]
     guard let data = try? JSONSerialization.data(
@@ -202,6 +203,7 @@ enum FeatureDiagnostics {
       _ = ftruncate(fd, 0)
     }
     KeyboardLifecycleTrace.clear()
+    LiveDictationLatency.clear()
   }
 }
 

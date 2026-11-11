@@ -78,6 +78,10 @@ extension KeyboardViewController {
       isAddressField: proxy.keyboardType == .URL || proxy.keyboardType == .emailAddress
     ).leading
     proxy.insertText(prefix + update.text)
+    LiveDictationLatency.mark(.firstHostInsert, token: update.sessionToken)
+    FeatureDiagnostics.record(.liveDictation, .firstHostInsert,
+      durationMs: LiveDictationLatency.elapsedMs(.firstHostInsert),
+      operationID: update.sessionToken)
     self.liveTranscriptionDocumentID = document
     self.liveTranscriptionPrefix = prefix
     self.liveTranscriptionCommittedRaw = update.text

@@ -153,6 +153,9 @@ final class SpeechRecognitionService: ObservableObject {
     }
 
     self.isRecording = true
+    if let token = self.activeDictationToken {
+      LiveDictationLatency.mark(.audioCaptured, token: token)
+    }
     FeatureDiagnostics.record(.speech, .started,
       operationID: self.activeDictationToken, phase: .running)
     self.settings.isRecording = true

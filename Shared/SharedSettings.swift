@@ -301,6 +301,20 @@ struct SharedSettings {
     nonmutating set { defaults.set(newValue, forKey: SharedKey.experimentalLiveDictationEnabled) }
   }
 
+  /// A diagnostic-only first window. Default stays at the proven 1.5 seconds.
+  var liveFirstWindowSamples: Int {
+    get {
+      let choice = defaults.integer(forKey: SharedKey.liveFirstWindowSamples)
+      return LiveDictationChunkPolicy.firstWindowOptions.contains(choice)
+        ? choice : LiveDictationChunkPolicy.firstQwenSamples
+    }
+    nonmutating set {
+      let choice = LiveDictationChunkPolicy.firstWindowOptions.contains(newValue)
+        ? newValue : LiveDictationChunkPolicy.firstQwenSamples
+      defaults.set(choice, forKey: SharedKey.liveFirstWindowSamples)
+    }
+  }
+
   var experimentalMeetingRecordEnabled: Bool {
     get { defaults.bool(forKey: SharedKey.experimentalMeetingRecordEnabled) }
     nonmutating set { defaults.set(newValue, forKey: SharedKey.experimentalMeetingRecordEnabled) }

@@ -162,6 +162,28 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("Accuracy: Unrated", read("Sayboard/Views/ModelCardView.swift"))
         self.assertIn("Speed: Unrated", read("Sayboard/Views/ModelCardView.swift"))
 
+    def test_live_first_word_latency_and_retry_without_dropping_audio(self):
+        policy = read("Shared/LiveDictationChunkPolicy.swift")
+        shared = read("Shared/ExperimentalLiveTranscription.swift")
+        speech = read("Sayboard/Services/SpeechRecognitionService+ExperimentalLive.swift")
+        keyboard = read("SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift")
+        host = read("SayboardKeyboard/KeyboardViewController.swift")
+        diagnostics = read("Sayboard/Views/DiagnosticsView.swift")
+        self.assertIn("static let firstQwenSamples = 24_000", policy)
+        self.assertIn("static let firstWindowOptions = [3_200, 8_000, 16_000, 24_000]", policy)
+        self.assertIn("static func retryFirstWindow(after samples: Int)", policy)
+        self.assertIn("let firstWindow = self.settings.liveFirstWindowSamples", speech.replace("var firstWindow", "let firstWindow")) 
+        self.assertIn("if firstChunk && !published", speech)
+        self.assertIn("firstWindow = next", speech)
+        self.assertIn("readOffset += samples.count", speech)
+        self.assertIn("LiveDictationLatency.mark(.firstHostInsert", keyboard)
+        self.assertIn("LiveDictationLatency.begin(token: token)", host)
+        self.assertIn("enum LiveDictationLatency", shared)
+        self.assertIn("Never persist recognized or host text", shared)
+        self.assertIn("Mic → first text in host", diagnostics)
+        self.assertIn('Text("0.2 s (experimental)")', diagnostics)
+        self.assertIn("liveDictationLatencyMs", read("Shared/FeatureDiagnostics.swift"))
+
     def test_live_original_is_visible_before_final_translation(self):
         extension = read("SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift")
         keyboard = read("SayboardKeyboard/KeyboardState.swift")

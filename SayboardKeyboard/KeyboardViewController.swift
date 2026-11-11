@@ -757,6 +757,7 @@ final class KeyboardViewController: UIInputViewController {
     settings.synchronize()
     let token = UUID().uuidString
     settings.dictationSessionToken = token
+    LiveDictationLatency.begin(token: token)
     self.prepareDictationDestination()
     settings.dictationCancellationRequested = false
     settings.synchronize()

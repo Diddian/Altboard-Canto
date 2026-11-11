@@ -156,6 +156,7 @@ enum SharedKey {
   static let keyboardAdaptiveTouchEnabled = "canto.keyboard.adaptiveTouchEnabled"
   static let keyboardSwipeDiagnosticsEnabled = "canto.keyboard.swipeDiagnosticsEnabled"
   static let experimentalLiveDictationEnabled = "canto.dictation.experimentalLiveEnabled"
+  static let liveFirstWindowSamples = "canto.dictation.firstWindowSamples.v1"
   static let experimentalMeetingRecordEnabled = "canto.dictation.experimentalMeetingEnabled"
   static let keyboardHapticDriver = "keyboardHapticDriver"
   static let keyboardAutoCapitalizationEnabled = "keyboardAutoCapitalizationEnabled"

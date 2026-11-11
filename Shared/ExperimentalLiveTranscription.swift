@@ -17,18 +17,21 @@ enum ExperimentalLiveTranscription {
     return try? JSONDecoder().decode(ExperimentalLiveTranscript.self, from: data)
   }
 
-  static func write(sessionToken: String, revision: Int, text: String) {
+  @discardableResult
+  static func write(sessionToken: String, revision: Int, text: String) -> Bool {
     guard let url = AppGroup.containerURL?.appendingPathComponent(fileName),
-          !sessionToken.isEmpty, revision > 0, !text.isEmpty else { return }
+          !sessionToken.isEmpty, revision > 0, !text.isEmpty else { return false }
     let update = ExperimentalLiveTranscript(sessionToken: sessionToken,
       revision: revision, text: String(text.prefix(3000)),
       updatedAt: Date().timeIntervalSinceReferenceDate)
-    guard let payload = try? JSONEncoder().encode(update) else { return }
+    guard let payload = try? JSONEncoder().encode(update) else { return false }
     do {
       try payload.write(to: url, options: [.atomic, .completeFileProtectionUnlessOpen])
       TranscriptionBridge.postDarwinNotification(DarwinNotificationName.experimentalLiveTranscriptUpdated)
+      return true
     } catch {
       DiagnosticLog.write("live dictation: update file write failed")
+      return false
     }
   }
 
@@ -50,5 +53,59 @@ enum ExperimentalSpeechSegments {
       || (last.unicodeScalars.first.map { $0.value >= 0x3400 && $0.value <= 0x9FFF } ?? false)
       || (first.unicodeScalars.first.map { $0.value >= 0x3400 && $0.value <= 0x9FFF } ?? false)
     return previous + (noSpace ? "" : " ") + next
+  }
+}
+
+/// Cross-process first-text timing only. Never persist recognized or host text.
+/// At most one timestamp per milestone for the latest dictation request.
+enum LiveDictationLatency {
+  enum Point: String, CaseIterable {
+    case audioCaptured, modelReady, firstChunkReady, firstDecoded, firstPublished, firstHostInsert
+  }
+
+  private static let prefix = "canto.liveLatency.v1."
+
+  static func begin(token: String, at time: TimeInterval = Date().timeIntervalSinceReferenceDate) {
+    guard UUID(uuidString: token) != nil, let defaults = AppGroup.sharedDefaults else { return }
+    for point in Point.allCases { defaults.removeObject(forKey: prefix + point.rawValue) }
+    defaults.set(time, forKey: prefix + "startedAt")
+    defaults.set(token, forKey: prefix + "sessionToken")
+    defaults.synchronize()
+  }
+
+  static func mark(_ point: Point, token: String,
+                   at time: TimeInterval = Date().timeIntervalSinceReferenceDate) {
+    guard let defaults = AppGroup.sharedDefaults else { return }
+    defaults.synchronize()
+    guard defaults.string(forKey: prefix + "sessionToken") == token,
+          defaults.object(forKey: prefix + point.rawValue) == nil else { return }
+    defaults.set(time, forKey: prefix + point.rawValue)
+  }
+
+  static func elapsedMs(_ point: Point) -> Int? {
+    guard let defaults = AppGroup.sharedDefaults else { return nil }
+    defaults.synchronize()
+    let started = defaults.double(forKey: prefix + "startedAt")
+    let end = defaults.double(forKey: prefix + point.rawValue)
+    guard started > 0, end >= started, end - started < 3600 else { return nil }
+    return Int((end - started) * 1_000)
+  }
+
+  static func label(_ point: Point) -> String {
+    guard let elapsed = elapsedMs(point) else { return "Not measured" }
+    return String(format: "%.2f s", Double(elapsed) / 1_000)
+  }
+
+  static func exportDurationsMs() -> [String: Int] {
+    Dictionary(uniqueKeysWithValues: Point.allCases.compactMap { point in
+      elapsedMs(point).map { (point.rawValue, $0) }
+    })
+  }
+
+  static func clear() {
+    guard let defaults = AppGroup.sharedDefaults else { return }
+    for point in Point.allCases { defaults.removeObject(forKey: prefix + point.rawValue) }
+    defaults.removeObject(forKey: prefix + "startedAt")
+    defaults.removeObject(forKey: prefix + "sessionToken")
   }
 }
