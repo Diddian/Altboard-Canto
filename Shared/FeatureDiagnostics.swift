@@ -70,11 +70,10 @@ enum FeatureDiagnostics {
       residentMB: residentMB.map { max(0, min(131_072, $0)) },
       failureReason: failureReason
     )
-    if event == .failed || event == .interrupted || (area == .appStartup && event == .started) {
-      queue.sync { append(entry) }
-    } else {
-      queue.async { append(entry) }
-    }
+    // All event persistence is asynchronous. A failure can originate on the
+    // keyboard's touch path; waiting for the App Group file lock would stall it.
+    // The serial queue preserves this process's event order.
+    queue.async { append(entry) }
     #endif
   }
 
@@ -203,6 +202,7 @@ enum FeatureDiagnostics {
       _ = ftruncate(fd, 0)
     }
     KeyboardLifecycleTrace.clear()
+    KeyboardHapticTrace.clear()
     LiveDictationLatency.clear()
   }
 }
