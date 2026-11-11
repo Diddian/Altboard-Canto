@@ -21,6 +21,40 @@ class SettingsContractTests(unittest.TestCase):
         self.assertNotIn(".frame(height: 31)", selection)
         self.assertNotIn('.frame(width: 24)', selection)
 
+    def test_opt_in_spelling_and_native_key_clicks(self):
+        settings = read("Sayboard/Views/KeyboardSettingsView.swift")
+        shared = read("Shared/SharedSettings.swift")
+        controller = read("SayboardKeyboard/KeyboardViewController.swift")
+        haptics = read("Shared/KeyboardHaptics.swift")
+        latin = read("SayboardKeyboard/LatinWordSuggestions.swift")
+        layout = read("SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift")
+        self.assertIn('Toggle("Auto-Correction", isOn: self.$autoCorrectionEnabled)', settings)
+        self.assertIn('Toggle("Spell Check", isOn: self.$spellCheckingEnabled)', settings)
+        self.assertIn('private var autoCorrectionEnabled = false', settings)
+        self.assertIn('private var spellCheckingEnabled = false', settings)
+        self.assertIn('var keyboardAutoCorrectionEnabled: Bool', shared)
+        self.assertIn('var keyboardSpellCheckingEnabled: Bool', shared)
+        self.assertIn('UIInputView, UIInputViewAudioFeedback', controller)
+        self.assertIn('enableInputClicksWhenVisible: Bool { true }', controller)
+        self.assertIn('UIDevice.current.playInputClick()', haptics)
+        self.assertIn('spellCheckEnabled && typed.count >= 3', latin)
+        self.assertIn('func automaticCorrection(for typed:', latin)
+        self.assertIn('self.autoCorrectionEnabled && self.page == .letters', layout)
+        self.assertIn('LatinWordSuggestionPolicy.canReplace(typed, in: context)', layout)
+
+    def test_one_pass_conversation_translation_uses_voice_output(self):
+        source = read("Sayboard/Services/LLMProcessingCoordinator.swift")
+        body = source.split('func processConversationTurn(', 1)[1].split(
+            'private func processVoiceChunks(', 1
+        )[0]
+        self.assertIn('if options.target != .original', body)
+        self.assertIn('onCleaned(source)', body)
+        self.assertIn('let translation = await self.processVoiceChunks(source, options: options)', body)
+        self.assertNotIn('cleanupOptions', body)
+        self.assertIn('guard !Task.isCancelled', body)
+        self.assertIn('Correct clear ASR and source grammar mistakes',
+                      read("Shared/VoiceOutputOptions.swift"))
+
     def test_keyboard_option_toggle_and_preview_share_one_state_owner(self):
         parent = read("Sayboard/Views/KeyboardSettingsView.swift")
         editor = read("Sayboard/Views/KeyboardCustomizationView.swift")

@@ -139,7 +139,7 @@ struct ConversationView: View {
             .font(.caption.weight(.semibold))
             .foregroundStyle(.secondary)
           Text(displayText)
-            .font(.system(size: 25, weight: .regular))
+            .font(.title2)
             .foregroundStyle(.primary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .textSelection(.enabled)

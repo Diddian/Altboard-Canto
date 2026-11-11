@@ -29,6 +29,10 @@ struct AlphabeticKeyboardLayout: View {
     store: UserDefaults(suiteName: AppGroup.identifier)
   )
   private var chineseModeRaw = ChineseInputMode.phonetic.rawValue
+  @AppStorage(SharedKey.keyboardAutoCorrectionEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var autoCorrectionEnabled = false
+  @AppStorage(SharedKey.keyboardSpellCheckingEnabled, store: UserDefaults(suiteName: AppGroup.identifier))
+  private var spellCheckingEnabled = false
   @State private var shapeBuffer = ""
   @State private var shapeLatinBuffer = ""
   @State private var shapeCandidates = [ChineseShapeCandidate]()
@@ -491,7 +495,8 @@ struct AlphabeticKeyboardLayout: View {
       self.shapeCandidates = Array(all.prefix(12))
     } else if self.isLatinGrid, let typed = self.activeLatinWord {
       let all = LatinWordSuggestions.shared.choices(
-        for: typed, preferred: SharedSettings().preferredSpokenLanguages, limit: 48
+        for: typed, preferred: SharedSettings().preferredSpokenLanguages, limit: 48,
+        spellCheckEnabled: self.spellCheckingEnabled
       )
       self.expandedLatinSuggestions = all
       self.latinSuggestions = Array(all.prefix(9))
@@ -1174,7 +1179,7 @@ struct AlphabeticKeyboardLayout: View {
       let typed = self.shapeLatinBuffer
       let preferred = SharedSettings().preferredSpokenLanguages
       let immediate = LatinWordSuggestions.shared.fastChoices(
-        for: typed, preferred: preferred
+        for: typed, preferred: preferred, spellCheckEnabled: self.spellCheckingEnabled
       )
       if self.latinSuggestions != immediate { self.latinSuggestions = immediate }
       self.latinRefreshTask = Task { @MainActor in
@@ -1182,7 +1187,7 @@ struct AlphabeticKeyboardLayout: View {
         guard !Task.isCancelled, self.shapeLatinBuffer == typed,
               self.usesShapeMode else { return }
         let values = LatinWordSuggestions.shared.choices(
-          for: typed, preferred: preferred
+          for: typed, preferred: preferred, spellCheckEnabled: self.spellCheckingEnabled
         )
         guard !Task.isCancelled, self.shapeLatinBuffer == typed else { return }
         if self.latinSuggestions != values {
@@ -1258,7 +1263,9 @@ struct AlphabeticKeyboardLayout: View {
     }
     // Keep stable suggestions on-screen between asynchronous dictionary lookups.
     let preferred = SharedSettings().preferredSpokenLanguages
-    let immediate = LatinWordSuggestions.shared.fastChoices(for: typed, preferred: preferred)
+    let immediate = LatinWordSuggestions.shared.fastChoices(
+      for: typed, preferred: preferred, spellCheckEnabled: self.spellCheckingEnabled
+    )
     if self.latinSuggestions != immediate { self.latinSuggestions = immediate }
 
     // Let key-down animation render before asking the installed OS
@@ -1272,7 +1279,8 @@ struct AlphabeticKeyboardLayout: View {
             ) == typed else { return }
       let values = LatinWordSuggestions.shared.choices(
         for: typed, preferred: preferred,
-        context: self.proxy.documentContextBeforeInput(), limit: 48
+        context: self.proxy.documentContextBeforeInput(), limit: 48,
+        spellCheckEnabled: self.spellCheckingEnabled
       )
       guard !Task.isCancelled, self.activeLatinWord == typed else { return }
       let compact = Array(values.prefix(9))
@@ -1591,6 +1599,21 @@ struct AlphabeticKeyboardLayout: View {
     // After punctuation, Space restores the Alphabet page. Digits retain
     // the numeric page to allow quantities and dates.
     let returnToLetters = self.page != .letters && self.lastInputWasSymbol
+    // Never rewrite Cantonese composition, shape codes, email or URL fields.
+    if self.autoCorrectionEnabled && self.page == .letters
+        && !self.usesShapeMode
+        && !self.keyboardState.hostInputTraits.disallowsAutoCorrection
+        && (!self.offersCantonese || self.composition.isEmpty
+            || self.recognizedLatinSpelling == self.composition.buffer),
+       let context = self.proxy.documentContextBeforeInput(),
+       let typed = LatinWordSuggestionPolicy.trailingWord(in: context),
+       LatinWordSuggestionPolicy.canReplace(typed, in: context),
+       let correction = LatinWordSuggestions.shared.automaticCorrection(
+         for: typed, preferred: SharedSettings().preferredSpokenLanguages
+       ) {
+      for _ in typed { self.proxy.deleteBackward() }
+      self.proxy.insertText(correction)
+    }
     self.clearComposition()
     self.proxy.insertSpace()
     if returnToLetters { self.page = .letters }

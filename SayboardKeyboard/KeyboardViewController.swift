@@ -1236,6 +1236,7 @@ extension KeyboardViewController {
       returnKeyType: proxy.returnKeyType ?? .default,
       contentType: proxy.textContentType?.rawValue,
       autocapitalizationType: proxy.autocapitalizationType ?? .sentences,
+      autocorrectionType: proxy.autocorrectionType ?? .default,
       enablesReturnKeyAutomatically: proxy.enablesReturnKeyAutomatically ?? false,
       hasText: proxy.hasText
         || !(proxy.documentContextBeforeInput ?? "").isEmpty

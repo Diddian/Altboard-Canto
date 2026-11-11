@@ -58,9 +58,8 @@ final class LLMProcessingCoordinator: ObservableObject {
     return output
   }
 
-  /// Both stages share one inference session, rather than repeatedly loading
-  /// and unloading the same model between cleanup and translation.
-  /// The callback publishes the cleaned original before translation completes.
+  /// Translated turns use the same one-pass output as keyboard dictation.
+  /// The original ASR transcript stays available to the speaker.
   func processConversationTurn(
     _ source: String, options: VoiceOutputConfiguration,
     onCleaned: @escaping @MainActor (String) -> Void
@@ -72,32 +71,32 @@ final class LLMProcessingCoordinator: ObservableObject {
     guard let backgroundTask = await self.beginVoiceProcessing() else { return nil }
     defer { self.endVoiceProcessing(backgroundTask) }
 
-    var cleaned: String?
-    if options.cleanupEnabled {
-      let cleanupOptions = VoiceOutputConfiguration(
-        cleanupEnabled: true, target: .original,
-        register: .faithful, customLanguage: ""
-      )
-      let cleanupStarted = CFAbsoluteTimeGetCurrent()
-      cleaned = await self.processVoiceChunks(source, options: cleanupOptions)
-      if let cleaned, !cleaned.isEmpty, !Task.isCancelled {
-        onCleaned(cleaned)
-        FeatureDiagnostics.record(
-          .speechFinalization, .completed,
-          durationMs: Int((CFAbsoluteTimeGetCurrent() - cleanupStarted) * 1_000)
-        )
-      } else if !Task.isCancelled {
-        FeatureDiagnostics.record(.speechFinalization, .fallback)
-      }
-    } else {
+    // One shared inference pass for translated turns, as in keyboard Output.
+    // Original-only turns can still run one optional cleanup pass.
+    if options.target != .original {
       onCleaned(source)
-    }
-
-    guard !Task.isCancelled, options.target != .original else {
+    } else {
+      if options.cleanupEnabled {
+        let cleanedStarted = CFAbsoluteTimeGetCurrent()
+        let cleaned = await self.processVoiceChunks(source, options: options)
+        guard !Task.isCancelled else { return nil }
+        if let cleaned, !cleaned.isEmpty {
+          onCleaned(cleaned)
+          FeatureDiagnostics.record(.speechFinalization, .completed,
+            durationMs: Int((CFAbsoluteTimeGetCurrent() - cleanedStarted) * 1_000))
+        } else {
+          onCleaned(source)
+          FeatureDiagnostics.record(.speechFinalization, .fallback)
+        }
+      } else {
+        onCleaned(source)
+      }
       return nil
     }
+
+    guard !Task.isCancelled else { return nil }
     let translateStarted = CFAbsoluteTimeGetCurrent()
-    let translation = await self.processVoiceChunks(cleaned ?? source, options: options)
+    let translation = await self.processVoiceChunks(source, options: options)
     if translation != nil {
       FeatureDiagnostics.record(
         .voiceOutput, .completed,

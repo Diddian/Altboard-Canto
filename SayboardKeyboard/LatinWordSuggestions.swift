@@ -22,7 +22,8 @@ final class LatinWordSuggestions {
 
   private init() {}
 
-  func fastChoices(for typed: String, preferred: [String], limit: Int = 6)
+  func fastChoices(for typed: String, preferred: [String], limit: Int = 6,
+                   spellCheckEnabled: Bool = false)
     -> [LatinWordSuggestion] {
     let codes = LatinWordSuggestionPolicy.preferredCodes(preferred)
     let languageBoosts = LanguagePriority.boosts(preferred)
@@ -64,9 +65,9 @@ final class LatinWordSuggestions {
     }
     for code in codes where code == "en" || code == "de" {
       let words = Self.commonWords[code] ?? []
-      let phrases = LatinWordSuggestionPolicy.splitPhraseCorrections(
-        for: typed, dictionary: words, limit: 2
-      )
+      let phrases = spellCheckEnabled
+        ? LatinWordSuggestionPolicy.splitPhraseCorrections(for: typed, dictionary: words, limit: 2)
+        : []
       let lexicon = code == "en"
         ? SwipeWordLexicon.shared.prefixMatches(typed, limit: 10) : []
       let prefixes = words.filter {
@@ -85,7 +86,7 @@ final class LatinWordSuggestions {
   }
 
   func choices(for typed: String, preferred: [String], context: String? = nil,
-               limit: Int = 9) -> [LatinWordSuggestion] {
+               limit: Int = 9, spellCheckEnabled: Bool = false) -> [LatinWordSuggestion] {
     guard (2...32).contains(typed.count) else { return [] }
     let codes = LatinWordSuggestionPolicy.preferredCodes(preferred)
     let languageBoosts = LanguagePriority.boosts(preferred)
@@ -95,7 +96,8 @@ final class LatinWordSuggestions {
       preferred: preferred, available: available
     )
     let range = NSRange(location: 0, length: typed.utf16.count)
-    var collected = fastChoices(for: typed, preferred: preferred, limit: limit)
+    var collected = fastChoices(for: typed, preferred: preferred, limit: limit,
+                                spellCheckEnabled: spellCheckEnabled)
     var seen = Set(collected.map { $0.text.lowercased() })
 
     func collect(_ words: [String], code: String) {
@@ -116,7 +118,7 @@ final class LatinWordSuggestions {
           forPartialWordRange: range, in: typed, language: locale
         ) ?? []
         collect(completions, code: code)
-        if typed.count >= 3 {
+        if spellCheckEnabled && typed.count >= 3 {
           let guesses = checker.guesses(forWordRange: range, in: typed, language: locale) ?? []
           collect(guesses, code: code)
         }
@@ -149,6 +151,35 @@ final class LatinWordSuggestions {
       let a = score(lhs.element), b = score(rhs.element)
       return a == b ? lhs.offset < rhs.offset : a > b
     }.prefix(max(1, limit)).map(\.element))
+  }
+
+  /// An opt-in correction must be a unique one-edit candidate and must not
+  /// be a valid word in any chosen language. No host text is stored.
+  func automaticCorrection(for typed: String, preferred: [String]) -> String? {
+    guard (4...24).contains(typed.count),
+          !self.recognizesWholeWord(typed, preferred: preferred) else { return nil }
+    let locales = LatinWordSuggestionPolicy.checkerLocales(
+      preferred: preferred, available: UITextChecker.availableLanguages
+    )
+    guard !locales.isEmpty else { return nil }
+    let range = NSRange(location: 0, length: typed.utf16.count)
+    var choices = Set<String>()
+    for locale in locales {
+      let error = self.checker.rangeOfMisspelledWord(
+        in: typed, range: range, startingAt: 0, wrap: false, language: locale.identifier
+      )
+      if error.location == NSNotFound { return nil }
+      let candidates = (self.checker.guesses(
+        forWordRange: range, in: typed, language: locale.identifier
+      ) ?? []).filter {
+        LatinWordSuggestionPolicy.oneEditApart(typed.lowercased(), $0.lowercased())
+          && !$0.contains(" ") && (2...32).contains($0.count)
+      }
+      guard candidates.count == 1, let candidate = candidates.first else { continue }
+      choices.insert(candidate.lowercased())
+    }
+    guard choices.count == 1, let word = choices.first else { return nil }
+    return LatinWordSuggestionPolicy.matchCapitalization(word, typed: typed)
   }
 
   /// A buffered shape spelling is kept as Latin only after an actual word

@@ -7,6 +7,7 @@ struct KeyboardHostInputTraits: Equatable {
   var returnKeyType: UIReturnKeyType = .default
   var contentType: String?
   var autocapitalizationType: UITextAutocapitalizationType = .sentences
+  var autocorrectionType: UITextAutocorrectionType = .default
   var enablesReturnKeyAutomatically = false
   var hasText = false
 
@@ -47,6 +48,12 @@ struct KeyboardHostInputTraits: Equatable {
     }
     return self.contentType == UITextContentType.emailAddress.rawValue
       || self.contentType == UITextContentType.URL.rawValue
+  }
+
+  var disallowsAutoCorrection: Bool {
+    self.autocorrectionType == .no || self.usesASCIITypingOnly
+      || self.keyboardType == .webSearch || self.keyboardType == .numberPad
+      || self.keyboardType == .phonePad || self.keyboardType == .decimalPad
   }
 
   var prefersNumberPage: Bool {

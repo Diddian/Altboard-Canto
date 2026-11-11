@@ -51,6 +51,14 @@ struct KeyboardHostInputTraitsTests {
     #expect(KeyboardHostInputTraits().returnEnabled)
   }
 
+  @Test func hostAutocorrectionRestrictions() {
+    #expect(KeyboardHostInputTraits(autocorrectionType: .no).disallowsAutoCorrection)
+    #expect(KeyboardHostInputTraits(keyboardType: .emailAddress).disallowsAutoCorrection)
+    #expect(KeyboardHostInputTraits(keyboardType: .URL).disallowsAutoCorrection)
+    #expect(KeyboardHostInputTraits(keyboardType: .numberPad).disallowsAutoCorrection)
+    #expect(!KeyboardHostInputTraits().disallowsAutoCorrection)
+  }
+
   @Test func hostCapitalizationWinsInAddressFields() {
     #expect(KeyboardHostInputTraits(keyboardType: .URL).prefersLowercase)
     #expect(KeyboardHostInputTraits(

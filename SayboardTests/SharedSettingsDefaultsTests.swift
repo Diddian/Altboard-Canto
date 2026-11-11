@@ -37,6 +37,8 @@ struct SharedSettingsDefaultsTests {
 
     #expect(settings.microphoneKeyboardLayout == .defaultLayout)
     #expect(settings.keyboardHapticsEnabled)
+    #expect(!settings.keyboardAutoCorrectionEnabled)
+    #expect(!settings.keyboardSpellCheckingEnabled)
     #expect(settings.periodShortcutEnabled)
     #expect(settings.keyboardAutoCapitalizationEnabled)
     #expect(settings.keyboardKind == .standard)
@@ -191,6 +193,23 @@ struct SharedSettingsDefaultsTests {
     #expect(defaults.bool(forKey: SharedKey.keyboardSwipeTypingEnabled))
     defaults.set(false, forKey: SharedKey.keyboardSwipeTypingEnabled)
     #expect(!defaults.bool(forKey: SharedKey.keyboardSwipeTypingEnabled))
+  }
+
+  @Test
+  func spellingPreferencesDefaultOffAndPersist() throws {
+    let suiteName = Self.uniqueSuiteName()
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { Self.cleanup(suiteName: suiteName) }
+    let settings = SharedSettings(defaults: defaults)
+    #expect(!settings.keyboardAutoCorrectionEnabled)
+    #expect(!settings.keyboardSpellCheckingEnabled)
+    settings.keyboardAutoCorrectionEnabled = true
+    #expect(SharedSettings(defaults: defaults).keyboardAutoCorrectionEnabled)
+    #expect(!SharedSettings(defaults: defaults).keyboardSpellCheckingEnabled)
+    settings.keyboardSpellCheckingEnabled = true
+    settings.keyboardAutoCorrectionEnabled = false
+    #expect(SharedSettings(defaults: defaults).keyboardSpellCheckingEnabled)
+    #expect(!SharedSettings(defaults: defaults).keyboardAutoCorrectionEnabled)
   }
 
   @Test
