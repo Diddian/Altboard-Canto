@@ -150,8 +150,8 @@ final class KeyboardViewController: UIInputViewController {
     }
     self.keyboardState.isTranslationMode = SharedSettings().isTranslationMode
     self.updateKeyboardHeight(actionBarVisible: false)
-    self.pingMainAppForSessionStatus()
     self.pingValidator.startIfNeeded(for: self.keyboardState)
+    self.pingMainAppForSessionStatus()
     self.keyboardState.appearedAt = CFAbsoluteTimeGetCurrent()
     saveHostBundleId()
     self.keyboardState.syncOnboardingPractice(hostProcessID: self.hostProcess?.pid)
@@ -163,6 +163,10 @@ final class KeyboardViewController: UIInputViewController {
 
   override func viewWillDisappear(_ animated: Bool) {
     super.viewWillDisappear(animated)
+    self.staleFallbackTimer?.invalidate()
+    self.staleFallbackTimer = nil
+    self.warmStartSessionAcknowledged = false
+    self.pingValidator.cancel()
     self.stopMemoryWatch()
     self.renderProbeGeneration &+= 1
     KeyboardTouchLearning.shared.invalidate()
@@ -487,7 +491,7 @@ final class KeyboardViewController: UIInputViewController {
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.requestSessionStatus)
   }
 
-  private static let staleFallbackTimeout: TimeInterval = 1.0
+  private static let staleFallbackTimeout: TimeInterval = 2.0
 
   private static var transcriptionObserver: DarwinNotificationObserver?
   private static var voiceProgressObserver: DarwinNotificationObserver?
@@ -504,6 +508,7 @@ final class KeyboardViewController: UIInputViewController {
   private var hostingController: UIHostingController<KeyboardView>?
   private let hostGeometry = KeyboardHostGeometry()
   private var staleFallbackTimer: Timer?
+  private var warmStartSessionAcknowledged = false
   private var lastSyncedFullAccess = false
   private var hasPerformedInitialFullAccessSync = false
   private var hasDeferredAppearanceInsert = false
@@ -594,8 +599,8 @@ final class KeyboardViewController: UIInputViewController {
       self.keyboardState.startLevelPolling()
     }
     self.keyboardState.syncOnboardingPractice(hostProcessID: self.hostProcess?.pid)
-    self.pingMainAppForSessionStatus()
     self.pingValidator.startIfNeeded(for: self.keyboardState)
+    self.pingMainAppForSessionStatus()
     self.keyboardState.appearedAt = CFAbsoluteTimeGetCurrent()
     self.insertTranscribedText()
     self.checkForPendingLLMResult()
@@ -708,44 +713,72 @@ final class KeyboardViewController: UIInputViewController {
   }
 
   private func startDictationViaDarwin() {
-    let processing = self.keyboardState.isProcessing
-    let recording = self.keyboardState.isRecording
-
-    guard !processing, !recording else {
-      return
-    }
-    saveHostBundleId()
+    guard !self.keyboardState.isProcessing, !self.keyboardState.isRecording else { return }
+    self.saveHostBundleId()
     let settings = SharedSettings()
     settings.synchronize()
-
-    settings.dictationSessionToken = UUID().uuidString
+    let token = UUID().uuidString
+    settings.dictationSessionToken = token
     settings.dictationCancellationRequested = false
     settings.synchronize()
-    TranscriptionBridge.postDarwinNotification(DarwinNotificationName.requestStartDictation)
-
+    self.warmStartSessionAcknowledged = false
     self.staleFallbackTimer?.invalidate()
-    // The History test field is already in the foreground app. Never redirect
-    // out of that field merely because model startup takes longer than 1s.
-    if HistoryKeyboardTestSession.isFocused { return }
+    self.staleFallbackTimer = nil
+    TranscriptionBridge.postDarwinNotification(DarwinNotificationName.requestStartDictation)
+    self.pingMainAppForSessionStatus()
+    self.scheduleWarmStartCheck(token: token, retryCount: 0)
+  }
+
+  private func scheduleWarmStartCheck(token: String, retryCount: Int) {
+    self.staleFallbackTimer?.invalidate()
+    guard !HistoryKeyboardTestSession.isFocused else { return }
     self.staleFallbackTimer = Timer.scheduledTimer(
-      withTimeInterval: Self.staleFallbackTimeout,
-      repeats: false,
+      withTimeInterval: Self.staleFallbackTimeout, repeats: false
     ) { [weak self] _ in
-      DispatchQueue.main.async {
+      DispatchQueue.main.async { [weak self] in
         guard let self else { return }
-        let sessionActive = self.keyboardState.isSessionActive
-        let isRec = self.keyboardState.isRecording
-        guard !sessionActive, !isRec else { return }
-        self.openDictateDeepLinkFallback(
-          reason: "stale fallback fired (no response in \(Self.staleFallbackTimeout)s, session=\(sessionActive) rec=\(isRec))"
-        )
+        self.staleFallbackTimer = nil
+        let settings = SharedSettings()
+        settings.synchronize()
+        let now = CFAbsoluteTimeGetCurrent()
+        guard DictationRequestPolicy.isCurrent(
+          started: token, current: settings.dictationSessionToken,
+          cancelled: settings.dictationCancellationRequested
+        ), self.viewIfLoaded?.window != nil, !self.keyboardState.isRecording else { return }
+
+        let audioAlive = settings.isSessionActive
+          && DictationRequestPolicy.hasRecentAudioHeartbeat(
+            settings.mainAppHeartbeat, now: now
+          )
+        if audioAlive && retryCount == 0 {
+          // Replay a lost Darwin notification once with the same request token.
+          FeatureDiagnostics.record(.speech, .fallback)
+          DiagnosticLog.write("keyboard: retrying warm dictation request")
+          TranscriptionBridge.postDarwinNotification(DarwinNotificationName.requestStartDictation)
+          self.scheduleWarmStartCheck(token: token, retryCount: 1)
+          return
+        }
+        if DictationRequestPolicy.shouldOpenColdFallback(
+          requestToken: token, currentToken: settings.dictationSessionToken,
+          cancelled: settings.dictationCancellationRequested,
+          keyboardVisible: true, recording: self.keyboardState.isRecording,
+          appAcknowledged: self.warmStartSessionAcknowledged,
+          heartbeat: settings.mainAppHeartbeat, now: now
+        ) && !settings.isSessionActive {
+          FeatureDiagnostics.record(.speech, .fallback)
+          self.openDictateDeepLinkFallback(reason: "no active audio engine")
+          return
+        }
+        self.keyboardState.isStartingRecording = false
+        FeatureDiagnostics.record(.speech, .failed)
+        DiagnosticLog.write("keyboard: warm dictation not acknowledged; stayed in host")
       }
     }
   }
 
   private func openDictateDeepLinkFallback(reason _: String) {
     let settings = SharedSettings()
-    settings.isSessionActive = false
+    // The keyboard does not own the app's audio-session state.
     settings.keyboardRequestedDictationAt = CFAbsoluteTimeGetCurrent()
     settings.keyboardRequestedDictation = true
     if settings.dictationSessionToken == nil {
