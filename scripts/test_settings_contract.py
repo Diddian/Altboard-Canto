@@ -606,7 +606,7 @@ class SettingsContractTests(unittest.TestCase):
         for control in ('Auto-capitalization', 'Double-Space Period', 'Haptic Feedback'):
             self.assertIn('Toggle("' + control, layout)
             self.assertNotIn('Toggle("' + control, custom)
-        for control in ('Extra Globe Key', 'Settings Key', 'Output Key', 'AI Key')
+        for control in ('Extra Globe Key', 'Settings Key', 'Output Key', 'AI Key'):
             self.assertIn('Toggle("' + control, custom)
         self.assertNotIn('.disabled(!self.aiEnabled)', custom)
         self.assertIn("Tap preview keys to test haptics.", layout)
