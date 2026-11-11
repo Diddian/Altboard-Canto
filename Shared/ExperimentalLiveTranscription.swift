@@ -13,7 +13,8 @@ enum ExperimentalLiveTranscription {
 
   static func read() -> ExperimentalLiveTranscript? {
     guard let url = AppGroup.containerURL?.appendingPathComponent(fileName),
-          let data = try? Data(contentsOf: url) else { return nil }
+          let data = try? Data(contentsOf: url),
+          data.count <= 128 * 1_024 else { return nil }
     return try? JSONDecoder().decode(ExperimentalLiveTranscript.self, from: data)
   }
 
@@ -24,7 +25,8 @@ enum ExperimentalLiveTranscription {
     let update = ExperimentalLiveTranscript(sessionToken: sessionToken,
       revision: revision, text: String(text.prefix(3000)),
       updatedAt: Date().timeIntervalSinceReferenceDate)
-    guard let payload = try? JSONEncoder().encode(update) else { return false }
+    guard let payload = try? JSONEncoder().encode(update),
+          payload.count <= 128 * 1_024 else { return false }
     do {
       try payload.write(to: url, options: [.atomic, .completeFileProtectionUnlessOpen])
       TranscriptionBridge.postDarwinNotification(DarwinNotificationName.experimentalLiveTranscriptUpdated)

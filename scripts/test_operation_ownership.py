@@ -102,6 +102,35 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("ConversationTurnPolicy.validAudioFileName", body)
         self.assertIn("decode([ConversationTurn].self", body)
 
+    def test_live_session_is_scoped_to_host_field_and_epoch(self):
+        live = source("SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift")
+        for guard in ("LiveDeliveryPolicy.accepts(", "LiveDeliveryPolicy.matchesField(",
+                      "liveTranscriptionOwnerToken", "liveTranscriptionDocumentEpoch",
+                      "liveTranscriptionContextAfter"):
+            self.assertIn(guard, live)
+        controller = source("SayboardKeyboard/KeyboardViewController.swift")
+        self.assertIn("if Self.blockedLiveSessionToken != settings.dictationSessionToken", controller)
+        self.assertIn("self.availableDocumentIdentifier() == self.dictationDocumentID", controller)
+
+    def test_meeting_does_not_end_a_borrowed_audio_session(self):
+        body = function("Sayboard/Services/MeetingRecordingCoordinator.swift", "func start(", "private func heartbeat()")
+        self.assertIn("service.session.captureOwner == nil", body)
+        self.assertIn("if sessionStartedHere { try service.session.startSession() }", body)
+        self.assertIn("if self.sessionStartedHere { self.speechService?.session.endSession() }", body)
+
+    def test_conversation_prevents_late_turn_or_live_preview_handoff(self):
+        body = function("Sayboard/Services/ConversationCoordinator.swift", "private func completeTurn(", "func saveAsMeeting()")
+        self.assertIn("self.turns[index].id == turnID", body)
+        preview = function("Sayboard/Services/ConversationCoordinator.swift", "private func startLivePreview(")
+        self.assertIn("self.activeID == sessionID", preview)
+
+    def test_llm_terminal_status_outlives_keyboard_ack(self):
+        bridge = source("Shared/LLMBridge.swift")
+        self.assertIn("if self.readStatus(matching: requestID)?.phase.isTerminal == true", bridge)
+        self.assertIn("OperationPolicy.mayTransition(", bridge)
+        controller = source("SayboardKeyboard/KeyboardViewController+LLM.swift")
+        self.assertIn("LLMBridge.writeStatus(.cancelled, requestID: id)", controller)
+
     def test_haptic_disable_does_not_prewarm_engine(self):
         body = function("Shared/KeyboardHaptics.swift", "static func prepare()")
         self.assertLess(body.index("guard settings.keyboardHapticsEnabled"), body.index("KeyboardCoreHaptic.prewarm"))

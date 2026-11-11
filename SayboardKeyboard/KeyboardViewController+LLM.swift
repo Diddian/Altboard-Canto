@@ -214,7 +214,8 @@ extension KeyboardViewController {
   }
 
   func abandonPendingLLMRequest() {
-    guard self.llmRequestID != nil else { return }
+    guard let id = self.llmRequestID else { return }
+    LLMBridge.writeStatus(.cancelled, requestID: id)
     self.insertPendingAutoActionFallback()
     self.keyboardState.showFinalOutputPreview("Text action timed out. Original text retained.")
     self.finishLLMInsertion()

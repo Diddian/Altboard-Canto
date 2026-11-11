@@ -111,6 +111,58 @@ enum VerifyOperationContracts {
     precondition(future == .interrupted)
     precondition(ConversationTurnPolicy.maximumRecoverySeconds > ConversationTurnPolicy.maximumCaptureSeconds)
     precondition(OperationPhase.busy.isTerminal && !OperationPhase.accepted.isTerminal)
+    precondition(OperationPolicy.mayTransition(from: nil, to: .requested))
+    precondition(OperationPolicy.mayTransition(from: .requested, to: .accepted))
+    precondition(OperationPolicy.mayTransition(from: .accepted, to: .completed))
+    precondition(!OperationPolicy.mayTransition(from: .completed, to: .failed))
+    precondition(!OperationPolicy.mayTransition(from: .cancelled, to: .running))
+    precondition(!OperationPolicy.mayTransition(from: nil, to: .completed))
+    let liveToken = UUID().uuidString
+    let liveEpoch = UUID()
+    precondition(LiveDeliveryPolicy.accepts(
+      token: liveToken, requestToken: liveToken, currentToken: liveToken,
+      revision: 2, lastRevision: 1, updatedAt: 99, now: 100,
+      destinationEpoch: liveEpoch, currentEpoch: liveEpoch
+    ))
+    precondition(!LiveDeliveryPolicy.accepts(
+      token: liveToken, requestToken: liveToken, currentToken: liveToken,
+      revision: 2, lastRevision: 2, updatedAt: 99, now: 100,
+      destinationEpoch: liveEpoch, currentEpoch: liveEpoch
+    ))
+    precondition(!LiveDeliveryPolicy.accepts(
+      token: liveToken, requestToken: liveToken, currentToken: liveToken,
+      revision: 3, lastRevision: 2, updatedAt: 10, now: 100,
+      destinationEpoch: liveEpoch, currentEpoch: liveEpoch
+    ))
+    let document = UUID()
+    precondition(LiveDeliveryPolicy.matchesField(
+      ownedDocument: document, currentDocument: document,
+      ownedEpoch: liveEpoch, currentEpoch: liveEpoch,
+      anchor: "sample", before: "a sample",
+      expectedAfter: " tail", after: " tail", selectedText: nil
+    ))
+    precondition(!LiveDeliveryPolicy.matchesField(
+      ownedDocument: document, currentDocument: UUID(),
+      ownedEpoch: liveEpoch, currentEpoch: liveEpoch,
+      anchor: "sample", before: "a sample",
+      expectedAfter: " tail", after: " tail", selectedText: nil
+    ))
+    precondition(!LiveDeliveryPolicy.matchesField(
+      ownedDocument: document, currentDocument: document,
+      ownedEpoch: liveEpoch, currentEpoch: UUID(),
+      anchor: "sample", before: "a sample",
+      expectedAfter: " tail", after: " tail", selectedText: nil
+    ))
+    precondition(!LiveDeliveryPolicy.matchesField(
+      ownedDocument: document, currentDocument: document,
+      ownedEpoch: liveEpoch, currentEpoch: liveEpoch,
+      anchor: "sample", before: "a sample",
+      expectedAfter: " tail", after: "changed", selectedText: nil
+    ))
+    LLMBridge.clearStatus(matching: a.requestID)
+    precondition(LLMBridge.readStatus(matching: a.requestID)?.phase == .completed)
+    precondition(!LLMBridge.writeStatus(.failed, requestID: a.requestID))
+    precondition(!LLMBridge.writeResult("late", requestID: a.requestID))
     print("Operation identity, bridge acknowledgement, resource guards and legacy recovery: PASS")
   }
 }

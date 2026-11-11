@@ -23,6 +23,7 @@ final class KeyboardViewController: UIInputViewController {
   var llmSelectedText: String?
   var llmDirectSelectedText: String?
   var dictationRequestToken: String?
+  var dictationDocumentID: UUID?
   var llmRequestID: UUID?
   var llmDocumentIdentifier: UUID?
   var llmSelectionContextBefore: String?
@@ -34,6 +35,9 @@ final class KeyboardViewController: UIInputViewController {
   var cursorPreferredColumn: Int?
   var cursorPreferredDocumentID: UUID?
   var liveTranscriptionDocumentID: UUID?
+  var liveTranscriptionDocumentEpoch: UUID?
+  var liveTranscriptionOwnerToken: String?
+  var liveTranscriptionContextAfter: String?
   var liveTranscriptionMarkedText = ""
   var liveTranscriptionCommittedRaw = ""
   var liveTranscriptionPrefix = ""
@@ -184,7 +188,7 @@ final class KeyboardViewController: UIInputViewController {
     self.renderProbeGeneration &+= 1
     KeyboardTouchLearning.shared.invalidate()
     if self.liveTranscriptionDocumentID != nil {
-      let token = SharedSettings().dictationSessionToken
+      let token = self.liveTranscriptionOwnerToken
       self.liveTranscriptionBlockedToken = token
       Self.blockedLiveSessionToken = token
     }
@@ -474,7 +478,8 @@ final class KeyboardViewController: UIInputViewController {
     let text = delivery.text
     guard delivery.canInsert(requestToken: self.dictationRequestToken,
                              currentEpoch: self.keyboardState.documentEpoch),
-          self.availableDocumentIdentifier() != nil else {
+          self.dictationDocumentID != nil,
+          self.availableDocumentIdentifier() == self.dictationDocumentID else {
       self.keyboardState.showFinalOutputPreview("Dictation saved in History; input changed.")
       FeatureDiagnostics.record(.bridge, .rejected,
         operationID: delivery.sessionToken, phase: .rejected)
@@ -488,6 +493,7 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     if self.liveTranscriptionBlockedToken != nil || Self.blockedLiveSessionToken != nil {
+      self.abandonExperimentalLiveOwnership()
       Self.blockedLiveSessionToken = nil
       self.liveTranscriptionBlockedToken = nil
       self.keyboardState.showFinalOutputPreview(text)
@@ -653,8 +659,13 @@ final class KeyboardViewController: UIInputViewController {
         vc.keyboardState.clearFinalOutputPreview()
         vc.keyboardState.liveSourcePreview = nil
         vc.keyboardState.isRecording = true
-        vc.liveTranscriptionBlockedToken = nil
-        Self.blockedLiveSessionToken = nil
+        // A delayed start callback cannot restore this same blocked session.
+        if vc.liveTranscriptionBlockedToken != settings.dictationSessionToken {
+          vc.liveTranscriptionBlockedToken = nil
+        }
+        if Self.blockedLiveSessionToken != settings.dictationSessionToken {
+          Self.blockedLiveSessionToken = nil
+        }
         vc.keyboardState.recordingStartedAt = SharedSettings().recordingStartedAt
         vc.keyboardState.isStartingRecording = false
         if !vc.isPerformingHistoryNavigation {
@@ -747,7 +758,8 @@ final class KeyboardViewController: UIInputViewController {
   func prepareDictationDestination() {
     let settings = SharedSettings()
     self.dictationRequestToken = settings.dictationSessionToken
-    settings.dictationDestinationEpoch = self.availableDocumentIdentifier() == nil
+    self.dictationDocumentID = self.availableDocumentIdentifier()
+    settings.dictationDestinationEpoch = self.dictationDocumentID == nil
       ? nil : self.keyboardState.documentEpoch
     settings.synchronize()
   }
@@ -863,6 +875,7 @@ extension KeyboardViewController {
       settings.synchronize()
     }
     self.dictationRequestToken = nil
+    self.dictationDocumentID = nil
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.requestCancelDictation)
   }
 

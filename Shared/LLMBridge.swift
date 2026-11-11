@@ -24,9 +24,13 @@ struct LLMJobStatus: Codable, Sendable {
 
 struct LLMBridge: Sendable {
 
-  static func writeStatus(_ phase: OperationPhase, requestID: UUID) {
+  @discardableResult
+  static func writeStatus(_ phase: OperationPhase, requestID: UUID) -> Bool {
     guard let folder = AppGroup.containerURL?.appendingPathComponent("text-job-status", isDirectory: true)
-    else { return }
+    else { return false }
+    guard OperationPolicy.mayTransition(
+      from: self.readStatus(matching: requestID)?.phase, to: phase
+    ) else { return false }
     do {
       try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
       let status = LLMJobStatus(schemaVersion: 1, requestID: requestID, phase: phase)
@@ -44,7 +48,11 @@ struct LLMBridge: Sendable {
         }
         for file in sorted.dropFirst(64) { try? FileManager.default.removeItem(at: file) }
       }
-    } catch { FeatureDiagnostics.record(.bridge, .failed) }
+      return true
+    } catch {
+      FeatureDiagnostics.record(.bridge, .failed)
+      return false
+    }
   }
 
   static func readStatus(matching requestID: UUID) -> LLMJobStatus? {
@@ -58,6 +66,9 @@ struct LLMBridge: Sendable {
   }
 
   static func clearStatus(matching requestID: UUID) {
+    // Retain the bounded terminal marker so the host defer cannot report
+    // an already delivered completion as failure after keyboard acknowledgement.
+    if self.readStatus(matching: requestID)?.phase.isTerminal == true { return }
     guard let url = AppGroup.containerURL?
       .appendingPathComponent("text-job-status", isDirectory: true)
       .appendingPathComponent(requestID.uuidString + ".json") else { return }
@@ -73,7 +84,10 @@ struct LLMBridge: Sendable {
     do {
       let data = try JSONEncoder().encode(request)
       try data.write(to: url, options: [.atomic, .completeFileProtectionUnlessOpen])
-      self.writeStatus(.requested, requestID: request.requestID)
+      guard self.writeStatus(.requested, requestID: request.requestID) else {
+        self.clearRequest(matching: request.requestID)
+        return false
+      }
       FeatureDiagnostics.record(.bridge, .queued)
       return true
     } catch {
@@ -92,6 +106,10 @@ struct LLMBridge: Sendable {
 
   @discardableResult
   static func writeResult(_ text: String, requestID: UUID) -> Bool {
+    // Ignore late or repeated results after a terminal outcome.
+    guard let phase = self.readStatus(matching: requestID)?.phase,
+          phase != .completed,
+          OperationPolicy.mayTransition(from: phase, to: .completed) else { return false }
     guard let url = resultFileURL else {
       FeatureDiagnostics.record(.bridge, .unavailable)
       return false
@@ -101,7 +119,10 @@ struct LLMBridge: Sendable {
       try JSONEncoder().encode(payload).write(
         to: url, options: [.atomic, .completeFileProtectionUnlessOpen]
       )
-      self.writeStatus(.completed, requestID: requestID)
+      guard self.writeStatus(.completed, requestID: requestID) else {
+        self.clearResult(matching: requestID)
+        return false
+      }
       FeatureDiagnostics.record(.bridge, .queued)
       return true
     } catch {
