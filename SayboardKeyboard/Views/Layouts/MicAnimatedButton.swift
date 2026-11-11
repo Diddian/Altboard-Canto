@@ -130,7 +130,6 @@ struct MicAnimatedButton: View {
   @State private var holdActivationTask: Task<Void, Never>?
   @State private var holdStartedRecording = false
   @State private var suppressButtonAction = false
-  @State private var lastStartTapAt: Date?
   @State private var showSpinner = false
   @State private var isMorphing = false
   @State private var isSpinnerMorphing = false
@@ -291,31 +290,21 @@ struct MicAnimatedButton: View {
     } else {
       self.keyboardState.isStartingRecording = false
     }
-    self.lastStartTapAt = nil
   }
 
   private func handleTap() {
     if self.keyboardState.isProcessing {
-      self.lastStartTapAt = nil
-      self.showSpinner = false
+        self.showSpinner = false
       self.proxy.cancelDictation()
       return
     }
     self.keyboardState.clearFinalOutputPreview()
     self.keyboardState.dismissMicHint()
-    if self.keyboardState.isRecording {
-      // A second quick tap cancels an accidental capture. A later tap
-      // remains the normal Stop & Transcribe action.
-      if let tapAt = self.lastStartTapAt, Date().timeIntervalSince(tapAt) < 1.3 {
-        self.lastStartTapAt = nil
-        self.proxy.cancelDictation()
-      } else {
-        self.proxy.stopDictation()
-      }
-    } else if self.keyboardState.isStartingRecording {
-      self.lastStartTapAt = nil
-      self.keyboardState.isStartingRecording = false
-      self.proxy.cancelDictation()
+    if self.keyboardState.isRecording || self.keyboardState.isStartingRecording {
+      // A second tap always requests Stop & Transcribe. A quick tap must
+      // never silently cancel captured speech or discard test output.
+      // The token-scoped intent also handles a stop before start acknowledgment.
+      self.requestHeldStop()
     } else if self.keyboardState.isDictationLocked {
       if let url = DeepLink.unlockURL { self.proxy.openURL(url) }
     } else {
@@ -332,12 +321,10 @@ struct MicAnimatedButton: View {
         // The keyboard may be a new UIKit instance while the app's audio
         // session is still alive. Recheck shared state on every mic tap.
         self.keyboardState.isStartingRecording = true
-        self.lastStartTapAt = Date()
         MicrophoneHoldStopIntent.clear(defaults: settings.defaults)
         self.proxy.startDictation()
       } else if let url = DeepLink.dictateURL {
         self.keyboardState.isStartingRecording = true
-        self.lastStartTapAt = Date()
         MicrophoneHoldStopIntent.clear(defaults: settings.defaults)
         if OperatingSystem.isHostBundleIdBroken {
           self.proxy.resolveHost()
