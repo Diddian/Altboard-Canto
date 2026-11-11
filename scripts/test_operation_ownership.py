@@ -44,7 +44,78 @@ class OperationOwnershipTests(unittest.TestCase):
     def test_cancellation_cannot_end_conversation(self):
         body = function("Sayboard/Services/SpeechRecognitionService.swift", "func cancelRecording()", "func transcribeSamples")
         self.assertLess(body.index("ConversationCoordinator.shared.recordingSide == nil"), body.index("self.session.endSession()"))
-        self.assertIn("await cancelledLive?.value", body)
+        self.assertIn("self.cancellationTask == nil", body)
+        self.assertIn("await self.awaitExperimentalLiveWorkerExit(cancelledLive)", body)
+        self.assertIn("defer { self.cancellationTask = nil }", body)
+        self.assertLess(body.index("cancelledLive?.cancel()"), body.index("await self.awaitExperimentalLiveWorkerExit"))
+
+    def test_start_stop_finalization_uses_owned_session_and_explicit_failure_paths(self):
+        service = source("Sayboard/Services/SpeechRecognitionService.swift")
+        capture = function("Sayboard/Services/SpeechRecognitionService.swift",
+                           "func startCapture()", "func scheduleQwenWarmupAfterCapture")
+        stop = function("Sayboard/Services/SpeechRecognitionService.swift",
+                        "func stopRecording()", "func cancelRecording")
+        final = function("Sayboard/Services/SpeechRecognitionService+Transcription.swift",
+                         "func runFinalTranscription(", "func saveHistoryRecord(")
+        self.assertLess(capture.index("!self.settings.dictationCancellationRequested"),
+                        capture.index("try self.startAudioCapture()"))
+        self.assertLess(capture.index("self.speechWorkers == 0"),
+                        capture.index("try self.startAudioCapture()"))
+        self.assertLess(stop.index("self.session.endCapture(owner: .dictation)"),
+                        stop.index("await self.stopExperimentalLive()"))
+        self.assertLess(stop.index("guard self.isCurrentDictation(finalizationToken) else { return }"),
+                        stop.index("await self.runFinalTranscription("))
+        self.assertIn("case .noSpeech:", final)
+        self.assertIn("self.settings.lastDictationOutcome = .noSpeech", final)
+        self.assertIn("case .failed:", final)
+        self.assertIn("self.settings.lastDictationOutcome = .engineFailed", final)
+        self.assertIn("guard !samples.isEmpty else", final)
+        self.assertIn("self.settings.lastDictationOutcome = .engineFailed", final)
+        self.assertIn("if case .text(let output) = result", final)
+        self.assertLess(stop.index("await self.runFinalTranscription("),
+                        stop.index("self.saveHistoryRecord(preserveUntranscribedAudio: retainUndecodedAudio)"))
+        self.assertIn("TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStopped)", stop)
+        self.assertIn("func transcribeSamples(_ samples:", service)
+
+    def test_cancel_rejects_stale_publication_and_preserves_failed_asr_audio(self):
+        service = source("Sayboard/Services/SpeechRecognitionService.swift")
+        stop = function("Sayboard/Services/SpeechRecognitionService.swift",
+                        "func stopRecording()", "func cancelRecording")
+        cancel = function("Sayboard/Services/SpeechRecognitionService.swift",
+                          "func cancelRecording()", "func transcribeSamples")
+        final = function("Sayboard/Services/SpeechRecognitionService+Transcription.swift",
+                         "func runFinalTranscription(", "func saveHistoryRecord(")
+        history = function("Sayboard/Services/SpeechRecognitionService+Transcription.swift",
+                           "func saveHistoryRecord(")
+        live = source("Sayboard/Services/SpeechRecognitionService+ExperimentalLive.swift")
+        self.assertIn("let retainUndecodedAudio = self.settings.lastDictationOutcome == .engineFailed", stop)
+        self.assertIn("|| self.settings.lastDictationOutcome == .processingFailed", stop)
+        self.assertIn("self.saveHistoryRecord(preserveUntranscribedAudio: retainUndecodedAudio)", stop)
+        self.assertIn("saveHistoryRecord(preserveUntranscribedAudio: true)", stop)
+        self.assertIn("preserveUntranscribedAudio && recognized.isEmpty", history)
+        self.assertIn("if result.writeFailed", history)
+        self.assertIn("guard !transcription.isEmpty else", history)
+        self.assertIn("self.settings.dictationSessionToken = nil", cancel)
+        self.assertIn("self.settings.dictationCancellationRequested = true", cancel)
+        self.assertIn("ExperimentalLiveTranscription.clear()", cancel)
+        self.assertIn("TranscriptionBridge.clearTranscription()", cancel)
+        self.assertIn("guard self.isCurrentDictation(requestToken) else { return }", final)
+        self.assertIn("guard !Task.isCancelled, self.isRecording else { break }", live)
+        self.assertIn("if ExperimentalLiveTranscription.write(", live)
+
+    def test_cancel_wait_is_bounded_and_keeps_native_worker_accounted(self):
+        cancel = function("Sayboard/Services/SpeechRecognitionService.swift", "func cancelRecording()", "func transcribeSamples")
+        live = function("Sayboard/Services/SpeechRecognitionService+ExperimentalLive.swift", "func awaitExperimentalLiveWorkerExit", "func stopExperimentalLive")
+        stop = function("Sayboard/Services/SpeechRecognitionService+ExperimentalLive.swift", "func stopExperimentalLive")
+        self.assertIn("for _ in 0..<40", live)
+        self.assertLess(live.index("if self.speechWorkers == 0"), live.index("await task?.value"))
+        self.assertIn("return false", live)
+        self.assertIn("await self.awaitExperimentalLiveWorkerExit(task)", stop)
+        self.assertLess(cancel.index("self.cancellationTask == nil"), cancel.index("self.cancellationTask = Task"))
+        self.assertIn("if !nativeWorkerExited", cancel)
+        self.assertLess(cancel.index("await self.awaitExperimentalLiveWorkerExit(cancelledLive)"), cancel.index("self.isStopping = false"))
+        self.assertIn("self.speechWorkers == 0 else", function("Sayboard/Services/SpeechRecognitionService.swift", "func startCapture()", "func scheduleQwenWarmupAfterCapture"))
+        self.assertIn("defer { self.speechWorkers -= 1 }", function("Sayboard/Services/SpeechRecognitionService.swift", "func transcribeSamples", "func loadModelIfAvailable"))
 
 
     def test_cold_and_warm_microphone_share_one_request_owner(self):
