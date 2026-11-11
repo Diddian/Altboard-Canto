@@ -33,7 +33,8 @@ class OperationOwnershipTests(unittest.TestCase):
                         "private func handleProcessingRequest()", "private func beginInferenceBackgroundTask()")
         self.assertIn("if terminalPhase != .completed", body)
         self.assertEqual(body.count("DarwinNotificationName.llmProcessingFailed"), 3)
-        validation = body.split("private func validateRequest", 1)[1]
+        validation = function("Sayboard/Services/LLMProcessingCoordinator.swift",
+                              "private func validateRequest", "private func beginInferenceBackgroundTask")
         self.assertNotIn("DarwinNotificationName.llmProcessingFailed", validation)
 
     def test_cancel_observer_checks_the_active_token(self):
