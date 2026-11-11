@@ -106,7 +106,12 @@ struct MicAnimatedButton: View {
       self.holdStartedRecording = false
       self.suppressButtonAction = false
     }
-    .allowsHitTesting(!self.keyboardState.isProcessing)
+    // A stuck inference must never disable the only microphone control.
+    // During processing it becomes an explicit, token-scoped Cancel action.
+    .accessibilityLabel(self.keyboardState.isProcessing
+      ? "Cancel dictation processing" : "Dictation microphone")
+    .accessibilityHint(self.keyboardState.isProcessing
+      ? "Stop pending recognition so the microphone can be used again." : "")
     .onChange(of: self.keyboardState.isRecording, self.handleRecordingChanged)
     .task(id: self.keyboardState.isProcessing, self.observeProcessing)
     .task(id: self.keyboardState.isStartingRecording) {
@@ -205,6 +210,7 @@ struct MicAnimatedButton: View {
   }
 
   private func handleMicPressChange(isDown: Bool) {
+    if self.keyboardState.isProcessing { return }
     if isDown {
       KeyboardHaptics.key()
       // Keep native Button semantics for accepted taps and VoiceOver.
@@ -289,6 +295,12 @@ struct MicAnimatedButton: View {
   }
 
   private func handleTap() {
+    if self.keyboardState.isProcessing {
+      self.lastStartTapAt = nil
+      self.showSpinner = false
+      self.proxy.cancelDictation()
+      return
+    }
     self.keyboardState.clearFinalOutputPreview()
     self.keyboardState.dismissMicHint()
     if self.keyboardState.isRecording {
@@ -379,7 +391,7 @@ struct MicAnimatedButton: View {
   }
 
   private func spinnerView(isSpin: Bool) -> some View {
-    MetaballSpinner(color: .primary, size: self.sizing.spinnerSize)
+    TwoDotOrbitProcessing(size: self.sizing.spinnerSize)
       .scaleEffect(isSpin ? 1 : 0.01)
       .transaction(value: isSpin) { transaction in
         transaction.animation = .easeOut(duration: 0.2)
@@ -476,5 +488,36 @@ struct MicButtonStyle: ButtonStyle {
       .onChange(of: configuration.isPressed) { _, pressed in
         self.pressedBinding?.wrappedValue = pressed
       }
+  }
+}
+
+
+// Two balanced points exchange positions around a shared centre.
+// This is purely visual: it never owns recording or cancellation state.
+private struct TwoDotOrbitProcessing: View {
+  let size: CGFloat
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+  var body: some View {
+    TimelineView(.animation(minimumInterval: 1.0 / 25.0, paused: self.reduceMotion)) { timeline in
+      let angle = timeline.date.timeIntervalSinceReferenceDate * (2 * Double.pi / 1.35)
+      let radius = self.size * 0.24
+      let dot = self.size * 0.23
+      Canvas { context, extent in
+        let origin = CGPoint(x: extent.width / 2, y: extent.height / 2)
+        for offset in [0.0, Double.pi] {
+          let phase = self.reduceMotion ? offset : angle + offset
+          let rect = CGRect(
+            x: origin.x + radius * cos(phase) - dot / 2,
+            y: origin.y + radius * sin(phase) - dot / 2,
+            width: dot, height: dot
+          )
+          context.fill(Path(ellipseIn: rect), with: .foreground)
+        }
+      }
+    }
+    .frame(width: self.size, height: self.size)
+    .accessibilityHidden(true)
+    .allowsHitTesting(false)
   }
 }

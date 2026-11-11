@@ -162,6 +162,22 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("Accuracy: Unrated", read("Sayboard/Views/ModelCardView.swift"))
         self.assertIn("Speed: Unrated", read("Sayboard/Views/ModelCardView.swift"))
 
+    def test_visible_keyboard_recovers_cancel_and_animation_without_spinning_state(self):
+        timeout = read("SayboardKeyboard/KeyboardViewController+Timeout.swift")
+        host = read("SayboardKeyboard/KeyboardViewController.swift")
+        mic = read("SayboardKeyboard/Views/Layouts/MicAnimatedButton.swift")
+        self.assertIn("func resumeProcessingTimeoutIfNeeded()", timeout)
+        self.assertIn("Date(timeIntervalSinceReferenceDate: progress.startedAt)", timeout)
+        self.assertGreaterEqual(host.count("self.resumeProcessingTimeoutIfNeeded()"), 2)
+        self.assertIn("self.cancelDictationViaDarwin()", timeout)
+        self.assertIn('Cancel dictation processing', mic)
+        self.assertIn("if self.keyboardState.isProcessing {", mic)
+        self.assertIn("self.proxy.cancelDictation()", mic)
+        self.assertNotIn(".allowsHitTesting(!self.keyboardState.isProcessing)", mic)
+        self.assertIn("TwoDotOrbitProcessing(size: self.sizing.spinnerSize)", mic)
+        self.assertIn("accessibilityReduceMotion", mic)
+        self.assertIn("TimelineView(.animation(minimumInterval:", mic)
+
     def test_live_first_word_latency_and_retry_without_dropping_audio(self):
         policy = read("Shared/LiveDictationChunkPolicy.swift")
         shared = read("Shared/ExperimentalLiveTranscription.swift")

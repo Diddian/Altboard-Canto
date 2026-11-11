@@ -164,6 +164,7 @@ final class KeyboardViewController: UIInputViewController {
     self.pingValidator.startIfNeeded(for: self.keyboardState)
     self.pingMainAppForSessionStatus()
     self.keyboardState.appearedAt = CFAbsoluteTimeGetCurrent()
+    self.resumeProcessingTimeoutIfNeeded()
     saveHostBundleId()
     self.keyboardState.syncOnboardingPractice(hostProcessID: self.hostProcess?.pid)
     self.hasDeferredAppearanceInsert = true
@@ -624,6 +625,7 @@ final class KeyboardViewController: UIInputViewController {
     self.pingValidator.startIfNeeded(for: self.keyboardState)
     self.pingMainAppForSessionStatus()
     self.keyboardState.appearedAt = CFAbsoluteTimeGetCurrent()
+    self.resumeProcessingTimeoutIfNeeded()
     self.insertTranscribedText()
     self.checkForPendingLLMResult()
   }

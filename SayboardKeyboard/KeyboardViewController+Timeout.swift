@@ -6,6 +6,20 @@ extension KeyboardViewController {
   static let processingCheckInterval: TimeInterval = 5
   static let processingHardTimeout: TimeInterval = 180
 
+  /// Restore the absolute timeout after iOS suspends/recreates the keyboard.
+  /// Progress start time is App Group state, not the lifetime of this view.
+  func resumeProcessingTimeoutIfNeeded() {
+    guard self.keyboardState.isProcessing, !self.keyboardState.isRecording else { return }
+    let settings = SharedSettings()
+    settings.synchronize()
+    guard let progress = self.keyboardState.voiceProcessingProgress,
+          progress.sessionToken == settings.dictationSessionToken else { return }
+    self.processingStartTime = Date(timeIntervalSinceReferenceDate: progress.startedAt)
+    FeatureDiagnostics.record(.speechFinalization, .queued,
+      operationID: progress.sessionToken)
+    self.startProcessingTimeout()
+  }
+
   func cancelProcessingTimeout() {
     self.processingTimeoutTimer?.invalidate()
     self.processingTimeoutTimer = nil
@@ -48,6 +62,13 @@ extension KeyboardViewController {
           } else {
             self.insertTranscribedText()
             self.checkForPendingLLMResult()
+            // The previous implementation reset only the keyboard flags,
+            // leaving the host worker and session token alive indefinitely.
+            FeatureDiagnostics.record(.speechFinalization, .failed,
+              operationID: self.dictationRequestToken)
+            if self.keyboardState.isProcessing {
+              self.cancelDictationViaDarwin()
+            }
             self.abandonPendingLLMRequest()
             self.resetProcessingState()
           }
