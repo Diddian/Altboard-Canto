@@ -2,11 +2,12 @@
 """Generate deterministic HKCanCor aggregate counts inside the offline Jyutping DB."""
 import argparse
 from collections import Counter
-from concurrent.futures import ThreadPoolExecutor
 import hashlib
+from io import BytesIO
 import json
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import sqlite3
+import tarfile
 import time
 from urllib.request import Request, urlopen
 
@@ -28,22 +29,39 @@ def _request(url: str) -> bytes:
     raise RuntimeError(f"Cannot retrieve pinned HKCanCor source: {url}") from error
 
 
+def sources_from_archive(archive_bytes: bytes) -> list[tuple[str, bytes]]:
+    # Read only pinned CHAT files in memory; never unpack archive paths to disk.
+    if len(archive_bytes) > 60_000_000:
+        raise ValueError("HKCanCor archive exceeds download size limit")
+    expected_parent = tuple(CORPUS_DIRECTORY.split("/"))
+    sources = []
+    with tarfile.open(fileobj=BytesIO(archive_bytes), mode="r:gz") as archive:
+        for member in archive:
+            parts = PurePosixPath(member.name).parts
+            if (not member.isfile() or len(parts) != len(expected_parent) + 2
+                    or parts[1:-1] != expected_parent
+                    or not parts[-1].endswith(".cha")):
+                continue
+            if member.size > 5_000_000:
+                raise ValueError("HKCanCor source file exceeds size limit")
+            handle = archive.extractfile(member)
+            if handle is None:
+                raise ValueError(f"Unreadable CHAT source: {member.name}")
+            with handle:
+                data = handle.read(5_000_001)
+            if len(data) != member.size:
+                raise ValueError(f"Incomplete CHAT source: {member.name}")
+            sources.append((parts[-1], data))
+    sources.sort()
+    if len(sources) != MINIMUM_SOURCE_FILES or len({name for name, _ in sources}) != len(sources):
+        raise ValueError(f"Expected {MINIMUM_SOURCE_FILES} unique CHAT files, found {len(sources)}")
+    return sources
+
+
 def pinned_sources() -> list[tuple[str, bytes]]:
-    listing = json.loads(_request(
-        f"https://api.github.com/repos/{CORPUS_REPO}/contents/{CORPUS_DIRECTORY}"
-        f"?ref={CORPUS_REVISION}"
-    ))
-    names = sorted(item["name"] for item in listing if item["name"].endswith(".cha"))
-    if len(names) != MINIMUM_SOURCE_FILES:
-        raise ValueError(f"Expected {MINIMUM_SOURCE_FILES} CHAT files, found {len(names)}")
-
-    def fetch(name: str) -> tuple[str, bytes]:
-        url = (f"https://raw.githubusercontent.com/{CORPUS_REPO}/{CORPUS_REVISION}/"
-               f"{CORPUS_DIRECTORY}/{name}")
-        return name, _request(url)
-
-    with ThreadPoolExecutor(max_workers=8) as pool:
-        return list(pool.map(fetch, names))
+    # A commit-pinned archive avoids GitHub's unauthenticated REST API rate limit.
+    url = f"https://codeload.github.com/{CORPUS_REPO}/tar.gz/{CORPUS_REVISION}"
+    return sources_from_archive(_request(url))
 
 
 def _is_han(character: str) -> bool:

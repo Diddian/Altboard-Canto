@@ -1,6 +1,9 @@
 """Deterministic offline Cantonese corpus-count regression tests."""
 import importlib.util
+from io import BytesIO
 from pathlib import Path
+import tarfile
+from unittest.mock import patch
 import sqlite3
 import tempfile
 import unittest
@@ -18,6 +21,31 @@ FIXTURE = ("@UTF8\n@Begin\n*XXA:\t你 都 唔 識 .\n"
 
 
 class CorpusNgramTests(unittest.TestCase):
+    def test_archive_source_selection_avoids_rate_limited_github_api(self):
+        stream = BytesIO()
+        with tarfile.open(fileobj=stream, mode="w:gz") as archive:
+            for index in range(BUILDER.MINIMUM_SOURCE_FILES):
+                data = f"*XXA:\\t你好 {index}\\n".encode()
+                name = (f"pycantonese-{BUILDER.CORPUS_REVISION}/"
+                        f"{BUILDER.CORPUS_DIRECTORY}/{index:03d}.cha")
+                info = tarfile.TarInfo(name)
+                info.size = len(data)
+                archive.addfile(info, BytesIO(data))
+            other = b"not a CHAT file"
+            info = tarfile.TarInfo(
+                f"pycantonese-{BUILDER.CORPUS_REVISION}/src/unrelated.cha"
+            )
+            info.size = len(other)
+            archive.addfile(info, BytesIO(other))
+        with patch.object(BUILDER, "_request", return_value=stream.getvalue()) as req:
+            sources = BUILDER.pinned_sources()
+        self.assertEqual(len(sources), BUILDER.MINIMUM_SOURCE_FILES)
+        self.assertEqual(sources[0][0], "000.cha")
+        self.assertNotIn(b"not a CHAT file", [data for _, data in sources])
+        self.assertEqual(req.call_count, 1)
+        self.assertIn("codeload.github.com", req.call_args.args[0])
+        self.assertIn(BUILDER.CORPUS_REVISION, req.call_args.args[0])
+
     def test_tokenization_and_sentence_boundaries(self):
         utt = list(BUILDER.utterances(FIXTURE))
         self.assertEqual(utt, ["你 都 唔 識 .", "可能 呀 ， 耶穌 !", "你 都 唔 識 ."])
