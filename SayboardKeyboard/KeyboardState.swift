@@ -206,6 +206,14 @@ final class KeyboardState: ObservableObject {
       return
     }
     self.voiceProcessingProgress = update
+    // The app owns the audio engine. Its first finalization update proves
+    // capture has ended, even when the mic was stopped by a timer or interrupt.
+    if update.stage == .stoppingAudio {
+      self.isRecording = false
+      self.isStartingRecording = false
+      self.recordingStartedAt = 0
+      self.stopLevelPolling()
+    }
     if !self.isRecording {
       self.isProcessing = true
     }
