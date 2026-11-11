@@ -10,6 +10,51 @@ struct RecordingPolicyChecks {
     precondition(!DictationRequestPolicy.isCurrent(started: "", current: "", cancelled: false))
     precondition(!DictationRequestPolicy.isCurrent(started: "a", current: nil, cancelled: false))
 
+    let now: TimeInterval = 20
+    let p = DictationRequestPolicy.self
+    precondition(p.hasRecentAudioHeartbeat(19.5, now: now))
+    precondition(p.hasRecentAudioHeartbeat(17, now: now))
+    precondition(!p.hasRecentAudioHeartbeat(16.9, now: now))
+    precondition(!p.hasRecentAudioHeartbeat(20.1, now: now))
+    precondition(!p.hasRecentAudioHeartbeat(0, now: now))
+    precondition(p.shouldRequestWarmSession(
+      keyboardActive: false, appActive: true, heartbeat: 19.5,
+      now: now, practiceFocused: false
+    ))
+    precondition(p.shouldRequestWarmSession(
+      keyboardActive: true, appActive: false, heartbeat: 19.5,
+      now: now, practiceFocused: false
+    ))
+    precondition(p.shouldRequestWarmSession(
+      keyboardActive: false, appActive: false, heartbeat: 0,
+      now: now, practiceFocused: true
+    ))
+    precondition(!p.shouldRequestWarmSession(
+      keyboardActive: true, appActive: true, heartbeat: 16.9,
+      now: now, practiceFocused: false
+    ))
+    func cold(
+      token: String? = "request", current: String? = "request",
+      cancelled: Bool = false, visible: Bool = true,
+      recording: Bool = false, acknowledged: Bool = false,
+      heartbeat: TimeInterval = 16.9
+    ) -> Bool {
+      p.shouldOpenColdFallback(
+        requestToken: token, currentToken: current, cancelled: cancelled,
+        keyboardVisible: visible, recording: recording,
+        appAcknowledged: acknowledged, heartbeat: heartbeat, now: now
+      )
+    }
+    precondition(cold())
+    precondition(!cold(token: "old"))
+    precondition(!cold(current: nil))
+    precondition(!cold(cancelled: true))
+    precondition(!cold(visible: false))
+    precondition(!cold(recording: true))
+    precondition(!cold(acknowledged: true))
+    precondition(!cold(heartbeat: 19.5))
+
+
     var envelope = AudioWaveformPeaks()
     precondition(envelope.waveform(count: 3) == [1, 1, 1])
     precondition(envelope.waveform(count: 0).isEmpty)
