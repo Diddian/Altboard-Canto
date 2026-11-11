@@ -210,6 +210,100 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("ConversationTurnPolicy.validAudioFileName", body)
         self.assertIn("decode([ConversationTurn].self", body)
 
+    def test_live_session_is_scoped_to_host_field_and_epoch(self):
+        live = source("SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift")
+        for guard in ("LiveDeliveryPolicy.accepts(", "LiveDeliveryPolicy.matchesField(",
+                      "liveTranscriptionOwnerToken", "liveTranscriptionDocumentEpoch",
+                      "liveTranscriptionContextAfter"):
+            self.assertIn(guard, live)
+        controller = source("SayboardKeyboard/KeyboardViewController.swift")
+        self.assertIn("if Self.blockedLiveSessionToken != settings.dictationSessionToken", controller)
+        self.assertIn("self.availableDocumentIdentifier() == self.dictationDocumentID", controller)
+
+    def test_meeting_does_not_end_a_borrowed_audio_session(self):
+        body = function("Sayboard/Services/MeetingRecordingCoordinator.swift", "func start(", "private func heartbeat()")
+        self.assertIn("service.session.captureOwner == nil", body)
+        self.assertIn("if sessionStartedHere { try service.session.startSession() }", body)
+        self.assertIn("if self.sessionStartedHere { self.speechService?.session.endSession() }", body)
+
+    def test_conversation_prevents_late_turn_or_live_preview_handoff(self):
+        body = function("Sayboard/Services/ConversationCoordinator.swift", "private func completeTurn(", "func saveAsMeeting()")
+        self.assertGreaterEqual(body.count("self.turns[index].id == turnID"), 3)
+        preview = function("Sayboard/Services/ConversationCoordinator.swift", "private func startLivePreview(")
+        self.assertIn("self.activeID == sessionID", preview)
+
+    def test_llm_bridge_owns_single_slot_and_replayed_notifications(self):
+        bridge = source("Shared/LLMBridge.swift")
+        policy = source("Shared/OperationContracts.swift")
+        keyboard = source("SayboardKeyboard/KeyboardViewController+LLM.swift")
+        self.assertIn("withBridgeLock", bridge)
+        self.assertIn("!FileManager.default.fileExists(atPath: url.path)", bridge)
+        self.assertIn("phase == .accepted || phase == .running", bridge)
+        self.assertIn("!phase.isTerminal { return false }", bridge)
+        self.assertIn("case .busy, .rejected: return previous == .requested", policy)
+        self.assertNotIn("LLMBridge.clearRequest()", keyboard)
+        self.assertNotIn("LLMBridge.clearResult()", keyboard)
+
+    def test_live_final_plan_and_cancel_tombstone(self):
+        live = source("SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift")
+        contract = source("Shared/OperationContracts.swift")
+        self.assertIn("LiveFinalReconciliation.plan(", live)
+        self.assertIn("self.liveTranscriptionOwnerToken ?? self.dictationRequestToken", live)
+        for case in ("case .unchanged:", "case .append(let suffix):",
+                     "case .replace(let replacement):", "case .review:"):
+            self.assertIn(case, live)
+        self.assertIn("guard before?.hasSuffix(marked) == true else { return .review }", contract)
+
+    def test_llm_terminal_status_outlives_keyboard_ack(self):
+        bridge = source("Shared/LLMBridge.swift")
+        self.assertIn("if self.readStatus(matching: requestID)?.phase.isTerminal == true", bridge)
+        self.assertIn("OperationPolicy.mayTransition(", bridge)
+        controller = source("SayboardKeyboard/KeyboardViewController+LLM.swift")
+        self.assertIn("LLMBridge.writeStatus(.cancelled, requestID: id)", controller)
+
+    def test_stale_live_block_is_request_scoped(self):
+        controller = source("SayboardKeyboard/KeyboardViewController.swift")
+        self.assertIn("self.liveTranscriptionBlockedToken == delivery.sessionToken", controller)
+        self.assertIn("Self.blockedLiveSessionToken == delivery.sessionToken", controller)
+        self.assertIn("self.abandonExperimentalLiveOwnership()", controller)
+
+    def test_outbox_limits_do_not_delete_unacknowledged_text(self):
+        bridge = source("Shared/TranscriptionBridge.swift")
+        self.assertIn("guard pending.count < 64", bridge)
+        self.assertIn("data.count <= 128 * 1_024", bridge)
+        self.assertIn("self.postDarwinNotification(DarwinNotificationName.transcriptionReady)", bridge)
+        self.assertNotIn("dropFirst(64)", bridge)
+
+    def test_final_delivery_uses_captured_identity_after_shared_token_clears(self):
+        final = function(
+            "SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift",
+            "func completeExperimentalLiveText(", "func cancelExperimentalLiveText()"
+        )
+        self.assertIn("LiveFinalDeliveryPolicy.mayReconcile(", final)
+        self.assertNotIn("SharedSettings().dictationSessionToken", final)
+        self.assertIn("cancelled: cancellationRequested", final)
+        self.assertIn("LiveFinalReconciliation.plan(", final)
+        insertion = function("SayboardKeyboard/KeyboardViewController.swift",
+                             "func insertTranscribedText()", "func pingMainAppForSessionStatus")
+        self.assertIn("!settings.dictationCancellationRequested", insertion)
+        self.assertIn("delivery, cancellationRequested: settings.dictationCancellationRequested", insertion)
+        policy = source("Shared/OperationContracts.swift")
+        self.assertIn("delivery.canInsert(requestToken: requestToken", policy)
+        self.assertIn("requestDocument == ownedDocument", policy)
+        self.assertIn("blockedToken != delivery.sessionToken", policy)
+
+    def test_bounded_cross_process_lock_and_result_owner(self):
+        bridge = source("Shared/LLMBridge.swift")
+        self.assertIn("LOCK_EX | LOCK_NB", bridge)
+        self.assertIn("for attempt in 0..<5", bridge)
+        self.assertIn("usleep(2_000)", bridge)
+        self.assertIn("self.readRequest()?.requestID == requestID", bridge)
+        self.assertNotIn("flock(fd, LOCK_EX) == 0", bridge)
+        verification = source("scripts/verify-llm-bridge.swift")
+        self.assertIn("holder.waitUntilExit()", verification)
+        self.assertIn("waited < 0.15", verification)
+        self.assertIn("preserved == malformed", verification)
+
     def test_haptic_disable_does_not_prewarm_engine(self):
         body = function("Shared/KeyboardHaptics.swift", "static func prepare()")
         self.assertLess(body.index("guard settings.keyboardHapticsEnabled"), body.index("KeyboardCoreHaptic.prewarm"))

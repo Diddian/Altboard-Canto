@@ -15,8 +15,22 @@ struct TranscriptionBridge: Sendable {
     )
     do {
       try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+      // Pending deliveries may contain user text. Never delete unacknowledged
+      // results to make room; refuse new writes at the bounded queue limit.
+      let pending = try FileManager.default.contentsOfDirectory(
+        at: folder, includingPropertiesForKeys: nil
+      ).filter { $0.pathExtension == "json" }
+      guard pending.count < 64 else {
+        FeatureDiagnostics.record(.bridge, .unavailable)
+        return false
+      }
       let url = folder.appendingPathComponent(payload.resultID.uuidString + ".json")
-      try JSONEncoder().encode(payload).write(
+      let data = try JSONEncoder().encode(payload)
+      guard data.count <= 128 * 1_024 else {
+        FeatureDiagnostics.record(.bridge, .unavailable)
+        return false
+      }
+      try data.write(
         to: url, options: [.atomic, .completeFileProtectionUnlessOpen]
       )
       FeatureDiagnostics.record(.bridge, .queued, operationID: token, phase: .completed)
