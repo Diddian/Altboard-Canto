@@ -536,3 +536,4 @@ private struct TwoDotOrbitProcessing: View {
       context.fill(Path(ellipseIn: rect), with: .foreground)
     }
   }
+}
