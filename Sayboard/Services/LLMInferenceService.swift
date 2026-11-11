@@ -42,10 +42,18 @@ final class LLMInferenceService: ObservableObject {
     return budget > 0 ? budget : nil
   }
 
+  func matchesLoadedModel(variant: LLMModelVariant, path: String) -> Bool {
+    self.loadState == .loaded && self.currentVariant == variant
+      && self.currentModelPath == path && self.model != nil && self.context != nil
+  }
+
   func loadModel(variant: LLMModelVariant, path: String) async {
-    guard self.loadState != .loading else { return }
+    guard self.loadState != .loading, !self.isProcessing else { return }
+    if self.loadState == .loaded { self.unloadModel() }
+    let loadStartedAt = ProcessInfo.processInfo.systemUptime
     self.loadState = .loading
     self.currentVariant = variant
+    self.currentModelPath = nil
 
     let availableMemory = os_proc_available_memory()
     let requiredMemory = UInt64(Double(variant.ramRequirementMB.megabytesInBytes) * Self.memoryCheckSafetyMultiplier)
@@ -93,9 +101,23 @@ final class LLMInferenceService: ObservableObject {
         return (SendablePointer(pointer: model), SendablePointer(pointer: ctx))
       }.value
 
+    if Task.isCancelled {
+      if let result {
+        let held = result
+        await Task.detached(priority: .utility) {
+          llama_free(held.context.pointer)
+          llama_model_free(held.model.pointer)
+        }.value
+      }
+      self.currentVariant = nil
+      self.loadState = .unloaded
+      return
+    }
+
     if let result {
       self.model = result.model.pointer
       self.context = result.context.pointer
+      self.currentModelPath = path
       self.loadState = .loaded
       let footprintAfter = ProcessFootprint.residentMB()
       DiagnosticLog.write(
@@ -105,9 +127,14 @@ final class LLMInferenceService: ObservableObject {
       )
       DiagnosticLog.write("llm: backends -- \(Self.systemInfo())")
     } else {
+      self.currentVariant = nil
       self.loadState = .error("Failed to load LLM model")
       DiagnosticLog.write("llm: llama.cpp refused \(variant.rawValue) — unsupported arch or bad file?")
     }
+    DiagnosticLog.write(
+      "llm: model_load_ms=\(Int((ProcessInfo.processInfo.systemUptime - loadStartedAt) * 1_000)), "
+        + "state=\(String(describing: self.loadState))"
+    )
   }
 
   func unloadModel() {
@@ -124,12 +151,14 @@ final class LLMInferenceService: ObservableObject {
     self.context = nil
     self.model = nil
     self.currentVariant = nil
+    self.currentModelPath = nil
     self.loadState = .unloaded
   }
 
   func process(systemPrompt: String, userText: String, assistantPrefill: String = "", maxOutputTokens: Int? = nil, deadlineSeconds: TimeInterval = 15) async -> String? {
     let prompt = Prompt(system: systemPrompt, user: userText, assistantPrefill: assistantPrefill)
     guard
+      !self.isProcessing, self.loadState == .loaded,
       let model = self.model,
       let context = self.context,
       let variant = self.currentVariant
@@ -155,11 +184,12 @@ final class LLMInferenceService: ObservableObject {
         deadlineSeconds: deadlineSeconds,
       )
     }
-    return await withTaskCancellationHandler {
+    let result = await withTaskCancellationHandler {
       await worker.value
     } onCancel: {
       worker.cancel()
     }
+    return Task.isCancelled ? nil : result
   }
 
   private struct Prompt: Sendable {
@@ -180,6 +210,7 @@ final class LLMInferenceService: ObservableObject {
   private var model: OpaquePointer?
   private var context: OpaquePointer?
   private var currentVariant: LLMModelVariant?
+  private var currentModelPath: String?
   private var isProcessing = false
 
   private nonisolated static func systemInfo() -> String {
@@ -195,6 +226,7 @@ final class LLMInferenceService: ObservableObject {
     maxOutputTokens: Int?,
     deadlineSeconds: TimeInterval,
   ) -> String? {
+    guard !Task.isCancelled else { return nil }
     let template = variant.chatTemplate
     let promptString = self.buildFormattedPrompt(
       model: model,
@@ -225,8 +257,14 @@ final class LLMInferenceService: ObservableObject {
     var batch = llama_batch_init(Int32(tokens.count), 0, 1)
     defer { llama_batch_free(batch) }
 
-    guard self.decodePrompt(context: context, batch: &batch, tokens: tokens) else { return nil }
+    let prefillStartedAt = ProcessInfo.processInfo.systemUptime
+    guard self.decodePrompt(context: context, batch: &batch, tokens: tokens),
+          !Task.isCancelled else { return nil }
+    DiagnosticLog.write(
+      "llm: prompt_prefill_ms=\(Int((ProcessInfo.processInfo.systemUptime - prefillStartedAt) * 1_000))"
+    )
 
+    let generationStartedAt = ProcessInfo.processInfo.systemUptime
     guard
       let generated = self.generateTokens(
         context: context,
@@ -240,6 +278,10 @@ final class LLMInferenceService: ObservableObject {
       DiagnosticLog.write("llm: generation failed")
       return nil
     }
+    guard !Task.isCancelled else { return nil }
+    DiagnosticLog.write(
+      "llm: generation_ms=\(Int((ProcessInfo.processInfo.systemUptime - generationStartedAt) * 1_000))"
+    )
     DiagnosticLog.write(
       "llm: raw=\(generated.text.count) chars, eos=\(generated.stoppedAtEOS), "
         + "closingTag=\(generated.text.contains("</think>")), "
@@ -342,11 +384,11 @@ final class LLMInferenceService: ObservableObject {
       currentPos += 1
 
       guard llama_decode(context, batch) == 0 else {
-        break
+        return nil
       }
     }
 
-    guard !hitDeadline else { return nil }
+    guard !hitDeadline, !Task.isCancelled else { return nil }
 
     // UTF-8 codepoints can span model tokens; decode after assembling all bytes.
     let raw = String(decoding: outputBytes, as: UTF8.self)

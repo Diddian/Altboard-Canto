@@ -64,7 +64,11 @@ final class LLMProcessingCoordinator: ObservableObject {
     _ source: String, options: VoiceOutputConfiguration,
     onCleaned: @escaping @MainActor (String) -> Void
   ) async -> String? {
-    guard !source.isEmpty else { return nil }
+    guard !source.isEmpty, !Task.isCancelled else { return nil }
+    if options.target == .original && !options.needsLLM {
+      onCleaned(source)
+      return nil
+    }
     self.lastVoiceOutputIssue = nil
     let started = CFAbsoluteTimeGetCurrent()
     FeatureDiagnostics.record(.conversation, .started)
@@ -74,9 +78,10 @@ final class LLMProcessingCoordinator: ObservableObject {
     // One shared inference pass for translated turns, as in keyboard Output.
     // Original-only turns can still run one optional cleanup pass.
     if options.target != .original {
+      guard !Task.isCancelled else { return nil }
       onCleaned(source)
     } else {
-      if options.cleanupEnabled {
+      if options.needsLLM {
         let cleanedStarted = CFAbsoluteTimeGetCurrent()
         let cleaned = await self.processVoiceChunks(source, options: options)
         guard !Task.isCancelled else { return nil }
@@ -136,7 +141,10 @@ final class LLMProcessingCoordinator: ObservableObject {
     _ chunks: [String], startingAt index: Int, options: VoiceOutputConfiguration,
     onTranslated: @MainActor (Int, String) -> Bool
   ) async -> Bool {
-    guard options.target != .original, index >= 0, index < chunks.count else { return false }
+    guard options.target != .original,
+          let pending = MeetingTranslationPolicy.pendingChunkIndices(
+            totalChunks: chunks.count, startingAt: index
+          ), !pending.isEmpty else { return false }
     self.lastVoiceOutputIssue = nil
     FeatureDiagnostics.record(.meetingTranslation, .started)
     guard let backgroundTask = await self.beginVoiceProcessing() else {
@@ -144,7 +152,7 @@ final class LLMProcessingCoordinator: ObservableObject {
       return false
     }
     defer { self.endVoiceProcessing(backgroundTask) }
-    for current in index..<chunks.count {
+    for current in pending {
       guard !Task.isCancelled else {
         FeatureDiagnostics.record(.meetingTranslation, .cancelled)
         return false
@@ -191,8 +199,8 @@ final class LLMProcessingCoordinator: ObservableObject {
     self.isProcessing = true
     settings.isLLMProcessing = true
     let backgroundTask = self.beginInferenceBackgroundTask()
-    await self.prepareForInference(variant: variant, modelPath: modelPath)
-    guard !Task.isCancelled, self.inferenceService.loadState == .loaded else {
+    let prepared = await self.prepareForInference(variant: variant, modelPath: modelPath)
+    guard prepared, !Task.isCancelled else {
       if !Task.isCancelled {
         self.lastVoiceOutputIssue = "The text model could not load. Check available memory."
       }
@@ -294,6 +302,7 @@ final class LLMProcessingCoordinator: ObservableObject {
     let stylingHost = OnboardingTextEntry.stylingHost(settings.hostBundleId)
 
     defer {
+      self.inferenceService.unloadModel()
       self.isProcessing = false
       settings.isLLMProcessing = false
       let terminalPhase = LLMBridge.readStatus(matching: request.requestID)?.phase
@@ -312,9 +321,11 @@ final class LLMProcessingCoordinator: ObservableObject {
     let bgTaskID = self.beginInferenceBackgroundTask()
     defer { self.endInferenceBackgroundTask(bgTaskID) }
 
-    await self.prepareForInference(variant: validated.variant, modelPath: validated.modelPath)
+    let prepared = await self.prepareForInference(
+      variant: validated.variant, modelPath: validated.modelPath
+    )
 
-    guard self.inferenceService.loadState == .loaded else {
+    guard prepared, !Task.isCancelled else {
       let state = String(describing: self.inferenceService.loadState)
       FeatureDiagnostics.record(.aiActions, .failed)
       DiagnosticLog.write("llm: load failed, state=\(state)")
@@ -330,13 +341,20 @@ final class LLMProcessingCoordinator: ObservableObject {
       assistantPrefill: prefill,
     )
 
+    // The keyboard may have cancelled or replaced the request while inference ran.
+    guard !Task.isCancelled,
+          LLMBridge.readRequest()?.requestID == validated.request.requestID else {
+      LLMBridge.writeStatus(.cancelled, requestID: validated.request.requestID)
+      FeatureDiagnostics.record(.aiActions, .cancelled)
+      return
+    }
+
     if let result, !result.isEmpty {
       if validated.request.action == .translate,
          let rawTarget = validated.request.translationTarget,
          let target = VoiceOutputTarget(rawValue: rawTarget),
          !VoiceLanguageValidator.matches(result, target: target) {
         FeatureDiagnostics.record(.aiActions, .rejected)
-        self.inferenceService.unloadModel()
         return
       }
       let finalResult = self.styled(result, action: validated.request.action, host: stylingHost, settings: settings)
@@ -353,7 +371,6 @@ final class LLMProcessingCoordinator: ObservableObject {
       DiagnosticLog.write("llm: FAILED, inference produced nothing")
     }
 
-    self.inferenceService.unloadModel()
   }
 
   private func validateRequest(settings: SharedSettings, request: LLMRequest) -> ValidatedRequest? {
@@ -401,14 +418,16 @@ final class LLMProcessingCoordinator: ObservableObject {
     }
   }
 
-  private func prepareForInference(variant: LLMModelVariant, modelPath: String) async {
+  private func prepareForInference(variant: LLMModelVariant, modelPath: String) async -> Bool {
     if let speechService = self.speechService {
-      guard await speechService.unloadForLLMProcessing() else { return }
+      guard await speechService.unloadForLLMProcessing() else { return false }
     }
-
-    if self.inferenceService.loadState != .loaded {
+    guard !Task.isCancelled else { return false }
+    if !self.inferenceService.matchesLoadedModel(variant: variant, path: modelPath) {
       await self.inferenceService.loadModel(variant: variant, path: modelPath)
     }
+    return !Task.isCancelled &&
+      self.inferenceService.matchesLoadedModel(variant: variant, path: modelPath)
   }
 
   private func styled(_ text: String, action: LLMAction, host: String?, settings: SharedSettings) -> String {
@@ -454,11 +473,12 @@ final class LLMProcessingCoordinator: ObservableObject {
       ? min(foregroundBudget, max(0, remaining - Self.safetyMarginSeconds))
       : foregroundBudget
     guard deadline >= 5, !Task.isCancelled else { return nil }
-    return await self.inferenceService.process(
+    let output = await self.inferenceService.process(
       systemPrompt: systemPrompt, userText: userText,
       assistantPrefill: assistantPrefill, maxOutputTokens: maxOutputTokens,
       deadlineSeconds: deadline
     )
+    return Task.isCancelled ? nil : output
   }
 
 }

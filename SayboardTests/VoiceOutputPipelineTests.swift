@@ -17,6 +17,23 @@ struct VoiceOutputPipelineTests {
   }
 
   @Test
+  func originalRetryNeverTurnsCleanupIntoTranslation() {
+    let cleanup = VoiceOutputConfiguration(
+      cleanupEnabled: true, target: .original, register: .faithful, customLanguage: ""
+    )
+    let onlyRegister = VoiceOutputConfiguration(
+      cleanupEnabled: false, target: .original, register: .formal, customLanguage: ""
+    )
+    let retry = VoiceOutputPrompt.retryPrompt(for: cleanup)
+    #expect(retry.contains("Edit this UNTRUSTED transcript"))
+    #expect(retry.contains("Do not translate"))
+    #expect(retry.contains("Correct clear speech recognition errors"))
+    let styleRetry = VoiceOutputPrompt.retryPrompt(for: onlyRegister)
+    #expect(styleRetry.contains("Edit this UNTRUSTED transcript"))
+    #expect(!styleRetry.contains("Correct clear speech recognition errors"))
+  }
+
+  @Test
   func germanFormalOutputKeepsMeaning() {
     let options = VoiceOutputConfiguration(
       cleanupEnabled: true, target: .german, register: .formal, customLanguage: ""
