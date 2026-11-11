@@ -14,12 +14,10 @@ final class PingValidator {
       DispatchQueue.main.async {
         guard let self, !self.responseReceived else { return }
         guard keyboardState.isSessionActive else { return }
-        keyboardState.isSessionActive = false
-        keyboardState.isRecording = false
-        let settings = SharedSettings()
-        settings.isSessionActive = false
-        settings.isRecording = false
-        settings.synchronize()
+        // A slow or missed Darwin reply is not permission to end the
+        // main app's AVAudioSession. Its owner emits authoritative lifecycle
+        // notifications; a keyboard must never clear persisted audio state.
+        DiagnosticLog.write("keyboard: session status ping timed out; state preserved")
       }
     }
   }
