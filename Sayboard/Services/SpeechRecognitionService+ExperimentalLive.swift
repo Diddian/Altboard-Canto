@@ -118,13 +118,30 @@ extension SpeechRecognitionService {
     }
   }
 
-  func stopExperimentalLive() async {
+  /// Native sherpa-onnx decode runs in a detached worker and may ignore
+  /// Swift cancellation. Bound the shutdown wait so Stop cannot hang forever.
+  /// A timed-out decode must remain in use until its native call returns.
+  @discardableResult
+  func stopExperimentalLive() async -> Bool {
     let task = self.experimentalLiveTask
     if task != nil { FeatureDiagnostics.record(.liveDictation, .stopped) }
     self.experimentalLiveTask = nil
     task?.cancel()
-    await task?.value
-    self.liveDictationStatus = "Stopped"
+    guard task != nil else {
+      self.liveDictationStatus = "Stopped"
+      return true
+    }
+    for _ in 0..<40 {
+      if self.speechWorkers == 0 {
+        await task?.value
+        self.liveDictationStatus = "Stopped"
+        return true
+      }
+      do { try await Task.sleep(for: .milliseconds(100)) } catch { break }
+    }
+    self.liveDictationStatus = "Native ASR worker did not stop; audio retained"
+    FeatureDiagnostics.record(.liveDictation, .slow, durationMs: 4_000)
+    return false
   }
 }
 

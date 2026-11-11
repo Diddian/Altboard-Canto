@@ -162,6 +162,21 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("Accuracy: Unrated", read("Sayboard/Views/ModelCardView.swift"))
         self.assertIn("Speed: Unrated", read("Sayboard/Views/ModelCardView.swift"))
 
+    def test_stop_live_decode_bounded_and_audio_preserved_after_native_stall(self):
+        live = read("Sayboard/Services/SpeechRecognitionService+ExperimentalLive.swift")
+        service = read("Sayboard/Services/SpeechRecognitionService.swift")
+        final = read("Sayboard/Services/SpeechRecognitionService+Transcription.swift")
+        self.assertIn("func stopExperimentalLive() async -> Bool", live)
+        self.assertIn("for _ in 0..<40", live)
+        self.assertIn("if self.speechWorkers == 0", live)
+        self.assertIn("Native ASR worker did not stop; audio retained", live)
+        self.assertIn("let liveStopped = await self.stopExperimentalLive()", service)
+        self.assertIn("if !liveStopped && self.speechWorkers > 0", service)
+        self.assertIn("saveHistoryRecord(preserveUntranscribedAudio: true)", service)
+        self.assertIn("Recognition interrupted — audio preserved for playback", final)
+        self.assertIn("func saveHistoryRecord(preserveUntranscribedAudio: Bool = false)", final)
+        self.assertIn('TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStopped)', service)
+
     def test_visible_keyboard_recovers_cancel_and_animation_without_spinning_state(self):
         timeout = read("SayboardKeyboard/KeyboardViewController+Timeout.swift")
         host = read("SayboardKeyboard/KeyboardViewController.swift")
@@ -212,7 +227,8 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn('Text("Live Transcription")', chrome)
         self.assertIn("self.keyboardState.liveSourcePreview", chrome)
         self.assertIn("self.liveSourcePreview = nil", keyboard)
-        self.assertIn("ExperimentalLiveTranscription.write(sessionToken: token", speech)
+        self.assertIn("if ExperimentalLiveTranscription.write(", speech)
+        self.assertIn("sessionToken: token, revision: revision + 1", speech)
         status_strip = chrome.split("struct KeyboardStatusStrip: View", 1)[1].split("struct KeyboardBottomRow: View", 1)[0]
         self.assertNotIn("proxy.insertText(", status_strip)
 
@@ -682,7 +698,9 @@ class SettingsContractTests(unittest.TestCase):
         bridge = read("SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift")
         self.assertIn("static let firstQwenSamples = 24_000", policy)
         self.assertIn("static let subsequentQwenSamples = 24_000", policy)
-        self.assertIn("hasAttemptedFirst = true", live)
+        self.assertIn("firstCompleted = true", live)
+        self.assertIn("if firstChunk && !published", live)
+        self.assertIn("retryFirstWindow(after: firstWindow)", live)
         self.assertIn("LiveDictationChunkPolicy.samples(", live)
         self.assertIn("CantoneseOutput.normalizeDictation(", live)
         self.assertIn("CantoneseOutput.normalizeDictation(", final)

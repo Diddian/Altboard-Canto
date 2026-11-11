@@ -270,8 +270,26 @@ final class SpeechRecognitionService: ObservableObject {
 
     self.cancelMaxDurationTimer()
     self.session.endCapture(owner: .dictation)
-    await self.stopExperimentalLive()
+    let liveStopped = await self.stopExperimentalLive()
     guard self.isCurrentDictation(finalizationToken) else { return }
+    if !liveStopped && self.speechWorkers > 0 {
+      // Starting a second Qwen decode while the native worker is still
+      // running would race a shared recognizer and can exhaust iPhone RAM.
+      // Save the recording, even without recognized words, before resetting.
+      self.settings.lastDictationOutcome = .processingFailed
+      self.currentRawTranscription = ExperimentalLiveTranscription.read()?.text ?? ""
+      self.currentTranscription = self.currentRawTranscription
+      self.saveHistoryRecord(preserveUntranscribedAudio: true)
+      self.accumulator.reset()
+      self.settings.isRecording = false
+      self.settings.dictationSessionToken = nil
+      self.settings.synchronize()
+      TranscriptionBridge.clearVoiceProgress()
+      FeatureDiagnostics.record(.speechFinalization, .failed,
+        durationMs: Int((CFAbsoluteTimeGetCurrent() - finalizationStartedAt) * 1_000))
+      TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStopped)
+      return
+    }
     // Only the final recognizer needs these samples now; release the queued copy.
     let savedSamples = self.accumulator.consumeAll()
     let stylingHost = OnboardingTextEntry.stylingHost(self.settings.hostBundleId)

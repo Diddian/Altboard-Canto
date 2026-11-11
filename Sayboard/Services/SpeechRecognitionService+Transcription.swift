@@ -259,7 +259,7 @@ extension SpeechRecognitionService {
     }
   }
 
-  func saveHistoryRecord() {
+  func saveHistoryRecord(preserveUntranscribedAudio: Bool = false) {
     guard let fileName = currentAudioFileName else { return }
     guard let result = audioRecorder.stopRecording() else { return }
     if result.writeFailed {
@@ -270,7 +270,9 @@ extension SpeechRecognitionService {
       return
     }
 
-    let transcription = self.currentTranscription.isEmpty ? self.currentRawTranscription : self.currentTranscription
+    let recognized = self.currentTranscription.isEmpty ? self.currentRawTranscription : self.currentTranscription
+    let transcription = preserveUntranscribedAudio && recognized.isEmpty
+      ? "Recognition interrupted — audio preserved for playback" : recognized
     guard !transcription.isEmpty else {
       if let url = HistoryStore.shared.audioFileURL(for: fileName) {
         try? FileManager.default.removeItem(at: url)
