@@ -261,11 +261,15 @@ struct KeyboardBottomRow: View {
           action()
         }
       }
-      if let openEmoji = self.onEmojiAction {
-        KeyButton(content: .nativeEmojiGlyph, fixedWidth: self.metrics.sideButtonWidth) {
-          openEmoji()
-        }
-        .accessibilityLabel("Open Emoji keyboard")
+      if self.onEmojiAction != nil {
+        // The bottom Emoji-shaped key is another native keyboard selector.
+        // Do not invoke the legacy in-extension Emoji page.
+        NativeInputModeSwitchKey(
+          configure: self.keyboardState.configureInputModeListButton,
+          iconName: "nativeEmoji"
+        )
+        .frame(width: self.metrics.sideButtonWidth,
+               height: KeyboardChromeMetrics.keyHeight)
       } else if self.keyboardState.showsGlobeButton {
         NativeInputModeSwitchKey(
           configure: self.keyboardState.configureInputModeListButton,
