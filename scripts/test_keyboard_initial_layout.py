@@ -273,7 +273,11 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn("No callbacks can be guaranteed while iOS runs another keyboard.", trace)
         self.assertIn("FeatureDiagnostics.record(.appStartup, .started)", app)
         self.assertIn("FeatureDiagnostics.record(.appStartup, .completed)", app)
-        self.assertIn("area == .appStartup && event == .started", feature)
+        # Startup events are recorded through one bounded asynchronous queue.
+        self.assertIn("area: area.rawValue, event: event.rawValue", feature)
+        self.assertIn("queue.async { append(entry) }", feature)
+        self.assertIn("guard flock(fd, LOCK_EX) == 0", feature)
+        self.assertIn("private static let maxBytes: off_t = 1_048_576", feature)
         for private_content in ("documentContextBeforeInput", "selectedText",
                                 "hostBundleId", "touchPath", "audioBuffer"):
             self.assertNotIn(private_content, trace)
