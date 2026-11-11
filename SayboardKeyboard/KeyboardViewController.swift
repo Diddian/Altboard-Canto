@@ -784,15 +784,28 @@ final class KeyboardViewController: UIInputViewController {
           (settings.isRecording || settings.isKeyboardRequestRecent()),
           let token = settings.dictationSessionToken,
           UUID(uuidString: token) != nil else { return }
-    if self.dictationRequestToken == token, self.dictationDocumentID != nil { return }
-    self.dictationRequestToken = token
     let document = self.availableDocumentIdentifier()
-    if DictationRequestPolicy.isSameDestination(
+    let sameField = DictationRequestPolicy.isSameDestination(
       sessionToken: token, document: document,
       fingerprint: settings.dictationDestinationFingerprint
-    ), let epoch = settings.dictationDestinationEpoch {
+    )
+    if self.dictationRequestToken == token,
+       self.dictationDocumentID == document, sameField,
+       self.keyboardState.documentEpoch == settings.dictationDestinationEpoch {
+      return
+    }
+    self.dictationRequestToken = token
+    if sameField, let epoch = settings.dictationDestinationEpoch {
       self.dictationDocumentID = document
       self.keyboardState.documentEpoch = epoch
+      // A recreated controller may resume live text only for the exact
+      // same request and UIKit destination. Never clear a foreign tombstone.
+      if self.liveTranscriptionBlockedToken == token {
+        self.liveTranscriptionBlockedToken = nil
+      }
+      if Self.blockedLiveSessionToken == token {
+        Self.blockedLiveSessionToken = nil
+      }
     } else {
       self.dictationDocumentID = nil
       self.liveTranscriptionBlockedToken = token
