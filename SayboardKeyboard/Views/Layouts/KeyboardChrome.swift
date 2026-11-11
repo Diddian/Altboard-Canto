@@ -334,7 +334,7 @@ struct KeyboardBottomRow: View {
     let padding = (self.keyboardState.effectiveTypingKind == .alphabetic ? 6.67 : 4).kbScaled
     let gap = KeyboardChromeMetrics.buttonSpacing
     let leading = self.metrics.trashWidth
-      + (self.metrics.showsGlobe ? self.metrics.sideButtonWidth + gap : 0)
+      + (self.metrics.showsGlobe ? self.metrics.sideButtonWidth : 0)
     for count in stride(from: requested.count, through: 0, by: -1) {
       let selected: [String]
       if count == 2 && requested.count == 3 && requested.last == ".com" {

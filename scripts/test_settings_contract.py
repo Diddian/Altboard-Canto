@@ -144,9 +144,10 @@ class SettingsContractTests(unittest.TestCase):
         conversation = read("Sayboard/Services/ConversationCoordinator.swift")
         ui = read("Sayboard/Views/ConversationView.swift")
         self.assertIn("let clean = TextSanitizer.sanitize(raw)", meeting)
-        self.assertIn("let cleaned = TextSanitizer.sanitize(output.text)", live)
-        self.assertIn("let frameCount = service.settings.selectedVariant.engine == .qwen3", conversation)
-        self.assertIn("? 24_000 : 48_000", conversation)
+        self.assertIn("let cleaned = CantoneseOutput.normalizeDictation(", live)
+        self.assertIn("preferredLanguages: self.recordingSpokenLanguages", live)
+        self.assertIn("LiveDictationChunkPolicy.samples(", conversation)
+        self.assertIn("hasAttemptedFirst: hasAttemptedFirst", conversation)
         self.assertIn("spokenBy: activeSpeaker ?? side", ui)
         self.assertIn("selected == .cantonese ? CantoneseOutput.normalize(source) : source", ui)
 
@@ -430,10 +431,10 @@ class SettingsContractTests(unittest.TestCase):
         settings = read("Sayboard/Views/KeyboardSettingsView.swift")
         phone = read("Sayboard/Views/Onboarding/KeyboardLayoutPreview.swift")
         preview = settings.split("private struct KeyboardTestPreview", 1)[1]
-        self.assertEqual(preview.count('if self.showsGlobeButton'), 2)
+        self.assertEqual(preview.count('if self.systemSwitchRequired'), 2)
         self.assertIn("if self.showExtraGlobeKey", preview)
         self.assertIn("SharedKey.keyboardShowGlobeKey", preview)
-        self.assertNotIn("showExtraGlobe", phone)
+        self.assertIn("showExtraGlobeKey", phone)
         self.assertIn(".accessibilityLabel(\"Keyboard preview; tap keys to test haptic feedback\")", preview)
         self.assertNotIn(".allowsHitTesting(false)", preview)
 
@@ -473,16 +474,55 @@ class SettingsContractTests(unittest.TestCase):
         phone = read("Sayboard/Views/Onboarding/KeyboardLayoutPreview.swift")
         settings = read("Sayboard/Views/KeyboardSettingsView.swift")
         alphabet = read("SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift")
-        self.assertNotIn("showExtraGlobe", phone)
-        self.assertEqual(phone.count('self.symbolKey("globe", width: Self.sideKeyWidth)'), 1)
+        self.assertIn("showExtraGlobeKey", phone)
+        self.assertEqual(phone.count('self.symbolKey("globe", width: Self.sideKeyWidth)'), 3)
         self.assertEqual(phone.count("self.nativeGlobeKey(width: 48)"), 1)
         self.assertIn('self.symbolKey("sparkles", width: 38)', phone)
         self.assertNotIn("self.showGlobeKey", settings)
-        self.assertEqual(settings.count('if self.showsGlobeButton'), 2)
+        self.assertEqual(settings.count('if self.systemSwitchRequired'), 2)
         self.assertIn('self.key("globe", width: 48)', settings)
         self.assertIn("else if SharedSettings().keyboardShowAIButton", alphabet)
         self.assertIn("Output language unavailable. Open Altboard", alphabet)
         self.assertIn("AI actions unavailable. Open Altboard", alphabet)
+
+    def test_off_globe_has_no_fake_in_keyboard_icon_and_on_key_is_leftmost(self):
+        chrome = read("SayboardKeyboard/Views/Layouts/KeyboardChrome.swift")
+        standard = read("SayboardKeyboard/Views/Layouts/StandardKeyboardLayout.swift")
+        extended = read("SayboardKeyboard/Views/Layouts/ExtendedKeyboardLayout.swift")
+        alphabet = read("SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift")
+        phone = read("Sayboard/Views/Onboarding/KeyboardLayoutPreview.swift")
+        preview = read("Sayboard/Views/KeyboardSettingsView.swift")
+        menu = read("SayboardKeyboard/Views/KeyboardLLMActionsToolbar.swift")
+        self.assertIn("self.needsInputModeSwitchKey // UIKit decides", chrome)
+        self.assertIn("if self.keyboardState.showsGlobeButton", chrome)
+        self.assertIn("if self.systemSwitchRequired", preview)
+        self.assertIn("if self.systemSwitchRequired", phone)
+        self.assertIn("private var showExtraGlobeKey = false", preview)
+        self.assertIn("private var showExtraGlobeKey = false", phone)
+        for source in (standard, extended, alphabet):
+            self.assertLess(source.index("if self.keyboardState.showGlobeKey"),
+                            source.index("if self.keyboardState.showSettingsKey"))
+        self.assertLess(menu.index("if self.keyboardState.showGlobeKey"),
+                        menu.index('KeyButton(content: .systemImage("xmark")'))
+        self.assertLess(phone.index("if self.showExtraGlobeKey"),
+                        phone.index('self.symbolKey("gearshape"'))
+        self.assertNotIn("true // Keep the native keyboard/Emoji picker", chrome)
+
+    def test_live_dictation_first_chunk_and_original_cantonese_script(self):
+        live = read("Sayboard/Services/SpeechRecognitionService+ExperimentalLive.swift")
+        final = read("Sayboard/Services/SpeechRecognitionService+Transcription.swift")
+        policy = read("Shared/LiveDictationChunkPolicy.swift")
+        converter = read("Sayboard/Services/CantoneseOutput.swift")
+        bridge = read("SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift")
+        self.assertIn("static let firstQwenSamples = 16_000", policy)
+        self.assertIn("static let subsequentQwenSamples = 24_000", policy)
+        self.assertIn("hasAttemptedFirst = true", live)
+        self.assertIn("LiveDictationChunkPolicy.samples(", live)
+        self.assertIn("CantoneseOutput.normalizeDictation(", live)
+        self.assertIn("CantoneseOutput.normalizeDictation(", final)
+        self.assertIn('preferredLanguages.first == "yue"', converter)
+        self.assertIn("guard settings.voiceOutputTarget == .original else { return }", bridge)
+        self.assertIn("FeatureDiagnostics.record(.liveDictation, .firstUpdate,", live)
 
     def test_listening_animation_respects_accessibility(self):
         chrome = read("SayboardKeyboard/Views/Layouts/KeyboardChrome.swift")
@@ -566,11 +606,11 @@ class SettingsContractTests(unittest.TestCase):
         for control in ('Auto-capitalization', 'Double-Space Period', 'Haptic Feedback'):
             self.assertIn('Toggle("' + control, layout)
             self.assertNotIn('Toggle("' + control, custom)
-        for control in ('Extra Globe Key (Top Row)', 'Settings Key', 'Output Key', 'AI Key'):
+        for control in ('Extra Globe Key', 'Settings Key', 'Output Key', 'AI Key')
             self.assertIn('Toggle("' + control, custom)
         self.assertNotIn('.disabled(!self.aiEnabled)', custom)
         self.assertIn("Tap preview keys to test haptics.", layout)
-        self.assertEqual(layout.count('if self.showsGlobeButton'), 2)
+        self.assertEqual(layout.count('if self.systemSwitchRequired'), 2)
         self.assertIn("if self.showExtraGlobeKey", layout)
         self.assertNotIn('Text("Not yet available")', custom)
 
@@ -601,8 +641,9 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("var keyboardShowGlobeKey: Bool", config)
         self.assertIn("self.showGlobeKey = self.settings.keyboardShowGlobeKey", state)
         self.assertIn('private var showGlobe = false', custom)
-        self.assertIn('Toggle("Extra Globe Key (Top Row)", isOn: self.$showGlobe)', custom)
+        self.assertIn('Toggle("Extra Globe Key", isOn: self.$showGlobe)', custom)
         self.assertIn("var showsGlobeButton: Bool", keyboard)
+        self.assertIn("self.needsInputModeSwitchKey // UIKit decides", keyboard)
         self.assertIn("var needsInputModeSwitchKey: Bool", config)
         self.assertIn("if self.keyboardState.showsGlobeButton", keyboard)
         self.assertIn('iconName = "globe"', native)
@@ -619,8 +660,13 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn('if self.keyboardState.showGlobeKey', alphabet)
         self.assertLess(alphabet.index('if self.keyboardState.showGlobeKey'),
                         alphabet.index('if self.keyboardState.showSettingsKey'))
-        self.assertEqual(preview.count("if self.showsGlobeButton"), 2)
+        self.assertEqual(preview.count("if self.systemSwitchRequired"), 2)
         self.assertIn("NativeInputModeSwitchKey(", keyboard)
+        self.assertIn("if self.keyboardState.showGlobeKey",
+          read("SayboardKeyboard/Views/KeyboardLLMActionsToolbar.swift"))
+        self.assertIn("SharedKey.needsInputModeSwitchKey", preview)
+        self.assertIn("SharedKey.keyboardShowGlobeKey",
+          read("Sayboard/Views/Onboarding/KeyboardLayoutPreview.swift"))
         self.assertIn("#selector(handleInputModeList(from:with:))", controller)
 
     def test_output_and_formatting_have_one_owner(self):
