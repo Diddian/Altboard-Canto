@@ -87,9 +87,8 @@ struct KeyboardSettingsView: View {
         }
         .disabled(!self.hapticsEnabled)
         Button("Reset Haptic Feedback", systemImage: "arrow.counterclockwise") {
-          self.hapticsEnabled = true
-          self.hapticStrength = SharedSettings.defaultKeyboardHapticStrength
-          SharedSettings().keyboardHapticDriver = .coreHaptics
+          SharedSettings().resetKeyboardHaptics()
+          // @AppStorage observes the same App Group values as the extension.
         }
       } label: {
         Label("Haptic Settings", systemImage: "hand.tap")
