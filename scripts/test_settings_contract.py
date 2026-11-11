@@ -159,7 +159,7 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("let displayed = CantoneseOutput.normalizeForOutput(translated, options: options)", inference)
         self.assertIn('ShareLink("Share Translation", item: translated)', view)
         self.assertIn("translationDraftText", view)
-        self.assertIn("No translation saved yet.", view)
+        self.assertNotIn("No translation saved yet.", view)
 
     def test_conversation_output_languages_do_not_change_globals(self):
         view = read("Sayboard/Views/ConversationView.swift")
@@ -260,7 +260,7 @@ class SettingsContractTests(unittest.TestCase):
     def test_cantonese_output_rejects_nonhan_fallback(self):
         output = read("Shared/VoiceOutputOptions.swift")
         validator = output.split("enum VoiceLanguageValidator", 1)[1]
-        self.assertIn("if han > 0 { return true }", validator)
+        self.assertIn("guard !foreignScript else { return false }", validator)
         self.assertNotIn("han > 0 || latin < 8", validator)
         self.assertIn("CharacterSet.decimalDigits.contains($0)", validator)
 
@@ -276,7 +276,7 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn('Image(systemName: "chevron.right")', source)
         self.assertIn('self.languageSelectionRows', source)
         self.assertNotIn('VStack(alignment: .leading, spacing: 6) { self.languageSelectionRows }', source)
-        self.assertIn('.frame(height: 44)', source)
+        self.assertIn('.frame(height: 31)', source)
         self.assertIn('mode: .ordered(Binding(', source)
         self.assertIn('.accessibilityValue(self.languagePriorityAccessibilityValue)', source)
         self.assertNotIn("DisclosureGroup(isExpanded: self.$showsLanguagePriority)", source)
@@ -420,7 +420,7 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn('Toggle("Double-Space Period"', source)
         self.assertIn("Tap preview keys to test haptics.", source)
         preview = source.split("private struct KeyboardTestPreview", 1)[1]
-        self.assertIn("Button { KeyboardHaptics.key(technique: .light) }", preview)
+        self.assertIn("Button { KeyboardHaptics.key() }", preview)
         self.assertNotIn(".allowsHitTesting(false)", preview)
         self.assertIn(".accessibilityElement(children: .contain)", preview)
         self.assertIn('Image(systemName: image)', preview)
@@ -566,7 +566,7 @@ class SettingsContractTests(unittest.TestCase):
         for control in ('Auto-capitalization', 'Double-Space Period', 'Haptic Feedback'):
             self.assertIn('Toggle("' + control, layout)
             self.assertNotIn('Toggle("' + control, custom)
-        for control in ('Extra Globe Key', 'Settings Key', 'Output Key', 'AI Key'):
+        for control in ('Extra Globe Key (Top Row)', 'Settings Key', 'Output Key', 'AI Key'):
             self.assertIn('Toggle("' + control, custom)
         self.assertNotIn('.disabled(!self.aiEnabled)', custom)
         self.assertIn("Tap preview keys to test haptics.", layout)
@@ -601,7 +601,7 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("var keyboardShowGlobeKey: Bool", config)
         self.assertIn("self.showGlobeKey = self.settings.keyboardShowGlobeKey", state)
         self.assertIn('private var showGlobe = false', custom)
-        self.assertIn('Toggle("Extra Globe Key", isOn: self.$showGlobe)', custom)
+        self.assertIn('Toggle("Extra Globe Key (Top Row)", isOn: self.$showGlobe)', custom)
         self.assertIn("var showsGlobeButton: Bool", keyboard)
         self.assertIn("var needsInputModeSwitchKey: Bool", config)
         self.assertIn("if self.keyboardState.showsGlobeButton", keyboard)
