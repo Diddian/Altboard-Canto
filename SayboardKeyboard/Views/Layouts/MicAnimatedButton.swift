@@ -294,7 +294,7 @@ struct MicAnimatedButton: View {
 
   private func handleTap() {
     if self.keyboardState.isProcessing {
-        self.showSpinner = false
+      self.showSpinner = false
       self.proxy.cancelDictation()
       return
     }
