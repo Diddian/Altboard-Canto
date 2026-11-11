@@ -287,10 +287,8 @@ enum VoiceLanguageValidator {
       }
       // Short snippets are too ambiguous for language classification.
       // Reject long, confidently wrong-language output without guessing.
-      guard output.count >= 60,
-            let expected = NLLanguage(rawValue: String(code.split(separator: "-")[0])) else {
-        return true
-      }
+      guard output.count >= 60 else { return true }
+      let expected = NLLanguage(rawValue: String(code.split(separator: "-")[0]))
       let recognizer = NLLanguageRecognizer()
       recognizer.processString(output)
       let hypotheses = recognizer.languageHypotheses(withMaximum: 3)
