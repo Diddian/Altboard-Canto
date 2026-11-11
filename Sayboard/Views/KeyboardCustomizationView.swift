@@ -26,7 +26,7 @@ struct KeyboardCustomizationView: View {
 
   @ViewBuilder
   private var rows: some View {
-    Toggle("Extra Globe Key", isOn: self.$showGlobe)
+    Toggle("Extra Globe Key (Top Row)", isOn: self.$showGlobe)
     Toggle("Settings Key", isOn: self.$showSettingsKey)
     Toggle("Output Key", isOn: self.$showOutputButton)
     Toggle("AI Key", isOn: self.$showAIButton)

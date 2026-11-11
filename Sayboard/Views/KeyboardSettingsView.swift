@@ -105,6 +105,8 @@ struct KeyboardSettingsView: View {
 
 private struct KeyboardTestPreview: View {
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @ObservedObject private var sensoryPulse = KeyboardSensoryPulse.shared
+  @State private var previewUppercase = false
   let kind: KeyboardKind
   let microphoneLayout: MicrophoneKeyboardLayout
   let letterArrangement: LetterKeyArrangement
@@ -144,7 +146,7 @@ private struct KeyboardTestPreview: View {
           self.letterRow(self.letterArrangement.rows[0], inset: KeyboardLayoutGeometry.alphabetEdgeInset)
           self.letterRow(self.letterArrangement.rows[1], inset: KeyboardLayoutGeometry.alphabetSecondInset)
           HStack(spacing: KeyboardLayoutGeometry.alphabetSpecialGap) {
-            self.key("shift.fill", width: 50)
+            self.shiftPreview
             HStack(spacing: 6) {
               ForEach(self.letterArrangement.rows[2], id: \.self) { self.letter($0) }
             }
@@ -220,6 +222,7 @@ private struct KeyboardTestPreview: View {
                 in: RoundedRectangle(cornerRadius: KeyboardLayoutGeometry.topCornerRadius,
                                      style: .continuous))
     .animation(self.reduceMotion ? nil : .easeInOut(duration: 0.15), value: self.microphoneLayout)
+    .sensoryFeedback(.selection, trigger: self.sensoryPulse.count)
     .accessibilityElement(children: .contain)
     .accessibilityLabel("Keyboard preview; tap keys to test haptic feedback")
   }
@@ -241,7 +244,7 @@ private struct KeyboardTestPreview: View {
   }
 
   private var translatePreview: some View {
-    Button { KeyboardHaptics.key(technique: .light) } label: {
+    Button { KeyboardHaptics.key() } label: {
       VStack(spacing: 0) {
         Image(systemName: "translate").font(.system(size: 17))
         Text("AUTO").font(.system(size: 8, weight: .bold, design: .rounded))
@@ -255,6 +258,20 @@ private struct KeyboardTestPreview: View {
     .accessibilityLabel("Output language preview")
   }
 
+  private var shiftPreview: some View {
+    Button {
+      self.previewUppercase.toggle()
+      KeyboardHaptics.key()
+    } label: {
+      Image(systemName: self.previewUppercase ? "shift.fill" : "shift")
+        .font(.system(size: 18))
+        .foregroundStyle(.primary)
+        .frame(width: 50, height: 45)
+        .background(Color(uiColor: KeyboardPalette.keyFill),
+          in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }.buttonStyle(.plain).accessibilityLabel("Preview Shift")
+  }
+
   private func letterRow(_ letters: [String], inset: CGFloat) -> some View {
     HStack(spacing: 6) {
       ForEach(letters, id: \.self) { self.letter($0) }
@@ -263,8 +280,8 @@ private struct KeyboardTestPreview: View {
   }
 
   private func letter(_ title: String) -> some View {
-    Button { KeyboardHaptics.key(technique: .light) } label: {
-      Text(verbatim: title)
+    Button { KeyboardHaptics.key() } label: {
+      Text(verbatim: self.previewUppercase ? title.uppercased() : title.lowercased())
         .font(.system(size: 21, weight: .regular, design: .default))
         .foregroundStyle(.primary)
         .offset(y: -1.2)
@@ -308,7 +325,7 @@ private struct KeyboardTestPreview: View {
   private func key(
     _ image: String, width: CGFloat, height: CGFloat = 45, capsule: Bool = false
   ) -> some View {
-    Button { KeyboardHaptics.key(technique: .light) } label: {
+    Button { KeyboardHaptics.key() } label: {
       Image(systemName: image)
         .font(.system(size: 18))
         .foregroundStyle(.primary)
@@ -322,7 +339,7 @@ private struct KeyboardTestPreview: View {
   }
 
   private func labelKey(_ title: String, width: CGFloat? = nil, height: CGFloat = 45) -> some View {
-    Button { KeyboardHaptics.key(technique: .light) } label: {
+    Button { KeyboardHaptics.key() } label: {
       Text(verbatim: title)
         .font(.system(size: 16))
         .foregroundStyle(.primary)

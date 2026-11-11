@@ -429,6 +429,13 @@ private struct MeetingRecordDetailView: View {
     )
   }
 
+  private var translationMatchesSaved: Bool {
+    let language = PreferredVoiceLanguages.currentCode(target: self.selectedTarget, custom: self.outputLanguage)
+    return self.latest.translationDraftNextChunk == nil &&
+      MeetingTranslationPolicy.hasMatchingSavedOutput(self.latest.translatedTranscript,
+        savedLanguage: self.latest.translatedLanguageCode, targetLanguage: language)
+  }
+
   private var canTranslate: Bool {
     self.selectedTarget != .original &&
       (self.selectedTarget != .custom ||
@@ -465,9 +472,6 @@ private struct MeetingRecordDetailView: View {
         LabeledContent("Started", value: self.latest.startedAt.formatted(
           date: .abbreviated, time: .shortened))
         LabeledContent("Duration", value: MeetingRecordsView.time(self.latest.totalDuration))
-        Text("Saved privately on this iPhone in Altboard → Meetings. Use Share to export a copy.")
-          .font(.footnote)
-          .foregroundStyle(.secondary)
       }
 
       Section("Transcript") {
@@ -488,9 +492,6 @@ private struct MeetingRecordDetailView: View {
         if self.latest.transcript.count > 450 {
           Button("Read Full Transcript") { self.showingFullOriginal = true }
         }
-        Text("Speech-to-text transcription · Original language")
-          .font(.caption)
-          .foregroundStyle(.secondary)
         Button("Copy Transcript") {
           UIPasteboard.general.string = self.latest.transcript
         }
@@ -521,10 +522,10 @@ private struct MeetingRecordDetailView: View {
           }
         }
         if let translated = self.latest.translatedTranscript, !translated.isEmpty {
-          Label("Translation saved on this iPhone", systemImage: "checkmark.circle.fill")
-            .font(.footnote).foregroundStyle(.green)
-          LabeledContent("Saved output language",
-                         value: PreferredVoiceLanguages.outputShortLabel(for: self.latest.translatedLanguageCode ?? ""))
+          if !self.translationMatchesSaved {
+            LabeledContent("Saved language", value: PreferredVoiceLanguages.outputShortLabel(
+              for: self.latest.translatedLanguageCode ?? ""))
+          }
           Text(self.translatedPreview)
             .foregroundStyle(.blue)
             .lineLimit(6)
@@ -534,8 +535,6 @@ private struct MeetingRecordDetailView: View {
           }
           Button("Copy Translation") { UIPasteboard.general.string = translated }
           ShareLink("Share Translation", item: translated)
-          Text("Stored in Altboard → Meetings → this meeting. Share to save outside the app; the original remains unchanged.")
-            .font(.footnote).foregroundStyle(.secondary)
         }
         if let draft = self.latest.translationDraftText, !draft.isEmpty {
           Text("Partial translation · Saved sections")
@@ -558,7 +557,7 @@ private struct MeetingRecordDetailView: View {
             self.recorder.cancelTranslation(id: self.record.id)
           }
           .accessibilityHint("Preserves original transcript and saved translated sections")
-        } else {
+        } else if !self.translationMatchesSaved {
           Button("Translate to \(self.selectedLanguageName)") {
             self.recorder.translateRecord(
               id: self.record.id, using: self.speechService,
@@ -568,20 +567,12 @@ private struct MeetingRecordDetailView: View {
           .disabled(!self.canTranslate || self.latest.transcript.isEmpty
             || self.recorder.translatingRecordID != nil
             || self.recorder.isRecording || self.recorder.isFinalizing)
-          Text("Offline translation saves separately; your original audio and transcript stay intact.")
-            .font(.footnote)
-            .foregroundStyle(.secondary)
           if self.recorder.translationStatusRecordID == self.record.id,
              !self.recorder.translationStatus.isEmpty {
             Text(self.recorder.translationStatus)
               .font(.footnote)
               .foregroundStyle(self.recorder.translationStatus.hasPrefix("Translation failed")
                 ? Color.orange : Color.secondary)
-          } else if (self.latest.translatedTranscript ?? "").isEmpty
-             && (self.latest.translationDraftText ?? "").isEmpty {
-            Text("No translation saved yet. Choose a language and tap Translate. The result will appear here.")
-              .font(.footnote)
-              .foregroundStyle(.secondary)
           }
         }
       }

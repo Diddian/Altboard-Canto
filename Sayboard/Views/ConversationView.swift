@@ -42,6 +42,11 @@ struct ConversationView: View {
         Menu {
           Toggle("Clean Up Speech After Recording", isOn: self.$cleanupEnabled)
             .disabled(self.conversation.recordingSide != nil || self.conversation.processing)
+          if let last = self.conversation.turns.last, last.needsRetry {
+            Button("Retry Last Turn", systemImage: "arrow.clockwise") {
+              Task { await self.conversation.retry(last.id, using: self.speechService) }
+            }.disabled(self.conversation.processing || self.conversation.recordingSide != nil)
+          }
           Button("Save as Meeting", systemImage: "square.and.arrow.down") {
             _ = self.conversation.saveAsMeeting()
           }
@@ -84,8 +89,6 @@ struct ConversationView: View {
     let code = side == .other ? self.visitorCode : self.myCode
     let targetCode = PreferredVoiceLanguages.currentCode(target: target, custom: code)
     let detected = live ? self.liveLanguage : recent?.detectedLanguageCode
-    let targetLabel = target == .original ? self.localeText("original", target: target) :
-      self.nativeLanguageName(targetCode)
     let isReceiver = recent != nil && !speakerOwnsLastTurn
     let isTranslating = !live && isReceiver && !showsOriginalLanguage
     let displayText: String
@@ -119,17 +122,17 @@ struct ConversationView: View {
             .foregroundStyle(.secondary)
             .accessibilityLabel(self.localeText("detected", target: target) + ": " + self.nativeLanguageName(detected))
         }
+        if isTranslating {
+          Image(systemName: "arrow.left.arrow.right")
+            .font(.caption).foregroundStyle(.secondary).accessibilityHidden(true)
+        }
         self.targetPicker(side: side)
       }
 
       ScrollView {
         VStack(alignment: .leading, spacing: 8) {
-          HStack(spacing: 5) {
-            if isTranslating { Image(systemName: "arrow.left.arrow.right") }
-            Text(self.localeText(live ? "live" :
-              (showsOriginalLanguage ? "transcript" : "translation"), target: target))
-            if isTranslating { Text("· " + targetLabel) }
-          }
+          Text(self.localeText(live ? "live" :
+            (showsOriginalLanguage ? "transcript" : "translation"), target: target))
             .font(.caption.weight(.semibold))
             .foregroundStyle(.secondary)
           Text(displayText)
@@ -141,28 +144,20 @@ struct ConversationView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
       }
 
-      if live {
-        Text(self.localeText(self.conversation.livePreviewUnavailable ? "afterStop" : "cleanupHint", target: target))
+      if live && self.conversation.livePreviewUnavailable {
+        Text(self.localeText("afterStop", target: target))
           .font(.caption2)
           .foregroundStyle(.secondary)
           .lineLimit(2)
           .frame(maxWidth: .infinity, alignment: .center)
-      } else if let recent, isReceiver {
-        Text(self.localeText(recent.status == "translated" ? "ready" :
-          (recent.status == "translationFailed" ? "unavailable" : "pending"), target: target))
+      } else if let recent, isReceiver, recent.status == "translationFailed" {
+        Text(self.localeText("unavailable", target: target))
           .font(.caption2)
           .foregroundStyle(.secondary)
           .lineLimit(2)
           .frame(maxWidth: .infinity, alignment: .center)
       }
       HStack {
-        if let recent, recent.needsRetry, !live, !self.conversation.processing,
-           !speakerOwnsLastTurn {
-          Button(self.localeText("retry", target: target)) {
-            Task { await self.conversation.retry(recent.id, using: self.speechService) }
-          }
-          .buttonStyle(.bordered)
-        }
         Spacer(minLength: 0)
         self.recordButton(side: side, recording: isSpeaking, target: target, code: code)
         Spacer(minLength: 0)

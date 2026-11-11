@@ -5,7 +5,7 @@ struct VoiceOutputSettingsView: View {
   var inline = false
 
   @AppStorage(SharedKey.voiceCleanupEnabled, store: AppGroup.sharedDefaults ?? .standard)
-  private var cleanupEnabled = false
+  private var cleanupEnabled = true
   @AppStorage(SharedKey.voicePunctuationEnabled, store: AppGroup.sharedDefaults ?? .standard)
   private var punctuationEnabled = true
   @AppStorage(SharedKey.voiceOutputTarget, store: AppGroup.sharedDefaults ?? .standard)

@@ -340,7 +340,7 @@ struct SharedSettings {
   }
 
   var voiceCleanupEnabled: Bool {
-    get { defaults.object(forKey: SharedKey.voiceCleanupEnabled) as? Bool ?? false }
+    get { defaults.object(forKey: SharedKey.voiceCleanupEnabled) as? Bool ?? true }
     nonmutating set { defaults.set(newValue, forKey: SharedKey.voiceCleanupEnabled) }
   }
 
