@@ -168,12 +168,14 @@ enum LatinSwipeDecoder {
 /// One retained gesture, including moves beyond the row where it began.
 final class LatinSwipeSession {
   private(set) var points = [LatinSwipePoint]()
+  private(set) var travelDistance = 0.0
   private(set) var visited = Set<String>()
   private var cachedCenters = [String: LatinSwipePoint]()
 
   func begin(_ point: LatinSwipePoint, arrangement: LetterKeyArrangement, width: Double) {
     points = []
     visited = []
+    travelDistance = 0
     cachedCenters = LatinSwipeDecoder.centers(
       arrangement: arrangement, fullWidth: width
     )
@@ -196,6 +198,9 @@ final class LatinSwipeSession {
           y: $0.y + (point.y - $0.y) * step
         )
       } ?? point
+      if let lastPoint = points.last {
+        travelDistance += lastPoint.distance(to: next)
+      }
       points.append(next)
       if let key = cachedCenters.min(by: {
         $0.value.distance(to: next) < $1.value.distance(to: next)
@@ -209,13 +214,14 @@ final class LatinSwipeSession {
     // Short two-letter swipes cannot visit three distinct letters reliably.
     // Require longer physical travel for two-key gestures than for a
     // conventional tap-to-neighbor correction.
-    (visited.count >= 3 && LatinSwipeDecoder.gestureLength(points) >= 62)
-      || (visited.count >= 2 && LatinSwipeDecoder.gestureLength(points) >= 65)
+    (visited.count >= 3 && travelDistance >= 62)
+      || (visited.count >= 2 && travelDistance >= 65)
   }
 
   func reset() {
     points.removeAll(keepingCapacity: true)
     visited.removeAll(keepingCapacity: true)
     cachedCenters.removeAll(keepingCapacity: true)
+    travelDistance = 0
   }
 }

@@ -35,6 +35,7 @@ for order in [LetterKeyArrangement.qwerty, .qwertz] {
   shortSession.begin(path[0], arrangement: order, width: 440)
   shortSession.append(path[1], arrangement: order, width: 440)
   precondition(shortSession.isLikelyGlide, "short 'to' stroke should be recognized as glide")
+  precondition(abs(shortSession.travelDistance - LatinSwipeDecoder.gestureLength(shortSession.points)) < 0.000_001)
 }
 precondition(LatinSwipeDecoder.rank(
   path: [LatinSwipePoint(x: 100, y: 20), LatinSwipePoint(x: 105, y: 20)],
@@ -69,6 +70,8 @@ for _ in 0..<20 {
   for point in longTrace.dropFirst() { bounded.append(point, arrangement: .qwerty, width: 440) }
 }
 precondition(bounded.points.count <= 384, "swipe points must remain bounded")
+precondition(abs(bounded.travelDistance - LatinSwipeDecoder.gestureLength(bounded.points)) < 0.000_001,
+             "cached distance must match bounded, backtracking stroke")
 // Regression: frequent short and long swipes must decode on both layouts.
 // Geometric success alone is not device acceptance; real paths follow QA.
 for order in [LetterKeyArrangement.qwerty, .qwertz] {
@@ -108,6 +111,7 @@ for p in points.dropFirst() { session.append(p, arrangement: .qwerty, width: 440
 precondition(session.isLikelyGlide)
 session.reset()
 precondition(session.points.isEmpty)
+precondition(session.travelDistance == 0)
 print("Latin swipe geometry, normalization and EN/DE ranking: PASS")
   }
 }
