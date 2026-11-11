@@ -30,7 +30,7 @@ struct NativeInputModeSwitchKey: UIViewRepresentable {
     button.isAccessibilityElement = true
     button.accessibilityLabel = self.iconName == "globe"
       ? "System keyboard picker" : "Keyboard and Emoji picker"
-    button.accessibilityHint = "Hold to choose the system Emoji keyboard or another keyboard."
+    button.accessibilityHint = "Tap to switch keyboards. Hold to choose system Emoji or another keyboard."
     // Keep only Apple's selector for tap/hold, without a competing recognizer.
     configure?(button)
     updateUIView(button, context: context)
@@ -53,6 +53,16 @@ struct NativeInputModeSwitchKey: UIViewRepresentable {
     let configuration = UIImage.SymbolConfiguration(
       pointSize: Self.iconSize, weight: .regular
     )
+    if iconName == "nativeEmoji" {
+      // Keep the approved vector Emoji key face while UIKit owns all touches.
+      let size = CGSize(width: Self.iconSize, height: Self.iconSize)
+      let path = NativeEmojiGlyph().path(in: CGRect(origin: .zero, size: size))
+      return UIGraphicsImageRenderer(size: size).image { context in
+        context.cgContext.setFillColor(ink.cgColor)
+        context.cgContext.addPath(path.cgPath)
+        context.cgContext.drawPath(using: .eoFill)
+      }
+    }
     return (UIImage(systemName: iconName, withConfiguration: configuration)
       ?? UIImage(systemName: "globe", withConfiguration: configuration)
       ?? UIImage()).withTintColor(ink, renderingMode: .alwaysOriginal)

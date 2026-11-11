@@ -261,6 +261,51 @@ struct SharedSettingsDefaultsTests {
     #expect(SharedSettings(defaults: defaults).keyboardHapticStrength == 0.55)
   }
 
+  @Test
+  func resettingHapticsPreservesOtherKeyboardSettings() throws {
+    let suiteName = Self.uniqueSuiteName()
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { Self.cleanup(suiteName: suiteName) }
+    let settings = SharedSettings(defaults: defaults)
+
+    settings.keyboardHapticsEnabled = false
+    settings.keyboardHapticStrength = 0.95
+    settings.keyboardHapticDriver = .uiKit
+    settings.keyboardKind = .alphabetic
+    settings.keyboardShowGlobeKey = true
+    settings.keyboardShowSettingsKey = false
+    settings.keyboardShowOutputLanguageButton = false
+    settings.keyboardShowAIButton = false
+
+    settings.resetKeyboardHaptics()
+    let reopened = SharedSettings(defaults: defaults)
+    #expect(reopened.keyboardHapticsEnabled)
+    #expect(reopened.keyboardHapticStrength == SharedSettings.defaultKeyboardHapticStrength)
+    #expect(reopened.keyboardHapticDriver == .coreHaptics)
+    #expect(reopened.keyboardKind == .alphabetic)
+    #expect(reopened.keyboardShowGlobeKey)
+    #expect(!reopened.keyboardShowSettingsKey)
+    #expect(!reopened.keyboardShowOutputLanguageButton)
+    #expect(!reopened.keyboardShowAIButton)
+
+    // A second reset must be idempotent and must not erase unrelated choices.
+    reopened.resetKeyboardHaptics()
+    #expect(SharedSettings(defaults: defaults).keyboardHapticStrength == SharedSettings.defaultKeyboardHapticStrength)
+    #expect(!SharedSettings(defaults: defaults).keyboardShowOutputLanguageButton)
+  }
+
+  @Test
+  func explicitHapticDisableWinsOverDefaultAfterRestart() throws {
+    let suiteName = Self.uniqueSuiteName()
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { Self.cleanup(suiteName: suiteName) }
+    let settings = SharedSettings(defaults: defaults)
+    #expect(settings.keyboardHapticsEnabled)
+    settings.keyboardHapticsEnabled = false
+    #expect(!SharedSettings(defaults: defaults).keyboardHapticsEnabled)
+    #expect(defaults.object(forKey: SharedKey.keyboardHapticsEnabled) as? Bool == false)
+  }
+
   private static func uniqueSuiteName() -> String {
     "app.sayboard.tests.\(UUID().uuidString)"
   }

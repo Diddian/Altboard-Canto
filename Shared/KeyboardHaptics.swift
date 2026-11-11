@@ -65,8 +65,10 @@ private enum KeyboardCoreHaptic {
       player = try newEngine.makePlayer(with: pattern)
       playerIntensity = intensity
     } catch {
-      // A keyboard extension can reject engine startup; preserve the existing
-      // SwiftUI fallback on the first key rather than blocking view creation.
+      // Failure must not retry expensive engine startup on first key-down.
+      // Surface a bounded code so play() uses the existing sensory fallback.
+      let ns = error as NSError
+      unavailableError = "engine-prewarm-failed:\(ns.domain):\(ns.code)"
       engine = nil
       player = nil
       playerIntensity = nil
