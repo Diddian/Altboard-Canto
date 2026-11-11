@@ -174,7 +174,7 @@ final class ConversationCoordinator: ObservableObject {
     self.sessionStartedHere = false
     self.startedAt = nil
     self.activeID = nil
-    self.liveSource = ""
+    // Keep the source preview visible while ASR/translation finalizes.
     self.livePreviewUnavailable = false
     guard let saved, !saved.writeFailed, saved.duration > 0 else {
       self.status = "Audio could not be saved. Nothing was overwritten."
@@ -391,7 +391,8 @@ final class ConversationCoordinator: ObservableObject {
   func prepareLivePreview(using service: SpeechRecognitionService) {
     guard self.recordingSide == nil, !self.processing,
           !LocalUserDataStore.isExporting,
-          !service.isModelInUse, !service.isStopping,
+          !service.isRecording, !service.isStopping,
+          service.session.captureOwner == nil, service.speechWorkers == 0,
           service.llmCoordinator?.isProcessing != true,
           MeetingRecordingCoordinator.shared.translatingRecordID == nil,
           !MeetingRecordingCoordinator.shared.isFinalizing else { return }
@@ -399,7 +400,7 @@ final class ConversationCoordinator: ObservableObject {
   }
 
   private func scheduleLivePreviewWarmup(using service: SpeechRecognitionService) {
-    guard self.warmupTask == nil, service.activeLoadState == .unloaded else { return }
+    guard self.warmupTask == nil, service.activeLoadState != .loaded else { return }
     guard let downloads = service.downloadService else {
       if self.recordingSide != nil {
         self.livePreviewUnavailable = true
@@ -408,20 +409,35 @@ final class ConversationCoordinator: ObservableObject {
       }
       return
     }
-    let availableMB = Int(os_proc_available_memory() / 1_048_576)
-    let minimumMB = max(2_400,
-      Int(Double(SharedSettings().selectedVariant.ramRequirementMB) * 0.58))
-    guard availableMB >= minimumMB else {
-      if self.recordingSide != nil {
-        self.livePreviewUnavailable = true
-        self.status = "Live text unavailable due to memory pressure; transcript after Stop."
-        FeatureDiagnostics.record(.liveDictation, .fallback, failureReason: .insufficientMemory)
+    let needsLoad = service.activeLoadState == .unloaded
+    if needsLoad {
+      let availableMB = Int(os_proc_available_memory() / 1_048_576)
+      let minimumMB = max(2_400,
+        Int(Double(SharedSettings().selectedVariant.ramRequirementMB) * 0.58))
+      guard availableMB >= minimumMB else {
+        if self.recordingSide != nil {
+          self.livePreviewUnavailable = true
+          self.status = "Live text unavailable due to memory pressure; transcript after Stop."
+          FeatureDiagnostics.record(.liveDictation, .fallback, failureReason: .insufficientMemory)
+        }
+        return
       }
-      return
     }
     self.warmupTask = Task { @MainActor [weak self, weak service] in
       guard let self, let service else { return }
-      await service.loadModelIfAvailable(downloadService: downloads)
+      defer { self.warmupTask = nil }
+      if needsLoad {
+        await service.loadModelIfAvailable(downloadService: downloads)
+      } else {
+        // Another operation is loading the same recognizer. Wait for its
+        // terminal state rather than leaving the live preview unarmed.
+        for _ in 0..<150 {
+          guard !Task.isCancelled && service.activeLoadState == .loading else { break }
+          if self.activeID != nil && self.recordingSide == nil { break }
+          do { try await Task.sleep(for: .milliseconds(200)) }
+          catch { break }
+        }
+      }
       if service.activeLoadState == .loaded {
         if self.recordingSide != nil { self.startLivePreview(using: service) }
       } else if self.recordingSide != nil {
@@ -429,7 +445,6 @@ final class ConversationCoordinator: ObservableObject {
         self.status = "Live text unavailable; recording is saved for transcription after Stop."
         FeatureDiagnostics.record(.liveDictation, .fallback, failureReason: .modelLoadFailed)
       }
-      self.warmupTask = nil
     }
   }
 
@@ -445,11 +460,19 @@ final class ConversationCoordinator: ObservableObject {
       let previewStarted = CFAbsoluteTimeGetCurrent()
       var didPublishFirstUpdate = false
       var hasAttemptedFirst = false
+      var firstWindow = service.settings.liveFirstWindowSamples
+      let isQwen = service.settings.selectedVariant.engine == .qwen3
       while !Task.isCancelled && self.recordingSide != nil
               && self.activeID == sessionID {
+        if isQwen && !hasAttemptedFirst
+            && firstWindow < LiveDictationChunkPolicy.firstQwenSamples
+            && self.accumulator.sampleCount - offset >= LiveDictationChunkPolicy.firstQwenSamples {
+          firstWindow = LiveDictationChunkPolicy.firstQwenSamples
+          FeatureDiagnostics.record(.liveDictation, .fallback, operationID: operationID)
+        }
         let frameCount = LiveDictationChunkPolicy.samples(
-          isQwen: service.settings.selectedVariant.engine == .qwen3,
-          hasAttemptedFirst: hasAttemptedFirst
+          isQwen: isQwen, hasAttemptedFirst: hasAttemptedFirst,
+          firstWindowSamples: firstWindow
         )
         guard let samples = self.accumulator.chunk(from: offset, count: frameCount)
         else {
@@ -457,30 +480,41 @@ final class ConversationCoordinator: ObservableObject {
           catch { break }
           continue
         }
-        offset += samples.count
         let firstChunk = !hasAttemptedFirst
-        hasAttemptedFirst = true
         let result = await service.transcribeSamples(samples)
         guard !Task.isCancelled, self.recordingSide != nil,
               self.activeID == sessionID else { break }
+        var published = false
+        var retryableNoSpeech = false
         switch result {
         case .text(let output):
           let raw = TextSanitizer.sanitize(output.text)
           if !raw.isEmpty {
             self.liveSource = ExperimentalSpeechSegments.append(raw, to: self.liveSource)
+            published = true
             if !didPublishFirstUpdate {
               didPublishFirstUpdate = true
               FeatureDiagnostics.record(.liveDictation, .firstUpdate,
                 durationMs: Int((CFAbsoluteTimeGetCurrent() - previewStarted) * 1_000),
                 operationID: operationID)
             }
-          } else if firstChunk {
-            FeatureDiagnostics.record(.liveDictation, .noSpeech, operationID: operationID)
+          } else {
+            retryableNoSpeech = true
+            if firstChunk { FeatureDiagnostics.record(.liveDictation, .noSpeech, operationID: operationID) }
           }
         case .noSpeech:
+          retryableNoSpeech = true
           if firstChunk { FeatureDiagnostics.record(.liveDictation, .noSpeech, operationID: operationID) }
         case .failed:
           if firstChunk { FeatureDiagnostics.record(.liveDictation, .failed, operationID: operationID) }
+        }
+        if firstChunk && !published && retryableNoSpeech && isQwen,
+           let next = LiveDictationChunkPolicy.retryFirstWindow(after: firstWindow) {
+          // Retry the original samples, retaining the first syllables.
+          firstWindow = next
+        } else {
+          offset += samples.count
+          hasAttemptedFirst = true
         }
       }
     }
