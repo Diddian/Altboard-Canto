@@ -28,7 +28,7 @@ struct ConversationTurnPolicyTests {
       duration: 4.2, targetCode: "yue",
       sourceText: "Merhaba, nasılsın?",
       translatedText: "你好，你點呀？",
-      detectedLanguageCode: "tr", status: "translated"
+      detectedLanguageCode: "tr", status: .translated
     )
     let data = try JSONEncoder().encode([fixture])
     let decoded = try JSONDecoder().decode([ConversationTurn].self, from: data)
@@ -48,7 +48,7 @@ struct ConversationTurnPolicyTests {
       duration: 2, targetCode: "yue",
       sourceText: "Ich habe, äh, morgen Zeit.",
       translatedText: "我聽日得閒。",
-      detectedLanguageCode: "de", status: "translated"
+      detectedLanguageCode: "de", status: .translated
     )
     fixture.cleanedSourceText = "Ich habe morgen Zeit."
     let decoded = try JSONDecoder().decode(ConversationTurn.self,
@@ -63,7 +63,7 @@ struct ConversationTurnPolicyTests {
       audioFileName: "110E8400-E29B-41D4-A716-446655440000.caf",
       duration: 2, targetCode: "",
       sourceText: "مرحبا", translatedText: nil,
-      detectedLanguageCode: "ar", status: "original"
+      detectedLanguageCode: "ar", status: .original
     )
     #expect(!turn.needsRetry)
     #expect(turn.translatedText == nil)
@@ -77,10 +77,11 @@ struct ConversationTurnPolicyTests {
       duration: 1.8, targetCode: "tr",
       sourceText: "我想去飲咖啡。",
       translatedText: nil, detectedLanguageCode: "zh",
-      status: "translationFailed"
+      status: .translationFailed
     )
     #expect(turn.needsRetry)
     #expect(turn.sourceText == "我想去飲咖啡。")
     #expect(turn.translatedText == nil)
   }
 }
+
