@@ -453,7 +453,8 @@ final class KeyboardViewController: UIInputViewController {
   }
 
   func insertTranscribedText() {
-    let delivery = TranscriptionBridge.readDelivery()
+    let delivery = TranscriptionBridge.readDelivery(matching: self.dictationRequestToken,
+      destinationEpoch: self.keyboardState.documentEpoch)
     guard let delivery, !delivery.text.isEmpty else {
       DiagnosticLog.write("keyboard: NO TEXT available to insert")
       let settings = SharedSettings()

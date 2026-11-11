@@ -85,6 +85,10 @@ enum LocalUserDataStore {
           if !removed, !(try HistoryStore.shared.readRecords()).isEmpty {
             throw CocoaError(.fileWriteUnknown)
           }
+          if let pending = AppGroup.containerURL?.appendingPathComponent("transcription-outbox-v1"),
+             FileManager.default.fileExists(atPath: pending.path) {
+            try FileManager.default.removeItem(at: pending)
+          }
           // Include orphaned audio left by an interrupted or failed earlier cleanup.
           if let audio = HistoryStore.shared.audioDirectoryURL {
             try FileManager.default.removeItem(at: audio)
@@ -135,6 +139,12 @@ enum LocalUserDataStore {
             if let audio = audioDirectory, fm.fileExists(atPath: audio.path) {
               try Task.checkCancellation()
               try fm.copyItem(at: audio, to: notes.appendingPathComponent("Audio", isDirectory: true))
+            }
+          }
+          if categories.contains(.voiceNotes) {
+            let pending = group.appendingPathComponent("transcription-outbox-v1", isDirectory: true)
+            if fm.fileExists(atPath: pending.path) {
+              try fm.copyItem(at: pending, to: folder.appendingPathComponent("Pending-Dictation", isDirectory: true))
             }
           }
           if categories.contains(.meetings) {

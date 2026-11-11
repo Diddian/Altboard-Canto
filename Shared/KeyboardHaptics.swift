@@ -22,8 +22,10 @@ private enum KeyboardCoreHaptic {
   private static var player: (any CHHapticPatternPlayer)?
   private static var playerIntensity: Float?
   private static var unavailableError: String?
+  private static var generation: UInt64 = 0
 
   static func reset() {
+    self.generation &+= 1
     self.engine?.stop(completionHandler: nil)
     self.engine = nil
     self.player = nil
@@ -40,8 +42,13 @@ private enum KeyboardCoreHaptic {
       let newEngine = try CHHapticEngine()
       newEngine.playsHapticsOnly = true
       newEngine.isAutoShutdownEnabled = true
+      self.generation &+= 1
+      let generation = self.generation
       newEngine.resetHandler = {
-        Task { @MainActor in self.reset() }
+        Task { @MainActor in
+          guard generation == self.generation else { return }
+          self.reset()
+        }
       }
       try newEngine.start()
       engine = newEngine
@@ -77,8 +84,13 @@ private enum KeyboardCoreHaptic {
         let newEngine = try CHHapticEngine()
         newEngine.playsHapticsOnly = true
         newEngine.isAutoShutdownEnabled = true
+        self.generation &+= 1
+        let generation = self.generation
         newEngine.resetHandler = {
-          Task { @MainActor in self.reset() }
+          Task { @MainActor in
+            guard generation == self.generation else { return }
+            self.reset()
+          }
         }
         try newEngine.start()
         engine = newEngine

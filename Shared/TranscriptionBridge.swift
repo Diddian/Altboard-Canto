@@ -5,7 +5,7 @@ struct TranscriptionBridge: Sendable {
   @discardableResult
   static func writeTranscription(_ text: String) -> Bool {
     let settings = SharedSettings()
-    guard let url = deliveryFileURL, let token = settings.dictationSessionToken else {
+    guard let folder = deliveryDirectory, let token = settings.dictationSessionToken else {
       FeatureDiagnostics.record(.bridge, .unavailable)
       return false
     }
@@ -14,6 +14,8 @@ struct TranscriptionBridge: Sendable {
       destinationEpoch: settings.dictationDestinationEpoch, text: text
     )
     do {
+      try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+      let url = folder.appendingPathComponent(payload.resultID.uuidString + ".json")
       try JSONEncoder().encode(payload).write(
         to: url, options: [.atomic, .completeFileProtectionUnlessOpen]
       )
@@ -26,17 +28,29 @@ struct TranscriptionBridge: Sendable {
     }
   }
 
-  static func readDelivery() -> DictationDelivery? {
-    guard let url = deliveryFileURL, let bytes = try? Data(contentsOf: url),
-          let result = try? JSONDecoder().decode(DictationDelivery.self, from: bytes),
-          result.schemaVersion == 1 else { return nil }
-    return result
+  static func readDelivery(matching token: String? = nil, destinationEpoch: UUID? = nil) -> DictationDelivery? {
+    guard let folder = deliveryDirectory else { return nil }
+    let files = (try? FileManager.default.contentsOfDirectory(at: folder,
+      includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
+    let sorted = files.sorted {
+      ((try? $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast)
+        > ((try? $1.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast)
+    }
+    var latest: DictationDelivery?
+    for url in sorted.prefix(64) {
+      guard let bytes = try? Data(contentsOf: url),
+            let result = try? JSONDecoder().decode(DictationDelivery.self, from: bytes),
+            result.schemaVersion == 1 else { continue }
+      if latest == nil { latest = result }
+      if result.sessionToken == token, result.destinationEpoch == destinationEpoch { return result }
+    }
+    return latest
   }
 
   static func readTranscription() -> String? { self.readDelivery()?.text }
 
   static func acknowledgeDelivery(_ resultID: UUID) {
-    guard self.readDelivery()?.resultID == resultID, let url = deliveryFileURL else { return }
+    guard let url = deliveryDirectory?.appendingPathComponent(resultID.uuidString + ".json") else { return }
     try? FileManager.default.removeItem(at: url)
   }
 
@@ -66,8 +80,8 @@ struct TranscriptionBridge: Sendable {
     AppGroup.containerURL?.appendingPathComponent("dictation-stop-v1.txt")
   }
 
-  private static var deliveryFileURL: URL? {
-    AppGroup.containerURL?.appendingPathComponent("transcription-result-v1.json")
+  private static var deliveryDirectory: URL? {
+    AppGroup.containerURL?.appendingPathComponent("transcription-outbox-v1", isDirectory: true)
   }
 
   private static var cancellationFileURL: URL? {

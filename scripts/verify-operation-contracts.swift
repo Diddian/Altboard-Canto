@@ -77,7 +77,12 @@ enum VerifyOperationContracts {
     let pending = TranscriptionBridge.readDelivery()!
     TranscriptionBridge.acknowledgeDelivery(UUID())
     precondition(TranscriptionBridge.readDelivery()?.resultID == pending.resultID)
+    precondition(TranscriptionBridge.writeTranscription("a newer synthetic result"))
     TranscriptionBridge.acknowledgeDelivery(pending.resultID)
+    let newer = TranscriptionBridge.readDelivery()!
+    precondition(newer.resultID != pending.resultID)
+    precondition(newer.text == "a newer synthetic result")
+    TranscriptionBridge.acknowledgeDelivery(newer.resultID)
     precondition(TranscriptionBridge.readDelivery() == nil)
     TranscriptionBridge.requestCancellation(for: "00000000-0000-0000-0000-000000000003")
     precondition(TranscriptionBridge.cancellationToken() == "00000000-0000-0000-0000-000000000003")
