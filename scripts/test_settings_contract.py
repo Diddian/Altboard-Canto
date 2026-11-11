@@ -755,7 +755,7 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn('preferredLanguages.first == "yue"', converter)
         self.assertNotIn("guard settings.voiceOutputTarget == .original else { return }", bridge)
         self.assertIn("proxy.insertText(prefix + update.text)", bridge)
-        self.assertIn("guard owned == self.availableDocumentIdentifier()", bridge)
+        self.assertIn("LiveDeliveryPolicy.matchesField(", bridge)
         self.assertIn("FeatureDiagnostics.record(.liveDictation, .firstUpdate,", live)
 
     def test_listening_animation_respects_accessibility(self):
