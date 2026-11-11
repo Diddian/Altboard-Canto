@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at_berlin": "2026-11-10",
+  "updated_at_berlin": "2026-11-11",
   "baseline": {
     "branch": "main",
     "commit": "7b7aa5c5041805783358fbfeb8a38b09a2922ec4",
@@ -926,6 +926,23 @@
     "Meetings require a supported speech model but no separate enable switch. Rewrite & Translate is controlled by the Keyboard AI Key and available downloaded model, not by a separate Enabled toggle.",
     "Automatic clipboard copy is no longer offered; explicit clipboard recovery after changed host inputs remains permitted.",
     "Keyboard has a separate, collapsed Haptic Settings disclosure for strength and reset; the existing keyboard haptic engine remains the sole owner.",
-    "Custom voice output language uses Apply/Cancel without replacing the saved target on invalid input; clearing the compiled model cache requires confirmation."
-  ]
+    "Custom voice output language uses Apply/Cancel without replacing the saved target on invalid input; clearing the compiled model cache requires confirmation.",
+    "Runtime state architecture: the 44-family model, ownership contracts and seven Globe/haptic/output review areas are in `docs/state-audit/state-machines.json`; diagrams are in `docs/state-audit/STATE-WORKFLOW.md`. Build 199 CI passed; physical acceptance is pending."
+  ],
+  "runtime_state_model": {
+    "schema_version": 1,
+    "canonical_path": "docs/state-audit/state-machines.json",
+    "diagram_path": "docs/state-audit/STATE-WORKFLOW.md",
+    "historical_audit_build": 193,
+    "historical_audit_commit": "2157207f275df0b7396808963c63238facf5a13c",
+    "machine_families": 44,
+    "relationships": 29,
+    "risks": 16,
+    "additional_review_areas": 7,
+    "inspected_main_commit": "cdccc29f5751531b10b9308f47b1f27369054fc3",
+    "successful_CI_build": 199,
+    "device_accepted": false,
+    "status": "source_audit_has_newer_code_to_reverify",
+    "note": "Navigation baseline Build 124 is separate and remains a historical snapshot."
+  }
 }

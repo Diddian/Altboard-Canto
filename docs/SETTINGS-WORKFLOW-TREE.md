@@ -148,5 +148,6 @@ of dynamic lists describe repeated rows, not extra navigation destinations.
 - Automatic clipboard copy is no longer offered; explicit clipboard recovery after changed host inputs remains permitted.
 - Keyboard has a separate, collapsed Haptic Settings disclosure for strength and reset; the existing keyboard haptic engine remains the sole owner.
 - Custom voice output language uses Apply/Cancel without replacing the saved target on invalid input; clearing the compiled model cache requires confirmation.
+- Runtime state architecture: the 44-family model, ownership contracts and seven Globe/haptic/output review areas are in `docs/state-audit/state-machines.json`; diagrams are in `docs/state-audit/STATE-WORKFLOW.md`. Build 199 CI passed; physical acceptance is pending.
 
 Consult `KNOWN-ISSUES.json` for evidence and pending acceptance checks.

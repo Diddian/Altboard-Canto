@@ -1,0 +1,1725 @@
+{
+  "schemaVersion": 1,
+  "description": "Cross-domain runtime state model, not executable Swift or proof of iPhone behavior.",
+  "source": {
+    "auditBuild": 193,
+    "auditSHA": "2157207f275df0b7396808963c63238facf5a13c",
+    "sourceKind": "historical source audit",
+    "mainCheckedSHA": "cdccc29f5751531b10b9308f47b1f27369054fc3",
+    "mainBuild": 199,
+    "mainCI": "success",
+    "mainDeviceAccepted": false,
+    "sourceFilesScanned": 93,
+    "stateDeclarationMatches": 462
+  },
+  "machines": [
+    {
+      "id": "S01",
+      "name": "Build and artifact publication",
+      "owner": ".github/workflows/build-unsigned-ipa.yml",
+      "representation": "GitHub job/step state",
+      "persistence": "Actions run, artifact and rolling tag",
+      "states": [
+        "queued",
+        "preflight",
+        "resources",
+        "compile",
+        "package",
+        "verify",
+        "upload",
+        "publish",
+        "failed",
+        "cancelled"
+      ],
+      "events": [
+        "push_main",
+        "dispatch_main",
+        "new_run_cancels_previous",
+        "step_failure"
+      ],
+      "invariant": "An IPA is available only after compile, package, exact-SHA verification and upload."
+    },
+    {
+      "id": "S02",
+      "name": "Containing app lifecycle",
+      "owner": "Sayboard/SayboardApp.swift",
+      "representation": "scenePhase plus startup resets and root view flags",
+      "persistence": "UserDefaults, process services",
+      "states": [
+        "launching",
+        "active",
+        "inactive",
+        "background",
+        "reappeared"
+      ],
+      "events": [
+        "launch",
+        "scene_change",
+        "deep_link",
+        "language_change"
+      ],
+      "invariant": "Reappearing a view must not reset an active operation's authoritative state."
+    },
+    {
+      "id": "S03",
+      "name": "Keyboard lifecycle and render readiness",
+      "owner": "SayboardKeyboard/KeyboardViewController.swift",
+      "representation": "initialStateReady, hostingController, appearance/recovery revisions",
+      "persistence": "process-local; bounded traces",
+      "states": [
+        "uninitialized",
+        "settings_ready",
+        "mounted",
+        "visible",
+        "hidden",
+        "missing_rows_probe",
+        "recovery_requested"
+      ],
+      "events": [
+        "viewDidLoad",
+        "willAppear",
+        "layout",
+        "didAppear",
+        "willDisappear",
+        "memory_warning"
+      ],
+      "invariant": "A probe for an intentional stroke/emoji/prompt surface must not remount missing alphabet rows."
+    },
+    {
+      "id": "S04",
+      "name": "Typing availability and fallback",
+      "owner": "SayboardKeyboard/KeyboardState.swift",
+      "representation": "derived BasicTypingFallbackReason and effectiveTypingKind",
+      "persistence": "settings mirrors plus local Full Access",
+      "states": [
+        "preferred_layout",
+        "full_access_fallback",
+        "group_fallback",
+        "microphone_fallback",
+        "model_fallback"
+      ],
+      "events": [
+        "refresh",
+        "capability_change",
+        "model_change"
+      ],
+      "invariant": "Ordinary typing remains available independently of voice prerequisites."
+    },
+    {
+      "id": "S05",
+      "name": "Shared audio session",
+      "owner": "Sayboard/Services/BackgroundAudioSession.swift",
+      "representation": "isSessionActive, engine, tap and inactivity timer",
+      "persistence": "host process plus shared mirrors",
+      "states": [
+        "inactive",
+        "starting",
+        "active_idle",
+        "active_capture",
+        "interrupted",
+        "ending"
+      ],
+      "events": [
+        "startSession",
+        "endSession",
+        "interruption",
+        "inactivity_timeout"
+      ],
+      "invariant": "Only the audio-session owner mutates actual session lifecycle; capture release and engine lifetime are distinct."
+    },
+    {
+      "id": "S06",
+      "name": "Microphone capture lease",
+      "owner": "Sayboard/Services/BackgroundAudioSession.swift",
+      "representation": "UnifiedCaptureOwner? enum",
+      "persistence": "host process",
+      "states": [
+        "none",
+        "dictation",
+        "meeting",
+        "conversation"
+      ],
+      "events": [
+        "beginCapture",
+        "endCapture",
+        "deactivateTap"
+      ],
+      "invariant": "At most one capture owner; a caller may release only its own capture."
+    },
+    {
+      "id": "S07",
+      "name": "Warm and cold dictation handoff",
+      "owner": "SayboardKeyboard/KeyboardViewController.swift",
+      "representation": "session token, recent heartbeat, retry timer and acknowledgement",
+      "persistence": "UserDefaults plus process timer",
+      "states": [
+        "idle",
+        "warm_requested",
+        "retry_once",
+        "acknowledged",
+        "cold_deep_link",
+        "failed"
+      ],
+      "events": [
+        "start_request",
+        "status_ping",
+        "two_second_probe",
+        "app_open"
+      ],
+      "invariant": "Every acknowledgement/retry/fallback must belong to the same pending request."
+    },
+    {
+      "id": "S08",
+      "name": "Microphone tap and hold intent",
+      "owner": "SayboardKeyboard/Views/Layouts/MicAnimatedButton.swift",
+      "representation": "MicrophonePressPolicy plus local flags and token-scoped hold-stop intent",
+      "persistence": "view state; shared stop intent",
+      "states": [
+        "idle",
+        "pressed",
+        "holding",
+        "starting",
+        "release_stop_pending",
+        "tap_stop",
+        "quick_cancel",
+        "locked"
+      ],
+      "events": [
+        "press",
+        "hold_threshold",
+        "accepted_tap",
+        "release",
+        "disappear",
+        "start_ack"
+      ],
+      "invariant": "One accepted gesture produces one start and one corresponding stop/cancel."
+    },
+    {
+      "id": "S09",
+      "name": "Dictation execution and finalization",
+      "owner": "Sayboard/Services/SpeechRecognitionService.swift",
+      "representation": "isRecording/isStopping + session token + outcome",
+      "persistence": "host process and shared mirrors",
+      "states": [
+        "idle",
+        "capture_starting",
+        "recording",
+        "draining_live",
+        "loading_recognizer",
+        "transcribing",
+        "processing_output",
+        "saved",
+        "cancelled",
+        "failed"
+      ],
+      "events": [
+        "startCapture",
+        "stopRecording",
+        "cancelRecording",
+        "token_changed",
+        "native_completion"
+      ],
+      "invariant": "A terminal path releases only resources belonging to its request and cannot leave isStopping latched."
+    },
+    {
+      "id": "S10",
+      "name": "ASR model and native worker lifecycle",
+      "owner": "Sayboard/Services/SpeechRecognitionService.swift",
+      "representation": "ModelLoadState, selected engine, engine-specific tasks/generations",
+      "persistence": "disk model and process handles",
+      "states": [
+        "unloaded",
+        "loading",
+        "loaded",
+        "decoding",
+        "unloading",
+        "error"
+      ],
+      "events": [
+        "load",
+        "join_load",
+        "decode",
+        "model_select",
+        "unload",
+        "memory_pressure"
+      ],
+      "invariant": "Load/decode/unload need a pinned model generation and compatible resource lease."
+    },
+    {
+      "id": "S11",
+      "name": "Experimental live ASR worker",
+      "owner": "Sayboard/Services/SpeechRecognitionService+ExperimentalLive.swift",
+      "representation": "Task, read offset, chunk revision and isRecording",
+      "persistence": "process; local live bridge file",
+      "states": [
+        "disabled",
+        "waiting_audio_or_model",
+        "decoding_chunk",
+        "publishing",
+        "behind",
+        "stopping",
+        "stopped"
+      ],
+      "events": [
+        "capture_start",
+        "chunk_ready",
+        "model_ready",
+        "stop",
+        "cancel"
+      ],
+      "invariant": "No old worker publishes after cancellation; resource reuse waits for worker exit."
+    },
+    {
+      "id": "S12",
+      "name": "Live insertion ownership",
+      "owner": "SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift",
+      "representation": "document ID, suffix anchor, revision, blocked tokens",
+      "persistence": "keyboard process; live update file",
+      "states": [
+        "preview_only",
+        "unowned",
+        "append_owned",
+        "blocked",
+        "final_replacement",
+        "abandoned"
+      ],
+      "events": [
+        "live_update",
+        "field_change",
+        "cursor_change",
+        "disappear",
+        "final_result",
+        "cancel"
+      ],
+      "invariant": "Replace only a verified owned range in the same document; later main changes target-dependent live insertion."
+    },
+    {
+      "id": "S13",
+      "name": "Final dictation delivery",
+      "owner": "Shared/TranscriptionBridge.swift",
+      "representation": "singleton text file plus transcriptionReady notification",
+      "persistence": "App Group transcription.txt",
+      "states": [
+        "empty",
+        "written",
+        "notified",
+        "read",
+        "cleared",
+        "inserted_or_previewed"
+      ],
+      "events": [
+        "writeTranscription",
+        "ready",
+        "keyboard_appearance",
+        "dictationStopped",
+        "clear"
+      ],
+      "invariant": "Delivery must identify request and destination and remain recoverable until acknowledged."
+    },
+    {
+      "id": "S14",
+      "name": "Output target and formatting",
+      "owner": "Sayboard/Services/SpeechRecognitionService+Transcription.swift",
+      "representation": "live VoiceOutputConfiguration and bounded selection retries",
+      "persistence": "preferences plus per-record/request output",
+      "states": [
+        "original",
+        "cleanup",
+        "translation",
+        "target_changed_retry",
+        "stale_rejected",
+        "rendered"
+      ],
+      "events": [
+        "language_tap",
+        "ASR_complete",
+        "LLM_complete",
+        "pre_delivery_recheck"
+      ],
+      "invariant": "Source speech survives failure; target/configuration must match the result at delivery."
+    },
+    {
+      "id": "S15",
+      "name": "Manual AI request bridge",
+      "owner": "SayboardKeyboard/KeyboardViewController+LLM.swift",
+      "representation": "requestID, pending action, isLLMProcessing, global failure notifications",
+      "persistence": "LLM bridge JSON; keyboard-local request",
+      "states": [
+        "idle",
+        "selection_required",
+        "clipboard_prompt",
+        "written",
+        "awaiting_acceptance",
+        "running",
+        "result",
+        "failed",
+        "busy_unacknowledged"
+      ],
+      "events": [
+        "AI_action",
+        "clipboard_action",
+        "Darwin_request",
+        "host_busy",
+        "result_notification"
+      ],
+      "invariant": "Every request receives a correlated accepted/busy/terminal outcome and bounded local recovery."
+    },
+    {
+      "id": "S16",
+      "name": "Shared text-model inference",
+      "owner": "Sayboard/Services/LLMProcessingCoordinator.swift",
+      "representation": "isProcessing + LLMLoadState + native worker",
+      "persistence": "host process and shared busy mirror",
+      "states": [
+        "idle",
+        "validating",
+        "releasing_ASR",
+        "loading_text_model",
+        "generating",
+        "cancelling",
+        "unloading",
+        "failed"
+      ],
+      "events": [
+        "manual_AI",
+        "voice_cleanup",
+        "conversation_translation",
+        "meeting_translation",
+        "timeout"
+      ],
+      "invariant": "One canonical inference owner; model unload follows completed/cancelled-and-joined native work."
+    },
+    {
+      "id": "S17",
+      "name": "LLM insertion and undo history",
+      "owner": "SayboardKeyboard/KeyboardViewController+LLM.swift",
+      "representation": "request/document IDs, selection contexts, history and index",
+      "persistence": "keyboard-local state plus result file",
+      "states": [
+        "waiting",
+        "selection_matches",
+        "destination_changed",
+        "clipboard_fallback",
+        "inserted",
+        "undo_available",
+        "redo_available",
+        "history_invalidated"
+      ],
+      "events": [
+        "LLM_result",
+        "host_edit",
+        "undo",
+        "redo",
+        "new_request"
+      ],
+      "invariant": "Unrelated fields/selections cannot be replaced; history indices and destination ownership remain valid."
+    },
+    {
+      "id": "S18",
+      "name": "Conversation capture and live preview",
+      "owner": "Sayboard/Services/ConversationCoordinator.swift",
+      "representation": "recordingSide, activeID, capture options, warmup/live/limit tasks",
+      "persistence": "process and audio CAF",
+      "states": [
+        "ready",
+        "recording_other",
+        "recording_me",
+        "warming",
+        "previewing",
+        "stopping"
+      ],
+      "events": [
+        "start_side",
+        "stop",
+        "25_second_limit",
+        "audio_interruption"
+      ],
+      "invariant": "Only one side captures; output options are pinned to the turn and native decode is not duplicated."
+    },
+    {
+      "id": "S19",
+      "name": "Conversation turn processing",
+      "owner": "Sayboard/Services/ConversationCoordinator.swift",
+      "representation": "processing flag; ConversationTurn.status String",
+      "persistence": "turns.json plus CAF",
+      "states": [
+        "processing",
+        "speechFailed",
+        "noSpeech",
+        "transcribed",
+        "original",
+        "translationFailed",
+        "translated"
+      ],
+      "events": [
+        "saved_audio",
+        "ASR_result",
+        "cleanup_result",
+        "translation_result",
+        "retry"
+      ],
+      "invariant": "A failed stage preserves original audio/source and identifies exactly which stage can retry."
+    },
+    {
+      "id": "S20",
+      "name": "Conversation draft durability",
+      "owner": "Sayboard/Services/ConversationCoordinator.swift",
+      "representation": "turn list, draft folder, persist/restore/save/discard",
+      "persistence": "conversation-draft/turns.json and audio/",
+      "states": [
+        "empty",
+        "recording_unindexed_audio",
+        "saved_turns",
+        "restored",
+        "save_as_meeting",
+        "discarded",
+        "orphan_audio"
+      ],
+      "events": [
+        "record",
+        "persist",
+        "process_exit",
+        "restore",
+        "saveAsMeeting",
+        "discard"
+      ],
+      "invariant": "Every captured audio file is discoverable after restart, including a crash before a turn is appended."
+    },
+    {
+      "id": "S21",
+      "name": "Meeting capture, audio parts and backlog",
+      "owner": "Sayboard/Services/MeetingRecordingCoordinator.swift",
+      "representation": "isRecording, current record, recorder, accumulator and decode task",
+      "persistence": "meeting manifest and rotating CAF parts",
+      "states": [
+        "starting",
+        "recording",
+        "decoding_chunk",
+        "rotating_part",
+        "backlog_overflow",
+        "stopping"
+      ],
+      "events": [
+        "start",
+        "heartbeat",
+        "part_limit",
+        "chunk_ready",
+        "overflow",
+        "stop"
+      ],
+      "invariant": "One tap, bounded FIFO, saved audio parts, and explicit partial-transcript reporting."
+    },
+    {
+      "id": "S22",
+      "name": "Meeting finalization and restart recovery",
+      "owner": "Sayboard/Services/MeetingRecordingCoordinator.swift",
+      "representation": "isFinalizing; MeetingRecord.state String",
+      "persistence": "atomic manifest with audio parts",
+      "states": [
+        "recording",
+        "completed",
+        "interrupted",
+        "partialAudio",
+        "partialTranscript",
+        "unreadable_folder",
+        "restored_stale_recording"
+      ],
+      "events": [
+        "stop",
+        "await_decode",
+        "drain_FIFO",
+        "write_manifest",
+        "relaunch"
+      ],
+      "invariant": "Relaunch turns abandoned active states into a recoverable inactive state without discarding files."
+    },
+    {
+      "id": "S23",
+      "name": "Resumable meeting translation",
+      "owner": "Sayboard/Services/MeetingRecordingCoordinator.swift",
+      "representation": "translatingRecordID, Task, fingerprint/configuration/chunk cursor",
+      "persistence": "draft and last confirmed output in manifest",
+      "states": [
+        "idle",
+        "validating",
+        "resume_or_restart",
+        "translating",
+        "pausing",
+        "paused",
+        "failed",
+        "confirmed"
+      ],
+      "events": [
+        "translate",
+        "target_change",
+        "chunk_complete",
+        "pause",
+        "restart",
+        "persist_failure"
+      ],
+      "invariant": "Source/fingerprint/configuration match on resume; previous confirmed output survives partial replacement."
+    },
+    {
+      "id": "S24",
+      "name": "Background download registry and installer",
+      "owner": "Sayboard/Services/BackgroundDownloadManager.swift",
+      "representation": "URLSession task IDs, metadata dictionaries and processing queue",
+      "persistence": "active-downloads.json, temporary/archive/destination files",
+      "states": [
+        "enqueued",
+        "transferring",
+        "downloaded_temp",
+        "verifying",
+        "installing",
+        "completed",
+        "cancelled",
+        "reconciling"
+      ],
+      "events": [
+        "enqueue",
+        "delegate_complete",
+        "verify",
+        "extract",
+        "cancel",
+        "relaunch"
+      ],
+      "invariant": "Every completion and install commit belongs to the active download generation."
+    },
+    {
+      "id": "S25",
+      "name": "Speech model download and readiness",
+      "owner": "Sayboard/Services/ModelDownloadService.swift",
+      "representation": "ModelDownloadState plus enqueue tasks and persisted in-progress set",
+      "persistence": "disk model, preferences and UI state",
+      "states": [
+        "notDownloaded",
+        "downloading",
+        "validating_files",
+        "loading_for_validation",
+        "downloaded",
+        "error",
+        "interrupted"
+      ],
+      "events": [
+        "download",
+        "cancel",
+        "native_load",
+        "retry",
+        "verifyExistingModels"
+      ],
+      "invariant": "Downloaded files, loadability and current residency are distinct facts; a load failure is not proof of corruption."
+    },
+    {
+      "id": "S26",
+      "name": "Text model download and upgrade",
+      "owner": "Sayboard/Services/LLMDownloadService.swift",
+      "representation": "per-variant ModelDownloadState and upgrade selection flags",
+      "persistence": "GGUF files and upgrade preferences",
+      "states": [
+        "notDownloaded",
+        "downloading",
+        "downloaded",
+        "error",
+        "upgrade_offered",
+        "upgrade_queued",
+        "upgrade_declined",
+        "replacement_retained"
+      ],
+      "events": [
+        "download",
+        "cancel",
+        "verify",
+        "upgrade",
+        "manual_select",
+        "delete_replaced"
+      ],
+      "invariant": "Automatic upgrade respects explicit selection and never invalidates a model in use."
+    },
+    {
+      "id": "S27",
+      "name": "Model selection and deletion",
+      "owner": "Sayboard/Services/ModelDownloadService.swift",
+      "representation": "selected variant mirrors, file availability and ad hoc busy guards",
+      "persistence": "UserDefaults and model directories",
+      "states": [
+        "selected_downloaded",
+        "selected_missing",
+        "change_requested",
+        "change_blocked",
+        "deleting",
+        "fallback_selected"
+      ],
+      "events": [
+        "selectVariant",
+        "deleteModel",
+        "download_complete",
+        "variant_observer"
+      ],
+      "invariant": "A pending operation pins its engine/model; select/delete honor capture, finalization and inference leases."
+    },
+    {
+      "id": "S28",
+      "name": "Keyboard surface and input method",
+      "owner": "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift",
+      "representation": "page enum + showsEmojiPage + ChineseInputMode preference",
+      "persistence": "page/view state; persisted Chinese mode",
+      "states": [
+        "letters_phonetic",
+        "letters_cangjie",
+        "letters_quick",
+        "letters_stroke",
+        "numbers",
+        "symbols",
+        "emoji",
+        "candidate_grid"
+      ],
+      "events": [
+        "page_key",
+        "Chinese_mode_cycle",
+        "emoji_open_close",
+        "host_traits",
+        "appearance"
+      ],
+      "invariant": "Visible surface has one render owner; persisted stroke is intentional and distinct from missing rows."
+    },
+    {
+      "id": "S29",
+      "name": "Cantonese phonetic composition and prediction",
+      "owner": "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift",
+      "representation": "JyutpingComposition, candidate spelling and prediction anchors",
+      "persistence": "transient composition; aggregate learning",
+      "states": [
+        "empty",
+        "typing",
+        "debouncing",
+        "candidates",
+        "expanded",
+        "selected",
+        "invalidated",
+        "next_word"
+      ],
+      "events": [
+        "letter",
+        "tone",
+        "lookup",
+        "candidate_tap",
+        "space",
+        "host_edit",
+        "field_change"
+      ],
+      "invariant": "A candidate can replace only the document-bound spelling that produced it."
+    },
+    {
+      "id": "S30",
+      "name": "Cangjie, Quick and stroke composition",
+      "owner": "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift",
+      "representation": "shape/Latin buffers, candidates and host string anchor",
+      "persistence": "view state; persisted method/learning",
+      "states": [
+        "empty",
+        "collecting_code",
+        "Latin_ambiguity",
+        "candidates",
+        "selected",
+        "cleared"
+      ],
+      "events": [
+        "shape_key",
+        "stroke",
+        "hold_punctuation",
+        "space",
+        "delete",
+        "host_change"
+      ],
+      "invariant": "Empty/nil or equal text context is not sufficient proof of the same host document."
+    },
+    {
+      "id": "S31",
+      "name": "Latin suggestions and swipe replacement",
+      "owner": "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift",
+      "representation": "active word, delayed lookup tasks, alternatives and next words",
+      "persistence": "view state; bounded learned preferences",
+      "states": [
+        "literal",
+        "lookup_pending",
+        "suggestions",
+        "swipe_committed",
+        "alternative_available",
+        "next_word",
+        "invalidated"
+      ],
+      "events": [
+        "typing",
+        "lookup_complete",
+        "swipe",
+        "choose_alternative",
+        "host_edit"
+      ],
+      "invariant": "Delayed lookups and replacements require a matching document epoch and input revision."
+    },
+    {
+      "id": "S32",
+      "name": "Physical letter touch and swipe session",
+      "owner": "SayboardKeyboard/Views/AlphabeticTouchRow.swift",
+      "representation": "UIKit touch owner, touch state, hold task and LatinSwipeSession",
+      "persistence": "gesture-local memory",
+      "states": [
+        "idle",
+        "pressed",
+        "holding",
+        "alternates",
+        "gliding",
+        "committed",
+        "cancelled"
+      ],
+      "events": [
+        "touch_begin",
+        "move",
+        "hold_threshold",
+        "touch_end",
+        "touch_cancel",
+        "appearance_revision"
+      ],
+      "invariant": "One physical gesture inserts once; SwiftUI accessibility remains a separate activation route."
+    },
+    {
+      "id": "S33",
+      "name": "Cursor and spacebar trackpad",
+      "owner": "SayboardKeyboard/Views/SpaceBarKey.swift",
+      "representation": "press time, activation task, isTrackpadActive, offset counters",
+      "persistence": "view-local gesture plus controller cursor preference",
+      "states": [
+        "idle",
+        "pressed",
+        "hold_pending",
+        "trackpad",
+        "cursor_moved",
+        "released",
+        "cancelled"
+      ],
+      "events": [
+        "press",
+        "hold",
+        "drag",
+        "release",
+        "disappear",
+        "field_change"
+      ],
+      "invariant": "Space insertion and trackpad movement are mutually exclusive outcomes."
+    },
+    {
+      "id": "S34",
+      "name": "Repeat delete, symbol hold and Emoji variants",
+      "owner": "SayboardKeyboard/Views/SymbolHoldKey.swift",
+      "representation": "view flags/tasks; related RepeatDeleteButton and EmojiKeyboardView controls",
+      "persistence": "view state; Emoji recent list",
+      "states": [
+        "idle",
+        "pressed",
+        "hold_wait",
+        "choosing_variant",
+        "repeat_delete",
+        "released",
+        "cancelled"
+      ],
+      "events": [
+        "touch",
+        "hold",
+        "slide",
+        "release",
+        "disappear"
+      ],
+      "invariant": "Cancelled/remounted controls cannot continue a repeat task or emit an unintended base symbol."
+    },
+    {
+      "id": "S35",
+      "name": "Shift, caps lock and microphone animation",
+      "owner": "SayboardKeyboard/Views/Layouts/MicAnimatedButton.swift",
+      "representation": "multiple presentation flags; keyboard shiftActive/capsLock",
+      "persistence": "view state",
+      "states": [
+        "lowercase",
+        "shifted",
+        "caps_lock",
+        "mic_idle",
+        "wave_morph",
+        "wave",
+        "spinner_delay",
+        "spinner",
+        "spinner_morph"
+      ],
+      "events": [
+        "shift_tap",
+        "double_tap",
+        "host_caps_trait",
+        "recording_change",
+        "processing_change",
+        "animation_completion"
+      ],
+      "invariant": "Presentation follows operation state; interrupted animations cannot decide business state."
+    },
+    {
+      "id": "S36",
+      "name": "Permissions, keyboard probes and onboarding",
+      "owner": "Sayboard/Services/PermissionService.swift",
+      "representation": "permission enum, reported probes, OnboardingStep/record/route history",
+      "persistence": "OS permission and UserDefaults records",
+      "states": [
+        "undetermined",
+        "denied",
+        "granted",
+        "keyboard_unknown",
+        "probe_reported",
+        "step_active",
+        "postponed",
+        "completed"
+      ],
+      "events": [
+        "refresh",
+        "permission_result",
+        "extension_probe",
+        "step_pass",
+        "back",
+        "relaunch"
+      ],
+      "invariant": "A cached permission/probe or completed onboarding is not proof that the keyboard is currently selected."
+    },
+    {
+      "id": "S37",
+      "name": "Tabs, navigation, sheets and app language",
+      "owner": "Sayboard/Views/MainTabView.swift",
+      "representation": "tab enum, four NavigationPaths, banner/sheet state; root language remount",
+      "persistence": "preferences and view state",
+      "states": [
+        "history",
+        "conversation",
+        "meetings",
+        "settings",
+        "sheet_presented",
+        "banner",
+        "language_transition"
+      ],
+      "events": [
+        "tab",
+        "deep_link",
+        "push_pop",
+        "sheet_dismiss",
+        "language_apply"
+      ],
+      "invariant": "Navigation/view lifetime cannot erase an operation still owned by a retained coordinator."
+    },
+    {
+      "id": "S38",
+      "name": "Voice history and retention",
+      "owner": "Shared/HistoryStore.swift",
+      "representation": "read-modify-write JSON, audio records and retention policy",
+      "persistence": "history.json and audio/",
+      "states": [
+        "readable",
+        "unreadable",
+        "saving",
+        "correcting",
+        "retaining",
+        "deleting",
+        "write_failed"
+      ],
+      "events": [
+        "save",
+        "correction",
+        "retention_change",
+        "delete",
+        "export"
+      ],
+      "invariant": "Manifest and audio changes remain consistent; failure does not silently report success."
+    },
+    {
+      "id": "S39",
+      "name": "Audio playback and tutorials",
+      "owner": "Sayboard/Services/MeetingAudioPlayback.swift",
+      "representation": "separate player states; AudioPlayerService and PiPTutorialService",
+      "persistence": "process-local player/time/part/task state",
+      "states": [
+        "stopped",
+        "opening",
+        "playing",
+        "paused",
+        "seeking",
+        "next_part",
+        "PiP_pending",
+        "PiP_active",
+        "error"
+      ],
+      "events": [
+        "play",
+        "pause",
+        "seek",
+        "finish",
+        "tutorial",
+        "navigation"
+      ],
+      "invariant": "Playback and capture share AVAudioSession configuration ownership."
+    },
+    {
+      "id": "S40",
+      "name": "Settings, prompts, corrections and learned choices",
+      "owner": "Shared/SharedSettings.swift",
+      "representation": "UserDefaults values, local editor copies and custom prompt sheet enum",
+      "persistence": "App Group preferences and aggregate learning",
+      "states": [
+        "loaded",
+        "draft",
+        "valid",
+        "invalid",
+        "saving",
+        "saved",
+        "reset",
+        "unavailable"
+      ],
+      "events": [
+        "edit",
+        "save",
+        "disable_action",
+        "remove_prompt",
+        "reset_learning",
+        "refresh"
+      ],
+      "invariant": "Settings change becomes one validated command; deleted prompt/action references are reconciled."
+    },
+    {
+      "id": "S41",
+      "name": "Data export, deletion and cache cleanup",
+      "owner": "Sayboard/Services/LocalUserDataStore.swift",
+      "representation": "category enum, busy flag, detached exporter and share URL",
+      "persistence": "local data and temporary export archive",
+      "states": [
+        "idle",
+        "confirmation",
+        "exporting",
+        "sharing",
+        "cancel_requested",
+        "cleaned",
+        "deleting",
+        "partial_failure"
+      ],
+      "events": [
+        "export",
+        "delete",
+        "confirm",
+        "view_disappear",
+        "worker_exit",
+        "share_dismiss"
+      ],
+      "invariant": "Destructive actions and snapshots respect every active data owner; All Data coverage is explicit."
+    },
+    {
+      "id": "S42",
+      "name": "Diagnostic collection and export",
+      "owner": "Shared/FeatureDiagnostics.swift",
+      "representation": "bounded JSONL, lock/queue, export/reset state",
+      "persistence": "App Group log and explicit export file",
+      "states": [
+        "enabled_development",
+        "disabled_APPSTORE",
+        "queued",
+        "writing",
+        "rotating",
+        "exporting",
+        "reset"
+      ],
+      "events": [
+        "milestone",
+        "failure",
+        "export_action",
+        "reset_action"
+      ],
+      "invariant": "Metadata stays bounded and content-free; event lineage can distinguish overlapping operations."
+    },
+    {
+      "id": "S43",
+      "name": "Entitlement and free-word allowance",
+      "owner": "Shared/SharedSettings+Entitlement.swift",
+      "representation": "EntitlementStatus and conditional APPSTORE policy",
+      "persistence": "shared entitlement/word counters; StoreKit facts",
+      "states": [
+        "development_unlocked",
+        "unknown",
+        "free",
+        "allowance_remaining",
+        "locked",
+        "purchase_pending",
+        "purchased",
+        "restored"
+      ],
+      "events": [
+        "compile_configuration",
+        "charge_words",
+        "purchase",
+        "cancel_purchase",
+        "restore"
+      ],
+      "invariant": "Development Release behavior is not evidence for AppStore entitlement paths."
+    },
+    {
+      "id": "S44",
+      "name": "Host resolution and return",
+      "owner": "Sayboard/SayboardApp.swift",
+      "representation": "host process/bundle hints, lastHostReturnToken, pending deep links",
+      "persistence": "remembered host preferences and process tasks",
+      "states": [
+        "unknown",
+        "resolving",
+        "remembered",
+        "return_requested",
+        "manual_hint",
+        "failed"
+      ],
+      "events": [
+        "keyboard_appearance",
+        "resolveHost",
+        "dictate_deep_link",
+        "deadline",
+        "foreground_change"
+      ],
+      "invariant": "Return intent is tied to the originating request; dispatching an open is not proof of foreground success."
+    }
+  ],
+  "relationships": [
+    {
+      "from": "S08",
+      "to": "S07",
+      "kind": "command",
+      "label": "Mic gesture creates start/stop/cancel intent",
+      "source": "MicAnimatedButton"
+    },
+    {
+      "from": "S07",
+      "to": "S09",
+      "kind": "bridge",
+      "label": "Darwin notification or cold deep link activates host dictation",
+      "source": "KeyboardViewController / SayboardApp"
+    },
+    {
+      "from": "S09",
+      "to": "S06",
+      "kind": "resource",
+      "label": "Dictation acquires/releases capture",
+      "source": "SpeechRecognitionService.startAudioCapture"
+    },
+    {
+      "from": "S18",
+      "to": "S06",
+      "kind": "resource",
+      "label": "Conversation acquires/releases capture",
+      "source": "ConversationCoordinator.start/stop"
+    },
+    {
+      "from": "S21",
+      "to": "S06",
+      "kind": "resource",
+      "label": "Meeting acquires/releases capture",
+      "source": "MeetingRecordingCoordinator.start/stop"
+    },
+    {
+      "from": "S06",
+      "to": "S05",
+      "kind": "resource",
+      "label": "Capture shares the audio engine/tap",
+      "source": "BackgroundAudioSession"
+    },
+    {
+      "from": "S09",
+      "to": "S10",
+      "kind": "resource",
+      "label": "Final ASR and warmup",
+      "source": "SpeechRecognitionService"
+    },
+    {
+      "from": "S18",
+      "to": "S10",
+      "kind": "resource",
+      "label": "Live preview and final turn ASR",
+      "source": "ConversationCoordinator"
+    },
+    {
+      "from": "S21",
+      "to": "S10",
+      "kind": "resource",
+      "label": "Incremental ASR and final drain",
+      "source": "MeetingRecordingCoordinator"
+    },
+    {
+      "from": "S10",
+      "to": "S16",
+      "kind": "conflict",
+      "label": "prepareForInference unloads ASR without a universal ASR lease",
+      "source": "C04"
+    },
+    {
+      "from": "S23",
+      "to": "S16",
+      "kind": "resource",
+      "label": "Meeting translation uses shared text coordinator",
+      "source": "translateMeetingChunks"
+    },
+    {
+      "from": "S19",
+      "to": "S16",
+      "kind": "resource",
+      "label": "Conversation cleanup/translation",
+      "source": "processConversationTurn"
+    },
+    {
+      "from": "S15",
+      "to": "S16",
+      "kind": "bridge",
+      "label": "Manual request may be silently rejected as busy",
+      "source": "C05"
+    },
+    {
+      "from": "S09",
+      "to": "S14",
+      "kind": "data",
+      "label": "ASR source passes through corrections/output policy",
+      "source": "runFinalTranscription"
+    },
+    {
+      "from": "S14",
+      "to": "S13",
+      "kind": "bridge",
+      "label": "Final text enters singleton outbox",
+      "source": "TranscriptionBridge"
+    },
+    {
+      "from": "S13",
+      "to": "S12",
+      "kind": "data",
+      "label": "Live ownership can protect final replacement when established",
+      "source": "completeExperimentalLiveText"
+    },
+    {
+      "from": "S13",
+      "to": "S03",
+      "kind": "conflict",
+      "label": "Deferred final-only insertion uses current keyboard proxy",
+      "source": "C02"
+    },
+    {
+      "from": "S09",
+      "to": "S05",
+      "kind": "conflict",
+      "label": "Unscoped cancel can end a foreign session",
+      "source": "C03"
+    },
+    {
+      "from": "S39",
+      "to": "S05",
+      "kind": "conflict",
+      "label": "Meeting playback directly sets playback category",
+      "source": "C10"
+    },
+    {
+      "from": "S24",
+      "to": "S25",
+      "kind": "event",
+      "label": "Completion updates speech download readiness",
+      "source": "ModelDownloadService"
+    },
+    {
+      "from": "S24",
+      "to": "S26",
+      "kind": "event",
+      "label": "Completion updates text-model readiness/upgrade",
+      "source": "LLMDownloadService"
+    },
+    {
+      "from": "S27",
+      "to": "S10",
+      "kind": "resource",
+      "label": "Selection/deletion triggers model reload/deactivation",
+      "source": "SayboardApp.ModelSelectionObserver"
+    },
+    {
+      "from": "S28",
+      "to": "S29",
+      "kind": "composition",
+      "label": "Phonetic mode owns romanization composition",
+      "source": "AlphabeticKeyboardLayout"
+    },
+    {
+      "from": "S28",
+      "to": "S30",
+      "kind": "composition",
+      "label": "Shape modes own shape composition",
+      "source": "AlphabeticKeyboardLayout"
+    },
+    {
+      "from": "S32",
+      "to": "S31",
+      "kind": "gesture",
+      "label": "Swipe commits alternatives for current field",
+      "source": "AlphabeticTouchRow"
+    },
+    {
+      "from": "S33",
+      "to": "S29",
+      "kind": "invalidation",
+      "label": "Trackpad cancels candidate work",
+      "source": "beginCursorTracking"
+    },
+    {
+      "from": "S37",
+      "to": "S20",
+      "kind": "lifetime",
+      "label": "Navigation does not persist active capture intent",
+      "source": "C11"
+    },
+    {
+      "from": "S41",
+      "to": "S20",
+      "kind": "coverage_gap",
+      "label": "All Data does not include Conversation draft",
+      "source": "C16"
+    },
+    {
+      "from": "S42",
+      "to": "S09",
+      "kind": "observability",
+      "label": "Milestones lack correlated transition lineage",
+      "source": "C14"
+    }
+  ],
+  "risks": [
+    {
+      "id": "C01",
+      "priority": "build_blocker",
+      "title": "Two source-text tests demand opposite live-insertion behavior",
+      "historicalStatus": "superseded_in_source_by_670c8dc_not_build_verified",
+      "currentStatus": "source_superseded_and_build199_CI_success",
+      "affectedFiles": [
+        "scripts/test_settings_contract.py",
+        "SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift"
+      ],
+      "repairContract": "Use the later main behavior at 670c8dc as the current source contract. Keep behavioral checks for live source visibility, final target output and document ownership. Do not restore contradictory assertions.",
+      "deviceVerified": false
+    },
+    {
+      "id": "C02",
+      "priority": "P1",
+      "title": "Final dictation result has no request or destination identity",
+      "historicalStatus": "open_at_build_193",
+      "currentStatus": "requires_code_reverification",
+      "affectedFiles": [
+        "Shared/TranscriptionBridge.swift",
+        "SayboardKeyboard/KeyboardViewController.swift"
+      ],
+      "repairContract": "Use a versioned final-result envelope with requestID, destination epoch, resultID and explicit pending/consumed status. Pin the destination at activation. Keep completed text recoverable through existing history/explicit copy when the destination no longer matches; acknowledge consumption by resultID.",
+      "deviceVerified": false
+    },
+    {
+      "id": "C03",
+      "priority": "P1",
+      "title": "A dictation cancel can end Conversation's audio session",
+      "historicalStatus": "open_at_build_193",
+      "currentStatus": "requires_code_reverification",
+      "affectedFiles": [
+        "Sayboard/Services/SpeechRecognitionService.swift",
+        "Sayboard/Services/BackgroundAudioSession.swift"
+      ],
+      "repairContract": "Make cancel a token- and owner-scoped command. Let the audio-session owner end the session only when leases permit it. Acknowledge stale/foreign cancels as ignored metadata events.",
+      "deviceVerified": false
+    },
+    {
+      "id": "C04",
+      "priority": "P1",
+      "title": "Capture ownership does not serialize ASR and text-model resource use",
+      "historicalStatus": "open_at_build_193",
+      "currentStatus": "requires_code_reverification",
+      "affectedFiles": [
+        "Sayboard/Services/MeetingRecordingCoordinator.swift",
+        "Sayboard/Services/ConversationCoordinator.swift",
+        "Sayboard/Services/LLMProcessingCoordinator.swift",
+        "Sayboard/Services/SpeechRecognitionService.swift"
+      ],
+      "repairContract": "Extend the existing ownership approach with ASR decode/load leases and text-job reservations. Pin model generations. Queue or explicitly reject incompatible work with an operation-scoped outcome. Await native workers before unloading; preserve microphone ownership independently.",
+      "deviceVerified": false
+    },
+    {
+      "id": "C05",
+      "priority": "P1",
+      "title": "Manual AI can remain busy after an ignored request",
+      "historicalStatus": "open_at_build_193",
+      "currentStatus": "requires_code_reverification",
+      "affectedFiles": [
+        "SayboardKeyboard/KeyboardViewController+LLM.swift",
+        "Sayboard/Services/LLMProcessingCoordinator.swift",
+        "SayboardKeyboard/KeyboardViewController+Timeout.swift"
+      ],
+      "repairContract": "Persist request-scoped accepted/busy/failed/cancelled/completed outcomes. Start a bounded request timer at submission and reconcile on reappearance. Scope all terminal handling to requestID; keep a recoverable retry action for a missing host acknowledgement.",
+      "deviceVerified": false
+    },
+    {
+      "id": "C06",
+      "priority": "P1",
+      "title": "Extension recovery overwrites host-owned runtime mirrors",
+      "historicalStatus": "open_at_build_193",
+      "currentStatus": "requires_code_reverification",
+      "affectedFiles": [
+        "SayboardKeyboard/KeyboardViewController+Timeout.swift",
+        "SayboardKeyboard/KeyboardState.swift",
+        "SayboardKeyboard/PingValidator.swift"
+      ],
+      "repairContract": "Have the extension request cancellation/reconciliation and update its local projection. Keep canonical runtime writes in host owners. Publish one versioned snapshot with process epoch, revision and operation phase, separating capture from finalization.",
+      "deviceVerified": false
+    },
+    {
+      "id": "C07",
+      "priority": "P1",
+      "title": "A cancelled download installer can finish into a replacement task",
+      "historicalStatus": "open_at_build_193",
+      "currentStatus": "requires_code_reverification",
+      "affectedFiles": [
+        "Sayboard/Services/BackgroundDownloadManager+Processing.swift",
+        "Sayboard/Services/BackgroundDownloadManager.swift"
+      ],
+      "repairContract": "Carry a unique download generation through transfer, verification, staging and commit. Recheck exact generation under the registry lock before installation and metadata mutation. Install into a generation-specific staging directory, then atomically promote only the active generation.",
+      "deviceVerified": false
+    },
+    {
+      "id": "C08",
+      "priority": "P1",
+      "title": "SenseVoice's joined load reads the generation after awaiting",
+      "historicalStatus": "open_at_build_193",
+      "currentStatus": "requires_code_reverification",
+      "affectedFiles": [
+        "Sayboard/Services/SenseVoiceTranscriptionService.swift"
+      ],
+      "repairContract": "Capture the joined task's generation before awaiting, as waitForLoad and Qwen3 already do. Keep a task/generation pair and optionally model identity together.",
+      "deviceVerified": false
+    },
+    {
+      "id": "C09",
+      "priority": "P1",
+      "title": "IME ownership can survive a field change with identical text context",
+      "historicalStatus": "open_at_build_193",
+      "currentStatus": "requires_code_reverification",
+      "affectedFiles": [
+        "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift"
+      ],
+      "repairContract": "Expose a document epoch through KeyboardProxy or KeyboardState. Bind phonetic/shape composition, suggestions and swipe alternatives to it; cancel/reset on epoch change, even when text strings are equal. Nil identity uses conservative non-replacement behavior.",
+      "deviceVerified": false
+    },
+    {
+      "id": "C10",
+      "priority": "P1",
+      "title": "Meeting playback can reconfigure the audio session during capture",
+      "historicalStatus": "open_at_build_193",
+      "currentStatus": "requires_code_reverification",
+      "affectedFiles": [
+        "Sayboard/Services/MeetingAudioPlayback.swift",
+        "Sayboard/Views/MeetingRecordsView.swift"
+      ],
+      "repairContract": "Route playback/capture category changes through BackgroundAudioSession. Decide explicitly whether playback is blocked or uses compatible routing while capture is active; enforce it in the service and UI.",
+      "deviceVerified": false
+    },
+    {
+      "id": "C11",
+      "priority": "P1",
+      "title": "Conversation audio can be saved without a discoverable turn manifest",
+      "historicalStatus": "open_at_build_193",
+      "currentStatus": "requires_code_reverification",
+      "affectedFiles": [
+        "Sayboard/Services/ConversationCoordinator.swift"
+      ],
+      "repairContract": "Persist a versioned recording-intent entry containing turn ID, safe audio filename and output configuration before capture. Atomically transition it after Stop. On launch reconcile incomplete entries and known orphan audio into an explicit recoverable state; never delete automatically.",
+      "deviceVerified": false
+    },
+    {
+      "id": "C12",
+      "priority": "P2",
+      "title": "Conversation recovery rejects files just beyond its own 25-second timer",
+      "historicalStatus": "open_at_build_193",
+      "currentStatus": "requires_code_reverification",
+      "affectedFiles": [
+        "Sayboard/Services/ConversationCoordinator.swift"
+      ],
+      "repairContract": "Separate the user-facing duration cap from the bounded recovery read limit. Use bounded streaming chunks or a small documented tolerance; derive both from one policy and retain a strict memory bound.",
+      "deviceVerified": false
+    },
+    {
+      "id": "C13",
+      "priority": "P2",
+      "title": "Persisted status strings do not define restart transitions",
+      "historicalStatus": "open_at_build_193",
+      "currentStatus": "requires_code_reverification",
+      "affectedFiles": [
+        "Shared/ConversationTurn.swift",
+        "Sayboard/Services/MeetingRecordingCoordinator.swift",
+        "Sayboard/Services/ConversationCoordinator.swift"
+      ],
+      "repairContract": "Introduce Codable status enums and a versioned document envelope, preserving legacy string decoding. Reconcile process-owned active statuses to interrupted/retryable on restart using the actual record/audio state.",
+      "deviceVerified": false
+    },
+    {
+      "id": "C14",
+      "priority": "P2",
+      "title": "Diagnostics cannot correlate many overlapping operation transitions",
+      "historicalStatus": "open_at_build_193",
+      "currentStatus": "requires_code_reverification",
+      "affectedFiles": [
+        "Shared/FeatureDiagnostics.swift"
+      ],
+      "repairContract": "Extend the existing structured diagnostics with opaque operationID, parentID where needed, owner, from/to state, generation and enumerated reason. Keep it bounded, content-free and export-only. Do not add a parallel logging system or raw text.",
+      "deviceVerified": false
+    },
+    {
+      "id": "C15",
+      "priority": "P2",
+      "title": "Speech download readiness conflates valid files with successful native loading",
+      "historicalStatus": "open_at_build_193",
+      "currentStatus": "requires_code_reverification",
+      "affectedFiles": [
+        "Sayboard/Services/ModelDownloadService+Execution.swift"
+      ],
+      "repairContract": "Return a typed load failure and retain validated files for transient/busy/cancelled/resource failures. Delete only proven invalid data under the existing policy; show a retryable load state.",
+      "deviceVerified": false
+    },
+    {
+      "id": "C16",
+      "priority": "P2",
+      "title": "All Data export/deletion does not cover the Conversation draft",
+      "historicalStatus": "open_at_build_193",
+      "currentStatus": "requires_code_reverification",
+      "affectedFiles": [
+        "Sayboard/Services/LocalUserDataStore.swift",
+        "Sayboard/Services/ConversationCoordinator.swift",
+        "Sayboard/Views/DataAndStorageSettingsView.swift"
+      ],
+      "repairContract": "Add explicit conversation-draft coverage and service-level active-owner protection, or use precise category labels and clearly expose separate draft export/deletion. Take a consistent snapshot before exporting; never delete active audio.",
+      "deviceVerified": false
+    }
+  ],
+  "additionalReviewAreas": [
+    {
+      "id": "E01",
+      "name": "Native Globe / Emoji picker",
+      "source": [
+        "SayboardKeyboard/Views/NativeInputModeSwitchKey.swift",
+        "SayboardKeyboard/KeyboardViewController.swift"
+      ],
+      "related": [
+        "S03",
+        "S28",
+        "S36"
+      ],
+      "candidateStates": [
+        "idle",
+        "pressed",
+        "system_picker",
+        "switched",
+        "return",
+        "extension_reload"
+      ],
+      "invariant": "iOS/UIViewController owns picker and keyboard selection, no custom Emoji UI or duplicate recognizers",
+      "status": "requires_latest_main_submachine_verification"
+    },
+    {
+      "id": "E02",
+      "name": "Haptic pulse, driver and reset",
+      "source": [
+        "Shared/KeyboardHaptics.swift",
+        "Shared/KeyboardHapticDriver.swift",
+        "Shared/SharedSettings.swift"
+      ],
+      "related": [
+        "S32",
+        "S34",
+        "S40"
+      ],
+      "candidateStates": [
+        "disabled",
+        "ready",
+        "pulse",
+        "fallback",
+        "engine_reset",
+        "failure"
+      ],
+      "invariant": "one pulse per physical gesture; reset generation must not invalidate newer engine; per-process lifetime",
+      "status": "requires_latest_main_submachine_verification"
+    },
+    {
+      "id": "E03",
+      "name": "Live source versus translated output",
+      "source": [
+        "SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift",
+        "Shared/TranscriptionBridge.swift"
+      ],
+      "related": [
+        "S11",
+        "S12",
+        "S13",
+        "S14"
+      ],
+      "candidateStates": [
+        "source_preview",
+        "target_selected",
+        "processing",
+        "final_ready",
+        "consumed",
+        "recoverable"
+      ],
+      "invariant": "live words and translated final result differ; delivery must match request and original document",
+      "status": "requires_latest_main_submachine_verification"
+    },
+    {
+      "id": "E04",
+      "name": "Document epoch for IME / swipe / AI",
+      "source": [
+        "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift",
+        "SayboardKeyboard/KeyboardViewController+LLM.swift"
+      ],
+      "related": [
+        "S12",
+        "S17",
+        "S29",
+        "S30",
+        "S31"
+      ],
+      "candidateStates": [
+        "bound",
+        "composing",
+        "field_changed",
+        "invalidated",
+        "recoverable"
+      ],
+      "invariant": "matching visible text does not prove identical document; asynchronous replacements check epochs",
+      "status": "requires_latest_main_submachine_verification"
+    },
+    {
+      "id": "E05",
+      "name": "Host / keyboard notification acknowledgement",
+      "source": [
+        "Shared/LLMBridge.swift",
+        "Shared/TranscriptionBridge.swift"
+      ],
+      "related": [
+        "S07",
+        "S13",
+        "S15"
+      ],
+      "candidateStates": [
+        "requested",
+        "notified",
+        "acknowledged",
+        "timeout",
+        "terminal"
+      ],
+      "invariant": "Darwin notifications are wakeups, not authoritative states; result/consume are request scoped",
+      "status": "requires_latest_main_submachine_verification"
+    },
+    {
+      "id": "E06",
+      "name": "Permission and Full Access fallback",
+      "source": [
+        "Sayboard/Services/PermissionService.swift",
+        "SayboardKeyboard/KeyboardState.swift"
+      ],
+      "related": [
+        "S04",
+        "S36"
+      ],
+      "candidateStates": [
+        "unknown",
+        "denied",
+        "granted",
+        "stale_probe",
+        "fallback",
+        "restored"
+      ],
+      "invariant": "cached permission does not prove current selection; offline typing remains available",
+      "status": "requires_latest_main_submachine_verification"
+    },
+    {
+      "id": "E07",
+      "name": "Conversation, playback and session interruption",
+      "source": [
+        "Sayboard/Services/ConversationCoordinator.swift",
+        "Sayboard/Services/MeetingAudioPlayback.swift",
+        "Sayboard/Services/BackgroundAudioSession.swift"
+      ],
+      "related": [
+        "S05",
+        "S06",
+        "S18",
+        "S19",
+        "S20",
+        "S39"
+      ],
+      "candidateStates": [
+        "capture",
+        "playback",
+        "interrupted",
+        "cancelled",
+        "recovered"
+      ],
+      "invariant": "AVAudioSession owned centrally; playback/cancel cannot kill foreign capture; preserve unfinished audio",
+      "status": "requires_latest_main_submachine_verification"
+    }
+  ],
+  "crossDomainInvariants": [
+    "One canonical state owner per operation; presentation mirrors are projections.",
+    "Cancellation and async completion require matching request ID, owner and generation.",
+    "Capture and AVAudioSession are independent scoped resources.",
+    "ASR workers and text-model work require compatible leases and cancel-and-join.",
+    "Result insertion requires original document epoch and matching request; acknowledge consumption.",
+    "IME, swipe, cursor and AI must invalidate stale document-bound work.",
+    "iOS owns system Globe/Emoji selection; preserve UIKit and accessibility ownership.",
+    "Haptics have one pulse per accepted gesture; reset generation is validated.",
+    "Conversation/Meeting audio remains recoverable across restarts.",
+    "No diagnostic event records typed text, transcripts, audio or credentials."
+  ],
+  "diagrams": [
+    {
+      "id": "resources",
+      "title": "Current resource relationships",
+      "status": "current_source_model",
+      "mermaid": "flowchart TD\n  D[\"Keyboard dictation\"] --> C[\"Shared capture gate\"]\n  M[\"Meetings\"] --> C\n  V[\"Conversation\"] --> C\n  D --> A[\"ASR engines\"]\n  M --> A\n  V --> A\n  M --> L[\"Text coordinator\"]\n  V --> L\n  D --> L\n  L -. \"Unload lacks shared lease\" .-> A\n  C --> S[\"Audio session\"]\n  D -. \"Cancel can end foreign session\" .-> S\n  P[\"Meeting playback\"] -. \"Sets playback category\" .-> S"
+    },
+    {
+      "id": "dictation",
+      "title": "Current dictation phases",
+      "status": "current_source_model",
+      "mermaid": "stateDiagram-v2\n  [*] --> Requested\n  Requested --> Recording: capture acknowledged\n  Requested --> Failed: activation failure\n  Recording --> Draining: stop\n  Draining --> Loading: recognizer needed\n  Loading --> Transcribing\n  Transcribing --> ProcessingOutput\n  ProcessingOutput --> ProcessingOutput: bounded target change retry\n  ProcessingOutput --> Delivering: current target matches\n  ProcessingOutput --> Failed: output failure\n  Delivering --> Idle: save and stopped notification\n  Recording --> Cancelled: cancel\n  Cancelled --> Idle\n  Failed --> Idle"
+    },
+    {
+      "id": "delivery",
+      "title": "Current delivery gap and proposed contract",
+      "status": "current_and_proposed",
+      "mermaid": "flowchart TD\n  subgraph Current[\"Current final-only path\"]\n    A[\"Request in field A\"] --> F[\"Plain transcription file\"]\n    F --> B[\"Current proxy may be field B\"]\n  end\n  subgraph Proposed[\"Proposed delivery contract\"]\n    R[\"Request and destination epoch\"] --> O[\"Pending result envelope\"]\n    O --> G{\"Request and destination match?\"}\n    G -->|Yes| I[\"Insert once and acknowledge\"]\n    G -->|No or unknown| K[\"Retain for explicit review\"]\n  end"
+    },
+    {
+      "id": "download",
+      "title": "Download cancellation crosses an install boundary",
+      "status": "current_and_proposed",
+      "mermaid": "sequenceDiagram\n  participant A as Installer A\n  participant R as Download registry\n  participant U as User retry\n  A->>R: Check variant key exists\n  A->>A: Verify and extract\n  U->>R: Cancel A, enqueue B under same key\n  A->>R: Complete by key\n  Note over A,R: Current completion can remove B\n  Note over A,R: Proposed commit checks exact generation"
+    },
+    {
+      "id": "conversation",
+      "title": "Conversation crash-recovery window",
+      "status": "current_and_proposed",
+      "mermaid": "flowchart TD\n  J[\"Proposed capture-intent journal\"] -.-> A[\"Create CAF\"]\n  A --> B[\"Record, stop and join workers\"]\n  B --> C[\"Append turn and persist manifest\"]\n  A --> X[\"Process exits before manifest\"]\n  B --> X\n  X --> R[\"Restore reads turns.json only\"]\n  R --> O[\"Orphan audio lacks visible turn\"]"
+    },
+    {
+      "id": "architecture",
+      "title": "Proposed domain ownership",
+      "status": "recommendation",
+      "mermaid": "flowchart TD\n  UI[\"UI projections and commands\"] --> C[\"Identified intents\"]\n  C --> D[\"Domain state owners\"]\n  D --> L[\"Resource leases\"]\n  D --> S[\"Versioned runtime snapshot\"]\n  S --> UI\n  D --> O[\"Result and consume acknowledgement\"]\n  O --> UI\n  D --> T[\"Correlated metadata diagnostics\"]"
+    },
+    {
+      "id": "cross_domain_input_output",
+      "title": "Globe, haptics, output and resource ownership",
+      "status": "proposed_followup_map",
+      "mermaid": "flowchart LR\n subgraph Keyboard[\"Keyboard extension\"]\n  Globe[\"UIKit Globe key\"] --> Picker[\"Native iOS keyboard menu\"]\n  Touch[\"UIKit touch owner\"] --> IME[\"Yue / English / Deutsch / swipe\"]\n  Touch --> Haptics[\"Haptic settings + per-process engine\"]\n  Mic[\"Mic / AI request\"] --> Capture\n  Final[\"Final result + requestID + documentEpoch\"] --> Match{\"Same document?\"}\n  Match -->|yes| HostField[\"Host input field\"]\n  Match -->|no| Recover[\"Recover without auto-insertion\"]\n  IME --> HostField\n end\n subgraph Host[\"Containing app\"]\n  Conversation[\"Conversation / Meeting\"] --> Capture[\"Capture lease\"]\n  Capture --> Audio[\"AVAudioSession owner\"]\n  Conversation --> ASR[\"ASR decode/load lease\"]\n  Conversation --> TextModel[\"Text-model lease\"]\n  ASR --> Final\n  TextModel --> Final\n end\n Haptics -. \"one gesture, one pulse\" .-> Touch\n ASR -. \"cancel + join before unload\" .-> TextModel"
+    }
+  ],
+  "nextStep": "Audit current main for each historical risk and seven submachine reviews; direct-main repair only remaining faults, then one exact-commit unsigned IPA."
+}
