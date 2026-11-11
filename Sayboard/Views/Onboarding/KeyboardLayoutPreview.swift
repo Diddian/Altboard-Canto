@@ -168,7 +168,7 @@ struct KeyboardLayoutPreview: View {
       .padding(.horizontal, KeyboardLayoutGeometry.alphabetSpecialRowInset)
       HStack(spacing: Self.keySpacing) {
         self.textKey("?123", width: 48, size: 16)
-        if self.systemSwitchRequired { self.nativeGlobeKey(width: 48) }
+        if self.systemSwitchRequired && !self.showExtraGlobeKey { self.nativeGlobeKey(width: 48) }
         ZStack(alignment: .bottomTrailing) {
           Color.clear
           Text("A")
@@ -189,7 +189,7 @@ struct KeyboardLayoutPreview: View {
 
   private var bottomRow: some View {
     HStack(spacing: Self.keySpacing) {
-      if self.systemSwitchRequired {
+      if self.systemSwitchRequired && !self.showExtraGlobeKey {
         self.symbolKey("globe", width: Self.sideKeyWidth)
       }
       self.symbolKey("trash", width: Self.sideKeyWidth)

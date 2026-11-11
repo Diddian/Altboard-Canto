@@ -2,7 +2,7 @@ import SwiftUI
 
 extension KeyboardState {
   var showsGlobeButton: Bool {
-    self.needsInputModeSwitchKey // UIKit decides if a switch is required inside the keyboard.
+    self.needsInputModeSwitchKey && !self.showGlobeKey // The optional top Globe replaces the required bottom switch.
   }
 
   var showsAIButton: Bool {

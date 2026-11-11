@@ -304,7 +304,7 @@ private struct KeyboardTestPreview: View {
   private var alphabetBottomRow: some View {
     HStack(spacing: 6) {
       self.labelKey("?123", width: 48)
-      if self.systemSwitchRequired {
+      if self.systemSwitchRequired && !self.showExtraGlobeKey {
         self.key("globe", width: 48)
       }
       self.labelKey("", height: 45)
@@ -314,7 +314,7 @@ private struct KeyboardTestPreview: View {
 
   private var standardBottomRow: some View {
     HStack(spacing: 6) {
-      if self.systemSwitchRequired {
+      if self.systemSwitchRequired && !self.showExtraGlobeKey {
         self.key("globe", width: 45)
       }
       self.key("trash", width: 45)
