@@ -60,14 +60,12 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("Accuracy: Unrated", read("Sayboard/Views/ModelCardView.swift"))
         self.assertIn("Speed: Unrated", read("Sayboard/Views/ModelCardView.swift"))
 
-    def test_live_original_preview_preserved_without_untranslated_host_insertion(self):
+    def test_live_original_is_visible_before_final_translation(self):
         extension = read("SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift")
         keyboard = read("SayboardKeyboard/KeyboardState.swift")
         chrome = read("SayboardKeyboard/Views/Layouts/KeyboardChrome.swift")
         speech = read("Sayboard/Services/SpeechRecognitionService+ExperimentalLive.swift")
-        self.assertIn("guard settings.voiceOutputTarget == .original else { return }", extension)
-        self.assertLess(extension.index("liveSourcePreview = String(update.text.suffix(240))"),
-                        extension.index("guard settings.voiceOutputTarget == .original else { return }"))
+        self.assertNotIn("guard settings.voiceOutputTarget == .original else { return }", extension)
         self.assertIn("liveSourcePreview = String(update.text.suffix(240))", extension)
         self.assertIn("func completeExperimentalLiveText(_ final: String) -> Bool", extension)
         self.assertIn("guard owned == self.availableDocumentIdentifier()", extension)

@@ -20,8 +20,8 @@ extension KeyboardViewController {
   func applyExperimentalLiveUpdate() {
     let settings = SharedSettings()
     settings.synchronize()
-    // Preview the source, but never insert untranslated words into a field
-    // whose selected target requires translation after Stop.
+    // Keep recognized words live while the selected output is processed.
+    // The final bridge only replaces text still owned in the same host field.
     guard settings.experimentalLiveDictationEnabled,
           (self.keyboardState.isRecording || settings.isRecording),
           let update = ExperimentalLiveTranscription.read(),
@@ -31,7 +31,6 @@ extension KeyboardViewController {
           !update.text.isEmpty else { return }
 
     self.keyboardState.liveSourcePreview = String(update.text.suffix(240))
-    guard settings.voiceOutputTarget == .original else { return }
     let proxy = self.textDocumentProxy
     guard let document = self.availableDocumentIdentifier() else {
       // Never insert live text when UIKit cannot confirm the destination field.
