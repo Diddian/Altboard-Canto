@@ -678,7 +678,8 @@ final class KeyboardViewController: UIInputViewController {
         vc.insertTranscribedText()
         if vc.liveTranscriptionDocumentID != nil,
            (SharedSettings().dictationCancellationRequested
-             || (TranscriptionBridge.readTranscription() ?? "").isEmpty) {
+             || (TranscriptionBridge.readDelivery(matching: vc.dictationRequestToken,
+                 destinationEpoch: vc.keyboardState.documentEpoch)?.text ?? "").isEmpty) {
           vc.cancelExperimentalLiveText()
         }
         vc.finalizeProcessingPipeline()

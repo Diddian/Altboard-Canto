@@ -297,11 +297,15 @@ final class LLMProcessingCoordinator: ObservableObject {
     defer {
       self.isProcessing = false
       settings.isLLMProcessing = false
-      if LLMBridge.readStatus(matching: request.requestID)?.phase.isTerminal != true {
+      let terminalPhase = LLMBridge.readStatus(matching: request.requestID)?.phase
+      if terminalPhase?.isTerminal != true {
         LLMBridge.writeStatus(.failed, requestID: request.requestID)
       }
       LLMBridge.clearRequest(matching: request.requestID)
-      TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingFailed)
+      // Success already sent its completion event; never report it as a failure.
+      if terminalPhase != .completed {
+        TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingFailed)
+      }
     }
 
     guard let validated = self.validateRequest(settings: settings, request: request) else { return }
@@ -315,7 +319,6 @@ final class LLMProcessingCoordinator: ObservableObject {
       let state = String(describing: self.inferenceService.loadState)
       FeatureDiagnostics.record(.aiActions, .failed)
       DiagnosticLog.write("llm: load failed, state=\(state)")
-      TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingFailed)
       return
     }
     DiagnosticLog.write("llm: model loaded")
@@ -335,7 +338,6 @@ final class LLMProcessingCoordinator: ObservableObject {
          !VoiceLanguageValidator.matches(result, target: target) {
         FeatureDiagnostics.record(.aiActions, .rejected)
         self.inferenceService.unloadModel()
-        TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingFailed)
         return
       }
       let finalResult = self.styled(result, action: validated.request.action, host: stylingHost, settings: settings)
@@ -346,12 +348,10 @@ final class LLMProcessingCoordinator: ObservableObject {
       } else {
         FeatureDiagnostics.record(.aiActions, .failed)
         DiagnosticLog.write("llm: result could not be saved in shared storage")
-        TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingFailed)
       }
     } else {
       FeatureDiagnostics.record(.aiActions, .failed)
       DiagnosticLog.write("llm: FAILED, inference produced nothing")
-      TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingFailed)
     }
 
     self.inferenceService.unloadModel()
@@ -363,7 +363,6 @@ final class LLMProcessingCoordinator: ObservableObject {
       guard let rawTarget = request.translationTarget,
             let target = VoiceOutputTarget(rawValue: rawTarget), target != .original,
             target.targetInstruction(customLanguage: request.customTranslationLanguage ?? "") != nil else {
-        TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingFailed)
         return nil
       }
     }
@@ -371,14 +370,12 @@ final class LLMProcessingCoordinator: ObservableObject {
 
     guard let downloadService = self.downloadService, downloadService.hasUsableModel else {
       DiagnosticLog.write("llm: no usable model, selected=\(settings.selectedLLMVariant.rawValue)")
-      TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingFailed)
       return nil
     }
 
     let variant = settings.selectedLLMVariant
     guard let modelPath = downloadService.modelFileURL(for: variant)?.path else {
       DiagnosticLog.write("llm: model file missing for \(variant.rawValue)")
-      TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingFailed)
       return nil
     }
     DiagnosticLog.write("llm: variant=\(variant.rawValue), template=\(variant.chatTemplate.rawValue)")

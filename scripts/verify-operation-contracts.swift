@@ -75,6 +75,16 @@ enum VerifyOperationContracts {
 
     precondition(TranscriptionBridge.writeTranscription("synthetic final text"))
     let pending = TranscriptionBridge.readDelivery()!
+    let requestToken = SharedSettings().dictationSessionToken
+    let requestEpoch = SharedSettings().dictationDestinationEpoch
+    precondition(TranscriptionBridge.readDelivery(matching: requestToken,
+      destinationEpoch: requestEpoch)?.resultID == pending.resultID)
+    precondition(TranscriptionBridge.readDelivery(matching: UUID().uuidString,
+      destinationEpoch: requestEpoch) == nil)
+    precondition(TranscriptionBridge.readDelivery(matching: requestToken,
+      destinationEpoch: UUID()) == nil)
+    precondition(TranscriptionBridge.readDelivery(matching: nil,
+      destinationEpoch: requestEpoch) == nil)
     TranscriptionBridge.acknowledgeDelivery(UUID())
     precondition(TranscriptionBridge.readDelivery()?.resultID == pending.resultID)
     precondition(TranscriptionBridge.writeTranscription("a newer synthetic result"))

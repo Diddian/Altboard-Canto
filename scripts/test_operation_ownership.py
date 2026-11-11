@@ -19,6 +19,23 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertLess(body.index("delivery.canInsert"), body.index("acknowledgeDelivery"))
         self.assertNotIn("clearTranscription()", body)
 
+    def test_scoped_delivery_cannot_return_a_foreign_pending_result(self):
+        body = function("Shared/TranscriptionBridge.swift", "static func readDelivery(", "static func readTranscription()")
+        self.assertIn("if let token, result.sessionToken == token", body)
+        self.assertIn("return token == nil && destinationEpoch == nil ? latest : nil", body)
+        observer = function("SayboardKeyboard/KeyboardViewController.swift",
+                            "Self.dictationStoppedObserver =", "self.setupSessionLifecycleObservers()")
+        self.assertIn("TranscriptionBridge.readDelivery(matching: vc.dictationRequestToken", observer)
+        self.assertNotIn("TranscriptionBridge.readTranscription()", observer)
+
+    def test_completed_ai_request_does_not_send_failure_notification(self):
+        body = function("Sayboard/Services/LLMProcessingCoordinator.swift",
+                        "private func handleProcessingRequest()", "private func beginInferenceBackgroundTask()")
+        self.assertIn("if terminalPhase != .completed", body)
+        self.assertEqual(body.count("DarwinNotificationName.llmProcessingFailed"), 3)
+        validation = body.split("private func validateRequest", 1)[1]
+        self.assertNotIn("DarwinNotificationName.llmProcessingFailed", validation)
+
     def test_cancel_observer_checks_the_active_token(self):
         body = function("Sayboard/Services/SpeechRecognitionService.swift", "self.requestCancelObserver =", "self.requestStopObserver =")
         self.assertLess(body.index("OperationPolicy.ownsCancellation"), body.index("self.cancelRecording()"))

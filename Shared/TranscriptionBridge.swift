@@ -42,9 +42,10 @@ struct TranscriptionBridge: Sendable {
             let result = try? JSONDecoder().decode(DictationDelivery.self, from: bytes),
             result.schemaVersion == 1 else { continue }
       if latest == nil { latest = result }
-      if result.sessionToken == token, result.destinationEpoch == destinationEpoch { return result }
+      if let token, result.sessionToken == token, result.destinationEpoch == destinationEpoch { return result }
     }
-    return latest
+    // A scoped request must never fall back to a result from another field/session.
+    return token == nil && destinationEpoch == nil ? latest : nil
   }
 
   static func readTranscription() -> String? { self.readDelivery()?.text }
