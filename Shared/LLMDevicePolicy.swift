@@ -38,3 +38,20 @@ enum LLMDevicePolicy {
     return .compact
   }
 }
+
+/// Pure checks at the native-model and keyboard-request boundaries.
+/// Mutable model and request state remains with their existing owners.
+enum LLMOperationPolicy {
+  static func canPublish(requestID: UUID, currentRequestID: UUID?, cancelled: Bool) -> Bool {
+    !cancelled && currentRequestID == requestID
+  }
+
+  static func matchesLoadedModel<Variant: Equatable>(
+    requestedVariant: Variant, requestedPath: String,
+    loadedVariant: Variant?, loadedPath: String?,
+    isLoaded: Bool, hasModel: Bool, hasContext: Bool
+  ) -> Bool {
+    isLoaded && hasModel && hasContext
+      && loadedVariant == requestedVariant && loadedPath == requestedPath
+  }
+}

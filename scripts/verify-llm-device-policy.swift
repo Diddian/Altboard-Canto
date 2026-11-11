@@ -40,6 +40,30 @@ enum VerifyLLMDevicePolicy {
       precondition(prompt.contains("political and historical"))
       precondition(prompt.contains("Do not replace them"))
     }
-    print("Device memory tiers and Chinese rewrite prompt contracts passed")
+    let request = UUID()
+    precondition(LLMOperationPolicy.canPublish(
+      requestID: request, currentRequestID: request, cancelled: false))
+    precondition(!LLMOperationPolicy.canPublish(
+      requestID: request, currentRequestID: nil, cancelled: false))
+    precondition(!LLMOperationPolicy.canPublish(
+      requestID: request, currentRequestID: UUID(), cancelled: false))
+    precondition(!LLMOperationPolicy.canPublish(
+      requestID: request, currentRequestID: request, cancelled: true))
+    func reusable(_ variant: String?, _ path: String?,
+                  _ ready: Bool, _ model: Bool, _ context: Bool) -> Bool {
+      LLMOperationPolicy.matchesLoadedModel(
+        requestedVariant: "small", requestedPath: "/models/current.gguf",
+        loadedVariant: variant, loadedPath: path,
+        isLoaded: ready, hasModel: model, hasContext: context
+      )
+    }
+    precondition(reusable("small", "/models/current.gguf", true, true, true))
+    precondition(!reusable("large", "/models/current.gguf", true, true, true))
+    precondition(!reusable("small", "/models/old.gguf", true, true, true))
+    precondition(!reusable(nil, nil, true, true, true))
+    precondition(!reusable("small", "/models/current.gguf", false, true, true))
+    precondition(!reusable("small", "/models/current.gguf", true, false, true))
+    precondition(!reusable("small", "/models/current.gguf", true, true, false))
+    print("Device memory tiers, Chinese rewrite, request safety and model handoff PASS")
   }
 }

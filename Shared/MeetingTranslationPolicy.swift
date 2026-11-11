@@ -50,7 +50,15 @@ enum MeetingTranslationPolicy {
           savedConfigurationKey == configurationKey,
           let processedChunks, processedChunks >= 0,
           processedChunks <= totalChunks else { return false }
-    return processedChunks == 0 || !(savedTranslation ?? "").isEmpty
+    return processedChunks == 0 || !(savedTranslation ?? "")
+      .trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+  }
+
+  /// Returns only unfinished chunk indices. A successful persisted chunk is
+  /// never resubmitted after a resume, and an invalid cursor cannot start work.
+  static func pendingChunkIndices(totalChunks: Int, startingAt index: Int) -> Range<Int>? {
+    guard totalChunks > 0, (0...totalChunks).contains(index) else { return nil }
+    return index..<totalChunks
   }
 
   static func hasMatchingSavedOutput(
