@@ -766,7 +766,7 @@ final class KeyboardViewController: UIInputViewController {
           keyboardVisible: true, recording: self.keyboardState.isRecording,
           appAcknowledged: self.warmStartSessionAcknowledged,
           heartbeat: settings.mainAppHeartbeat, now: now
-        ) && !settings.isSessionActive {
+        ) {
           FeatureDiagnostics.record(.speech, .fallback)
           self.openDictateDeepLinkFallback(reason: "no active audio engine")
           return
