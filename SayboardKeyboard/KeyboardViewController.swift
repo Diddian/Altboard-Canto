@@ -680,6 +680,8 @@ final class KeyboardViewController: UIInputViewController {
         vc.keyboardState.clearFinalOutputPreview()
         vc.keyboardState.liveSourcePreview = nil
         vc.keyboardState.isRecording = true
+        // A capture acknowledgment is stronger than an idle session ping.
+        vc.warmStartSessionAcknowledged = true
         // A delayed start callback cannot restore this same blocked session.
         if vc.liveTranscriptionBlockedToken != settings.dictationSessionToken {
           vc.liveTranscriptionBlockedToken = nil
@@ -900,7 +902,7 @@ final class KeyboardViewController: UIInputViewController {
           && DictationRequestPolicy.hasRecentAudioHeartbeat(
             settings.mainAppHeartbeat, now: now
           )
-        if audioAlive && retryCount == 0 {
+        if (audioAlive || settings.isSessionActive) && retryCount == 0 {
           // Replay a lost Darwin notification once with the same request token.
           FeatureDiagnostics.record(.speech, .fallback)
           DiagnosticLog.write("keyboard: retrying warm dictation request")
@@ -935,8 +937,8 @@ final class KeyboardViewController: UIInputViewController {
       settings.dictationSessionToken = UUID().uuidString
     }
     settings.synchronize()
-    self.keyboardState.isSessionActive = false
-    self.keyboardState.isProcessing = false
+    // Only the containing app may set the actual session state.
+    self.keyboardState.isStartingRecording = true
     guard let url = DeepLink.dictateURL else { return }
     if let openAction = self.keyboardState.openURLAction {
       openAction(url)
@@ -1006,7 +1008,7 @@ extension KeyboardViewController {
         guard let vc = Self.activeInstance else { return }
         let isProc = vc.keyboardState.isProcessing
         vc.pingValidator.cancel()
-        vc.warmStartSessionAcknowledged = true
+        // Audio-session existence alone is not a recording-start acknowledgment.
         vc.keyboardState.isSessionActive = true
         if isProc || vc.keyboardState.isLLMProcessing {
           vc.receivedPingDuringProcessing = true
