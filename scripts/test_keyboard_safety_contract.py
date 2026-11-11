@@ -189,11 +189,20 @@ class KeyboardSafetyContracts(unittest.TestCase):
         tap = mic.split("private func handleTap()", 1)[1].split(
             "private func handleRecordingChanged", 1
         )[0]
-        self.assertIn("DictationRequestPolicy.shouldRequestWarmSession(", tap)
-        self.assertIn("appActive: settings.isSessionActive", tap)
-        self.assertIn("heartbeat: settings.mainAppHeartbeat", tap)
-        self.assertLess(tap.index("self.proxy.startDictation()"),
-                        tap.index("self.proxy.openURL(url)", tap.index("let direct =")))
+        controller = source("SayboardKeyboard/KeyboardViewController.swift")
+        start = controller.split("private func startDictationViaDarwin()", 1)[1].split(
+            "private func scheduleWarmStartCheck", 1
+        )[0]
+        self.assertIn("self.proxy.startDictation()", tap)
+        self.assertNotIn("DeepLink.dictateURL", tap)
+        self.assertNotIn("settings.dictationSessionToken =", tap)
+        self.assertIn("DictationRequestPolicy.shouldRequestWarmSession(", start)
+        self.assertIn("appActive: settings.isSessionActive", start)
+        self.assertIn("heartbeat: settings.mainAppHeartbeat", start)
+        self.assertIn("self.prepareDictationDestination()", start)
+        self.assertIn('self.openDictateDeepLinkFallback(reason: "cold audio session")', start)
+        self.assertLess(start.index("TranscriptionBridge.postDarwinNotification("),
+                        start.index('self.openDictateDeepLinkFallback(reason: "cold audio session")'))
         self.assertIn("hasRecentAudioHeartbeat", policy)
         self.assertIn("lastHeartbeat.withLock", audio)
         self.assertNotIn("settings.isSessionActive = false", ping)
