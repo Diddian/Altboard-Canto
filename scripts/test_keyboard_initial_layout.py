@@ -323,6 +323,29 @@ class KeyboardInitialLayoutTests(unittest.TestCase):
         self.assertIn('private static let maxBytes: off_t = 1_048_576', trace)
         self.assertIn("flock(fd, LOCK_EX)", trace)
         self.assertIn("flock(fd, LOCK_SH)", trace)
+        # A diagnostic record cannot accept arbitrary typed text, host content
+        # or a caller-defined string key. Only bounded enum/number fields exist.
+        entry = trace.split("private struct Entry: Codable, Sendable {", 1)[1].split(
+            "\\n  }", 1
+        )[0]
+        fields = [
+            line.strip() for line in entry.splitlines()
+            if line.strip().startswith("let ")
+        ]
+        self.assertTrue(fields)
+        self.assertEqual(
+            [field.split(":", 1)[0].removeprefix("let ") for field in fields],
+            ["schemaVersion", "operationID", "phase", "timestampMs", "process",
+             "area", "event", "durationMs", "speechEngine", "audioDurationMs",
+             "residentMB", "failureReason"]
+        )
+        self.assertIn("operationID.flatMap { UUID(uuidString: $0)?.uuidString }", record)
+        self.assertIn("durationMs.map { max(0, min(7_200_000, $0)) }", record)
+        self.assertIn("residentMB.map { max(0, min(131_072, $0)) }", record)
+        self.assertIn("if currentSize >= 0 && currentSize + off_t(bytes.count) > maxBytes", trace)
+        self.assertIn("FeatureDiagnostics.exportFileURL()", screen)
+        self.assertIn("FeatureDiagnostics.clearAll()", screen)
+        self.assertIn("self.confirmTraceClear = true", screen)
         self.assertIn('DisclosureGroup("Development Traces"', screen)
         for sensitive in ("documentContextBeforeInput", "selectedText", "audioSamples",
                           "request.text", "request.prompt", "hostBundleId", "touchPath"):
