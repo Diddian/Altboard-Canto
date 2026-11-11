@@ -44,7 +44,24 @@ class OperationOwnershipTests(unittest.TestCase):
     def test_cancellation_cannot_end_conversation(self):
         body = function("Sayboard/Services/SpeechRecognitionService.swift", "func cancelRecording()", "func transcribeSamples")
         self.assertLess(body.index("ConversationCoordinator.shared.recordingSide == nil"), body.index("self.session.endSession()"))
-        self.assertIn("await cancelledLive?.value", body)
+        self.assertIn("self.cancellationTask == nil", body)
+        self.assertIn("await self.awaitExperimentalLiveWorkerExit(cancelledLive)", body)
+        self.assertIn("defer { self.cancellationTask = nil }", body)
+        self.assertLess(body.index("cancelledLive?.cancel()"), body.index("await self.awaitExperimentalLiveWorkerExit"))
+
+    def test_cancel_wait_is_bounded_and_keeps_native_worker_accounted(self):
+        cancel = function("Sayboard/Services/SpeechRecognitionService.swift", "func cancelRecording()", "func transcribeSamples")
+        live = function("Sayboard/Services/SpeechRecognitionService+ExperimentalLive.swift", "func awaitExperimentalLiveWorkerExit", "func stopExperimentalLive")
+        stop = function("Sayboard/Services/SpeechRecognitionService+ExperimentalLive.swift", "func stopExperimentalLive")
+        self.assertIn("for _ in 0..<40", live)
+        self.assertLess(live.index("if self.speechWorkers == 0"), live.index("await task?.value"))
+        self.assertIn("return false", live)
+        self.assertIn("await self.awaitExperimentalLiveWorkerExit(task)", stop)
+        self.assertLess(cancel.index("self.cancellationTask == nil"), cancel.index("self.cancellationTask = Task"))
+        self.assertIn("if !nativeWorkerExited", cancel)
+        self.assertLess(cancel.index("await self.awaitExperimentalLiveWorkerExit(cancelledLive)"), cancel.index("self.isStopping = false"))
+        self.assertIn("self.speechWorkers == 0 else", function("Sayboard/Services/SpeechRecognitionService.swift", "func startCapture()", "func scheduleQwenWarmupAfterCapture"))
+        self.assertIn("defer { self.speechWorkers -= 1 }", function("Sayboard/Services/SpeechRecognitionService.swift", "func transcribeSamples", "func loadModelIfAvailable"))
 
     def test_extension_timeout_cannot_reset_host_runtime(self):
         body = function("SayboardKeyboard/KeyboardViewController+Timeout.swift", "func resetProcessingState()")

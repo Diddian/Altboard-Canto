@@ -345,7 +345,8 @@ final class SpeechRecognitionService: ObservableObject {
   }
 
   func cancelRecording() {
-    guard (self.isRecording || self.isStopping),
+    guard self.cancellationTask == nil,
+          (self.isRecording || self.isStopping),
           self.session.captureOwner == nil || self.session.captureOwner == .dictation,
           !MeetingRecordingCoordinator.shared.isRecording,
           !MeetingRecordingCoordinator.shared.isFinalizing,
@@ -369,11 +370,18 @@ final class SpeechRecognitionService: ObservableObject {
     self.isStopping = true
     let cancelledToken = self.activeDictationToken
     self.cancellationTask = Task { @MainActor [weak self] in
-      await cancelledLive?.value
-      guard let self, self.activeDictationToken == cancelledToken else { return }
+      guard let self else { return }
+      defer { self.cancellationTask = nil }
+      let nativeWorkerExited = await self.awaitExperimentalLiveWorkerExit(cancelledLive)
+      guard self.activeDictationToken == cancelledToken else { return }
+      if !nativeWorkerExited {
+        // A stalled native decoder must not keep the cancellation owner alive.
+        // speechWorkers still rejects new recording and inference until it exits.
+        self.liveDictationStatus = "Native ASR still running; retry after it finishes"
+        FeatureDiagnostics.record(.liveDictation, .slow, durationMs: 4_000)
+      }
       self.activeDictationToken = nil
       self.isStopping = false
-      self.cancellationTask = nil
     }
     self.settings.isRecording = false
     self.settings.recordingStartedAt = 0

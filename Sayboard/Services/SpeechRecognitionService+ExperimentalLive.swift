@@ -118,6 +118,19 @@ extension SpeechRecognitionService {
     }
   }
 
+  /// Swift cancellation cannot interrupt synchronous native inference.
+  /// Keep the worker counted until decode returns, but bound UI cleanup.
+  func awaitExperimentalLiveWorkerExit(_ task: Task<Void, Never>?) async -> Bool {
+    for _ in 0..<40 {
+      if self.speechWorkers == 0 {
+        await task?.value
+        return true
+      }
+      do { try await Task.sleep(for: .milliseconds(100)) } catch { break }
+    }
+    return false
+  }
+
   /// Native sherpa-onnx decode runs in a detached worker and may ignore
   /// Swift cancellation. Bound the shutdown wait so Stop cannot hang forever.
   /// A timed-out decode must remain in use until its native call returns.
@@ -131,13 +144,9 @@ extension SpeechRecognitionService {
       self.liveDictationStatus = "Stopped"
       return true
     }
-    for _ in 0..<40 {
-      if self.speechWorkers == 0 {
-        await task?.value
-        self.liveDictationStatus = "Stopped"
-        return true
-      }
-      do { try await Task.sleep(for: .milliseconds(100)) } catch { break }
+    if await self.awaitExperimentalLiveWorkerExit(task) {
+      self.liveDictationStatus = "Stopped"
+      return true
     }
     self.liveDictationStatus = "Native ASR worker did not stop; audio retained"
     FeatureDiagnostics.record(.liveDictation, .slow, durationMs: 4_000)
