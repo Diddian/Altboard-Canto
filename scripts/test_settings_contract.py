@@ -215,6 +215,32 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn('Text("0.2 s (experimental)")', diagnostics)
         self.assertIn("liveDictationLatencyMs", read("Shared/FeatureDiagnostics.swift"))
 
+    def test_conversation_reuses_selected_first_window_and_preserves_preview(self):
+        coordinator = read("Sayboard/Services/ConversationCoordinator.swift")
+        view = read("Sayboard/Views/ConversationView.swift")
+        live = read("Sayboard/Services/SpeechRecognitionService+ExperimentalLive.swift")
+        chrome = read("SayboardKeyboard/Views/Layouts/KeyboardChrome.swift")
+        controller = read("SayboardKeyboard/KeyboardViewController.swift")
+        self.assertIn("var firstWindow = service.settings.liveFirstWindowSamples", coordinator)
+        self.assertIn("retryFirstWindow(after: firstWindow)", coordinator)
+        self.assertIn("firstWindowSamples: firstWindow", coordinator)
+        self.assertIn("service.activeLoadState != .loaded", coordinator)
+        self.assertIn("service.activeLoadState == .loading", coordinator)
+        self.assertIn("Retain the last live source", coordinator)
+        self.assertIn("self.conversation.processing,", view)
+        self.assertIn("sourcePreview: self.keyboardState.liveSourcePreview", chrome)
+        self.assertIn("options: sourceOptions", live)
+        self.assertIn("settings.isSessionActive) && retryCount == 0", controller)
+
+    def test_live_first_window_device_default_is_conservative_and_overridable(self):
+        policy = read("Shared/LiveDictationChunkPolicy.swift")
+        settings = read("Shared/SharedSettings.swift")
+        diagnostics = read("Sayboard/Views/DiagnosticsView.swift")
+        self.assertIn("defaultFirstWindowSamples(physicalMemoryBytes: UInt64)", policy)
+        self.assertIn("deviceDefaultFirstWindowSamples", settings)
+        self.assertIn("firstWindowOptions.contains(choice)", settings)
+        self.assertIn("Device-tier default", diagnostics)
+
     def test_live_original_is_visible_before_final_translation(self):
         extension = read("SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift")
         keyboard = read("SayboardKeyboard/KeyboardState.swift")
@@ -222,7 +248,8 @@ class SettingsContractTests(unittest.TestCase):
         speech = read("Sayboard/Services/SpeechRecognitionService+ExperimentalLive.swift")
         self.assertNotIn("guard settings.voiceOutputTarget == .original else { return }", extension)
         self.assertIn("liveSourcePreview = String(update.text.suffix(240))", extension)
-        self.assertIn("func completeExperimentalLiveText(_ final: String) -> Bool", extension)
+        self.assertIn("func completeExperimentalLiveText(", extension)
+        self.assertIn("_ delivery: DictationDelivery, cancellationRequested: Bool", extension)
         self.assertIn("guard owned == self.availableDocumentIdentifier()", extension)
         self.assertIn('Text("Live Transcription")', chrome)
         self.assertIn("self.keyboardState.liveSourcePreview", chrome)

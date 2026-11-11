@@ -234,7 +234,7 @@ class KeyboardSafetyContracts(unittest.TestCase):
         self.assertIn("DictationRequestPolicy.isCurrent(", start)
         self.assertIn("DictationRequestPolicy.shouldOpenColdFallback(", start)
         self.assertIn("self.viewIfLoaded?.window != nil", start)
-        self.assertIn("audioAlive && retryCount == 0", start)
+        self.assertIn("(audioAlive || settings.isSessionActive) && retryCount == 0", start)
         self.assertIn("self.scheduleWarmStartCheck(token: token, retryCount: 1)", start)
         self.assertIn("self.warmStartSessionAcknowledged", start)
         self.assertIn("self.staleFallbackTimer?.invalidate()", disappearance)

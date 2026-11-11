@@ -72,6 +72,19 @@ struct VerifyMicrophonePress {
     ) == nil)
     precondition(LiveDictationChunkPolicy.firstWindowOptions.first == 1_600)
     precondition(LiveDictationChunkPolicy.retryFirstWindow(after: 1_600) == 3_200)
+    let gib: UInt64 = 1_073_741_824
+    precondition(LiveDictationChunkPolicy.defaultFirstWindowSamples(physicalMemoryBytes: 12 * gib) == 1_600)
+    precondition(LiveDictationChunkPolicy.defaultFirstWindowSamples(physicalMemoryBytes: 8 * gib) == 3_200)
+    precondition(LiveDictationChunkPolicy.defaultFirstWindowSamples(physicalMemoryBytes: 6 * gib) == 8_000)
+    precondition(LiveDictationChunkPolicy.defaultFirstWindowSamples(physicalMemoryBytes: 4 * gib) == 24_000)
+    precondition(DictationRequestPolicy.shouldRequestWarmSession(
+      keyboardActive: false, appActive: true, heartbeat: 1, now: 10,
+      practiceFocused: false
+    ))
+    precondition(!DictationRequestPolicy.shouldRequestWarmSession(
+      keyboardActive: false, appActive: false, heartbeat: 1, now: 10,
+      practiceFocused: false
+    ))
     print("Microphone tap, hold, release and token-scoped stop checks passed")
   }
 }
