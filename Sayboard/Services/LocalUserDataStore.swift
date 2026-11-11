@@ -4,15 +4,28 @@ import ZIPFoundation
 @MainActor
 enum LocalUserDataStore {
   enum Category: String, CaseIterable, Identifiable, Sendable {
-    case voiceNotes, meetings, vocabulary
+    case voiceNotes, meetings, vocabulary, conversationDraft
     var id: String { self.rawValue }
     var title: String {
       switch self {
       case .voiceNotes: "Voice Notes"
       case .meetings: "Meetings"
       case .vocabulary: "Corrections & Suggestions"
+      case .conversationDraft: "Conversation Draft"
       }
     }
+  }
+
+  private(set) static var isExporting = false
+
+  static var hasActiveOperation: Bool {
+    let settings = SharedSettings()
+    return self.isExporting || settings.isRecording || settings.isLLMProcessing
+      || MeetingRecordingCoordinator.shared.isRecording
+      || MeetingRecordingCoordinator.shared.isFinalizing
+      || MeetingRecordingCoordinator.shared.translatingRecordID != nil
+      || ConversationCoordinator.shared.recordingSide != nil
+      || ConversationCoordinator.shared.processing
   }
 
   static let learnedKeys = [
@@ -61,6 +74,7 @@ enum LocalUserDataStore {
   }
 
   static func delete(_ categories: [Category]) throws {
+    guard !self.hasActiveOperation else { throw CocoaError(.userCancelled) }
     FeatureDiagnostics.record(.data, .started)
     do {
       guard AppGroup.sharedDefaults != nil else { throw CocoaError(.fileWriteNoPermission) }
@@ -78,6 +92,8 @@ enum LocalUserDataStore {
         case .meetings:
           let recorder = MeetingRecordingCoordinator.shared
           guard recorder.deleteAllRecords() else { throw CocoaError(.fileWriteUnknown) }
+        case .conversationDraft:
+          guard ConversationCoordinator.shared.discardDraft() else { throw CocoaError(.fileWriteUnknown) }
         case .vocabulary:
           self.resetLearning()
           SharedSettings().cantoneseCorrectionRules = []
@@ -93,6 +109,9 @@ enum LocalUserDataStore {
   }
 
   static func export(_ categories: [Category]) async throws -> URL {
+    guard !self.hasActiveOperation else { throw CocoaError(.userCancelled) }
+    self.isExporting = true
+    defer { self.isExporting = false }
     FeatureDiagnostics.record(.data, .started)
     do {
       guard let group = AppGroup.containerURL else { throw CocoaError(.fileReadNoSuchFile) }
@@ -123,6 +142,13 @@ enum LocalUserDataStore {
             if fm.fileExists(atPath: meetings.path) {
               try Task.checkCancellation()
               try fm.copyItem(at: meetings, to: folder.appendingPathComponent("Meetings", isDirectory: true))
+            }
+          }
+          if categories.contains(.conversationDraft) {
+            let draft = group.appendingPathComponent("conversation-draft", isDirectory: true)
+            if fm.fileExists(atPath: draft.path) {
+              try Task.checkCancellation()
+              try fm.copyItem(at: draft, to: folder.appendingPathComponent("Conversation-Draft", isDirectory: true))
             }
           }
           if let vocabulary {
@@ -162,3 +188,4 @@ enum LocalUserDataStore {
     }
   }
 }
+

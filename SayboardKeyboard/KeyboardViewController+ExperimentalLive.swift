@@ -26,6 +26,8 @@ extension KeyboardViewController {
           (self.keyboardState.isRecording || settings.isRecording),
           let update = ExperimentalLiveTranscription.read(),
           update.sessionToken == settings.dictationSessionToken,
+          update.sessionToken == self.dictationRequestToken,
+          settings.dictationDestinationEpoch == self.keyboardState.documentEpoch,
           update.revision > self.liveTranscriptionRevision,
           self.liveTranscriptionBlockedToken != update.sessionToken,
           !update.text.isEmpty else { return }
@@ -138,3 +140,4 @@ extension KeyboardViewController {
     self.liveTranscriptionRevision = 0
   }
 }
+

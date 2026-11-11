@@ -18,7 +18,8 @@ struct DataAndStorageSettingsView: View {
   @State private var errorMessage: String?
 
   private var recordingActive: Bool {
-    self.speechService.isRecording || self.speechService.isStopping
+    LocalUserDataStore.hasActiveOperation
+      || self.speechService.isRecording || self.speechService.isStopping
       || self.recorder.isRecording || self.recorder.isFinalizing
   }
 
@@ -164,6 +165,7 @@ struct DataAndStorageSettingsView: View {
     case .voiceNotes: self.voiceNoteCount
     case .meetings: self.recorder.records.count
     case .vocabulary: self.vocabularyCount
+    case .conversationDraft: ConversationCoordinator.shared.turns.count
     }
   }
 
@@ -236,4 +238,5 @@ private struct DataExportSheet: UIViewControllerRepresentable {
   }
   func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }
+
 

@@ -34,7 +34,8 @@ extension KeyboardViewController {
 
         let settings = SharedSettings()
         settings.synchronize()
-        if self.receivedPingDuringProcessing || settings.dictationSessionToken != nil {
+        if self.receivedPingDuringProcessing || settings.dictationSessionToken != nil
+            || self.keyboardState.isLLMProcessing {
           if elapsed < Self.processingHardTimeout {
             if self.keyboardState.isLLMProcessing {
               self.checkForPendingLLMResult()
@@ -47,6 +48,7 @@ extension KeyboardViewController {
           } else {
             self.insertTranscribedText()
             self.checkForPendingLLMResult()
+            self.abandonPendingLLMRequest()
             self.resetProcessingState()
           }
         } else {
@@ -70,10 +72,8 @@ extension KeyboardViewController {
     if !self.isPerformingHistoryNavigation {
       self.keyboardState.clearLLMHistory()
     }
-    let settings = SharedSettings()
-    settings.isSessionActive = false
-    settings.isRecording = false
-    settings.isLLMProcessing = false
-    settings.synchronize()
+    // Request reconciliation; the extension cannot stop the host audio engine.
+    self.pingMainAppForSessionStatus()
   }
 }
+

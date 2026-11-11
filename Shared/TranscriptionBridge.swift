@@ -2,34 +2,76 @@ import Foundation
 
 struct TranscriptionBridge: Sendable {
 
-  static func writeTranscription(_ text: String) {
-    guard let url = transcriptionFileURL else {
+  @discardableResult
+  static func writeTranscription(_ text: String) -> Bool {
+    let settings = SharedSettings()
+    guard let url = deliveryFileURL, let token = settings.dictationSessionToken else {
       FeatureDiagnostics.record(.bridge, .unavailable)
-      return
+      return false
     }
+    let payload = DictationDelivery(
+      schemaVersion: 1, resultID: UUID(), sessionToken: token,
+      destinationEpoch: settings.dictationDestinationEpoch, text: text
+    )
     do {
-      try Data(text.utf8).write(to: url, options: [.atomic, .completeFileProtectionUnlessOpen])
-      FeatureDiagnostics.record(.bridge, .queued)
-      DiagnosticLog.write("bridge: wrote \(text.count) chars")
+      try JSONEncoder().encode(payload).write(
+        to: url, options: [.atomic, .completeFileProtectionUnlessOpen]
+      )
+      FeatureDiagnostics.record(.bridge, .queued, operationID: token, phase: .completed)
+      self.postDarwinNotification(DarwinNotificationName.transcriptionReady)
+      return true
     } catch {
-      FeatureDiagnostics.record(.bridge, .failed)
-      DiagnosticLog.write("bridge: WRITE FAILED: \(error.localizedDescription)")
+      FeatureDiagnostics.record(.bridge, .failed, operationID: token, phase: .failed)
+      return false
     }
-    self.postDarwinNotification(DarwinNotificationName.transcriptionReady)
   }
 
-  static func readTranscription() -> String? {
-    guard let url = transcriptionFileURL else {
-      return nil
-    }
-    do {
-      let text = try String(contentsOf: url, encoding: .utf8)
-      DiagnosticLog.write("bridge: read \(text.count) chars")
-      return text
-    } catch {
-      DiagnosticLog.write("bridge: READ FAILED: \(error.localizedDescription)")
-      return nil
-    }
+  static func readDelivery() -> DictationDelivery? {
+    guard let url = deliveryFileURL, let bytes = try? Data(contentsOf: url),
+          let result = try? JSONDecoder().decode(DictationDelivery.self, from: bytes),
+          result.schemaVersion == 1 else { return nil }
+    return result
+  }
+
+  static func readTranscription() -> String? { self.readDelivery()?.text }
+
+  static func acknowledgeDelivery(_ resultID: UUID) {
+    guard self.readDelivery()?.resultID == resultID, let url = deliveryFileURL else { return }
+    try? FileManager.default.removeItem(at: url)
+  }
+
+  static func requestCancellation(for token: String?) {
+    guard let token, UUID(uuidString: token) != nil,
+          let url = cancellationFileURL else { return }
+    try? Data(token.utf8).write(to: url, options: [.atomic, .completeFileProtectionUnlessOpen])
+  }
+
+  static func cancellationToken() -> String? {
+    guard let url = cancellationFileURL else { return nil }
+    return try? String(contentsOf: url, encoding: .utf8)
+  }
+
+  static func requestStop(for token: String?) {
+    guard let token, UUID(uuidString: token) != nil,
+          let url = stopFileURL else { return }
+    try? Data(token.utf8).write(to: url, options: [.atomic, .completeFileProtectionUnlessOpen])
+  }
+
+  static func stopToken() -> String? {
+    guard let url = stopFileURL else { return nil }
+    return try? String(contentsOf: url, encoding: .utf8)
+  }
+
+  private static var stopFileURL: URL? {
+    AppGroup.containerURL?.appendingPathComponent("dictation-stop-v1.txt")
+  }
+
+  private static var deliveryFileURL: URL? {
+    AppGroup.containerURL?.appendingPathComponent("transcription-result-v1.json")
+  }
+
+  private static var cancellationFileURL: URL? {
+    AppGroup.containerURL?.appendingPathComponent("dictation-cancel-v1.txt")
   }
 
   /// Publish a short-lived, local-only processing status for the keyboard.
@@ -73,6 +115,10 @@ struct TranscriptionBridge: Sendable {
   }
 
   static func clearTranscription() {
+    if let delivery = self.readDelivery(),
+       delivery.sessionToken == SharedSettings().dictationSessionToken {
+      self.acknowledgeDelivery(delivery.resultID)
+    }
     guard let url = transcriptionFileURL else { return }
     try? Data().write(to: url, options: [.atomic, .completeFileProtectionUnlessOpen])
   }
@@ -173,3 +219,4 @@ final class DarwinNotificationObserver: @unchecked Sendable {
   private let callback: () -> Void
   private var isObserving = false
 }
+

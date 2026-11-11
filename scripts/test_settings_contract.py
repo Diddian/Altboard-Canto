@@ -56,7 +56,8 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("try Task.checkCancellation()", download)
         self.assertIn('modelSHA256 =', installed)
         self.assertIn("isDownloaded(variant)", read("Sayboard/Services/ModelDownloadService.swift"))
-        self.assertIn("guard !MeetingRecordingCoordinator.shared.isRecording", read("Sayboard/Services/ModelDownloadService.swift"))
+        self.assertIn("!MeetingRecordingCoordinator.shared.isRecording", read("Sayboard/Services/ModelDownloadService.swift"))
+        self.assertIn("guard self.modelLoader?.isModelInUse != true", read("Sayboard/Services/ModelDownloadService.swift"))
         self.assertIn("Accuracy: Unrated", read("Sayboard/Views/ModelCardView.swift"))
         self.assertIn("Speed: Unrated", read("Sayboard/Views/ModelCardView.swift"))
 
@@ -816,6 +817,7 @@ class SettingsContractTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
 
 
 

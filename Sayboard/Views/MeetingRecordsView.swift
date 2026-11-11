@@ -475,12 +475,12 @@ private struct MeetingRecordDetailView: View {
       }
 
       Section("Transcript") {
-        if self.latest.state == "partialTranscript" {
+        if self.latest.state == .partialTranscript {
           Label("Transcript incomplete. Original audio parts are preserved.",
                 systemImage: "exclamationmark.triangle")
             .foregroundStyle(.orange)
         }
-        if self.latest.state == "partialAudio" {
+        if self.latest.state == .partialAudio {
           Label("Some audio could not be saved. Available parts and transcript are preserved.",
                 systemImage: "exclamationmark.triangle")
             .foregroundStyle(.orange)
@@ -678,3 +678,4 @@ private struct MeetingRecordDetailView: View {
     .onChange(of: self.notes) { _, _ in self.saved = false; self.saveFailed = false }
   }
 }
+

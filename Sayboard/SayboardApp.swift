@@ -148,6 +148,7 @@ struct SayboardApp: App {
     settings.isSessionActive = false
     settings.isRecording = false
     settings.isModelLoading = false
+    settings.isLLMProcessing = false
     settings.dictationSessionToken = nil
     settings.onboardingPracticeProcessID = nil
     settings.mainAppHeartbeat = CFAbsoluteTimeGetCurrent()
@@ -361,7 +362,7 @@ private struct SayboardRootView: View {
     self.llmCoordinator.setupObservers()
 
     let settings = SharedSettings()
-    if settings.isLLMProcessing {
+    if settings.isLLMProcessing && !self.llmCoordinator.isProcessing {
       settings.isLLMProcessing = false
     }
   }
@@ -632,3 +633,4 @@ private struct SayboardRootView: View {
   }
 
 }
+

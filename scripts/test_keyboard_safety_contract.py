@@ -70,7 +70,7 @@ class KeyboardSafetyContracts(unittest.TestCase):
         self.assertIn("current?.writeFailed = true", recorder)
         self.assertIn("writeFailed: snapshot.writeFailed", recorder)
         self.assertIn("if self.audioRecorder.hasWriteFailure", meeting)
-        self.assertIn('record.state = self.incompleteAudio ? "partialAudio"', meeting)
+        self.assertIn('record.state = self.incompleteAudio ? .partialAudio', meeting)
         self.assertIn("if result.writeFailed", history)
         self.assertIn("self.currentAudioFileName = nil", history)
 
@@ -103,9 +103,9 @@ class KeyboardSafetyContracts(unittest.TestCase):
         self.assertIn("min(Self.updateSeconds * 16_000, available)", meeting)
         self.assertIn("self.accumulator.consume(count: count)", meeting)
         self.assertNotIn("let remaining = self.accumulator.consumeAll()", meeting)
-        self.assertIn('record.state = self.incompleteAudio ? "partialAudio"', meeting)
-        self.assertIn('interrupted ? "interrupted"', meeting)
-        self.assertIn('"partialTranscript"', meeting)
+        self.assertIn('record.state = self.incompleteAudio ? .partialAudio', meeting)
+        self.assertIn('interrupted ? .interrupted', meeting)
+        self.assertIn(".partialTranscript", meeting)
         self.assertIn('(transcriptIncomplete || self.incompleteAudio) ? .fallback : .completed', meeting)
         queue = source("Sayboard/Services/AudioBufferAccumulator.swift")
         self.assertIn("var sampleCount: Int", queue)
@@ -230,4 +230,5 @@ class KeyboardSafetyContracts(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
 

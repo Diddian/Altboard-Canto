@@ -21,8 +21,10 @@ extension BackgroundDownloadManager {
         self.activeMetadata.removeValue(forKey: key)
         continue
       }
-      guard !activeTaskIds.contains(taskId) else { continue }
+      guard !activeTaskIds.contains(taskId),
+            !self.installingTasks.contains(self.installationID(meta)) else { continue }
 
+      self.lastFinishedTasks[key] = self.installationID(meta)
       let fm = FileManager.default
       if fm.fileExists(atPath: meta.destinationDirectory.path) {
         let completedEvent = DownloadEvent.completed(
@@ -30,14 +32,14 @@ extension BackgroundDownloadManager {
           variantRawValue: meta.variantRawValue,
           destinationDirectory: meta.destinationDirectory,
         )
-        DispatchQueue.main.async { self.eventSubject.send(completedEvent) }
+        self.emit(completedEvent, key: key, metadata: meta, terminal: true)
       } else {
         let failedEvent = DownloadEvent.failed(
           downloadType: meta.downloadType,
           variantRawValue: meta.variantRawValue,
           error: R2DownloadError.cancelled,
         )
-        DispatchQueue.main.async { self.eventSubject.send(failedEvent) }
+        self.emit(failedEvent, key: key, metadata: meta, terminal: true)
       }
       self.activeMetadata.removeValue(forKey: key)
       self.activeTasks.removeValue(forKey: key)
@@ -46,9 +48,14 @@ extension BackgroundDownloadManager {
 
   func processDownloadedFile(tempURL: URL, key: String, metadata: DownloadMetadata) {
     let fm = FileManager.default
+    defer {
+      self.lock.lock()
+      self.installingTasks.remove(self.installationID(metadata))
+      self.lock.unlock()
+    }
 
     self.lock.lock()
-    let stillActive = self.activeMetadata[key] != nil
+    let stillActive = self.isCurrent(key: key, metadata: metadata)
     self.lock.unlock()
     guard stillActive else {
       try? fm.removeItem(at: tempURL)
@@ -73,7 +80,8 @@ extension BackgroundDownloadManager {
       rawGGUFName = nil
     }
     if let extractError = self.extractToDestination(
-      zipURL: tempURL, destinationDir: metadata.destinationDirectory, ggufFileName: rawGGUFName
+      zipURL: tempURL, destinationDir: metadata.destinationDirectory, ggufFileName: rawGGUFName,
+      key: key, metadata: metadata
     ) {
       self.completeWithFailure(key: key, metadata: metadata, error: extractError)
       return
@@ -100,12 +108,20 @@ extension BackgroundDownloadManager {
   }
 
   private func extractToDestination(zipURL: URL, destinationDir: URL,
-                                    ggufFileName: String? = nil) -> R2DownloadError? {
+                                    ggufFileName: String? = nil,
+                                    key: String, metadata: DownloadMetadata) -> R2DownloadError? {
     let fm = FileManager.default
     do {
       try ModelDownloadInstaller.install(
         source: zipURL, destination: destinationDir, ggufFileName: ggufFileName
-      )
+      ) { staging in
+        self.lock.lock()
+        defer { self.lock.unlock() }
+        guard self.isCurrent(key: key, metadata: metadata) else {
+          throw R2DownloadError.cancelled
+        }
+        try ModelDownloadInstaller.promote(staging: staging, destination: destinationDir)
+      }
 
       return nil
     } catch {
@@ -117,6 +133,11 @@ extension BackgroundDownloadManager {
 
   private func completeWithSuccess(key: String, metadata: DownloadMetadata) {
     self.lock.lock()
+    guard self.isCurrent(key: key, metadata: metadata) else {
+      self.lock.unlock()
+      return
+    }
+    self.lastFinishedTasks[key] = self.installationID(metadata)
     self.activeMetadata.removeValue(forKey: key)
     self.activeTasks.removeValue(forKey: key)
     self.lastProgress.removeValue(forKey: key)
@@ -128,7 +149,8 @@ extension BackgroundDownloadManager {
       variantRawValue: metadata.variantRawValue,
       destinationDirectory: metadata.destinationDirectory,
     )
-    DispatchQueue.main.async { self.eventSubject.send(event) }
+    self.emit(event, key: key, metadata: metadata, terminal: true)
   }
 }
+
 

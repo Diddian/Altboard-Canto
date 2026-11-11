@@ -14,8 +14,9 @@ final class SenseVoiceTranscriptionService: ObservableObject {
 
   func loadModel(from directory: URL) async {
     if let loadTask {
+      let token = self.generation
       let value = await loadTask.value
-      self.finish(value, generation: self.generation)
+      self.finish(value, generation: token)
       return
     }
     guard let folder = SenseVoiceModelBundle.locate(in: directory) else {
@@ -95,3 +96,4 @@ final class SenseVoiceTranscriptionService: ObservableObject {
       : .text(TranscriptionOutput(text: cleaned, firstWordStart: nil, lastWordEnd: nil))
   }
 }
+

@@ -23,6 +23,14 @@ private enum KeyboardCoreHaptic {
   private static var playerIntensity: Float?
   private static var unavailableError: String?
 
+  static func reset() {
+    self.engine?.stop(completionHandler: nil)
+    self.engine = nil
+    self.player = nil
+    self.playerIntensity = nil
+    self.unavailableError = nil
+  }
+
   /// Prepare the engine and pattern before any key is pressed. Startup is
   /// considerably more expensive than playing an already-compiled transient.
   static func prewarm(strength: Double) {
@@ -31,7 +39,10 @@ private enum KeyboardCoreHaptic {
     do {
       let newEngine = try CHHapticEngine()
       newEngine.playsHapticsOnly = true
-      newEngine.isAutoShutdownEnabled = false
+      newEngine.isAutoShutdownEnabled = true
+      newEngine.resetHandler = {
+        Task { @MainActor in self.reset() }
+      }
       try newEngine.start()
       engine = newEngine
       let intensity = Float(max(0.15, min(1.0, strength)))
@@ -65,7 +76,10 @@ private enum KeyboardCoreHaptic {
       if engine == nil {
         let newEngine = try CHHapticEngine()
         newEngine.playsHapticsOnly = true
-        newEngine.isAutoShutdownEnabled = false
+        newEngine.isAutoShutdownEnabled = true
+        newEngine.resetHandler = {
+          Task { @MainActor in self.reset() }
+        }
         try newEngine.start()
         engine = newEngine
       }
@@ -202,9 +216,20 @@ enum KeyboardHaptics {
     }
   }
 
+  static func suspend() {
+    KeyboardCoreHaptic.reset()
+    FeatureDiagnostics.record(.haptics, .stopped)
+  }
+
   static func prepare() {
-    if SharedSettings().keyboardHapticDriver == .coreHaptics {
-      KeyboardCoreHaptic.prewarm(strength: SharedSettings().keyboardHapticStrength)
+    let settings = SharedSettings()
+    guard settings.keyboardHapticsEnabled else {
+      KeyboardCoreHaptic.reset()
+      return
+    }
+    FeatureDiagnostics.record(.haptics, .started)
+    if settings.keyboardHapticDriver == .coreHaptics {
+      KeyboardCoreHaptic.prewarm(strength: settings.keyboardHapticStrength)
     }
     selection.prepare()
     soft.prepare()
@@ -213,3 +238,4 @@ enum KeyboardHaptics {
     heavy.prepare()
   }
 }
+

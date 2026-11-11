@@ -60,13 +60,12 @@ final class PiPTutorialService: NSObject, ObservableObject {
     }
   }
 
+  private let playbackOwner = UUID()
+
   private func configureAudioSessionForPiP() {
-    guard !SharedSettings().isSessionActive else { return }
-    let session = AVAudioSession.sharedInstance()
-    do {
-      try session.setCategory(.playback, options: .mixWithOthers)
-      try session.setActive(true)
-    } catch { }
+    _ = BackgroundAudioSession.configurePlayback(owner: self.playbackOwner, stop: { [weak self] in
+      self?.stopTutorial()
+    })
   }
 
   private func setupPlayer(url: URL) {
@@ -145,6 +144,7 @@ final class PiPTutorialService: NSObject, ObservableObject {
   }
 
   private func tearDown() {
+    BackgroundAudioSession.releasePlayback(owner: self.playbackOwner)
     guard self.isActive else { return }
     self.possibleObservation?.invalidate()
     self.possibleObservation = nil
@@ -210,3 +210,4 @@ extension PiPTutorialService: AVPictureInPictureControllerDelegate {
     completionHandler(true)
   }
 }
+

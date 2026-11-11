@@ -566,6 +566,11 @@ struct SharedSettings {
     }
   }
 
+  var dictationDestinationEpoch: UUID? {
+    get { self.defaults.string(forKey: "dictationDestinationEpoch").flatMap(UUID.init(uuidString:)) }
+    nonmutating set { self.defaults.set(newValue?.uuidString, forKey: "dictationDestinationEpoch") }
+  }
+
   var dictationSessionToken: String? {
     get { self.defaults.string(forKey: SharedKey.dictationSessionToken) }
     nonmutating set { defaults.set(newValue, forKey: SharedKey.dictationSessionToken) }
@@ -630,4 +635,5 @@ struct SharedSettings {
   }
 
 }
+
 

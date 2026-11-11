@@ -16,7 +16,53 @@ struct LLMResult: Codable, Sendable {
   let text: String
 }
 
+struct LLMJobStatus: Codable, Sendable {
+  let schemaVersion: Int
+  let requestID: UUID
+  let phase: OperationPhase
+}
+
 struct LLMBridge: Sendable {
+
+  static func writeStatus(_ phase: OperationPhase, requestID: UUID) {
+    guard let folder = AppGroup.containerURL?.appendingPathComponent("text-job-status", isDirectory: true)
+    else { return }
+    do {
+      try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+      let status = LLMJobStatus(schemaVersion: 1, requestID: requestID, phase: phase)
+      try JSONEncoder().encode(status).write(
+        to: folder.appendingPathComponent(requestID.uuidString + ".json"),
+        options: [.atomic, .completeFileProtectionUnlessOpen]
+      )
+      let files = (try? FileManager.default.contentsOfDirectory(
+        at: folder, includingPropertiesForKeys: [.contentModificationDateKey]
+      )) ?? []
+      if files.count > 64 {
+        let sorted = files.sorted {
+          ((try? $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast)
+            > ((try? $1.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast)
+        }
+        for file in sorted.dropFirst(64) { try? FileManager.default.removeItem(at: file) }
+      }
+    } catch { FeatureDiagnostics.record(.bridge, .failed) }
+  }
+
+  static func readStatus(matching requestID: UUID) -> LLMJobStatus? {
+    guard let url = AppGroup.containerURL?
+      .appendingPathComponent("text-job-status", isDirectory: true)
+      .appendingPathComponent(requestID.uuidString + ".json"),
+      let bytes = try? Data(contentsOf: url),
+      let status = try? JSONDecoder().decode(LLMJobStatus.self, from: bytes),
+      status.schemaVersion == 1, status.requestID == requestID else { return nil }
+    return status
+  }
+
+  static func clearStatus(matching requestID: UUID) {
+    guard let url = AppGroup.containerURL?
+      .appendingPathComponent("text-job-status", isDirectory: true)
+      .appendingPathComponent(requestID.uuidString + ".json") else { return }
+    try? FileManager.default.removeItem(at: url)
+  }
 
   @discardableResult
   static func writeRequest(_ request: LLMRequest) -> Bool {
@@ -27,6 +73,7 @@ struct LLMBridge: Sendable {
     do {
       let data = try JSONEncoder().encode(request)
       try data.write(to: url, options: [.atomic, .completeFileProtectionUnlessOpen])
+      self.writeStatus(.requested, requestID: request.requestID)
       FeatureDiagnostics.record(.bridge, .queued)
       return true
     } catch {
@@ -54,6 +101,7 @@ struct LLMBridge: Sendable {
       try JSONEncoder().encode(payload).write(
         to: url, options: [.atomic, .completeFileProtectionUnlessOpen]
       )
+      self.writeStatus(.completed, requestID: requestID)
       FeatureDiagnostics.record(.bridge, .queued)
       return true
     } catch {
@@ -75,9 +123,19 @@ struct LLMBridge: Sendable {
     return FileManager.default.fileExists(atPath: url.path)
   }
 
+  static func clearRequest(matching requestID: UUID) {
+    guard self.readRequest()?.requestID == requestID else { return }
+    self.clearRequest()
+  }
+
   static func clearRequest() {
     guard let url = requestFileURL else { return }
     try? FileManager.default.removeItem(at: url)
+  }
+
+  static func clearResult(matching requestID: UUID) {
+    guard self.readResult(matching: requestID) != nil else { return }
+    self.clearResult()
   }
 
   static func clearResult() {
@@ -96,4 +154,5 @@ struct LLMBridge: Sendable {
     AppGroup.containerURL?.appendingPathComponent(resultFileName)
   }
 }
+
 

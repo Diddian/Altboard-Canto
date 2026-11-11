@@ -39,6 +39,8 @@ struct NativeInputModeSwitchKey: UIViewRepresentable {
 
   func updateUIView(_ button: UIButton, context: Context) {
     button.backgroundColor = KeyboardPalette.keyFill
+    button.accessibilityLabel = self.iconName == "globe"
+      ? "System keyboard picker" : "Keyboard and Emoji picker"
     // A dedicated noninteractive child avoids UIKit briefly clearing its
     // UIButton image when the native input-mode picker is activated.
     (button.viewWithTag(Self.iconTag) as? UIImageView)?.image = Self.glyphImage(
@@ -56,3 +58,4 @@ struct NativeInputModeSwitchKey: UIViewRepresentable {
       ?? UIImage()).withTintColor(ink, renderingMode: .alwaysOriginal)
   }
 }
+

@@ -17,7 +17,7 @@ struct VerifyConversationTurns {
       id: UUID(), speaker: .other, audioFileName: good,
       duration: 3.5, targetCode: "yue",
       sourceText: "Merhaba, nasılsın?", translatedText: "你好，你點呀？",
-      detectedLanguageCode: "tr", status: "translated"
+      detectedLanguageCode: "tr", status: .translated
     )
     let encoded = try JSONEncoder().encode([old])
     let decoded = try JSONDecoder().decode([ConversationTurn].self, from: encoded)
@@ -27,3 +27,4 @@ struct VerifyConversationTurns {
     print("Conversation turn policy and preservation: PASS")
   }
 }
+

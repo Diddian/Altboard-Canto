@@ -11,6 +11,7 @@ final class MeetingAudioPlayback: ObservableObject {
   @Published private(set) var position: TimeInterval = 0
   @Published private(set) var duration: TimeInterval = 0
 
+  private let playbackOwner = UUID()
   private var current: MeetingRecord?
   private var player: AVAudioPlayer?
   private var partIndex = 0
@@ -18,6 +19,9 @@ final class MeetingAudioPlayback: ObservableObject {
   private var tick: Timer?
 
   func toggle(_ record: MeetingRecord) {
+    guard BackgroundAudioSession.configurePlayback(owner: self.playbackOwner, stop: { [weak self] in
+      self?.stop()
+    }) else { return }
     if self.recordID != record.id {
       _ = self.open(record, at: 0, autoplay: true)
       return
@@ -44,6 +48,7 @@ final class MeetingAudioPlayback: ObservableObject {
   }
 
   func stop() {
+    BackgroundAudioSession.releasePlayback(owner: self.playbackOwner)
     self.tick?.invalidate()
     self.tick = nil
     self.player?.stop()
@@ -91,8 +96,9 @@ final class MeetingAudioPlayback: ObservableObject {
     self.position = target
     self.duration = total
     if autoplay {
-      try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
-      try? AVAudioSession.sharedInstance().setActive(true)
+      guard BackgroundAudioSession.configurePlayback(owner: self.playbackOwner, stop: { [weak self] in
+        self?.stop()
+      }) else { return false }
     }
     self.isPlaying = autoplay ? audio.play() : false
     self.startTimer()
@@ -135,3 +141,4 @@ final class MeetingAudioPlayback: ObservableObject {
     }
   }
 }
+

@@ -230,7 +230,10 @@ extension SpeechRecognitionService {
         )
         self.currentTranscription = finalOutput
         self.settings.chargeFreeWords(WordCounter.count(finalOutput))
-        TranscriptionBridge.writeTranscription(finalOutput)
+        guard TranscriptionBridge.writeTranscription(finalOutput) else {
+          self.settings.lastDictationOutcome = .processingFailed
+          return
+        }
         deliveredText = finalOutput
         break
       }
@@ -313,4 +316,5 @@ extension SpeechRecognitionService {
     self.historySaveGeneration += 1
   }
 }
+
 

@@ -190,7 +190,9 @@ struct KeyboardView: View {
       .fill(Color(uiColor: KeyboardPalette.backdrop))
       .ignoresSafeArea(edges: .bottom)
     }
-    .sensoryFeedback(.selection, trigger: self.sensoryPulse.count)
+    .sensoryFeedback(trigger: self.sensoryPulse.count) { _, _ in
+      self.keyboardState.keyboardHapticsEnabled ? .selection : nil
+    }
   }
 
   @Environment(\.openURL) private var openURL
@@ -209,5 +211,6 @@ struct KeyboardView: View {
     }
   }
 }
+
 
 

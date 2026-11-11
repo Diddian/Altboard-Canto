@@ -25,6 +25,7 @@ final class ModelDownloadService: ObservableObject {
 
   var eventCancellable: AnyCancellable?
   var enqueueTasks = [ModelVariant: Task<Void, Never>]()
+  var enqueueGenerations = [ModelVariant: UUID]()
 
   var hasUsableModel: Bool {
     self.isDownloaded(SharedSettings().selectedVariant)
@@ -48,7 +49,9 @@ final class ModelDownloadService: ObservableObject {
   }
 
   func selectVariant(_ variant: ModelVariant) {
-    guard !MeetingRecordingCoordinator.shared.isRecording,
+    guard self.modelLoader?.isModelInUse != true,
+          !SharedSettings().isLLMProcessing,
+          !MeetingRecordingCoordinator.shared.isRecording,
           !MeetingRecordingCoordinator.shared.isFinalizing,
           ConversationCoordinator.shared.recordingSide == nil,
           !ConversationCoordinator.shared.processing,
@@ -132,6 +135,7 @@ final class ModelDownloadService: ObservableObject {
   }
 
   func ensureValidSelection() {
+    guard self.modelLoader?.isModelInUse != true, !SharedSettings().isRecording else { return }
     let settings = SharedSettings()
     let current = settings.selectedVariant
     guard !self.isDownloaded(current) else {
@@ -149,7 +153,9 @@ final class ModelDownloadService: ObservableObject {
   }
 
   func startDownload(variant: ModelVariant) {
-    guard !MeetingRecordingCoordinator.shared.isRecording,
+    guard self.modelLoader?.isModelInUse != true,
+          !SharedSettings().isLLMProcessing,
+          !MeetingRecordingCoordinator.shared.isRecording,
           !MeetingRecordingCoordinator.shared.isFinalizing,
           ConversationCoordinator.shared.recordingSide == nil,
           !ConversationCoordinator.shared.processing,
@@ -178,13 +184,16 @@ final class ModelDownloadService: ObservableObject {
     self.variantStates[variant] = .downloading(progress: 0)
     FeatureDiagnostics.record(.speechModel, .queued)
 
+    let generation = UUID()
+    self.enqueueGenerations[variant] = generation
     self.enqueueTasks[variant] = Task {
-      await self.enqueueDownload(variant: variant)
+      await self.enqueueDownload(variant: variant, generation: generation)
     }
   }
 
   func cancelDownload(variant: ModelVariant) {
     FeatureDiagnostics.record(.speechModel, .cancelled)
+    self.enqueueGenerations[variant] = nil
     self.enqueueTasks[variant]?.cancel()
     self.enqueueTasks[variant] = nil
 
@@ -193,14 +202,17 @@ final class ModelDownloadService: ObservableObject {
       downloadType: .stt,
     )
 
-    try? ModelStorageManager.delete(variant)
+    let retained = ModelStorageManager.isDownloaded(variant)
+    if !retained { try? ModelStorageManager.delete(variant) }
 
-    self.variantStates[variant] = .notDownloaded
+    self.variantStates[variant] = retained ? .downloaded : .notDownloaded
     self.removeVariantFromPersistence(variant)
   }
 
   func deleteModel(variant: ModelVariant) {
-    guard !MeetingRecordingCoordinator.shared.isRecording,
+    guard self.modelLoader?.isModelInUse != true,
+          !SharedSettings().isLLMProcessing,
+          !MeetingRecordingCoordinator.shared.isRecording,
           !MeetingRecordingCoordinator.shared.isFinalizing,
           ConversationCoordinator.shared.recordingSide == nil,
           !ConversationCoordinator.shared.processing,
@@ -280,6 +292,7 @@ final class ModelDownloadService: ObservableObject {
   }
 
   func autoSelectIfNeeded(variant: ModelVariant) {
+    guard self.modelLoader?.isModelInUse != true, !SharedSettings().isRecording else { return }
     let settings = SharedSettings()
     if !self.isDownloaded(settings.selectedVariant) {
       settings.selectedVariant = variant
@@ -318,4 +331,5 @@ final class ModelDownloadService: ObservableObject {
     LegacyModelMigration.runIfNeeded()
   }
 }
+
 

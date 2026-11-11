@@ -14,7 +14,7 @@ extension KeyboardViewController {
     ) {
       DispatchQueue.main.async {
         guard let vc = Self.activeInstance else { return }
-        vc.keyboardState.isLLMProcessing = true
+        vc.syncLLMRequestStatus()
       }
     }
 
@@ -32,9 +32,7 @@ extension KeyboardViewController {
     ) {
       DispatchQueue.main.async {
         guard let vc = Self.activeInstance else { return }
-        vc.insertPendingAutoActionFallback()
-        vc.keyboardState.isLLMProcessing = false
-        vc.keyboardState.isProcessing = false
+        vc.syncLLMRequestStatus()
       }
     }
   }
@@ -139,12 +137,6 @@ extension KeyboardViewController {
 
     let language = Self.detectLanguage(from: inputText)
 
-    let settings = SharedSettings()
-    if settings.dictationSessionToken == nil {
-      settings.dictationSessionToken = UUID().uuidString
-      settings.synchronize()
-    }
-
     let request = LLMRequest(
       text: inputText,
       action: action,
@@ -164,6 +156,7 @@ extension KeyboardViewController {
       self.finishLLMInsertion()
       return
     }
+    self.startProcessingTimeout()
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.requestLLMProcessing)
     DiagnosticLog.write("llm/kb: requested \(action.rawValue), text=\(inputText.count) chars")
   }
@@ -187,16 +180,44 @@ extension KeyboardViewController {
   }
 
   func checkForPendingLLMResult() {
+    if self.syncLLMRequestStatus() { return }
     guard LLMBridge.hasResult() else { return }
     guard let result = LLMBridge.readResult(matching: self.llmRequestID),
           !result.isEmpty else {
       FeatureDiagnostics.record(.bridge, .rejected)
       // A response owned by a previous keyboard/request must never enter
       // the currently focused document.
-      LLMBridge.clearResult()
       return
     }
     self.insertLLMResult()
+  }
+
+  @discardableResult
+  func syncLLMRequestStatus() -> Bool {
+    guard let id = self.llmRequestID,
+          let status = LLMBridge.readStatus(matching: id) else { return false }
+    switch status.phase {
+    case .busy, .failed, .rejected, .cancelled:
+      self.insertPendingAutoActionFallback()
+      self.keyboardState.showFinalOutputPreview(
+        status.phase == .busy ? "Text model busy. Try again after the current task."
+          : "Text action unavailable. Your original text is unchanged."
+      )
+      self.finishLLMInsertion()
+      return true
+    case .requested, .accepted, .running:
+      self.keyboardState.isLLMProcessing = true
+    case .completed:
+      break
+    }
+    return false
+  }
+
+  func abandonPendingLLMRequest() {
+    guard self.llmRequestID != nil else { return }
+    self.insertPendingAutoActionFallback()
+    self.keyboardState.showFinalOutputPreview("Text action timed out. Original text retained.")
+    self.finishLLMInsertion()
   }
 
   private static func detectLanguage(from text: String) -> String? {
@@ -232,14 +253,12 @@ extension KeyboardViewController {
           !result.isEmpty else {
       if LLMBridge.hasResult() {
         // A stale response must not end an unrelated, still-active action.
-        LLMBridge.clearResult()
         return
       }
       FeatureDiagnostics.record(.bridge, .unavailable)
       DiagnosticLog.write("llm/kb: notified complete but bridge held no result")
       self.insertPendingAutoActionFallback()
       self.keyboardState.isLLMProcessing = false
-      self.keyboardState.isProcessing = false
       return
     }
     DiagnosticLog.write("llm/kb: inserting \(result.count) chars")
@@ -317,10 +336,13 @@ extension KeyboardViewController {
   }
 
   private func finishLLMInsertion() {
-    LLMBridge.clearResult()
-    LLMBridge.clearRequest()
+    if let id = self.llmRequestID {
+      LLMBridge.clearResult(matching: id)
+      LLMBridge.clearRequest(matching: id)
+      LLMBridge.clearStatus(matching: id)
+    }
+    if !self.keyboardState.isProcessing { self.cancelProcessingTimeout() }
     self.keyboardState.isLLMProcessing = false
-    self.keyboardState.isProcessing = false
     self.pendingAutoActionText = nil
     self.llmOriginalText = ""
     self.llmSelectedText = nil
@@ -371,4 +393,5 @@ extension KeyboardViewController {
     self.navigateLLMHistory(to: self.keyboardState.llmHistoryIndex + 1)
   }
 }
+
 

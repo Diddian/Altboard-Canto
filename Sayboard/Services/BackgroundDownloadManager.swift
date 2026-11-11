@@ -44,7 +44,33 @@ final class BackgroundDownloadManager: NSObject, URLSessionDownloadDelegate, @un
   let lock = NSLock()
   var activeMetadata = [String: DownloadMetadata]()
   var activeTasks = [String: URLSessionDownloadTask]()
+  var installingTasks = Set<String>()
+  var lastFinishedTasks = [String: String]()
+
+  func installationID(_ metadata: DownloadMetadata) -> String {
+    "\(metadata.sessionIdentifier ?? Self.sessionIdentifier):\(metadata.taskIdentifier ?? -1)"
+  }
+
+  func isCurrent(key: String, metadata: DownloadMetadata) -> Bool {
+    guard let current = self.activeMetadata[key] else { return false }
+    return OperationPolicy.sameDownload(
+      task: metadata.taskIdentifier, session: metadata.sessionIdentifier,
+      currentTask: current.taskIdentifier, currentSession: current.sessionIdentifier
+    )
+  }
   var lastProgress = [String: (percent: Int, nanoseconds: UInt64)]()
+
+  func emit(_ event: DownloadEvent, key: String, metadata: DownloadMetadata, terminal: Bool) {
+    DispatchQueue.main.async {
+      self.lock.lock()
+      let current = terminal
+        ? self.lastFinishedTasks[key] == self.installationID(metadata)
+        : self.isCurrent(key: key, metadata: metadata)
+      self.lock.unlock()
+      guard current else { return }
+      self.eventSubject.send(event)
+    }
+  }
 
   static func ownsSession(identifier: String) -> Bool {
     identifier == Self.sessionIdentifier || identifier == Self.upgradeSessionIdentifier
@@ -78,6 +104,7 @@ final class BackgroundDownloadManager: NSObject, URLSessionDownloadDelegate, @un
     defer { self.lock.unlock() }
 
     let existingKey = self.metadataKey(for: metadata)
+    self.lastFinishedTasks[existingKey] = nil
     self.activeTasks[existingKey]?.cancel()
 
     var request = URLRequest(url: metadata.sourceURL)
@@ -101,6 +128,7 @@ final class BackgroundDownloadManager: NSObject, URLSessionDownloadDelegate, @un
   func cancelDownload(variantRawValue: String, downloadType: DownloadType) {
     self.lock.lock()
     let key = "\(downloadType.rawValue)/\(variantRawValue)"
+    self.lastFinishedTasks[key] = nil
     self.activeMetadata.removeValue(forKey: key)
     let task = self.activeTasks.removeValue(forKey: key)
     self.lastProgress.removeValue(forKey: key)
@@ -166,6 +194,9 @@ final class BackgroundDownloadManager: NSObject, URLSessionDownloadDelegate, @un
       return
     }
 
+    self.lock.lock()
+    self.installingTasks.insert(self.installationID(metadata))
+    self.lock.unlock()
     self.processingQueue.async {
       self.processDownloadedFile(tempURL: tempURL, key: key, metadata: metadata)
     }
@@ -229,7 +260,7 @@ final class BackgroundDownloadManager: NSObject, URLSessionDownloadDelegate, @un
       variantRawValue: metadata.variantRawValue,
       fraction: fraction,
     )
-    DispatchQueue.main.async { self.eventSubject.send(event) }
+    self.emit(event, key: key, metadata: metadata, terminal: false)
   }
 
   func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) {
@@ -276,6 +307,11 @@ final class BackgroundDownloadManager: NSObject, URLSessionDownloadDelegate, @un
 
   func completeWithFailure(key: String, metadata: DownloadMetadata, error: Error) {
     self.lock.lock()
+    guard self.isCurrent(key: key, metadata: metadata) else {
+      self.lock.unlock()
+      return
+    }
+    self.lastFinishedTasks[key] = self.installationID(metadata)
     self.activeMetadata.removeValue(forKey: key)
     self.activeTasks.removeValue(forKey: key)
     self.lastProgress.removeValue(forKey: key)
@@ -287,7 +323,7 @@ final class BackgroundDownloadManager: NSObject, URLSessionDownloadDelegate, @un
       variantRawValue: metadata.variantRawValue,
       error: error,
     )
-    DispatchQueue.main.async { self.eventSubject.send(event) }
+    self.emit(event, key: key, metadata: metadata, terminal: true)
   }
 
   func persistMetadata() {
@@ -373,3 +409,4 @@ final class BackgroundDownloadManager: NSObject, URLSessionDownloadDelegate, @un
   }
 
 }
+

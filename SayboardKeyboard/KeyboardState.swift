@@ -48,6 +48,7 @@ final class KeyboardState: ObservableObject {
   @Published var voiceProcessingProgress: VoiceProcessingProgress?
   @Published var needsInputModeSwitchKey = false
   @Published var keyboardHapticsEnabled = true
+  @Published var documentEpoch = UUID()
   @Published var textContextRevision = 0
   @Published var keyboardAppearanceRevision = 0
   // Only a confirmed missing-row probe forces a new UIKit touch-row tree.
@@ -157,7 +158,6 @@ final class KeyboardState: ObservableObject {
     self.isSessionActive = self.settings.isSessionActive
     if self.isRecording, !self.isSessionActive {
       self.isRecording = false
-      self.settings.isRecording = false
     }
     self.isProcessing = false
     self.voiceProcessingProgress = nil
@@ -182,7 +182,6 @@ final class KeyboardState: ObservableObject {
       self.settings.isTranslationMode = false
     }
     self.hasUsableLLMModel = self.settings.hasUsableLLMModel
-    self.isLLMProcessing = self.settings.isLLMProcessing
     self.llmEnabled = self.settings.llmEnabled
     self.llmCustomPrompts = self.settings.llmCustomPrompts
     self.defaultLLMActionSelection = self.settings.defaultLLMActionSelection
@@ -306,4 +305,5 @@ private final class DisplayLinkTarget: NSObject {
 
   private let callback: () -> Bool
 }
+
 

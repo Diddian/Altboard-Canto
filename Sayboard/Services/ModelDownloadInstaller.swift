@@ -2,7 +2,8 @@ import Foundation
 import ZIPFoundation
 
 enum ModelDownloadInstaller {
-  static func install(source: URL, destination: URL, ggufFileName: String?) throws {
+  static func install(source: URL, destination: URL, ggufFileName: String?,
+                      promote: ((URL) throws -> Void)? = nil) throws {
     let fm = FileManager.default
     let staging = fm.temporaryDirectory
       .appendingPathComponent("model-install-" + UUID().uuidString, isDirectory: true)
@@ -25,6 +26,15 @@ enum ModelDownloadInstaller {
     } else {
       try fm.unzipItem(at: source, to: staging)
     }
+    if let promote {
+      try promote(staging)
+    } else {
+      try self.promote(staging: staging, destination: destination)
+    }
+  }
+
+  static func promote(staging: URL, destination: URL) throws {
+    let fm = FileManager.default
     try fm.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
     if fm.fileExists(atPath: destination.path) {
       _ = try fm.replaceItemAt(destination, withItemAt: staging)
@@ -37,3 +47,4 @@ enum ModelDownloadInstaller {
     try? protectedURL.setResourceValues(values)
   }
 }
+

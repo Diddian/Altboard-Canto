@@ -36,7 +36,7 @@ extension SpeechRecognitionService {
         hasAttemptedFirst = true
         self.liveDictationStatus = "Transcribing live segment"
         let started = CFAbsoluteTimeGetCurrent()
-        let result = await self.qwen3Service.transcribe(audioSamples: samples)
+        let result = await self.transcribeSamples(samples)
         guard !Task.isCancelled, self.isRecording else { break }
         if case .text(let output) = result {
           // The native Qwen decoder may prefix each chunk with a language
@@ -83,3 +83,4 @@ extension SpeechRecognitionService {
     self.liveDictationStatus = "Stopped"
   }
 }
+

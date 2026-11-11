@@ -256,6 +256,19 @@ struct AlphabeticKeyboardLayout: View {
     .onChange(of: self.showsEmojiPage) { _, _ in
       self.syncExpectedLetterRows()
     }
+    .onChange(of: self.keyboardState.documentEpoch) { _, _ in
+      self.clearComposition()
+      self.clearShapeComposition()
+      self.latinRefreshTask?.cancel()
+      self.cantoneseRefreshTask?.cancel()
+      self.cursorRefreshTask?.cancel()
+      self.swipeAlternatives.removeAll()
+      self.nextCantoneseWords.removeAll()
+      self.nextLatinWords.removeAll()
+      self.latinSuggestions.removeAll()
+      self.predictionAnchor = nil
+      self.swipeTrail.clear()
+    }
     .onChange(of: self.keyboardState.keyboardAppearanceRevision) { _, _ in
       if self.showsEmojiPage {
         self.showsEmojiPage = false
@@ -1776,4 +1789,5 @@ private final class SwipeTrailDrawingView: UIView {
     }
   }
 }
+
 

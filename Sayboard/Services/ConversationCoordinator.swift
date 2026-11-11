@@ -7,7 +7,7 @@ import os
 @MainActor
 final class ConversationCoordinator: ObservableObject {
   static let shared = ConversationCoordinator()
-  static let maximumTurnSeconds: TimeInterval = 25
+  static let maximumTurnSeconds = ConversationTurnPolicy.maximumCaptureSeconds
 
   @Published private(set) var turns: [ConversationTurn] = []
   @Published private(set) var recordingSide: ConversationSpeaker?
@@ -27,6 +27,7 @@ final class ConversationCoordinator: ObservableObject {
   private var sessionObservation: AnyCancellable?
   private var startedAt: Date?
   private var activeID: UUID?
+  private var draftStorageReadable = true
 
   private init() { self.restoreDraft() }
 
@@ -48,8 +49,11 @@ final class ConversationCoordinator: ObservableObject {
       self.status = "Choose a valid output language code before recording."
       return
     }
-    guard self.recordingSide == nil, !self.processing,
+    guard self.draftStorageReadable, !LocalUserDataStore.isExporting,
+          self.recordingSide == nil, !self.processing,
           !service.isRecording, !service.isStopping,
+          service.llmCoordinator?.isProcessing != true,
+          MeetingRecordingCoordinator.shared.translatingRecordID == nil,
           !MeetingRecordingCoordinator.shared.isRecording,
           !MeetingRecordingCoordinator.shared.isFinalizing,
           service.session.captureOwner == nil,
@@ -66,6 +70,17 @@ final class ConversationCoordinator: ObservableObject {
       let format = service.session.audioEngine.inputNode.outputFormat(forBus: 0)
       let identifier = UUID()
       let name = identifier.uuidString + ".caf"
+      self.activeID = identifier
+      self.turns.append(ConversationTurn(
+        id: identifier, speaker: side, audioFileName: name, duration: 0,
+        targetCode: PreferredVoiceLanguages.currentCode(
+          target: options.target, custom: options.customLanguage
+        ), sourceText: "", translatedText: nil, detectedLanguageCode: nil, status: .recording
+      ))
+      guard self.persistDraft() else {
+        self.turns.removeAll { $0.id == identifier }
+        throw ConversationError.storage
+      }
       guard self.recorder.startRecording(
         fileName: name, format: format, directory: folder
       ) != nil else {
@@ -82,7 +97,6 @@ final class ConversationCoordinator: ObservableObject {
         }
         throw error
       }
-      self.activeID = identifier
       self.captureOptions = options
       self.recordingSide = side
       self.elapsed = 0
@@ -137,6 +151,11 @@ final class ConversationCoordinator: ObservableObject {
         await self.stop(using: service)
       }
     } catch {
+      if let id = self.activeID {
+        self.turns.removeAll { $0.id == id }
+        _ = self.persistDraft()
+      }
+      self.activeID = nil
       if self.sessionStartedHere { service.session.endSession() }
       self.status = "Unable to start recording. Check microphone and storage."
       FeatureDiagnostics.record(.conversation, .failed)
@@ -156,6 +175,11 @@ final class ConversationCoordinator: ObservableObject {
     self.sessionObservation = nil
     service.session.endCapture(owner: .conversation)
     let saved = self.recorder.stopRecording()
+    if let saved, let index = self.turns.firstIndex(where: { $0.id == identifier }) {
+      self.turns[index].duration = saved.duration
+      self.turns[index].status = .processing
+      _ = self.persistDraft()
+    }
     let samples = self.accumulator.consumeAll()
     self.accumulator.reset()
     self.liveTask?.cancel()
@@ -177,18 +201,13 @@ final class ConversationCoordinator: ObservableObject {
     }
     let requested = self.captureOptions ?? Self.defaultOutput(for: side)
     self.captureOptions = nil
-    let code = PreferredVoiceLanguages.currentCode(
-      target: requested.target, custom: requested.customLanguage
-    )
-    let index = self.turns.count
-    self.turns.append(ConversationTurn(
-      id: identifier, speaker: side,
-      audioFileName: saved.url.lastPathComponent, duration: saved.duration,
-      targetCode: code, sourceText: "", translatedText: nil,
-      detectedLanguageCode: nil, status: "processing"
-    ))
+    guard let index = self.turns.firstIndex(where: { $0.id == identifier }) else {
+      self.processing = false
+      return
+    }
+    self.turns[index].duration = saved.duration
+    self.turns[index].status = .processing
     guard self.persistDraft() else {
-      self.turns.removeLast()
       self.status = "Could not save the turn. Audio file retained."
       self.processing = false
       FeatureDiagnostics.record(.conversation, .failed)
@@ -210,7 +229,7 @@ final class ConversationCoordinator: ObservableObject {
       await service.loadModelIfAvailable(downloadService: downloads)
     }
     guard service.activeLoadState == .loaded else {
-      self.turns[index].status = "speechFailed"
+      self.turns[index].status = .speechFailed
       self.status = "Speech model unavailable. Audio saved; retry this turn."
       _ = self.persistDraft()
       FeatureDiagnostics.record(.conversation, .unavailable)
@@ -224,7 +243,7 @@ final class ConversationCoordinator: ObservableObject {
       audioDurationMs: samples.count / 16, residentMB: ProcessFootprint.residentMB()
     )
     guard case .text(let output) = result else {
-      self.turns[index].status = "speechFailed"
+      self.turns[index].status = .speechFailed
       self.status = "Recognition failed. Original audio was retained."
       _ = self.persistDraft()
       FeatureDiagnostics.record(.conversation, .failed)
@@ -233,7 +252,7 @@ final class ConversationCoordinator: ObservableObject {
     let source = TextSanitizer.sanitize(output.text)
       .trimmingCharacters(in: .whitespacesAndNewlines)
     guard !source.isEmpty else {
-      self.turns[index].status = "noSpeech"
+      self.turns[index].status = .noSpeech
       self.status = "No speech detected. Audio retained."
       _ = self.persistDraft()
       FeatureDiagnostics.record(.conversation, .noSpeech)
@@ -243,20 +262,20 @@ final class ConversationCoordinator: ObservableObject {
     identifier.processString(source)
     self.turns[index].sourceText = source
     self.turns[index].detectedLanguageCode = identifier.dominantLanguage?.rawValue
-    self.turns[index].status = "transcribed"
+    self.turns[index].status = .transcribed
     _ = self.persistDraft()
     let coordinator = service.llmCoordinator
     let hasTextModel = coordinator?.downloadService?.hasUsableModel == true
     guard hasTextModel, let coordinator else {
       if options.target == .original {
         // Same-language output must remain usable without a text model.
-        self.turns[index].status = "original"
+        self.turns[index].status = .original
         self.status = "Transcript saved in original language"
         _ = self.persistDraft()
         FeatureDiagnostics.record(.conversation, .fallback)
         return
       }
-      self.turns[index].status = "translationFailed"
+      self.turns[index].status = .translationFailed
       self.status = "Text Model missing. Original saved; translate again after download."
       _ = self.persistDraft()
       FeatureDiagnostics.record(.conversation, .unavailable)
@@ -278,18 +297,18 @@ final class ConversationCoordinator: ObservableObject {
     }
 
     if options.target == .original {
-      self.turns[index].status = "original"
+      self.turns[index].status = .original
       self.status = "Transcript saved in original language"
       _ = self.persistDraft()
       return
     }
     if let translation, !translation.isEmpty {
       self.turns[index].translatedText = translation
-      self.turns[index].status = "translated"
+      self.turns[index].status = .translated
       self.status = "Translation ready"
       FeatureDiagnostics.record(.conversation, .completed)
     } else {
-      self.turns[index].status = "translationFailed"
+      self.turns[index].status = .translationFailed
       self.status = "Translation failed. Original saved; retry this turn."
       FeatureDiagnostics.record(.conversation, .failed)
     }
@@ -297,7 +316,13 @@ final class ConversationCoordinator: ObservableObject {
   }
 
   func retry(_ turnID: UUID, using service: SpeechRecognitionService) async {
-    guard !self.processing, self.recordingSide == nil,
+    guard !LocalUserDataStore.isExporting,
+          !service.isRecording, !service.isStopping,
+          !MeetingRecordingCoordinator.shared.isRecording,
+          !MeetingRecordingCoordinator.shared.isFinalizing,
+          MeetingRecordingCoordinator.shared.translatingRecordID == nil,
+          service.llmCoordinator?.isProcessing != true,
+          !self.processing, self.recordingSide == nil,
           let index = self.turns.firstIndex(where: { $0.id == turnID })
     else { return }
     let turn = self.turns[index]
@@ -316,7 +341,7 @@ final class ConversationCoordinator: ObservableObject {
       )
       if let output, !output.isEmpty {
         self.turns[index].translatedText = output
-        self.turns[index].status = "translated"
+        self.turns[index].status = .translated
         self.status = "Translation ready"
       } else {
         self.status = "Translation still unavailable. Original saved."
@@ -350,12 +375,22 @@ final class ConversationCoordinator: ObservableObject {
     return true
   }
 
-  func discardDraft() {
-    guard self.recordingSide == nil, !self.processing else { return }
-    if let folder = Self.folder { try? FileManager.default.removeItem(at: folder) }
+  @discardableResult
+  func discardDraft() -> Bool {
+    guard self.recordingSide == nil, !self.processing else { return false }
+    if let folder = Self.folder, FileManager.default.fileExists(atPath: folder.path) {
+      do { try FileManager.default.removeItem(at: folder) }
+      catch {
+        self.status = "Could not clear the conversation. Saved draft retained."
+        FeatureDiagnostics.record(.conversation, .failed)
+        return false
+      }
+    }
     self.turns = []
+    self.draftStorageReadable = true
     self.status = "Conversation cleared"
     FeatureDiagnostics.record(.conversation, .cancelled)
+    return true
   }
 
   private func startLivePreview(using service: SpeechRecognitionService) {
@@ -424,7 +459,7 @@ final class ConversationCoordinator: ObservableObject {
     guard let folder = Self.folder else { return false }
     do {
       try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-      try JSONEncoder().encode(self.turns).write(
+      try JSONEncoder().encode(ConversationDraft(schemaVersion: 1, turns: self.turns)).write(
         to: folder.appendingPathComponent("turns.json"),
         options: [.atomic, .completeFileProtectionUnlessOpen]
       )
@@ -436,12 +471,46 @@ final class ConversationCoordinator: ObservableObject {
   }
 
   private func restoreDraft() {
-    guard let file = Self.folder?.appendingPathComponent("turns.json"),
-          let data = try? Data(contentsOf: file),
-          let restored = try? JSONDecoder().decode([ConversationTurn].self, from: data)
-    else { return }
-    self.turns = restored
-    self.status = "Previous conversation restored. Use ⋯ to save it as a Meeting or clear it."
+    guard let folder = Self.folder else { return }
+    let data = try? Data(contentsOf: folder.appendingPathComponent("turns.json"))
+    if let data {
+      if let draft = try? JSONDecoder().decode(ConversationDraft.self, from: data),
+         draft.schemaVersion == 1 {
+        self.turns = draft.turns
+      } else if let old = try? JSONDecoder().decode([ConversationTurn].self, from: data) {
+        self.turns = old
+      } else {
+        self.draftStorageReadable = false
+        self.status = "Saved conversation could not be read. Original files retained."
+        FeatureDiagnostics.record(.conversation, .failed)
+        return
+      }
+    }
+    for index in self.turns.indices where self.turns[index].status == .recording
+        || self.turns[index].status == .processing {
+      self.turns[index].status = .interrupted
+    }
+    let audio = folder.appendingPathComponent("audio", isDirectory: true)
+    let files = (try? FileManager.default.contentsOfDirectory(at: audio,
+      includingPropertiesForKeys: nil)) ?? []
+    for file in files where ConversationTurnPolicy.validAudioFileName(file.lastPathComponent) {
+      guard let id = UUID(uuidString: file.deletingPathExtension().lastPathComponent),
+            let recording = try? AVAudioFile(forReading: file),
+            recording.processingFormat.sampleRate > 0 else { continue }
+      let duration = Double(recording.length) / recording.processingFormat.sampleRate
+      if let index = self.turns.firstIndex(where: { $0.id == id }) {
+        if self.turns[index].duration == 0 { self.turns[index].duration = duration }
+      } else {
+        self.turns.append(ConversationTurn(
+          id: id, speaker: .me, audioFileName: file.lastPathComponent, duration: duration,
+          targetCode: "", sourceText: "", translatedText: nil,
+          detectedLanguageCode: nil, status: .interrupted
+        ))
+      }
+    }
+    guard !self.turns.isEmpty else { return }
+    _ = self.persistDraft()
+    self.status = "Previous conversation restored. Retry unfinished turns or save as a Meeting."
     FeatureDiagnostics.record(.conversation, .fallback)
   }
 
@@ -449,7 +518,7 @@ final class ConversationCoordinator: ObservableObject {
   private static func readAudio(at url: URL) -> [Float]? {
     guard ConversationTurnPolicy.validAudioFileName(url.lastPathComponent),
           let file = try? AVAudioFile(forReading: url),
-          file.length <= AVAudioFramePosition(25 * file.processingFormat.sampleRate)
+          file.length <= AVAudioFramePosition(ConversationTurnPolicy.maximumRecoverySeconds * file.processingFormat.sampleRate)
     else { return nil }
     let format = file.processingFormat
     let destination = AVAudioFormat(
@@ -483,3 +552,4 @@ final class ConversationCoordinator: ObservableObject {
     case storage
   }
 }
+

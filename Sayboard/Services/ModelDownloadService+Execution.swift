@@ -21,17 +21,25 @@ extension ModelDownloadService {
       }
   }
 
-  func enqueueDownload(variant: ModelVariant) async {
+  func enqueueDownload(variant: ModelVariant, generation: UUID) async {
+    defer {
+      if self.enqueueGenerations[variant] == generation {
+        self.enqueueTasks[variant] = nil
+        self.enqueueGenerations[variant] = nil
+      }
+    }
     if variant.engine == .qwen3 || variant.engine == .senseVoice {
       do {
         if variant.engine == .senseVoice {
           try await SenseVoiceModelDownloader.download { [weak self] fraction in
-            guard let self, self.enqueueTasks[variant] != nil else { return }
+            guard let self, self.enqueueGenerations[variant] == generation,
+                  !Task.isCancelled else { return }
             self.variantStates[variant] = .downloading(progress: min(fraction * 0.95, 0.95))
           }
         } else {
           try await QwenHubDownloader.download(variant: variant) { [weak self] fraction in
-            guard let self, self.enqueueTasks[variant] != nil else { return }
+            guard let self, self.enqueueGenerations[variant] == generation,
+                  !Task.isCancelled else { return }
             guard case .downloading = self.state(for: variant) else { return }
             self.variantStates[variant] = .downloading(
               progress: min(max(fraction, 0) * Self.downloadProgressCeiling, Self.downloadProgressCeiling)
@@ -44,6 +52,7 @@ extension ModelDownloadService {
         }
         // Use the same preparing-model progress phase as every other model.
         let modelReady = await self.loadModelAfterDownload(variant: variant)
+        guard !Task.isCancelled, self.enqueueGenerations[variant] == generation else { return }
         guard modelReady else {
           self.removeVariantFromPersistence(variant)
           self.enqueueTasks[variant] = nil
@@ -54,6 +63,7 @@ extension ModelDownloadService {
         self.removeVariantFromPersistence(variant)
         self.autoSelectIfNeeded(variant: variant)
       } catch {
+        guard self.enqueueGenerations[variant] == generation else { return }
         FeatureDiagnostics.record(.speechModel, Task.isCancelled ? .cancelled : .failed)
         self.variantStates[variant] = Task.isCancelled ? .notDownloaded
           : .error(message: "Speech model download failed: \(error.localizedDescription)")
@@ -86,8 +96,11 @@ extension ModelDownloadService {
         sizeBytes: entry.sizeBytes,
       )
 
+      try Task.checkCancellation()
+      guard self.enqueueGenerations[variant] == generation else { return }
       BackgroundDownloadManager.shared.enqueueDownload(metadata: metadata)
     } catch {
+      guard self.enqueueGenerations[variant] == generation else { return }
       FeatureDiagnostics.record(.speechModel, .failed)
       self.variantStates[variant] = .error(message: localizedDownloadError(error))
       self.removeVariantFromPersistence(variant)
@@ -110,6 +123,7 @@ extension ModelDownloadService {
       return false
     }
 
+    if modelLoader.isModelInUse { return true }
     let ceiling = Self.downloadProgressCeiling
     self.variantStates[variant] = .downloading(progress: ceiling)
 
@@ -127,13 +141,8 @@ extension ModelDownloadService {
     animationTask.cancel()
 
     if !loaded {
-      FeatureDiagnostics.record(.speechModel, .failed)
-      try? ModelStorageManager.delete(variant)
-      self.variantStates[variant] = .error(
-        message: "Model failed to load. Tap Retry to try again."
-      )
-      self.removeVariantFromPersistence(variant)
-      return false
+      // Verified files remain downloaded; memory and worker availability are transient.
+      FeatureDiagnostics.record(.speechModel, .fallback)
     }
     return true
   }
@@ -229,3 +238,4 @@ private func isOutOfSpaceError(_ error: Error) -> Bool {
 
   return matches(error, depth: 0)
 }
+

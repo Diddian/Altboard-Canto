@@ -36,6 +36,37 @@ enum AudioSessionError: LocalizedError {
 @MainActor
 final class BackgroundAudioSession: ObservableObject {
 
+  private static weak var activeSession: BackgroundAudioSession?
+  private static var playbackOwner: UUID?
+  private static var stopPlayback: (@MainActor () -> Void)?
+
+  static func configurePlayback(owner: UUID, stop: @escaping @MainActor () -> Void) -> Bool {
+    guard self.activeSession?.captureOwner == nil else {
+      FeatureDiagnostics.record(.speechAudio, .blocked)
+      return false
+    }
+    if self.playbackOwner != owner { self.stopPlayback?() }
+    self.playbackOwner = owner
+    self.stopPlayback = stop
+    guard self.activeSession?.isSessionActive != true else { return true }
+    do {
+      let audio = AVAudioSession.sharedInstance()
+      try audio.setCategory(.playback, mode: .default)
+      try audio.setActive(true)
+      return true
+    } catch {
+      self.releasePlayback(owner: owner)
+      FeatureDiagnostics.record(.speechAudio, .failed)
+      return false
+    }
+  }
+
+  static func releasePlayback(owner: UUID) {
+    guard self.playbackOwner == owner else { return }
+    self.playbackOwner = nil
+    self.stopPlayback = nil
+  }
+
   @Published private(set) var isSessionActive = false
   @Published private(set) var captureOwner: UnifiedCaptureOwner?
   private(set) var hasRecordedThisSession = false
@@ -84,6 +115,7 @@ final class BackgroundAudioSession: ObservableObject {
       DictationBreadcrumb.record("audio: session activation failed; resources released")
       throw error
     }
+    Self.activeSession = self
     self.isSessionActive = true
     self.settings.isSessionActive = true
     self.settings.mainAppHeartbeat = CFAbsoluteTimeGetCurrent()
@@ -113,6 +145,7 @@ final class BackgroundAudioSession: ObservableObject {
     let audioSession = AVAudioSession.sharedInstance()
     try? audioSession.setActive(false, options: .notifyOthersOnDeactivation)
 
+    if Self.activeSession === self { Self.activeSession = nil }
     self.isSessionActive = false
     self.settings.isSessionActive = false
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.sessionEnded)
@@ -133,6 +166,9 @@ final class BackgroundAudioSession: ObservableObject {
       FeatureDiagnostics.record(.speechAudio, .blocked)
       throw AudioSessionError.alreadyCapturing
     }
+    Self.stopPlayback?()
+    Self.stopPlayback = nil
+    Self.playbackOwner = nil
     try self.activateTap(accumulator: accumulator, recorder: recorder)
     self.captureOwner = owner
     FeatureDiagnostics.record(.speechAudio, .started)
@@ -375,4 +411,5 @@ final class BackgroundAudioSession: ObservableObject {
     }
   }
 }
+
 

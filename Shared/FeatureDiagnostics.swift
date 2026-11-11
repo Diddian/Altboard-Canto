@@ -9,7 +9,7 @@ import Glibc
 /// Do not accept text, paths, host identifiers, prompts or typed characters.
 enum FeatureDiagnostics {
   enum Area: String, Sendable {
-    case speech, speechAudio, speechDecode, speechFinalization, liveDictation, voiceOutput, aiActions, speechModel, textModel
+    case speech, speechAudio, speechDecode, speechFinalization, liveDictation, voiceOutput, aiActions, speechModel, textModel, keyboardGlobe, haptics
     case meeting, meetingTranslation, conversation, data, language, swipe, chineseInput, bridge, keyboardRender, keyboardEmoji, appStartup
   }
 
@@ -23,6 +23,8 @@ enum FeatureDiagnostics {
 
   private struct Entry: Codable, Sendable {
     let schemaVersion: Int
+    let operationID: String?
+    let phase: OperationPhase?
     let timestampMs: Int64
     let process: String
     let area: String
@@ -51,11 +53,14 @@ enum FeatureDiagnostics {
   static func record(
     _ area: Area, _ event: Event, durationMs: Int? = nil,
     speechEngine: SpeechEngine? = nil, audioDurationMs: Int? = nil, residentMB: Int? = nil,
-    failureReason: FailureReason? = nil
+    failureReason: FailureReason? = nil, operationID: String? = nil,
+    phase: OperationPhase? = nil
   ) {
     #if !APPSTORE
     let entry = Entry(
-      schemaVersion: 2,
+      schemaVersion: 3,
+      operationID: operationID.flatMap { UUID(uuidString: $0)?.uuidString },
+      phase: phase,
       timestampMs: Int64(Date().timeIntervalSince1970 * 1_000),
       process: Bundle.main.bundleURL.pathExtension == "appex" ? "keyboard" : "app",
       area: area.rawValue, event: event.rawValue,
@@ -159,7 +164,7 @@ enum FeatureDiagnostics {
     } ?? [:]
     let featureEvents = entries()
     let payload: [String: Any] = [
-      "schemaVersion": 2,
+      "schemaVersion": 3,
       "exportedAtMs": Int64(Date().timeIntervalSince1970 * 1_000),
       "build": Bundle.main.infoDictionary?["AltboardBuildSHA"] as? String ?? "unknown",
       "privacy": "No typed text, host content, touch paths, audio, transcripts or credentials",
@@ -199,4 +204,5 @@ enum FeatureDiagnostics {
     KeyboardLifecycleTrace.clear()
   }
 }
+
 

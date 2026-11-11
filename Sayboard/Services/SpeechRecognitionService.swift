@@ -8,6 +8,7 @@ import Darwin
 
 @MainActor
 protocol ModelLoading: AnyObject {
+  var isModelInUse: Bool { get }
   func loadModel(variant: ModelVariant, from url: URL) async -> Bool
 }
 
@@ -38,6 +39,28 @@ final class SpeechRecognitionService: ObservableObject {
   let settings = SharedSettings()
   let accumulator = AudioBufferAccumulator()
   let audioRecorder = AudioRecorder()
+  private(set) var activeDictationToken: String?
+  private(set) var speechWorkers = 0
+  private var modelLoadsInFlight = 0
+  private var cancellationTask: Task<Void, Never>?
+
+  var canBeginTextWork: Bool {
+    OperationPolicy.canBeginTextWork(
+      capturing: self.session.captureOwner != nil || self.isRecording,
+      speechWorkers: self.speechWorkers + self.modelLoadsInFlight
+    )
+  }
+
+  var isModelInUse: Bool {
+    self.isRecording || self.isStopping || self.speechWorkers > 0 || self.modelLoadsInFlight > 0
+      || self.llmCoordinator?.isProcessing == true
+      || MeetingRecordingCoordinator.shared.isRecording
+      || MeetingRecordingCoordinator.shared.isFinalizing
+      || MeetingRecordingCoordinator.shared.translatingRecordID != nil
+      || ConversationCoordinator.shared.recordingSide != nil
+      || ConversationCoordinator.shared.processing
+  }
+
   var currentTranscription = ""
   @Published var currentRawTranscription = ""
   var recordingSpokenLanguages = [String]()
@@ -69,11 +92,14 @@ final class SpeechRecognitionService: ObservableObject {
     guard !self.settings.dictationCancellationRequested else { return }
     let micAuth = self.settings.isMicrophoneAuthorized
 
-    guard !self.isRecording, !self.isStopping,
+    guard !LocalUserDataStore.isExporting,
+          !self.isRecording, !self.isStopping,
           !MeetingRecordingCoordinator.shared.isRecording,
           !MeetingRecordingCoordinator.shared.isFinalizing,
           ConversationCoordinator.shared.recordingSide == nil,
-          !ConversationCoordinator.shared.processing else {
+          !ConversationCoordinator.shared.processing,
+          MeetingRecordingCoordinator.shared.translatingRecordID == nil,
+          self.llmCoordinator?.isProcessing != true, self.speechWorkers == 0 else {
       return
     }
     guard micAuth else {
@@ -91,6 +117,7 @@ final class SpeechRecognitionService: ObservableObject {
     if self.settings.dictationSessionToken == nil {
       self.settings.dictationSessionToken = UUID().uuidString
     }
+    self.activeDictationToken = self.settings.dictationSessionToken
     TranscriptionBridge.clearTranscription()
     TranscriptionBridge.clearVoiceProgress()
     ExperimentalLiveTranscription.clear()
@@ -126,7 +153,8 @@ final class SpeechRecognitionService: ObservableObject {
     }
 
     self.isRecording = true
-    FeatureDiagnostics.record(.speech, .started)
+    FeatureDiagnostics.record(.speech, .started,
+      operationID: self.activeDictationToken, phase: .running)
     self.settings.isRecording = true
     self.settings.recordingStartedAt = Date().timeIntervalSinceReferenceDate
     self.armMaxDurationTimer()
@@ -216,10 +244,17 @@ final class SpeechRecognitionService: ObservableObject {
       return
     }
     self.isRecording = false
-    FeatureDiagnostics.record(.speech, .stopped)
+    FeatureDiagnostics.record(.speech, .stopped,
+      operationID: self.activeDictationToken, phase: .accepted)
     self.settings.recordingStartedAt = 0
     self.isStopping = true
-    let finalizationToken = self.settings.dictationSessionToken
+    let finalizationToken = self.activeDictationToken
+    defer {
+      if self.activeDictationToken == finalizationToken {
+        self.isStopping = false
+        self.activeDictationToken = nil
+      }
+    }
     let finalizationStartedAt = CFAbsoluteTimeGetCurrent()
     MicrophoneHoldStopIntent.clear(defaults: self.settings.defaults)
     TranscriptionBridge.writeVoiceProgress(.stoppingAudio)
@@ -283,12 +318,17 @@ final class SpeechRecognitionService: ObservableObject {
   }
 
   func cancelRecording() {
-    guard !MeetingRecordingCoordinator.shared.isRecording,
-          !MeetingRecordingCoordinator.shared.isFinalizing else { return }
-    FeatureDiagnostics.record(.speech, .cancelled)
+    guard (self.isRecording || self.isStopping),
+          self.session.captureOwner == nil || self.session.captureOwner == .dictation,
+          !MeetingRecordingCoordinator.shared.isRecording,
+          !MeetingRecordingCoordinator.shared.isFinalizing,
+          ConversationCoordinator.shared.recordingSide == nil else { return }
+    FeatureDiagnostics.record(.speech, .cancelled,
+      operationID: self.activeDictationToken, phase: .cancelled)
     MicrophoneHoldStopIntent.clear(defaults: self.settings.defaults)
     self.liveDictationStatus = "Cancelled"
-    self.experimentalLiveTask?.cancel()
+    let cancelledLive = self.experimentalLiveTask
+    cancelledLive?.cancel()
     self.experimentalLiveTask = nil
     ExperimentalLiveTranscription.clear()
     self.cancelMaxDurationTimer()
@@ -299,11 +339,23 @@ final class SpeechRecognitionService: ObservableObject {
     self.session.endSession()
     self.accumulator.reset()
     self.isRecording = false
-    self.isStopping = false
+    self.isStopping = true
+    let cancelledToken = self.activeDictationToken
+    self.cancellationTask = Task { @MainActor [weak self] in
+      await cancelledLive?.value
+      guard let self, self.activeDictationToken == cancelledToken else { return }
+      self.activeDictationToken = nil
+      self.isStopping = false
+      self.cancellationTask = nil
+    }
     self.settings.isRecording = false
     self.settings.recordingStartedAt = 0
     self.settings.keyboardRequestedDictation = false
     self.settings.dictationCancellationRequested = true
+    if let delivery = TranscriptionBridge.readDelivery(),
+       delivery.sessionToken == cancelledToken {
+      TranscriptionBridge.acknowledgeDelivery(delivery.resultID)
+    }
     self.settings.dictationSessionToken = nil
     self.settings.synchronize()
     self.currentTranscription = ""
@@ -317,6 +369,12 @@ final class SpeechRecognitionService: ObservableObject {
   /// One ASR dispatch for keyboard dictation, Meetings and future Conversation.
   /// All consumers reuse the existing microphone session and model owners.
   func transcribeSamples(_ samples: [Float]) async -> TranscriptionResult {
+    guard self.llmCoordinator?.isProcessing != true, self.speechWorkers == 0 else {
+      FeatureDiagnostics.record(.speechDecode, .blocked, failureReason: .busy)
+      return .failed("Speech model is busy")
+    }
+    self.speechWorkers += 1
+    defer { self.speechWorkers -= 1 }
     switch self.settings.selectedVariant.engine {
     case .whisperKit:
       return await self.whisperService.transcribe(audioSamples: samples)
@@ -347,11 +405,10 @@ final class SpeechRecognitionService: ObservableObject {
     _ = await self.loadModel(variant: variant, from: folderURL)
   }
 
-  func unloadForLLMProcessing() async {
-    if self.isRecording {
-      await self.stopRecording()
-    }
+  func unloadForLLMProcessing() async -> Bool {
+    guard self.canBeginTextWork else { return false }
     await self.unloadAllEngines()
+    return true
   }
 
   func deactivateCompletely() async {
@@ -562,7 +619,10 @@ extension SpeechRecognitionService {
       DarwinNotificationName.requestCancelDictation
     ) { [weak self] in
       Task { @MainActor [weak self] in
-        self?.cancelRecording()
+        guard let self, OperationPolicy.ownsCancellation(
+          requested: TranscriptionBridge.cancellationToken(), active: self.activeDictationToken
+        ) else { return }
+        self.cancelRecording()
       }
     }
 
@@ -573,7 +633,9 @@ extension SpeechRecognitionService {
         guard let self else {
           return
         }
-        guard self.hasValidSessionToken(caller: "requestStopDictation") else { return }
+        guard OperationPolicy.ownsCancellation(
+          requested: TranscriptionBridge.stopToken(), active: self.activeDictationToken
+        ) else { return }
         await self.stopRecording()
       }
     }
@@ -584,6 +646,9 @@ extension SpeechRecognitionService {
 extension SpeechRecognitionService: ModelLoading {
 
   func loadModel(variant: ModelVariant, from url: URL) async -> Bool {
+    guard self.llmCoordinator?.isProcessing != true else { return false }
+    self.modelLoadsInFlight += 1
+    defer { self.modelLoadsInFlight -= 1 }
     switch variant.engine {
     case .whisperKit:
       await self.whisperService.loadModel(variant: variant, from: url.path)
@@ -610,4 +675,5 @@ extension SpeechRecognitionService: ModelLoading {
     }
   }
 }
+
 

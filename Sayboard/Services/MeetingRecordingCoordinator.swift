@@ -10,13 +10,22 @@ struct MeetingAudioPart: Codable, Identifiable {
   var id: Int { number }
 }
 
+enum MeetingRecordState: String, Codable {
+  case recording, completed, interrupted, partialAudio, partialTranscript
+  init(from decoder: Decoder) throws {
+    let raw = try decoder.singleValueContainer().decode(String.self)
+    self = Self(rawValue: raw) ?? .interrupted
+  }
+}
+
 struct MeetingRecord: Codable, Identifiable {
+  var schemaVersion: Int? = 1
   let id: UUID
   let startedAt: Date
   var endedAt: Date?
   var parts: [MeetingAudioPart]
   var transcript: String
-  var state: String
+  var state: MeetingRecordState
   // Optional metadata preserves decoding of recordings made before naming.
   var title: String?
   var notes: String?
@@ -77,8 +86,10 @@ final class MeetingRecordingCoordinator: ObservableObject {
   private init() { self.reloadRecords() }
 
   func start(with service: SpeechRecognitionService, title: String = "", notes: String = "") {
-    guard !self.isRecording, !self.isFinalizing, self.translatingRecordID == nil,
+    guard !LocalUserDataStore.isExporting,
+          !self.isRecording, !self.isFinalizing, self.translatingRecordID == nil,
           !service.isRecording, !service.isStopping,
+          service.llmCoordinator?.isProcessing != true,
           ConversationCoordinator.shared.recordingSide == nil,
           !ConversationCoordinator.shared.processing,
           SharedSettings().hasUsableModel,
@@ -122,7 +133,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
     ) + 1
     self.current = MeetingRecord(
       id: id, startedAt: Date(), endedAt: nil, parts: [],
-      transcript: "", state: "recording",
+      transcript: "", state: .recording,
       title: Self.normalized(title, limit: 120),
       notes: Self.normalized(notes, limit: 4000),
       sequenceNumber: nextNumber
@@ -247,9 +258,9 @@ final class MeetingRecordingCoordinator: ObservableObject {
       var manifestSaved = false
       if var record = self.current {
         record.endedAt = Date()
-        record.state = self.incompleteAudio ? "partialAudio"
-          : (interrupted ? "interrupted"
-            : (transcriptIncomplete ? "partialTranscript" : "completed"))
+        record.state = self.incompleteAudio ? .partialAudio
+          : (interrupted ? .interrupted
+            : (transcriptIncomplete ? .partialTranscript : .completed))
         self.current = record
         manifestSaved = self.writeManifest(record)
       }
@@ -364,7 +375,11 @@ final class MeetingRecordingCoordinator: ObservableObject {
     id: UUID, using service: SpeechRecognitionService,
     options selectedOptions: VoiceOutputConfiguration? = nil
   ) {
-    guard self.translatingRecordID == nil, !self.isRecording, !self.isFinalizing,
+    guard !LocalUserDataStore.isExporting,
+          self.translatingRecordID == nil, !self.isRecording, !self.isFinalizing,
+          !service.isRecording, !service.isStopping,
+          ConversationCoordinator.shared.recordingSide == nil,
+          !ConversationCoordinator.shared.processing,
           let index = self.records.firstIndex(where: { $0.id == id }) else { return }
     self.translationStatusRecordID = id
     let settings = SharedSettings()
@@ -558,7 +573,12 @@ final class MeetingRecordingCoordinator: ObservableObject {
         unreadable += 1
         return nil
       }
-      return record
+      var recovered = record
+      if recovered.state == .recording, recovered.id != self.current?.id {
+        recovered.state = .interrupted
+        _ = self.writeManifest(recovered)
+      }
+      return recovered
     }.sorted { $0.startedAt < $1.startedAt }
     if unreadable != self.unreadableRecordCount {
       self.unreadableRecordCount = unreadable
@@ -618,7 +638,7 @@ final class MeetingRecordingCoordinator: ObservableObject {
         id: id,
         startedAt: Date().addingTimeInterval(-offset),
         endedAt: Date(),
-        parts: parts, transcript: transcript, state: "completed",
+        parts: parts, transcript: transcript, state: .completed,
         title: "Conversation " + Date().formatted(date: .abbreviated, time: .shortened),
         notes: "Offline two-party conversation",
         sequenceNumber: sequence
@@ -691,5 +711,6 @@ final class MeetingRecordingCoordinator: ObservableObject {
     return root
   }
 }
+
 
 

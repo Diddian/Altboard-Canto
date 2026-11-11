@@ -14,13 +14,18 @@ final class AudioPlayerService: ObservableObject {
 
   func play(url: URL) {
     if self.currentFileURL == url, let player {
+      guard BackgroundAudioSession.configurePlayback(owner: self.playbackOwner, stop: { [weak self] in
+        self?.stop()
+      }) else { return }
       player.play()
       self.isPlaying = true
       return
     }
 
     self.stop()
-    self.configureAudioSessionForPlayback()
+    guard BackgroundAudioSession.configurePlayback(owner: self.playbackOwner, stop: { [weak self] in
+      self?.stop()
+    }) else { return }
 
     do {
       let newPlayer = try AVAudioPlayer(contentsOf: url)
@@ -42,6 +47,7 @@ final class AudioPlayerService: ObservableObject {
   }
 
   func stop() {
+    BackgroundAudioSession.releasePlayback(owner: self.playbackOwner)
     self.player?.stop()
     self.player = nil
     self.isPlaying = false
@@ -62,16 +68,10 @@ final class AudioPlayerService: ObservableObject {
     }
   }
 
+  private let playbackOwner = UUID()
   private var player: AVAudioPlayer?
   private lazy var delegateAdapter = PlayerDelegateAdapter { [weak self] in
     self?.handlePlaybackFinished()
-  }
-
-  private func configureAudioSessionForPlayback() {
-    guard !SharedSettings().isSessionActive else { return }
-    let session = AVAudioSession.sharedInstance()
-    try? session.setCategory(.playback, mode: .default)
-    try? session.setActive(true)
   }
 
   private func handlePlaybackFinished() {
@@ -96,3 +96,4 @@ private final class PlayerDelegateAdapter: NSObject, AVAudioPlayerDelegate {
 
   private let onFinish: @MainActor () -> Void
 }
+

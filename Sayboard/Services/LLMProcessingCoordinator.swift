@@ -16,15 +16,11 @@ final class LLMProcessingCoordinator: ObservableObject {
   @Published private(set) var lastVoiceOutputIssue: String?
 
   func setupObservers() {
+    self.requestObserver?.stopObserving()
     self.requestObserver = TranscriptionBridge.observeDarwinNotification(
       DarwinNotificationName.requestLLMProcessing
     ) { [weak self] in
       Task { @MainActor [weak self] in
-        let tokenSettings = SharedSettings()
-        tokenSettings.synchronize()
-        guard tokenSettings.dictationSessionToken != nil else {
-          return
-        }
         await self?.handleProcessingRequest()
       }
     }
@@ -176,7 +172,7 @@ final class LLMProcessingCoordinator: ObservableObject {
   }
 
   private func beginVoiceProcessing() async -> UIBackgroundTaskIdentifier? {
-    guard !self.isProcessing else {
+    guard !self.isProcessing, self.speechService?.canBeginTextWork != false else {
       self.lastVoiceOutputIssue = "The text model is busy. Try again when the current task finishes."
       FeatureDiagnostics.record(.voiceOutput, .blocked, failureReason: .busy)
       return nil
@@ -268,9 +264,14 @@ final class LLMProcessingCoordinator: ObservableObject {
   }
 
   private func handleProcessingRequest() async {
-    guard !self.isProcessing else {
-      FeatureDiagnostics.record(.aiActions, .blocked)
-      DiagnosticLog.write("llm: request ignored, already processing")
+    guard let request = LLMBridge.readRequest() else { return }
+    guard !self.isProcessing, self.speechService?.isStopping != true,
+          self.speechService?.canBeginTextWork != false else {
+      LLMBridge.writeStatus(.busy, requestID: request.requestID)
+      LLMBridge.clearRequest(matching: request.requestID)
+      FeatureDiagnostics.record(.aiActions, .blocked,
+        operationID: request.requestID.uuidString, phase: .busy)
+      TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingFailed)
       return
     }
     FeatureDiagnostics.record(.aiActions, .started)
@@ -278,7 +279,8 @@ final class LLMProcessingCoordinator: ObservableObject {
 
     guard !SharedSettings().isDictationLocked else {
       FeatureDiagnostics.record(.aiActions, .blocked)
-      LLMBridge.clearRequest()
+      LLMBridge.writeStatus(.rejected, requestID: request.requestID)
+      LLMBridge.clearRequest(matching: request.requestID)
       TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingFailed)
       return
     }
@@ -286,16 +288,23 @@ final class LLMProcessingCoordinator: ObservableObject {
     self.isProcessing = true
     let settings = SharedSettings()
     settings.isLLMProcessing = true
+    LLMBridge.writeStatus(.accepted, requestID: request.requestID)
+    FeatureDiagnostics.record(.aiActions, .queued,
+      operationID: request.requestID.uuidString, phase: .accepted)
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingStarted)
     let stylingHost = OnboardingTextEntry.stylingHost(settings.hostBundleId)
 
     defer {
       self.isProcessing = false
       settings.isLLMProcessing = false
-      LLMBridge.clearRequest()
+      if LLMBridge.readStatus(matching: request.requestID)?.phase.isTerminal != true {
+        LLMBridge.writeStatus(.failed, requestID: request.requestID)
+      }
+      LLMBridge.clearRequest(matching: request.requestID)
+      TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingFailed)
     }
 
-    guard let validated = self.validateRequest(settings: settings) else { return }
+    guard let validated = self.validateRequest(settings: settings, request: request) else { return }
 
     let bgTaskID = self.beginInferenceBackgroundTask()
     defer { self.endInferenceBackgroundTask(bgTaskID) }
@@ -348,13 +357,8 @@ final class LLMProcessingCoordinator: ObservableObject {
     self.inferenceService.unloadModel()
   }
 
-  private func validateRequest(settings: SharedSettings) -> ValidatedRequest? {
+  private func validateRequest(settings: SharedSettings, request: LLMRequest) -> ValidatedRequest? {
     settings.synchronize()
-    guard let request = LLMBridge.readRequest() else {
-      DiagnosticLog.write("llm: no request in bridge")
-      TranscriptionBridge.postDarwinNotification(DarwinNotificationName.llmProcessingFailed)
-      return nil
-    }
     if request.action == .translate {
       guard let rawTarget = request.translationTarget,
             let target = VoiceOutputTarget(rawValue: rawTarget), target != .original,
@@ -403,7 +407,7 @@ final class LLMProcessingCoordinator: ObservableObject {
 
   private func prepareForInference(variant: LLMModelVariant, modelPath: String) async {
     if let speechService = self.speechService {
-      await speechService.unloadForLLMProcessing()
+      guard await speechService.unloadForLLMProcessing() else { return }
     }
 
     if self.inferenceService.loadState != .loaded {
@@ -462,5 +466,6 @@ final class LLMProcessingCoordinator: ObservableObject {
   }
 
 }
+
 
 

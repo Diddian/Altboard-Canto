@@ -16,6 +16,7 @@ final class KeyboardViewController: UIInputViewController {
   var pendingAutoActionText: String?
   var llmSelectedText: String?
   var llmDirectSelectedText: String?
+  var dictationRequestToken: String?
   var llmRequestID: UUID?
   var llmDocumentIdentifier: UUID?
   var llmSelectionContextBefore: String?
@@ -97,6 +98,9 @@ final class KeyboardViewController: UIInputViewController {
     #endif
     self.keyboardState.configureInputModeListButton = { [weak self] button in
       guard let self else { return }
+      button.removeTarget(self, action: #selector(handleInputModeList(from:with:)),
+                          for: .allTouchEvents)
+      FeatureDiagnostics.record(.keyboardGlobe, .completed)
       button.addTarget(
         self, action: #selector(handleInputModeList(from:with:)),
         for: .allTouchEvents
@@ -133,6 +137,7 @@ final class KeyboardViewController: UIInputViewController {
     #endif
     let document = self.availableDocumentIdentifier()
     if document == nil || self.lastTouchDocumentID != document {
+      self.keyboardState.documentEpoch = UUID()
       KeyboardTouchLearning.shared.invalidate()
     }
     // Do not reuse field-specific touch state when UIKit cannot identify it.
@@ -168,6 +173,7 @@ final class KeyboardViewController: UIInputViewController {
     self.warmStartSessionAcknowledged = false
     self.pingValidator.cancel()
     self.stopMemoryWatch()
+    KeyboardHaptics.suspend()
     self.renderProbeGeneration &+= 1
     KeyboardTouchLearning.shared.invalidate()
     if self.liveTranscriptionDocumentID != nil {
@@ -447,8 +453,8 @@ final class KeyboardViewController: UIInputViewController {
   }
 
   func insertTranscribedText() {
-    let text = TranscriptionBridge.readTranscription()
-    guard let text, !text.isEmpty else {
+    let delivery = TranscriptionBridge.readDelivery()
+    guard let delivery, !delivery.text.isEmpty else {
       DiagnosticLog.write("keyboard: NO TEXT available to insert")
       let settings = SharedSettings()
       settings.synchronize()
@@ -457,12 +463,21 @@ final class KeyboardViewController: UIInputViewController {
       }
       return
     }
+    let text = delivery.text
+    guard delivery.canInsert(requestToken: self.dictationRequestToken,
+                             currentEpoch: self.keyboardState.documentEpoch),
+          self.availableDocumentIdentifier() != nil else {
+      self.keyboardState.showFinalOutputPreview("Dictation saved in History; input changed.")
+      FeatureDiagnostics.record(.bridge, .rejected,
+        operationID: delivery.sessionToken, phase: .rejected)
+      return
+    }
+    defer { TranscriptionBridge.acknowledgeDelivery(delivery.resultID) }
     FeatureDiagnostics.record(.bridge, .started)
     self.keyboardState.dictationOutcome = nil
     if !self.isPerformingHistoryNavigation {
       self.keyboardState.clearLLMHistory()
     }
-    TranscriptionBridge.clearTranscription()
 
     if self.liveTranscriptionBlockedToken != nil || Self.blockedLiveSessionToken != nil {
       Self.blockedLiveSessionToken = nil
@@ -616,6 +631,10 @@ final class KeyboardViewController: UIInputViewController {
         guard let vc = Self.activeInstance else {
           return
         }
+        let settings = SharedSettings()
+        settings.synchronize()
+        guard settings.isRecording,
+              settings.dictationSessionToken == vc.dictationRequestToken else { return }
         vc.staleFallbackTimer?.invalidate()
         vc.staleFallbackTimer = nil
         vc.pingValidator.cancel()
@@ -644,6 +663,7 @@ final class KeyboardViewController: UIInputViewController {
         guard let vc = Self.activeInstance else {
           return
         }
+        guard !SharedSettings().isRecording else { return }
         vc.cancelProcessingTimeout()
         vc.staleFallbackTimer?.invalidate()
         vc.staleFallbackTimer = nil
@@ -714,6 +734,14 @@ final class KeyboardViewController: UIInputViewController {
     }
   }
 
+  func prepareDictationDestination() {
+    let settings = SharedSettings()
+    self.dictationRequestToken = settings.dictationSessionToken
+    settings.dictationDestinationEpoch = self.availableDocumentIdentifier() == nil
+      ? nil : self.keyboardState.documentEpoch
+    settings.synchronize()
+  }
+
   private func startDictationViaDarwin() {
     guard !self.keyboardState.isProcessing, !self.keyboardState.isRecording else { return }
     self.saveHostBundleId()
@@ -721,6 +749,7 @@ final class KeyboardViewController: UIInputViewController {
     settings.synchronize()
     let token = UUID().uuidString
     settings.dictationSessionToken = token
+    self.prepareDictationDestination()
     settings.dictationCancellationRequested = false
     settings.synchronize()
     self.warmStartSessionAcknowledged = false
@@ -814,9 +843,15 @@ extension KeyboardViewController {
     self.keyboardState.isProcessing = false
     self.keyboardState.stopLevelPolling()
     let settings = SharedSettings()
-    settings.keyboardRequestedDictation = false
-    settings.dictationCancellationRequested = true
-    settings.synchronize()
+    let cancelled = self.dictationRequestToken
+    TranscriptionBridge.requestCancellation(for: cancelled)
+    if OperationPolicy.ownsCancellation(requested: cancelled, active: settings.dictationSessionToken) {
+      settings.keyboardRequestedDictation = false
+      settings.dictationCancellationRequested = true
+      settings.dictationDestinationEpoch = nil
+      settings.synchronize()
+    }
+    self.dictationRequestToken = nil
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.requestCancelDictation)
   }
 
@@ -828,6 +863,7 @@ extension KeyboardViewController {
     self.keyboardState.syncVoiceProcessingProgress()
     self.keyboardState.syncModelLoading()
     self.keyboardState.stopLevelPolling()
+    TranscriptionBridge.requestStop(for: self.dictationRequestToken)
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.requestStopDictation)
     self.startProcessingTimeout()
   }
@@ -992,6 +1028,7 @@ extension KeyboardViewController {
         self?.advanceToNextInputMode()
       },
       openURL: { [weak self] url in
+        if url.host == DeepLink.dictateHost { self?.prepareDictationDestination() }
         self?.openURL(url)
       },
       startDictation: { [weak self] in
@@ -1105,8 +1142,10 @@ extension KeyboardViewController {
         KeyboardTouchLearning.shared.invalidate()
         self.resetCursorVerticalState()
         self.lastTouchDocumentID = nil
+        self.keyboardState.documentEpoch = UUID()
       }
     } else if !sameDocument {
+      self.keyboardState.documentEpoch = UUID()
       KeyboardTouchLearning.shared.invalidate()
       self.resetCursorVerticalState()
       self.lastTouchDocumentID = currentDocument
@@ -1215,6 +1254,7 @@ extension KeyboardViewController {
     self.checkForPendingLLMResult()
   }
 }
+
 
 
 

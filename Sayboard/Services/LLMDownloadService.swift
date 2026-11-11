@@ -81,6 +81,10 @@ final class LLMDownloadService: ObservableObject {
   }
 
   func selectVariant(_ variant: LLMModelVariant) {
+    guard !SharedSettings().isLLMProcessing else {
+      FeatureDiagnostics.record(.textModel, .blocked)
+      return
+    }
     FeatureDiagnostics.record(.textModel, .selected)
     SharedSettings().defaults.set(true, forKey: Self.manualSelectionKey)
     SharedSettings().selectedLLMVariant = variant
@@ -139,17 +143,23 @@ final class LLMDownloadService: ObservableObject {
       )
     }
 
-    try? LLMModelStorageManager.delete(variant)
-    self.variantStates[variant] = .notDownloaded
+    let retained = LLMModelStorageManager.isDownloaded(variant)
+    if !retained { try? LLMModelStorageManager.delete(variant) }
+    self.variantStates[variant] = retained ? .downloaded : .notDownloaded
     self.removeVariantFromPersistence(variant)
   }
 
   func deleteModel(variant: LLMModelVariant) {
+    guard !SharedSettings().isLLMProcessing else {
+      FeatureDiagnostics.record(.textModel, .blocked)
+      return
+    }
     self.recordUpgradeDecline(for: variant)
     do {
       try LLMModelStorageManager.delete(variant)
       FeatureDiagnostics.record(.textModel, .deleted)
     } catch {
+      guard !Task.isCancelled else { return }
       FeatureDiagnostics.record(.textModel, .failed)
     }
 
@@ -339,8 +349,10 @@ final class LLMDownloadService: ObservableObject {
         sizeBytes: entry.sizeBytes,
       )
 
+      try Task.checkCancellation()
       BackgroundDownloadManager.shared.enqueueDownload(metadata: metadata)
     } catch {
+      guard !Task.isCancelled else { return }
       FeatureDiagnostics.record(.textModel, .failed)
       if downloadType == .llmUpgrade, case R2DownloadError.insufficientDiskSpace = error {
         self.variantStates[variant] = .notDownloaded
@@ -453,5 +465,6 @@ final class LLMDownloadService: ObservableObject {
     settings.llmDownloadInProgressVariants = variants
   }
 }
+
 
 

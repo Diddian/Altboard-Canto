@@ -149,7 +149,7 @@ struct ConversationView: View {
           .foregroundStyle(.secondary)
           .lineLimit(2)
           .frame(maxWidth: .infinity, alignment: .center)
-      } else if let recent, isReceiver, recent.status == "translationFailed" {
+      } else if let recent, isReceiver, recent.status == .translationFailed {
         Text(self.localeText("unavailable", target: target))
           .font(.caption2)
           .foregroundStyle(.secondary)
@@ -342,3 +342,4 @@ struct ConversationView: View {
     )
   }
 }
+
