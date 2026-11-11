@@ -192,7 +192,9 @@ class KeyboardSafetyContracts(unittest.TestCase):
         self.assertIn("lastHeartbeat.withLock", audio)
         self.assertNotIn("settings.isSessionActive = false", ping)
         self.assertNotIn("settings.isRecording = false", ping)
-        self.assertNotIn("keyboardState.isRecording = false", ping)
+        self.assertIn("keyboardState.isRecording = false", ping)
+        self.assertLess(ping.index("DictationRequestPolicy.hasRecentAudioHeartbeat("),
+                        ping.index("keyboardState.isRecording = false"))
 
     def test_armed_mic_fallback_is_token_scoped_and_cancels_on_hide(self):
         controller = source("SayboardKeyboard/KeyboardViewController.swift")
