@@ -28,6 +28,57 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("TranscriptionBridge.readDelivery(matching: vc.dictationRequestToken", observer)
         self.assertNotIn("TranscriptionBridge.readTranscription()", observer)
 
+    def test_completed_dictation_is_recovered_only_for_the_original_field(self):
+        controller = source("SayboardKeyboard/KeyboardViewController.swift")
+        policy = source("Shared/DictationRequestPolicy.swift")
+        recovery = function("SayboardKeyboard/KeyboardViewController.swift",
+                            "private func recoverCompletedDictationDestination()",
+                            "private func recentPendingDictation()")
+        self.assertIn("static func mayRecoverCompleted(", policy)
+        self.assertIn("DictationRequestPolicy.isSameDestination(", policy)
+        self.assertIn("maxAgeSeconds: Self.automaticRecoveryWindow", recovery)
+        self.assertIn("DictationRequestPolicy.mayRecoverCompleted(", recovery)
+        self.assertIn("fingerprint: settings.dictationDestinationFingerprint", recovery)
+        self.assertIn("self.keyboardState.documentEpoch = epoch", recovery)
+        self.assertIn("static let automaticRecoveryWindow: TimeInterval = 90", controller)
+
+    def test_pending_dictation_requires_user_action_and_exact_acknowledgment(self):
+        controller = source("SayboardKeyboard/KeyboardViewController.swift")
+        insert = function("SayboardKeyboard/KeyboardViewController.swift",
+                          "func insertTranscribedText()", "func pingMainAppForSessionStatus")
+        manual = function("SayboardKeyboard/KeyboardViewController.swift",
+                          "func insertPendingDictation()", "func insertTranscribedText()")
+        self.assertIn("self.dictationRequestToken.flatMap { token in", insert)
+        self.assertIn("matching: token, allowAnyDestination: true", insert)
+        self.assertNotIn("matching: self.dictationRequestToken, allowAnyDestination: true", insert)
+        self.assertNotIn("defer { TranscriptionBridge.acknowledgeDelivery", insert)
+        self.assertIn("case .review:", insert)
+        self.assertIn("self.refreshPendingDictation()", insert)
+        self.assertIn("self.liveTranscriptionBlockedToken == delivery.sessionToken", insert)
+        self.assertLess(insert.index("delivery.canInsert"), insert.index("TranscriptionBridge.acknowledgeDelivery"))
+        self.assertIn("guard self.viewIfLoaded?.window != nil", manual)
+        self.assertIn("let delivery = self.recentPendingDictation()", manual)
+        self.assertIn("before?.hasSuffix(delivery.text) != true", manual)
+        self.assertLess(manual.index("self.insertSpacedText(delivery.text)"),
+                        manual.index("TranscriptionBridge.acknowledgeDelivery(delivery.resultID)"))
+        self.assertIn("TranscriptionBridge.cancellationToken() != delivery.sessionToken", controller)
+
+    def test_uncertain_live_reconciliation_never_acknowledges(self):
+        live = source("SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift")
+        controller = source("SayboardKeyboard/KeyboardViewController.swift")
+        self.assertIn("enum LiveFinalDeliveryResult", live)
+        self.assertIn("case notApplicable, inserted, review", live)
+        self.assertIn("return .review", live)
+        self.assertIn("return .inserted", live)
+        handling = function("SayboardKeyboard/KeyboardViewController.swift",
+                            "func insertTranscribedText()", "func pingMainAppForSessionStatus")
+        self.assertIn("case .inserted:", handling)
+        self.assertIn("case .review:", handling)
+        reviewed = handling.split("case .review:", 1)[1].split("case .notApplicable:", 1)[0]
+        self.assertNotIn("acknowledgeDelivery", reviewed)
+        self.assertNotIn("showFinalOutputPreview(delivery.text)", handling)
+        self.assertIn("self.keyboardState.hasPendingDictation =", controller)
+
     def test_completed_ai_request_does_not_send_failure_notification(self):
         body = function("Sayboard/Services/LLMProcessingCoordinator.swift",
                         "private func handleProcessingRequest()", "private func beginInferenceBackgroundTask()")
