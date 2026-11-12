@@ -124,6 +124,10 @@ final class SpeechRecognitionService: ObservableObject {
     self.currentAudioFileName = "\(UUID().uuidString).caf"
 
     let sessionStartedHere = !self.session.isSessionActive
+    FeatureDiagnostics.record(.speechAudio,
+      sessionStartedHere ? .fallback : .selected,
+      failureReason: sessionStartedHere ? .coldAudioSessionStart : nil,
+      operationID: self.activeDictationToken)
     guard self.ensureSessionActive() else {
       FeatureDiagnostics.record(.speech, .failed)
       self.currentAudioFileName = nil

@@ -154,6 +154,7 @@ enum KeyboardHaptics {
   private static let light = UIImpactFeedbackGenerator(style: .light)
   private static let medium = UIImpactFeedbackGenerator(style: .medium)
   private static let heavy = UIImpactFeedbackGenerator(style: .heavy)
+  private static var prepared = false
 
   static func key(
     strength override: Double? = nil,
@@ -182,8 +183,11 @@ enum KeyboardHaptics {
       switch driver {
       case .coreHaptics:
         if let error = KeyboardCoreHaptic.play(strength: strength) {
-          KeyboardSensoryPulse.shared.trigger()
-          KeyboardHapticTrace.record(technique: "core->sensory", enabled: true,
+          // The extension can reject Core Haptics after an app/keyboard
+          // handoff. Use a direct UIKit pulse instead of a SwiftUI state
+          // update that may not render while the keyboard is rebuilding.
+          triggerUIKit(technique: .automatic, strength: strength)
+          KeyboardHapticTrace.record(technique: "core->uikit", enabled: true,
             fullAccess: settings.hasFullAccess, outcome: error)
         } else {
           KeyboardHapticTrace.record(technique: "core", enabled: true,
@@ -234,6 +238,8 @@ enum KeyboardHaptics {
   }
 
   static func suspend() {
+    guard prepared else { return }
+    prepared = false
     KeyboardCoreHaptic.reset()
     FeatureDiagnostics.record(.haptics, .stopped)
   }
@@ -241,9 +247,13 @@ enum KeyboardHaptics {
   static func prepare() {
     let settings = SharedSettings()
     guard settings.keyboardHapticsEnabled else {
-      KeyboardCoreHaptic.reset()
+      if prepared { suspend() } else { KeyboardCoreHaptic.reset() }
       return
     }
+    // viewWillAppear and foreground callbacks may both run for one keyboard.
+    // Prepare once per appearance, not repeatedly on the touch path.
+    guard !prepared else { return }
+    prepared = true
     FeatureDiagnostics.record(.haptics, .started)
     if settings.keyboardHapticDriver == .coreHaptics {
       KeyboardCoreHaptic.prewarm(strength: settings.keyboardHapticStrength)

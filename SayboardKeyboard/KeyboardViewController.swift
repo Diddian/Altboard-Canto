@@ -119,7 +119,7 @@ final class KeyboardViewController: UIInputViewController {
       button.addTarget(self, action: #selector(recordNativeGlobeTouch), for: .touchDown)
       #endif
     }
-    KeyboardHaptics.prepare()
+    // Prewarm only when the keyboard is about to enter a visible window.
     Self.activeInstance = self
     self.setupTranscriptionObserver()
     self.setupExperimentalLiveObserver()
@@ -560,9 +560,11 @@ final class KeyboardViewController: UIInputViewController {
           (matchesDocument || matchesDocumentlessHost) else {
       // Keep the pending delivery in the outbox and in History. A new keyboard
       // can stop capture, but may not write into an unverified host field.
+      let reason: FeatureDiagnostics.FailureReason = currentDocument == nil
+        ? .destinationUnavailable
+        : (self.dictationDocumentID == nil ? .destinationOwnerLost : .destinationChanged)
       FeatureDiagnostics.record(.bridge, .rejected,
-        failureReason: currentDocument == nil
-          ? .destinationUnavailable : .destinationChanged,
+        failureReason: reason,
         operationID: delivery.sessionToken, phase: .rejected)
       return
     }
@@ -926,6 +928,7 @@ final class KeyboardViewController: UIInputViewController {
         && !settings.dictationCancellationRequested,
        let token = settings.dictationSessionToken,
        UUID(uuidString: token) != nil {
+      FeatureDiagnostics.record(.speech, .selected, operationID: token)
       self.recoverActiveDictationAfterReentry()
       self.pingMainAppForSessionStatus()
       return
@@ -961,6 +964,8 @@ final class KeyboardViewController: UIInputViewController {
     } else {
       // Cold activation opens the app with the SAME token and destination.
       // Only the controller creates a request; the mic view never rearms.
+      FeatureDiagnostics.record(.speech, .fallback,
+        failureReason: .coldAudioSessionStart, operationID: token)
       self.openDictateDeepLinkFallback(reason: "cold audio session")
     }
   }
@@ -1001,7 +1006,8 @@ final class KeyboardViewController: UIInputViewController {
           appAcknowledged: self.warmStartSessionAcknowledged,
           heartbeat: settings.mainAppHeartbeat, now: now
         ) {
-          FeatureDiagnostics.record(.speech, .fallback)
+          FeatureDiagnostics.record(.speech, .fallback,
+            failureReason: .warmStartUnacknowledged, operationID: token)
           self.openDictateDeepLinkFallback(reason: "no active audio engine")
           return
         }

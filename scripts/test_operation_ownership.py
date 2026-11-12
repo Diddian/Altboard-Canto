@@ -14,6 +14,42 @@ def function(path, name, next_name=None):
 
 
 class OperationOwnershipTests(unittest.TestCase):
+    def test_haptic_recovery_is_idempotent_and_uses_direct_uikit_fallback(self):
+        haptic = source("Shared/KeyboardHaptics.swift")
+        controller = source("SayboardKeyboard/KeyboardViewController.swift")
+        self.assertIn("private static var prepared = false", haptic)
+        self.assertIn("guard !prepared else { return }", haptic)
+        self.assertIn('KeyboardHapticTrace.record(technique: "core->uikit"', haptic)
+        self.assertIn("triggerUIKit(technique: .automatic, strength: strength)", haptic)
+        self.assertNotIn('KeyboardHapticTrace.record(technique: "core->sensory"', haptic)
+        self.assertIn("if prepared { suspend() }", haptic)
+        did_load = function("SayboardKeyboard/KeyboardViewController.swift",
+                            "override func viewDidLoad()", "override func viewWillAppear(")
+        self.assertNotIn("KeyboardHaptics.prepare()", did_load)
+        self.assertIn("KeyboardHaptics.prepare()", controller)
+        self.assertIn("KeyboardHaptics.suspend()", controller)
+
+    def test_warm_session_diagnostics_explain_rearm_without_new_owner(self):
+        speech = source("Sayboard/Services/SpeechRecognitionService.swift")
+        controller = source("SayboardKeyboard/KeyboardViewController.swift")
+        diagnostics = source("Shared/FeatureDiagnostics.swift")
+        self.assertIn("case coldAudioSessionStart, warmStartUnacknowledged", diagnostics)
+        self.assertIn("case destinationUnavailable, destinationChanged, destinationOwnerLost", diagnostics)
+        self.assertIn("sessionStartedHere ? .fallback : .selected", speech)
+        start = function("SayboardKeyboard/KeyboardViewController.swift",
+                         "private func startDictationViaDarwin()",
+                         "private func scheduleWarmStartCheck(")
+        self.assertIn("settings.isRecording && settings.isSessionActive", start)
+        self.assertIn("self.recoverActiveDictationAfterReentry()", start)
+        self.assertIn("FeatureDiagnostics.record(.speech, .selected, operationID: token)", start)
+        self.assertIn("failureReason: .coldAudioSessionStart", start)
+        schedule = function("SayboardKeyboard/KeyboardViewController.swift",
+                            "private func scheduleWarmStartCheck(",
+                            "private func openDictateDeepLinkFallback(")
+        self.assertIn("failureReason: .warmStartUnacknowledged", schedule)
+        self.assertIn("private func recoverCompletedDictationDestination()", controller)
+        self.assertIn("self.insertSpacedText(text)", controller)
+
     def test_cold_app_launch_keeps_valid_host_dictation_token(self):
         app = source("Sayboard/SayboardApp.swift")
         policy = source("Shared/DictationRequestPolicy.swift")
