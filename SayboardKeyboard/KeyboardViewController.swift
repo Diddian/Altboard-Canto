@@ -513,8 +513,8 @@ final class KeyboardViewController: UIInputViewController {
   func insertTranscribedText() {
     self.recoverCompletedDictationDestination()
     // Never use an unscoped latest result for automatic insertion or
-    // display. A fresh keyboard with no request owner can only show the
-    // generic Insert action until the original field is verified.
+    // display. A fresh keyboard must first recover its scoped request;
+    // never select the newest unrelated transcript.
     let delivery = self.dictationRequestToken.flatMap { token in
       TranscriptionBridge.readDelivery(matching: token,
         destinationEpoch: self.keyboardState.documentEpoch)
@@ -542,8 +542,8 @@ final class KeyboardViewController: UIInputViewController {
         sessionToken: self.dictationRequestToken, document: currentDocument,
         fingerprint: settings.dictationDestinationFingerprint
       )
-    // Build #146 inserted on keyboard return without needing a UIKit UUID.
-    // Limit that fallback to the same original host process and request.
+    // Some UIKit hosts return no document UUID. In that case accept only
+    // a recent completed request from this exact originating host process.
     let matchesDocumentlessHost = self.viewIfLoaded?.window != nil
       && DictationRequestPolicy.mayDeliverWithoutDocumentIdentifier(
         deliveryToken: delivery.sessionToken,
@@ -583,8 +583,8 @@ final class KeyboardViewController: UIInputViewController {
         return
       }
     }
-    // A documentless return has no live-edit anchor to reconcile. Use Build
-    // #146's direct insertion route after verifying the original host process.
+    // A documentless return has no live-edit anchor to reconcile. After
+    // verifying the original host process, use the ordinary insertion path.
     if !matchesDocumentlessHost {
       switch self.completeExperimentalLiveText(
         delivery, cancellationRequested: settings.dictationCancellationRequested
