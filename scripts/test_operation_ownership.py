@@ -35,7 +35,7 @@ class OperationOwnershipTests(unittest.TestCase):
                             "private func recoverCompletedDictationDestination()",
                             "private func recentPendingDictation()")
         self.assertIn("static func mayRecoverCompleted(", policy)
-        self.assertIn("DictationRequestPolicy.isSameDestination(", policy)
+        self.assertIn("return isSameDestination(", policy)
         self.assertIn("maxAgeSeconds: Self.automaticRecoveryWindow", recovery)
         self.assertIn("DictationRequestPolicy.mayRecoverCompleted(", recovery)
         self.assertIn("fingerprint: settings.dictationDestinationFingerprint", recovery)
