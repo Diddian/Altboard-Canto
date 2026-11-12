@@ -424,7 +424,7 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("preserved == malformed", verification)
 
     def test_haptic_disable_does_not_prewarm_engine(self):
-        body = function("Shared/KeyboardHaptics.swift", "static func prepare()")
+        body = function("Shared/KeyboardHaptics.swift", "static func prepare(owner: AnyObject? = nil)")
         self.assertLess(body.index("guard settings.keyboardHapticsEnabled"), body.index("KeyboardCoreHaptic.prewarm"))
         self.assertIn("KeyboardHaptics.suspend(owner: self)", source("SayboardKeyboard/KeyboardViewController.swift"))
 
