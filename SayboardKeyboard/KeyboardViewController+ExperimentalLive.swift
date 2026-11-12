@@ -143,7 +143,6 @@ extension KeyboardViewController {
       cancelled: cancellationRequested
     ) else {
       FeatureDiagnostics.record(.bridge, .fallback, operationID: delivery.sessionToken)
-      self.keyboardState.showFinalOutputPreview(final)
       return .review
     }
     let plan = LiveFinalReconciliation.plan(
@@ -162,7 +161,6 @@ extension KeyboardViewController {
       proxy.insertText(replacement)
     case .review:
       // A truncated host context must never trigger destructive correction.
-      self.keyboardState.showFinalOutputPreview(final)
       return .review
     }
     return .inserted

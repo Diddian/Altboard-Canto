@@ -541,11 +541,14 @@ final class KeyboardViewController: UIInputViewController {
 
   func insertTranscribedText() {
     self.recoverCompletedDictationDestination()
-    let delivery = TranscriptionBridge.readDelivery(matching: self.dictationRequestToken,
-      destinationEpoch: self.keyboardState.documentEpoch)
-      ?? TranscriptionBridge.readDelivery(
-        matching: self.dictationRequestToken, allowAnyDestination: true
-      )
+    // Never use an unscoped latest result for automatic insertion or
+    // display. A fresh keyboard with no request owner can only show the
+    // generic Insert action until the original field is verified.
+    let delivery = self.dictationRequestToken.flatMap { token in
+      TranscriptionBridge.readDelivery(matching: token,
+        destinationEpoch: self.keyboardState.documentEpoch)
+        ?? TranscriptionBridge.readDelivery(matching: token, allowAnyDestination: true)
+    }
     guard let delivery, !delivery.text.isEmpty else {
       DiagnosticLog.write("keyboard: NO TEXT available to insert")
       self.refreshPendingDictation()
@@ -572,7 +575,6 @@ final class KeyboardViewController: UIInputViewController {
           ) else {
       // Keep the pending delivery in the outbox and in History. A new keyboard
       // can stop capture, but may not write into an unverified host field.
-      self.keyboardState.showFinalOutputPreview(delivery.text)
       self.refreshPendingDictation()
       FeatureDiagnostics.record(.bridge, .rejected,
         failureReason: currentDocument == nil
@@ -591,7 +593,6 @@ final class KeyboardViewController: UIInputViewController {
       self.abandonExperimentalLiveOwnership()
       Self.blockedLiveSessionToken = nil
       self.liveTranscriptionBlockedToken = nil
-      self.keyboardState.showFinalOutputPreview(text)
       self.refreshPendingDictation()
       FeatureDiagnostics.record(.bridge, .fallback)
       return
@@ -607,7 +608,6 @@ final class KeyboardViewController: UIInputViewController {
       return
     case .review:
       self.refreshPendingDictation()
-      self.keyboardState.showFinalOutputPreview(text)
       FeatureDiagnostics.record(.bridge, .fallback)
       return
     case .notApplicable:
