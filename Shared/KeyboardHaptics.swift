@@ -155,6 +155,7 @@ enum KeyboardHaptics {
   private static let medium = UIImpactFeedbackGenerator(style: .medium)
   private static let heavy = UIImpactFeedbackGenerator(style: .heavy)
   private static var prepared = false
+  private static var activeOwner: ObjectIdentifier?
 
   static func key(
     strength override: Double? = nil,
@@ -237,19 +238,24 @@ enum KeyboardHaptics {
     }
   }
 
-  static func suspend() {
+  static func suspend(owner: AnyObject? = nil) {
+    // UIKit may overlap the old and new keyboard controllers. Do not let
+    // the disappearing controller shut down the new controller's engine.
+    if let owner, let activeOwner, activeOwner != ObjectIdentifier(owner) { return }
     guard prepared else { return }
     prepared = false
+    activeOwner = nil
     KeyboardCoreHaptic.reset()
     FeatureDiagnostics.record(.haptics, .stopped)
   }
 
-  static func prepare() {
+  static func prepare(owner: AnyObject? = nil) {
     let settings = SharedSettings()
     guard settings.keyboardHapticsEnabled else {
       if prepared { suspend() } else { KeyboardCoreHaptic.reset() }
       return
     }
+    if let owner { activeOwner = ObjectIdentifier(owner) }
     // viewWillAppear and foreground callbacks may both run for one keyboard.
     // Prepare once per appearance, not repeatedly on the touch path.
     guard !prepared else { return }

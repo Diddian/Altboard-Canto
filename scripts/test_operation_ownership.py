@@ -25,9 +25,10 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("if prepared { suspend() }", haptic)
         did_load = function("SayboardKeyboard/KeyboardViewController.swift",
                             "override func viewDidLoad()", "override func viewWillAppear(")
-        self.assertNotIn("KeyboardHaptics.prepare()", did_load)
-        self.assertIn("KeyboardHaptics.prepare()", controller)
-        self.assertIn("KeyboardHaptics.suspend()", controller)
+        self.assertNotIn("KeyboardHaptics.prepare(owner: self)", did_load)
+        self.assertIn("KeyboardHaptics.prepare(owner: self)", controller)
+        self.assertIn("KeyboardHaptics.suspend(owner: self)", controller)
+        self.assertIn("activeOwner != ObjectIdentifier(owner)", haptic)
 
     def test_warm_session_diagnostics_explain_rearm_without_new_owner(self):
         speech = source("Sayboard/Services/SpeechRecognitionService.swift")
@@ -414,7 +415,7 @@ class OperationOwnershipTests(unittest.TestCase):
     def test_haptic_disable_does_not_prewarm_engine(self):
         body = function("Shared/KeyboardHaptics.swift", "static func prepare()")
         self.assertLess(body.index("guard settings.keyboardHapticsEnabled"), body.index("KeyboardCoreHaptic.prewarm"))
-        self.assertIn("KeyboardHaptics.suspend()", source("SayboardKeyboard/KeyboardViewController.swift"))
+        self.assertIn("KeyboardHaptics.suspend(owner: self)", source("SayboardKeyboard/KeyboardViewController.swift"))
 
     def test_globe_retains_native_selector_and_no_added_gesture(self):
         key = source("SayboardKeyboard/Views/NativeInputModeSwitchKey.swift")

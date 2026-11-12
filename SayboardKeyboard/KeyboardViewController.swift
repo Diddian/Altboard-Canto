@@ -158,7 +158,7 @@ final class KeyboardViewController: UIInputViewController {
     // Reset transient gestures without tearing down the visible render tree.
     self.keyboardState.keyboardAppearanceRevision &+= 1
     self.missingRowsRefreshAttempted = false
-    KeyboardHaptics.prepare()
+    KeyboardHaptics.prepare(owner: self)
     if self.keyboardState.isRecording {
       self.keyboardState.startLevelPolling()
     } else if !self.keyboardState.isProcessing {
@@ -185,7 +185,7 @@ final class KeyboardViewController: UIInputViewController {
     self.warmStartSessionAcknowledged = false
     self.pingValidator.cancel()
     self.stopMemoryWatch()
-    KeyboardHaptics.suspend()
+    KeyboardHaptics.suspend(owner: self)
     self.renderProbeGeneration &+= 1
     KeyboardTouchLearning.shared.invalidate()
     if self.liveTranscriptionDocumentID != nil {
@@ -719,12 +719,13 @@ final class KeyboardViewController: UIInputViewController {
 
   @objc
   private func hostDidEnterForeground() {
+    guard self.viewIfLoaded?.window != nil else { return }
     self.syncFullAccessIfChanged()
     self.keyboardState.refresh()
     self.refreshHostInputTraits()
     self.keyboardState.keyboardAppearanceRevision &+= 1
     self.updateKeyboardHeight(actionBarVisible: false)
-    KeyboardHaptics.prepare()
+    KeyboardHaptics.prepare(owner: self)
     if self.keyboardState.isRecording {
       self.keyboardState.startLevelPolling()
     }
