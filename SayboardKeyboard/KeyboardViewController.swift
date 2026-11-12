@@ -170,6 +170,7 @@ final class KeyboardViewController: UIInputViewController {
     self.pingMainAppForSessionStatus()
     self.keyboardState.appearedAt = CFAbsoluteTimeGetCurrent()
     self.resumeProcessingTimeoutIfNeeded()
+    self.refreshPendingDictation()
     saveHostBundleId()
     self.keyboardState.syncOnboardingPractice(hostProcessID: self.hostProcess?.pid)
     self.hasDeferredAppearanceInsert = true
@@ -464,7 +465,74 @@ final class KeyboardViewController: UIInputViewController {
     #endif
   }
 
+  private static let manualDeliveryWindow: TimeInterval = 1_800
+  private static let automaticRecoveryWindow: TimeInterval = 90
+
+  /// A completed dictation may outlive the keyboard process and the main
+  /// app's mutable session token. Only the original UIKit field can regain
+  /// automatic insertion; no host text or document identifier is persisted.
+  private func recoverCompletedDictationDestination() {
+    guard self.dictationRequestToken == nil else { return }
+    let settings = SharedSettings()
+    settings.synchronize()
+    guard !settings.isRecording, settings.dictationSessionToken == nil,
+          !settings.dictationCancellationRequested,
+          let delivery = TranscriptionBridge.readDelivery(
+            maxAgeSeconds: Self.automaticRecoveryWindow
+          ),
+          TranscriptionBridge.cancellationToken() != delivery.sessionToken,
+          let epoch = delivery.destinationEpoch,
+          let document = self.availableDocumentIdentifier(),
+          (self.textDocumentProxy.selectedText?.isEmpty ?? true),
+          DictationRequestPolicy.isSameDestination(
+            sessionToken: delivery.sessionToken, document: document,
+            fingerprint: settings.dictationDestinationFingerprint
+          ) else { return }
+    self.dictationRequestToken = delivery.sessionToken
+    self.dictationDocumentID = document
+    self.keyboardState.documentEpoch = epoch
+    FeatureDiagnostics.record(.bridge, .fallback,
+      operationID: delivery.sessionToken, phase: .accepted)
+  }
+
+  private func recentPendingDictation() -> DictationDelivery? {
+    guard let delivery = TranscriptionBridge.readDelivery(
+      maxAgeSeconds: Self.manualDeliveryWindow
+    ), !delivery.text.isEmpty,
+      TranscriptionBridge.cancellationToken() != delivery.sessionToken else {
+      return nil
+    }
+    return delivery
+  }
+
+  func refreshPendingDictation() {
+    let settings = SharedSettings()
+    settings.synchronize()
+    self.keyboardState.hasPendingDictation =
+      !settings.isRecording && self.recentPendingDictation() != nil
+  }
+
+  /// User-triggered fallback when iOS replaced the host field or omitted its
+  /// document identifier. Never silently insert a foreign pending result.
+  func insertPendingDictation() {
+    guard self.viewIfLoaded?.window != nil,
+          let delivery = self.recentPendingDictation() else {
+      self.refreshPendingDictation()
+      return
+    }
+    let before = self.textDocumentProxy.documentContextBeforeInput
+    if before?.hasSuffix(delivery.text) != true {
+      self.insertSpacedText(delivery.text)
+    }
+    TranscriptionBridge.acknowledgeDelivery(delivery.resultID)
+    self.keyboardState.showFinalOutputPreview(delivery.text)
+    self.refreshPendingDictation()
+    FeatureDiagnostics.record(.bridge, .completed,
+      operationID: delivery.sessionToken, phase: .completed)
+  }
+
   func insertTranscribedText() {
+    self.recoverCompletedDictationDestination()
     let delivery = TranscriptionBridge.readDelivery(matching: self.dictationRequestToken,
       destinationEpoch: self.keyboardState.documentEpoch)
       ?? TranscriptionBridge.readDelivery(
@@ -472,6 +540,7 @@ final class KeyboardViewController: UIInputViewController {
       )
     guard let delivery, !delivery.text.isEmpty else {
       DiagnosticLog.write("keyboard: NO TEXT available to insert")
+      self.refreshPendingDictation()
       let settings = SharedSettings()
       settings.synchronize()
       if let outcome = settings.lastDictationOutcome {
@@ -496,11 +565,11 @@ final class KeyboardViewController: UIInputViewController {
       // Keep the pending delivery in the outbox and in History. A new keyboard
       // can stop capture, but may not write into an unverified host field.
       self.keyboardState.showFinalOutputPreview(delivery.text)
+      self.refreshPendingDictation()
       FeatureDiagnostics.record(.bridge, .rejected,
         operationID: delivery.sessionToken, phase: .rejected)
       return
     }
-    defer { TranscriptionBridge.acknowledgeDelivery(delivery.resultID) }
     FeatureDiagnostics.record(.bridge, .started)
     self.keyboardState.dictationOutcome = nil
     if !self.isPerformingHistoryNavigation {
@@ -513,23 +582,39 @@ final class KeyboardViewController: UIInputViewController {
       Self.blockedLiveSessionToken = nil
       self.liveTranscriptionBlockedToken = nil
       self.keyboardState.showFinalOutputPreview(text)
+      self.refreshPendingDictation()
       FeatureDiagnostics.record(.bridge, .fallback)
       return
     }
-    if self.completeExperimentalLiveText(
+    switch self.completeExperimentalLiveText(
       delivery, cancellationRequested: settings.dictationCancellationRequested
     ) {
+    case .inserted:
+      TranscriptionBridge.acknowledgeDelivery(delivery.resultID)
+      self.refreshPendingDictation()
       self.keyboardState.showFinalOutputPreview(text)
       FeatureDiagnostics.record(.bridge, .completed)
       return
+    case .review:
+      self.refreshPendingDictation()
+      self.keyboardState.showFinalOutputPreview(text)
+      FeatureDiagnostics.record(.bridge, .fallback)
+      return
+    case .notApplicable:
+      break
     }
     if self.autoApplyLLMIfNeeded(directText: text) {
+      // The existing keyboard LLM bridge now owns the pending output.
+      TranscriptionBridge.acknowledgeDelivery(delivery.resultID)
+      self.refreshPendingDictation()
       FeatureDiagnostics.record(.bridge, .queued)
       return
     }
 
     DiagnosticLog.write("keyboard: inserting \(text.count) chars into textDocumentProxy")
     self.insertSpacedText(text)
+    TranscriptionBridge.acknowledgeDelivery(delivery.resultID)
+    self.refreshPendingDictation()
     FeatureDiagnostics.record(.bridge, .completed)
     self.keyboardState.showFinalOutputPreview(text)
   }
@@ -651,6 +736,7 @@ final class KeyboardViewController: UIInputViewController {
     self.keyboardState.appearedAt = CFAbsoluteTimeGetCurrent()
     self.resumeProcessingTimeoutIfNeeded()
     self.insertTranscribedText()
+    self.refreshPendingDictation()
     self.checkForPendingLLMResult()
   }
 
@@ -1178,6 +1264,9 @@ extension KeyboardViewController {
         self?.recordLiveDebugAction(.micCancel)
         #endif
         self?.cancelDictationViaDarwin()
+      },
+      insertPendingDictation: { [weak self] in
+        self?.insertPendingDictation()
       },
       resolveHost: { [weak self] in
         self?.saveHostBundleId()

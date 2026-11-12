@@ -3,6 +3,10 @@ import UIKit
 /// Host-owned live words are appended as each offline Qwen chunk finishes.
 /// No raw host text is stored. A session token, document ID and short suffix
 /// anchor prevent updates to an unrelated field after cursor/focus changes.
+enum LiveFinalDeliveryResult {
+  case notApplicable, inserted, review
+}
+
 extension KeyboardViewController {
   static var experimentalLiveObserver: DarwinNotificationObserver?
 
@@ -114,8 +118,8 @@ extension KeyboardViewController {
   /// confirmed missing suffix, or expose the final result for manual review.
   func completeExperimentalLiveText(
     _ delivery: DictationDelivery, cancellationRequested: Bool
-  ) -> Bool {
-    guard self.liveTranscriptionDocumentID != nil else { return false }
+  ) -> LiveFinalDeliveryResult {
+    guard self.liveTranscriptionDocumentID != nil else { return .notApplicable }
     defer { self.abandonExperimentalLiveOwnership() }
     let final = delivery.text
     let proxy = self.textDocumentProxy
@@ -140,7 +144,7 @@ extension KeyboardViewController {
     ) else {
       FeatureDiagnostics.record(.bridge, .fallback, operationID: delivery.sessionToken)
       self.keyboardState.showFinalOutputPreview(final)
-      return true
+      return .review
     }
     let plan = LiveFinalReconciliation.plan(
       partial: self.liveTranscriptionCommittedRaw, final: final,
@@ -159,8 +163,9 @@ extension KeyboardViewController {
     case .review:
       // A truncated host context must never trigger destructive correction.
       self.keyboardState.showFinalOutputPreview(final)
+      return .review
     }
-    return true
+    return .inserted
   }
 
   func cancelExperimentalLiveText() {
