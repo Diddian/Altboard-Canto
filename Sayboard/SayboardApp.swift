@@ -145,11 +145,28 @@ struct SayboardApp: App {
     Self.configureDefaultLanguageIfNeeded()
     let settings = SharedSettings()
     settings.synchronize()
+    // The keyboard starts a cold microphone request before this app launches.
+    // Clearing its token here breaks destination ownership: transcription
+    // reaches History but can no longer insert into the originating host.
+    let preserveColdRequest = DictationRequestPolicy.shouldPreserveColdStartRequest(
+      token: settings.dictationSessionToken,
+      isRecentKeyboardRequest: settings.isKeyboardRequestRecent(),
+      cancelled: settings.dictationCancellationRequested
+    )
+    let preservedToken = preserveColdRequest ? settings.dictationSessionToken : nil
     settings.isSessionActive = false
     settings.isRecording = false
     settings.isModelLoading = false
     settings.isLLMProcessing = false
-    settings.dictationSessionToken = nil
+    if !preserveColdRequest {
+      settings.dictationSessionToken = nil
+      settings.dictationDestinationEpoch = nil
+      settings.dictationDestinationFingerprint = nil
+      settings.dictationOriginProcessMarker = nil
+    } else {
+      FeatureDiagnostics.record(.bridge, .queued,
+        operationID: preservedToken, phase: .accepted)
+    }
     settings.onboardingPracticeProcessID = nil
     settings.mainAppHeartbeat = CFAbsoluteTimeGetCurrent()
     HistoryStore.shared.applyRetentionPolicy()

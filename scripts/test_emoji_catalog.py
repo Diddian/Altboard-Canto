@@ -22,6 +22,26 @@ class EmojiCatalogTests(unittest.TestCase):
         )
         self.assertTrue(notice.startswith("UNICODE LICENSE V3"))
 
+    def test_recent_one_page_is_bounded_and_order_stable_while_open(self):
+        catalog = (ROOT / "SayboardKeyboard" / "EmojiCatalog.swift").read_text(
+            encoding="utf-8"
+        )
+        view = (ROOT / "SayboardKeyboard" / "Views" / "EmojiKeyboardView.swift").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("static let recentPageSize = 24", catalog)
+        self.assertIn("Array(values.prefix(recentPageSize))", catalog)
+        self.assertIn("if saved.count > recentPageSize", catalog)
+        self.assertIn("defaults?.set(bounded, forKey: recentKey)", catalog)
+        self.assertIn("let bounded = boundedRecent(values)", catalog)
+        self.assertIn(".onAppear { self.recent = EmojiCatalog.recent() }", view)
+        self.assertIn("_ = EmojiCatalog.remember(choice)", view)
+        self.assertNotIn("self.recent = EmojiCatalog.remember(choice)", view)
+        self.assertIn("HStack(spacing: 4.kbScaled)", view)
+        self.assertIn(".frame(width: 44.kbScaled, height: KeyboardChromeMetrics.keyHeight)", view)
+        self.assertIn("count: 8", view)
+        self.assertIn("by: 24", view)
+
     def test_fully_qualified_order_search_metadata(self):
         fixture = """# Version: 18.0
 # group: Smileys & Emotion

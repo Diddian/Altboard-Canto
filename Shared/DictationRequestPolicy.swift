@@ -67,6 +67,17 @@ enum DictationRequestPolicy {
     )
   }
 
+  /// Keep the originating keyboard request across a cold containing-app
+  /// launch. The destination proof and session token must not be reset while
+  /// that fresh request is being handed off.
+  static func shouldPreserveColdStartRequest(
+    token: String?, isRecentKeyboardRequest: Bool, cancelled: Bool
+  ) -> Bool {
+    guard isRecentKeyboardRequest, !cancelled,
+          let token, UUID(uuidString: token) != nil else { return false }
+    return true
+  }
+
   static func isCurrent(started: String?, current: String?, cancelled: Bool) -> Bool {
     guard let started, !started.isEmpty, !cancelled else { return false }
     return started == current

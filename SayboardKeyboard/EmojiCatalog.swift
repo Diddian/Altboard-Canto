@@ -124,19 +124,33 @@ enum EmojiCatalog {
     }.prefix(limit))
   }
 
+  /// One stable visible page: eight columns by three rows.
+  static let recentPageSize = 24
+  private static let recentKey = "canto.emoji.recent.v1"
+
+  static func boundedRecent(_ values: [String]) -> [String] {
+    Array(values.prefix(recentPageSize))
+  }
+
   static func recent() -> [String] {
-    let saved = UserDefaults(suiteName: AppGroup.identifier)?
-      .stringArray(forKey: "canto.emoji.recent.v1") ?? []
-    return saved.isEmpty ? common : saved
+    let defaults = UserDefaults(suiteName: AppGroup.identifier)
+    let saved = defaults?.stringArray(forKey: recentKey) ?? []
+    let bounded = boundedRecent(saved)
+    if saved.count > recentPageSize {
+      // Retire old entries beyond the first page once, including existing
+      // installs which previously kept two pages.
+      defaults?.set(bounded, forKey: recentKey)
+    }
+    return saved.isEmpty ? boundedRecent(common) : bounded
   }
 
   static func remember(_ emoji: String) -> [String] {
     var values = recent().filter { $0 != emoji }
     values.insert(emoji, at: 0)
-    let recent = Array(values.prefix(48))
+    let bounded = boundedRecent(values)
     UserDefaults(suiteName: AppGroup.identifier)?
-      .set(recent, forKey: "canto.emoji.recent.v1")
-    return recent
+      .set(bounded, forKey: recentKey)
+    return bounded
   }
 
   private static let searchAliases: [String: String] = [

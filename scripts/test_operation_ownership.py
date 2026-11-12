@@ -14,6 +14,26 @@ def function(path, name, next_name=None):
 
 
 class OperationOwnershipTests(unittest.TestCase):
+    def test_cold_app_launch_keeps_valid_host_dictation_token(self):
+        app = source("Sayboard/SayboardApp.swift")
+        policy = source("Shared/DictationRequestPolicy.swift")
+        app_init = app.split("struct SayboardApp: App {", 1)[1].split(
+            "@UIApplicationDelegateAdaptor", 1
+        )[0]
+        self.assertIn("shouldPreserveColdStartRequest(", policy)
+        self.assertIn("isRecentKeyboardRequest: settings.isKeyboardRequestRecent()", app_init)
+        self.assertIn("token: settings.dictationSessionToken", app_init)
+        self.assertIn("if !preserveColdRequest {", app_init)
+        self.assertIn("settings.dictationSessionToken = nil", app_init)
+        self.assertIn("settings.dictationDestinationEpoch = nil", app_init)
+        self.assertIn("operationID: preservedToken, phase: .accepted", app_init)
+        self.assertEqual(app_init.count("settings.dictationSessionToken = nil"), 1)
+        service = source("Sayboard/Services/SpeechRecognitionService+Transcription.swift")
+        self.assertIn("TranscriptionBridge.writeTranscription(finalOutput)", service)
+        controller = source("SayboardKeyboard/KeyboardViewController.swift")
+        self.assertIn("self.insertDeferredAppearanceText()", controller)
+        self.assertIn("self.insertSpacedText(text)", controller)
+
     def test_final_delivery_keeps_pending_result_on_destination_mismatch(self):
         body = function("SayboardKeyboard/KeyboardViewController.swift", "func insertTranscribedText()", "func pingMainAppForSessionStatus")
         self.assertLess(body.index("delivery.canInsert"), body.index("acknowledgeDelivery"))

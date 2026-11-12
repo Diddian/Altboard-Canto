@@ -91,7 +91,9 @@ struct EmojiKeyboardView: View {
                     KeyboardHaptics.key()
                     if let tone { EmojiCatalog.preferredTone = tone }
                     self.proxy.insertText(choice)
-                    self.recent = EmojiCatalog.remember(choice)
+                    // Persist for the next Emoji keyboard visit. Keep this
+                    // visible page fixed so consecutive taps hit the same cell.
+                    _ = EmojiCatalog.remember(choice)
                   }
                 )
               }
@@ -200,7 +202,7 @@ struct EmojiKeyboardView: View {
         self.onNumbers()
       }
       ScrollView(.horizontal) {
-        HStack(spacing: 10.kbScaled) {
+        HStack(spacing: 4.kbScaled) {
           ForEach(Array(Self.categories.enumerated()), id: \.offset) { _, category in
             Button {
               self.selectedGroup = category.name

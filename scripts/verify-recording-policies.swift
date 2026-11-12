@@ -10,6 +10,22 @@ struct RecordingPolicyChecks {
     precondition(!DictationRequestPolicy.isCurrent(started: "", current: "", cancelled: false))
     precondition(!DictationRequestPolicy.isCurrent(started: "a", current: nil, cancelled: false))
 
+    let validColdToken = UUID().uuidString
+    precondition(DictationRequestPolicy.shouldPreserveColdStartRequest(
+      token: validColdToken, isRecentKeyboardRequest: true, cancelled: false
+    ))
+    precondition(!DictationRequestPolicy.shouldPreserveColdStartRequest(
+      token: validColdToken, isRecentKeyboardRequest: false, cancelled: false
+    ))
+    precondition(!DictationRequestPolicy.shouldPreserveColdStartRequest(
+      token: validColdToken, isRecentKeyboardRequest: true, cancelled: true
+    ))
+    precondition(!DictationRequestPolicy.shouldPreserveColdStartRequest(
+      token: nil, isRecentKeyboardRequest: true, cancelled: false
+    ))
+    precondition(!DictationRequestPolicy.shouldPreserveColdStartRequest(
+      token: "stale-invalid-token", isRecentKeyboardRequest: true, cancelled: false
+    ))
     let now: TimeInterval = 20
     let p = DictationRequestPolicy.self
     precondition(p.hasRecentAudioHeartbeat(19.5, now: now))
