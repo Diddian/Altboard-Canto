@@ -475,18 +475,21 @@ final class KeyboardViewController: UIInputViewController {
     guard self.dictationRequestToken == nil else { return }
     let settings = SharedSettings()
     settings.synchronize()
-    guard !settings.isRecording, settings.dictationSessionToken == nil,
-          !settings.dictationCancellationRequested,
-          let delivery = TranscriptionBridge.readDelivery(
+    guard let delivery = TranscriptionBridge.readDelivery(
             maxAgeSeconds: Self.automaticRecoveryWindow
           ),
           TranscriptionBridge.cancellationToken() != delivery.sessionToken,
           let epoch = delivery.destinationEpoch,
           let document = self.availableDocumentIdentifier(),
-          (self.textDocumentProxy.selectedText?.isEmpty ?? true),
-          DictationRequestPolicy.isSameDestination(
-            sessionToken: delivery.sessionToken, document: document,
-            fingerprint: settings.dictationDestinationFingerprint
+          DictationRequestPolicy.mayRecoverCompleted(
+            requestedToken: self.dictationRequestToken,
+            activeToken: settings.dictationSessionToken,
+            deliveryToken: delivery.sessionToken,
+            deliveryEpoch: epoch, currentDocument: document,
+            fingerprint: settings.dictationDestinationFingerprint,
+            recording: settings.isRecording,
+            cancelled: settings.dictationCancellationRequested,
+            hasSelection: !(self.textDocumentProxy.selectedText?.isEmpty ?? true)
           ) else { return }
     self.dictationRequestToken = delivery.sessionToken
     self.dictationDocumentID = document
@@ -508,8 +511,13 @@ final class KeyboardViewController: UIInputViewController {
   func refreshPendingDictation() {
     let settings = SharedSettings()
     settings.synchronize()
+    let hadPending = self.keyboardState.hasPendingDictation
     self.keyboardState.hasPendingDictation =
       !settings.isRecording && self.recentPendingDictation() != nil
+    if !hadPending && self.keyboardState.hasPendingDictation {
+      FeatureDiagnostics.record(.bridge, .fallback,
+        failureReason: .awaitingUserInsertion)
+    }
   }
 
   /// User-triggered fallback when iOS replaced the host field or omitted its
@@ -567,6 +575,8 @@ final class KeyboardViewController: UIInputViewController {
       self.keyboardState.showFinalOutputPreview(delivery.text)
       self.refreshPendingDictation()
       FeatureDiagnostics.record(.bridge, .rejected,
+        failureReason: currentDocument == nil
+          ? .destinationUnavailable : .destinationChanged,
         operationID: delivery.sessionToken, phase: .rejected)
       return
     }

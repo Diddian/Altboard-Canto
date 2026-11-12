@@ -20,6 +20,24 @@ enum DictationRequestPolicy {
     return actual == fingerprint
   }
 
+  /// Finished results may regain auto-insertion only in their original
+  /// UIKit document. A lost document identity must use explicit user action.
+  static func mayRecoverCompleted(
+    requestedToken: String?, activeToken: String?, deliveryToken: String,
+    deliveryEpoch: UUID?, currentDocument: UUID?, fingerprint: String?,
+    recording: Bool, cancelled: Bool, hasSelection: Bool
+  ) -> Bool {
+    guard requestedToken == nil, activeToken == nil,
+          !recording, !cancelled, !hasSelection,
+          deliveryEpoch != nil, UUID(uuidString: deliveryToken) != nil else {
+      return false
+    }
+    return isSameDestination(
+      sessionToken: deliveryToken, document: currentDocument,
+      fingerprint: fingerprint
+    )
+  }
+
   static func isCurrent(started: String?, current: String?, cancelled: Bool) -> Bool {
     guard let started, !started.isEmpty, !cancelled else { return false }
     return started == current

@@ -70,6 +70,35 @@ struct VerifyMicrophonePress {
     precondition(DictationRequestPolicy.destinationFingerprint(
       sessionToken: nil, document: field
     ) == nil)
+    // Completed output must not jump into a new host field, even when
+    // the main app already cleared its mutable active session token.
+    let epoch = UUID()
+    func mayRecover(
+      token: String? = nil, active: String? = nil,
+      delivery: String = tokenForCompleted,
+      currentDocument: UUID? = field, epochID: UUID? = epoch,
+      cancelled: Bool = false, recording: Bool = false,
+      hasSelection: Bool = false
+    ) -> Bool {
+      DictationRequestPolicy.mayRecoverCompleted(
+        requestedToken: token, activeToken: active,
+        deliveryToken: delivery, deliveryEpoch: epochID,
+        currentDocument: currentDocument, fingerprint: fingerprint,
+        recording: recording, cancelled: cancelled,
+        hasSelection: hasSelection
+      )
+    }
+    let tokenForCompleted = token
+    precondition(mayRecover())
+    precondition(!mayRecover(token: token))
+    precondition(!mayRecover(active: token))
+    precondition(!mayRecover(delivery: UUID().uuidString))
+    precondition(!mayRecover(currentDocument: UUID()))
+    precondition(!mayRecover(currentDocument: nil))
+    precondition(!mayRecover(epochID: nil))
+    precondition(!mayRecover(cancelled: true))
+    precondition(!mayRecover(recording: true))
+    precondition(!mayRecover(hasSelection: true))
     precondition(LiveDictationChunkPolicy.firstWindowOptions.first == 1_600)
     precondition(LiveDictationChunkPolicy.retryFirstWindow(after: 1_600) == 3_200)
     let gib: UInt64 = 1_073_741_824

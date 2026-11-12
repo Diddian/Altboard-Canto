@@ -43,6 +43,7 @@ enum FeatureDiagnostics {
   enum FailureReason: String, Codable, Sendable {
     case busy, noTextModel, missingModelFile, modelLoadFailed
     case inferenceUnavailable, invalidTargetLanguage, oversizedOutput, insufficientMemory
+    case destinationUnavailable, destinationChanged, awaitingUserInsertion
   }
 
   private static let filename = "feature-diagnostics-v1.jsonl"

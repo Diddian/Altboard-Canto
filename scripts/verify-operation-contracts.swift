@@ -110,6 +110,10 @@ enum VerifyOperationContracts {
       destinationEpoch: requestEpoch) == nil)
     TranscriptionBridge.acknowledgeDelivery(UUID())
     precondition(TranscriptionBridge.readDelivery()?.resultID == pending.resultID)
+    precondition(TranscriptionBridge.readDelivery(
+      maxAgeSeconds: 1_800
+    )?.resultID == pending.resultID)
+    precondition(TranscriptionBridge.readDelivery(maxAgeSeconds: -1) == nil)
     precondition(TranscriptionBridge.writeTranscription("a newer synthetic result"))
     TranscriptionBridge.acknowledgeDelivery(pending.resultID)
     let newer = TranscriptionBridge.readDelivery()!
