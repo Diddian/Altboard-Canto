@@ -604,6 +604,15 @@ struct SharedSettings {
     nonmutating set { self.defaults.set(newValue?.uuidString, forKey: "dictationDestinationEpoch") }
   }
 
+  /// Short-lived, request-bound process fingerprint for UIKit hosts which
+  /// provide no document identifier. This contains no typing or host text.
+  var dictationOriginProcessMarker: String? {
+    get { self.defaults.string(forKey: "canto.dictation.originProcess.v1") }
+    nonmutating set {
+      self.defaults.set(newValue, forKey: "canto.dictation.originProcess.v1")
+    }
+  }
+
   /// Request-scoped, irreversible field check; never the UIKit identifier.
   var dictationDestinationFingerprint: String? {
     get { self.defaults.string(forKey: "canto.dictation.destinationFingerprint.v1") }

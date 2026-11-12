@@ -476,22 +476,36 @@ final class KeyboardViewController: UIInputViewController {
     guard let delivery = TranscriptionBridge.readDelivery(
             maxAgeSeconds: Self.automaticRecoveryWindow
           ),
-          TranscriptionBridge.cancellationToken() != delivery.sessionToken,
-          let epoch = delivery.destinationEpoch,
-          let document = self.availableDocumentIdentifier(),
-          DictationRequestPolicy.mayRecoverCompleted(
-            requestedToken: self.dictationRequestToken,
-            activeToken: settings.dictationSessionToken,
-            deliveryToken: delivery.sessionToken,
-            deliveryEpoch: epoch, currentDocument: document,
-            fingerprint: settings.dictationDestinationFingerprint,
-            recording: settings.isRecording,
-            cancelled: settings.dictationCancellationRequested,
-            hasSelection: !(self.textDocumentProxy.selectedText?.isEmpty ?? true)
-          ) else { return }
+          TranscriptionBridge.cancellationToken() != delivery.sessionToken
+    else { return }
+    let document = self.availableDocumentIdentifier()
+    let selected = !(self.textDocumentProxy.selectedText?.isEmpty ?? true)
+    let sameDocument = DictationRequestPolicy.mayRecoverCompleted(
+      requestedToken: self.dictationRequestToken,
+      activeToken: settings.dictationSessionToken,
+      deliveryToken: delivery.sessionToken,
+      deliveryEpoch: delivery.destinationEpoch, currentDocument: document,
+      fingerprint: settings.dictationDestinationFingerprint,
+      recording: settings.isRecording,
+      cancelled: settings.dictationCancellationRequested,
+      hasSelection: selected
+    )
+    let sameDocumentlessHost = self.viewIfLoaded?.window != nil
+      && DictationRequestPolicy.mayDeliverWithoutDocumentIdentifier(
+        deliveryToken: delivery.sessionToken, requestedToken: nil,
+        activeToken: settings.dictationSessionToken,
+        deliveryEpoch: delivery.destinationEpoch, currentDocument: document,
+        fingerprint: settings.dictationDestinationFingerprint,
+        originProcessMarker: settings.dictationOriginProcessMarker,
+        currentHost: self.hostProcess, recording: settings.isRecording,
+        cancelled: settings.dictationCancellationRequested, hasSelection: selected
+      )
+    guard sameDocument || sameDocumentlessHost else { return }
     self.dictationRequestToken = delivery.sessionToken
     self.dictationDocumentID = document
-    self.keyboardState.documentEpoch = epoch
+    if let epoch = delivery.destinationEpoch {
+      self.keyboardState.documentEpoch = epoch
+    }
     FeatureDiagnostics.record(.bridge, .fallback,
       operationID: delivery.sessionToken, phase: .accepted)
   }
@@ -519,16 +533,31 @@ final class KeyboardViewController: UIInputViewController {
     let settings = SharedSettings()
     settings.synchronize()
     let currentDocument = self.availableDocumentIdentifier()
+    let matchesDocument = delivery.canInsert(
+      requestToken: self.dictationRequestToken,
+      currentEpoch: self.keyboardState.documentEpoch
+    ) && self.dictationDocumentID != nil
+      && currentDocument == self.dictationDocumentID
+      && DictationRequestPolicy.isSameDestination(
+        sessionToken: self.dictationRequestToken, document: currentDocument,
+        fingerprint: settings.dictationDestinationFingerprint
+      )
+    // Build #146 inserted on keyboard return without needing a UIKit UUID.
+    // Limit that fallback to the same original host process and request.
+    let matchesDocumentlessHost = self.viewIfLoaded?.window != nil
+      && DictationRequestPolicy.mayDeliverWithoutDocumentIdentifier(
+        deliveryToken: delivery.sessionToken,
+        requestedToken: self.dictationRequestToken,
+        activeToken: settings.dictationSessionToken,
+        deliveryEpoch: delivery.destinationEpoch, currentDocument: currentDocument,
+        fingerprint: settings.dictationDestinationFingerprint,
+        originProcessMarker: settings.dictationOriginProcessMarker,
+        currentHost: self.hostProcess, recording: settings.isRecording,
+        cancelled: settings.dictationCancellationRequested,
+        hasSelection: !(self.textDocumentProxy.selectedText?.isEmpty ?? true)
+      )
     guard !settings.dictationCancellationRequested,
-          delivery.canInsert(requestToken: self.dictationRequestToken,
-                             currentEpoch: self.keyboardState.documentEpoch),
-          self.dictationDocumentID != nil,
-          currentDocument == self.dictationDocumentID,
-          DictationRequestPolicy.isSameDestination(
-            sessionToken: self.dictationRequestToken,
-            document: currentDocument,
-            fingerprint: settings.dictationDestinationFingerprint
-          ) else {
+          (matchesDocument || matchesDocumentlessHost) else {
       // Keep the pending delivery in the outbox and in History. A new keyboard
       // can stop capture, but may not write into an unverified host field.
       FeatureDiagnostics.record(.bridge, .rejected,
@@ -543,27 +572,34 @@ final class KeyboardViewController: UIInputViewController {
       self.keyboardState.clearLLMHistory()
     }
 
-    if self.liveTranscriptionBlockedToken == delivery.sessionToken
-        || Self.blockedLiveSessionToken == delivery.sessionToken {
+    let blockedLiveEdit = self.liveTranscriptionBlockedToken == delivery.sessionToken
+      || Self.blockedLiveSessionToken == delivery.sessionToken
+    if blockedLiveEdit {
       self.abandonExperimentalLiveOwnership()
       Self.blockedLiveSessionToken = nil
       self.liveTranscriptionBlockedToken = nil
-      FeatureDiagnostics.record(.bridge, .fallback)
-      return
+      if !matchesDocumentlessHost {
+        FeatureDiagnostics.record(.bridge, .fallback)
+        return
+      }
     }
-    switch self.completeExperimentalLiveText(
-      delivery, cancellationRequested: settings.dictationCancellationRequested
-    ) {
-    case .inserted:
-      TranscriptionBridge.acknowledgeDelivery(delivery.resultID)
-      self.keyboardState.showFinalOutputPreview(text)
-      FeatureDiagnostics.record(.bridge, .completed)
-      return
-    case .review:
-      FeatureDiagnostics.record(.bridge, .fallback)
-      return
-    case .notApplicable:
-      break
+    // A documentless return has no live-edit anchor to reconcile. Use Build
+    // #146's direct insertion route after verifying the original host process.
+    if !matchesDocumentlessHost {
+      switch self.completeExperimentalLiveText(
+        delivery, cancellationRequested: settings.dictationCancellationRequested
+      ) {
+      case .inserted:
+        TranscriptionBridge.acknowledgeDelivery(delivery.resultID)
+        self.keyboardState.showFinalOutputPreview(text)
+        FeatureDiagnostics.record(.bridge, .completed)
+        return
+      case .review:
+        FeatureDiagnostics.record(.bridge, .fallback)
+        return
+      case .notApplicable:
+        break
+      }
     }
     if self.autoApplyLLMIfNeeded(directText: text) {
       // The existing keyboard LLM bridge now owns the pending output.
@@ -832,6 +868,9 @@ final class KeyboardViewController: UIInputViewController {
     settings.dictationDestinationFingerprint = DictationRequestPolicy.destinationFingerprint(
       sessionToken: self.dictationRequestToken, document: self.dictationDocumentID
     )
+    settings.dictationOriginProcessMarker = DictationRequestPolicy.originProcessMarker(
+      token: self.dictationRequestToken, process: self.hostProcess
+    )
     settings.synchronize()
   }
 
@@ -1017,6 +1056,7 @@ extension KeyboardViewController {
       settings.dictationCancellationRequested = true
       settings.dictationDestinationEpoch = nil
       settings.dictationDestinationFingerprint = nil
+      settings.dictationOriginProcessMarker = nil
       settings.synchronize()
     }
     self.dictationRequestToken = nil

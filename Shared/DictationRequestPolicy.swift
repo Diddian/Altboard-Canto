@@ -20,8 +20,37 @@ enum DictationRequestPolicy {
     return actual == fingerprint
   }
 
-  /// Finished results may regain auto-insertion only in their original
-  /// UIKit document. A lost document identity must use explicit user action.
+  /// When UIKit provides no document ID at either end of the same
+  /// dictation, a request-bound host-process fingerprint is the only bounded
+  /// automatic fallback. A changed/known document ID always fails closed.
+  static func originProcessMarker(
+    token: String?, process: (pid: Int, version: Int)?
+  ) -> String? {
+    guard let token, UUID(uuidString: token) != nil,
+          let process, process.pid > 0 else { return nil }
+    let input = Data("altboard-host-v1:\(token):\(process.pid):\(process.version)".utf8)
+    return Data(SHA256.hash(data: input)).base64EncodedString()
+  }
+
+  static func mayDeliverWithoutDocumentIdentifier(
+    deliveryToken: String, requestedToken: String?, activeToken: String?,
+    deliveryEpoch: UUID?, currentDocument: UUID?, fingerprint: String?,
+    originProcessMarker: String?, currentHost: (pid: Int, version: Int)?,
+    recording: Bool, cancelled: Bool, hasSelection: Bool
+  ) -> Bool {
+    guard UUID(uuidString: deliveryToken) != nil,
+          (requestedToken == nil || requestedToken == deliveryToken),
+          (activeToken == nil || activeToken == deliveryToken),
+          deliveryEpoch == nil, currentDocument == nil, fingerprint == nil,
+          !recording, !cancelled, !hasSelection,
+          let originProcessMarker,
+          let current = self.originProcessMarker(token: deliveryToken, process: currentHost)
+    else { return false }
+    return originProcessMarker == current
+  }
+
+  /// Finished results may regain auto-insertion only in the original
+  /// UIKit document, or through the process-bound documentless path above.
   static func mayRecoverCompleted(
     requestedToken: String?, activeToken: String?, deliveryToken: String,
     deliveryEpoch: UUID?, currentDocument: UUID?, fingerprint: String?,

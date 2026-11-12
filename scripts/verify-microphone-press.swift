@@ -123,6 +123,52 @@ struct VerifyMicrophonePress {
       deliveryEpoch: epoch, currentDocument: field, fingerprint: fingerprint,
       recording: false, cancelled: false, hasSelection: true
     ))
+    let origin = DictationRequestPolicy.originProcessMarker(
+      token: token, process: (pid: 1234, version: 7)
+    )
+    precondition(origin != nil)
+    precondition(DictationRequestPolicy.mayDeliverWithoutDocumentIdentifier(
+      deliveryToken: token, requestedToken: nil, activeToken: nil,
+      deliveryEpoch: nil, currentDocument: nil, fingerprint: nil,
+      originProcessMarker: origin, currentHost: (pid: 1234, version: 7),
+      recording: false, cancelled: false, hasSelection: false
+    ))
+    precondition(!DictationRequestPolicy.mayDeliverWithoutDocumentIdentifier(
+      deliveryToken: token, requestedToken: nil, activeToken: nil,
+      deliveryEpoch: nil, currentDocument: nil, fingerprint: nil,
+      originProcessMarker: origin, currentHost: (pid: 1235, version: 7),
+      recording: false, cancelled: false, hasSelection: false
+    ))
+    precondition(!DictationRequestPolicy.mayDeliverWithoutDocumentIdentifier(
+      deliveryToken: token, requestedToken: nil, activeToken: nil,
+      deliveryEpoch: UUID(), currentDocument: nil, fingerprint: nil,
+      originProcessMarker: origin, currentHost: (pid: 1234, version: 7),
+      recording: false, cancelled: false, hasSelection: false
+    ))
+    precondition(!DictationRequestPolicy.mayDeliverWithoutDocumentIdentifier(
+      deliveryToken: token, requestedToken: nil, activeToken: nil,
+      deliveryEpoch: nil, currentDocument: UUID(), fingerprint: nil,
+      originProcessMarker: origin, currentHost: (pid: 1234, version: 7),
+      recording: false, cancelled: false, hasSelection: false
+    ))
+    precondition(!DictationRequestPolicy.mayDeliverWithoutDocumentIdentifier(
+      deliveryToken: token, requestedToken: nil, activeToken: nil,
+      deliveryEpoch: nil, currentDocument: nil, fingerprint: nil,
+      originProcessMarker: origin, currentHost: (pid: 1234, version: 7),
+      recording: true, cancelled: false, hasSelection: false
+    ))
+    precondition(!DictationRequestPolicy.mayDeliverWithoutDocumentIdentifier(
+      deliveryToken: token, requestedToken: nil, activeToken: nil,
+      deliveryEpoch: nil, currentDocument: nil, fingerprint: nil,
+      originProcessMarker: origin, currentHost: (pid: 1234, version: 7),
+      recording: false, cancelled: true, hasSelection: false
+    ))
+    precondition(!DictationRequestPolicy.mayDeliverWithoutDocumentIdentifier(
+      deliveryToken: token, requestedToken: nil, activeToken: nil,
+      deliveryEpoch: nil, currentDocument: nil, fingerprint: nil,
+      originProcessMarker: origin, currentHost: (pid: 1234, version: 7),
+      recording: false, cancelled: false, hasSelection: true
+    ))
     precondition(LiveDictationChunkPolicy.firstWindowOptions.first == 1_600)
     precondition(LiveDictationChunkPolicy.retryFirstWindow(after: 1_600) == 3_200)
     let gib: UInt64 = 1_073_741_824

@@ -40,6 +40,8 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("DictationRequestPolicy.mayRecoverCompleted(", recovery)
         self.assertIn("fingerprint: settings.dictationDestinationFingerprint", recovery)
         self.assertIn("self.keyboardState.documentEpoch = epoch", recovery)
+        self.assertIn("DictationRequestPolicy.mayDeliverWithoutDocumentIdentifier(", recovery)
+        self.assertIn("currentHost: self.hostProcess", recovery)
         self.assertIn("static let automaticRecoveryWindow: TimeInterval = 90", controller)
 
     def test_146_style_automatic_callbacks_keep_scoped_delivery(self):
@@ -50,6 +52,9 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("self.dictationRequestToken.flatMap { token in", insert)
         self.assertIn("matching: token, allowAnyDestination: true", insert)
         self.assertNotIn("defer { TranscriptionBridge.acknowledgeDelivery", insert)
+        self.assertIn("let matchesDocument = delivery.canInsert(", insert)
+        self.assertIn("let matchesDocumentlessHost =", insert)
+        self.assertIn("matchesDocument || matchesDocumentlessHost", insert)
         self.assertLess(insert.index("delivery.canInsert"), insert.index("TranscriptionBridge.acknowledgeDelivery"))
         self.assertIn("self.insertSpacedText(text)", insert)
         self.assertIn("TranscriptionBridge.acknowledgeDelivery(delivery.resultID)", insert)
