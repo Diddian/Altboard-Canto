@@ -44,7 +44,7 @@ struct TranscriptionBridge: Sendable {
 
   static func readDelivery(
     matching token: String? = nil, destinationEpoch: UUID? = nil,
-    allowAnyDestination: Bool = false
+    allowAnyDestination: Bool = false, maxAgeSeconds: TimeInterval? = nil
   ) -> DictationDelivery? {
     guard let folder = deliveryDirectory else { return nil }
     let files = (try? FileManager.default.contentsOfDirectory(at: folder,
@@ -55,6 +55,13 @@ struct TranscriptionBridge: Sendable {
     }
     var latest: DictationDelivery?
     for url in sorted.prefix(64) {
+      if let maxAgeSeconds {
+        guard let modified = try? url.resourceValues(
+          forKeys: [.contentModificationDateKey]
+        ).contentModificationDate,
+          Date().timeIntervalSince(modified) >= 0,
+          Date().timeIntervalSince(modified) <= maxAgeSeconds else { continue }
+      }
       guard let bytes = try? Data(contentsOf: url),
             let result = try? JSONDecoder().decode(DictationDelivery.self, from: bytes),
             result.schemaVersion == 1 else { continue }
