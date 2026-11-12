@@ -32,13 +32,13 @@ extension KeyboardViewController {
           update.sessionToken == self.dictationRequestToken,
           update.sessionToken == settings.dictationSessionToken,
           update.revision > self.liveTranscriptionRevision,
-          self.liveTranscriptionBlockedToken != update.sessionToken,
-          Self.blockedLiveSessionToken != update.sessionToken,
           !update.text.isEmpty else { return }
 
-    // Display recognized source-language speech even when the insertion
-    // destination has changed. Never write without the stronger field gate.
+    // Display source-language speech even after iOS recreates the keyboard.
+    // A blocked destination must never suppress read-only preview text.
     self.keyboardState.liveSourcePreview = String(update.text.suffix(240))
+    guard self.liveTranscriptionBlockedToken != update.sessionToken,
+          Self.blockedLiveSessionToken != update.sessionToken else { return }
     guard LiveDeliveryPolicy.accepts(
       token: update.sessionToken,
       requestToken: self.dictationRequestToken,

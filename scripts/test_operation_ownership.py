@@ -14,6 +14,17 @@ def function(path, name, next_name=None):
 
 
 class OperationOwnershipTests(unittest.TestCase):
+    def test_blocked_live_field_retains_preview_without_unverified_insertion(self):
+        live = function("SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift",
+                        "func applyExperimentalLiveUpdate()",
+                        "func completeExperimentalLiveText(")
+        self.assertLess(live.index("self.keyboardState.liveSourcePreview ="),
+                        live.index("self.liveTranscriptionBlockedToken != update.sessionToken"))
+        self.assertLess(live.index("Self.blockedLiveSessionToken != update.sessionToken"),
+                        live.index("let proxy = self.textDocumentProxy"))
+        self.assertIn("guard let document = self.availableDocumentIdentifier()", live)
+        self.assertIn("self.blockExperimentalLiveChanges(token: update.sessionToken)", live)
+
     def test_haptic_recovery_is_idempotent_and_uses_direct_uikit_fallback(self):
         haptic = source("Shared/KeyboardHaptics.swift")
         controller = source("SayboardKeyboard/KeyboardViewController.swift")
