@@ -132,26 +132,6 @@ private struct AnimatedDictationNoticeLine: View {
   }
 }
 
-/// Explicit, user-owned recovery when iOS replaced the destination field.
-struct PendingDictationInsertButton: View {
-  let proxy: KeyboardProxy
-
-  var body: some View {
-    Button {
-      self.proxy.insertPendingDictation()
-    } label: {
-      Label("Insert", systemImage: "text.badge.plus")
-        .font(.system(size: 12.kbScaled, weight: .semibold))
-        .lineLimit(1)
-        .padding(.horizontal, 8.kbScaled)
-        .frame(minHeight: KeyboardChromeMetrics.keyHeight)
-    }
-    .buttonStyle(.borderedProminent)
-    .accessibilityLabel("Insert saved dictation into current text field")
-    .accessibilityHint("Adds the completed transcription at the cursor")
-  }
-}
-
 /// Centered status in the existing control row; no extra keyboard height.
 struct KeyboardStatusStrip: View {
   @ObservedObject var keyboardState: KeyboardState

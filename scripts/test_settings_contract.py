@@ -810,22 +810,22 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn(".focused(self.$isKeyboardTestFocused)", field)
         self.assertIn(".accessibilityLabel(\"Keyboard test input\")", field)
 
-    def test_saved_dictation_insert_control_is_available_in_all_keyboards(self):
+    def test_voice_output_requires_no_additional_keyboard_button(self):
         chrome = read("SayboardKeyboard/Views/Layouts/KeyboardChrome.swift")
         proxy = read("SayboardKeyboard/Views/KeyboardView.swift")
         controller = read("SayboardKeyboard/KeyboardViewController.swift")
-        self.assertIn("struct PendingDictationInsertButton: View", chrome)
-        self.assertIn("self.proxy.insertPendingDictation()", chrome)
-        self.assertIn('Label("Insert", systemImage: "text.badge.plus")', chrome)
-        self.assertIn("let insertPendingDictation: () -> Void", proxy)
-        self.assertIn("insertPendingDictation: { [weak self] in", controller)
+        state = read("SayboardKeyboard/KeyboardState.swift")
+        self.assertNotIn("PendingDictationInsertButton", chrome)
+        self.assertNotIn("insertPendingDictation", proxy)
+        self.assertNotIn("insertPendingDictation", controller)
+        self.assertNotIn("hasPendingDictation", state)
         for path in ("SayboardKeyboard/Views/Layouts/StandardKeyboardLayout.swift",
                      "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift",
                      "SayboardKeyboard/Views/Layouts/ExtendedKeyboardLayout.swift"):
-            layout = read(path)
-            self.assertIn("self.keyboardState.hasPendingDictation", layout)
-            self.assertIn("PendingDictationInsertButton(proxy: self.proxy)", layout)
-        self.assertIn(".accessibilityLabel(\"Insert saved dictation into current text field\")", chrome)
+            self.assertNotIn("PendingDictationInsertButton", read(path))
+        self.assertIn("self.insertDeferredAppearanceText()", controller)
+        self.assertIn("self.insertTranscribedText()", controller)
+        self.assertIn("DarwinNotificationName.transcriptionReady", controller)
 
     def test_microphone_stop_preserves_audio_and_shows_processing(self):
         mic = read("SayboardKeyboard/Views/Layouts/MicAnimatedButton.swift")

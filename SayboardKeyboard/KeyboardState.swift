@@ -43,9 +43,6 @@ final class KeyboardState: ObservableObject {
   @Published var llmError: LLMError?
   @Published var dictationOutcome: DictationOutcome?
   @Published var finalOutputPreview: String?
-  /// A completed voice result was not automatically inserted.
-  /// The on-screen Insert button is the only explicit fallback owner.
-  @Published var hasPendingDictation = false
   @Published var liveSourcePreview: String?
   private var finalPreviewGeneration = UUID()
   @Published var voiceProcessingProgress: VoiceProcessingProgress?

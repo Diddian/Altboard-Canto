@@ -113,11 +113,6 @@ extension ExtendedKeyboardLayout {
           .layoutPriority(-1)
           .frame(maxWidth: .infinity)
         LongRecordingNotice(startedAt: self.keyboardState.recordingStartedAt)
-      } else if self.keyboardState.hasPendingDictation
-                  && !self.keyboardState.isStartingRecording
-                  && !self.keyboardState.isProcessing {
-        PendingDictationInsertButton(proxy: self.proxy)
-          .layoutPriority(1)
       }
       self.micButton
       }

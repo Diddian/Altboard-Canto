@@ -80,13 +80,7 @@ struct StandardKeyboardLayout: View {
         } else {
         self.sideButtons
           .padding(.horizontal, 4.kbScaled)
-        if self.keyboardState.hasPendingDictation && !self.keyboardState.isRecording
-            && !self.keyboardState.isStartingRecording && !self.keyboardState.isProcessing {
-          PendingDictationInsertButton(proxy: self.proxy)
-            .frame(width: min(available, 108.kbScaled),
-                   height: KeyboardChromeMetrics.keyHeight)
-            .zIndex(2)
-        } else if self.keyboardState.isRecording {
+        if self.keyboardState.isRecording {
           VStack(spacing: 1.kbScaled) {
             LiveDictationNoticeView()
             LongRecordingNotice(startedAt: self.keyboardState.recordingStartedAt)

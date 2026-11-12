@@ -49,7 +49,6 @@ struct KeyboardProxy {
   let startDictation: () -> Void
   let stopDictation: () -> Void
   let cancelDictation: () -> Void
-  let insertPendingDictation: () -> Void
   let resolveHost: () -> Void
   let requestLLMProcessing: (LLMAction, UUID?) -> Void
   let requestLLMClipboard: () -> Void
