@@ -70,35 +70,59 @@ struct VerifyMicrophonePress {
     precondition(DictationRequestPolicy.destinationFingerprint(
       sessionToken: nil, document: field
     ) == nil)
-    // Completed output must not jump into a new host field, even when
-    // the main app already cleared its mutable active session token.
+    // Recovery requires the original document and completed request token.
+    // Mutable session flags may be cleared only after the main app finishes.
     let epoch = UUID()
-    func mayRecover(
-      token: String? = nil, active: String? = nil,
-      delivery: String = tokenForCompleted,
-      currentDocument: UUID? = field, epochID: UUID? = epoch,
-      cancelled: Bool = false, recording: Bool = false,
-      hasSelection: Bool = false
-    ) -> Bool {
-      DictationRequestPolicy.mayRecoverCompleted(
-        requestedToken: token, activeToken: active,
-        deliveryToken: delivery, deliveryEpoch: epochID,
-        currentDocument: currentDocument, fingerprint: fingerprint,
-        recording: recording, cancelled: cancelled,
-        hasSelection: hasSelection
-      )
-    }
-    let tokenForCompleted = token
-    precondition(mayRecover())
-    precondition(!mayRecover(token: token))
-    precondition(!mayRecover(active: token))
-    precondition(!mayRecover(delivery: UUID().uuidString))
-    precondition(!mayRecover(currentDocument: UUID()))
-    precondition(!mayRecover(currentDocument: nil))
-    precondition(!mayRecover(epochID: nil))
-    precondition(!mayRecover(cancelled: true))
-    precondition(!mayRecover(recording: true))
-    precondition(!mayRecover(hasSelection: true))
+    precondition(DictationRequestPolicy.mayRecoverCompleted(
+      requestedToken: nil, activeToken: nil, deliveryToken: token,
+      deliveryEpoch: epoch, currentDocument: field, fingerprint: fingerprint,
+      recording: false, cancelled: false, hasSelection: false
+    ))
+    precondition(!DictationRequestPolicy.mayRecoverCompleted(
+      requestedToken: token, activeToken: nil, deliveryToken: token,
+      deliveryEpoch: epoch, currentDocument: field, fingerprint: fingerprint,
+      recording: false, cancelled: false, hasSelection: false
+    ))
+    precondition(!DictationRequestPolicy.mayRecoverCompleted(
+      requestedToken: nil, activeToken: token, deliveryToken: token,
+      deliveryEpoch: epoch, currentDocument: field, fingerprint: fingerprint,
+      recording: false, cancelled: false, hasSelection: false
+    ))
+    precondition(!DictationRequestPolicy.mayRecoverCompleted(
+      requestedToken: nil, activeToken: nil, deliveryToken: UUID().uuidString,
+      deliveryEpoch: epoch, currentDocument: field, fingerprint: fingerprint,
+      recording: false, cancelled: false, hasSelection: false
+    ))
+    precondition(!DictationRequestPolicy.mayRecoverCompleted(
+      requestedToken: nil, activeToken: nil, deliveryToken: token,
+      deliveryEpoch: epoch, currentDocument: UUID(), fingerprint: fingerprint,
+      recording: false, cancelled: false, hasSelection: false
+    ))
+    precondition(!DictationRequestPolicy.mayRecoverCompleted(
+      requestedToken: nil, activeToken: nil, deliveryToken: token,
+      deliveryEpoch: epoch, currentDocument: nil, fingerprint: fingerprint,
+      recording: false, cancelled: false, hasSelection: false
+    ))
+    precondition(!DictationRequestPolicy.mayRecoverCompleted(
+      requestedToken: nil, activeToken: nil, deliveryToken: token,
+      deliveryEpoch: nil, currentDocument: field, fingerprint: fingerprint,
+      recording: false, cancelled: false, hasSelection: false
+    ))
+    precondition(!DictationRequestPolicy.mayRecoverCompleted(
+      requestedToken: nil, activeToken: nil, deliveryToken: token,
+      deliveryEpoch: epoch, currentDocument: field, fingerprint: fingerprint,
+      recording: false, cancelled: true, hasSelection: false
+    ))
+    precondition(!DictationRequestPolicy.mayRecoverCompleted(
+      requestedToken: nil, activeToken: nil, deliveryToken: token,
+      deliveryEpoch: epoch, currentDocument: field, fingerprint: fingerprint,
+      recording: true, cancelled: false, hasSelection: false
+    ))
+    precondition(!DictationRequestPolicy.mayRecoverCompleted(
+      requestedToken: nil, activeToken: nil, deliveryToken: token,
+      deliveryEpoch: epoch, currentDocument: field, fingerprint: fingerprint,
+      recording: false, cancelled: false, hasSelection: true
+    ))
     precondition(LiveDictationChunkPolicy.firstWindowOptions.first == 1_600)
     precondition(LiveDictationChunkPolicy.retryFirstWindow(after: 1_600) == 3_200)
     let gib: UInt64 = 1_073_741_824
