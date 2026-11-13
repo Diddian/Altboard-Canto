@@ -230,7 +230,8 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("self.conversation.processing,", view)
         self.assertIn("sourcePreview: self.keyboardState.liveSourcePreview", chrome)
         self.assertIn("options: sourceOptions", live)
-        self.assertIn("settings.isSessionActive) && retryCount == 0", controller)
+        self.assertIn("(audioAlive || settings.isSessionActive || settings.isModelLoading)", controller)
+        self.assertIn("&& retryCount == 0", controller)
 
     def test_live_first_window_device_default_is_conservative_and_overridable(self):
         policy = read("Shared/LiveDictationChunkPolicy.swift")
