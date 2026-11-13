@@ -14,6 +14,50 @@ def function(path, name, next_name=None):
 
 
 class OperationOwnershipTests(unittest.TestCase):
+    def test_cold_model_audio_recovery_keeps_session_intent_and_stop_gate(self):
+        audio = source("Sayboard/Services/BackgroundAudioSession.swift")
+        speech = source("Sayboard/Services/SpeechRecognitionService.swift")
+        diagnostics = source("Shared/FeatureDiagnostics.swift")
+        suspended = function("Sayboard/Services/BackgroundAudioSession.swift",
+                             "func suspendForModelLoad()", "func restoreAfterModelLoad(")
+        resumed = function("Sayboard/Services/BackgroundAudioSession.swift",
+                           "func restoreAfterModelLoad(", "/// Single capture gate")
+        stop = function("Sayboard/Services/SpeechRecognitionService.swift",
+                        "func stopRecording()", "func cancelRecording()")
+        ending = function("Sayboard/Services/BackgroundAudioSession.swift",
+                          "func endSession()", "/// Release the audio engine's memory")
+        self.assertIn("guard self.isSessionActive, self.captureOwner == nil", suspended)
+        self.assertLess(suspended.index("self.endSession()"), suspended.index("self.resumeAfterModelLoad = true"))
+        self.assertIn("self.resumeAfterModelLoad = false", ending)
+        self.assertIn("guard self.resumeAfterModelLoad else { return nil }", resumed)
+        self.assertIn("Self.playbackOwner == nil", resumed)
+        self.assertIn("try self.startSession()", resumed)
+        self.assertIn("let parkedAudio = coldQwen && self.session.suspendForModelLoad()", stop)
+        self.assertIn("self.restoreParkedAudioSession(", stop)
+        self.assertIn("self.activeDictationToken == finalizationToken", stop)
+        self.assertIn("!self.settings.dictationCancellationRequested", stop)
+        self.assertIn("modelLoadMemoryRelease", diagnostics)
+        self.assertIn("audioSessionRestoreFailed", diagnostics)
+        self.assertLess(stop.index("self.session.endCapture(owner: .dictation)"),
+                        stop.index("self.session.suspendForModelLoad()"))
+        self.assertIn("TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStopped)", stop)
+        reload = function("Sayboard/Services/SpeechRecognitionService.swift",
+                          "func reloadModel(", "private func restoreParkedAudioSession(")
+        self.assertIn("self.session.suspendForModelLoad()", reload)
+        self.assertIn("self.restoreParkedAudioSession(allowed: !self.isRecording)", reload)
+        self.assertIn("private func restoreParkedAudioSession(", speech)
+
+    def test_warm_session_uses_recent_audio_liveness_before_app_jump(self):
+        policy = source("Shared/DictationRequestPolicy.swift")
+        source_method = function("Shared/DictationRequestPolicy.swift",
+                                 "static func shouldRequestWarmSession(", "static func shouldOpenColdFallback(")
+        self.assertIn("practiceFocused || appActive || keyboardActive", source_method)
+        self.assertIn("|| hasRecentAudioHeartbeat(heartbeat, now: now)", source_method)
+        controller = source("SayboardKeyboard/KeyboardViewController.swift")
+        self.assertIn("self.scheduleWarmStartCheck(token: token, retryCount: 0)", controller)
+        self.assertIn("!appAcknowledged", policy)
+        self.assertIn("&& !hasRecentAudioHeartbeat(heartbeat, now: now)", policy)
+
     def test_blocked_live_field_retains_preview_without_unverified_insertion(self):
         live = function("SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift",
                         "func applyExperimentalLiveUpdate()",

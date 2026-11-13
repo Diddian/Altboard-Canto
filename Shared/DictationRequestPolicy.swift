@@ -95,8 +95,11 @@ enum DictationRequestPolicy {
   ) -> Bool {
     // Try the app-owned session first even if iOS paused an idle heartbeat.
     // A bounded handshake will detect stale state and open the app if needed.
-    practiceFocused || appActive
-      || (keyboardActive && hasRecentAudioHeartbeat(heartbeat, now: now))
+    // A live audio heartbeat is stronger than a temporarily stale UI flag.
+    // This only selects a bounded host handshake; no heartbeat can acknowledge
+    // a new recording request on its own.
+    practiceFocused || appActive || keyboardActive
+      || hasRecentAudioHeartbeat(heartbeat, now: now)
   }
 
   static func shouldOpenColdFallback(

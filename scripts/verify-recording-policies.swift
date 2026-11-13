@@ -51,6 +51,10 @@ struct RecordingPolicyChecks {
       keyboardActive: true, appActive: true, heartbeat: 16.9,
       now: now, practiceFocused: false
     ))
+    precondition(p.shouldRequestWarmSession(
+      keyboardActive: false, appActive: false, heartbeat: 19.5,
+      now: now, practiceFocused: false
+    ))
     precondition(!p.shouldRequestWarmSession(
       keyboardActive: false, appActive: false, heartbeat: 16.9,
       now: now, practiceFocused: false

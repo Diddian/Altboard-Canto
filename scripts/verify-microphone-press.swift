@@ -180,6 +180,10 @@ struct VerifyMicrophonePress {
       keyboardActive: false, appActive: true, heartbeat: 1, now: 10,
       practiceFocused: false
     ))
+    precondition(DictationRequestPolicy.shouldRequestWarmSession(
+      keyboardActive: false, appActive: false, heartbeat: 9.5, now: 10,
+      practiceFocused: false
+    ))
     precondition(!DictationRequestPolicy.shouldRequestWarmSession(
       keyboardActive: false, appActive: false, heartbeat: 1, now: 10,
       practiceFocused: false

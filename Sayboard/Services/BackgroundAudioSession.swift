@@ -70,6 +70,8 @@ final class BackgroundAudioSession: ObservableObject {
   @Published private(set) var isSessionActive = false
   @Published private(set) var captureOwner: UnifiedCaptureOwner?
   private(set) var hasRecordedThisSession = false
+  // One temporary owner while cold Qwen releases audio for final decoding.
+  private var resumeAfterModelLoad = false
 
   var onInterruptionBegan: (() -> Void)?
 
@@ -82,6 +84,7 @@ final class BackgroundAudioSession: ObservableObject {
   nonisolated let tapDiagnostics = OSAllocatedUnfairLock<TapDiagnostics>(initialState: TapDiagnostics())
 
   func startSession() throws {
+    self.resumeAfterModelLoad = false
     guard !self.isSessionActive else { return }
     DictationBreadcrumb.record("audio: startSession entered")
     let audioSession = AVAudioSession.sharedInstance()
@@ -126,6 +129,8 @@ final class BackgroundAudioSession: ObservableObject {
   }
 
   func endSession() {
+    // Manual stop, timeout or interruption also cancels any parked resume.
+    self.resumeAfterModelLoad = false
     guard self.isSessionActive else {
       return
     }
@@ -154,6 +159,31 @@ final class BackgroundAudioSession: ObservableObject {
     if let observer = interruptionObserver {
       NotificationCenter.default.removeObserver(observer)
       self.interruptionObserver = nil
+    }
+  }
+
+  /// Release the audio engine's memory for cold model loading without
+  /// interpreting that temporary release as a manual session shutdown.
+  @discardableResult
+  func suspendForModelLoad() -> Bool {
+    guard self.isSessionActive, self.captureOwner == nil else { return false }
+    self.endSession()
+    self.resumeAfterModelLoad = true
+    return true
+  }
+
+  /// Restores at most once; an explicit stop cancels the parked intent.
+  /// nil: cancelled or ineligible; false: audio restart failed.
+  func restoreAfterModelLoad(allowed: Bool) -> Bool? {
+    guard self.resumeAfterModelLoad else { return nil }
+    self.resumeAfterModelLoad = false
+    guard allowed, self.captureOwner == nil, Self.playbackOwner == nil else { return nil }
+    if self.isSessionActive { return true }
+    do {
+      try self.startSession()
+      return true
+    } catch {
+      return false
     }
   }
 

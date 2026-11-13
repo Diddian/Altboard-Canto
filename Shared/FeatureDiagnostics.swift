@@ -15,7 +15,7 @@ enum FeatureDiagnostics {
 
   enum Event: String, Sendable {
     case started, completed, stopped, cancelled, failed, blocked, fallback
-    case selected, queued, downloaded, deleted, slow, noSpeech, rejected
+    case selected, queued, downloaded, deleted, slow, noSpeech, rejected, resumed
     case unavailable, interrupted, firstUpdate, firstChunkReady, firstHostInsert, rotated
     case rootWaiting, rootReady, layoutMounted, letterRowMounted
     case strokeGridMounted, trailOverlayMounted, llmPromptMounted
@@ -45,6 +45,7 @@ enum FeatureDiagnostics {
     case inferenceUnavailable, invalidTargetLanguage, oversizedOutput, insufficientMemory
     case destinationUnavailable, destinationChanged, destinationOwnerLost, awaitingUserInsertion
     case coldAudioSessionStart, warmStartUnacknowledged
+    case modelLoadMemoryRelease, audioSessionRestoreFailed
   }
 
   private static let filename = "feature-diagnostics-v1.jsonl"

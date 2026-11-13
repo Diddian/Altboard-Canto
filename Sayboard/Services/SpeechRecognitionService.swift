@@ -300,11 +300,23 @@ final class SpeechRecognitionService: ObservableObject {
 
     // Preserve the first words: capture before cold Qwen3 ONNX initialization.
     let coldQwen = self.settings.selectedVariant.engine == .qwen3 && self.activeLoadState != .loaded
-    if coldQwen {
-      self.settings.isModelLoading = true
-      self.session.endSession()
+    let parkedAudio = coldQwen && self.session.suspendForModelLoad()
+    if coldQwen { self.settings.isModelLoading = true }
+    if parkedAudio {
+      FeatureDiagnostics.record(.speechAudio, .queued,
+        failureReason: .modelLoadMemoryRelease, operationID: finalizationToken)
     }
-    defer { if coldQwen { self.settings.isModelLoading = false } }
+    defer {
+      if coldQwen { self.settings.isModelLoading = false }
+      if parkedAudio {
+        // An explicit Stop, cancellation or new operation invalidates recovery.
+        self.restoreParkedAudioSession(
+          allowed: self.activeDictationToken == finalizationToken
+            && !self.settings.dictationCancellationRequested,
+          operationID: finalizationToken
+        )
+      }
+    }
 
     let backgroundTask = UIApplication.shared.beginBackgroundTask(withName: "VoiceFinalization") {
       DictationBreadcrumb.record("voice: background finalization time expired")
@@ -440,12 +452,26 @@ final class SpeechRecognitionService: ObservableObject {
 
   func reloadModel(variant: ModelVariant, folderURL: URL?) async {
     await self.unloadAllEngines()
-    // Stop the persistent audio engine before initializing the larger Qwen3 ONNX model.
-    if variant.engine == .qwen3, self.session.isSessionActive, !self.isRecording {
-      self.session.endSession()
+    // Manual model changes can also temporarily release a warm audio engine.
+    let parkedAudio = variant.engine == .qwen3 && !self.isRecording
+      && self.session.suspendForModelLoad()
+    defer {
+      if parkedAudio {
+        self.restoreParkedAudioSession(allowed: !self.isRecording)
+      }
     }
     guard let folderURL else { return }
     _ = await self.loadModel(variant: variant, from: folderURL)
+  }
+
+  private func restoreParkedAudioSession(
+    allowed: Bool, operationID: String? = nil
+  ) {
+    guard let restored = self.session.restoreAfterModelLoad(allowed: allowed)
+    else { return }
+    FeatureDiagnostics.record(.speechAudio, restored ? .resumed : .failed,
+      failureReason: restored ? nil : .audioSessionRestoreFailed,
+      operationID: operationID)
   }
 
   func unloadForLLMProcessing() async -> Bool {
