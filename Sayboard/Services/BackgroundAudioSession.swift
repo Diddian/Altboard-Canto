@@ -48,7 +48,7 @@ final class BackgroundAudioSession: ObservableObject {
     if self.playbackOwner != owner { self.stopPlayback?() }
     self.playbackOwner = owner
     self.stopPlayback = stop
-    guard self.activeSession?.isSessionActive != true else { return true }
+    guard self.activeSession?.isSessionHealthy != true else { return true }
     do {
       let audio = AVAudioSession.sharedInstance()
       try audio.setCategory(.playback, mode: .default)
@@ -90,7 +90,7 @@ final class BackgroundAudioSession: ObservableObject {
   func startSession() throws {
     self.recoveryGate.cancel()
     if self.isSessionActive {
-      guard !self.audioEngine.isRunning else { return }
+      guard !self.isSessionHealthy else { return }
       guard self.captureOwner == nil else { throw AudioSessionError.alreadyCapturing }
       // A stale flag is not proof of a running audio engine.
       self.endSession()

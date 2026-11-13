@@ -123,7 +123,7 @@ final class SpeechRecognitionService: ObservableObject {
     ExperimentalLiveTranscription.clear()
     self.currentAudioFileName = "\(UUID().uuidString).caf"
 
-    let sessionStartedHere = !self.session.isSessionActive
+    let sessionStartedHere = !self.session.isSessionHealthy
     FeatureDiagnostics.record(.speechAudio,
       sessionStartedHere ? .fallback : .selected,
       failureReason: sessionStartedHere ? .coldAudioSessionStart : nil,
@@ -586,12 +586,12 @@ final class SpeechRecognitionService: ObservableObject {
   }
 
   private func ensureSessionActive() -> Bool {
-    guard !self.session.isSessionActive else {
+    guard !self.session.isSessionHealthy else {
       return true
     }
     do {
       try self.session.startSession()
-      return true
+      return self.session.isSessionHealthy
     } catch {
       self.errorMessage = String(
         localized: "Failed to configure audio session.",

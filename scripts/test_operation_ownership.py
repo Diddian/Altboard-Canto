@@ -58,6 +58,23 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertLess(deactivate.index("self.session.endSession()"),
                         deactivate.index("await self.unloadAllEngines()"))
 
+    def test_stale_audio_flag_requires_running_engine_before_capture(self):
+        audio = source("Sayboard/Services/BackgroundAudioSession.swift")
+        speech = source("Sayboard/Services/SpeechRecognitionService.swift")
+        activation = function("Sayboard/Services/BackgroundAudioSession.swift",
+                              "func startSession() throws", "func endSession()")
+        health = function("Sayboard/Services/BackgroundAudioSession.swift",
+                          "var isSessionHealthy:", "nonisolated let levelBridge")
+        self.assertIn("self.audioEngine.isRunning", health)
+        self.assertIn("Self.activeSession === self", health)
+        self.assertIn("guard !self.isSessionHealthy else { return }", activation)
+        ensure = function("Sayboard/Services/SpeechRecognitionService.swift",
+                          "private func ensureSessionActive()", "private func startAudioCapture()")
+        self.assertIn("guard !self.session.isSessionHealthy", ensure)
+        self.assertIn("return self.session.isSessionHealthy", ensure)
+        self.assertIn("let sessionStartedHere = !self.session.isSessionHealthy", speech)
+        self.assertIn("self.activeSession?.isSessionHealthy != true", audio)
+
     def test_warm_session_uses_recent_audio_liveness_before_app_jump(self):
         policy = source("Shared/DictationRequestPolicy.swift")
         source_method = function("Shared/DictationRequestPolicy.swift",
