@@ -156,6 +156,14 @@ enum KeyboardHaptics {
   private static let heavy = UIImpactFeedbackGenerator(style: .heavy)
   private static var prepared = false
   private static var activeOwner: ObjectIdentifier?
+  private static var sensoryViewOwner: ObjectIdentifier?
+
+  /// The SwiftUI path is safe only while its active keyboard is mounted.
+  static func setSensoryViewReady(_ ready: Bool, owner: AnyObject) {
+    let id = ObjectIdentifier(owner)
+    if ready { sensoryViewOwner = id }
+    else if sensoryViewOwner == id { sensoryViewOwner = nil }
+  }
 
   static func key(
     strength override: Double? = nil,
@@ -187,9 +195,18 @@ enum KeyboardHaptics {
           // The extension can reject Core Haptics after an app/keyboard
           // handoff. Use a direct UIKit pulse instead of a SwiftUI state
           // update that may not render while the keyboard is rebuilding.
-          triggerUIKit(technique: .automatic, strength: strength)
-          KeyboardHapticTrace.record(technique: "core->uikit", enabled: true,
-            fullAccess: settings.hasFullAccess, outcome: error)
+          if sensoryViewOwner != nil &&
+              error.hasPrefix("engine-prewarm-failed:com.apple.CoreHaptics") {
+            // Core Haptics is denied. Use one mounted SwiftUI pulse; never
+            // submit both UIKit and SwiftUI feedback on the same key.
+            KeyboardSensoryPulse.shared.trigger()
+            KeyboardHapticTrace.record(technique: "core->sensory", enabled: true,
+              fullAccess: settings.hasFullAccess, outcome: error)
+          } else {
+            triggerUIKit(technique: .automatic, strength: strength)
+            KeyboardHapticTrace.record(technique: "core->uikit", enabled: true,
+              fullAccess: settings.hasFullAccess, outcome: error)
+          }
         } else {
           KeyboardHapticTrace.record(technique: "core", enabled: true,
             fullAccess: settings.hasFullAccess, outcome: "submitted")

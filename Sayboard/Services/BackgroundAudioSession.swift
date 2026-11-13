@@ -71,7 +71,7 @@ final class BackgroundAudioSession: ObservableObject {
   @Published private(set) var captureOwner: UnifiedCaptureOwner?
   private(set) var hasRecordedThisSession = false
   // One temporary owner while cold Qwen releases audio for final decoding.
-  private var resumeAfterModelLoad = false
+  private var recoveryGate = AudioSessionRecoveryGate()
 
   var onInterruptionBegan: (() -> Void)?
 
@@ -79,13 +79,22 @@ final class BackgroundAudioSession: ObservableObject {
 
   let audioEngine = AVAudioEngine()
 
+  var isSessionHealthy: Bool {
+    self.isSessionActive && self.audioEngine.isRunning && Self.activeSession === self
+  }
+
   nonisolated let levelBridge = AudioLevelBridge(mode: .writer)
 
   nonisolated let tapDiagnostics = OSAllocatedUnfairLock<TapDiagnostics>(initialState: TapDiagnostics())
 
   func startSession() throws {
-    self.resumeAfterModelLoad = false
-    guard !self.isSessionActive else { return }
+    self.recoveryGate.cancel()
+    if self.isSessionActive {
+      guard !self.audioEngine.isRunning else { return }
+      guard self.captureOwner == nil else { throw AudioSessionError.alreadyCapturing }
+      // A stale flag is not proof of a running audio engine.
+      self.endSession()
+    }
     DictationBreadcrumb.record("audio: startSession entered")
     let audioSession = AVAudioSession.sharedInstance()
     var sessionActivated = false
@@ -129,61 +138,82 @@ final class BackgroundAudioSession: ObservableObject {
   }
 
   func endSession() {
-    // Manual stop, timeout or interruption also cancels any parked resume.
-    self.resumeAfterModelLoad = false
-    guard self.isSessionActive else {
+    let wasParked = self.recoveryGate.isParked
+    self.recoveryGate.cancel()
+    if wasParked && !self.isSessionActive {
+      self.finishParkedSession()
       return
     }
+    self.closeActiveSession(notifyEnded: true)
+  }
 
-    self.deactivateTap()
-    self.resetLevelState()
+  private func finishParkedSession() {
     self.onSessionEnded?()
-
-    self.inactivityTimer?.invalidate()
-    self.inactivityTimer = nil
-
-    if self.audioEngine.isRunning {
-      self.audioEngine.stop()
-    }
-    self.audioEngine.inputNode.removeTap(onBus: 0)
-
-    let audioSession = AVAudioSession.sharedInstance()
-    try? audioSession.setActive(false, options: .notifyOthersOnDeactivation)
-
-    if Self.activeSession === self { Self.activeSession = nil }
-    self.isSessionActive = false
-    self.settings.isSessionActive = false
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.sessionEnded)
-    self.hasRecordedThisSession = false
-
-    if let observer = interruptionObserver {
+    if let observer = self.interruptionObserver {
       NotificationCenter.default.removeObserver(observer)
       self.interruptionObserver = nil
     }
   }
 
-  /// Release the audio engine's memory for cold model loading without
-  /// interpreting that temporary release as a manual session shutdown.
+  /// A model-loading pause releases the engine without declaring user Stop.
+  private func closeActiveSession(notifyEnded: Bool) {
+    guard self.isSessionActive else { return }
+    self.deactivateTap()
+    self.resetLevelState()
+    if notifyEnded { self.onSessionEnded?() }
+
+    self.inactivityTimer?.invalidate()
+    self.inactivityTimer = nil
+    if self.audioEngine.isRunning { self.audioEngine.stop() }
+    self.audioEngine.inputNode.removeTap(onBus: 0)
+    try? AVAudioSession.sharedInstance().setActive(
+      false, options: .notifyOthersOnDeactivation
+    )
+
+    if Self.activeSession === self { Self.activeSession = nil }
+    self.isSessionActive = false
+    self.settings.isSessionActive = false
+    if notifyEnded {
+      TranscriptionBridge.postDarwinNotification(DarwinNotificationName.sessionEnded)
+    }
+    self.hasRecordedThisSession = false
+
+    if notifyEnded, let observer = self.interruptionObserver {
+      NotificationCenter.default.removeObserver(observer)
+      self.interruptionObserver = nil
+    }
+  }
+
+  /// Park the previously armed session exactly once during cold-model loading.
   @discardableResult
   func suspendForModelLoad() -> Bool {
-    guard self.isSessionActive, self.captureOwner == nil else { return false }
-    self.endSession()
-    self.resumeAfterModelLoad = true
+    guard self.recoveryGate.park(
+      sessionActive: self.isSessionActive, capturing: self.captureOwner != nil
+    ) else { return false }
+    self.closeActiveSession(notifyEnded: false)
     return true
   }
 
-  /// Restores at most once; an explicit stop cancels the parked intent.
-  /// nil: cancelled or ineligible; false: audio restart failed.
+  /// A manual Stop, cancellation, interruption or another audio owner wins.
+  /// nil: no pending intent; false: restart failed; true: restored.
   func restoreAfterModelLoad(allowed: Bool) -> Bool? {
-    guard self.resumeAfterModelLoad else { return nil }
-    self.resumeAfterModelLoad = false
-    guard allowed, self.captureOwner == nil, Self.playbackOwner == nil,
-          Self.activeSession == nil || Self.activeSession === self else { return nil }
-    if self.isSessionActive { return true }
+    guard let permitted = self.recoveryGate.take(
+      allowed: allowed,
+      captureFree: self.captureOwner == nil,
+      playbackFree: Self.playbackOwner == nil,
+      competingSessionFree: Self.activeSession == nil || Self.activeSession === self
+    ) else { return nil }
+    guard permitted else {
+      self.finishParkedSession()
+      return nil
+    }
+    if self.isSessionHealthy { return true }
     do {
       try self.startSession()
-      return true
+      return self.isSessionHealthy
     } catch {
+      self.finishParkedSession()
       return false
     }
   }
@@ -395,6 +425,9 @@ final class BackgroundAudioSession: ObservableObject {
   }
 
   private func setupInterruptionObserver() {
+    if let observer = self.interruptionObserver {
+      NotificationCenter.default.removeObserver(observer)
+    }
     self.interruptionObserver = NotificationCenter.default.addObserver(
       forName: AVAudioSession.interruptionNotification,
       object: AVAudioSession.sharedInstance(),
@@ -419,6 +452,10 @@ final class BackgroundAudioSession: ObservableObject {
 
     switch type {
     case .began:
+      if self.recoveryGate.isParked {
+        self.endSession()
+        return
+      }
       self.deactivateTap()
       self.onInterruptionBegan?()
 

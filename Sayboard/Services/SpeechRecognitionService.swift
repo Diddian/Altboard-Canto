@@ -198,17 +198,22 @@ final class SpeechRecognitionService: ObservableObject {
             let downloads = self.downloadService
       else { return }
 
-      // This model's published RAM requirement is an estimate. Keep an extra
-      // 512 MB available for the recording engine and the OS.
+      // Release unused recognizers first, not the currently recording tap.
+      // This reduces live-model peak memory without hiding an OOM.
+      await self.releaseInactiveSpeechEnginesForQwen()
+      guard self.isRecording, !self.isStopping,
+            self.settings.selectedVariant.engine == .qwen3,
+            self.activeLoadState == .unloaded else { return }
       let variant = self.settings.selectedVariant
       let availableMB = Int(os_proc_available_memory() / 1_048_576)
-      // Explicit live input permits a lower but still bounded warm-start
-      // threshold. Otherwise the old conservative final-only path applies.
       let wantsLive = self.settings.experimentalLiveDictationEnabled
-      let minimumMB = wantsLive
-        ? max(2_400, Int(Double(variant.ramRequirementMB) * 0.58))
-        : variant.ramRequirementMB + 512
-      guard availableMB >= minimumMB else {
+      let minimumMB = LiveWarmupMemoryPolicy.requiredAvailableMB(
+        requirementMB: variant.ramRequirementMB, wantsLive: wantsLive
+      )
+      guard LiveWarmupMemoryPolicy.allowsWarmup(
+        availableMB: availableMB, requirementMB: variant.ramRequirementMB,
+        wantsLive: wantsLive
+      ) else {
         if wantsLive {
           self.liveDictationStatus = "Insufficient memory to warm Qwen while recording"
           FeatureDiagnostics.record(.liveDictation, .fallback,
@@ -239,6 +244,16 @@ final class SpeechRecognitionService: ObservableObject {
         "qwen: concurrent warmup ended in state \(String(describing: self.activeLoadState))"
       )
     }
+  }
+
+  private func releaseInactiveSpeechEnginesForQwen() async {
+    guard self.isRecording, self.speechWorkers == 0,
+          self.modelLoadsInFlight == 0,
+          self.settings.selectedVariant.engine == .qwen3 else { return }
+    if self.whisperService.loadState == .loaded { await self.whisperService.unloadModel() }
+    if self.parakeetService.loadState == .loaded { await self.parakeetService.unloadModel() }
+    if self.moonshineService.loadState == .loaded { self.moonshineService.unloadModel() }
+    if self.senseVoiceService.loadState == .loaded { self.senseVoiceService.unloadModel() }
   }
 
   func stopRecording() async {
@@ -451,8 +466,7 @@ final class SpeechRecognitionService: ObservableObject {
   }
 
   func reloadModel(variant: ModelVariant, folderURL: URL?) async {
-    await self.unloadAllEngines()
-    // Manual model changes can also temporarily release a warm audio engine.
+    // Temporarily park the engine before allocating a cold recognizer.
     let parkedAudio = variant.engine == .qwen3 && !self.isRecording
       && self.session.suspendForModelLoad()
     defer {
@@ -460,6 +474,7 @@ final class SpeechRecognitionService: ObservableObject {
         self.restoreParkedAudioSession(allowed: !self.isRecording)
       }
     }
+    await self.unloadAllEngines()
     guard let folderURL else { return }
     _ = await self.loadModel(variant: variant, from: folderURL)
   }
@@ -614,12 +629,12 @@ extension SpeechRecognitionService {
     ) { [weak self] in
       Task { @MainActor [weak self] in
         guard let self else { return }
-        let active = self.session.isSessionActive
-        let recording = self.isRecording
-        if active {
+        // Do not acknowledge an armed microphone from a stale shared flag.
+        let healthy = self.session.isSessionHealthy
+        if healthy {
           TranscriptionBridge.postDarwinNotification(DarwinNotificationName.sessionStarted)
         }
-        if recording {
+        if self.isRecording && healthy {
           TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStarted)
         }
       }

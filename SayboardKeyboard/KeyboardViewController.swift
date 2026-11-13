@@ -956,26 +956,26 @@ final class KeyboardViewController: UIInputViewController {
       appActive: settings.isSessionActive,
       heartbeat: settings.mainAppHeartbeat,
       now: CFAbsoluteTimeGetCurrent(),
-      practiceFocused: HistoryKeyboardTestSession.isFocused
+      practiceFocused: HistoryKeyboardTestSession.isFocused,
+      modelLoading: settings.isModelLoading
     )
-    if direct {
-      TranscriptionBridge.postDarwinNotification(DarwinNotificationName.requestStartDictation)
-      self.pingMainAppForSessionStatus()
-      self.scheduleWarmStartCheck(token: token, retryCount: 0)
-    } else {
-      // Cold activation opens the app with the SAME token and destination.
-      // Only the controller creates a request; the mic view never rearms.
-      FeatureDiagnostics.record(.speech, .fallback,
-        failureReason: .coldAudioSessionStart, operationID: token)
-      self.openDictateDeepLinkFallback(reason: "cold audio session")
-    }
+    // Even a stale App Group flag gets a short host handshake before
+    // navigating away and risking loss of the original input field.
+    TranscriptionBridge.postDarwinNotification(DarwinNotificationName.requestStartDictation)
+    self.pingMainAppForSessionStatus()
+    self.scheduleWarmStartCheck(
+      token: token, retryCount: 0,
+      timeout: direct ? Self.staleFallbackTimeout : 0.8
+    )
   }
 
-  private func scheduleWarmStartCheck(token: String, retryCount: Int) {
+  private func scheduleWarmStartCheck(
+    token: String, retryCount: Int, timeout: TimeInterval? = nil
+  ) {
     self.staleFallbackTimer?.invalidate()
     guard !HistoryKeyboardTestSession.isFocused else { return }
     self.staleFallbackTimer = Timer.scheduledTimer(
-      withTimeInterval: Self.staleFallbackTimeout, repeats: false
+      withTimeInterval: timeout ?? Self.staleFallbackTimeout, repeats: false
     ) { [weak self] _ in
       DispatchQueue.main.async { [weak self] in
         guard let self else { return }
@@ -992,7 +992,8 @@ final class KeyboardViewController: UIInputViewController {
           && DictationRequestPolicy.hasRecentAudioHeartbeat(
             settings.mainAppHeartbeat, now: now
           )
-        if (audioAlive || settings.isSessionActive) && retryCount == 0 {
+        if (audioAlive || settings.isSessionActive || settings.isModelLoading)
+            && retryCount == 0 {
           // Replay a lost Darwin notification once with the same request token.
           FeatureDiagnostics.record(.speech, .fallback)
           DiagnosticLog.write("keyboard: retrying warm dictation request")

@@ -91,14 +91,14 @@ enum DictationRequestPolicy {
 
   static func shouldRequestWarmSession(
     keyboardActive: Bool, appActive: Bool, heartbeat: TimeInterval,
-    now: TimeInterval, practiceFocused: Bool
+    now: TimeInterval, practiceFocused: Bool, modelLoading: Bool = false
   ) -> Bool {
     // Try the app-owned session first even if iOS paused an idle heartbeat.
     // A bounded handshake will detect stale state and open the app if needed.
     // A live audio heartbeat is stronger than a temporarily stale UI flag.
     // This only selects a bounded host handshake; no heartbeat can acknowledge
     // a new recording request on its own.
-    practiceFocused || appActive || keyboardActive
+    practiceFocused || appActive || keyboardActive || modelLoading
       || hasRecentAudioHeartbeat(heartbeat, now: now)
   }
 
@@ -107,9 +107,12 @@ enum DictationRequestPolicy {
     keyboardVisible: Bool, recording: Bool, appAcknowledged: Bool,
     heartbeat: TimeInterval, now: TimeInterval
   ) -> Bool {
-    isCurrent(started: requestToken, current: currentToken, cancelled: cancelled)
+    // Liveness is not an acknowledgment for this particular request.
+    // An unacknowledged start must eventually use the bounded fallback.
+    _ = heartbeat
+    _ = now
+    return isCurrent(started: requestToken, current: currentToken, cancelled: cancelled)
       && keyboardVisible && !recording && !appAcknowledged
-      && !hasRecentAudioHeartbeat(heartbeat, now: now)
   }
 
 }

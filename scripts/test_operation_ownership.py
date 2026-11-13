@@ -25,13 +25,16 @@ class OperationOwnershipTests(unittest.TestCase):
         stop = function("Sayboard/Services/SpeechRecognitionService.swift",
                         "func stopRecording()", "func cancelRecording()")
         ending = function("Sayboard/Services/BackgroundAudioSession.swift",
-                          "func endSession()", "/// Release the audio engine's memory")
-        self.assertIn("guard self.isSessionActive, self.captureOwner == nil", suspended)
-        self.assertLess(suspended.index("self.endSession()"), suspended.index("self.resumeAfterModelLoad = true"))
-        self.assertIn("self.resumeAfterModelLoad = false", ending)
-        self.assertIn("guard self.resumeAfterModelLoad else { return nil }", resumed)
-        self.assertIn("Self.playbackOwner == nil", resumed)
-        self.assertIn("Self.activeSession == nil || Self.activeSession === self", resumed)
+                          "func endSession()", "private func finishParkedSession()")
+        self.assertIn("self.recoveryGate.park(", suspended)
+        self.assertNotIn("self.endSession()", suspended)
+        self.assertIn("self.recoveryGate.cancel()", ending)
+        self.assertIn("self.recoveryGate.take(", resumed)
+        self.assertIn("playbackFree: Self.playbackOwner == nil", resumed)
+        self.assertIn("competingSessionFree: Self.activeSession == nil || Self.activeSession === self", resumed)
+        self.assertIn("self.closeActiveSession(notifyEnded: false)", suspended)
+        self.assertIn("if notifyEnded { self.onSessionEnded?() }", audio)
+        self.assertIn("if self.recoveryGate.isParked {", audio)
         self.assertIn("try self.startSession()", resumed)
         self.assertIn("let parkedAudio = coldQwen && self.session.suspendForModelLoad()", stop)
         self.assertIn("self.restoreParkedAudioSession(", stop)
@@ -41,6 +44,9 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("audioSessionRestoreFailed", diagnostics)
         self.assertLess(stop.index("self.session.endCapture(owner: .dictation)"),
                         stop.index("self.session.suspendForModelLoad()"))
+        self.assertIn("self.session.isSessionHealthy", speech)
+        self.assertIn("LiveWarmupMemoryPolicy.allowsWarmup(", speech)
+        self.assertIn("releaseInactiveSpeechEnginesForQwen()", speech)
         self.assertIn("TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStopped)", stop)
         reload = function("Sayboard/Services/SpeechRecognitionService.swift",
                           "func reloadModel(", "private func restoreParkedAudioSession(")
@@ -56,12 +62,14 @@ class OperationOwnershipTests(unittest.TestCase):
         policy = source("Shared/DictationRequestPolicy.swift")
         source_method = function("Shared/DictationRequestPolicy.swift",
                                  "static func shouldRequestWarmSession(", "static func shouldOpenColdFallback(")
-        self.assertIn("practiceFocused || appActive || keyboardActive", source_method)
+        self.assertIn("practiceFocused || appActive || keyboardActive || modelLoading", source_method)
         self.assertIn("|| hasRecentAudioHeartbeat(heartbeat, now: now)", source_method)
         controller = source("SayboardKeyboard/KeyboardViewController.swift")
-        self.assertIn("self.scheduleWarmStartCheck(token: token, retryCount: 0)", controller)
+        self.assertIn("self.scheduleWarmStartCheck(", controller)
+        self.assertIn("token: token, retryCount: 0,", controller)
         self.assertIn("!appAcknowledged", policy)
-        self.assertIn("&& !hasRecentAudioHeartbeat(heartbeat, now: now)", policy)
+        self.assertIn("&& keyboardVisible && !recording && !appAcknowledged", policy)
+        self.assertIn("timeout: direct ? Self.staleFallbackTimeout : 0.8", controller)
 
     def test_blocked_live_field_retains_preview_without_unverified_insertion(self):
         live = function("SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift",
@@ -81,7 +89,10 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("guard !prepared else { return }", haptic)
         self.assertIn('KeyboardHapticTrace.record(technique: "core->uikit"', haptic)
         self.assertIn("triggerUIKit(technique: .automatic, strength: strength)", haptic)
-        self.assertNotIn('KeyboardHapticTrace.record(technique: "core->sensory"', haptic)
+        self.assertIn('KeyboardHapticTrace.record(technique: "core->sensory"', haptic)
+        self.assertIn("sensoryViewOwner != nil", haptic)
+        self.assertIn("setSensoryViewReady(true, owner: self.keyboardState)",
+                      source("SayboardKeyboard/Views/KeyboardView.swift"))
         self.assertIn("if prepared { suspend() }", haptic)
         did_load = function("SayboardKeyboard/KeyboardViewController.swift",
                             "override func viewDidLoad()", "override func viewWillAppear(")
@@ -103,7 +114,9 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("settings.isRecording && settings.isSessionActive", start)
         self.assertIn("self.recoverActiveDictationAfterReentry()", start)
         self.assertIn("FeatureDiagnostics.record(.speech, .selected, operationID: token)", start)
-        self.assertIn("failureReason: .coldAudioSessionStart", start)
+        self.assertIn("self.pingMainAppForSessionStatus()", start)
+        self.assertNotIn("failureReason: .coldAudioSessionStart", start)
+        self.assertIn("self.scheduleWarmStartCheck(", start)
         schedule = function("SayboardKeyboard/KeyboardViewController.swift",
                             "private func scheduleWarmStartCheck(",
                             "private func openDictateDeepLinkFallback(")

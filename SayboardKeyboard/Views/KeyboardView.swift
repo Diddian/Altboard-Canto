@@ -178,6 +178,10 @@ struct KeyboardView: View {
     }
     .onAppear {
       self.keyboardState.openURLAction = { [openURL] url in openURL(url) }
+      KeyboardHaptics.setSensoryViewReady(true, owner: self.keyboardState)
+    }
+    .onDisappear {
+      KeyboardHaptics.setSensoryViewReady(false, owner: self.keyboardState)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     .environment(\.keyboardHapticsEnabled, self.keyboardState.keyboardHapticsEnabled)

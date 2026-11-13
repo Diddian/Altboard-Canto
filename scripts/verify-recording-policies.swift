@@ -78,7 +78,8 @@ struct RecordingPolicyChecks {
     precondition(!cold(visible: false))
     precondition(!cold(recording: true))
     precondition(!cold(acknowledged: true))
-    precondition(!cold(heartbeat: 19.5))
+    // A heartbeat never acknowledges this particular request.
+    precondition(cold(heartbeat: 19.5))
 
 
     var envelope = AudioWaveformPeaks()

@@ -53,6 +53,14 @@ jobs:
             Shared/KeyboardDocumentIdentifier.swift scripts/verify-keyboard-document-identifier.swift
           "$RUNNER_TEMP/document-identity-smoke"
 
+      - name: Verify one-shot audio recovery and memory admission gates
+        run: |
+          set -euo pipefail
+          swiftc -swift-version 6 -o "$RUNNER_TEMP/audio-session-recovery-smoke" \
+            Shared/AudioSessionRecoveryGate.swift Shared/LiveWarmupMemoryPolicy.swift \
+            scripts/verify-audio-session-recovery.swift
+          "$RUNNER_TEMP/audio-session-recovery-smoke"
+
       - name: Verify audio FIFO and bounded compaction
         run: |
           set -euo pipefail
