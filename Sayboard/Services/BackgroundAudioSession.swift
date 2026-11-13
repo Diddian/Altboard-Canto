@@ -177,7 +177,8 @@ final class BackgroundAudioSession: ObservableObject {
   func restoreAfterModelLoad(allowed: Bool) -> Bool? {
     guard self.resumeAfterModelLoad else { return nil }
     self.resumeAfterModelLoad = false
-    guard allowed, self.captureOwner == nil, Self.playbackOwner == nil else { return nil }
+    guard allowed, self.captureOwner == nil, Self.playbackOwner == nil,
+          Self.activeSession == nil || Self.activeSession === self else { return nil }
     if self.isSessionActive { return true }
     do {
       try self.startSession()

@@ -31,6 +31,7 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("self.resumeAfterModelLoad = false", ending)
         self.assertIn("guard self.resumeAfterModelLoad else { return nil }", resumed)
         self.assertIn("Self.playbackOwner == nil", resumed)
+        self.assertIn("Self.activeSession == nil || Self.activeSession === self", resumed)
         self.assertIn("try self.startSession()", resumed)
         self.assertIn("let parkedAudio = coldQwen && self.session.suspendForModelLoad()", stop)
         self.assertIn("self.restoreParkedAudioSession(", stop)
@@ -46,6 +47,10 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("self.session.suspendForModelLoad()", reload)
         self.assertIn("self.restoreParkedAudioSession(allowed: !self.isRecording)", reload)
         self.assertIn("private func restoreParkedAudioSession(", speech)
+        deactivate = function("Sayboard/Services/SpeechRecognitionService.swift",
+                              "func deactivateCompletely()", "func startRecordingAfterModelLoad()")
+        self.assertLess(deactivate.index("self.session.endSession()"),
+                        deactivate.index("await self.unloadAllEngines()"))
 
     def test_warm_session_uses_recent_audio_liveness_before_app_jump(self):
         policy = source("Shared/DictationRequestPolicy.swift")

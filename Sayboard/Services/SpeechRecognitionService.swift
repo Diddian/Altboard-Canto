@@ -481,8 +481,10 @@ final class SpeechRecognitionService: ObservableObject {
   }
 
   func deactivateCompletely() async {
-    await self.unloadAllEngines()
+    // Revoke parked recovery before suspension in the model unload.
+    // Otherwise the finalizer could briefly reactivate a manually stopped mic.
     self.session.endSession()
+    await self.unloadAllEngines()
   }
 
   func startRecordingAfterModelLoad() async {
