@@ -7,7 +7,7 @@
     "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
     "review_branch": "review/full-history-20261114"
   },
-  "status": "x3_audio_session_workers_history_source_review_complete_x4_to_x7_pending",
+  "status": "x4_voice_host_delivery_and_llm_owner_review_complete_x5_to_x7_pending",
   "expected_current_tracked_files_observed": 577,
   "current_tracked_files": 577,
   "initial_tracked_files": 356,
@@ -963,7 +963,9 @@
       "path": "Sayboard/Services/CantoneseOutput.swift",
       "sha": "ca532bd5615c05033b1c3df7beb8d7cf34d22e2f",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X4",
+      "evidence": "X4 GitHub source owner and tests inspected at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 4-43 output target script normalization"
     },
     {
       "path": "Sayboard/Services/ConversationCoordinator.swift",
@@ -988,7 +990,8 @@
       "path": "Sayboard/Services/HostApplicationMonitor.swift",
       "sha": "1b8aceeee94f5f7b77366d3cd4e4fa1e32a51248",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "not_reviewed",
+      "x4_evidence": "X4 scoped path at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; host process proof owner path; not fully reviewed; defer remaining lifecycle to X7. Remainder not automatically marked reviewed."
     },
     {
       "path": "Sayboard/Services/LLMDownloadService.swift",
@@ -1012,8 +1015,10 @@
       "path": "Sayboard/Services/LLMProcessingCoordinator.swift",
       "sha": "6307bdb404b8bd0664388d37eb73c8759367acbf",
       "tracking": "current",
-      "review": "not_reviewed",
-      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 223,313-316 unload target; full voice output X4; remainder not claimed reviewed"
+      "review": "reviewed",
+      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 223,313-316 unload target; full voice output X4; remainder not claimed reviewed",
+      "stage": "X4",
+      "evidence": "X4 GitHub source owner and tests inspected at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 18-27 event owner; 43-137 voice output; 186-280 memory/inference; 282-396 request processing; 398-453 verification/model handoff; 455-504 styling and timeout"
     },
     {
       "path": "Sayboard/Services/LLMPromptTemplates.swift",
@@ -1179,7 +1184,8 @@
       "tracking": "current",
       "review": "reviewed",
       "stage": "X3",
-      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 7-21 token/abort; 44-260 final decoding/bridge; 262-319 history"
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 7-21 token/abort; 44-260 final decoding/bridge; 262-319 history",
+      "x4_evidence": "X4 scoped path at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; 44-260 final LLM/voice output preference, validation, history and bridge. Remainder not automatically marked reviewed."
     },
     {
       "path": "Sayboard/Services/SpeechRecognitionService.swift",
@@ -1601,7 +1607,8 @@
       "path": "Sayboard/Views/VoiceOutputSettingsView.swift",
       "sha": "c02c67f92a263579c585551e74d39d9d142abb03",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "not_reviewed",
+      "x4_evidence": "X4 scoped path at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; 11-109 explicit target selector and BCP47 validation. Remainder not automatically marked reviewed."
     },
     {
       "path": "Sayboard/Views/WaveformPlayerView.swift",
@@ -1693,7 +1700,8 @@
       "review": "reviewed",
       "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators SayboardKeyboard/KeyboardState.swift:49-104,147-194,236-242; X1 installation/activation/runtime ownership",
       "stage": "X1",
-      "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 49-59 reactive state, 86-106 fallback, 147-194 refresh"
+      "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 49-59 reactive state, 86-106 fallback, 147-194 refresh",
+      "x4_evidence": "X4 scoped path at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; 39-52 history state, 108-145 undo visibility and clear. Remainder not automatically marked reviewed."
     },
     {
       "path": "SayboardKeyboard/KeyboardTouchLearning.swift",
@@ -1711,7 +1719,9 @@
       "path": "SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift",
       "sha": "936be5130bce8f258be31ffa6c484726aedb3b0a",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X4",
+      "evidence": "X4 GitHub source owner and tests inspected at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 13-22 observer, 24-114 live update, 119-167 final reconciliation, 169-204 cancel/ownership reset"
     },
     {
       "path": "SayboardKeyboard/KeyboardViewController+HostDetection.swift",
@@ -1723,7 +1733,9 @@
       "path": "SayboardKeyboard/KeyboardViewController+LLM.swift",
       "sha": "09aad863a9cbaed41a272820db32ab18654c290d",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X4",
+      "evidence": "X4 GitHub source owner and tests inspected at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 8-38 observers; 40-164 auto/manual dispatch; 167-225 clipboard, status and timeout; 234-360 field checks, result, cleanup; 362-398 Undo/Redo"
     },
     {
       "path": "SayboardKeyboard/KeyboardViewController+Spacing.swift",
@@ -1747,7 +1759,8 @@
       "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators SayboardKeyboard/KeyboardViewController.swift:67-200,307-465,647-709,721-739,1153-1199,1343-1479; X1 installation/activation/runtime ownership",
       "stage": "X1",
       "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 7-11 click protocol, 98-200 lifecycle/Globe/Haptics, 382-465 render probe, 1153-1199 hosting, 1466-1472 native requirement",
-      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 741-817 request acknowledgment; 900-1131 keyboard direct/delayed handshakes; prior X1 already full-reviewed; remainder not claimed reviewed"
+      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 741-817 request acknowledgment; 900-1131 keyboard direct/delayed handshakes; prior X1 already full-reviewed; remainder not claimed reviewed",
+      "x4_evidence": "X4 scoped path at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; 21-46 identity/epoch and ephemeral LLM state, 134-200 reentry, 467-618 final delivery, 665-816 notification observers, 865-922 destination capture, 1201-1307 keyboard proxy, 1343-1399 field change, 1433-1478 document accessor. Remainder not automatically marked reviewed."
     },
     {
       "path": "SayboardKeyboard/LatinSwipeDecoder.swift",
@@ -2149,7 +2162,8 @@
       "path": "SayboardTests/DictationSpacingTests.swift",
       "sha": "d4df5f8ad93e89e8ddb1b7fec89d7a589017f4bc",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "not_reviewed",
+      "x4_evidence": "X4 scoped path at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; 7-210 localized insertion spacing test catalogue; not run. Remainder not automatically marked reviewed."
     },
     {
       "path": "SayboardTests/DownloadErrorMessageTests.swift",
@@ -2223,7 +2237,9 @@
       "path": "SayboardTests/LLMActionSelectionTests.swift",
       "sha": "65b49588559fada3abb50bb5722d6abcaf4e4662",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X4",
+      "evidence": "X4 GitHub source owner and tests inspected at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 6-196 action selection round-trips and disabled preset guards (test file inspected; not executed)"
     },
     {
       "path": "SayboardTests/LLMGenerationBudgetTests.swift",
@@ -2442,7 +2458,8 @@
       "path": "SayboardTests/VoiceOutputPipelineTests.swift",
       "sha": "d0d4fac7d584b81804611771dd1e590ec100d7d3",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "not_reviewed",
+      "x4_evidence": "X4 scoped path at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; 9-100 target and source validation; 115-169 preference retries/script conversion; 187-240 specific locale cases; not run. Remainder not automatically marked reviewed."
     },
     {
       "path": "SayboardTests/WordCounterTests.swift",
@@ -2570,13 +2587,15 @@
       "tracking": "current",
       "review": "reviewed",
       "stage": "X3",
-      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 4-84 destination/current session; 86-116 heartbeat and bounded warm/cold policy"
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 4-84 destination/current session; 86-116 heartbeat and bounded warm/cold policy",
+      "x4_evidence": "X4 recheck at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 4-50 document/process proof; 52-84 token recovery; 86-118 audio liveness policy (X3 recheck)"
     },
     {
       "path": "Shared/DictationSpacing.swift",
       "sha": "8cbe13a3f6bb6388e503dd651dc204e6bdc08490",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "not_reviewed",
+      "x4_evidence": "X4 scoped path at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; separators read and verified with existing dedicated test cases; full spacing policy delegated broader X5/X6. Remainder not automatically marked reviewed."
     },
     {
       "path": "Shared/DiskSpace.swift",
@@ -2755,7 +2774,9 @@
       "path": "Shared/LLMBridge.swift",
       "sha": "7158d925c14a4b25b33921ff8f4a1b9f3c3171dc",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X4",
+      "evidence": "X4 GitHub source owner and tests inspected at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 9-28 request/result/status schema; 30-92 terminal state; 94-165 one-slot request/result publication; 168-206 cleanup; 208-238 process lock"
     },
     {
       "path": "Shared/LLMConstants.swift",
@@ -2870,7 +2891,9 @@
       "path": "Shared/OperationContracts.swift",
       "sha": "eecf116023a5cffecde1e1366a809aa814493ff6",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X4",
+      "evidence": "X4 GitHub source owner and tests inspected at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 3-56 operation/delivery ownership; 58-89 live revision and field guard; 91-143 final live reconciliation"
     },
     {
       "path": "Shared/PeriodShortcut.swift",
@@ -2931,7 +2954,8 @@
       "review": "reviewed",
       "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators Shared/SharedSettings.swift:3-9,83-116,365-368; X1 installation/activation/runtime ownership",
       "stage": "X1",
-      "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 231-245 Globe config, 258-294 haptic settings and reset, 365-368 persisted needs key"
+      "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 231-245 Globe config, 258-294 haptic settings and reset, 365-368 persisted needs key",
+      "x4_evidence": "X4 scoped path at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; 360-383 clipboard/output flags, 602-627 session destination fingerprint and process marker. Remainder not automatically marked reviewed."
     },
     {
       "path": "Shared/Snippet.swift",
@@ -2967,31 +2991,41 @@
       "path": "Shared/TextSanitizer.swift",
       "sha": "ffd2ed4e72c69f78fecc1aedd7d255604afbfb49",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X4",
+      "evidence": "X4 GitHub source owner and tests inspected at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 4-79 ASR header stripping and normalized output"
     },
     {
       "path": "Shared/TranscriptionBridge.swift",
       "sha": "b9568b02c96593d756bc2516d4a267bd4dfab933",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X4",
+      "evidence": "X4 GitHub source owner and tests inspected at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 5-43 pending durable outbox bounds and write; 45-80 bounded read/match/ack; 83-115 cancel/stop tokens; 117-185 progress events; 215-260 Darwin observer"
     },
     {
       "path": "Shared/VoiceOutputOptions.swift",
       "sha": "224227e74b1ab962d264e2d4f9deabd8e31a8400",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X4",
+      "evidence": "X4 GitHub source owner and tests inspected at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 65-145 target instruction, 174-189 need LLM, 192-265 prompt and safety, 269-336 language validation"
     },
     {
       "path": "Shared/VoiceOutputScriptPolicy.swift",
       "sha": "4a1c5a0fc4944191eb1dd7b76dcf759934d877bb",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X4",
+      "evidence": "X4 GitHub source owner and tests inspected at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 1-9 user-selected simplified Chinese conversion"
     },
     {
       "path": "Shared/VoiceOutputSelectionPolicy.swift",
       "sha": "e95bea4170bddd1a23d32e1648ea951c39a20e33",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X4",
+      "evidence": "X4 GitHub source owner and tests inspected at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 1-18 one current language with bounded retry"
     },
     {
       "path": "Shared/VoicePunctuationPolicy.swift",
@@ -3422,7 +3456,8 @@
       "sha": "d8d4ab3e104b38c9de723453d17480a5b893312a",
       "tracking": "current",
       "review": "not_reviewed",
-      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 17-89 recovery/health; 249-385 start/stop/native worker source-string assertions; full test suite X4-X7; remainder not claimed reviewed"
+      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 17-89 recovery/health; 249-385 start/stop/native worker source-string assertions; full test suite X4-X7; remainder not claimed reviewed",
+      "x4_evidence": "X4 scoped path at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; 144-236 host/delivery id guards, 436-506 status/bridge smoke cases; source-string checks only; not run. Remainder not automatically marked reviewed."
     },
     {
       "path": "scripts/test_settings_contract.py",
@@ -3597,7 +3632,8 @@
       "path": "scripts/verify-llm-bridge.swift",
       "sha": "026e55b73b7990cb1173d0bb95d02c5eb0718d9b",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "not_reviewed",
+      "x4_evidence": "X4 scoped path at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; 30-131 one-slot request/status/lock contention fixture; no reentry orphan scenario asserted; not run. Remainder not automatically marked reviewed."
     },
     {
       "path": "scripts/verify-llm-device-policy.swift",
@@ -10211,14 +10247,78 @@
       "not_run": [
         "unit tests, Swift toolchain against exact GitHub blobs, physical device and iOS 27.2 memory measurements"
       ]
+    },
+    "X4": {
+      "status": "complete_GitHub_source_owner_review; no runtime test",
+      "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+      "reviewed_paths": [
+        "Shared/TranscriptionBridge.swift",
+        "Shared/LLMBridge.swift",
+        "Shared/DictationRequestPolicy.swift",
+        "Shared/OperationContracts.swift",
+        "Shared/VoiceOutputSelectionPolicy.swift",
+        "Shared/VoiceOutputOptions.swift",
+        "Sayboard/Services/CantoneseOutput.swift",
+        "Shared/VoiceOutputScriptPolicy.swift",
+        "Shared/TextSanitizer.swift",
+        "SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift",
+        "SayboardKeyboard/KeyboardViewController+LLM.swift",
+        "Sayboard/Services/LLMProcessingCoordinator.swift",
+        "SayboardTests/LLMActionSelectionTests.swift"
+      ],
+      "partial_paths": [
+        "SayboardKeyboard/KeyboardViewController.swift",
+        "SayboardKeyboard/KeyboardState.swift",
+        "Shared/SharedSettings.swift",
+        "Sayboard/Services/SpeechRecognitionService+Transcription.swift",
+        "Shared/DictationSpacing.swift",
+        "SayboardTests/VoiceOutputPipelineTests.swift",
+        "SayboardTests/DictationSpacingTests.swift",
+        "Sayboard/Views/VoiceOutputSettingsView.swift",
+        "Sayboard/Services/HostApplicationMonitor.swift",
+        "scripts/test_operation_ownership.py",
+        "scripts/verify-llm-bridge.swift"
+      ],
+      "historical_checkpoints": [
+        84,
+        136,
+        193,
+        228,
+        232
+      ],
+      "source_predicates": {
+        "observed": 26,
+        "total": 26,
+        "nature": "source-path predicates, not behavioral pass/fail"
+      },
+      "new_findings": [
+        "F-0018",
+        "F-0019",
+        "F-0020",
+        "F-0021",
+        "F-0022",
+        "F-0023",
+        "F-0024",
+        "F-0025",
+        "F-0026"
+      ],
+      "unverified": [
+        "same-host two-field documentless insertion",
+        "live duplicate on controller recreation",
+        "LLM undo in foreign field",
+        "clipboard fallback on iPhone",
+        "pending request reentry and orphan result",
+        "short wrong-language model output",
+        "crash between insert and ack"
+      ]
     }
   },
   "counts": {
     "current_total": 577,
     "historical_only": 14,
-    "reviewed": 87,
+    "reviewed": 99,
     "excluded": 0,
-    "not_reviewed": 504,
+    "not_reviewed": 492,
     "known_changed_path_occurrences": 983,
     "known_unique_changed_paths": 336
   },

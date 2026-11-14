@@ -1,7 +1,7 @@
 {
   "schema_version": "untangle-ocr-findings/v1",
   "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
-  "status": "X0-X3 scoped GitHub review complete; X4-X7 pending; X8 repairs not started; iPhone unverified",
+  "status": "X0-X4 scoped source reviews complete; X5-X7 pending; X8 production repair not started; iPhone not verified",
   "findings": [
     {
       "id": "F-0001",
@@ -766,6 +766,394 @@
       "regression_oracle": "Measure audio callback duration/gaps, buffer errors and dropped samples during 30min dictation and backgrounding under low memory; assert recorded PCM counts and first-word preservation.",
       "verification": [
         "Code-level synchronous work observed; realtime glitch/OOM not measured on device."
+      ]
+    },
+    {
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X4/manual-source",
+      "assigned_stage": "X8",
+      "id": "F-0018",
+      "severity": "high",
+      "state": "confirmed",
+      "area": "document_ownership",
+      "paths": [
+        "Shared/DictationRequestPolicy.swift",
+        "SayboardKeyboard/KeyboardViewController.swift",
+        "Shared/SharedSettings.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Shared/DictationRequestPolicy.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "25-50",
+          "observation": "documentless delivery authorizes based on token, absence of document/epoch and same process marker, but no per-field proof"
+        },
+        {
+          "path": "SayboardKeyboard/KeyboardViewController.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "493-503,547-560",
+          "observation": "both completed recovery and regular insert accept matchesDocumentlessHost as alternative to document identity"
+        },
+        {
+          "path": "Shared/SharedSettings.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "607-621",
+          "observation": "only request-bound host-process marker persisted; not a field marker"
+        }
+      ],
+      "scenario": "Two different editable fields within the SAME host app both expose no documentIdentifier. Dictation originates in field A; user switches focus to field B before delivery, with no selected text and same host-process identity.",
+      "causal_chain": "Process fingerprint matches B although B is a different field -> matchesDocumentlessHost true -> final text may automatically insert into B. This is a deterministic policy gap, not an observed iPhone event.",
+      "root_owner": "DictationRequestPolicy.mayDeliverWithoutDocumentIdentifier fallback authorization",
+      "smallest_repair": "Fail closed on absent field proof; keep outbox/History and offer an explicit, user-confirmed paste path. A host-process ID alone must not authorize automatic text insertion.",
+      "regression_oracle": "Two synthetic fields A and B in same pid/version with nil UIKit document identifiers: origin A, attempt delivery to B -> denied; original unavailable -> result remains recoverable, not discarded. Positive same-field with nonnil verified ID still inserts once.",
+      "verification": [
+        "Confirmed policy cannot distinguish two fields sharing a host-process marker; no physical iPhone foreign-field insertion observed."
+      ]
+    },
+    {
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X4/manual-source",
+      "assigned_stage": "X8",
+      "id": "F-0019",
+      "severity": "high",
+      "state": "confirmed",
+      "area": "idempotency",
+      "paths": [
+        "SayboardKeyboard/KeyboardViewController.swift",
+        "SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift",
+        "Shared/ExperimentalLiveTranscription.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "SayboardKeyboard/KeyboardViewController.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "148-176,191-195",
+          "observation": "viewWillAppear recovers request and immediately applies live update; prior owner may block on disappear"
+        },
+        {
+          "path": "SayboardKeyboard/KeyboardViewController.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "883-916",
+          "observation": "same-field reentry clears blocked tokens but does not restore prior liveTranscriptionRevision/CommittedRaw/MarkedText"
+        },
+        {
+          "path": "SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "24-35,93-113,195-204",
+          "observation": "new controller accepts > revision 0 and inserts the entire update when liveTranscriptionDocumentID nil; ownership reset clears revision/anchor"
+        }
+      ],
+      "scenario": "Live Qwen update 1 was already inserted into field A. iOS recreates the keyboard during the same active request; field A and its fingerprint still match, latest partial file still exists, and viewWillAppear/next event replays update.",
+      "causal_chain": "App Group retained latest transcript but not applied receipt -> new controller starts liveRevision=0, owner=nil -> policy accepts same token/epoch -> inserts whole partial a second time.",
+      "root_owner": "Live partial apply/reentry ownership and receipt boundary",
+      "smallest_repair": "On reentry, never replay a possibly applied partial solely from session and document ID. Add an idempotent receipt/host-anchor validation without storing raw host text, or conservatively keep preview-only until a verified final reconciliation.",
+      "regression_oracle": "Insert partial revision 1 once, reconstruct controller same document and epoch with current revision 2, verify no duplicate text on appearance or Darwin replay. Repeat after keyboard switch, extension death, cursor move, and foreign document.",
+      "verification": [
+        "Confirmed source sequence permits duplicate partial under stated preconditions; actual iPhone duplicate not recorded.",
+        "Build #228 has same live source blob; not introduced by #232."
+      ]
+    },
+    {
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X4/manual-source",
+      "assigned_stage": "X8",
+      "id": "F-0020",
+      "severity": "high",
+      "state": "confirmed",
+      "area": "document_ownership",
+      "paths": [
+        "SayboardKeyboard/KeyboardViewController+LLM.swift",
+        "SayboardKeyboard/KeyboardViewController.swift",
+        "SayboardKeyboard/KeyboardState.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "SayboardKeyboard/KeyboardViewController+LLM.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "362-384",
+          "observation": "Undo/Redo matches only contextBeforeInput to llmTextHistory[currentIndex]+suffix before deleting/inserting; no current document ID or recorded history owner"
+        },
+        {
+          "path": "SayboardKeyboard/KeyboardViewController.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "1348-1381",
+          "observation": "textDidChange updates documentEpoch on a new field but does not clear LLM history"
+        },
+        {
+          "path": "SayboardKeyboard/KeyboardState.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "39-41,108-145",
+          "observation": "LLM history holds strings and index, without field/document identity"
+        }
+      ],
+      "scenario": "LLM rewrites field A; user focuses unrelated field B containing exactly the same text immediately before cursor, then presses LLM Undo/Redo.",
+      "causal_chain": "LLM history remains visible across document change -> text equality alone passes -> deleteBackward/insertText mutates B, without ever checking the original document ID.",
+      "root_owner": "KeyboardViewController.navigateLLMHistory and KeyboardState.llmTextHistory ownership",
+      "smallest_repair": "Bind history to originating document/epoch and verify it before Undo/Redo; clear or disable when field ownership changes. Retain original actions in A only.",
+      "regression_oracle": "Generate history for document A, focus document B with identical preceding text and invoke Undo: B unchanged; return to A and Undo/Redo remains correct. Also test bounded context truncation and manual typing.",
+      "verification": [
+        "Confirmed source-level unauthorized cross-document mutation path under matching text; iPhone UI test not run."
+      ]
+    },
+    {
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X4/manual-source",
+      "assigned_stage": "X8",
+      "id": "F-0021",
+      "severity": "medium",
+      "state": "confirmed",
+      "area": "clipboard_side_effect",
+      "paths": [
+        "SayboardKeyboard/KeyboardViewController+LLM.swift",
+        "Shared/SharedSettings.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "SayboardKeyboard/KeyboardViewController+LLM.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "244-252,270-305",
+          "observation": "on mismatched field/selection, async result and auto fallback write to UIPasteboard.general.string without a user-initiated clipboard action"
+        },
+        {
+          "path": "SayboardKeyboard/KeyboardViewController+LLM.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "167-182",
+          "observation": "separate explicit clipboard processing requires user action and full-access gate"
+        },
+        {
+          "path": "Shared/SharedSettings.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "360-363",
+          "observation": "alsoCopyToClipboard preference exists but is not consulted on mismatch fallback"
+        }
+      ],
+      "scenario": "While rewriting selected text or processing auto dictation, user switches fields and has unrelated content on clipboard.",
+      "causal_chain": "field guard correctly prevents host write but writes LLM result to global clipboard as fallback -> silently replaces previous clipboard contents even if user did not choose clipboard workflow.",
+      "root_owner": "KeyboardViewController+LLM mismatch recovery side-effect",
+      "smallest_repair": "Store a scoped pending result and offer explicit Copy/Paste action on mismatch; preserve clipboard content until user acts. Clipboard-only user-initiated workflow remains allowed.",
+      "regression_oracle": "Put synthetic sentinel on clipboard; trigger selection/document mismatch in default LLM and auto-LLM; assert sentinel retained and safe result shown. Explicit clipboard workflow should replace clipboard on user action.",
+      "verification": [
+        "Unconditional clipboard write statically confirmed; actual pasteboard permission/system alerts and user harm not observed."
+      ]
+    },
+    {
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X4/manual-source",
+      "assigned_stage": "X8",
+      "id": "F-0022",
+      "severity": "high",
+      "state": "confirmed",
+      "area": "handoff_atomicity",
+      "paths": [
+        "SayboardKeyboard/KeyboardViewController.swift",
+        "SayboardKeyboard/KeyboardViewController+LLM.swift",
+        "Shared/TranscriptionBridge.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "SayboardKeyboard/KeyboardViewController.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "606-610",
+          "observation": "if autoApplyLLMIfNeeded is true, source transcript is acknowledged/removed immediately while LLM result is merely queued"
+        },
+        {
+          "path": "SayboardKeyboard/KeyboardViewController+LLM.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "40-73,75-164",
+          "observation": "auto action returns true after dispatch even though write request may fail or async inference has not delivered text"
+        },
+        {
+          "path": "Shared/TranscriptionBridge.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "78-81",
+          "observation": "acknowledgment deletes source outbox result rather than transferring durable ownership"
+        }
+      ],
+      "scenario": "Final ASR transcript is ready; automatic LLM action is enabled. Before text model returns/inserts, the keyboard/host app is suspended or terminated.",
+      "causal_chain": "Queued LLM work claims dictation delivery complete -> outbox cleared before new durable input commitment -> automatic insertion can be missed, although History may preserve original transcript.",
+      "root_owner": "Nontransactional handoff from Dictation outbox to optional LLM bridge and host commit",
+      "smallest_repair": "Treat successful LLM result handoff/durable recovery as separate state; keep source retrievable until committed output or an explicit, retrievable pending operation is recorded. No duplicate LLM owner.",
+      "regression_oracle": "Queue auto LLM, kill extension/host after source ack but before model result, recreate keyboard: original/final result remains recoverable without foreign-field insertion. Also simulate request storage failure and language change.",
+      "verification": [
+        "Confirmed early ack relative to asynchronous LLM completion; actual user-missed delivery on iPhone not observed."
+      ]
+    },
+    {
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X4/manual-source",
+      "assigned_stage": "X8",
+      "id": "F-0023",
+      "severity": "high",
+      "state": "confirmed",
+      "area": "recovery_liveness",
+      "paths": [
+        "Shared/LLMBridge.swift",
+        "Sayboard/Services/LLMProcessingCoordinator.swift",
+        "SayboardKeyboard/KeyboardViewController+LLM.swift",
+        "SayboardKeyboard/KeyboardViewController.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Shared/LLMBridge.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "95-110,160-170",
+          "observation": "new writeRequest refused whenever a previous result file exists; readResult requires nonnil matching requestID"
+        },
+        {
+          "path": "Sayboard/Services/LLMProcessingCoordinator.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "313-325,373-385",
+          "observation": "host writes final result, retains terminal status, then clears request file after completion"
+        },
+        {
+          "path": "SayboardKeyboard/KeyboardViewController+LLM.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "185-196,255-266",
+          "observation": "new keyboard reads only matching ephemeral llmRequestID and cannot pick orphan result with nil ID"
+        },
+        {
+          "path": "SayboardKeyboard/KeyboardViewController.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "21-32",
+          "observation": "llmRequestID resides only on controller, not persisted in a field-scoped receipt"
+        }
+      ],
+      "scenario": "Host finishes an LLM text action while originating keyboard controller has been destroyed and recreated.",
+      "causal_chain": "host retains result and clears completed request -> new controller has nil request ID -> pending result cannot be fetched by normal recovery -> result file blocks every new request. No approved orphan-recovery UI is evident in inspected owners.",
+      "root_owner": "LLMBridge result retention and per-controller request ownership reattachment",
+      "smallest_repair": "Add bounded, explicit recovery for terminal orphan result using authenticated request/destination proof or user-confirmed export. Avoid automatically pasting into a foreign field or deleting unknown pending text. Release stale slot only after safe recovery.",
+      "regression_oracle": "Create result for request A, clear terminal request, recreate keyboard without llmRequestID: new operation must have a safe path to recover or explicitly release A; no automatic foreign insertion or silent deletion.",
+      "verification": [
+        "Durable result + ephemeral ID + slot rejection combination confirmed; full repo-wide external cleanup not exhaustively asserted, physical stuck session not observed.",
+        "Build #228 has identical LLMBridge/keyboard LLM source blob."
+      ]
+    },
+    {
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X4/manual-source",
+      "assigned_stage": "X8",
+      "id": "F-0024",
+      "severity": "medium",
+      "state": "confirmed",
+      "area": "recovery_liveness",
+      "paths": [
+        "Shared/TranscriptionBridge.swift",
+        "SayboardKeyboard/KeyboardViewController.swift",
+        "Shared/SharedSettings.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Shared/TranscriptionBridge.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "45-74",
+          "observation": "unscoped readDelivery returns newest valid pending outbox item, not the newest item compatible with current field"
+        },
+        {
+          "path": "SayboardKeyboard/KeyboardViewController.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "472-503",
+          "observation": "completion recovery only considers the one newest unscoped pending delivery and returns if it cannot match current field"
+        },
+        {
+          "path": "Shared/SharedSettings.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "602-621",
+          "observation": "one global mutable destination fingerprint, not proof attached to each pending result"
+        }
+      ],
+      "scenario": "Two unacknowledged dictations have different source fields. The newer one is for B, but user returns to A while older A result still exists.",
+      "causal_chain": "unscoped newest candidate B fails A authorization -> recoverCompleted never searches older item A -> recoverable older result is starved, and later overwrite of global proof may make it unclaimable automatically.",
+      "root_owner": "TranscriptionBridge.readDelivery unscoped recovery selection and mutable per-session destination metadata",
+      "smallest_repair": "Keep bounded pending list and select only a verified field-owned result with its per-result proof; if proof unavailable, surface manual recovery, not arbitrary newest insertion.",
+      "regression_oracle": "Outbox A and newer B; focus A -> A is available for safe recovery (or explicit manual pickup), B remains pending. Repeat after restart and 64-item bound.",
+      "verification": [
+        "Selection order and single-candidate recovery confirmed by source; actual stranded result on iPhone not reproduced."
+      ]
+    },
+    {
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X4/manual-source",
+      "assigned_stage": "X8",
+      "id": "F-0025",
+      "severity": "medium",
+      "state": "hypothesis",
+      "area": "idempotency",
+      "paths": [
+        "SayboardKeyboard/KeyboardViewController.swift",
+        "Shared/TranscriptionBridge.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "SayboardKeyboard/KeyboardViewController.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "590-616",
+          "observation": "when live reconcile or ordinary insert succeeds, UIKit text proxy is mutated before an independent outbox remove acknowledgment"
+        },
+        {
+          "path": "Shared/TranscriptionBridge.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "78-81",
+          "observation": "acknowledgeDelivery is best-effort delete and has no durable applied receipt or transaction with host editor"
+        }
+      ],
+      "scenario": "iOS kills keyboard extension after textDocumentProxy.insertText returns but before outbox file is deleted, while same document remains available.",
+      "causal_chain": "host text may be committed but result remains unacknowledged -> reentry sees pending compatible result -> duplicate final text possible. Atomicity across UIKit host/App Group cannot be guaranteed by file delete ordering alone.",
+      "root_owner": "Dictation final host mutation vs outbox applied receipt",
+      "smallest_repair": "Use bounded idempotent reconciliation with field/context evidence and explicit retry semantics; document at-most-once vs at-least-once tradeoff where host offers no transactional commit. Do not delete uncertain results merely to hide duplicates.",
+      "regression_oracle": "Fault inject between host insertion and ack and after ack I/O failure; recreate controller same field, assert never blind replay; pending text remains recoverable when exact ownership cannot be proven.",
+      "verification": [
+        "Irreversible insertion/ack gap confirmed; actual process kill interleaving and duplication not observed."
+      ]
+    },
+    {
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X4/manual-source",
+      "assigned_stage": "X8",
+      "id": "F-0026",
+      "severity": "medium",
+      "state": "confirmed",
+      "area": "translation_validation",
+      "paths": [
+        "Shared/VoiceOutputOptions.swift",
+        "Sayboard/Services/LLMProcessingCoordinator.swift",
+        "SayboardTests/VoiceOutputPipelineTests.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Shared/VoiceOutputOptions.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "300-313",
+          "observation": "German or English target returns true on any nonempty under-60-char Latin result without language identification when no Chinese characters dominate"
+        },
+        {
+          "path": "Sayboard/Services/LLMProcessingCoordinator.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "229-250,259-279",
+          "observation": "voice output pipeline relies on VoiceLanguageValidator.matches to accept translated model output"
+        },
+        {
+          "path": "SayboardTests/VoiceOutputPipelineTests.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "65-70,115-134",
+          "observation": "existing tests cover basic positive short text, not cross-language negative English-as-German short text"
+        }
+      ],
+      "scenario": "User targets German but local LLM returns a short English phrase rather than German.",
+      "causal_chain": "Short-Latin branch bypasses language check -> model result can be accepted in wrong target language and forwarded as a successful translation.",
+      "root_owner": "VoiceLanguageValidator.matches short Latin bypass",
+      "smallest_repair": "Add a bounded stronger language/lexical check for identifiable short snippets where reliable, or flag uncertainty for review rather than claiming German translation. Do not reject neutral numbers/terms without evidence.",
+      "regression_oracle": "German target receives synthetically wrong short English, English target receives German short text, and true German, mixed technical proper nouns, and numbers: enforce correct allow/reject/uncertain outcomes.",
+      "verification": [
+        "Deterministic validator accepts short foreign-Latin candidate as plausible; no actual model mistranslation reported."
       ]
     }
   ],

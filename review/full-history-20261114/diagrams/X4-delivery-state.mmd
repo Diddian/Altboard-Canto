@@ -1,0 +1,32 @@
+flowchart TD
+  MIC["Microphone / host field A"] --> TOKEN["request token + field epoch + fingerprint"]
+  TOKEN --> AUDIO["SpeechRecognitionService ASR + optional voice translation"]
+  AUDIO --> OUT["TranscriptionBridge outbox: resultID/token/epoch"]
+  OUT --> CLAIM{"Can prove originating field?"}
+  CLAIM -->|document UUID + fingerprint| LIVE{"Live partial already inserted?"}
+  CLAIM -->|documentless F-0018: same process only| FIELD["Possible unrelated field B"]
+  CLAIM -->|no| KEEP["Keep pending + History; no automatic insert"]
+  LIVE -->|yes| RECON["LiveFinalReconciliation: append/replace/review"]
+  LIVE -->|no| AUTO{"Default LLM action enabled?"}
+  RECON -->|uncertain| KEEP
+  RECON -->|safe| UIKit["UIKit host insertion"]
+  AUTO -->|no| UIKit
+  AUTO -->|yes| ACKFIRST["F-0022 acknowledge original BEFORE LLM completion"]
+  ACKFIRST --> LLMREQ["LLMBridge single request slot"]
+  LLMREQ --> HOSTLLM["Offline model, request-scoped result/status"]
+  HOSTLLM --> LLMRESULT["Result file, requestID"]
+  LLMRESULT --> MATCH{"Original selection/document/context?"}
+  MATCH -->|yes| UIKit
+  MATCH -->|no F-0021| CLIP["Global clipboard overwritten"]
+  LLMRESULT -.->|F-0023 old keyboard owner gone| BLOCK["Orphan result blocks new jobs"]
+  UIKit --> ACK["Outbox remove acknowledgment"]
+  UIKit -.->|F-0025 crash before ack| REPLAY["Possible final duplicate on reentry"]
+  TOKEN --> PART["Live Qwen partial token/revision"]
+  PART --> LV["Keyboard live owner/anchor"]
+  LV --> UIKit
+  LV -.->|F-0019 recreated controller loses revision| REPLAY
+  UIKit --> HISTORY["LLM string history (no document owner)"]
+  HISTORY --> UNDO["Undo/Redo context equality only"]
+  UNDO -.->|F-0020 same text different field| FIELD
+  OUT -.->|F-0024 unscoped newest only| KEEP
+  AUDIO -.->|F-0026 short wrong-language accepted| OUT

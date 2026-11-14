@@ -1,24 +1,197 @@
 {
   "schema_version": "altboard-review-stage/v1",
   "id": "X4",
-  "status": "blocked",
-  "source_sha_at_review": null,
-  "review_branch_head_at_start": null,
-  "started_at": null,
-  "finished_at": null,
-  "review_mode": "GitHub manual OCR-style; Alibaba OCR CLI not run",
-  "untangle_status": "not_run",
-  "files_reviewed": [],
+  "status": "complete",
+  "source_sha_at_review": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+  "review_branch_head_at_start": "477a690c70dfed1346492d81d6d9fe2f3286dfea",
+  "started_at": "2026-11-14",
+  "finished_at": "2026-11-14",
+  "review_mode": "Connected GitHub manual source/commit diff and dual Untangle + data-integrity lens; Alibaba OCR CLI NOT RUN",
+  "untangle_status": "scoped cross_process_dictation_and_llm_delivery_ownership_atomicity_undo_recovery_and_translation_audit",
+  "files_reviewed": [
+    "Shared/TranscriptionBridge.swift",
+    "Shared/LLMBridge.swift",
+    "Shared/DictationRequestPolicy.swift",
+    "Shared/OperationContracts.swift",
+    "Shared/VoiceOutputSelectionPolicy.swift",
+    "Shared/VoiceOutputOptions.swift",
+    "Sayboard/Services/CantoneseOutput.swift",
+    "Shared/VoiceOutputScriptPolicy.swift",
+    "Shared/TextSanitizer.swift",
+    "SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift",
+    "SayboardKeyboard/KeyboardViewController+LLM.swift",
+    "Sayboard/Services/LLMProcessingCoordinator.swift",
+    "SayboardTests/LLMActionSelectionTests.swift"
+  ],
   "files_excluded": [],
-  "files_not_reviewed": [],
-  "new_or_updated_findings": [],
-  "diagram_paths": [],
+  "files_not_reviewed": [
+    "SayboardKeyboard/KeyboardViewController.swift — X4 relevant call sites only: 21-46 identity/epoch and ephemeral LLM state, 134-200 reentry, 467-618 final delivery, 665-816 notification observers, 865-922 destination capture, 1201-1307 keyboard proxy, 1343-1399 field change, 1433-1478 document accessor",
+    "SayboardKeyboard/KeyboardState.swift — X4 relevant call sites only: 39-52 history state, 108-145 undo visibility and clear",
+    "Shared/SharedSettings.swift — X4 relevant call sites only: 360-383 clipboard/output flags, 602-627 session destination fingerprint and process marker",
+    "Sayboard/Services/SpeechRecognitionService+Transcription.swift — X4 relevant call sites only: 44-260 final LLM/voice output preference, validation, history and bridge",
+    "Shared/DictationSpacing.swift — X4 relevant call sites only: separators read and verified with existing dedicated test cases; full spacing policy delegated broader X5/X6",
+    "SayboardTests/VoiceOutputPipelineTests.swift — X4 relevant call sites only: 9-100 target and source validation; 115-169 preference retries/script conversion; 187-240 specific locale cases; not run",
+    "SayboardTests/DictationSpacingTests.swift — X4 relevant call sites only: 7-210 localized insertion spacing test catalogue; not run",
+    "Sayboard/Views/VoiceOutputSettingsView.swift — X4 relevant call sites only: 11-109 explicit target selector and BCP47 validation",
+    "Sayboard/Services/HostApplicationMonitor.swift — X4 relevant call sites only: host process proof owner path; not fully reviewed; defer remaining lifecycle to X7",
+    "scripts/test_operation_ownership.py — X4 relevant call sites only: 144-236 host/delivery id guards, 436-506 status/bridge smoke cases; source-string checks only; not run",
+    "scripts/verify-llm-bridge.swift — X4 relevant call sites only: 30-131 one-slot request/status/lock contention fixture; no reentry orphan scenario asserted; not run",
+    "Remaining non-X4 files and historical-only paths remain not_reviewed until X5-X7. No whole-app acceptance claim."
+  ],
+  "new_or_updated_findings": [
+    "F-0018",
+    "F-0019",
+    "F-0020",
+    "F-0021",
+    "F-0022",
+    "F-0023",
+    "F-0024",
+    "F-0025",
+    "F-0026"
+  ],
+  "diagram_paths": [
+    "review/full-history-20261114/diagrams/X4-delivery-state.mmd"
+  ],
   "tests": {
-    "executed": [],
-    "not_run": []
+    "executed": [
+      "26/26 GitHub read-only code-path predicates observed at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad (24 direct plus 2 whitespace-insensitive confirmations). Includes positive guards and negative-risk conditions; these are NOT behavioral/compiled tests."
+    ],
+    "not_run": [
+      "scripts/test_operation_ownership.py (source cases inspected, not executed)",
+      "scripts/verify-llm-bridge.swift (source checked, not executed)",
+      "SayboardTests/VoiceOutputPipelineTests.swift, LLMActionSelectionTests.swift, DictationSpacingTests.swift (source inspected, not executed)",
+      "No Swift/Xcode unit test runner against repository; no iOS UI/VoiceOver/host app/clipboard/ASR/translation test performed",
+      "External Alibaba OCR CLI/independent reviewer not run",
+      "No unsigned IPA build and no production source changes"
+    ]
   },
-  "verified_outputs": [],
+  "verified_outputs": [
+    "review/full-history-20261114/manifest.json",
+    "review/full-history-20261114/stages/X4.json",
+    "review/full-history-20261114/coverage.json",
+    "review/full-history-20261114/findings.json",
+    "review/full-history-20261114/diagrams/X4-delivery-state.mmd"
+  ],
   "blocked_reasons": [],
-  "next_action": "Begin only after manifest previous stage gate; use stages.json for exact scope",
-  "evidence_notes": []
+  "next_action": "X5 only, after rechecking main and review HEAD: App Group storage, JSON persistence/migration, partial-write and recovery, diagnostics cross-process durability, privacy. All X4 fixes deferred X8 and must include iPhone acceptance.",
+  "evidence_notes": [
+    "Cross-process original-document identity is enforced for normal UIKit document UUID paths, but documentless host fallback proves only process identity: same-app foreign field may receive text (F-0018).",
+    "Live append safety uses token, revision, destination epoch, document ID and a bounded suffix anchor. Recreated controller loses applied revision/anchor despite reattaching field/session; replay risk F-0019.",
+    "Selected LLM replacement checks exact document+selection+context; separate LLM Undo/Redo uses text equality only and does not bind its history to a document/epoch (F-0020).",
+    "Automatic LLM mismatch fallback writes global clipboard without deliberate Copy action; explicit clipboard-only action is distinct and user initiated (F-0021).",
+    "Dictation final outbox is acknowledged as soon as automatic LLM action queues; no durable post-LLM input receipt exists at that handoff (F-0022).",
+    "LLM bridge has bounded nonblocking file lock and request-specific result statuses. Completed result can outlive controller owner and monopolize one-slot result without recovery in inspected caller paths (F-0023).",
+    "Unscoped pending outbox selection chooses newest valid file and recovery examines only one candidate; older same-field delivery can be starved (F-0024).",
+    "Host input mutation is not atomic with outbox acknowledgment; crash window F-0025 is hypothetical, not reproduced.",
+    "Explicit German/English output short Latin branch accepts wrong language candidate without language recognition; F-0026 source behavior confirmed.",
+    "Voiced translation still has three preference-change attempts, fail-closed on requested target text-model failure, and user-selected simplified conversion; the results don't establish model correctness on iPhone.",
+    "Build #84 bridge was single-simple file and no OperationContracts; #136 retained former bridge; #193 used legacy bridge; Build #228 has same TranscriptionBridge, OperationContracts, LLMBridge, +Live, and +LLM blobs as Build #232, so X4 risks predate #232 snapshot. No unsupported precise introduction date asserted.",
+    "Privacy: no user text, raw typing, host field IDs, transcripts, model prompts, process IDs or clipboard contents included in review artifacts."
+  ],
+  "owner_transitions": [
+    {
+      "id": "D01",
+      "owner": "KeyboardViewController.prepareDictationDestination",
+      "input": "Host mic request",
+      "state": "token, document UUID or process-only marker, epoch/fingerprint",
+      "effect": "App Group destination metadata",
+      "recovery": "on extension reentry authenticates fingerprint; documentless branch weak"
+    },
+    {
+      "id": "D02",
+      "owner": "SpeechRecognitionService.runFinalTranscription",
+      "input": "source ASR + user output target",
+      "state": "recording token/voice output preferences",
+      "effect": "offline LLM translate/edit with up to three retries; corrected output",
+      "recovery": "fail target-specific closed, retain raw transcription in History"
+    },
+    {
+      "id": "D03",
+      "owner": "TranscriptionBridge",
+      "input": "final output",
+      "state": "per resultID, token, epoch, text",
+      "effect": "atomic JSON outbox + Darwin wake",
+      "recovery": "bounded 64 pending, no eviction; best-effort resultID ack"
+    },
+    {
+      "id": "D04",
+      "owner": "KeyboardViewController.insertTranscribedText",
+      "input": "delivery matched by token",
+      "state": "document ID+epoch+fingerprint OR documentless process marker",
+      "effect": "live reconcile, auto-LLM, or UIKit insert, then ack",
+      "recovery": "field mismatch retains outbox; at-least-once crash gap remains"
+    },
+    {
+      "id": "D05",
+      "owner": "ExperimentalLiveTranscription + KeyboardViewController+ExperimentalLive",
+      "input": "Qwen partial revision",
+      "state": "session/revision + per-controller field/suffix anchor",
+      "effect": "append live text",
+      "recovery": "preview-only on owner loss; reentry applied-revision lost"
+    },
+    {
+      "id": "D06",
+      "owner": "LiveFinalReconciliation",
+      "input": "immutable final output + live partial",
+      "state": "request token/document/epoch, selection, suffix",
+      "effect": "append/replace/review",
+      "recovery": "review keeps pending result; no destructive repair on truncated context"
+    },
+    {
+      "id": "D07",
+      "owner": "KeyboardViewController+LLM.requestLLMProcessing",
+      "input": "selected host text/direct transcript or explicit clipboard",
+      "state": "ephemeral requestID, field ID, selection/context",
+      "effect": "single-slot App Group LLMRequest",
+      "recovery": "failure may insert original or overwrite clipboard; no persisted per-owner handoff receipt"
+    },
+    {
+      "id": "D08",
+      "owner": "LLMProcessingCoordinator + LLMBridge",
+      "input": "request and offline model",
+      "state": "file lock, status lifecycle, requestID",
+      "effect": "inference, result/status, Darwin notification",
+      "recovery": "terminal markers survive; orphan result prevents new request"
+    },
+    {
+      "id": "D09",
+      "owner": "KeyboardViewController+LLM.insertLLMResult",
+      "input": "result ID + text",
+      "state": "captured selected text/document/context",
+      "effect": "replace selection or append/direct result; fallback clipboard on mismatch",
+      "recovery": "clears result/request/status after owner handles"
+    },
+    {
+      "id": "D10",
+      "owner": "KeyboardViewController+LLM.navigateLLMHistory",
+      "input": "undo or redo control",
+      "state": "history text/current index + suffix only",
+      "effect": "delete/reinsert preceding host text",
+      "recovery": "fails on differing text but may modify foreign field with matching text"
+    },
+    {
+      "id": "D11",
+      "owner": "VoiceLanguageValidator/VoiceOutputPrompt/CantoneseOutput",
+      "input": "target script/language and ASR text",
+      "state": "target configuration and normalization policy",
+      "effect": "accept/reject/retry/normalize output",
+      "recovery": "short wrong-language Latin result can pass"
+    },
+    {
+      "id": "D12",
+      "owner": "KeyboardViewController.recoverCompletedDictationDestination",
+      "input": "newly-mounted keyboard with pending outbox",
+      "state": "newest pending candidate, mutable App Group proof, current field",
+      "effect": "reattach token for input",
+      "recovery": "older same-field pending record may not be searched"
+    },
+    {
+      "id": "D13",
+      "owner": "UIPasteboard fallback",
+      "input": "LLM result after field mismatch",
+      "state": "explicit clipboard-only flag OR automatic mismatch path",
+      "effect": "global clipboard replacement",
+      "recovery": "no prior clipboard backup or explicit consent on mismatch"
+    }
+  ]
 }
