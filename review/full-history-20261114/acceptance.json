@@ -524,6 +524,300 @@
       },
       "status": "test_only_pending",
       "preliminary_source_weight": 85
+    },
+    "F-0019": {
+      "task_id": "F-0019",
+      "baseline": "main@e396d72f5f93ff572f8479cf28b4a728c4eff49c",
+      "maturity": {
+        "stage": "integrate",
+        "exposure": "local_real",
+        "goal": "Live dictation reentry never duplicates previous partial",
+        "scope": "X8 bounded high-risk repair",
+        "promotion_trigger": "Every mandatory case plus real iPhone evidence passed"
+      },
+      "cases": [
+        {
+          "id": "reentry",
+          "criterion": "Recreated controller cannot reinsert already attempted live partial",
+          "expected": "Recreated controller cannot reinsert already attempted live partial",
+          "weight": 30,
+          "method": "automated",
+          "severity": "critical",
+          "mandatory": true,
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "append",
+          "criterion": "Uninterrupted stream appends strictly monotonic revisions only once",
+          "expected": "Uninterrupted stream appends strictly monotonic revisions only once",
+          "weight": 15,
+          "method": "automated",
+          "severity": "high",
+          "mandatory": true,
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "final",
+          "criterion": "Ambiguous final after reentry remains retrievable, no duplicate automatic insertion",
+          "expected": "Ambiguous final after reentry remains retrievable, no duplicate automatic insertion",
+          "weight": 20,
+          "method": "automated",
+          "severity": "critical",
+          "mandatory": true,
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "cancel",
+          "criterion": "Manual cancellation/new session cannot re-arm previous partial",
+          "expected": "Manual cancellation/new session cannot re-arm previous partial",
+          "weight": 15,
+          "method": "automated",
+          "severity": "high",
+          "mandatory": true,
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "device",
+          "criterion": "SideStore keyboard restart/reentry during Live Dictation does not duplicate words",
+          "expected": "SideStore keyboard restart/reentry during Live Dictation does not duplicate words",
+          "weight": 20,
+          "method": "manual",
+          "severity": "critical",
+          "mandatory": true,
+          "status": "not_run",
+          "evidence": []
+        }
+      ],
+      "untangle": {
+        "performed": false,
+        "evidence": [],
+        "unresolved_critical": false
+      },
+      "runtime_gate": {
+        "required": true,
+        "status": "not_run",
+        "evidence": []
+      },
+      "status": "not_started"
+    },
+    "F-0028": {
+      "task_id": "F-0028",
+      "baseline": "main@e396d72f5f93ff572f8479cf28b4a728c4eff49c",
+      "maturity": {
+        "stage": "integrate",
+        "exposure": "local_real",
+        "goal": "Interrupted model download metadata remains recoverable",
+        "scope": "X8 bounded high-risk repair",
+        "promotion_trigger": "Every mandatory case plus real iPhone evidence passed"
+      },
+      "cases": [
+        {
+          "id": "corrupt_quarantine",
+          "criterion": "Corrupt index quarantined with original bytes; no silent deletion",
+          "expected": "Corrupt index quarantined with original bytes; no silent deletion",
+          "weight": 20,
+          "method": "automated",
+          "severity": "high",
+          "mandatory": true,
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "orphan",
+          "criterion": "Unknown background URLSession tasks get explicit bounded cancellation and safe retry",
+          "expected": "Unknown background URLSession tasks get explicit bounded cancellation and safe retry",
+          "weight": 30,
+          "method": "automated",
+          "severity": "critical",
+          "mandatory": true,
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "reattach",
+          "criterion": "Known restored tasks can be cancelled or completed with scoped identifiers",
+          "expected": "Known restored tasks can be cancelled or completed with scoped identifiers",
+          "weight": 20,
+          "method": "automated",
+          "severity": "high",
+          "mandatory": true,
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "digest",
+          "criterion": "No restored/corrupt download bypasses SHA verification and installation staging",
+          "expected": "No restored/corrupt download bypasses SHA verification and installation staging",
+          "weight": 15,
+          "method": "source_inspection",
+          "severity": "critical",
+          "mandatory": true,
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "device",
+          "criterion": "iPhone download interrupted/relaunch gives safe retry and no corrupt installed model",
+          "expected": "iPhone download interrupted/relaunch gives safe retry and no corrupt installed model",
+          "weight": 15,
+          "method": "manual",
+          "severity": "high",
+          "mandatory": true,
+          "status": "not_run",
+          "evidence": []
+        }
+      ],
+      "untangle": {
+        "performed": false,
+        "evidence": [],
+        "unresolved_critical": false
+      },
+      "runtime_gate": {
+        "required": true,
+        "status": "not_run",
+        "evidence": []
+      },
+      "status": "not_started"
+    },
+    "F-0022": {
+      "task_id": "F-0022",
+      "baseline": "main@e396d72f5f93ff572f8479cf28b4a728c4eff49c",
+      "maturity": {
+        "stage": "integrate",
+        "exposure": "local_real",
+        "goal": "Automatic LLM handoff survives interruption and never loses original ASR",
+        "scope": "X8 bounded high-risk repair",
+        "promotion_trigger": "Every mandatory case plus real iPhone evidence passed"
+      },
+      "cases": [
+        {
+          "id": "source_preserved",
+          "criterion": "Do not acknowledge sole durable ASR text until LLM result or other recoverable source exists",
+          "expected": "Do not acknowledge sole durable ASR text until LLM result or other recoverable source exists",
+          "weight": 30,
+          "method": "automated",
+          "severity": "critical",
+          "mandatory": true,
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "failure",
+          "criterion": "Failed, cancelled or timed-out AI retains original for user recovery",
+          "expected": "Failed, cancelled or timed-out AI retains original for user recovery",
+          "weight": 25,
+          "method": "automated",
+          "severity": "critical",
+          "mandatory": true,
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "document",
+          "criterion": "Never auto-insert result into another host field",
+          "expected": "Never auto-insert result into another host field",
+          "weight": 25,
+          "method": "automated",
+          "severity": "critical",
+          "mandatory": true,
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "device",
+          "criterion": "iPhone interrupt automatic LLM and relaunch; recover original or completed output",
+          "expected": "iPhone interrupt automatic LLM and relaunch; recover original or completed output",
+          "weight": 20,
+          "method": "manual",
+          "severity": "critical",
+          "mandatory": true,
+          "status": "not_run",
+          "evidence": []
+        }
+      ],
+      "untangle": {
+        "performed": false,
+        "evidence": [],
+        "unresolved_critical": false
+      },
+      "runtime_gate": {
+        "required": true,
+        "status": "not_run",
+        "evidence": []
+      },
+      "status": "not_started"
+    },
+    "F-0023": {
+      "task_id": "F-0023",
+      "baseline": "main@e396d72f5f93ff572f8479cf28b4a728c4eff49c",
+      "maturity": {
+        "stage": "integrate",
+        "exposure": "local_real",
+        "goal": "LLM orphan results support explicit safe recovery",
+        "scope": "X8 bounded high-risk repair",
+        "promotion_trigger": "Every mandatory case plus real iPhone evidence passed"
+      },
+      "cases": [
+        {
+          "id": "orphan_find",
+          "criterion": "Old terminal request/result discoverable after controller recreation",
+          "expected": "Old terminal request/result discoverable after controller recreation",
+          "weight": 30,
+          "method": "automated",
+          "severity": "critical",
+          "mandatory": true,
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "manual_recovery",
+          "criterion": "User explicitly copies/exports orphan; no automatic insertion",
+          "expected": "User explicitly copies/exports orphan; no automatic insertion",
+          "weight": 30,
+          "method": "automated",
+          "severity": "critical",
+          "mandatory": true,
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "release",
+          "criterion": "Only confirmed recovery clears original bridge slot for next action",
+          "expected": "Only confirmed recovery clears original bridge slot for next action",
+          "weight": 20,
+          "method": "automated",
+          "severity": "high",
+          "mandatory": true,
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "device",
+          "criterion": "iPhone restart keyboard, recover orphan, execute next LLM action",
+          "expected": "iPhone restart keyboard, recover orphan, execute next LLM action",
+          "weight": 20,
+          "method": "manual",
+          "severity": "critical",
+          "mandatory": true,
+          "status": "not_run",
+          "evidence": []
+        }
+      ],
+      "untangle": {
+        "performed": false,
+        "evidence": [],
+        "unresolved_critical": false
+      },
+      "runtime_gate": {
+        "required": true,
+        "status": "not_run",
+        "evidence": []
+      },
+      "status": "not_started"
     }
   },
   "device_gate": {
