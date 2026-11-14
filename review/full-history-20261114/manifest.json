@@ -14,8 +14,8 @@
     "branch_policy": "sequential reviewers; one writer; no PR, force push, or merges"
   },
   "lifecycle": {
-    "phase": "X5_complete",
-    "next_stage": "X6",
+    "phase": "X6_complete",
+    "next_stage": "X7",
     "statuses": {
       "X0": "complete",
       "X1": "complete",
@@ -23,8 +23,8 @@
       "X3": "complete",
       "X4": "complete",
       "X5": "complete",
-      "X6": "ready",
-      "X7": "blocked",
+      "X6": "complete",
+      "X7": "ready",
       "X8": "blocked",
       "X9": "blocked"
     },

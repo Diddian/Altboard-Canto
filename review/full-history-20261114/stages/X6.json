@@ -1,24 +1,92 @@
 {
   "schema_version": "altboard-review-stage/v1",
   "id": "X6",
-  "status": "blocked",
-  "source_sha_at_review": null,
-  "review_branch_head_at_start": null,
-  "started_at": null,
-  "finished_at": null,
-  "review_mode": "GitHub manual OCR-style; Alibaba OCR CLI not run",
-  "untangle_status": "not_run",
-  "files_reviewed": [],
+  "status": "complete",
+  "source_sha_at_review": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+  "review_branch_head_at_start": "0887d5c45d8044e816d88dc31fa456bdf9dfcbd2",
+  "started_at": "2026-11-14",
+  "finished_at": "2026-11-14",
+  "review_mode": "Connected GitHub manual OCR-style + Untangle owner review; external Alibaba OCR CLI NOT RUN",
+  "untangle_status": "Cantonese canonical indexes and explicit selections, language priority, EN/DE suggestions, Swipe geometry, native Emoji versus unused browser, and persisted learning mapped",
+  "files_reviewed": [
+    "Shared/LanguagePriority.swift",
+    "Shared/CantoneseRomanizationVariants.swift",
+    "Shared/LatinWordSuggestionPolicy.swift",
+    "Shared/CantoneseSyllableEditing.swift",
+    "Shared/CantoneseSchemePreference.swift",
+    "Shared/JyutpingComposition.swift",
+    "Shared/CantoneseNgramDecoder.swift",
+    "Shared/KeyboardKind.swift",
+    "Shared/ChineseInputMode.swift",
+    "Shared/ConfirmedChoiceLearning.swift",
+    "Shared/InformalNgramPolicy.swift",
+    "Shared/PreferredVoiceLanguages.swift",
+    "Shared/CantoneseCorrections.swift",
+    "SayboardKeyboard/LatinSwipeDecoder.swift",
+    "SayboardKeyboard/JyutpingDictionary.swift",
+    "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift",
+    "SayboardKeyboard/LatinWordSuggestions.swift",
+    "SayboardKeyboard/SwipeWordLexicon.swift",
+    "SayboardKeyboard/InformalNgramStore.swift",
+    "SayboardKeyboard/EmojiCatalog.swift",
+    "SayboardKeyboard/Views/EmojiKeyboardView.swift",
+    "Shared/NativeEmojiGlyph.swift",
+    "scripts/verify-latin-swipe.swift",
+    "scripts/verify-universal-cantonese.swift",
+    "scripts/verify-language-priority.swift",
+    "scripts/test_universal_cantonese.py",
+    "scripts/build-jyutping-lexicon.py"
+  ],
   "files_excluded": [],
-  "files_not_reviewed": [],
-  "new_or_updated_findings": [],
-  "diagram_paths": [],
+  "files_not_reviewed": [
+    "SayboardKeyboard/Views/AlphabeticTouchRow.swift:20-249 — UIKit physical Swipe path and cancel (X2 full review)",
+    "SayboardKeyboard/Views/Layouts/KeyboardChrome.swift:234-283 — native picker (X2 full review)",
+    "SayboardKeyboard/ChineseShapeDictionary.swift:1-140,169-233 — shape lookup, ranking, persistence",
+    "Shared/SharedSettings.swift:160-194 — preferred-language storage (X5 full review)",
+    "Sayboard/Views/Onboarding/OnboardingLanguagesView.swift:32-159 — language selection and settings writes",
+    "SayboardTests/LatinWordSuggestionPolicyTests.swift:4-90 — test cases source only",
+    "SayboardTests/SharedSettingsLanguageTests.swift:4-70 — test cases source only",
+    "scripts/test_hk_japanese_lexicon.py:1-87 — acceptance assertions source only",
+    "SayboardKeyboard/Info.plist:29-36 — MUL metadata, not language routing"
+  ],
+  "new_or_updated_findings": [
+    "F-0034",
+    "F-0035"
+  ],
+  "diagram_paths": [
+    "review/full-history-20261114/diagrams/X6-language-routing.mmd"
+  ],
   "tests": {
-    "executed": [],
-    "not_run": []
+    "executed": [
+      "Read-only GitHub source and call-site verification at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad (NOT executable tests)",
+      "Read-only historical Git blob comparisons at Builds #84,#136,#193,#228,#232",
+      "Manual mathematical German 440pt key-coordinate check: Ü/U separation ~157pt > 88pt filter"
+    ],
+    "not_run": [
+      "python3 -m unittest discover -s scripts -p 'test_universal_cantonese.py'",
+      "python3 -m unittest discover -s scripts -p 'test_hk_japanese_lexicon.py'",
+      "Swift scripts verify-latin-swipe.swift, verify-universal-cantonese.swift, verify-language-priority.swift",
+      "SayboardTests/LatinWordSuggestionPolicyTests.swift, SharedSettingsLanguageTests.swift",
+      "iPhone SideStore/Emoji/Globe/SwiftUI touch/Swipe/host insertion/cross-process tests",
+      "Alibaba Open Code Review external CLI",
+      "Unsigned IPA build"
+    ]
   },
-  "verified_outputs": [],
+  "verified_outputs": [
+    "review/full-history-20261114/manifest.json",
+    "review/full-history-20261114/coverage.json",
+    "review/full-history-20261114/findings.json",
+    "review/full-history-20261114/stages/X6.json",
+    "review/full-history-20261114/diagrams/X6-language-routing.mmd"
+  ],
   "blocked_reasons": [],
-  "next_action": "Begin only after manifest previous stage gate; use stages.json for exact scope",
-  "evidence_notes": []
+  "next_action": "Stop after X6 per START_HERE one-stage-per-chat. X7 cross-domain residual sweep is next; X8 fixes blocked until X7 completes and explicit acceptance cases. No IPA build without authorization.",
+  "evidence_notes": [
+    "X6 has 12 proposed negative regression oracles, not 12 passing tests; historical blob comparisons are partial snapshots.",
+    "Info.plist PrimaryLanguage=mul is system metadata, not a UI language selector.",
+    "Indexed Jyutping/Yale/Sidney/mixed aliases and bounded explicit confirmed counts inspected. No dictionary database regenerated or checked by executable tests.",
+    "F-0034 German Swipe accented key center mismatch and F-0035 lost Cantonese context are source-level confirmed, not device-verified.",
+    "F-0002 legacy Emoji view, F-0030 export/delete gap, F-0033 App Group fallback reused without duplicating findings.",
+    "No raw typing, transcripts, audio, user secrets or host identifiers copied into review files."
+  ]
 }

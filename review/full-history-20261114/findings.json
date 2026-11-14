@@ -1,7 +1,7 @@
 {
   "schema_version": "untangle-ocr-findings/v1",
   "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
-  "status": "X0-X5 scoped source reviews complete; X6-X7 pending; X8 repairs not started; iPhone not verified",
+  "status": "X0-X6 scoped source audits complete; X7 sweep pending; X8 repairs not started; iPhone not verified",
   "findings": [
     {
       "id": "F-0001",
@@ -1496,6 +1496,94 @@
       "verification": [
         "Conditional split-source path confirmed in source; no actual SideStore entitlement failure or cross-process test performed."
       ]
+    },
+    {
+      "id": "F-0034",
+      "severity": "medium",
+      "state": "confirmed",
+      "area": "swipe_german_geometry",
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "paths": [
+        "Shared/KeyboardKind.swift",
+        "SayboardKeyboard/LatinSwipeDecoder.swift",
+        "SayboardKeyboard/Views/AlphabeticTouchRow.swift",
+        "scripts/verify-latin-swipe.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Shared/KeyboardKind.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "33-53",
+          "observation": "German selectable layout has dedicated Ü/Ö/Ä/ß keys at different physical positions from U/O/A/S."
+        },
+        {
+          "path": "SayboardKeyboard/LatinSwipeDecoder.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "18-41,90-97,119-142",
+          "observation": "rank() strips German accents to ASCII before resolving center coordinates; its 88-point endpoint filter operates on the wrong keys."
+        },
+        {
+          "path": "SayboardKeyboard/Views/AlphabeticTouchRow.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "217-235",
+          "observation": "Physical Gesture ranked against actual arrangement through this decoder."
+        },
+        {
+          "path": "scripts/verify-latin-swipe.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "11-27,28-105",
+          "observation": "Regression examples cover QWERTY/QWERTZ, but not .german accented-key geometry."
+        }
+      ],
+      "scenario": "Using the German letter arrangement, swipe the physical Ü-B-E-R keys for the candidate 'über'.",
+      "causal_chain": "Geometry uses Ü's dedicated physical center, but normalizedSpelling('über') produces 'uber'. At width 440, German Ü and U centers differ by ~157 points, exceeding the 88-point first-key filter; the correct candidate is rejected before full ranking.",
+      "root_owner": "LatinSwipeDecoder.rank conflates normalized lexical spelling and physical keyboard geometry",
+      "smallest_repair": "Generate templates using actual available German character-key coordinates, with bounded fallback only when a key does not exist on the selected layout. Keep QWERTY/QWERTZ and UIKit single touch owner unchanged.",
+      "regression_oracle": "Pure Swift .german ideal-gesture ranking tests for über/Straße using literal Ü and ß key centers; QWERTY/QWERTZ existing smoke tests; physical iPhone German layout test after build authorization.",
+      "verification": [
+        "Source and manual coordinate math only; no Swift runtime or iPhone executed.",
+        "Dedicated .german key layout absent #84, present #136; decoder ASCII normalization visible #84 and persists #232; exact introducing commit not established."
+      ],
+      "origin": "X6/manual-source",
+      "assigned_stage": "X8"
+    },
+    {
+      "id": "F-0035",
+      "severity": "medium",
+      "state": "confirmed",
+      "area": "cantonese_nextword_context",
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "paths": [
+        "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift",
+        "SayboardKeyboard/JyutpingDictionary.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "607-622,1440-1462",
+          "observation": "chooseContinuation() checks the old anchor then inserts text but resets predictionAnchor to the new short text and passes only that text into continuations()."
+        },
+        {
+          "path": "SayboardKeyboard/JyutpingDictionary.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "493-545",
+          "observation": "Next-word lookup prefers final two Han characters for corpus trigrams/bigrams; a single-character continuation loses available left context."
+        }
+      ],
+      "scenario": "Choose candidate '我', select continuation '哋', then request further predictions; host context is '我哋' but lookup receives only '哋'.",
+      "causal_chain": "Same short-lived predictionAnchor is used for stale host-suffix validation and next corpus context, dropping previously confirmed characters.",
+      "root_owner": "AlphabeticKeyboardLayout.chooseContinuation predictionAnchor and next-word query arguments",
+      "smallest_repair": "After validating insertion derive a bounded confirmed Han suffix from current live host context; keep field-mismatch guard separate. Do not persist host text.",
+      "regression_oracle": "Synthetic host fixture chooses 我 then 哋 and checks next lookup uses 我哋; moving cursor or field cancels stale candidate, no raw host storage. Physical acceptance deferred.",
+      "verification": [
+        "Source-only call-argument trace at main; actual iPhone candidate ranking unverified.",
+        "AlphabeticKeyboardLayout changed #84/#136/#193/#228, unchanged #228/#232; exact introducing commit not established."
+      ],
+      "origin": "X6/manual-source",
+      "assigned_stage": "X8"
     }
   ],
   "categories": [

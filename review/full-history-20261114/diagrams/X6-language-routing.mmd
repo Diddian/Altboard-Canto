@@ -1,0 +1,24 @@
+flowchart TD
+    A[User spoken language order in App Group] --> B[PreferredVoiceLanguages and LanguagePriority]
+    B --> C[Latin EN-DE suggestions and UITextChecker]
+    B --> D[Cantonese IME when yue enabled]
+    B --> E[Quick Cangjie Stroke input methods]
+    D --> F[Live phonetic composition]
+    F --> G[One indexed Jyutping Yale Sidney and mixed alias dictionary]
+    G --> H[SQLite corpus and bounded Cantonese ngrams]
+    G --> I[Explicit candidate chosen]
+    I --> J[Host insert and next word lookup]
+    J --> K[Two Han character context preferred]
+    J -.->|F-0035 only last continuation passed| K
+    C --> L[Offline Latin candidates and selected-word learning]
+    C --> M[Swipe lexicon]
+    M --> N[LatinSwipeDecoder physical geometry]
+    O[QWERTY QWERTZ and German keys] --> N
+    N -.->|F-0034 ASCII normalized umlaut geometry| P[German Swipe rejection]
+    N --> Q[One UIKit touch owner]
+    Q --> R[Host inserts once]
+    S[Bottom Emoji key] --> T[Native iOS input mode picker]
+    U[Unreachable custom Emoji view] -.->|F-0002 unused callback| S
+    U --> V[Emoji recents and preferred skin tone]
+    V -.->|F-0030 data scope| W[LocalUserDataStore]
+    A -.->|F-0033 App Group fallback| X[Separate app and extension preferences]

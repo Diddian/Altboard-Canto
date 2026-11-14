@@ -7,7 +7,7 @@
     "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
     "review_branch": "review/full-history-20261114"
   },
-  "status": "x5_persistence_settings_model_history_review_complete_x6_to_x7_pending",
+  "status": "X0-X6 scoped source reviews complete; X7 pending; X8 implementation not started",
   "expected_current_tracked_files_observed": 577,
   "current_tracked_files": 577,
   "initial_tracked_files": 356,
@@ -1697,13 +1697,17 @@
       "path": "SayboardKeyboard/InformalNgramStore.swift",
       "sha": "73a682a0cd676b782c8e7916f89821c36071563c",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X6",
+      "evidence": "Full GitHub source read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; exact language/IME/Swipe/Emoji owner reviewed for X6; source-only"
     },
     {
       "path": "SayboardKeyboard/JyutpingDictionary.swift",
       "sha": "5cb3562c7352a90ce01c08d010993c75afcd7aee",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X6",
+      "evidence": "Full GitHub source read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; exact language/IME/Swipe/Emoji owner reviewed for X6; source-only"
     },
     {
       "path": "SayboardKeyboard/KeyboardLiveDebugHUD.swift",
@@ -1792,13 +1796,17 @@
       "path": "SayboardKeyboard/LatinSwipeDecoder.swift",
       "sha": "01875ead79ecd89e3a6905cade43b446dbc07d8e",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X6",
+      "evidence": "Full GitHub source read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; exact language/IME/Swipe/Emoji owner reviewed for X6; source-only"
     },
     {
       "path": "SayboardKeyboard/LatinWordSuggestions.swift",
       "sha": "ba10229f2e6bd85c050dd6f04a4f442d75b5d145",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X6",
+      "evidence": "Full GitHub source read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; exact language/IME/Swipe/Emoji owner reviewed for X6; source-only"
     },
     {
       "path": "SayboardKeyboard/Localizable.xcstrings",
@@ -1836,7 +1844,9 @@
       "path": "SayboardKeyboard/SwipeWordLexicon.swift",
       "sha": "4b115548de50b7ee660c192db58c2ccbd6a0b9c9",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X6",
+      "evidence": "Full GitHub source read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; exact language/IME/Swipe/Emoji owner reviewed for X6; source-only"
     },
     {
       "path": "SayboardKeyboard/Views/AIButton.swift",
@@ -2517,31 +2527,41 @@
       "path": "Shared/CantoneseCorrections.swift",
       "sha": "51ec04a25f008e60f3f4eb04add2287a5af7db5e",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X6",
+      "evidence": "Full GitHub source read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; exact language/IME/Swipe/Emoji owner reviewed for X6; source-only"
     },
     {
       "path": "Shared/CantoneseNgramDecoder.swift",
       "sha": "403a037cb4e2816ecff4f3f29b220845611135b6",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X6",
+      "evidence": "Full GitHub source read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; exact language/IME/Swipe/Emoji owner reviewed for X6; source-only"
     },
     {
       "path": "Shared/CantoneseRomanizationVariants.swift",
       "sha": "8ba70a339d716b7278662ba586ea208235ac6746",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X6",
+      "evidence": "Full GitHub source read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; exact language/IME/Swipe/Emoji owner reviewed for X6; source-only"
     },
     {
       "path": "Shared/CantoneseSchemePreference.swift",
       "sha": "cfc310011d83abe0c72c8b1f9756d0c7b71b5957",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X6",
+      "evidence": "Full GitHub source read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; exact language/IME/Swipe/Emoji owner reviewed for X6; source-only"
     },
     {
       "path": "Shared/CantoneseSyllableEditing.swift",
       "sha": "8f4f510687dd36d0620b582b99b380f81fc1c8de",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X6",
+      "evidence": "Full GitHub source read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; exact language/IME/Swipe/Emoji owner reviewed for X6; source-only"
     },
     {
       "path": "Shared/Character+ChineseOrJapanese.swift",
@@ -2553,7 +2573,9 @@
       "path": "Shared/ChineseInputMode.swift",
       "sha": "845709b266e7b439600d485f6c72fe400baa8914",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X6",
+      "evidence": "Full GitHub source read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; exact language/IME/Swipe/Emoji owner reviewed for X6; source-only"
     },
     {
       "path": "Shared/ChinesePunctuationPolicy.swift",
@@ -2565,7 +2587,9 @@
       "path": "Shared/ConfirmedChoiceLearning.swift",
       "sha": "6b80fd8749934a7f2936c36deb8664cd396c7a58",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X6",
+      "evidence": "Full GitHub source read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; exact language/IME/Swipe/Emoji owner reviewed for X6; source-only"
     },
     {
       "path": "Shared/Constants.swift",
@@ -2678,13 +2702,17 @@
       "path": "Shared/InformalNgramPolicy.swift",
       "sha": "d31f91a4a04054574c36e72c4570b1f9f518bd2a",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X6",
+      "evidence": "Full GitHub source read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; exact language/IME/Swipe/Emoji owner reviewed for X6; source-only"
     },
     {
       "path": "Shared/JyutpingComposition.swift",
       "sha": "e6c197aef6d13ba092a2ee3fd408e5f06dc609a7",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X6",
+      "evidence": "Full GitHub source read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; exact language/IME/Swipe/Emoji owner reviewed for X6; source-only"
     },
     {
       "path": "Shared/KeyTouchMap.swift",
@@ -2826,7 +2854,9 @@
       "path": "Shared/LanguagePriority.swift",
       "sha": "05fc6805ef5e146730491360fabd5ab9e65ee3f0",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X6",
+      "evidence": "Full GitHub source read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; exact language/IME/Swipe/Emoji owner reviewed for X6; source-only"
     },
     {
       "path": "Shared/LatinSpeechCorrectionLearning.swift",
@@ -2838,7 +2868,9 @@
       "path": "Shared/LatinWordSuggestionPolicy.swift",
       "sha": "076372f08784c4f3dd81dbc8fe7f13cbc9800600",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X6",
+      "evidence": "Full GitHub source read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; exact language/IME/Swipe/Emoji owner reviewed for X6; source-only"
     },
     {
       "path": "Shared/LetterKeyAlternates.swift",
@@ -2911,7 +2943,9 @@
       "path": "Shared/NativeEmojiGlyph.swift",
       "sha": "9481e0e1827e7942cc9e2defa5a8e2ba93343bb8",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X6",
+      "evidence": "Full GitHub source read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; exact language/IME/Swipe/Emoji owner reviewed for X6; source-only"
     },
     {
       "path": "Shared/OperatingSystem.swift",
@@ -2945,7 +2979,9 @@
       "path": "Shared/PreferredVoiceLanguages.swift",
       "sha": "b31fbe8d51e5c1f5ef2791e82c01841fb0138479",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X6",
+      "evidence": "Full GitHub source read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; exact language/IME/Swipe/Emoji owner reviewed for X6; source-only"
     },
     {
       "path": "Shared/ProcessFootprint.swift",
@@ -3327,7 +3363,9 @@
       "path": "scripts/build-jyutping-lexicon.py",
       "sha": "404f8af88d77d2311eb57847f697e37ca6a08d35",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X6",
+      "evidence": "Full GitHub source read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; exact language/IME/Swipe/Emoji owner reviewed for X6; source-only"
     },
     {
       "path": "scripts/cantonese-phrases.tsv",
@@ -3518,7 +3556,9 @@
       "path": "scripts/test_universal_cantonese.py",
       "sha": "aef062cbcba2b036cc8ea0870c070b8d5644d632",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X6",
+      "evidence": "Full GitHub source read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; exact language/IME/Swipe/Emoji owner reviewed for X6; source-only"
     },
     {
       "path": "scripts/verify-audio-sample-queue.swift",
@@ -3636,7 +3676,9 @@
       "path": "scripts/verify-language-priority.swift",
       "sha": "20b4800e19aa56d5888ce93f9d2ce01e2842dba9",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X6",
+      "evidence": "Full GitHub source read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; exact language/IME/Swipe/Emoji owner reviewed for X6; source-only"
     },
     {
       "path": "scripts/verify-latin-speech-learning.swift",
@@ -3654,7 +3696,9 @@
       "path": "scripts/verify-latin-swipe.swift",
       "sha": "c2fc5087b27988e06c1878bcfdd0ecdb08f7ed22",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X6",
+      "evidence": "Full GitHub source read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; exact language/IME/Swipe/Emoji owner reviewed for X6; source-only"
     },
     {
       "path": "scripts/verify-letter-hold.swift",
@@ -3716,7 +3760,9 @@
       "path": "scripts/verify-universal-cantonese.swift",
       "sha": "44c9e9bc8e212bc5693399ba109f4c40522ae3af",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X6",
+      "evidence": "Full GitHub source read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; exact language/IME/Swipe/Emoji owner reviewed for X6; source-only"
     },
     {
       "path": "scripts/verify-vocabulary-export.swift",
@@ -10423,14 +10469,152 @@
         "No export/import ZIP round-trip or SideStore group-renaming test",
         "No sound-toggle owner found in selected settings read set; not claim of app-wide absence"
       ]
+    },
+    "X6": {
+      "status": "complete_source_owner_review; executable iOS/Swift/Python not run",
+      "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+      "reviewed_paths": [
+        "Shared/LanguagePriority.swift",
+        "Shared/CantoneseRomanizationVariants.swift",
+        "Shared/LatinWordSuggestionPolicy.swift",
+        "Shared/CantoneseSyllableEditing.swift",
+        "Shared/CantoneseSchemePreference.swift",
+        "Shared/JyutpingComposition.swift",
+        "Shared/CantoneseNgramDecoder.swift",
+        "Shared/KeyboardKind.swift",
+        "Shared/ChineseInputMode.swift",
+        "Shared/ConfirmedChoiceLearning.swift",
+        "Shared/InformalNgramPolicy.swift",
+        "Shared/PreferredVoiceLanguages.swift",
+        "Shared/CantoneseCorrections.swift",
+        "SayboardKeyboard/LatinSwipeDecoder.swift",
+        "SayboardKeyboard/JyutpingDictionary.swift",
+        "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift",
+        "SayboardKeyboard/LatinWordSuggestions.swift",
+        "SayboardKeyboard/SwipeWordLexicon.swift",
+        "SayboardKeyboard/InformalNgramStore.swift",
+        "SayboardKeyboard/EmojiCatalog.swift",
+        "SayboardKeyboard/Views/EmojiKeyboardView.swift",
+        "Shared/NativeEmojiGlyph.swift",
+        "scripts/verify-latin-swipe.swift",
+        "scripts/verify-universal-cantonese.swift",
+        "scripts/verify-language-priority.swift",
+        "scripts/test_universal_cantonese.py",
+        "scripts/build-jyutping-lexicon.py"
+      ],
+      "partial_paths": [
+        "SayboardKeyboard/Views/AlphabeticTouchRow.swift:20-249 — UIKit physical Swipe path and cancel (X2 full review)",
+        "SayboardKeyboard/Views/Layouts/KeyboardChrome.swift:234-283 — native picker (X2 full review)",
+        "SayboardKeyboard/ChineseShapeDictionary.swift:1-140,169-233 — shape lookup, ranking, persistence",
+        "Shared/SharedSettings.swift:160-194 — preferred-language storage (X5 full review)",
+        "Sayboard/Views/Onboarding/OnboardingLanguagesView.swift:32-159 — language selection and settings writes",
+        "SayboardTests/LatinWordSuggestionPolicyTests.swift:4-90 — test cases source only",
+        "SayboardTests/SharedSettingsLanguageTests.swift:4-70 — test cases source only",
+        "scripts/test_hk_japanese_lexicon.py:1-87 — acceptance assertions source only",
+        "SayboardKeyboard/Info.plist:29-36 — MUL metadata, not language routing"
+      ],
+      "historical_checkpoints": [
+        84,
+        136,
+        193,
+        228,
+        232
+      ],
+      "historical_blob_evidence": [
+        "German layout added between #84/#136; accent normalization persists #84-#232",
+        "LanguagePriority appears by #136 and unchanged #136/#193/#228/#232",
+        "JyutpingDictionary changed #84→#136, unchanged #136/#193/#228/#232",
+        "AlphabeticKeyboardLayout changed #84/#136/#193/#228, unchanged #228/#232",
+        "EmojiCatalog and EmojiKeyboardView changed #193→#228; KeyboardChrome native selector stable #228/#232",
+        "Universal Cantonese builder and tests changed by #193; unchanged #193/#228/#232"
+      ],
+      "newly_reviewed": 23,
+      "new_findings": [
+        "F-0034",
+        "F-0035"
+      ],
+      "previous_findings_reconciled": [
+        "F-0002",
+        "F-0030",
+        "F-0033"
+      ],
+      "negative_case_count": 12,
+      "negative_cases": [
+        {
+          "case_id": "X6-L01",
+          "owner": "LanguagePriority and PreferredVoiceLanguages",
+          "oracle": "zh-HK/cmn/Yue EN-DE normalization, order and MUL metadata"
+        },
+        {
+          "case_id": "X6-C01",
+          "owner": "JyutpingDictionary indexed SQLite",
+          "oracle": "keoi/keui/kui, jyun/yun/yuen, mixed aliases, tones exact"
+        },
+        {
+          "case_id": "X6-C02",
+          "owner": "CantoneseSchemePreference",
+          "oracle": "explicit selections only, counts aged, all spellings remain"
+        },
+        {
+          "case_id": "X6-C03",
+          "owner": "Cantonese continuation",
+          "oracle": "我 then 哋 preserves 我哋 prediction context and stale field rejection (F-0035)"
+        },
+        {
+          "case_id": "X6-L02",
+          "owner": "LatinWordSuggestions",
+          "oracle": "EN-DE valid words, spellchecking, explicit correction"
+        },
+        {
+          "case_id": "X6-L03",
+          "owner": "InformalNgramStore",
+          "oracle": "bounded 2-token context and no stored raw host text"
+        },
+        {
+          "case_id": "X6-S01",
+          "owner": "LatinSwipeDecoder",
+          "oracle": "QWERTY/QWERTZ to, become, evermore, one insertion"
+        },
+        {
+          "case_id": "X6-S02",
+          "owner": "LatinSwipeDecoder German",
+          "oracle": "dedicated Ü/Ä/Ö/ß match correct physical path (F-0034)"
+        },
+        {
+          "case_id": "X6-E01",
+          "owner": "native Emoji picker",
+          "oracle": "Globe/Emoji key routes once through iOS and legacy code is not entered (F-0002)"
+        },
+        {
+          "case_id": "X6-E02",
+          "owner": "EmojiCatalog persistence",
+          "oracle": "skin tone/recents bounded and documented export/delete (F-0030)"
+        },
+        {
+          "case_id": "X6-H01",
+          "owner": "ChineseShapeDictionary",
+          "oracle": "shape composition invalidated upon field switch"
+        },
+        {
+          "case_id": "X6-P01",
+          "owner": "App Group settings",
+          "oracle": "missing group cannot silently claim synchronized preferences (F-0033)"
+        }
+      ],
+      "unverified": [
+        "No Swift/Python tests executed",
+        "No external Alibaba OCR CLI",
+        "No IPA or iPhone tests",
+        "X7 residual source sweep and X8 behavioral acceptance pending"
+      ]
     }
   },
   "counts": {
     "current_total": 577,
     "historical_only": 14,
-    "reviewed": 118,
+    "reviewed": 141,
     "excluded": 0,
-    "not_reviewed": 473,
+    "not_reviewed": 450,
     "known_changed_path_occurrences": 983,
     "known_unique_changed_paths": 336
   },
