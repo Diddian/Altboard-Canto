@@ -1,7 +1,7 @@
 {
   "schema_version": "untangle-ocr-findings/v1",
   "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
-  "status": "x1_source_evidence_recorded_runtime_and_device_findings_pending",
+  "status": "x2_scoped_source_findings_recorded; X3-X7 pending; X8 not started; device tests unverified",
   "findings": [
     {
       "id": "F-0001",
@@ -65,7 +65,10 @@
         "docs/TASKS.md",
         "docs/voice-session-state-machine.md",
         "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift",
-        "SayboardKeyboard/Views/EmojiKeyboardView.swift"
+        "SayboardKeyboard/Views/EmojiKeyboardView.swift",
+        "SayboardKeyboard/Views/Layouts/KeyboardChrome.swift",
+        "SayboardKeyboard/Views/NativeInputModeSwitchKey.swift",
+        "SayboardKeyboard/EmojiCatalog.swift"
       ],
       "line_evidence": [
         {
@@ -84,17 +87,36 @@
           "path": "SayboardKeyboard/Views/EmojiKeyboardView.swift",
           "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
           "observation": "Present in current main tree; removed #63-68, re-added #70-84."
+        },
+        {
+          "path": "SayboardKeyboard/Views/Layouts/KeyboardChrome.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "267-275",
+          "observation": "onEmojiAction only checked for nil; actual UIButton is configured with UIKit native picker, no closure invocation"
+        },
+        {
+          "path": "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "209-216,1665-1692",
+          "observation": "openEmojiPage closure passed to bottom-row onEmojiAction, but bottom row never invokes it, leaving custom EmojiKeyboardView unreachable from user key"
+        },
+        {
+          "path": "SayboardKeyboard/Views/NativeInputModeSwitchKey.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "14-36",
+          "observation": "native Emoji glyph is a UIKit input-mode selector, not a direct system Emoji opener"
         }
       ],
-      "scenario": "A reviewer using archive/task guidance to assume the custom Emoji page is absent would miss the current rendering path.",
-      "causal_chain": "Earlier removal recorded as lasting feature decision -> source later reintroduces the Emoji page -> task documentation does not describe active source state.",
-      "root_owner": "Stale documentation contract vs current AlphabeticKeyboardLayout.swift Emoji page",
-      "smallest_repair": "At X2/X6 trace actual Emoji page and native Globe ownership, decide expected behavior from current requirements before changing any source or docs.",
+      "scenario": "Main retains a compiled custom Emoji page/catalog, but current Emoji-shaped bottom key invokes the native system input-mode picker. The old custom page is unreachable from this UI callback.",
+      "causal_chain": "Removed custom Emoji #68 -> reintroduced #84 -> native picker restored in bottom row without removing now-unused callback, layout branch, catalog; misleading and surplus code remains.",
+      "root_owner": "Unused onEmojiAction in KeyboardBottomRow and unreachable showsEmojiPage branch in AlphabeticKeyboardLayout",
+      "smallest_repair": "At X8 after X6 confirms requirements, remove only proven unreachable custom UI and related unused assets/tests if no other callers remain. Retain native picker and independent Emoji history needs.",
       "regression_oracle": "Inspect actual iOS Emoji and Globe handling and selection; check no duplicate picker/gesture or inaccessible keyboard switching; verify on iPhone.",
       "verification": [
         "Git window #63-68 shows EmojiKeyboardView.swift removed; #70-84 shows it added.",
         "At main source SHA, AlphabeticKeyboardLayout.swift lines 144-150 mounts EmojiKeyboardView.",
-        "Mismatch confirmed; end-user behavioral regression unverified."
+        "Mismatch confirmed; end-user behavioral regression unverified.",
+        "X2: manual source call-site review confirms onEmojiAction callback is unused; no user-visible Emoji defect proven."
       ],
       "origin": "H-005",
       "assigned_stage": "X2/X6"
@@ -151,7 +173,8 @@
       "regression_oracle": "Change installed keyboards while Altboard is not visible, return to Standard/Extended without typing, verify the native picker is available immediately if UIKit requires it; verify tap and long-press. Recheck stale stored false and no repeated App Group writes.",
       "verification": [
         "X1 source-only check: call-site count for self.syncInputModeSwitchKey() is exactly one (in textDidChange); activation/foreground/input-mode observers omit it.",
-        "No physical iPhone switch failure observed by this review."
+        "No physical iPhone switch failure observed by this review.",
+        "X2 native UIKit picker remains distinct from custom Emoji code; first-render system needsInputModeSwitchKey can still be stale."
       ],
       "origin": "X1/R2",
       "assigned_stage": "X8; verify with X2 native globe review"
@@ -283,10 +306,200 @@
       "regression_oracle": "Induce or simulate host window absence, zero input height, height mismatch and fewer than three letter-row touch surfaces; compare event sequence, limited retries and final keyboard visibility/hit-test. Physical iPhone screenshots plus diagnostics are mandatory before changing recovery logic.",
       "verification": [
         "X1 source-only check confirmed renderSuspicious predicates and the exclusive missingRows soft refresh.",
-        "No screenshot or iPhone trace demonstrates a persistent blank root; root cause remains hypothesis."
+        "No screenshot or iPhone trace demonstrates a persistent blank root; root cause remains hypothesis.",
+        "X2 found one effective SwiftUI layout and separate UIKit row touch owners; blank pixels/host window state remain iPhone-only."
       ],
       "origin": "X1/R2",
       "assigned_stage": "X8; complement X2 keyboard render review"
+    },
+    {
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X2",
+      "assigned_stage": "X8",
+      "id": "F-0007",
+      "severity": "medium",
+      "state": "confirmed",
+      "area": "correctness",
+      "paths": [
+        "Shared/KeyboardHaptics.swift",
+        "Shared/KeyboardHapticTrace.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Shared/KeyboardHaptics.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "100-137",
+          "observation": "after makePlayer fails with engine nonnil, retry `try player?.start` can no-op when player nil, returning nil success"
+        },
+        {
+          "path": "Shared/KeyboardHaptics.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "191-213",
+          "observation": "nil error is interpreted as Core submission and bypasses fallback"
+        }
+      ],
+      "scenario": "Core engine starts but pattern player creation fails; retry engine.start succeeds with nil player.",
+      "causal_chain": "player error -> optional start no-op -> play returns nil -> no fallback, trace submitted though nothing played.",
+      "root_owner": "KeyboardCoreHaptic.play error recovery",
+      "smallest_repair": "Require a non-nil player and successful playback before nil return; otherwise emit bounded error and use one fallback. Add injected-player-failure test.",
+      "regression_oracle": "Simulate engine operational + player unavailable: assert one fallback and failure trace, never core-submitted; test successful playback and reset generation.",
+      "verification": [
+        "Confirmed code-path defect only; not an observed physical iPhone haptic failure.",
+        "Same optional player retry exists at Build #223."
+      ]
+    },
+    {
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X2",
+      "assigned_stage": "X8",
+      "id": "F-0008",
+      "severity": "high",
+      "state": "hypothesis",
+      "area": "async_ownership",
+      "paths": [
+        "SayboardKeyboard/Views/RepeatDeleteButton.swift",
+        "SayboardKeyboard/Views/SpaceBarKey.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "SayboardKeyboard/Views/RepeatDeleteButton.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "33-87",
+          "observation": "zero-distance SwiftUI gesture holds repeating Task; only .onEnded and .onDisappear cancel"
+        },
+        {
+          "path": "SayboardKeyboard/Views/SpaceBarKey.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "36-45,73-142",
+          "observation": "tracking task/flag resets on .onEnded/.onDisappear only"
+        }
+      ],
+      "scenario": "Host/system cancels SwiftUI DragGesture without delivering .onEnded while view remains mounted.",
+      "causal_chain": "if gesture cancellation does not call end/disappear, Delete repeat continues or Spacebar tracking flag sticks (not reproduced).",
+      "root_owner": "RepeatDeleteButton/SpaceBarKey async gesture ownership",
+      "smallest_repair": "First prove iOS cancellation path with deterministic test/instrumentation, then use one bounded cancellation owner; no extra recognizer or polling.",
+      "regression_oracle": "Cancel held Delete while view stays visible, assert no further delete; repeat with cursor tracking and restored focus; physical device mandatory.",
+      "verification": [
+        "Source shows absent independent cancellation path; actual cancellation behavior unverified."
+      ]
+    },
+    {
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X2",
+      "assigned_stage": "X8",
+      "id": "F-0009",
+      "severity": "medium",
+      "state": "hypothesis",
+      "area": "accessibility",
+      "paths": [
+        "SayboardKeyboard/Views/RepeatDeleteButton.swift",
+        "SayboardKeyboard/Views/SpaceBarKey.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "SayboardKeyboard/Views/RepeatDeleteButton.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "21-35,80-89",
+          "observation": "Image + DragGesture + label but no explicit accessibilityAction for delete"
+        },
+        {
+          "path": "SayboardKeyboard/Views/SpaceBarKey.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "13-47,61-71",
+          "observation": "gesture-owned Spacebar can render Color.clear, has only hint and no explicit label/action"
+        }
+      ],
+      "scenario": "VoiceOver double-tap triggers accessibility activation without a physical DragGesture.",
+      "causal_chain": "no explicit action or role for gesture-only key -> Delete/Space insertion unproven under assistive tech.",
+      "root_owner": "RepeatDeleteButton and SpaceBarKey VoiceOver contract",
+      "smallest_repair": "Provide named button trait and explicit accessible actions for exactly one Delete/Space insertion; retain separate touch repeat/trackpad.",
+      "regression_oracle": "VoiceOver focus & activate Space/Delete, switch control, physical long press, one operation per activation, no duplicated feedback.",
+      "verification": [
+        "Missing explicit accessibility handlers confirmed in source; actual VoiceOver failure unverified."
+      ]
+    },
+    {
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X2",
+      "assigned_stage": "X8",
+      "id": "F-0010",
+      "severity": "medium",
+      "state": "confirmed",
+      "area": "correctness",
+      "paths": [
+        "Shared/KeyboardHaptics.swift",
+        "SayboardKeyboard/Views/SymbolHoldKey.swift",
+        "SayboardKeyboard/Views/AlphabeticTouchRow.swift",
+        "SayboardKeyboard/Views/ChineseStrokeGrid.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Shared/KeyboardHaptics.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "168-176",
+          "observation": "KeyboardHaptics.key default playsSound=true and invokes playInputClick"
+        },
+        {
+          "path": "SayboardKeyboard/Views/SymbolHoldKey.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "108-122",
+          "observation": "same hold triggers key on begin and after alternate popup"
+        },
+        {
+          "path": "SayboardKeyboard/Views/AlphabeticTouchRow.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "251-280,326-335",
+          "observation": "initial down and alternate hold trigger key() without playsSound false"
+        }
+      ],
+      "scenario": "User presses and holds one letter/symbol until popup appears.",
+      "causal_chain": "extra haptic confirmation uses full key sound call -> two click requests for one held key.",
+      "root_owner": "Feedback API conflates key click with hold-confirm haptic",
+      "smallest_repair": "Keep intentional hold vibration but call playsSound:false for popup confirmation; respect iOS sound preference.",
+      "regression_oracle": "Instrument sound requests for short tap, hold, cancel and slide; no click solely on popup; actual audible result iPhone only.",
+      "verification": [
+        "Two system click requests statically confirmed; iOS may suppress actual second sound."
+      ]
+    },
+    {
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X2",
+      "assigned_stage": "X8",
+      "id": "F-0011",
+      "severity": "medium",
+      "state": "hypothesis",
+      "area": "runtime_state",
+      "paths": [
+        "Shared/KeyboardHaptics.swift",
+        "SayboardKeyboard/Views/KeyboardView.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Shared/KeyboardHaptics.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "161-166,214-217",
+          "observation": "sensory driver increments pulse and records triggered even with nil sensoryViewOwner"
+        },
+        {
+          "path": "SayboardKeyboard/Views/KeyboardView.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "179-199",
+          "observation": "sensory consumer active only after appearance while mounted"
+        }
+      ],
+      "scenario": "Key haptic request arrives during host/extension handoff with SwiftUI consumer unmounted.",
+      "causal_chain": "no consumer -> pulse increment and triggered trace but no physical feedback (may be impossible under normal touch).",
+      "root_owner": "KeyboardSensoryPulse readiness and diagnostics",
+      "smallest_repair": "Distinguish unmounted drop from actual submission, guard one fallback for active keyboard; never replay stale pulse.",
+      "regression_oracle": "Simulate absent sensory consumer and overlapping controller, check trace/fallback and no replay/double pulse.",
+      "verification": [
+        "Control-flow discrepancy supported; real-world trigger remains unverified."
+      ]
     }
   ],
   "categories": [

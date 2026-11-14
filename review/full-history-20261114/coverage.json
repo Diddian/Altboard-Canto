@@ -7,7 +7,7 @@
     "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
     "review_branch": "review/full-history-20261114"
   },
-  "status": "x1_installation_lifecycle_file_review_complete_x2_to_x7_deep_review_pending",
+  "status": "x2_keyboard_input_feedback_review_complete_x3_to_x7_pending",
   "expected_current_tracked_files_observed": 577,
   "current_tracked_files": 577,
   "initial_tracked_files": 356,
@@ -1284,7 +1284,9 @@
       "path": "Sayboard/Views/KeyboardSettingsView.swift",
       "sha": "cee539bfc7bb47d07ba043ff334e43b2cd40848b",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected Sayboard/Views/KeyboardSettingsView.swift:17-26 persistent settings, 81-120 haptic UI, 129-247 app preview"
     },
     {
       "path": "Sayboard/Views/LLMModelCardView.swift",
@@ -1596,7 +1598,9 @@
       "path": "SayboardKeyboard/EmojiCatalog.swift",
       "sha": "f86138b04436b15c157eb9a8cb0d84d8b58e629f",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected SayboardKeyboard/EmojiCatalog.swift:10-50 catalog, 54-76 tone, 87-155 history"
     },
     {
       "path": "SayboardKeyboard/HostArbiter/KBHostArbiterHook.h",
@@ -1645,7 +1649,9 @@
       "path": "SayboardKeyboard/KeyboardMetrics.swift",
       "sha": "37758d9262920876765f60648b548cfc6b203ae9",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected SayboardKeyboard/KeyboardMetrics.swift:5-47 height and iPad scaling"
     },
     {
       "path": "SayboardKeyboard/KeyboardState.swift",
@@ -1653,7 +1659,8 @@
       "tracking": "current",
       "review": "reviewed",
       "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators SayboardKeyboard/KeyboardState.swift:49-104,147-194,236-242; X1 installation/activation/runtime ownership",
-      "stage": "X1"
+      "stage": "X1",
+      "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 49-59 reactive state, 86-106 fallback, 147-194 refresh"
     },
     {
       "path": "SayboardKeyboard/KeyboardTouchLearning.swift",
@@ -1703,7 +1710,8 @@
       "tracking": "current",
       "review": "reviewed",
       "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators SayboardKeyboard/KeyboardViewController.swift:67-200,307-465,647-709,721-739,1153-1199,1343-1479; X1 installation/activation/runtime ownership",
-      "stage": "X1"
+      "stage": "X1",
+      "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 7-11 click protocol, 98-200 lifecycle/Globe/Haptics, 382-465 render probe, 1153-1199 hosting, 1466-1472 native requirement"
     },
     {
       "path": "SayboardKeyboard/LatinSwipeDecoder.swift",
@@ -1757,19 +1765,25 @@
       "path": "SayboardKeyboard/Views/AIButton.swift",
       "sha": "0a932d6c4ba976177d5139821016a45ea3556989",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected SayboardKeyboard/Views/AIButton.swift:13-56 long-press/tap arbitration"
     },
     {
       "path": "SayboardKeyboard/Views/AlphabeticLetterKey.swift",
       "sha": "3439e0187523bc935a26bef7e43fe961763b8147",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected SayboardKeyboard/Views/AlphabeticLetterKey.swift:29-84 drawn key and accessibility label"
     },
     {
       "path": "SayboardKeyboard/Views/AlphabeticTouchRow.swift",
       "sha": "51d2da014080b605c728560a797384edc5ff3d47",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected SayboardKeyboard/Views/AlphabeticTouchRow.swift:42-125 UIKit row owner and VoiceOver action, 171-317 tap/swipe and release, 326-345 alternate hold"
     },
     {
       "path": "SayboardKeyboard/Views/BlockerPrompt.swift",
@@ -1781,7 +1795,8 @@
       "path": "SayboardKeyboard/Views/ChineseStrokeGrid.swift",
       "sha": "8a6282a58aeb92fc2a5650f677e6fe9a61a7bf2d",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "not_reviewed",
+      "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 12-18 gesture state, 81-135 touch and a11y, 156-170 haptic (only partial; X6 owns full review)"
     },
     {
       "path": "SayboardKeyboard/Views/DictationLockedLabel.swift",
@@ -1799,7 +1814,9 @@
       "path": "SayboardKeyboard/Views/EmojiKeyboardView.swift",
       "sha": "c7aedf7557bea1bc4d2900a72b4fc57c07227889",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected SayboardKeyboard/Views/EmojiKeyboardView.swift:5-112 custom Emoji view, 115-210 search, 300-370 key cells"
     },
     {
       "path": "SayboardKeyboard/Views/GlyphPath.swift",
@@ -1811,13 +1828,17 @@
       "path": "SayboardKeyboard/Views/ImmediateKeyTouchSurface.swift",
       "sha": "b3b528759cf47bf0a7f64eeb56efb894a56c469c",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected SayboardKeyboard/Views/ImmediateKeyTouchSurface.swift:4-77 UIViewRepresentable/UIKit touch sequence"
     },
     {
       "path": "SayboardKeyboard/Views/KeyButton.swift",
       "sha": "b413f720a078b753d765441f552dc962a1772556",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected SayboardKeyboard/Views/KeyButton.swift:25-64 SwiftUI button + haptic, 145-160 fallback font"
     },
     {
       "path": "SayboardKeyboard/Views/KeyCallout.swift",
@@ -1835,7 +1856,9 @@
       "path": "SayboardKeyboard/Views/KeyboardHapticEnvironment.swift",
       "sha": "fedae19901ba96604b60dc9930b329772ff4dc7d",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected SayboardKeyboard/Views/KeyboardHapticEnvironment.swift:3-28 opt-in SwiftUI sensory gate"
     },
     {
       "path": "SayboardKeyboard/Views/KeyboardLLMActionsToolbar.swift",
@@ -1847,7 +1870,9 @@
       "path": "SayboardKeyboard/Views/KeyboardReturnKey.swift",
       "sha": "0b3b188444493850c5d087f694362fa2accae2ae",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected SayboardKeyboard/Views/KeyboardReturnKey.swift:11-35 host Return event"
     },
     {
       "path": "SayboardKeyboard/Views/KeyboardView.swift",
@@ -1855,7 +1880,8 @@
       "tracking": "current",
       "review": "reviewed",
       "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators SayboardKeyboard/Views/KeyboardView.swift:133-200; X1 installation/activation/runtime ownership",
-      "stage": "X1"
+      "stage": "X1",
+      "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 133-200 one effective layout and sensory consumer"
     },
     {
       "path": "SayboardKeyboard/Views/LLMActionBar.swift",
@@ -1873,13 +1899,17 @@
       "path": "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift",
       "sha": "b060a58239868490967686eff98cd8ecd94c141a",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift:20-72 state, 142-356 layout/Emoji native Globe, 980-1104 symbol and touch callbacks, 1659-1714 resets"
     },
     {
       "path": "SayboardKeyboard/Views/Layouts/ExtendedKeyboardLayout.swift",
       "sha": "333a98ed75487058dc4f674ba56e5f0ca10716b5",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected SayboardKeyboard/Views/Layouts/ExtendedKeyboardLayout.swift:9-65 symbol page, 68-250 controls and input"
     },
     {
       "path": "SayboardKeyboard/Views/Layouts/KeyboardChrome.swift",
@@ -1887,25 +1917,31 @@
       "tracking": "current",
       "review": "reviewed",
       "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators SayboardKeyboard/Views/Layouts/KeyboardChrome.swift:3-30,260-283; X1 installation/activation/runtime ownership",
-      "stage": "X1"
+      "stage": "X1",
+      "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 3-62 flags/dimensions, 234-343 bottom row picker"
     },
     {
       "path": "SayboardKeyboard/Views/Layouts/MicAnimatedButton.swift",
       "sha": "6e49965f75f8d910a173eaf3a41625211d29a272",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "not_reviewed",
+      "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 79-124 Button cancellation and 194-304 tap/hold arbitration (only partial; later stage owns full mic state)"
     },
     {
       "path": "SayboardKeyboard/Views/Layouts/StandardKeyboardLayout.swift",
       "sha": "697ad1ae688b0bfe7dd88e2c057d069c5a636d69",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected SayboardKeyboard/Views/Layouts/StandardKeyboardLayout.swift:15-99 mic/control rows, 102-200 actions"
     },
     {
       "path": "SayboardKeyboard/Views/Layouts/SymbolsPage.swift",
       "sha": "dd3e3bdc6f26119c1bafe966ce91d05c12280410",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected SayboardKeyboard/Views/Layouts/SymbolsPage.swift:3-20 page toggler"
     },
     {
       "path": "SayboardKeyboard/Views/LongRecordingNotice.swift",
@@ -1937,13 +1973,16 @@
       "tracking": "current",
       "review": "reviewed",
       "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators SayboardKeyboard/Views/NativeInputModeSwitchKey.swift:6-70; X1 installation/activation/runtime ownership",
-      "stage": "X1"
+      "stage": "X1",
+      "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 14-49 native UIKit input-mode selector, 51-69 glyph"
     },
     {
       "path": "SayboardKeyboard/Views/RepeatDeleteButton.swift",
       "sha": "fd74901a86f2a71d6fc2e67df9f9799c93ad5b03",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected SayboardKeyboard/Views/RepeatDeleteButton.swift:17-88 repeat Task, release and accessibility"
     },
     {
       "path": "SayboardKeyboard/Views/SayboardWordmark.swift",
@@ -1955,7 +1994,9 @@
       "path": "SayboardKeyboard/Views/SpaceBarKey.swift",
       "sha": "0265e5d50a9ce8ace037060c2a931660751e7e9f",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected SayboardKeyboard/Views/SpaceBarKey.swift:13-47 gesture, 73-142 trackpad state and release"
     },
     {
       "path": "SayboardKeyboard/Views/SpinnerMorphAnimation.swift",
@@ -1973,13 +2014,17 @@
       "path": "SayboardKeyboard/Views/SymbolHoldKey.swift",
       "sha": "6d80cc32bc4ca0b1b88d39294e1e6b671a70e02b",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected SayboardKeyboard/Views/SymbolHoldKey.swift:30-70 immediate UIKit owner, 108-153 hold and commit"
     },
     {
       "path": "SayboardKeyboard/Views/TranslateToggleButton.swift",
       "sha": "5e7e20fd7b3e22683d69b9c2b4e893efdeae92a2",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected SayboardKeyboard/Views/TranslateToggleButton.swift:49-93 simultaneous long-press"
     },
     {
       "path": "SayboardKeyboard/Views/WaveformBars.swift",
@@ -2125,7 +2170,9 @@
       "path": "SayboardTests/KeyTouchMapTests.swift",
       "sha": "a964a3f92fee77498fa5b8d3707aba4dff0dd4a0",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected SayboardTests/KeyTouchMapTests.swift:4-38 hit-map unit cases"
     },
     {
       "path": "SayboardTests/KeyboardHostInputTraitsTests.swift",
@@ -2269,7 +2316,8 @@
       "path": "SayboardTests/SharedSettingsDefaultsTests.swift",
       "sha": "edca27b10c694a0b0a76f8194eb6a787bc8d64a5",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "not_reviewed",
+      "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 29-46 default, 101-114 persisted haptic OFF, 249-265 strength"
     },
     {
       "path": "SayboardTests/SharedSettingsEntitlementTests.swift",
@@ -2541,7 +2589,9 @@
       "path": "Shared/KeyTouchMap.swift",
       "sha": "26124dc2c50e6dfbdb23402633548ade57179349",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected Shared/KeyTouchMap.swift:6-72 non-overlapping routing, 76-94 prediction"
     },
     {
       "path": "Shared/KeyboardDocumentIdentifier.swift",
@@ -2567,19 +2617,25 @@
       "path": "Shared/KeyboardHapticDriver.swift",
       "sha": "4bd375042e5399f79a8a8472cdfafb557535cb16",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected Shared/KeyboardHapticDriver.swift:5-17 three haptic drivers"
     },
     {
       "path": "Shared/KeyboardHapticTrace.swift",
       "sha": "a6fd7437a3f282ee117b5827891310d548a5e5e6",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected Shared/KeyboardHapticTrace.swift:6-46 bounded asynchronous diagnostic trace"
     },
     {
       "path": "Shared/KeyboardHaptics.swift",
       "sha": "536d318adb7eeb1e5ecd98bcc049ed58531658fb",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected Shared/KeyboardHaptics.swift:20-139 engine state, optional player retry, prewarm and reset; 145-289 haptic, click and owner-scoped suspend"
     },
     {
       "path": "Shared/KeyboardHostGeometry.swift",
@@ -2611,7 +2667,9 @@
       "path": "Shared/KeyboardLayoutGeometry.swift",
       "sha": "a780fa38bda429823e8ddb6d00ea878989839bdc",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected Shared/KeyboardLayoutGeometry.swift:5-38 keyboard size/inset policy"
     },
     {
       "path": "Shared/KeyboardLifecycleTiming.swift",
@@ -2633,7 +2691,9 @@
       "path": "Shared/KeyboardPalette.swift",
       "sha": "d573123a34020ff1f7e3e6fe1fc2896f70d02113",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected Shared/KeyboardPalette.swift:5-34 light/dark colors"
     },
     {
       "path": "Shared/KeyboardProcessMemory.swift",
@@ -2811,7 +2871,8 @@
       "tracking": "current",
       "review": "reviewed",
       "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators Shared/SharedSettings.swift:3-9,83-116,365-368; X1 installation/activation/runtime ownership",
-      "stage": "X1"
+      "stage": "X1",
+      "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 231-245 Globe config, 258-294 haptic settings and reset, 365-368 persisted needs key"
     },
     {
       "path": "Shared/Snippet.swift",
@@ -2979,7 +3040,9 @@
       "path": "docs/HAPTICS-DIAGNOSTICS.md",
       "sha": "b93ef1aa155d2c4a1d71d424387a54a6d9b63ea9",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected docs/HAPTICS-DIAGNOSTICS.md:3-12 historical app vs extension observations, 31-38 stale reset description"
     },
     {
       "path": "docs/JYUTPING-DATA-NOTICES.md",
@@ -3245,7 +3308,9 @@
       "path": "scripts/test_emoji_catalog.py",
       "sha": "b9563fff13f11e2dffaca40c6f4846679490d67c",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected scripts/test_emoji_catalog.py:11-59 Emoji history/source assertions"
     },
     {
       "path": "scripts/test_hk_japanese_lexicon.py",
@@ -3303,13 +3368,16 @@
       "path": "scripts/test_settings_contract.py",
       "sha": "a1e5ce7be4e87749e80694039b856f691a2528bf",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "not_reviewed",
+      "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 24-45 system click/source assertions, 60-74 settings owner"
     },
     {
       "path": "scripts/test_symbol_visibility.py",
       "sha": "0d6c80f6a79ff65f6c175fff460cb46c96721bb6",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected scripts/test_symbol_visibility.py:30-106 source assertions"
     },
     {
       "path": "scripts/test_universal_cantonese.py",
@@ -3381,7 +3449,9 @@
       "path": "scripts/verify-key-touch-map.swift",
       "sha": "dae1f28e16c2d94f7bd06c0d94efa996c047b518",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X2",
+      "evidence": "X2 full GitHub file fetched at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped inspected scripts/verify-key-touch-map.swift:3-53 pure Swift hit-map tests"
     },
     {
       "path": "scripts/verify-keyboard-core.swift",
@@ -9945,14 +10015,75 @@
       ],
       "checks": "11/11 scoped GitHub-source predicates passed, source-inspection only; no iOS/Swift/Python test command run",
       "exclusion_note": "No current-file review claimed for partially inspected layout/Emoji/touch paths; X2 owns those deep checks."
+    },
+    "X2": {
+      "status": "complete_scoped_source_review; iPhone_NOT_RUN",
+      "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+      "reviewed_paths": [
+        "Shared/KeyboardHaptics.swift",
+        "Shared/KeyboardHapticDriver.swift",
+        "Shared/KeyboardHapticTrace.swift",
+        "Shared/KeyTouchMap.swift",
+        "Shared/KeyboardLayoutGeometry.swift",
+        "Shared/KeyboardPalette.swift",
+        "SayboardKeyboard/KeyboardMetrics.swift",
+        "SayboardKeyboard/Views/KeyboardHapticEnvironment.swift",
+        "SayboardKeyboard/Views/AlphabeticTouchRow.swift",
+        "SayboardKeyboard/Views/ImmediateKeyTouchSurface.swift",
+        "SayboardKeyboard/Views/AlphabeticLetterKey.swift",
+        "SayboardKeyboard/Views/KeyButton.swift",
+        "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift",
+        "SayboardKeyboard/Views/Layouts/StandardKeyboardLayout.swift",
+        "SayboardKeyboard/Views/Layouts/ExtendedKeyboardLayout.swift",
+        "SayboardKeyboard/Views/Layouts/SymbolsPage.swift",
+        "SayboardKeyboard/Views/EmojiKeyboardView.swift",
+        "SayboardKeyboard/EmojiCatalog.swift",
+        "SayboardKeyboard/Views/SpaceBarKey.swift",
+        "SayboardKeyboard/Views/RepeatDeleteButton.swift",
+        "SayboardKeyboard/Views/SymbolHoldKey.swift",
+        "SayboardKeyboard/Views/KeyboardReturnKey.swift",
+        "SayboardKeyboard/Views/AIButton.swift",
+        "SayboardKeyboard/Views/TranslateToggleButton.swift",
+        "SayboardKeyboard/Views/NativeInputModeSwitchKey.swift",
+        "SayboardKeyboard/Views/Layouts/KeyboardChrome.swift",
+        "SayboardKeyboard/Views/KeyboardView.swift",
+        "SayboardKeyboard/KeyboardState.swift",
+        "SayboardKeyboard/KeyboardViewController.swift",
+        "Shared/SharedSettings.swift",
+        "Sayboard/Views/KeyboardSettingsView.swift",
+        "scripts/test_symbol_visibility.py",
+        "scripts/verify-key-touch-map.swift",
+        "SayboardTests/KeyTouchMapTests.swift",
+        "scripts/test_emoji_catalog.py",
+        "docs/HAPTICS-DIAGNOSTICS.md"
+      ],
+      "partial_paths": [
+        "SayboardKeyboard/Views/Layouts/MicAnimatedButton.swift",
+        "SayboardKeyboard/Views/ChineseStrokeGrid.swift",
+        "scripts/test_settings_contract.py",
+        "SayboardTests/SharedSettingsDefaultsTests.swift"
+      ],
+      "historical_windows": [
+        "Builds 20-31 haptics introduced; 31-43 drivers; 43-51 touch owner; 63-68 Emoji deleted; 70-84 Emoji reintroduced; 223-232 Haptic owner scoping"
+      ],
+      "source_predicates": {
+        "passed": 15,
+        "total": 15,
+        "nature": "code-path presence only, not behavioral tests"
+      },
+      "unverified": [
+        "device Haptics/Sound/Emoji/VoiceOver",
+        "system-cancelled gesture",
+        "pixel render"
+      ]
     }
   },
   "counts": {
     "current_total": 577,
     "historical_only": 14,
-    "reviewed": 30,
+    "reviewed": 60,
     "excluded": 0,
-    "not_reviewed": 561,
+    "not_reviewed": 531,
     "known_changed_path_occurrences": 983,
     "known_unique_changed_paths": 336
   },

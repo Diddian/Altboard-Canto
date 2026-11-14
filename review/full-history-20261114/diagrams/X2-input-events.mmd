@@ -1,0 +1,36 @@
+flowchart TD
+  VC["KeyboardViewController UIKit"] --> ROOT["KeyboardView: one effective SwiftUI layout"]
+  ROOT --> AL["AlphabeticKeyboardLayout"]
+  ROOT --> OTHER["Standard / Extended"]
+  AL --> ROW["AlphabeticTouchRow: 3 UIKit touch bands"]
+  ROW --> TOUCH["ImmediateKeyTouchView"]
+  TOUCH --> FINISH{"OnEnded: tap or glide?"}
+  FINISH -->|Tap| INSERT["KeyboardProxy.insertText"]
+  FINISH -->|Glide| SWIPE["Swipe decode / one commit"]
+  TOUCH -->|Cancel| CANCEL["reset / no output"]
+  ROW -.-> VO["SwiftUI VoiceOver action"]
+  AL --> SYMBOL["SymbolHoldKey UIKit owner"]
+  SYMBOL --> INSERT
+  AL --> DELETE["RepeatDeleteButton SwiftUI DragGesture"]
+  AL --> SPACE["SpaceBarKey SwiftUI DragGesture"]
+  DELETE --> DEL["KeyboardProxy.delete"]
+  SPACE --> CURSOR["space or cursor, not both"]
+  AL --> NATIVE["NativeInputModeSwitchKey UIButton"]
+  OTHER --> NATIVE
+  NATIVE --> IOS["iOS handleInputModeList"]
+  AL -.-> DEAD["Unused onEmojiAction -> unreachable custom Emoji view (F-0002)"]
+  TOUCH --> HAPTIC["KeyboardHaptics.key"]
+  SYMBOL --> HAPTIC
+  SPACE --> HAPTIC
+  DELETE --> HAPTIC
+  HAPTIC --> CLICK["System playInputClick"]
+  HAPTIC --> CORE["CoreHaptics player"]
+  CORE -->|error| FALL["UIKit/Sensory fallback"]
+  CORE -.->|F-0007 nil player falsely submitted| HAPTIC
+  HAPTIC --> TRACE["bounded App Group HapticTrace"]
+  HAPTIC --> PULSE["SwiftUI sensory pulse"]
+  PULSE --> ROOT
+  DELETE -.->|F-0008 interrupted hold unverified| DEL
+  SPACE -.->|F-0009 accessibility activation unverified| CURSOR
+  SYMBOL -.->|F-0010 hold invokes extra click request| CLICK
+  NATIVE -.->|F-0003 stale required-key flag| ROOT

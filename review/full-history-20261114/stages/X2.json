@@ -1,24 +1,166 @@
 {
   "schema_version": "altboard-review-stage/v1",
   "id": "X2",
-  "status": "blocked",
-  "source_sha_at_review": null,
-  "review_branch_head_at_start": null,
-  "started_at": null,
-  "finished_at": null,
-  "review_mode": "GitHub manual OCR-style; Alibaba OCR CLI not run",
-  "untangle_status": "not_run",
-  "files_reviewed": [],
+  "status": "complete",
+  "source_sha_at_review": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+  "review_branch_head_at_start": "8f957a12300ab0d38109d5d5739ff22a571a4bc1",
+  "started_at": "2026-11-14",
+  "finished_at": "2026-11-14",
+  "review_mode": "GitHub manual OCR-style source review and Untangle ownership audit; OCR CLI NOT RUN",
+  "untangle_status": "performed_keyboard_input_feedback_globe_accessibility_owner_graph",
+  "files_reviewed": [
+    "Shared/KeyboardHaptics.swift",
+    "Shared/KeyboardHapticDriver.swift",
+    "Shared/KeyboardHapticTrace.swift",
+    "Shared/KeyTouchMap.swift",
+    "Shared/KeyboardLayoutGeometry.swift",
+    "Shared/KeyboardPalette.swift",
+    "SayboardKeyboard/KeyboardMetrics.swift",
+    "SayboardKeyboard/Views/KeyboardHapticEnvironment.swift",
+    "SayboardKeyboard/Views/AlphabeticTouchRow.swift",
+    "SayboardKeyboard/Views/ImmediateKeyTouchSurface.swift",
+    "SayboardKeyboard/Views/AlphabeticLetterKey.swift",
+    "SayboardKeyboard/Views/KeyButton.swift",
+    "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift",
+    "SayboardKeyboard/Views/Layouts/StandardKeyboardLayout.swift",
+    "SayboardKeyboard/Views/Layouts/ExtendedKeyboardLayout.swift",
+    "SayboardKeyboard/Views/Layouts/SymbolsPage.swift",
+    "SayboardKeyboard/Views/EmojiKeyboardView.swift",
+    "SayboardKeyboard/EmojiCatalog.swift",
+    "SayboardKeyboard/Views/SpaceBarKey.swift",
+    "SayboardKeyboard/Views/RepeatDeleteButton.swift",
+    "SayboardKeyboard/Views/SymbolHoldKey.swift",
+    "SayboardKeyboard/Views/KeyboardReturnKey.swift",
+    "SayboardKeyboard/Views/AIButton.swift",
+    "SayboardKeyboard/Views/TranslateToggleButton.swift",
+    "SayboardKeyboard/Views/NativeInputModeSwitchKey.swift",
+    "SayboardKeyboard/Views/Layouts/KeyboardChrome.swift",
+    "SayboardKeyboard/Views/KeyboardView.swift",
+    "SayboardKeyboard/KeyboardState.swift",
+    "SayboardKeyboard/KeyboardViewController.swift",
+    "Shared/SharedSettings.swift",
+    "Sayboard/Views/KeyboardSettingsView.swift",
+    "scripts/test_symbol_visibility.py",
+    "scripts/verify-key-touch-map.swift",
+    "SayboardTests/KeyTouchMapTests.swift",
+    "scripts/test_emoji_catalog.py",
+    "docs/HAPTICS-DIAGNOSTICS.md"
+  ],
   "files_excluded": [],
-  "files_not_reviewed": [],
-  "new_or_updated_findings": [],
-  "diagram_paths": [],
+  "files_not_reviewed": [
+    "MicAnimatedButton/ChineseStrokeGrid settings-contract and defaults tests: relevant X2 slices checked; full-file review remains X3, X5, X6, X7.",
+    "Other current or historical files remain not_reviewed in coverage.json for X3-X7.",
+    "Runtime keyboard pixels/taps/physical haptics/VoiceOver/gesture cancellation on iPhone not observed."
+  ],
+  "new_or_updated_findings": [
+    "F-0002",
+    "F-0003",
+    "F-0006",
+    "F-0007",
+    "F-0008",
+    "F-0009",
+    "F-0010",
+    "F-0011"
+  ],
+  "diagram_paths": [
+    "review/full-history-20261114/diagrams/X2-input-events.mmd"
+  ],
   "tests": {
-    "executed": [],
-    "not_run": []
+    "executed": [
+      "15/15 narrowly scoped GitHub source-path predicates at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: code path presence only; NOT compiled tests or device tests."
+    ],
+    "not_run": [
+      "scripts/test_symbol_visibility.py (source read, no unittest runner)",
+      "scripts/verify-key-touch-map.swift and Xcode unit tests (not executed)",
+      "iPhone SideStore touch, system Globe/Emoji, VoiceOver, haptic sensation, keyboard click, cancel-gesture, and keyboard pixels (NOT RUN)",
+      "Alibaba Open Code Review CLI (NOT RUN)",
+      "No unsigned IPA build or source edit"
+    ]
   },
-  "verified_outputs": [],
+  "verified_outputs": [
+    "review/full-history-20261114/coverage.json",
+    "review/full-history-20261114/findings.json",
+    "review/full-history-20261114/diagrams/X2-input-events.mmd",
+    "review/full-history-20261114/stages/X2.json",
+    "review/full-history-20261114/manifest.json"
+  ],
   "blocked_reasons": [],
-  "next_action": "Begin only after manifest previous stage gate; use stages.json for exact scope",
-  "evidence_notes": []
+  "next_action": "X3 only at fresh verified main HEAD: microphone session/ASR/Live Dictation/native worker/memory. X2 code repairs deferred to X8. No IPA.",
+  "evidence_notes": [
+    "main HEAD source pinned at ed2c4ede05567f3f63d2979ade81040c8fe799ad; review HEAD checked before write.",
+    "Alphabetic UI uses exactly one UIKit touch surface per row and inert swipe path; separate SwiftUI VoiceOver activation path; no duplicate printable character proven.",
+    "KeyboardHaptics.key sends native sound-click independently of selected haptic driver; Haptics OFF does not disable system-governed sound.",
+    "Core Haptics optional-player retry can return success on nil player: confirmed source-level control-flow defect, no physical device diagnosis.",
+    "Build #68 removed custom Emoji; #84 restored it; #232 bottom Emoji-shaped key uses native UIKit picker and leaves unreachable custom Emoji page. Existing F-0002 updated.",
+    "Source-only gesture cancellation ambiguity in Delete/Spacebar; unintended continuing deletion NOT observed on iPhone.",
+    "Source-only accessibility activation gaps for gesture-only Delete/Spacebar; VoiceOver failure NOT observed.",
+    "Trace diagnostic counts are serial per process; atomicity across processes deferred X5.",
+    "History window review: Builds #20-31 haptics introduced, #31-43 drivers, #43-51 UIKit touch row, #63-68 Emoji removed, #70-84 restored, #223-232 haptic owner-scoping. Endpoints do not establish every intermediate commit.",
+    "Separate per-repair behavioral acceptance and physical device gates remain unrun."
+  ],
+  "event_owners": [
+    {
+      "id": "E01",
+      "owner": "KeyboardViewController/KeyboardView",
+      "transition": "UIInputView lifecycle -> one UIHostingController -> effective KeyboardKind",
+      "cancel_retry": "refresh on appearance; scoped missing-letter-row recovery (X1 F-0006)",
+      "oracle": "reentry, field switch and render probes"
+    },
+    {
+      "id": "E02",
+      "owner": "ImmediateKeyTouchView/AlphabeticTouchRow",
+      "transition": "touch begin/move/end -> tap OR swipe -> one KeyboardProxy text action",
+      "cancel_retry": "touchesCancelled, resetToken, onDisappear",
+      "oracle": "tap, swipe, slide, cancelled tap, VoiceOver"
+    },
+    {
+      "id": "E03",
+      "owner": "SymbolHoldKey/ImmediateKeyTouchView",
+      "transition": "touch begin/hold/commit -> symbol or alternate",
+      "cancel_retry": "onCancelled/reset/onDisappear; sound requests duplicate on hold",
+      "oracle": "alternate hold and cancelled finger"
+    },
+    {
+      "id": "E04",
+      "owner": "SwiftUI KeyButton/KeyboardReturnKey/AIButton/TranslateToggleButton",
+      "transition": "physical Button state -> action; separate haptic on press",
+      "cancel_retry": "accepted Button vs long-press suppression",
+      "oracle": "tap/hold/VoiceOver no duplicate"
+    },
+    {
+      "id": "E05",
+      "owner": "SpaceBarKey",
+      "transition": "DragGesture -> space or cursor tracking",
+      "cancel_retry": "onEnded/onDisappear; no explicit cancellation callback",
+      "oracle": "long-drag interrupted without view disappearing"
+    },
+    {
+      "id": "E06",
+      "owner": "RepeatDeleteButton",
+      "transition": "DragGesture -> 1 delete or timed repeat Task",
+      "cancel_retry": "onEnded/onDisappear; cancellation while mounted unknown",
+      "oracle": "held delete interrupted, no additional deletion"
+    },
+    {
+      "id": "E07",
+      "owner": "KeyboardHaptics/KeyboardSensoryPulse",
+      "transition": "key event -> system click and Core/UIkit/Sensory haptic -> sampled trace",
+      "cancel_retry": "owner-scoped prepare/suspend; fallback, but nil player false success",
+      "oracle": "driver failure injection and iPhone feedback"
+    },
+    {
+      "id": "E08",
+      "owner": "NativeInputModeSwitchKey",
+      "transition": "UIKit UIButton -> Apple's handleInputModeList tap/hold picker",
+      "cancel_retry": "iOS OS owner; stale needsKey flag (F-0003)",
+      "oracle": "first Globe tap before typing, hold to select Emoji"
+    },
+    {
+      "id": "E09",
+      "owner": "Alphabetic/Standard/Extended layout",
+      "transition": "kind/page/host input traits -> layout/touch surfaces",
+      "cancel_retry": "local page reset and X1 render probe",
+      "oracle": "symbols and host trait transitions"
+    }
+  ]
 }
