@@ -6,7 +6,8 @@ extension KeyboardState {
   }
 
   var showsAIButton: Bool {
-    self.showAIButton && self.llmEnabled && self.hasUsableLLMModel
+    self.hasRecoverableLLMResult
+      || (self.showAIButton && self.llmEnabled && self.hasUsableLLMModel)
   }
 
 }
@@ -375,7 +376,8 @@ struct KeyboardBottomRow: View {
 enum KeyboardActions {
 
   static func tapLLM(state: KeyboardState, proxy: KeyboardProxy) {
-    guard !state.isDictationLocked else {
+    state.hasRecoverableLLMResult = LLMBridge.recoverableResult() != nil
+    guard !state.isDictationLocked || state.hasRecoverableLLMResult else {
       self.openUnlock(proxy: proxy)
       return
     }
@@ -383,6 +385,11 @@ enum KeyboardActions {
   }
 
   static func longPressLLM(state: KeyboardState, proxy: KeyboardProxy) {
+    state.hasRecoverableLLMResult = LLMBridge.recoverableResult() != nil
+    if state.hasRecoverableLLMResult {
+      state.showLLMActions = true
+      return
+    }
     guard !state.isDictationLocked else {
       self.openUnlock(proxy: proxy)
       return

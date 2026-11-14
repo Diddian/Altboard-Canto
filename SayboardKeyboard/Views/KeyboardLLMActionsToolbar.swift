@@ -30,6 +30,10 @@ struct KeyboardLLMActionsToolbar: View {
           self.keyboardState.showLLMActions = false
           self.proxy.requestLLMProcessing(action, customId)
         },
+        onRecoverResult: {
+          self.keyboardState.showLLMActions = false
+          self.proxy.copyRecoverableLLMResult()
+        },
         keyboardState: self.keyboardState
       )
       .frame(maxWidth: .infinity)

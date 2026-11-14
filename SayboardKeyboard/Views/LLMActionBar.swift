@@ -4,21 +4,29 @@ import SwiftUI
 struct LLMActionBar: View {
 
   let onSelectAction: (LLMAction, UUID?) -> Void
+  let onRecoverResult: () -> Void
 
   @ObservedObject var keyboardState: KeyboardState
 
   var body: some View {
     ScrollView(.horizontal, showsIndicators: false) {
       HStack(spacing: 6.kbScaled) {
-        ForEach(
-          LLMAction.enabledActions(excluding: self.keyboardState.disabledLLMActions),
-          id: \.rawValue,
-        ) { action in
-          LLMActionChip(label: action.displayNameKey, isLocalized: true) {
-            self.onSelectAction(action, nil)
+        if self.keyboardState.hasRecoverableLLMResult {
+          LLMActionChip(label: "Copy saved AI result", isLocalized: true) {
+            self.onRecoverResult()
           }
         }
-        self.customPromptChips
+        if !self.keyboardState.isDictationLocked {
+          ForEach(
+            LLMAction.enabledActions(excluding: self.keyboardState.disabledLLMActions),
+            id: \.rawValue,
+          ) { action in
+            LLMActionChip(label: action.displayNameKey, isLocalized: true) {
+              self.onSelectAction(action, nil)
+            }
+          }
+          self.customPromptChips
+        }
       }
       .padding(.horizontal, 4.kbScaled)
     }

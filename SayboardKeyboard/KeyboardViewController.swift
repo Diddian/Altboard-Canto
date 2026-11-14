@@ -25,6 +25,7 @@ final class KeyboardViewController: UIInputViewController {
   var dictationRequestToken: String?
   var dictationDocumentID: UUID?
   var llmRequestID: UUID?
+  var llmSourceDeliveryID: UUID?
   var llmDocumentIdentifier: UUID?
   var llmSelectionContextBefore: String?
   var llmSelectionContextAfter: String?
@@ -137,6 +138,7 @@ final class KeyboardViewController: UIInputViewController {
     SharedSettings().defaults.set(true, forKey: "canto.keyboardOpenedAtLeastOnce")
     SharedSettings().synchronize()
     self.keyboardState.refresh()
+    self.refreshRecoverableLLMResult()
     self.syncFullAccessIfChanged()
     self.initialStateReady = true
     if self.hostingController == nil {
@@ -582,9 +584,13 @@ final class KeyboardViewController: UIInputViewController {
     case .notApplicable:
       break
     }
-    if self.autoApplyLLMIfNeeded(directText: text) {
-      // The existing keyboard LLM bridge now owns the pending output.
-      TranscriptionBridge.acknowledgeDelivery(delivery.resultID)
+    if LLMBridge.ownsDelivery(delivery.resultID) {
+      // The original ASR outbox remains owned until the AI output or fallback
+      // is committed. A recreated keyboard must not re-run the same request.
+      FeatureDiagnostics.record(.bridge, .resumed, operationID: delivery.sessionToken)
+      return
+    }
+    if self.autoApplyLLMIfNeeded(directText: text, sourceDeliveryID: delivery.resultID) {
       FeatureDiagnostics.record(.bridge, .queued)
       return
     }
@@ -1270,6 +1276,9 @@ extension KeyboardViewController {
       },
       requestLLMClipboard: { [weak self] in
         self?.requestLLMClipboardProcessing()
+      },
+      copyRecoverableLLMResult: { [weak self] in
+        self?.copyRecoverableLLMResult()
       },
       adjustTextPosition: { [weak self] offset in
         #if !APPSTORE

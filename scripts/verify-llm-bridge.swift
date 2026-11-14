@@ -49,6 +49,7 @@ enum VerifyLLMBridge {
     let legacy = try JSONDecoder().decode(LLMRequest.self,
       from: Data(oldJSON.utf8))
     precondition(legacy.translationTarget == nil)
+    precondition(legacy.sourceDeliveryID == nil)
 
     precondition(LLMBridge.writeRequest(translation))
     precondition(LLMBridge.readRequest()?.translationTarget == "german")
@@ -73,6 +74,31 @@ enum VerifyLLMBridge {
     precondition(LLMBridge.readStatus(matching: translation.requestID)?.phase == .completed)
     precondition(!LLMBridge.writeStatus(.failed, requestID: translation.requestID))
 
+    // A recorded ASR source remains owned while the AI request is in flight.
+    // A complete result then retains that owner even after the host removes
+    // the original request, until the user explicitly recovers the result.
+    let deliveryID = UUID()
+    let linked = LLMRequest(
+      text: "test dictated source", action: .rewrite,
+      customPromptId: nil, language: "en", sourceDeliveryID: deliveryID
+    )
+    precondition(LLMBridge.writeRequest(linked))
+    precondition(LLMBridge.readRequest()?.sourceDeliveryID == deliveryID)
+    precondition(LLMBridge.ownsDelivery(deliveryID))
+    precondition(LLMBridge.writeStatus(.accepted, requestID: linked.requestID))
+    precondition(LLMBridge.writeResult("processed source", requestID: linked.requestID))
+    precondition(LLMBridge.readResultPayload(matching: linked.requestID)?.sourceDeliveryID == deliveryID)
+    precondition(LLMBridge.ownsDelivery(deliveryID))
+    // Simulate keyboard/controller destruction after host completion.
+    LLMBridge.clearRequest(matching: linked.requestID)
+    precondition(LLMBridge.readRequest() == nil)
+    precondition(LLMBridge.recoverableResult()?.requestID == linked.requestID)
+    precondition(LLMBridge.recoverableResult()?.text == "processed source")
+    precondition(!LLMBridge.writeRequest(request))
+    precondition(!LLMBridge.ownsDelivery(UUID()))
+    LLMBridge.clearResult(matching: linked.requestID)
+    precondition(LLMBridge.recoverableResult() == nil)
+    precondition(!LLMBridge.ownsDelivery(deliveryID))
     precondition(LLMBridge.writeRequest(request))
     precondition(LLMBridge.writeStatus(.cancelled, requestID: request.requestID))
     precondition(!LLMBridge.writeResult("late", requestID: request.requestID))

@@ -42,6 +42,7 @@ final class KeyboardState: ObservableObject {
   var llmHistoryDocumentIdentifier: UUID?
   var llmHistoryEpoch: UUID?
   @Published var showLLMActions = false
+  @Published var hasRecoverableLLMResult = false
   @Published var llmError: LLMError?
   @Published var dictationOutcome: DictationOutcome?
   @Published var finalOutputPreview: String?

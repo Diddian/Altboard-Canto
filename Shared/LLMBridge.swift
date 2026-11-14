@@ -14,11 +14,13 @@ struct LLMRequest: Codable, Sendable {
   let language: String?
   var translationTarget: String? = nil
   var customTranslationLanguage: String? = nil
+  var sourceDeliveryID: UUID? = nil
 }
 
 struct LLMResult: Codable, Sendable {
   let requestID: UUID
   let text: String
+  var sourceDeliveryID: UUID? = nil
 }
 
 struct LLMJobStatus: Codable, Sendable {
@@ -135,12 +137,14 @@ struct LLMBridge: Sendable {
     }
     // Serialize terminal publication with cancellation and request handoff.
     return self.withBridgeLock {
-      guard self.readRequest()?.requestID == requestID,
+      guard let request = self.readRequest(), request.requestID == requestID,
             let phase = self.readStatus(matching: requestID)?.phase,
             phase == .accepted || phase == .running,
             !self.hasResult() else { return false }
       do {
-        let payload = LLMResult(requestID: requestID, text: text)
+        let payload = LLMResult(
+          requestID: requestID, text: text, sourceDeliveryID: request.sourceDeliveryID
+        )
         try JSONEncoder().encode(payload).write(
           to: url, options: [.atomic, .completeFileProtectionUnlessOpen]
         )
@@ -158,11 +162,39 @@ struct LLMBridge: Sendable {
   }
 
   static func readResult(matching requestID: UUID?) -> String? {
-    guard let requestID, let url = resultFileURL,
-          let data = try? Data(contentsOf: url),
-          let payload = try? JSONDecoder().decode(LLMResult.self, from: data),
+    self.readResultPayload(matching: requestID)?.text
+  }
+
+  static func readResultPayload(matching requestID: UUID?) -> LLMResult? {
+    guard let requestID, let payload = self.readAnyResultPayload(),
           payload.requestID == requestID else { return nil }
-    return payload.text
+    return payload
+  }
+
+  /// A pending or completed request owns only its original dictation outbox.
+  /// This prevents retrying the same request on a recreated keyboard.
+  static func ownsDelivery(_ deliveryID: UUID) -> Bool {
+    if self.readAnyResultPayload()?.sourceDeliveryID == deliveryID { return true }
+    guard let request = self.readRequest(), request.sourceDeliveryID == deliveryID
+    else { return false }
+    return self.readStatus(matching: request.requestID)?.phase.isTerminal != true
+  }
+
+  /// A completed orphan can only be copied by explicit user action.
+  /// Never auto-paste it into a new field, and never recover active work.
+  static func recoverableResult() -> LLMResult? {
+    guard let requestURL = requestFileURL,
+          !FileManager.default.fileExists(atPath: requestURL.path),
+          let result = self.readAnyResultPayload(), !result.text.isEmpty,
+          self.readStatus(matching: result.requestID)?.phase == .completed
+    else { return nil }
+    return result
+  }
+
+  private static func readAnyResultPayload() -> LLMResult? {
+    guard let url = resultFileURL, let bytes = try? Data(contentsOf: url),
+          bytes.count <= 128 * 1_024 else { return nil }
+    return try? JSONDecoder().decode(LLMResult.self, from: bytes)
   }
 
   static func hasResult() -> Bool {

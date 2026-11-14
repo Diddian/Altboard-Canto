@@ -52,6 +52,7 @@ struct KeyboardProxy {
   let resolveHost: () -> Void
   let requestLLMProcessing: (LLMAction, UUID?) -> Void
   let requestLLMClipboard: () -> Void
+  let copyRecoverableLLMResult: () -> Void
   let adjustTextPosition: (Int) -> Void
   let moveCursorVertically: (Int) -> Void
   let resetCursorVerticalState: () -> Void

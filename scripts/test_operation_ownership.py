@@ -534,6 +534,36 @@ class OperationOwnershipTests(unittest.TestCase):
             self.assertIn(case, live)
         self.assertIn("guard before?.hasSuffix(marked) == true else { return .review }", contract)
 
+    def test_ai_handoff_and_orphan_recovery_use_single_persisted_owner(self):
+        controller = source("SayboardKeyboard/KeyboardViewController.swift")
+        actions = source("SayboardKeyboard/KeyboardViewController+LLM.swift")
+        bridge = source("Shared/LLMBridge.swift")
+        toolbar = source("SayboardKeyboard/Views/KeyboardLLMActionsToolbar.swift")
+        keyboard = source("SayboardKeyboard/Views/KeyboardView.swift")
+        menu = source("SayboardKeyboard/Views/LLMActionBar.swift")
+        verifier = source("scripts/verify-llm-bridge.swift")
+        delivered = function("SayboardKeyboard/KeyboardViewController.swift",
+                            "func insertTranscribedText()", "func pingMainAppForSessionStatus")
+        self.assertIn("LLMBridge.ownsDelivery(delivery.resultID)", delivered)
+        self.assertIn("sourceDeliveryID: delivery.resultID", delivered)
+        after_queue = delivered.split("if self.autoApplyLLMIfNeeded(", 1)[1].split(
+            "DiagnosticLog.write(\"keyboard: inserting", 1)[0]
+        self.assertNotIn("acknowledgeDelivery", after_queue)
+        self.assertIn("var sourceDeliveryID: UUID? = nil", bridge)
+        self.assertIn("sourceDeliveryID: request.sourceDeliveryID", bridge)
+        self.assertIn("static func recoverableResult()", bridge)
+        self.assertIn("self.finishLLMInsertion(acknowledgeSource: true)", actions)
+        self.assertIn("func copyRecoverableLLMResult()", actions)
+        copy = actions.split("func copyRecoverableLLMResult()", 1)[1].split(
+            "func requestLLMClipboardProcessing()", 1)[0]
+        self.assertIn("UIPasteboard.general.string = result.text", copy)
+        self.assertNotIn("textDocumentProxy.insertText", copy)
+        self.assertIn("copyRecoverableLLMResult: () -> Void", keyboard)
+        self.assertIn("onRecoverResult:", toolbar)
+        self.assertIn("Copy saved AI result", menu)
+        self.assertIn("precondition(LLMBridge.ownsDelivery(deliveryID))", verifier)
+        self.assertIn("precondition(LLMBridge.recoverableResult()?.text", verifier)
+
     def test_llm_terminal_status_outlives_keyboard_ack(self):
         bridge = source("Shared/LLMBridge.swift")
         self.assertIn("if self.readStatus(matching: requestID)?.phase.isTerminal == true", bridge)
@@ -577,7 +607,7 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("LOCK_EX | LOCK_NB", bridge)
         self.assertIn("for attempt in 0..<5", bridge)
         self.assertIn("usleep(2_000)", bridge)
-        self.assertIn("self.readRequest()?.requestID == requestID", bridge)
+        self.assertIn("guard let request = self.readRequest(), request.requestID == requestID", bridge)
         self.assertNotIn("flock(fd, LOCK_EX) == 0", bridge)
         verification = source("scripts/verify-llm-bridge.swift")
         self.assertIn("holder.waitUntilExit()", verification)
