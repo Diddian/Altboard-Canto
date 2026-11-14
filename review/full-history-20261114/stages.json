@@ -1,5 +1,5 @@
 {
-  "schema_version": "altboard-review-stages/v1",
+  "schema_version": "altboard-review-stages/v2",
   "stage_order": [
     "X0",
     "X1",
@@ -10,7 +10,13 @@
     "X6",
     "X7",
     "X8",
-    "X9"
+    "X9",
+    "X10",
+    "X11",
+    "X12",
+    "X13",
+    "X14",
+    "X15"
   ],
   "stages": [
     {
@@ -268,34 +274,180 @@
     },
     {
       "id": "X9",
-      "name": "Independent source reconciliation, release evidence and temporary review cleanup",
-      "goal": "Re-review X8 changes, verify every stage and artifact, get user-required iPhone evidence before acceptance, and delete temporary review folder only once blockers close.",
+      "name": "Core runtime and shared ownership",
+      "goal": "Inspect every unreviewed non-UI production Swift/ObjC file; trace owning state, callers, recovery, security and tests",
+      "planned_files": 65,
       "firstRead": [
-        "review/full-history-20261114/manifest.json",
-        "review/full-history-20261114/stages.json",
+        "review/full-history-20261114/review-queue.json",
         "review/full-history-20261114/coverage.json",
         "review/full-history-20261114/findings.json",
-        "review/full-history-20261114/acceptance.json",
-        "review/full-history-20261114/cleanup.json"
+        "review/full-history-20261114/stages/X9.json"
       ],
       "focus": [
-        "Independent fresh-context OCR-style and Untangle verification of repaired diffs; never self-certify independent agent",
-        "Verify matching source SHA/CI/artifact and App Group; preserve last usable IPA",
-        "Verify no critical/high unresolved issue and all mandatory >=90 acceptance cases (including human iPhone tests)",
-        "Present final in Chat; after gate success remove review folder from temp branch in ONE tree update and verify; branch deletion if supported",
-        "No cleanup if evidence needed to diagnose unresolved blocker"
+        "Inspect every unreviewed non-UI production Swift/ObjC file; trace owning state, callers, recovery, security and tests",
+        "Use two independent lenses: Untangle canonical state owner; manual OCR-style correctness and failure review",
+        "Mark reviewed/reviewed_limited/blocked with pinned SHA, exact code/asset evidence and test oracle; do not equate queued with reviewed",
+        "Deduplicate findings before allocating new IDs; never expose user text/audio/credentials"
       ],
       "outputs": [
-        "stages/X9.json",
-        "cleanup.json",
-        "temporary branch reviewed deletion commit"
+        "review-queue.json",
+        "coverage.json",
+        "findings.json",
+        "stages/X9.json"
       ],
-      "stop": "Review repository folder absent and cleanup confirmed, or explicit BLOCKED with retained evidence",
-      "estimatedTokens": "12k-22k",
-      "readRefs": {
-        "review_only": "review/full-history-20261114: review/full-history-20261114/",
-        "source_code": "main at verified SHA"
-      }
+      "stop": "All 65 assigned files have an evidence-based disposition and no P0 risk is silently skipped; unresolved runtime/device checks remain explicitly not_run",
+      "code_edits": "none; X8 owns main changes"
+    },
+    {
+      "id": "X10",
+      "name": "Keyboard and app UI/accessibility",
+      "goal": "Inspect every unreviewed Swift view; distinguish UIKit/SwiftUI events, native Globe, iOS accessibility, focus and long-press handling",
+      "planned_files": 77,
+      "firstRead": [
+        "review/full-history-20261114/review-queue.json",
+        "review/full-history-20261114/coverage.json",
+        "review/full-history-20261114/findings.json",
+        "review/full-history-20261114/stages/X10.json"
+      ],
+      "focus": [
+        "Inspect every unreviewed Swift view; distinguish UIKit/SwiftUI events, native Globe, iOS accessibility, focus and long-press handling",
+        "Use two independent lenses: Untangle canonical state owner; manual OCR-style correctness and failure review",
+        "Mark reviewed/reviewed_limited/blocked with pinned SHA, exact code/asset evidence and test oracle; do not equate queued with reviewed",
+        "Deduplicate findings before allocating new IDs; never expose user text/audio/credentials"
+      ],
+      "outputs": [
+        "review-queue.json",
+        "coverage.json",
+        "findings.json",
+        "stages/X10.json"
+      ],
+      "stop": "All 77 assigned files have an evidence-based disposition and no P0 risk is silently skipped; unresolved runtime/device checks remain explicitly not_run",
+      "code_edits": "none; X8 owns main changes"
+    },
+    {
+      "id": "X11",
+      "name": "Tests, build scripts and configuration",
+      "goal": "Inspect test target, native @Test execution, Python/Swift verifiers, entitlement and build scripts; reconcile F-0001/F-0039",
+      "planned_files": 104,
+      "firstRead": [
+        "review/full-history-20261114/review-queue.json",
+        "review/full-history-20261114/coverage.json",
+        "review/full-history-20261114/findings.json",
+        "review/full-history-20261114/stages/X11.json"
+      ],
+      "focus": [
+        "Inspect test target, native @Test execution, Python/Swift verifiers, entitlement and build scripts; reconcile F-0001/F-0039",
+        "Use two independent lenses: Untangle canonical state owner; manual OCR-style correctness and failure review",
+        "Mark reviewed/reviewed_limited/blocked with pinned SHA, exact code/asset evidence and test oracle; do not equate queued with reviewed",
+        "Deduplicate findings before allocating new IDs; never expose user text/audio/credentials"
+      ],
+      "outputs": [
+        "review-queue.json",
+        "coverage.json",
+        "findings.json",
+        "stages/X11.json"
+      ],
+      "stop": "All 104 assigned files have an evidence-based disposition and no P0 risk is silently skipped; unresolved runtime/device checks remain explicitly not_run",
+      "code_edits": "none; X8 owns main changes"
+    },
+    {
+      "id": "X12",
+      "name": "Previously excluded documents, media and assets",
+      "goal": "Reopen all 166 exclusions with type-appropriate inspection; 90 tutorial MP4 files require provenance/metadata and visual evidence where possible",
+      "planned_files": 166,
+      "firstRead": [
+        "review/full-history-20261114/review-queue.json",
+        "review/full-history-20261114/coverage.json",
+        "review/full-history-20261114/findings.json",
+        "review/full-history-20261114/stages/X12.json"
+      ],
+      "focus": [
+        "Reopen all 166 exclusions with type-appropriate inspection; 90 tutorial MP4 files require provenance/metadata and visual evidence where possible",
+        "Use two independent lenses: Untangle canonical state owner; manual OCR-style correctness and failure review",
+        "Mark reviewed/reviewed_limited/blocked with pinned SHA, exact code/asset evidence and test oracle; do not equate queued with reviewed",
+        "Deduplicate findings before allocating new IDs; never expose user text/audio/credentials"
+      ],
+      "outputs": [
+        "review-queue.json",
+        "coverage.json",
+        "findings.json",
+        "stages/X12.json"
+      ],
+      "stop": "All 166 assigned files have an evidence-based disposition and no P0 risk is silently skipped; unresolved runtime/device checks remain explicitly not_run",
+      "code_edits": "none; X8 owns main changes"
+    },
+    {
+      "id": "X13",
+      "name": "Historical-only source and change gaps",
+      "goal": "Inspect all 14 removed/renamed paths at historical SHAs; trace changes and transient files skipped by endpoint compare windows",
+      "planned_files": 14,
+      "firstRead": [
+        "review/full-history-20261114/review-queue.json",
+        "review/full-history-20261114/coverage.json",
+        "review/full-history-20261114/findings.json",
+        "review/full-history-20261114/stages/X13.json"
+      ],
+      "focus": [
+        "Inspect all 14 removed/renamed paths at historical SHAs; trace changes and transient files skipped by endpoint compare windows",
+        "Use two independent lenses: Untangle canonical state owner; manual OCR-style correctness and failure review",
+        "Mark reviewed/reviewed_limited/blocked with pinned SHA, exact code/asset evidence and test oracle; do not equate queued with reviewed",
+        "Deduplicate findings before allocating new IDs; never expose user text/audio/credentials"
+      ],
+      "outputs": [
+        "review-queue.json",
+        "coverage.json",
+        "findings.json",
+        "stages/X13.json"
+      ],
+      "stop": "All 14 assigned files have an evidence-based disposition and no P0 risk is silently skipped; unresolved runtime/device checks remain explicitly not_run",
+      "code_edits": "none; X8 owns main changes"
+    },
+    {
+      "id": "X14",
+      "name": "Independent reconciliation, acceptance and device evidence",
+      "goal": "Reconcile X0-X13 including live main source drift, all verified findings, CI tests, iPhone evidence and mandatory per-task >=90% acceptance",
+      "firstRead": [
+        "review/full-history-20261114/acceptance.json",
+        "review/full-history-20261114/review-queue.json",
+        "review/full-history-20261114/coverage.json",
+        "review/full-history-20261114/findings.json"
+      ],
+      "focus": [
+        "No hidden unreviewed/excluded sources, no silent high-severity bypass",
+        "Independent fresh-context manual review; external Alibaba OCR CLI not run unless expressly approved",
+        "Physical iPhone and app/keyboard App Group interaction evidence cannot come from CI",
+        "Do not declare Release Candidate without explicit user approval"
+      ],
+      "outputs": [
+        "coverage.json",
+        "findings.json",
+        "acceptance.json",
+        "stages/X14.json"
+      ],
+      "stop": "All X8-X13 review/acceptance gates met, or explicit block with preserved evidence and no promotion",
+      "code_edits": "none"
+    },
+    {
+      "id": "X15",
+      "name": "Durable archive and explicitly approved cleanup",
+      "goal": "Preserve a concise technical audit summary in an approved stable GitHub location before considering removal of temporary review evidence",
+      "firstRead": [
+        "review/full-history-20261114/cleanup.json",
+        "review/full-history-20261114/manifest.json"
+      ],
+      "focus": [
+        "Verify all acceptance and review gates",
+        "Preserve user data confidentiality and prior accepted IPA",
+        "Obtain explicit user authorization before deleting review files or branch",
+        "Remember Git deletion does not erase prior commit blobs"
+      ],
+      "outputs": [
+        "cleanup.json",
+        "stages/X15.json"
+      ],
+      "stop": "User-approved archival/retention and, only when authorized, verified cleanup. Otherwise remain blocked with evidence retained.",
+      "code_edits": "no production changes"
     }
-  ]
+  ],
+  "continuation_policy": "X9-X13 may progress sequentially as READ-ONLY source reviews while X8 functional/iPhone acceptance remains open. X14 requires all; X15 requires explicit cleanup approval."
 }

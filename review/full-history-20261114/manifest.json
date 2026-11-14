@@ -1,5 +1,5 @@
 {
-  "schema_version": "altboard-full-history-review/v1",
+  "schema_version": "altboard-full-history-review/v2",
   "repository": "Diddian/Altboard-Canto",
   "review_branch": "review/full-history-20261114",
   "review_root": "review/full-history-20261114",
@@ -8,14 +8,15 @@
     "main_at_bootstrap": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
     "earliest_workflow_build": 1,
     "earliest_build_sha": "d083c9aeaeba6b6d85b1c17b7c5f6627a85380eb",
-    "latest_workflow_build": 232,
-    "latest_build_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+    "latest_workflow_build": 236,
+    "latest_build_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
     "main_device_acceptance": "not_verified",
-    "branch_policy": "sequential reviewers; one writer; no PR, force push, or merges"
+    "branch_policy": "sequential reviewers; one writer; no PR, force push, or merges",
+    "latest_workflow_run_id": 43629599094
   },
   "lifecycle": {
-    "phase": "X8_in_progress",
-    "next_stage": "X8",
+    "phase": "X8_in_progress_X9_queued_review",
+    "next_stage": "X9",
     "statuses": {
       "X0": "complete",
       "X1": "complete",
@@ -26,7 +27,13 @@
       "X6": "complete",
       "X7": "complete",
       "X8": "in_progress",
-      "X9": "blocked"
+      "X9": "ready",
+      "X10": "blocked",
+      "X11": "blocked",
+      "X12": "blocked",
+      "X13": "blocked",
+      "X14": "blocked",
+      "X15": "blocked"
     },
     "independent_reviewer_executed": false,
     "ocr_cli_executed": false,
@@ -40,21 +47,23 @@
     "acceptance": "acceptance.json",
     "cleanup": "cleanup.json",
     "diagrams": "diagrams/",
-    "per_stage": "stages/Xn.json"
+    "per_stage": "stages/Xn.json",
+    "review_queue": "review-queue.json",
+    "review_plan": "REVIEW_COMPLETENESS_PLAN.md"
   },
   "rules": {
-    "stage_sequence": "X0 through X9 strictly; do not begin next until current stage complete",
+    "stage_sequence": "X0-X7 complete as historical source audits; X8 repairs/acceptance still in progress. X9-X13 sequential read-only full-file review permitted while X8 awaits device tests. X14 blocked until all gates; X15 cleanup only after explicit approval.",
     "stage_completion": "Write evidence and precise review coverage; commit stage JSON + canonical ledgers + diagrams in one atomic change; set stage status complete ONLY when gate met",
     "main_drift": "Recheck main HEAD before each worker. If newer, record difference, reconcile referenced files, do not silently review stale code",
     "review_writes": "All temporary review-only files on review branch; no test IPA from review-only commits",
     "code_writes": "Only X8 repairs may change main after explicit case matrix, review, tests and HEAD check; never add review files to main",
-    "file_review": "Account for every in-scope file with reviewed/excluded/not_reviewed and evidence; no assumed completion",
+    "file_review": "Every queued current/excluded/historical path must receive reviewed, reviewed_limited or blocked with actual inspected source/media evidence and test oracle; queueing is never a pass.",
     "ocr": "Manual OCR-style through GitHub in Chat; CLI not run unless separately installed and authorized. Never invoke paid or external OCR model by default",
     "untangle": "Canonical owners, hidden links, needless links, surplus code, special-case gates and cross-domain recovery",
     "acceptance": "Per implemented task >=90% measured pass weights AND all mandatory/critical cases; not_run earns zero; device not inferred from CI",
     "privacy": "Public repo. No private Project Sources, typing, transcripts, audio, user text, secrets or host identifiers in review files",
     "budget": "One stage per Chat. Fetch narrow slices; checkpoint current stage on limits and resume SAME stage later; never skip evidence",
-    "cleanup": "At X9 after accepted results, delete temporary review folder from review branch with Git tree sha:null entries; if branch ref deletion unavailable, disclose it; Git history cannot guarantee erasure"
+    "cleanup": "Only X15 after completed acceptance, durable archive and explicit user approval. No automatic deletion of review records."
   },
-  "scope": "Historical Build #1 to latest verified main, including removed code and all current feature groups; avoid last-build-only review"
+  "scope": "Build #1 through Build #236; 578 current tracked files, 14 historical-only; 426 queued from X0-X7 gaps across X9-X13. No physical iPhone test inferred."
 }
