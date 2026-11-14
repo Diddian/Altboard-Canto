@@ -30,20 +30,20 @@ struct SpeechModelRecommendationTests {
 
   @Test
   func `Cantonese recommends full size Qwen3 on capable devices`() {
-    #expect(Self.recommend(["yue"]) == .qwen3ASR17B)
-    #expect(Self.recommend(["yue", "en"]) == .qwen3ASR17B)
+    #expect(Self.recommend(["yue"]) == .qwen3ASR17BCantoneseHK)
+    #expect(Self.recommend(["yue", "en"]) == .qwen3ASR17BCantoneseHK)
     #expect(Self.recommend(["yue", "en", "de"]) == .qwen3ASR17B)
   }
 
   @Test
   func `Cantonese offers Qwen 0 point 6 when full size is unsupported`() {
-    #expect(Self.recommend(["yue", "en"]) { $0 != .qwen3ASR17B } == .qwen3ASR06B)
+    #expect(Self.recommend(["yue", "en"]) { $0 != .qwen3ASR17BCantoneseHK && $0 != .qwen3ASR17B } == .qwen3ASR06B)
   }
 
   @Test
   func `WSYue remains fallback for Cantonese and English`() {
     #expect(Self.recommend(["yue", "en"]) {
-      $0 != .qwen3ASR17B && $0 != .qwen3ASR06B
+      $0 != .qwen3ASR17BCantoneseHK && $0 != .qwen3ASR17B && $0 != .qwen3ASR06B
     } == .senseVoiceSmall)
   }
 

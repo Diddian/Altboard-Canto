@@ -19,6 +19,7 @@ struct ModelVariantRankingTests {
       .whisperTurbo,
       .moonshineSmallStreaming,
       .qwen3ASR06B,
+      .qwen3ASR17BCantoneseHK,
       .qwen3ASR17B,
       .moonshineBase,
       .senseVoiceSmall,

@@ -19,10 +19,9 @@ enum SpeechModelRecommendation {
   ) -> ModelVariant {
     let wanted = self.wanted(languages)
     if wanted.contains("yue") {
-      // Cantonese first uses the full-size, already-supported Qwen3 ONNX.
-      // Keep the HK-tuned GGUF out of this path until its audio backend exists.
-      // Do not lower the model size merely because an iPhone is the device.
-      for candidate in [ModelVariant.qwen3ASR17B, .qwen3ASR06B, .senseVoiceSmall] {
+      // The Hong Kong fine-tune handles Cantonese and English. Prefer the
+      // original multilingual Qwen when any selected language is unsupported.
+      for candidate in [ModelVariant.qwen3ASR17BCantoneseHK, .qwen3ASR17B, .qwen3ASR06B, .senseVoiceSmall] {
         if wanted.isSubset(of: candidate.supportedLanguages), isSupported(candidate) {
           return candidate
         }

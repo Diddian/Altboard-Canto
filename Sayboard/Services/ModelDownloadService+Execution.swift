@@ -36,6 +36,13 @@ extension ModelDownloadService {
                   !Task.isCancelled else { return }
             self.variantStates[variant] = .downloading(progress: min(fraction * 0.95, 0.95))
           }
+        } else if variant == .qwen3ASR17BCantoneseHK {
+          try await HKCantoneseGGUFDownloader.download { [weak self] fraction in
+            guard let self, self.enqueueGenerations[variant] == generation,
+                  !Task.isCancelled else { return }
+            guard case .downloading = self.state(for: variant) else { return }
+            self.variantStates[variant] = .downloading(progress: min(fraction * 0.95, 0.95))
+          }
         } else {
           try await QwenHubDownloader.download(variant: variant) { [weak self] fraction in
             guard let self, self.enqueueGenerations[variant] == generation,

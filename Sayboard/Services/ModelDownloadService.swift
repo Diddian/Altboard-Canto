@@ -75,6 +75,9 @@ final class ModelDownloadService: ObservableObject {
     guard ModelStorageManager.isDownloaded(variant) else { return nil }
 
     let fm = FileManager.default
+    if variant == .qwen3ASR17BCantoneseHK {
+      return HKCantoneseGGUFModelBundle.locate(in: dir)
+    }
     if variant.engine == .qwen3 {
       return Qwen3ModelBundle.locate(in: dir)
     }

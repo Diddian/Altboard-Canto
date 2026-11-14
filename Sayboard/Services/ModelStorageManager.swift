@@ -20,7 +20,9 @@ enum ModelStorageManager {
     case .moonshine:
       return self.containsONNXModel(at: dir)
     case .qwen3:
-      return Qwen3ModelBundle.isValid(directory: dir)
+      return variant == .qwen3ASR17BCantoneseHK
+        ? HKCantoneseGGUFModelBundle.locate(in: dir) != nil
+        : Qwen3ModelBundle.isValid(directory: dir)
     case .senseVoice:
       return SenseVoiceModelBundle.isValid(directory: dir)
     }

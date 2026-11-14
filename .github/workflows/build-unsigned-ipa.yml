@@ -106,7 +106,7 @@ jobs:
       - name: Verify Cantonese speech-model recommendations
         run: |
           set -euo pipefail
-          swiftc -swift-version 6 -o "$RUNNER_TEMP/speech-recommendation-smoke" \
+          swiftc -swift-version 6 -parse-as-library -o "$RUNNER_TEMP/speech-recommendation-smoke" \
             Shared/OperatingSystem.swift Shared/LlamaRuntime.swift \
             Shared/SpeechLanguages.swift Shared/ModelVariant.swift \
             Shared/SpeechModelRecommendation.swift scripts/verify-speech-recommendation.swift

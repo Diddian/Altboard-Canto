@@ -32,6 +32,7 @@ final class SpeechRecognitionService: ObservableObject {
   let parakeetService = ParakeetTranscriptionService()
   let moonshineService = MoonshineTranscriptionService()
   let qwen3Service = Qwen3TranscriptionService()
+  let qwenHKService = HKCantoneseGGUFTranscriptionService()
   let senseVoiceService = SenseVoiceTranscriptionService()
   weak var downloadService: ModelDownloadService?
   weak var llmCoordinator: LLMProcessingCoordinator?
@@ -76,7 +77,9 @@ final class SpeechRecognitionService: ObservableObject {
     case .whisperKit: self.whisperService.loadState
     case .parakeet: self.parakeetService.loadState
     case .moonshine: self.moonshineService.loadState
-    case .qwen3: self.qwen3Service.loadState
+    case .qwen3:
+      self.settings.selectedVariant == .qwen3ASR17BCantoneseHK
+        ? self.qwenHKService.loadState : self.qwen3Service.loadState
     case .senseVoice: self.senseVoiceService.loadState
     }
   }
@@ -254,6 +257,11 @@ final class SpeechRecognitionService: ObservableObject {
     if self.parakeetService.loadState == .loaded { await self.parakeetService.unloadModel() }
     if self.moonshineService.loadState == .loaded { self.moonshineService.unloadModel() }
     if self.senseVoiceService.loadState == .loaded { self.senseVoiceService.unloadModel() }
+    if self.settings.selectedVariant == .qwen3ASR17BCantoneseHK {
+      if self.qwen3Service.loadState == .loaded { self.qwen3Service.unloadModel() }
+    } else if self.qwenHKService.loadState == .loaded {
+      self.qwenHKService.unloadModel()
+    }
   }
 
   func stopRecording() async {
@@ -453,6 +461,9 @@ final class SpeechRecognitionService: ObservableObject {
     case .moonshine:
       return await self.moonshineService.transcribe(audioSamples: samples)
     case .qwen3:
+      if self.settings.selectedVariant == .qwen3ASR17BCantoneseHK {
+        return await self.qwenHKService.transcribe(audioSamples: samples)
+      }
       return await self.qwen3Service.transcribe(audioSamples: samples)
     case .senseVoice:
       return await self.senseVoiceService.transcribe(audioSamples: samples)
@@ -563,7 +574,11 @@ final class SpeechRecognitionService: ObservableObject {
     case .moonshine:
       await self.moonshineService.waitForLoad()
     case .qwen3:
-      await self.qwen3Service.waitForLoad()
+      if self.settings.selectedVariant == .qwen3ASR17BCantoneseHK {
+        await self.qwenHKService.waitForLoad()
+      } else {
+        await self.qwen3Service.waitForLoad()
+      }
     case .senseVoice:
       await self.senseVoiceService.waitForLoad()
     }
@@ -582,6 +597,7 @@ final class SpeechRecognitionService: ObservableObject {
     await self.parakeetService.unloadModel()
     self.moonshineService.unloadModel()
     self.qwen3Service.unloadModel()
+    self.qwenHKService.unloadModel()
     self.senseVoiceService.unloadModel()
   }
 
@@ -758,6 +774,10 @@ extension SpeechRecognitionService: ModelLoading {
       return self.parakeetService.loadState == .loaded
 
     case .qwen3:
+      if variant == .qwen3ASR17BCantoneseHK {
+        await self.qwenHKService.loadModel(from: url)
+        return self.qwenHKService.loadState == .loaded
+      }
       await self.qwen3Service.loadModel(from: url)
       return self.qwen3Service.loadState == .loaded
     case .senseVoice:
