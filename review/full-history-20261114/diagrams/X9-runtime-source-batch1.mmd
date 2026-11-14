@@ -8,3 +8,7 @@ flowchart LR
   O --> V["SenseVoiceModelBundle.locate"]
   P --> V
   V --> S["SenseVoiceTranscriptionService"]
+
+  CORD["LLMProcessingCoordinator: request and deadline"] --> INFER["LLMInferenceService: detached native inference"]
+  INFER --> PIECE["piece(): 64-byte buffer"]
+  PIECE -->|"negative capacity -> nil: F-0042"| OUTPUT["Incomplete UTF-8 output"]

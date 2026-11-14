@@ -1,7 +1,7 @@
 {
   "schema_version": "untangle-ocr-findings/v1",
   "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
-  "status": "41 deduplicated findings; Build #236 CI success, X8 mandatory/native/iPhone acceptance outstanding; X9 partial audit ongoing",
+  "status": "42 deduplicated findings; X9 source review remains in_progress; native/iPhone test gates not_run",
   "findings": [
     {
       "id": "F-0001",
@@ -1957,6 +1957,54 @@
         "Static @MainActor call and synchronous I/O verified at c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b; latency/memory/physical iPhone not_run."
       ],
       "origin": "X9/manual-GitHub-source",
+      "assigned_stage": "X8"
+    },
+    {
+      "id": "F-0042",
+      "severity": "medium",
+      "state": "confirmed",
+      "area": "llm_output_integrity",
+      "review_priority": "P1",
+      "first_detected_build": null,
+      "last_affected_build": 236,
+      "paths": [
+        "Sayboard/Services/LLMInferenceService.swift",
+        "Sayboard/Services/LLMProcessingCoordinator.swift",
+        "Shared/LlamaRuntime.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Sayboard/Services/LLMInferenceService.swift",
+          "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+          "lines": "205-208,381-383,395-411",
+          "observation": "pieceBufferSize is fixed to 64, token_to_piece is called once; any result <=0 returns nil; generateTokens omits this token's bytes and continues."
+        },
+        {
+          "path": "Shared/LlamaRuntime.swift",
+          "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+          "lines": "1-5",
+          "observation": "Pinned llama.cpp XCFramework runtime b10333."
+        },
+        {
+          "source": "https://github.com/ggml-org/llama.cpp/blob/b10333/src/llama-vocab.cpp#L3553",
+          "observation": "Pinned llama vocab implementation returns negative required size when caller buffer is too small."
+        },
+        {
+          "path": "Sayboard/Services/LLMProcessingCoordinator.swift",
+          "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+          "lines": "490-503",
+          "observation": "Coordinator invokes inference service and returns its output to bridge; no reconstruction of skipped token bytes."
+        }
+      ],
+      "scenario": "Generated token has a rendered piece of more than 64 UTF-8 bytes (for example, a long user-defined piece).",
+      "causal_chain": "Pinned llama_token_to_piece reports negative required capacity -> LLMInferenceService.piece returns nil -> generator silently omits token bytes -> returned answer is incomplete. Occurrence rate on real models is unknown.",
+      "root_owner": "LLMInferenceService.piece",
+      "smallest_repair": "Retry token-to-piece with exactly the returned required capacity under a safe bounded allocation; distinguish invalid tokens from buffer-too-small, and test UTF-8 fragment boundaries.",
+      "regression_oracle": "Use pinned llama library fixture with token piece 65+ bytes; decode must preserve exact bytes, including multi-byte UTF-8 sequences, without skipping or unbounded allocation.",
+      "verification": [
+        "Static branch behavior verified at c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b and pinned upstream llama.cpp b10333 source; no actual GGUF fixture, native runtime or iPhone test executed."
+      ],
+      "origin": "X9/manual-GitHub-pinned-backend",
       "assigned_stage": "X8"
     }
   ],

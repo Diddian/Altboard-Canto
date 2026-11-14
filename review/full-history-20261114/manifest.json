@@ -39,14 +39,15 @@
     "ocr_cli_executed": false,
     "project_sources_published": false,
     "x9_progress": {
-      "reviewed": 9,
+      "reviewed": 10,
       "reviewed_limited": 3,
-      "pending": 53,
+      "pending": 52,
       "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
       "checkpoint_date": "2026-11-14",
       "new_findings": [
         "F-0040",
-        "F-0041"
+        "F-0041",
+        "F-0042"
       ],
       "runtime_tests": "not_run"
     }

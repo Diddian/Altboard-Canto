@@ -2197,10 +2197,21 @@
       "stage": "X9",
       "provisional_priority": "P0",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
-      "findings": [],
-      "evidence": [],
+      "review_status": "reviewed",
+      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "findings": [
+        "F-0042"
+      ],
+      "evidence": [
+        {
+          "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+          "blob_sha": "8d9a72aa26d49e17876e24ba4142417752e82681",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Full 494-line native llama inference owner inspected. LLMProcessingCoordinator.swift lines 300-349, 443-452, 481-503 owns request, native model lifetime, cancellation/deadline; LLMGenerationBudgetTests.swift lines 5-38 explicitly fix 512-token single-batch admission (a tested policy, not silently categorized as a defect). runInference collects UTF-8 bytes, but piece() lines 406-412 drops token_to_piece negative length for pieces >64 bytes. Pinned llama.cpp b10333 implementation line 3553 returns -needed_length. F-0042.",
+          "negative_oracle": "Synthetic/fixture GGUF token piece >64 bytes must appear intact in generated UTF-8. Canceled native generation must finish before model/context free. Native model test and iPhone not_run.",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -6527,14 +6538,14 @@
     }
   ],
   "review_progress": {
-    "reviewed": 9,
-    "pending": 414,
+    "reviewed": 10,
+    "pending": 413,
     "blocked": 0,
     "limited": 3,
     "by_stage": {
       "X9": {
-        "reviewed": 9,
-        "pending": 53,
+        "reviewed": 10,
+        "pending": 52,
         "limited": 3
       },
       "X10": {

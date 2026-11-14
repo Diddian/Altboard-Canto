@@ -1270,7 +1270,10 @@
       "path": "Sayboard/Services/LLMInferenceService.swift",
       "sha": "8d9a72aa26d49e17876e24ba4142417752e82681",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X9",
+      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Services/LLMModelStorageManager.swift",
@@ -11122,9 +11125,9 @@
       "status": "in_progress",
       "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
       "planned_paths": 65,
-      "reviewed_new": 9,
+      "reviewed_new": 10,
       "queue_path": "review/full-history-20261114/review-queue.json",
-      "pending": 53,
+      "pending": 52,
       "reviewed_limited": 3
     },
     "X10": {
@@ -11167,9 +11170,9 @@
   "counts": {
     "current_total": 578,
     "historical_only": 14,
-    "reviewed": 175,
+    "reviewed": 176,
     "excluded": 166,
-    "not_reviewed": 248,
+    "not_reviewed": 247,
     "known_changed_path_occurrences": 983,
     "known_unique_changed_paths": 336,
     "reviewed_limited": 3
@@ -11184,8 +11187,8 @@
     "conclusion": "success",
     "physical_iphone": "not_run",
     "tracked_files": 578,
-    "reviewed_source": 175,
-    "queued_unreviewed_current": 234,
+    "reviewed_source": 176,
+    "queued_unreviewed_current": 233,
     "queued_previously_excluded_current": 166,
     "queued_historical_only": 14,
     "queue_path": "review/full-history-20261114/review-queue.json",
