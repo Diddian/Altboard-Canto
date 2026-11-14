@@ -7,9 +7,9 @@
     "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
     "review_branch": "review/full-history-20261114"
   },
-  "status": "X0-X7 source coverage snapshot plus X8 changed-file manual review; TEST IPA Build #233 pending",
-  "expected_current_tracked_files_observed": 577,
-  "current_tracked_files": 577,
+  "status": "X0-X7 historical baseline reconciled to X8 Build #236; X9-X13 inventory of 426 queued gaps; executable/device acceptance still incomplete",
+  "expected_current_tracked_files_observed": 578,
+  "current_tracked_files": 578,
   "initial_tracked_files": 356,
   "files": [
     {
@@ -4371,6 +4371,15 @@
           "previous_path": null
         }
       ]
+    },
+    {
+      "path": "SayboardTests/LiveInsertionReceiptTests.swift",
+      "sha": "95cfa887398f85165536372a0d6ad020886f3f27",
+      "tracking": "current",
+      "review": "reviewed",
+      "review_stage": "X8",
+      "latest_reviewed_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "review_note": "33-line Swift Testing fixture read at Build #236. Test code reviewed; its @Test methods are NOT executed by the existing IPA workflow."
     }
   ],
   "historical_changes": [
@@ -11018,7 +11027,7 @@
       ]
     },
     "X8": {
-      "status": "12_changed_paths_manual_diff_reviewed; tests/device_pending",
+      "status": "31_changed_or_added_file_diff_accounting; Build 236 compiled; mandatory device/tests not_run",
       "candidate_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
       "baseline_source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
       "changed_paths": [
@@ -11071,17 +11080,75 @@
       },
       "build_234": "success at e396d72f5f93ff572f8479cf28b4a728c4eff49c",
       "build_235": "success at 9433d29e",
-      "build_236": "preflights passed, full build pending at c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b"
+      "build_236": "success at c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b; test IPA uploaded; native SayboardTests NOT executed"
+    },
+    "X9": {
+      "status": "ready_to_review",
+      "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "planned_paths": 65,
+      "reviewed_new": 0,
+      "queue_path": "review/full-history-20261114/review-queue.json"
+    },
+    "X10": {
+      "status": "queued_blocked_until_predecessor",
+      "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "planned_paths": 77,
+      "reviewed_new": 0,
+      "queue_path": "review/full-history-20261114/review-queue.json"
+    },
+    "X11": {
+      "status": "queued_blocked_until_predecessor",
+      "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "planned_paths": 104,
+      "reviewed_new": 0,
+      "queue_path": "review/full-history-20261114/review-queue.json"
+    },
+    "X12": {
+      "status": "queued_blocked_until_predecessor",
+      "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "planned_paths": 166,
+      "reviewed_new": 0,
+      "queue_path": "review/full-history-20261114/review-queue.json"
+    },
+    "X13": {
+      "status": "queued_blocked_until_predecessor",
+      "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "planned_paths": 14,
+      "reviewed_new": 0,
+      "queue_path": "review/full-history-20261114/review-queue.json"
+    },
+    "X14": {
+      "status": "blocked",
+      "reason": "X8 acceptance and X9-X13 source reviews unverified"
+    },
+    "X15": {
+      "status": "blocked",
+      "reason": "User approval for cleanup not granted"
     }
   },
   "counts": {
-    "current_total": 577,
+    "current_total": 578,
     "historical_only": 14,
-    "reviewed": 165,
+    "reviewed": 166,
     "excluded": 166,
     "not_reviewed": 260,
     "known_changed_path_occurrences": 983,
     "known_unique_changed_paths": 336
   },
-  "rule": "Every current tracked blob and known historical-only path listed. Reviewed requires a full file read and exact source locator. Later stages X1-X7 own deep source/diff review. Window endpoint diffs do not capture transient path histories inside a window."
+  "rule": "A file is reviewed only after whole-file read and material caller/consumer + exact source SHA and test oracle. Queued/excluded paths are not cleared without type-appropriate evidence; historic source requires a genuine old commit. Binary content not inspected must be explicitly reviewed_limited or blocked.",
+  "current_snapshot": {
+    "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+    "build": 236,
+    "artifact_name": "Altboard-Canto-TEST.ipa",
+    "artifact_id": 14127992826,
+    "artifact_size_bytes": 80455514,
+    "conclusion": "success",
+    "physical_iphone": "not_run",
+    "tracked_files": 578,
+    "reviewed_source": 166,
+    "queued_unreviewed_current": 246,
+    "queued_previously_excluded_current": 166,
+    "queued_historical_only": 14,
+    "queue_path": "review/full-history-20261114/review-queue.json"
+  }
 }
