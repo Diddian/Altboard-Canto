@@ -536,5 +536,11 @@
     "mode": "GitHub manual OCR-style",
     "ocr_cli": "NOT RUN"
   },
-  "calculation": "sum of passed evidence-backed weights of 100 total per task; blocked/failed/not_run = 0; also every mandatory passes."
+  "calculation": "sum of passed evidence-backed weights of 100 total per task; blocked/failed/not_run = 0; also every mandatory passes.",
+  "source_verification": {
+    "source_sha": "e396d72f5f93ff572f8479cf28b4a728c4eff49c",
+    "build_233": "failed_no_IPA: obsolete verifier compilation",
+    "build_234": "preflights_passed; Xcode compile in_progress",
+    "no_device_evidence": true
+  }
 }

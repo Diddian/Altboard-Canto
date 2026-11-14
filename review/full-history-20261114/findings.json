@@ -811,9 +811,9 @@
         "Confirmed policy cannot distinguish two fields sharing a host-process marker; no physical iPhone foreign-field insertion observed."
       ],
       "x8_candidate": {
-        "main_sha": "0ab1269138a731418a9701c69f2dcca8286e5f01",
-        "phase": "source_patched_not_device_verified",
-        "build_run": 233,
+        "main_sha": "e396d72f5f93ff572f8479cf28b4a728c4eff49c",
+        "phase": "source_patched_test_IPA_building",
+        "build_run": 234,
         "review_scope": "X8 bounded batch",
         "approval": "pending"
       }
@@ -905,9 +905,9 @@
         "Confirmed source-level unauthorized cross-document mutation path under matching text; iPhone UI test not run."
       ],
       "x8_candidate": {
-        "main_sha": "0ab1269138a731418a9701c69f2dcca8286e5f01",
-        "phase": "source_patched_not_device_verified",
-        "build_run": 233,
+        "main_sha": "e396d72f5f93ff572f8479cf28b4a728c4eff49c",
+        "phase": "source_patched_test_IPA_building",
+        "build_run": 234,
         "review_scope": "X8 bounded batch",
         "approval": "pending"
       }
@@ -1213,9 +1213,9 @@
         "Same LegacyModelMigration blob observed at Builds #84, #136, #193, #228 and #232."
       ],
       "x8_candidate": {
-        "main_sha": "0ab1269138a731418a9701c69f2dcca8286e5f01",
-        "phase": "source_patched_not_device_verified",
-        "build_run": 233,
+        "main_sha": "e396d72f5f93ff572f8479cf28b4a728c4eff49c",
+        "phase": "source_patched_test_IPA_building",
+        "build_run": 234,
         "review_scope": "X8 bounded batch",
         "approval": "pending"
       }
@@ -1419,9 +1419,9 @@
         "Deterministic source path verified; no malformed real user history or audio fault test executed."
       ],
       "x8_candidate": {
-        "main_sha": "0ab1269138a731418a9701c69f2dcca8286e5f01",
-        "phase": "source_patched_not_device_verified",
-        "build_run": 233,
+        "main_sha": "e396d72f5f93ff572f8479cf28b4a728c4eff49c",
+        "phase": "source_patched_test_IPA_building",
+        "build_run": 234,
         "review_scope": "X8 bounded batch",
         "approval": "pending"
       }
@@ -1656,9 +1656,9 @@
         "Source-level owner/caller inspection and read-only predicate at pinned main SHA; iPhone AVAudioSession and native callback timing NOT RUN."
       ],
       "x8_candidate": {
-        "main_sha": "0ab1269138a731418a9701c69f2dcca8286e5f01",
-        "phase": "source_patched_not_device_verified",
-        "build_run": 233,
+        "main_sha": "e396d72f5f93ff572f8479cf28b4a728c4eff49c",
+        "phase": "source_patched_test_IPA_building",
+        "build_run": 234,
         "review_scope": "X8 bounded batch",
         "approval": "pending"
       }
@@ -1706,9 +1706,9 @@
         "Source-level branch and error swallow confirmed; no disk fault injection, restart runtime or device test executed."
       ],
       "x8_candidate": {
-        "main_sha": "0ab1269138a731418a9701c69f2dcca8286e5f01",
-        "phase": "source_patched_not_device_verified",
-        "build_run": 233,
+        "main_sha": "e396d72f5f93ff572f8479cf28b4a728c4eff49c",
+        "phase": "source_patched_test_IPA_building",
+        "build_run": 234,
         "review_scope": "X8 bounded batch",
         "approval": "pending"
       }

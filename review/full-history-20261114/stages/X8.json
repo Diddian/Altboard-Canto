@@ -2,7 +2,7 @@
   "schema_version": "altboard-review-stage/v1",
   "id": "X8",
   "status": "in_progress",
-  "source_sha_at_review": "0ab1269138a731418a9701c69f2dcca8286e5f01",
+  "source_sha_at_review": "e396d72f5f93ff572f8479cf28b4a728c4eff49c",
   "review_branch_head_at_start": "00d11a6e8b81cc31dbb3b7909020549f34c5b035",
   "started_at": "2026-11-14",
   "finished_at": null,
@@ -20,7 +20,8 @@
     "Shared/DictationRequestPolicy.swift",
     "Shared/HistoryStore.swift",
     "scripts/test_operation_ownership.py",
-    "scripts/verify-recording-policies.swift"
+    "scripts/verify-recording-policies.swift",
+    "scripts/verify-microphone-press.swift"
   ],
   "files_excluded": [],
   "files_not_reviewed": [
@@ -41,13 +42,14 @@
   "tests": {
     "executed": [
       "GitHub manual complete source diff inspection of 12 changed files, main@0ab1269138a731418a9701c69f2dcca8286e5f01 vs ed2c4ede; not a native build or functional runtime test",
-      "Source-level safety assertions in changed scripts prepared; GitHub Actions run #233 is executing, result pending"
+      "Build #233 earlier preflight operation ownership passed; offline IME step failed on obsolete verifier, log job 132538680920.",
+      "Build #234 precompile source/IME/smoke checks all passed, iOS compile still in progress when inspected."
     ],
     "not_run": [
-      "Build #233 terminal conclusion, artifact verification, iPhone SideStore test",
       "Filesystem fault injection for legacy model move, corrupt History index, Conversation copy/delete",
       "Native AVAudioPlayer completion callback, UIKit foreign-field interactions, LLM undo/redo on-device",
-      "Outstanding X0-X7 high-risk root cause repairs; no external Alibaba OCR CLI"
+      "Outstanding X0-X7 high-risk root cause repairs; no external Alibaba OCR CLI",
+      "Build #234 exact-SHA terminal compilation, package and artifact upload: pending"
     ]
   },
   "verified_outputs": [
@@ -59,11 +61,11 @@
     "main@0ab1269138a731418a9701c69f2dcca8286e5f01"
   ],
   "blocked_reasons": [
-    "Physical iPhone acceptance not observed; CI Build #233 pending",
     "Predeclared mandatory functional cases not all executed; six-task gate below 90%",
-    "Other confirmed high findings F-0001, F-0019, F-0022, F-0023, F-0028 remain open"
+    "Other confirmed high findings F-0001, F-0019, F-0022, F-0023, F-0028 remain open",
+    "Build #234 compilation and artifact verification pending, iPhone not tested"
   ],
-  "next_action": "Inspect run #233 result, repair compile/contract failures if any without replacing rolling IPA. Obtain iPhone evidence for six tasks. Continue remaining X8 high findings before declaring X8 complete.",
+  "next_action": "Verify Build #234 terminal result and artifact for source e396d72f5f93ff572f8479cf28b4a728c4eff49c; if failed, diagnose first failure before further main changes. Request SideStore device evidence; remaining F-0019, F-0022, F-0023, F-0028 and other open high findings still block X8 completion.",
   "evidence_notes": [
     "Initial repair batch predeclared BEFORE production edits: F-0018, F-0020, F-0027, F-0031, F-0036, F-0037.",
     "Other high/critical findings remain open; X8 is not complete, pending per-task mandatory tests and 90% acceptance.",
@@ -72,6 +74,8 @@
     "Production commit 0ab1269138a731418a9701c69f2dcca8286e5f01 is a single main fast-forward with [TEST IPA]; no PR/merge and no review artifacts on main.",
     "Changed files 12/12 inspected manually in commit diff. Test scripts currently contain source assertions; behavioral tests require runtime evidence.",
     "Per-task preliminary verified source-inspection weights: F-0018=20/100, F-0020=10/100, F-0027=15/100, F-0031=15/100, F-0036=85/100, F-0037=85/100. These are NOT acceptance percentages.",
-    "All six scoped tasks remain test_only_pending; weighted acceptance >=90 AND mandatory tests is the promotion gate."
+    "All six scoped tasks remain test_only_pending; weighted acceptance >=90 AND mandatory tests is the promotion gate.",
+    "Build #233 failed at scripts/verify-microphone-press.swift due to stale call to deleted documentless authorization API; no IPA published.",
+    "Follow-up main@e396d72f5f93ff572f8479cf28b4a728c4eff49c changes verifier only to match confirmed document field proof; Build #234 is compiling, not yet confirmed."
   ]
 }

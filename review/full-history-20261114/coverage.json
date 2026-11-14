@@ -11019,7 +11019,7 @@
     },
     "X8": {
       "status": "12_changed_paths_manual_diff_reviewed; tests/device_pending",
-      "candidate_source_sha": "0ab1269138a731418a9701c69f2dcca8286e5f01",
+      "candidate_source_sha": "e396d72f5f93ff572f8479cf28b4a728c4eff49c",
       "baseline_source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
       "changed_paths": [
         "Sayboard/Services/AudioPlayerService.swift",
@@ -11033,7 +11033,8 @@
         "Shared/DictationRequestPolicy.swift",
         "Shared/HistoryStore.swift",
         "scripts/test_operation_ownership.py",
-        "scripts/verify-recording-policies.swift"
+        "scripts/verify-recording-policies.swift",
+        "scripts/verify-microphone-press.swift"
       ],
       "device_acceptance": "not_run",
       "historical_and_unaffected_file_coverage": "X7 captured source SHA preserved, no blanket rebasing of untouched files",
@@ -11041,7 +11042,15 @@
         "Static source string predicates are not executable behavioral tests",
         "iOS compile/SideStore actual result not yet available",
         "F-0019, F-0022, F-0023, F-0028 remain unresolved high findings"
-      ]
+      ],
+      "follow_up": {
+        "prior_failed_run": 233,
+        "first_failure": "obsolete mayDeliverWithoutDocumentIdentifier regression oracle",
+        "subsequent_verifier_commit": "e396d72f5f93ff572f8479cf28b4a728c4eff49c",
+        "subsequent_run": 234,
+        "status": "in_progress_compiling",
+        "runURL": "https://github.com/Diddian/Altboard-Canto/actions/runs/43625422370"
+      }
     }
   },
   "counts": {
