@@ -1,7 +1,7 @@
 {
   "schema_version": "untangle-ocr-findings/v1",
   "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
-  "status": "x0_source_evidence_only_unverified_runtime_paths_deferred",
+  "status": "x1_source_evidence_recorded_runtime_and_device_findings_pending",
   "findings": [
     {
       "id": "F-0001",
@@ -98,6 +98,195 @@
       ],
       "origin": "H-005",
       "assigned_stage": "X2/X6"
+    },
+    {
+      "id": "F-0003",
+      "severity": "medium",
+      "state": "hypothesis",
+      "area": "platform_lifecycle",
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "paths": [
+        "SayboardKeyboard/KeyboardViewController.swift",
+        "SayboardKeyboard/KeyboardState.swift",
+        "Shared/SharedSettings.swift",
+        "SayboardKeyboard/Views/Layouts/KeyboardChrome.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "SayboardKeyboard/KeyboardViewController.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "134-179,721-739",
+          "observation": "viewWillAppear and hostDidEnterForeground refresh state but do not resync the actual UIKit needsInputModeSwitchKey"
+        },
+        {
+          "path": "SayboardKeyboard/KeyboardViewController.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "1348-1399,1466-1472",
+          "observation": "syncInputModeSwitchKey is invoked only from textDidChange; it compares iOS property with KeyboardState and persists result"
+        },
+        {
+          "path": "SayboardKeyboard/KeyboardViewController.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "695-709",
+          "observation": "input-mode-change callback only records diagnostics; no native key resync"
+        },
+        {
+          "path": "Shared/SharedSettings.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "365-368",
+          "observation": "Cached needsInputModeSwitchKey defaults true, but a previously stored false persists"
+        },
+        {
+          "path": "SayboardKeyboard/Views/Layouts/KeyboardChrome.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "3-6,260-283",
+          "observation": "Standard/Extended optional globe depends on cached flag; alphabetic bottom native picker is a distinct always-reserved slot"
+        }
+      ],
+      "scenario": "If a previous screen cached needsInputModeSwitchKey=false, iOS later requires the switch after keyboard configuration changes, and no textDidChange callback occurs before rendering Standard/Extended, the native system picker may be absent on first appearance.",
+      "causal_chain": "UIKit actual need changes -> persisted cached flag remains false -> viewWillAppear only refreshes the cache -> Standard/Extended Globe conditional omits picker until textDidChange resynchronizes.",
+      "root_owner": "KeyboardViewController.syncInputModeSwitchKey lifecycle synchronization",
+      "smallest_repair": "In X8, consider reading the actual UIKit property on appearance and foreground/input-mode transitions, with a single owner and no duplicate gesture handlers. Verify platform timing first; preserve alphabetic native picker and active input.",
+      "regression_oracle": "Change installed keyboards while Altboard is not visible, return to Standard/Extended without typing, verify the native picker is available immediately if UIKit requires it; verify tap and long-press. Recheck stale stored false and no repeated App Group writes.",
+      "verification": [
+        "X1 source-only check: call-site count for self.syncInputModeSwitchKey() is exactly one (in textDidChange); activation/foreground/input-mode observers omit it.",
+        "No physical iPhone switch failure observed by this review."
+      ],
+      "origin": "X1/R2",
+      "assigned_stage": "X8; verify with X2 native globe review"
+    },
+    {
+      "id": "F-0004",
+      "severity": "medium",
+      "state": "confirmed",
+      "area": "correctness",
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "paths": [
+        "Sayboard/Services/PermissionService.swift",
+        "SayboardKeyboard/KeyboardViewController.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Sayboard/Services/PermissionService.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "30-46",
+          "observation": "isKeyboardAddedSync returns true when historical keyboardProbeTimestamp > 0 OR canto.keyboardOpenedAtLeastOnce is true; the installed AppleKeyboards list is read only afterward"
+        },
+        {
+          "path": "SayboardKeyboard/KeyboardViewController.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "134-139",
+          "observation": "viewWillAppear unconditionally persists canto.keyboardOpenedAtLeastOnce=true"
+        }
+      ],
+      "scenario": "A once-opened extension leaves the historical marker set. After it is removed from iOS's installed keyboards without clearing app storage, isKeyboardAddedSync can still return true.",
+      "causal_chain": "Ever-open marker never expired -> 'keyboard added' reads historical fact as current installation -> live iOS keyboard-list verification bypassed.",
+      "root_owner": "PermissionService.isKeyboardAddedSync",
+      "smallest_repair": "Separate 'ever opened' and 'currently installed' evidence; require a fresh reliable installed-keyboard check or report an unknown state when iOS does not disclose installation. Keep historical marker for first-launch diagnostics only.",
+      "regression_oracle": "Install and open Altboard, remove the keyboard in iOS Settings without uninstalling the app, reopen host Setup, and verify that it does not report current installation based solely on the old marker; re-add should recover.",
+      "verification": [
+        "Source-path boolean short-circuit independently checked at main SHA; logical stale-status branch confirmed.",
+        "iOS removal/re-add test NOT RUN; no OS installation API correctness claim."
+      ],
+      "origin": "X1/R2",
+      "assigned_stage": "X8"
+    },
+    {
+      "id": "F-0005",
+      "severity": "medium",
+      "state": "hypothesis",
+      "area": "async_ownership",
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "paths": [
+        "Sayboard/Views/Onboarding/OnboardingKeyboardView.swift",
+        "Sayboard/Views/Onboarding/OnboardingPracticeView.swift",
+        "Shared/SharedSettings+Onboarding.swift",
+        "SayboardKeyboard/KeyboardState.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Sayboard/Views/Onboarding/OnboardingKeyboardView.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "95-108,145-150,234-252",
+          "observation": "UI gates completion on hasSeenAltboard; one AsyncStream observer listens for one Darwin keyboardShownInPractice notification and then returns; no retry/timeout inside observer"
+        },
+        {
+          "path": "SayboardKeyboard/KeyboardState.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "236-242",
+          "observation": "KeyboardState posts the Darwin signal on syncOnboardingPractice from extension appearance"
+        },
+        {
+          "path": "Shared/SharedSettings+Onboarding.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "36-64",
+          "observation": "Host process marker uses a 30-minute TTL, and may match when host process ID is unavailable"
+        },
+        {
+          "path": "Sayboard/Views/Onboarding/OnboardingPracticeView.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "226-235",
+          "observation": "Practice onboarding also depends on the one-shot keyboardShownInPractice signal"
+        }
+      ],
+      "scenario": "If the keyboard-open signal is delivered before the SwiftUI .task observer starts, or delivery is lost, the first-install test can remain 'waiting' despite an actual extension appearance; the user may need to switch keyboards away and back.",
+      "causal_chain": "Uncorrelated one-shot Darwin notification across process lifecycles -> missing or stale observation -> hasSeenAltboard remains false or misattributed -> onboarding continuation blocked or inaccurately confirmed.",
+      "root_owner": "OnboardingKeyboardView.watchForAltboard and KeyboardState.syncOnboardingPractice handshake",
+      "smallest_repair": "Use a bounded request/acknowledgment with activation identity or freshness and one safe retry when field remains focused; do not treat a language hint or historical probe alone as active keyboard identity.",
+      "regression_oracle": "Run first-install onboarding with delayed observer installation, lost Darwin notification, iOS keyboard switch before/after focus and restart; verify no false active claim and deterministic retry to an explicitly visible/tappable keyboard.",
+      "verification": [
+        "X1 inspection confirmed one-shot observer and process-marker handshake; missing-notification behavior not exercised.",
+        "Host KeyboardSelectionProbe only correlates source events temporally and explicitly says field unconfirmed."
+      ],
+      "origin": "X1/R2",
+      "assigned_stage": "X8"
+    },
+    {
+      "id": "F-0006",
+      "severity": "medium",
+      "state": "hypothesis",
+      "area": "runtime_state",
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "paths": [
+        "SayboardKeyboard/KeyboardViewController.swift",
+        "SayboardKeyboard/KeyboardState.swift",
+        "Shared/KeyboardLifecycleTrace.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "SayboardKeyboard/KeyboardViewController.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "382-465",
+          "observation": "Suspicious render includes missing hosting window, hidden/zero-size view, mismatched height and touch-test failures; the only automatic refresh gate is missingRows && hostingInWindow && !scanLimited"
+        },
+        {
+          "path": "SayboardKeyboard/KeyboardViewController.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "134-168,1153-1199",
+          "observation": "On reentry UIHostingController is kept if nonnil; height constraints are updated, but no other renderSuspicious condition triggers automatic reattachment"
+        },
+        {
+          "path": "Shared/KeyboardLifecycleTrace.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "289-298,430-450",
+          "observation": "Render probes are structural, not pixel visibility; input-mode hints are not OS keyboard identity"
+        }
+      ],
+      "scenario": "A persistent empty/incorrect keyboard caused by hosting not in the visible window or another non-letter-row render failure is diagnosed as renderSuspicious, but the one-shot missing-letter-row refresh path does not apply.",
+      "causal_chain": "Structural render failure outside missingRows branch -> only diagnostic record -> no bounded recovery for that condition; actual iOS persistence is unverified.",
+      "root_owner": "KeyboardViewController.captureRenderCheckpoint and setupKeyboardView reentry lifecycle",
+      "smallest_repair": "First discriminate transient iOS transitions from persistent failure using two window-bound checkpoints and one guarded recovery policy; never force-reparent a live UIKit keyboard or duplicate touch owners without evidence.",
+      "regression_oracle": "Induce or simulate host window absence, zero input height, height mismatch and fewer than three letter-row touch surfaces; compare event sequence, limited retries and final keyboard visibility/hit-test. Physical iPhone screenshots plus diagnostics are mandatory before changing recovery logic.",
+      "verification": [
+        "X1 source-only check confirmed renderSuspicious predicates and the exclusive missingRows soft refresh.",
+        "No screenshot or iPhone trace demonstrates a persistent blank root; root cause remains hypothesis."
+      ],
+      "origin": "X1/R2",
+      "assigned_stage": "X8; complement X2 keyboard render review"
     }
   ],
   "categories": [

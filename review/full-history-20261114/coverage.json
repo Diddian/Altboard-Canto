@@ -7,7 +7,7 @@
     "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
     "review_branch": "review/full-history-20261114"
   },
-  "status": "x0_file_inventory_complete_deep_review_pending",
+  "status": "x1_installation_lifecycle_file_review_complete_x2_to_x7_deep_review_pending",
   "expected_current_tracked_files_observed": 577,
   "current_tracked_files": 577,
   "initial_tracked_files": 356,
@@ -256,7 +256,9 @@
       "path": "Sayboard/Helpers/OnboardingProgress.swift",
       "sha": "ff4d9dd1783c0de0a7edbdcc800c0cac40b9dbda",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators Sayboard/Helpers/OnboardingProgress.swift:4-26,47-86,89-127; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "Sayboard/Helpers/SetupChecklist.swift",
@@ -868,7 +870,9 @@
       "path": "Sayboard/SayboardApp.swift",
       "sha": "ecbc099c61c342ada8e7ce4d45a38ab771a44035",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators Sayboard/SayboardApp.swift:140-220,223-256,283-339,638-640; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "Sayboard/Services/AppSearchService.swift",
@@ -1084,7 +1088,9 @@
       "path": "Sayboard/Services/PermissionService.swift",
       "sha": "a5c35a75097f25e5a6c32db7be39630a7b242640",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators Sayboard/Services/PermissionService.swift:21-70,94-115,156-173; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "Sayboard/Services/PiPTutorialService.swift",
@@ -1270,7 +1276,9 @@
       "path": "Sayboard/Views/KeyboardSelectionProbeView.swift",
       "sha": "5800443d13f07aa9a190bac00ab53d0355f11a0c",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators Sayboard/Views/KeyboardSelectionProbeView.swift:5-49,54-151,155-233; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "Sayboard/Views/KeyboardSettingsView.swift",
@@ -1366,7 +1374,9 @@
       "path": "Sayboard/Views/Onboarding/KeyboardSwitchTutorialView.swift",
       "sha": "80d4358eabe7f6d593b6907fa1b8e78b35c85889",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators Sayboard/Views/Onboarding/KeyboardSwitchTutorialView.swift:1-297; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "Sayboard/Views/Onboarding/MicrophonePromptTutorialView.swift",
@@ -1384,13 +1394,17 @@
       "path": "Sayboard/Views/Onboarding/OnboardingKeyboardTypeView.swift",
       "sha": "354374aaef840a54e1e02a13bf67bce310b1413d",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators Sayboard/Views/Onboarding/OnboardingKeyboardTypeView.swift:8-29,38-52; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "Sayboard/Views/Onboarding/OnboardingKeyboardView.swift",
       "sha": "3310bae9417c0b215f49db1b5a0ab3c4b807a760",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators Sayboard/Views/Onboarding/OnboardingKeyboardView.swift:29-108,131-150,210-252; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "Sayboard/Views/Onboarding/OnboardingLanguagesView.swift",
@@ -1414,13 +1428,17 @@
       "path": "Sayboard/Views/Onboarding/OnboardingPracticeView.swift",
       "sha": "731733b85b20f7b3be8ea298d17709228eef53c2",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators Sayboard/Views/Onboarding/OnboardingPracticeView.swift:9-37,98-146,226-247; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "Sayboard/Views/Onboarding/OnboardingTextEntry.swift",
       "sha": "a34732da3cb9515f557e46c831bd967d08989642",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators Sayboard/Views/Onboarding/OnboardingTextEntry.swift:23-54; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "Sayboard/Views/Onboarding/OnboardingWritingStyleView.swift",
@@ -1438,7 +1456,9 @@
       "path": "Sayboard/Views/OnboardingView.swift",
       "sha": "2c5160aad696ff15c0a265e207f918efcbebf9a5",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators Sayboard/Views/OnboardingView.swift:13-39,95-171; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "Sayboard/Views/PaywallView.swift",
@@ -1631,7 +1651,9 @@
       "path": "SayboardKeyboard/KeyboardState.swift",
       "sha": "45b26338a15c5047ff356dfcb7d822ad1ed78478",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators SayboardKeyboard/KeyboardState.swift:49-104,147-194,236-242; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "SayboardKeyboard/KeyboardTouchLearning.swift",
@@ -1679,7 +1701,9 @@
       "path": "SayboardKeyboard/KeyboardViewController.swift",
       "sha": "b6e752cb45e557ce5e40a9085b289a23bea9d98a",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators SayboardKeyboard/KeyboardViewController.swift:67-200,307-465,647-709,721-739,1153-1199,1343-1479; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "SayboardKeyboard/LatinSwipeDecoder.swift",
@@ -1829,7 +1853,9 @@
       "path": "SayboardKeyboard/Views/KeyboardView.swift",
       "sha": "b4c6fab1b84e739e474a31065d8a18bff6a165fe",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators SayboardKeyboard/Views/KeyboardView.swift:133-200; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "SayboardKeyboard/Views/LLMActionBar.swift",
@@ -1859,7 +1885,9 @@
       "path": "SayboardKeyboard/Views/Layouts/KeyboardChrome.swift",
       "sha": "3f8fd20902df0c99e5fe70e5a78808a44b1ada58",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators SayboardKeyboard/Views/Layouts/KeyboardChrome.swift:3-30,260-283; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "SayboardKeyboard/Views/Layouts/MicAnimatedButton.swift",
@@ -1907,7 +1935,9 @@
       "path": "SayboardKeyboard/Views/NativeInputModeSwitchKey.swift",
       "sha": "a6211aa7d48295d92398a35204ee33ab441e39d2",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators SayboardKeyboard/Views/NativeInputModeSwitchKey.swift:6-70; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "SayboardKeyboard/Views/RepeatDeleteButton.swift",
@@ -1979,7 +2009,9 @@
       "path": "SayboardTests/BasicKeyboardFallbackTests.swift",
       "sha": "150a3bcc844d7a2bd9667b78da14d82cb14ca77d",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators SayboardTests/BasicKeyboardFallbackTests.swift:1-19; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "SayboardTests/CantoneseCorrectionsTests.swift",
@@ -2249,7 +2281,9 @@
       "path": "SayboardTests/SharedSettingsGlobeKeyTests.swift",
       "sha": "66c99c9b614a163ac9d1f606b63c74bdffa18d4c",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators SayboardTests/SharedSettingsGlobeKeyTests.swift:1-58; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "SayboardTests/SharedSettingsLLMUpgradeTests.swift",
@@ -2525,7 +2559,9 @@
       "path": "Shared/KeyboardHandoffAnalyzer.swift",
       "sha": "080d6510c9508da474699cd600104b08b1e28947",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators Shared/KeyboardHandoffAnalyzer.swift:5-129; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "Shared/KeyboardHapticDriver.swift",
@@ -2567,7 +2603,9 @@
       "path": "Shared/KeyboardKind.swift",
       "sha": "eb0dd7475856f9456633d69eacaa116a87433e63",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators Shared/KeyboardKind.swift:4-16,32-54; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "Shared/KeyboardLayoutGeometry.swift",
@@ -2579,13 +2617,17 @@
       "path": "Shared/KeyboardLifecycleTiming.swift",
       "sha": "cd092c0ac40f3acbf17ff1ef25b9d5c008fe6c44",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators Shared/KeyboardLifecycleTiming.swift:5-140; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "Shared/KeyboardLifecycleTrace.swift",
       "sha": "76c3f213eaedfd9b2f7920a7ef9f4e994d49afeb",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators Shared/KeyboardLifecycleTrace.swift:11-52,113-180,289-340,430-558; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "Shared/KeyboardPalette.swift",
@@ -2759,13 +2801,17 @@
       "path": "Shared/SharedSettings+Onboarding.swift",
       "sha": "636eafbcebfacda55a91adfd0b9367e99ffc4b6c",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators Shared/SharedSettings+Onboarding.swift:6-29,36-64; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "Shared/SharedSettings.swift",
       "sha": "8dd7ada6aac53be6cfc3cdf722c0d9b3adb1f3db",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators Shared/SharedSettings.swift:3-9,83-116,365-368; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "Shared/Snippet.swift",
@@ -3235,13 +3281,17 @@
       "path": "scripts/test_keyboard_initial_layout.py",
       "sha": "a74c3465bd40e5b8cf2d462e92299714dc339f81",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators scripts/test_keyboard_initial_layout.py:11-106,201-285,409-486; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "scripts/test_keyboard_safety_contract.py",
       "sha": "ec354d9674ddc291806576df101576916c6ccbc1",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators scripts/test_keyboard_safety_contract.py:146-175,195-243; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "scripts/test_operation_ownership.py",
@@ -3349,7 +3399,9 @@
       "path": "scripts/verify-keyboard-handoff.swift",
       "sha": "bc13f76cd9cc25fbe74d2c3ffb825e713aeaac85",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators scripts/verify-keyboard-handoff.swift:1-72; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "scripts/verify-keyboard-host-geometry.swift",
@@ -3367,7 +3419,9 @@
       "path": "scripts/verify-keyboard-lifecycle-timing.swift",
       "sha": "fa454305fdd19c6f91bb65d58357200ac620dccf",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators scripts/verify-keyboard-lifecycle-timing.swift:1-65; X1 installation/activation/runtime ownership",
+      "stage": "X1"
     },
     {
       "path": "scripts/verify-language-priority.swift",
@@ -9839,14 +9893,66 @@
       "historical_compare_windows": 20,
       "compared_commits": 376,
       "not_claimed": "all-files code review or per-commit diff review"
+    },
+    "X1": {
+      "status": "complete_source_owner_review; iPhone_not_run",
+      "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+      "reviewed_paths": [
+        "Sayboard/SayboardApp.swift",
+        "SayboardKeyboard/Info.plist",
+        "SayboardKeyboard/KeyboardViewController.swift",
+        "SayboardKeyboard/KeyboardState.swift",
+        "Shared/KeyboardLifecycleTrace.swift",
+        "scripts/test_keyboard_initial_layout.py",
+        "scripts/test_keyboard_safety_contract.py",
+        "SayboardKeyboard/Views/KeyboardView.swift",
+        "Sayboard/Services/PermissionService.swift",
+        "Sayboard/Views/Onboarding/OnboardingKeyboardView.swift",
+        "Sayboard/Views/Onboarding/OnboardingKeyboardTypeView.swift",
+        "Sayboard/Views/OnboardingView.swift",
+        "Sayboard/Helpers/OnboardingProgress.swift",
+        "Shared/SharedSettings+Onboarding.swift",
+        "Sayboard/Views/Onboarding/OnboardingTextEntry.swift",
+        "Sayboard/Views/Onboarding/OnboardingPracticeView.swift",
+        "SayboardKeyboard/Views/NativeInputModeSwitchKey.swift",
+        "Sayboard/Views/KeyboardSelectionProbeView.swift",
+        "Shared/SharedSettings.swift",
+        "Shared/KeyboardKind.swift",
+        "SayboardKeyboard/Views/Layouts/KeyboardChrome.swift",
+        "Shared/KeyboardLifecycleTiming.swift",
+        "Shared/KeyboardHandoffAnalyzer.swift",
+        "scripts/verify-keyboard-handoff.swift",
+        "scripts/verify-keyboard-lifecycle-timing.swift",
+        "SayboardTests/BasicKeyboardFallbackTests.swift",
+        "SayboardTests/SharedSettingsGlobeKeyTests.swift",
+        "Sayboard/Views/Onboarding/KeyboardSwitchTutorialView.swift"
+      ],
+      "newly_reviewed": 27,
+      "previously_reviewed": [
+        "SayboardKeyboard/Info.plist"
+      ],
+      "partial_only_not_reviewed": [
+        "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift",
+        "SayboardKeyboard/Views/Layouts/StandardKeyboardLayout.swift",
+        "SayboardKeyboard/Views/Layouts/ExtendedKeyboardLayout.swift",
+        "SayboardKeyboard/Views/EmojiKeyboardView.swift",
+        "SayboardKeyboard/Views/AlphabeticTouchRow.swift"
+      ],
+      "historical_evidence": [
+        "Info.plist PrimaryLanguage: Build #1/#68/#84=mis; #85/#100/#136=yue-Hant-HK; #150=mis; #170/#232=mul",
+        "Exact Info.plist commits: 77f2cb4 mis->yue-Hant-HK, 31f1bc9 yue-Hant-HK->mis, 531b5b8 mis->mul",
+        "Keyboard load and view ownership refactored across historical windows #20-31, #120-136, #136-150, #223-232; bounded endpoint comparisons are not proof of device rendering"
+      ],
+      "checks": "11/11 scoped GitHub-source predicates passed, source-inspection only; no iOS/Swift/Python test command run",
+      "exclusion_note": "No current-file review claimed for partially inspected layout/Emoji/touch paths; X2 owns those deep checks."
     }
   },
   "counts": {
     "current_total": 577,
     "historical_only": 14,
-    "reviewed": 3,
+    "reviewed": 30,
     "excluded": 0,
-    "not_reviewed": 588,
+    "not_reviewed": 561,
     "known_changed_path_occurrences": 983,
     "known_unique_changed_paths": 336
   },

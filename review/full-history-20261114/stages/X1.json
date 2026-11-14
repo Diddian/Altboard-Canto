@@ -1,24 +1,214 @@
 {
   "schema_version": "altboard-review-stage/v1",
   "id": "X1",
-  "status": "blocked",
-  "source_sha_at_review": null,
-  "review_branch_head_at_start": null,
-  "started_at": null,
-  "finished_at": null,
+  "status": "complete",
+  "source_sha_at_review": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+  "review_branch_head_at_start": "49a53063785ee6747f7e7b8d5ee9aba390b1d970",
+  "started_at": "2026-11-14",
+  "finished_at": "2026-11-14",
   "review_mode": "GitHub manual OCR-style; Alibaba OCR CLI not run",
-  "untangle_status": "not_run",
-  "files_reviewed": [],
+  "untangle_status": "performed_scoped_lifecycle_ownership_state_and_recovery_audit",
+  "files_reviewed": [
+    "Sayboard/SayboardApp.swift",
+    "SayboardKeyboard/Info.plist",
+    "SayboardKeyboard/KeyboardViewController.swift",
+    "SayboardKeyboard/KeyboardState.swift",
+    "Shared/KeyboardLifecycleTrace.swift",
+    "scripts/test_keyboard_initial_layout.py",
+    "scripts/test_keyboard_safety_contract.py",
+    "SayboardKeyboard/Views/KeyboardView.swift",
+    "Sayboard/Services/PermissionService.swift",
+    "Sayboard/Views/Onboarding/OnboardingKeyboardView.swift",
+    "Sayboard/Views/Onboarding/OnboardingKeyboardTypeView.swift",
+    "Sayboard/Views/OnboardingView.swift",
+    "Sayboard/Helpers/OnboardingProgress.swift",
+    "Shared/SharedSettings+Onboarding.swift",
+    "Sayboard/Views/Onboarding/OnboardingTextEntry.swift",
+    "Sayboard/Views/Onboarding/OnboardingPracticeView.swift",
+    "SayboardKeyboard/Views/NativeInputModeSwitchKey.swift",
+    "Sayboard/Views/KeyboardSelectionProbeView.swift",
+    "Shared/SharedSettings.swift",
+    "Shared/KeyboardKind.swift",
+    "SayboardKeyboard/Views/Layouts/KeyboardChrome.swift",
+    "Shared/KeyboardLifecycleTiming.swift",
+    "Shared/KeyboardHandoffAnalyzer.swift",
+    "scripts/verify-keyboard-handoff.swift",
+    "scripts/verify-keyboard-lifecycle-timing.swift",
+    "SayboardTests/BasicKeyboardFallbackTests.swift",
+    "SayboardTests/SharedSettingsGlobeKeyTests.swift",
+    "Sayboard/Views/Onboarding/KeyboardSwitchTutorialView.swift"
+  ],
   "files_excluded": [],
-  "files_not_reviewed": [],
-  "new_or_updated_findings": [],
-  "diagram_paths": [],
+  "files_not_reviewed": [
+    "Adjacent AlphabeticKeyboardLayout, EmojiKeyboardView, AlphabeticTouchRow, StandardKeyboardLayout and ExtendedKeyboardLayout were partially scoped at X1; no full-file review claimed; routed to X2.",
+    "Other current/historical paths remain not_reviewed per coverage.json."
+  ],
+  "new_or_updated_findings": [
+    "F-0003",
+    "F-0004",
+    "F-0005",
+    "F-0006"
+  ],
+  "diagram_paths": [
+    "review/full-history-20261114/diagrams/X1-lifecycle.mmd"
+  ],
   "tests": {
-    "executed": [],
-    "not_run": []
+    "executed": [
+      "11/11 read-only deterministic GitHub source-path predicates: mul plist; no runtime primaryLanguage override; Globe sync invocation count/placement; persisted install-marker bypass; one-shot onboarding; limited render recovery; native UIKit selector and Alphabetic picker. This is not a compiled or runtime test."
+    ],
+    "not_run": [
+      "python3 -m unittest discover -s scripts -p 'test_keyboard_initial_layout.py' (source read only; no local checkout or runner invoked)",
+      "python3 -m unittest discover -s scripts -p 'test_keyboard_safety_contract.py' (source read only)",
+      "swiftc pure Swift handoff/timing verifiers and all UIKit/Xcode tests NOT RUN",
+      "iPhone/SideStore first-install, native Globe, blank board, lifecycle, Full Access and permissions acceptance NOT RUN",
+      "Alibaba OCR CLI NOT RUN; no paid/external review agent invoked"
+    ]
   },
-  "verified_outputs": [],
+  "verified_outputs": [
+    "review/full-history-20261114/coverage.json",
+    "review/full-history-20261114/findings.json",
+    "review/full-history-20261114/diagrams/X1-lifecycle.mmd",
+    "review/full-history-20261114/stages/X1.json",
+    "review/full-history-20261114/manifest.json"
+  ],
   "blocked_reasons": [],
-  "next_action": "Begin only after manifest previous stage gate; use stages.json for exact scope",
-  "evidence_notes": []
+  "next_action": "X2 only: visual keyboard state, Alphabetic/Standard/Extended ownership, custom Emoji versus native Globe, touch and haptics at pinned/rechecked main HEAD. Preserve X0/X1 findings; no IPA or main edits.",
+  "evidence_notes": [
+    "GitHub main HEAD and review branch HEAD checked again before tree creation; no source drift from X0.",
+    "Current Info.plist at main SHA declares PrimaryLanguage=mul with IsASCIICapable=true. This is metadata and cannot certify which keyboard iOS selected.",
+    "Historical commits: 77f2cb45 mis->yue-Hant-HK; 31f1bc91 yue-Hant-HK->mis; 531b5b8 mis->mul. Reviewed snapshots: builds #1/#68/#84 mis; #85/#100/#136 yue-Hant-HK; #150 mis; #170/#232 mul.",
+    "Source state: default keyboardKind .standard is microphone-only, but lack of Full Access/App Group/mic/model for Standard or Extended selects an alphabetic typing fallback without overwriting stored preference.",
+    "Host-to-keyboard first-install confirmation uses one-shot cross-process Darwin notification and a fresh Full Access timestamp; raw language hints and host-test field events do not prove actual selected keyboard.",
+    "Visible root is one UIHostingController per KeyboardViewController; UISystem input view is retained. RenderProbe checks structural geometry and hit tests but not pixels.",
+    "Globe native selector is wired and no competing touch recognizer was found inside NativeInputModeSwitchKey; extra active Emoji page contradiction retained as X0 F-0002, not duplicated.",
+    "F-0003/F-0005/F-0006 are runtime hypotheses, NOT confirmed device bugs. F-0004 confirms an unconditional source logic shortcut, NOT a physical iPhone observation.",
+    "Existing Python test files are mainly source-fragment assertions, not direct first-load UIKit runtime checks; F-0001 remains the deduplicated X0 CI source-string finding.",
+    "All nine declared source-owned transition groups have an owner, observable path, stale/cancel/retry rule and discriminating test oracle. Device-only tests explicitly not_run."
+  ],
+  "transitions": [
+    {
+      "id": "T01",
+      "transition": "Fresh install / onboarding",
+      "owner": "SayboardApp+OnboardingProgress+OnboardingRecordStore",
+      "observed_state_path": "No prior record -> languages/microphone/keyboard -> chosen kind persisted",
+      "stale_cancel_retry": "Resume persisted partial record; Back/Postpone; established-install migration bypass checked",
+      "test_oracle": "Fresh UserDefaults, interrupted onboarding, established install with model/history",
+      "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad"
+    },
+    {
+      "id": "T02",
+      "transition": "OS enable/select native keyboard",
+      "owner": "iOS Settings / current UITextInputMode (OS)",
+      "observed_state_path": "Installed mode / user selection -> optional extension launch; mul only metadata",
+      "stale_cancel_retry": "Host cannot force active third-party keyboard; stale last-known selection is unconfirmed; select using system Globe",
+      "test_oracle": "Remove/re-add and switch iOS keyboards; compare host mode hint with actual extension trace",
+      "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad"
+    },
+    {
+      "id": "T03",
+      "transition": "Onboarding host-to-extension handshake",
+      "owner": "OnboardingKeyboardView + KeyboardState + SharedSettings+Onboarding",
+      "observed_state_path": "Host test focus -> 30min PID marker -> extension viewWillAppear -> Darwin keyboardShownInPractice -> hasSeenAltboard",
+      "stale_cancel_retry": "One-shot observer cancellation on task disappear; no automatic retry after dropped event; Back/reselect manual retry",
+      "test_oracle": "Simulated missing and early notification; first-attempt focus and tap; no false completion",
+      "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad"
+    },
+    {
+      "id": "T04",
+      "transition": "Extension UIKit mount",
+      "owner": "KeyboardViewController(UIInputViewController)",
+      "observed_state_path": "loadView->viewDidLoad bootstrap->viewWillAppear refresh/access sync->single UIHostingController",
+      "stale_cancel_retry": "Hosting mounts only once; reentry refreshes state, cancels stale timer on disappear; activeInstance observer remains cross-process seam",
+      "test_oracle": "Source test loadView/system input, startup trace sequence, reentry should neither double-mount nor duplicate input",
+      "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad"
+    },
+    {
+      "id": "T05",
+      "transition": "Requested-to-effective keyboard fallback",
+      "owner": "SharedSettings + KeyboardState + KeyboardView",
+      "observed_state_path": "Default .standard; stored kind .standard/.extended/.alphabetic; non-alphabetic without full access/App Group/mic/model => alphabetic typing",
+      "stale_cancel_retry": "Fallback recomputes on refresh and foreground, no destructive preference overwrite; stale App Group values possible",
+      "test_oracle": "Missing/full permissions and model, regrant access, still type letters and preserve selected preference",
+      "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad"
+    },
+    {
+      "id": "T06",
+      "transition": "Native globe routing",
+      "owner": "UIKit needsInputModeSwitchKey + NativeInputModeSwitchKey + KeyboardChrome",
+      "observed_state_path": "UIKit native button handleInputModeList; cached need sync only on textDidChange; Alphabetic bottom selector independent",
+      "stale_cancel_retry": "ViewWillAppear/foreground has no explicit sync; risk when persisted false; OS owns picker; no second gesture",
+      "test_oracle": "Before-typing switch after installed mode change, tap/hold, VoiceOver and return to Altboard",
+      "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad"
+    },
+    {
+      "id": "T07",
+      "transition": "Rendered touch surface / empty board",
+      "owner": "KeyboardViewController + KeyboardLifecycleTrace + AlphabeticTouchRow",
+      "observed_state_path": "0.35s generation-scoped RenderProbe checks hosting, bounds, touch count and hit targets",
+      "stale_cancel_retry": "Disappear increments generation; one missingRows refresh; other suspicious conditions diagnostic only; no unverified pixels claim",
+      "test_oracle": "Normal/missing rows/zero-height/non-window host, input tap test and screenshot",
+      "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad"
+    },
+    {
+      "id": "T08",
+      "transition": "Focus, reentry, old callbacks",
+      "owner": "KeyboardViewController + KeyboardState + DictationRequestPolicy",
+      "observed_state_path": "Document change increments epoch and invalidates touch history; lifecycle cancels timers/ping; observers access activeInstance",
+      "stale_cancel_retry": "Cancelled pending warm start on hide; unknown document blocks unscoped insertion; hidden-controller observer ownership deferred to X4",
+      "test_oracle": "Switch fields/relaunch while dictating; no stale writing or lost output; no duplicate listener",
+      "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad"
+    },
+    {
+      "id": "T09",
+      "transition": "Local observability and interpretation",
+      "owner": "KeyboardLifecycleTrace + KeyboardHandoffAnalyzer + KeyboardSelectionProbeView",
+      "observed_state_path": "Bounded JSONL event log + host test-field markers and temporal extension sequence; first-load build marker",
+      "stale_cancel_retry": "Source traces exclude text and touch data; unavailable callback not treated as zero delay or proof of other keyboards; manual export",
+      "test_oracle": "Host normal and remembered mode probes; fail and healthy traces; privacy export only by user",
+      "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad"
+    }
+  ],
+  "historical_checkpoints": [
+    {
+      "build": 1,
+      "primary_language": "mis"
+    },
+    {
+      "build": 68,
+      "primary_language": "mis"
+    },
+    {
+      "build": 84,
+      "primary_language": "mis"
+    },
+    {
+      "build": 85,
+      "primary_language": "yue-Hant-HK"
+    },
+    {
+      "build": 100,
+      "primary_language": "yue-Hant-HK"
+    },
+    {
+      "build": 136,
+      "primary_language": "yue-Hant-HK"
+    },
+    {
+      "build": 150,
+      "primary_language": "mis"
+    },
+    {
+      "build": 170,
+      "primary_language": "mul"
+    },
+    {
+      "build": 232,
+      "primary_language": "mul"
+    }
+  ],
+  "review_limitations": [
+    "The actual selected iOS keyboard cannot be identified from primaryLanguage or installed-mode lists alone.",
+    "No keyboard pixels or physical touches have been observed; iOS may drop extension lifecycle callbacks during disposal.",
+    "X2 owns detailed layout/Emoji state and X4 owns deferred text-insertion ownership; X1 records interfaces without claiming full cross-domain audit."
+  ]
 }

@@ -1,0 +1,57 @@
+flowchart TD
+  %% X1: OBS labels are observed in main at ed2c4ede05567f3f63d2979ade81040c8fe799ad; HYP are unverified runtime branches.
+  subgraph OS["iOS-owned selection (not directly observable from host)"]
+    OSenable["Enable Altboard in Settings"]
+    OSselect["User chooses an input mode via system Globe"]
+  end
+  subgraph HOST["Sayboard host / onboarding"]
+    First["SayboardApp first launch + OnboardingProgress"]
+    Onboard["OnboardingKeyboardView test field"]
+    Kind["SharedSettings.keyboardKind preference"]
+    Marker["Host PID/time test marker"]
+    Signal["One-shot Darwin keyboardShownInPractice"]
+    Perm["PermissionService installation/Full Access probe"]
+  end
+  subgraph EXT["Altboard keyboard extension"]
+    Plist["Info.plist PrimaryLanguage=mul (declaration only)"]
+    Load["UIInputViewController loadView"]
+    Bootstrap["viewDidLoad bootstrapLayoutSettings"]
+    Appear["viewWillAppear: refresh + full access + mount once"]
+    Effective{"KeyboardState effectiveTypingKind"}
+    Alphabet["AlphabeticKeyboardLayout + safe typing fallback"]
+    Mic["Standard/Extended layout"]
+    Native["NativeInputModeSwitchKey: UIKit selector"]
+    Render["RenderProbe 350ms after appearance"]
+    Missing{"Missing letter rows? hosting in window?"}
+    Refresh["One bounded touch-row refresh"]
+    Unhandled["renderSuspicious only: other blank/height/window failures"]
+    Reentry["textDidChange / foreground / disappear"]
+  end
+  OSenable -->|"OBS: user installs"| OSselect
+  OSselect -.->|"HYP: OS may not instantiate extension"| Load
+  Plist -.->|"NOT keyboard identity or active mode"| OSselect
+  First -->|"OBS: display onboarding"| Onboard
+  Onboard -->|"OBS: choose layout"| Kind
+  Onboard -->|"OBS: mark test host"| Marker
+  Marker -->|"OBS: syncOnboardingPractice"| Signal
+  Signal -->|"OBS: when received, hasSeenAltboard"| Onboard
+  Signal -.->|"HYP: missed or early signal"| Onboard
+  OSenable -->|"OBS: historical probe may persist"| Perm
+  Load -->|"OBS"| Bootstrap
+  Bootstrap -->|"OBS"| Appear
+  Kind -->|"OBS: App Group preference"| Effective
+  Appear -->|"OBS: refresh state"| Effective
+  Effective -->|"OBS: Alphabet / missing resources"| Alphabet
+  Effective -->|"OBS: Standard or Extended when ready"| Mic
+  Alphabet -->|"OBS: dedicated native-picker key"| Native
+  Mic -->|"OBS: cached needsInputModeSwitchKey"| Native
+  Appear -->|"OBS: trace and schedule"| Render
+  Render -->|"OBS: bounded structural checks"| Missing
+  Missing -->|"OBS: confirmed missing rows"| Refresh
+  Missing -->|"OBS: all other suspicious cases"| Unhandled
+  Reentry -->|"OBS: reset transient state / timers"| Appear
+  Reentry -->|"OBS: textDidChange only"| Native
+  OSenable -.->|"HYP: OS required-switch flag changes while hidden"| Native
+
+  classDef hypothetical stroke-dasharray:5 3;
+  class Unhandled hypothetical;
