@@ -1,18 +1,22 @@
 {
   "schema_version": "temporary-review-cleanup/v1",
-  "status": "not_started",
+  "status": "blocked_pending_X8_to_X14_acceptance_and_explicit_user_approval",
   "temporary_branch": "review/full-history-20261114",
   "temporary_root": "review/full-history-20261114",
   "main_must_be_preserved": true,
   "delete_only_after": [
-    "X0-X8 complete or approved explicitly deferred",
-    "No unresolved critical/high findings hidden by scoring",
-    "All mandatory device checks performed or expressly blocked with evidence retained",
-    "User receives concise final code/CI/device-status report in Chat",
-    "Every temporary path accounted before delete"
+    "X0-X14 evidential review gates complete or explicitly blocked without concealing high/critical risks",
+    "Each file in review-queue.json has reviewed/reviewed_limited/blocked disposition and rationale",
+    "All mandatory iPhone acceptance verified or exposed as unresolved blocker",
+    "Durable concise technical record archived in user-approved GitHub location",
+    "Explicit user approval to delete review files or branch"
   ],
   "method": "On review branch, create tree entries {path,mode:'100644',type:'blob',sha:null} for every tracked review-root file; create deletion commit and fast-forward ref after checking expected SHA. Verify review folder absent. Delete review branch through GitHub UI only if connector lacks delete-ref support.",
   "caveat": "Deleting a folder in Git does NOT securely erase historical blobs/commits; never commit private user data at any stage.",
   "cleanup_commit_sha": null,
-  "verified_absent": false
+  "verified_absent": false,
+  "deferred_to_stage": "X15",
+  "requires_explicit_user_approval": true,
+  "auto_cleanup_allowed": false,
+  "next_action": "Retain all review records until X15 and separately approved cleanup. Deleting Git files does not securely erase Git history."
 }

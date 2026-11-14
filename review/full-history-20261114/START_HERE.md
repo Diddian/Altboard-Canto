@@ -1,33 +1,17 @@
-# Altboard-Canto temporary full-history code review
+# Altboard-Canto — Chat Mode full-history review
 
-**Technical work area only; remove it at X9.** Public GitHub branch `review/full-history-20261114`, folder `review/full-history-20261114/`. No source edits or unsigned IPA builds belong on this review branch. Production source is `main`; pinned initial source is `ed2c4ede05567f3f63d2979ade81040c8fe799ad`.
+**Production source:** current `main` HEAD. **Review records:** `review/full-history-20261114`, directory `review/full-history-20261114/`. Latest verified TEST IPA at this checkpoint: Build #236, SHA `c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b`, GitHub Actions run `43629599094`. **Physical iPhone acceptance: NOT RUN.**
 
-## Start / stage routing
+## Start / resume
 
-In a **new ChatGPT Chat Mode chat**, use the single command: **「Altboard-Canto：按 `review/full-history-20261114` 嘅 `review/full-history-20261114/manifest.json` 開始 X0。」** Replace X0 with the stage listed in `manifest.json`. Load `stages.json` and only that stage's `stages/Xn.json`. The stage file is the durable checkpoint; a new chat must not rely on prior conversation memory.
+1. Read `manifest.json` and `stages.json` on this review branch. Then read `REVIEW_COMPLETENESS_PLAN.md`, `review-queue.json` and only the selected `stages/Xn.json`.
+2. Check live `main` HEAD, relevant `docs/TASKS.md` and recent unsigned IPA Actions. Resolve drift; never use dated builds as live source.
+3. For X9–X13, choose P0/P1 queued files in that stage. Read the complete source at exact SHA and relevant caller/consumer. For previously excluded assets, inspect meaningful media/metadata/localization/license evidence; explicitly state if full binary contents were not inspected. Historic paths require an actual old commit.
+4. Perform **both** Untangle Dev ownership/state inspection and manual OCR-style diff/correctness review. The Alibaba OCR CLI has NOT been run. Avoid paid external tools and do not publish private data.
+5. Record `reviewed`, `reviewed_limited` or `blocked` in the queue with exact evidence, test oracle, uncertainty and status `pass/fail/not_run`. Deduplicate new findings with `findings.json`; link to verified source and priority.
+6. Commit `review-queue.json`, `coverage.json`, `findings.json`, `stages/Xn.json`, `manifest.json` on this **review branch** with expected HEAD checks. The original X0–X7 remain source-audit checkpoints, not device acceptance.
+7. X8 retains responsibility for authorized production repairs and per-task >=90% verified acceptance, plus required device checks. X9–X13 may review source sequentially while X8 is open. X14 reconciles all evidence; X15 preserves records unless the user explicitly approves their cleanup.
 
-## Workflow
+**Next stage:** Follow `manifest.lifecycle.next_stage` (X9 at this checkpoint). Preserve unfinished stage state in GitHub before changing chats. No PR, force-push, duplicate IPA workflow, documentation-only IPA, or auto-cleanup. Keep the previous usable IPA.
 
-1. Check `main` HEAD and recent Actions; pin the code SHA and compare drift with earlier results. Read the stage's live code and tests from `main` at a fixed SHA.
-2. Apply two **distinct** lenses: Untangle structural state/owner graph, and line-level **manual OCR-style** file/defect review. Alibaba Open Code Review CLI is **NOT RUN** merely because the skill is available.
-3. Record technical evidence in `coverage.json`, deduplicated root-cause findings in `findings.json`, and labelled observed/proposed edges in `diagrams/Xn-*.mmd`. Record exact file, symbol or line, source commit, scenario and test oracle.
-4. Update `stages/Xn.json` and `manifest.json` in one Git commit on this review branch. `Xn=complete` only after its stop gate. Next worker begins `X(n+1)`. On Chat context pressure, commit checkpoint with Xn=`in_progress` and resume **the same Xn** in a fresh chat.
-5. X0–X7 audit only; X8 may commit small evidence-backed fixes to `main` and run existing `.github/workflows/build-unsigned-ipa.yml` **once when required**. X9 only cleans the temporary review folder after full acceptance.
-
-## Immutable restrictions
-
-Do not copy private ChatGPT Project Sources into this public repo. No raw typing, transcript, audio, passwords, host text or personal identifiers. No documentation-only IPA. No PR, no speculative whole-repo rewrite, no force push, no duplicate owners, no subjective acceptance percentages. Do not re-run 232 iOS builds. Earlier commits can be reviewed through bounded compare windows and Git file history. A passing CI artifact is **not** physical iPhone acceptance.
-
-## Data ownership
-
-- `manifest.json`: ONLY phase status and next stage.
-- `stages.json`: predeclared stage scope, expected outputs and stop conditions.
-- `stages/Xn.json`: exact stage evidence, reviewed SHA, output paths and next-step gates.
-- `history-index.json`: Actions and historical change mapping.
-- `coverage.json`: authoritative source-file and historical-diff accounting.
-- `findings.json`: root-cause issue register, never duplicate an issue under another name.
-- `acceptance.json`: predeclared real behavioral tests, evidence and strict per-task >=90% decision.
-- `diagrams/`: temporary technical state graphs with source/status labels.
-- `cleanup.json`: X9 disposal contract.
-
-If `main` advances, do not silently treat a previous source review as current. Preserve evidence and create a scoped drift review, without moving review branch back to main.
+**Data:** This review branch may be public. Never commit raw typing, host text, user audio/transcripts, credentials, sensitive identifiers, or private Project Sources.
