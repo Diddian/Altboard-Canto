@@ -7,7 +7,7 @@
     "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
     "review_branch": "review/full-history-20261114"
   },
-  "status": "X0-X7 historical baseline reconciled to X8 Build #236; X9-X13 inventory of 426 queued gaps; executable/device acceptance still incomplete",
+  "status": "X9 in progress: 3 first-time complete source-file+consumer reviews at Build 236; 423 queue entries remain; device/critical repair acceptance open.",
   "expected_current_tracked_files_observed": 578,
   "current_tracked_files": 578,
   "initial_tracked_files": 356,
@@ -1994,7 +1994,10 @@
       "path": "SayboardKeyboard/KeyboardTouchLearning.swift",
       "sha": "3b40ba24fe4005e6a40b22083c7fd353b418f6cb",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X9",
+      "latest_reviewed_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "review_note": "Full 56-line in-memory adjacent-key correction classifier read; AlphabeticTouchRow.swift lines 290-307 and KeyboardViewController.swift lines 1354-1371 inspected. Tap position kept locally in process, no raw typing persistence in this owner. Lifecycle invalidates on field change. Negative test: Unrelated or nonadjacent Delete->tap must not shift boundary; context/field change invalidates pending classifier; physical touch/device not_run."
     },
     {
       "path": "SayboardKeyboard/KeyboardViewController+CursorNavigation.swift",
@@ -2953,7 +2956,10 @@
       "path": "Shared/HistoryRecord.swift",
       "sha": "21f5f8d659d399cf007441e7f1b141e22717e813",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X9",
+      "latest_reviewed_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "review_note": "Full 74-line Codable record and HistoryStore.swift lines 62-87, 92-105, 213-249 inspected. Backward decode supplies waveform/language defaults; unreadable index throws and save preserves unindexed record. Does NOT close F-0031/F-0032 runtime gates. Negative test: Decode old records without optional fields; corrupt JSON must throw without destroying audio; deletion fault injection is separate. Runtime not_run."
     },
     {
       "path": "Shared/HistoryStore.swift",
@@ -2991,7 +2997,10 @@
       "path": "Shared/KeyboardDocumentIdentifier.swift",
       "sha": "1c1cdbafe933dca7c5fd1f8a2537f03ccb37d1ee",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X9",
+      "latest_reviewed_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "review_note": "Full 28-line source inspected; KeyboardViewController.swift lines 1353-1374 and 1429-1439 consume safe-nil handling to invalidate touch epoch, not to authorize arbitrary host text insertion. Negative test: UIKit nil field ID must invalidate touch state and reject auto insertion; field A->B must advance document epoch. Device not_run."
     },
     {
       "path": "Shared/KeyboardExperimentMetrics.swift",
@@ -11083,11 +11092,12 @@
       "build_236": "success at c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b; test IPA uploaded; native SayboardTests NOT executed"
     },
     "X9": {
-      "status": "ready_to_review",
+      "status": "in_progress",
       "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
       "planned_paths": 65,
-      "reviewed_new": 0,
-      "queue_path": "review/full-history-20261114/review-queue.json"
+      "reviewed_new": 3,
+      "queue_path": "review/full-history-20261114/review-queue.json",
+      "pending": 62
     },
     "X10": {
       "status": "queued_blocked_until_predecessor",
@@ -11129,9 +11139,9 @@
   "counts": {
     "current_total": 578,
     "historical_only": 14,
-    "reviewed": 166,
+    "reviewed": 169,
     "excluded": 166,
-    "not_reviewed": 260,
+    "not_reviewed": 257,
     "known_changed_path_occurrences": 983,
     "known_unique_changed_paths": 336
   },
@@ -11145,8 +11155,8 @@
     "conclusion": "success",
     "physical_iphone": "not_run",
     "tracked_files": 578,
-    "reviewed_source": 166,
-    "queued_unreviewed_current": 246,
+    "reviewed_source": 169,
+    "queued_unreviewed_current": 243,
     "queued_previously_excluded_current": 166,
     "queued_historical_only": 14,
     "queue_path": "review/full-history-20261114/review-queue.json"

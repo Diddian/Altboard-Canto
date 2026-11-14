@@ -2,7 +2,7 @@
   "schema_version": "altboard-review-queue/v1",
   "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
   "historical_source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
-  "status": "all_paths_assigned_not_reviewed",
+  "status": "X9_in_progress",
   "definition": "Each entry is a review obligation, NOT a completed review. Previously excluded files must be inspected with the appropriate evidence depth.",
   "counts": {
     "total": 426,
@@ -3194,10 +3194,19 @@
       "stage": "X9",
       "provisional_priority": "P0",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+          "blob_sha": "3b40ba24fe4005e6a40b22083c7fd353b418f6cb",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Full 56-line in-memory adjacent-key correction classifier read; AlphabeticTouchRow.swift lines 290-307 and KeyboardViewController.swift lines 1354-1371 inspected. Tap position kept locally in process, no raw typing persistence in this owner. Lifecycle invalidates on field change.",
+          "negative_oracle": "Unrelated or nonadjacent Delete->tap must not shift boundary; context/field change invalidates pending classifier; physical touch/device not_run.",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4544,10 +4553,19 @@
       "stage": "X9",
       "provisional_priority": "P0",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+          "blob_sha": "21f5f8d659d399cf007441e7f1b141e22717e813",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Full 74-line Codable record and HistoryStore.swift lines 62-87, 92-105, 213-249 inspected. Backward decode supplies waveform/language defaults; unreadable index throws and save preserves unindexed record. Does NOT close F-0031/F-0032 runtime gates.",
+          "negative_oracle": "Decode old records without optional fields; corrupt JSON must throw without destroying audio; deletion fault injection is separate. Runtime not_run.",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4559,10 +4577,19 @@
       "stage": "X9",
       "provisional_priority": "P0",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+          "blob_sha": "1c1cdbafe933dca7c5fd1f8a2537f03ccb37d1ee",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Full 28-line source inspected; KeyboardViewController.swift lines 1353-1374 and 1429-1439 consume safe-nil handling to invalidate touch epoch, not to authorize arbitrary host text insertion.",
+          "negative_oracle": "UIKit nil field ID must invalidate touch state and reject auto insertion; field A->B must advance document epoch. Device not_run.",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -6410,5 +6437,33 @@
       "evidence": [],
       "test_status": "not_run"
     }
-  ]
+  ],
+  "review_progress": {
+    "reviewed": 3,
+    "pending": 423,
+    "blocked": 0,
+    "limited": 0,
+    "by_stage": {
+      "X9": {
+        "reviewed": 3,
+        "pending": 62
+      },
+      "X10": {
+        "reviewed": 0,
+        "pending": 77
+      },
+      "X11": {
+        "reviewed": 0,
+        "pending": 104
+      },
+      "X12": {
+        "reviewed": 0,
+        "pending": 166
+      },
+      "X13": {
+        "reviewed": 0,
+        "pending": 14
+      }
+    }
+  }
 }

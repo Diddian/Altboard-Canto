@@ -1,35 +1,45 @@
 {
   "schema_version": "altboard-review-stage/v1",
   "id": "X9",
-  "status": "ready",
-  "source_sha_at_review": null,
+  "status": "in_progress",
+  "source_sha_at_review": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
   "review_branch_head_at_start": null,
-  "started_at": null,
+  "started_at": "2026-11-14",
   "finished_at": null,
   "review_mode": "Manual GitHub Untangle + manual OCR-style; external OCR CLI NOT RUN",
   "untangle_status": "not_run",
-  "files_reviewed": [],
+  "files_reviewed": [
+    "Shared/KeyboardDocumentIdentifier.swift",
+    "Shared/HistoryRecord.swift",
+    "SayboardKeyboard/KeyboardTouchLearning.swift"
+  ],
   "files_excluded": [],
   "files_not_reviewed": [],
   "new_or_updated_findings": [],
   "diagram_paths": [],
   "tests": {
-    "executed": [],
+    "executed": [
+      "Read-only whole-file + caller inspection at pinned main c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b for KeyboardDocumentIdentifier, HistoryRecord, KeyboardTouchLearning; no executable runtime test."
+    ],
     "not_run": [
       "Whole-file content and caller/owner review for assigned queue",
-      "Device/real runtime tests where required"
+      "Device/real runtime tests where required",
+      "Native UIKit nil document proof, corrupt History decoder/store and physical touch-learning behavior are not executed by source inspection."
     ]
   },
   "verified_outputs": [],
   "blocked_reasons": [],
-  "next_action": "Start with P0 queued core source, pin latest main, read complete file and callers, record source/line/negative test evidence in queue and coverage; do not edit production code.",
+  "next_action": "Continue X9 P0 source/call-site review of ModelStorageManager, LLMInferenceService, other assigned runtime files. 62/65 queue paths remain. Maintain X8 device gate separately.",
   "evidence_notes": [
-    "All 65 assigned paths are queued, NOT reviewed. Original review/exclusion status is preserved in review-queue.json."
+    "All 65 assigned paths are queued, NOT reviewed. Original review/exclusion status is preserved in review-queue.json.",
+    "Shared/KeyboardDocumentIdentifier.swift: Full 28-line source inspected; KeyboardViewController.swift lines 1353-1374 and 1429-1439 consume safe-nil handling to invalidate touch epoch, not to authorize arbitrary host text insertion.",
+    "Shared/HistoryRecord.swift: Full 74-line Codable record and HistoryStore.swift lines 62-87, 92-105, 213-249 inspected. Backward decode supplies waveform/language defaults; unreadable index throws and save preserves unindexed record. Does NOT close F-0031/F-0032 runtime gates.",
+    "SayboardKeyboard/KeyboardTouchLearning.swift: Full 56-line in-memory adjacent-key correction classifier read; AlphabeticTouchRow.swift lines 290-307 and KeyboardViewController.swift lines 1354-1371 inspected. Tap position kept locally in process, no raw typing persistence in this owner. Lifecycle invalidates on field change."
   ],
   "review_plan_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
   "assigned_count": 65,
   "review_queue": "review/full-history-20261114/review-queue.json",
-  "reviewed_count": 0,
+  "reviewed_count": 3,
   "reviewed_limited_count": 0,
   "blocked_count": 0,
   "queue_owns_pending_paths": true

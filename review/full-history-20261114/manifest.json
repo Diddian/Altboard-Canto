@@ -15,7 +15,7 @@
     "latest_workflow_run_id": 43629599094
   },
   "lifecycle": {
-    "phase": "X8_in_progress_X9_queued_review",
+    "phase": "X8_in_progress_X9_source_review_in_progress",
     "next_stage": "X9",
     "statuses": {
       "X0": "complete",
@@ -27,7 +27,7 @@
       "X6": "complete",
       "X7": "complete",
       "X8": "in_progress",
-      "X9": "ready",
+      "X9": "in_progress",
       "X10": "blocked",
       "X11": "blocked",
       "X12": "blocked",
