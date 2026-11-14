@@ -36,3 +36,13 @@ flowchart TD
   REATTACH --> HASH["SHA-256 verified before atomic model promotion"]
   ORPHAN --> RETRY["User chooses Retry; no automatic restart"]
   HISTBAD["Unreadable history.json"] --> EXPORT["Voluntary Voice Notes export: CAF + original index bytes + warning"]
+
+  %% F-0022/F-0023 source candidate main@c1b3a1082f8b. Native host still unverified.
+  ASR_FINAL["Final ASR outbox: delivery UUID"] --> BOUND_REQ["LLMRequest.sourceDeliveryID"]
+  BOUND_REQ --> DONE_RESULT["LLMResult.sourceDeliveryID"]
+  BOUND_REQ -.->|"Failed/cancelled: original still in outbox"| ASR_FINAL
+  DONE_RESULT --> ORPHAN_CHECK{"Origin keyboard alive?"}
+  ORPHAN_CHECK -->|"yes, same document+context"| HOST_COMMIT["Insert or copy, then acknowledge source"]
+  ORPHAN_CHECK -->|"no, request cleared"| RECOVERY_UI["AI toolbar: explicit Copy saved AI result"]
+  RECOVERY_UI --> PASTE["Clipboard only; user chooses destination"]
+  PASTE --> ACK["Release result slot and acknowledge matching source"]

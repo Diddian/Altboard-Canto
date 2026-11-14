@@ -11019,7 +11019,7 @@
     },
     "X8": {
       "status": "12_changed_paths_manual_diff_reviewed; tests/device_pending",
-      "candidate_source_sha": "9433d29e82e04fb00eb374fbe825aacbf0d23350",
+      "candidate_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
       "baseline_source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
       "changed_paths": [
         "Sayboard/Services/AudioPlayerService.swift",
@@ -11046,7 +11046,13 @@
         "SayboardTests/LiveInsertionReceiptTests.swift",
         "Shared/ConversationTurn.swift",
         "Shared/ExperimentalLiveTranscription.swift",
-        "scripts/test_settings_contract.py"
+        "scripts/test_settings_contract.py",
+        "Shared/LLMBridge.swift",
+        "SayboardKeyboard/Views/KeyboardLLMActionsToolbar.swift",
+        "SayboardKeyboard/Views/KeyboardView.swift",
+        "SayboardKeyboard/Views/LLMActionBar.swift",
+        "SayboardKeyboard/Views/Layouts/KeyboardChrome.swift",
+        "scripts/verify-llm-bridge.swift"
       ],
       "device_acceptance": "not_run",
       "historical_and_unaffected_file_coverage": "X7 captured source SHA preserved, no blanket rebasing of untouched files",
@@ -11064,7 +11070,8 @@
         "runURL": "https://github.com/Diddian/Altboard-Canto/actions/runs/43625422370"
       },
       "build_234": "success at e396d72f5f93ff572f8479cf28b4a728c4eff49c",
-      "build_235": "in_progress at 9433d29e82e04fb00eb374fbe825aacbf0d23350"
+      "build_235": "success at 9433d29e",
+      "build_236": "preflights passed, full build pending at c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b"
     }
   },
   "counts": {

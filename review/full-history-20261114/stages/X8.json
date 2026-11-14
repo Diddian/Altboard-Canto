@@ -2,12 +2,12 @@
   "schema_version": "altboard-review-stage/v1",
   "id": "X8",
   "status": "in_progress",
-  "source_sha_at_review": "9433d29e82e04fb00eb374fbe825aacbf0d23350",
+  "source_sha_at_review": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
   "review_branch_head_at_start": "00d11a6e8b81cc31dbb3b7909020549f34c5b035",
   "started_at": "2026-11-14",
   "finished_at": null,
   "review_mode": "Scoped GitHub manual Untangle/OCR-style and targeted regression matrix; external Alibaba OCR CLI not run",
-  "untangle_status": "Scoped owner and consumer review at main@9433d29e82e04fb00eb374fbe825aacbf0d23350; 16 changed paths examined for F-0019, F-0028 and F-0031 export, F-0037 stale-turn equivalence. OCR CLI not run; no iPhone.",
+  "untangle_status": "Manual code ownership review at main@c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b: 10/10 changed files plus source handoff/bridge/callback consumers; OCR CLI not run. Mandatory device tests still pending.",
   "files_reviewed": [
     "Sayboard/Services/AudioPlayerService.swift",
     "Sayboard/Services/ConversationCoordinator.swift",
@@ -33,7 +33,13 @@
     "SayboardTests/LiveInsertionReceiptTests.swift",
     "Shared/ConversationTurn.swift",
     "Shared/ExperimentalLiveTranscription.swift",
-    "scripts/test_settings_contract.py"
+    "scripts/test_settings_contract.py",
+    "Shared/LLMBridge.swift",
+    "SayboardKeyboard/Views/KeyboardLLMActionsToolbar.swift",
+    "SayboardKeyboard/Views/KeyboardView.swift",
+    "SayboardKeyboard/Views/LLMActionBar.swift",
+    "SayboardKeyboard/Views/Layouts/KeyboardChrome.swift",
+    "scripts/verify-llm-bridge.swift"
   ],
   "files_excluded": [],
   "files_not_reviewed": [
@@ -57,7 +63,9 @@
       "Build #233 earlier preflight operation ownership passed; offline IME step failed on obsolete verifier, log job 132538680920.",
       "Build #234 precompile source/IME/smoke checks all passed, iOS compile still in progress when inspected.",
       "Build #234 at e396d72f5f93ff572f8479cf28b4a728c4eff49c passed preflight, Xcode 26.2 compile, entitlements, packaging and TEST IPA artifact upload; no iPhone acceptance.",
-      "X8 second batch main@9433d29e82e04fb00eb374fbe825aacbf0d23350 has source-level read-only invariants and added a nonexecuted Swift Testing fixture; Build #235 executing."
+      "X8 second batch main@9433d29e82e04fb00eb374fbe825aacbf0d23350 has source-level read-only invariants and added a nonexecuted Swift Testing fixture; Build #235 executing.",
+      "Build #235 success: Xcode 26.2 unsigned compile, App Group entitlements, test IPA package/artifact upload at 9433d29e.",
+      "Build #236 operation-identity preflight PASS with executable Swift single-slot bridge + orphan recovery tests on main@c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b; final build outcome pending."
     ],
     "not_run": [
       "Filesystem fault injection for legacy model move, corrupt History index, Conversation copy/delete",
@@ -65,7 +73,9 @@
       "Outstanding X0-X7 high-risk root cause repairs; no external Alibaba OCR CLI",
       "Build #234 exact-SHA terminal compilation, package and artifact upload: pending",
       "Build #235 terminal result, new Swift Testing fixture execution, native iPhone Live Dictation replay and download corruption/restart fault injection",
-      "F-0022/F-0023 disconnected candidate 089f6cda1588609561e5637135f62aae5b3c2cdd: executable Swift verifier and iPhone user recovery not yet run"
+      "F-0022/F-0023 disconnected candidate 089f6cda1588609561e5637135f62aae5b3c2cdd: executable Swift verifier and iPhone user recovery not yet run",
+      "Build #236 final compile/IPA artifact verification",
+      "iPhone SideStore: LLM auto-result original field, keyboard reentry, orphan copy button, manual Stop, failed/cancelled model recovery"
     ]
   },
   "verified_outputs": [
@@ -79,10 +89,11 @@
   "blocked_reasons": [
     "Predeclared mandatory functional cases not all executed; six-task gate below 90%",
     "Other confirmed high findings F-0001, F-0019, F-0022, F-0023, F-0028 remain open",
-    "Build #235 is in progress; compiled/test-only candidate not yet verified.",
-    "F-0022/F-0023 recovery candidate not pushed to main; user-visible Diagnostics recovery not device tested"
+    "F-0022/F-0023 recovery candidate not pushed to main; user-visible Diagnostics recovery not device tested",
+    "Build #236 final compile/artifact pending at c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+    "F-0022/F-0023 functional end-to-end and physical-iPhone acceptance remain not_run"
   ],
-  "next_action": "Wait for Build #235 terminal result before any main ref change. Inspect preflight/Xcode/artifact at main@9433d29e. Only after successful build and scoped defect review consider fast-forwarding staged F-0022/F-0023 candidate 089f6cda1588609561e5637135f62aae5b3c2cdd with one [TEST IPA] workflow. Physical SideStore acceptance pending; do not mark X8 complete.",
+  "next_action": "Inspect Build #236 final outcome. If success: test exact c1b3a108 IPA on physical iPhone (original field recovery, AI automatic handoff, orphan user-initiated copy, then next AI request); do not call X8 complete before all mandatory tasks pass. F-0001 and additional findings remain open.",
   "evidence_notes": [
     "Initial repair batch predeclared BEFORE production edits: F-0018, F-0020, F-0027, F-0031, F-0036, F-0037.",
     "Other high/critical findings remain open; X8 is not complete, pending per-task mandatory tests and 90% acceptance.",
@@ -99,6 +110,9 @@
     "Build #235 started for main@9433d29e82e04fb00eb374fbe825aacbf0d23350 (run 43626960646); its conclusion and device behavior pending.",
     "F-0019 receipt before UIKit mutation uses O_EXCL per session; restarted controller refuses replay and preserves outbox for manual recovery. Claim not equivalent to physical receipt-after-insert proof.",
     "F-0028 damaged index quarantined, unknown owned-session URLSession tasks cancelled, known task IDs reattached, original model SHA gate retained. Event-driven restore on foreground, not polling.",
-    "F-0022/F-0023 recovery work staged as unpushed GitHub commit 089f6cda1588609561e5637135f62aae5b3c2cdd (parent main@9433d29e); after source review of 6 changed files. Saves original LLM request on host failure, exposes user-confirmed clipboard recovery in existing Diagnostics, and expands executable Swift verifier; NO CI/IPA/device verification."
+    "F-0022/F-0023 recovery work staged as unpushed GitHub commit 089f6cda1588609561e5637135f62aae5b3c2cdd (parent main@9433d29e); after source review of 6 changed files. Saves original LLM request on host failure, exposes user-confirmed clipboard recovery in existing Diagnostics, and expands executable Swift verifier; NO CI/IPA/device verification.",
+    "Build #235 at 9433d29e concluded success with TEST IPA; exact run 43626960646.",
+    "F-0022/F-0023 integrated source on main@c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b (10 changed files). Verified preflight bridge test in Build #236; Xcode result and iPhone remain unverified.",
+    "Alternative unmerged candidate 089f6cd addresses a similar owner using Diagnostics recovery; not merged or applied; avoid duplicate recovery handlers."
   ]
 }

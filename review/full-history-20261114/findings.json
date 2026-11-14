@@ -1002,7 +1002,14 @@
       "regression_oracle": "Queue auto LLM, kill extension/host after source ack but before model result, recreate keyboard: original/final result remains recoverable without foreign-field insertion. Also simulate request storage failure and language change.",
       "verification": [
         "Confirmed early ack relative to asynchronous LLM completion; actual user-missed delivery on iPhone not observed."
-      ]
+      ],
+      "x8_candidate": {
+        "main_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+        "phase": "source_patched_preflight_passed_build_pending",
+        "build_run": 236,
+        "approval": "pending",
+        "notes": "Predeclared acceptance and direct controller/bridge diff reviewed; device unverified"
+      }
     },
     {
       "first_detected_build": null,
@@ -1053,7 +1060,14 @@
       "verification": [
         "Durable result + ephemeral ID + slot rejection combination confirmed; full repo-wide external cleanup not exhaustively asserted, physical stuck session not observed.",
         "Build #228 has identical LLMBridge/keyboard LLM source blob."
-      ]
+      ],
+      "x8_candidate": {
+        "main_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+        "phase": "source_patched_preflight_passed_build_pending",
+        "build_run": 236,
+        "approval": "pending",
+        "notes": "Predeclared acceptance and direct controller/bridge diff reviewed; device unverified"
+      }
     },
     {
       "first_detected_build": null,

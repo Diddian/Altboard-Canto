@@ -713,8 +713,10 @@
           "method": "automated",
           "severity": "critical",
           "mandatory": true,
-          "status": "not_run",
-          "evidence": []
+          "status": "pass",
+          "evidence": [
+            "Build #236, main@c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b, operation-identity preflight PASS: scripts/verify-llm-bridge.swift verifies sourceDeliveryID persistence on request/result, and reviewed KeyboardViewController.insertTranscribedText keeps source delivery queued instead of acknowledging it before LLM completion. Full crash/host UI not tested."
+          ]
         },
         {
           "id": "failure",
@@ -751,8 +753,10 @@
         }
       ],
       "untangle": {
-        "performed": false,
-        "evidence": [],
+        "performed": true,
+        "evidence": [
+          "Main@c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b: single-slot LLMBridge owns status/result/source UUID; keyboard emits request/observes status; copy action is explicit, no automatic orphan insertion. Manual scoped diff inspection of 10 changed files."
+        ],
         "unresolved_critical": false
       },
       "runtime_gate": {
@@ -760,7 +764,9 @@
         "status": "not_run",
         "evidence": []
       },
-      "status": "not_started"
+      "status": "test_only_pending",
+      "candidate_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "preliminary_source_weight": 30
     },
     "F-0023": {
       "task_id": "F-0023",
@@ -781,8 +787,10 @@
           "method": "automated",
           "severity": "critical",
           "mandatory": true,
-          "status": "not_run",
-          "evidence": []
+          "status": "pass",
+          "evidence": [
+            "Build #236, main@c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b, executable scripts/verify-llm-bridge.swift PASS: after host removes completed request, recoverableResult returns matching request ID and output while next job remains blocked until result clear. UIKit copy action not device-tested."
+          ]
         },
         {
           "id": "manual_recovery",
@@ -819,8 +827,10 @@
         }
       ],
       "untangle": {
-        "performed": false,
-        "evidence": [],
+        "performed": true,
+        "evidence": [
+          "Main@c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b: single-slot LLMBridge owns status/result/source UUID; keyboard emits request/observes status; copy action is explicit, no automatic orphan insertion. Manual scoped diff inspection of 10 changed files."
+        ],
         "unresolved_critical": false
       },
       "runtime_gate": {
@@ -828,7 +838,9 @@
         "status": "not_run",
         "evidence": []
       },
-      "status": "not_started"
+      "status": "test_only_pending",
+      "candidate_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "preliminary_source_weight": 30
     }
   },
   "device_gate": {
@@ -848,7 +860,8 @@
     "build_234": "success; exact SHA e396d72f5f93ff572f8479cf28b4a728c4eff49c; GitHub Actions 43625422370; TEST IPA artifact uploaded",
     "no_device_evidence": true,
     "additional_gap": "F-0031 recovery_export fails on corrupted JSON index; source acceptance downgraded 15 -> 0 on this criterion; needs read-only raw-audio recovery export before accepted",
-    "build_235": "in_progress; exact SHA 9433d29e82e04fb00eb374fbe825aacbf0d23350; GitHub Actions 43626960646",
-    "device_acceptance": "not_run"
+    "build_235": "completed success, SHA 9433d29e82e04fb00eb374fbe825aacbf0d23350, TEST IPA artifact available, run 43626960646",
+    "device_acceptance": "not_run",
+    "build_236": "in_progress at SHA c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b; preflight policy/ownership checks passed, full compile not verified"
   }
 }
