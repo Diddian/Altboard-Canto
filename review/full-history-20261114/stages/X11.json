@@ -1,0 +1,37 @@
+{
+  "schema_version": "altboard-review-stage/v1",
+  "id": "X11",
+  "status": "blocked",
+  "source_sha_at_review": null,
+  "review_plan_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+  "started_at": null,
+  "finished_at": null,
+  "review_mode": "Manual GitHub Untangle + manual OCR-style; external OCR CLI NOT RUN",
+  "untangle_status": "not_run",
+  "assigned_count": 104,
+  "review_queue": "review/full-history-20261114/review-queue.json",
+  "reviewed_count": 0,
+  "reviewed_limited_count": 0,
+  "blocked_count": 0,
+  "files_reviewed": [],
+  "files_excluded": [],
+  "files_not_reviewed": [],
+  "queue_owns_pending_paths": true,
+  "new_or_updated_findings": [],
+  "diagram_paths": [],
+  "tests": {
+    "executed": [],
+    "not_run": [
+      "Whole-file content and caller/owner review for assigned queue",
+      "Device/real runtime tests where required"
+    ]
+  },
+  "verified_outputs": [],
+  "blocked_reasons": [
+    "Prior stage not completed"
+  ],
+  "next_action": "Open only when predecessor is completed, reconcile latest source HEAD.",
+  "evidence_notes": [
+    "All 104 assigned paths are queued, NOT reviewed. Original review/exclusion status is preserved in review-queue.json."
+  ]
+}

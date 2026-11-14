@@ -1,12 +1,12 @@
 {
   "schema_version": "altboard-review-stage/v1",
   "id": "X9",
-  "status": "blocked",
+  "status": "ready",
   "source_sha_at_review": null,
   "review_branch_head_at_start": null,
   "started_at": null,
   "finished_at": null,
-  "review_mode": "GitHub manual OCR-style; Alibaba OCR CLI not run",
+  "review_mode": "Manual GitHub Untangle + manual OCR-style; external OCR CLI NOT RUN",
   "untangle_status": "not_run",
   "files_reviewed": [],
   "files_excluded": [],
@@ -15,10 +15,22 @@
   "diagram_paths": [],
   "tests": {
     "executed": [],
-    "not_run": []
+    "not_run": [
+      "Whole-file content and caller/owner review for assigned queue",
+      "Device/real runtime tests where required"
+    ]
   },
   "verified_outputs": [],
   "blocked_reasons": [],
-  "next_action": "Begin only after manifest previous stage gate; use stages.json for exact scope",
-  "evidence_notes": []
+  "next_action": "Start with P0 queued core source, pin latest main, read complete file and callers, record source/line/negative test evidence in queue and coverage; do not edit production code.",
+  "evidence_notes": [
+    "All 65 assigned paths are queued, NOT reviewed. Original review/exclusion status is preserved in review-queue.json."
+  ],
+  "review_plan_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+  "assigned_count": 65,
+  "review_queue": "review/full-history-20261114/review-queue.json",
+  "reviewed_count": 0,
+  "reviewed_limited_count": 0,
+  "blocked_count": 0,
+  "queue_owns_pending_paths": true
 }
