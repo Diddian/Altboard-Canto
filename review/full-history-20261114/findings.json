@@ -1,7 +1,7 @@
 {
   "schema_version": "untangle-ocr-findings/v1",
   "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
-  "status": "X0-X7 scoped source findings with full path status ledger; X8 repair pending, device unverified",
+  "status": "X0-X7 findings retained; six X8 root-cause candidates on main@0ab1269138a731418a9701c69f2dcca8286e5f01 pending CI/device; remaining high findings still open",
   "findings": [
     {
       "id": "F-0001",
@@ -809,7 +809,14 @@
       "regression_oracle": "Two synthetic fields A and B in same pid/version with nil UIKit document identifiers: origin A, attempt delivery to B -> denied; original unavailable -> result remains recoverable, not discarded. Positive same-field with nonnil verified ID still inserts once.",
       "verification": [
         "Confirmed policy cannot distinguish two fields sharing a host-process marker; no physical iPhone foreign-field insertion observed."
-      ]
+      ],
+      "x8_candidate": {
+        "main_sha": "0ab1269138a731418a9701c69f2dcca8286e5f01",
+        "phase": "source_patched_not_device_verified",
+        "build_run": 233,
+        "review_scope": "X8 bounded batch",
+        "approval": "pending"
+      }
     },
     {
       "first_detected_build": null,
@@ -896,7 +903,14 @@
       "regression_oracle": "Generate history for document A, focus document B with identical preceding text and invoke Undo: B unchanged; return to A and Undo/Redo remains correct. Also test bounded context truncation and manual typing.",
       "verification": [
         "Confirmed source-level unauthorized cross-document mutation path under matching text; iPhone UI test not run."
-      ]
+      ],
+      "x8_candidate": {
+        "main_sha": "0ab1269138a731418a9701c69f2dcca8286e5f01",
+        "phase": "source_patched_not_device_verified",
+        "build_run": 233,
+        "review_scope": "X8 bounded batch",
+        "approval": "pending"
+      }
     },
     {
       "first_detected_build": null,
@@ -1197,7 +1211,14 @@
       "verification": [
         "Direct source control flow verified; precise user data loss and upgrade reproduction NOT performed.",
         "Same LegacyModelMigration blob observed at Builds #84, #136, #193, #228 and #232."
-      ]
+      ],
+      "x8_candidate": {
+        "main_sha": "0ab1269138a731418a9701c69f2dcca8286e5f01",
+        "phase": "source_patched_not_device_verified",
+        "build_run": 233,
+        "review_scope": "X8 bounded batch",
+        "approval": "pending"
+      }
     },
     {
       "id": "F-0028",
@@ -1396,7 +1417,14 @@
       "regression_oracle": "Seed malformed history.json and a synthetic new audio recording: new audio survives failure and is recoverable; old file preserved for repair, no unapproved overwrite, valid history continues atomic append.",
       "verification": [
         "Deterministic source path verified; no malformed real user history or audio fault test executed."
-      ]
+      ],
+      "x8_candidate": {
+        "main_sha": "0ab1269138a731418a9701c69f2dcca8286e5f01",
+        "phase": "source_patched_not_device_verified",
+        "build_run": 233,
+        "review_scope": "X8 bounded batch",
+        "approval": "pending"
+      }
     },
     {
       "id": "F-0032",
@@ -1626,7 +1654,14 @@
       "regression_oracle": "History natural finish, final meeting part, missing CAF and timed stop followed by cold model load: no orphan playback owner; manual Stop remains authoritative; no two concurrent audio owners.",
       "verification": [
         "Source-level owner/caller inspection and read-only predicate at pinned main SHA; iPhone AVAudioSession and native callback timing NOT RUN."
-      ]
+      ],
+      "x8_candidate": {
+        "main_sha": "0ab1269138a731418a9701c69f2dcca8286e5f01",
+        "phase": "source_patched_not_device_verified",
+        "build_run": 233,
+        "review_scope": "X8 bounded batch",
+        "approval": "pending"
+      }
     },
     {
       "first_detected_build": null,
@@ -1669,7 +1704,14 @@
       "regression_oracle": "Inject source-folder removeItem failure after confirmed destination write; relaunch must not present duplicate active draft or allow duplicate import; saved meeting audio retained.",
       "verification": [
         "Source-level branch and error swallow confirmed; no disk fault injection, restart runtime or device test executed."
-      ]
+      ],
+      "x8_candidate": {
+        "main_sha": "0ab1269138a731418a9701c69f2dcca8286e5f01",
+        "phase": "source_patched_not_device_verified",
+        "build_run": 233,
+        "review_scope": "X8 bounded batch",
+        "approval": "pending"
+      }
     },
     {
       "first_detected_build": null,

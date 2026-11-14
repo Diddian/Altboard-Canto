@@ -1,0 +1,24 @@
+flowchart TD
+  subgraph "X8 source changes on main@0ab1269138a7 — device UNVERIFIED"
+    D["Dictation final text / request token"] --> ID{"UIKit document ID + epoch + fingerprint match?"}
+    ID -->|yes| INS["Scoped insert + ack"]
+    ID -->|no| O["Outbox and History preserved; no host mutation"]
+    LH["LLM Undo/Redo"] --> H{"Same document + epoch + context?"}
+    H -->|yes| EDIT["Replace original history text"]
+    H -->|no| REJ["Clear unsafe history; no edit"]
+    LEG["Legacy model migration"] --> VALID{"Verified destination installed?"}
+    VALID -->|no| RETRY["Keep marker and original file; retry next launch"]
+    VALID -->|yes| DONE["Remove legacy marker; cleanup after all succeed"]
+    HIST["History index write"] --> OK{"Read and atomic write succeeded?"}
+    OK -->|yes| INDEX["Index new recording"]
+    OK -->|no| KEEP["Preserve CAF + private unindexed JSON"]
+    PLAY["History / Meeting playback"] --> LEASE["Shared playbackOwner UUID"]
+    LEASE --> END["Natural end/error/pause -> release matching lease"]
+    CONV["Conversation draft (stable turn IDs)"] --> DEDUP{"Meeting already contains these turns?"}
+    DEDUP -->|yes| NOOP["Reuse existing Meeting"]
+    DEDUP -->|no| COPY["Copy audio + commit meeting manifest"]
+    NOOP --> CLEAN["Attempt draft cleanup; error recoverable"]
+    COPY --> CLEAN
+  end
+  classDef gap stroke:#b46c1e,stroke-width:2px;
+  class O,REJ,RETRY,KEEP,CLEAN gap;

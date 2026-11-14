@@ -2,28 +2,76 @@
   "schema_version": "altboard-review-stage/v1",
   "id": "X8",
   "status": "in_progress",
-  "source_sha_at_review": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+  "source_sha_at_review": "0ab1269138a731418a9701c69f2dcca8286e5f01",
   "review_branch_head_at_start": "00d11a6e8b81cc31dbb3b7909020549f34c5b035",
   "started_at": "2026-11-14",
   "finished_at": null,
   "review_mode": "Scoped GitHub manual Untangle/OCR-style and targeted regression matrix; external Alibaba OCR CLI not run",
-  "untangle_status": "planned, pending changed-diff review",
-  "files_reviewed": [],
+  "untangle_status": "manual changed-file review (12/12 changed files) and immediate owner/caller traces completed; IPA and iPhone not verified",
+  "files_reviewed": [
+    "Sayboard/Services/AudioPlayerService.swift",
+    "Sayboard/Services/ConversationCoordinator.swift",
+    "Sayboard/Services/LegacyModelMigration.swift",
+    "Sayboard/Services/MeetingAudioPlayback.swift",
+    "Sayboard/Services/MeetingRecordingCoordinator.swift",
+    "SayboardKeyboard/KeyboardState.swift",
+    "SayboardKeyboard/KeyboardViewController+LLM.swift",
+    "SayboardKeyboard/KeyboardViewController.swift",
+    "Shared/DictationRequestPolicy.swift",
+    "Shared/HistoryStore.swift",
+    "scripts/test_operation_ownership.py",
+    "scripts/verify-recording-policies.swift"
+  ],
   "files_excluded": [],
-  "files_not_reviewed": [],
-  "new_or_updated_findings": [],
-  "diagram_paths": [],
+  "files_not_reviewed": [
+    "Unresolved X0-X7 high findings beyond bounded repair batch: F-0001, F-0008 (hypothesis), F-0013 (hypothesis), F-0019, F-0022, F-0023, F-0028",
+    "Full Stage-X8 device-side behavior and filesystem fault injections not run"
+  ],
+  "new_or_updated_findings": [
+    "F-0018",
+    "F-0020",
+    "F-0027",
+    "F-0031",
+    "F-0036",
+    "F-0037"
+  ],
+  "diagram_paths": [
+    "review/full-history-20261114/diagrams/X8-repaired-contracts.mmd"
+  ],
   "tests": {
-    "executed": [],
-    "not_run": []
+    "executed": [
+      "GitHub manual complete source diff inspection of 12 changed files, main@0ab1269138a731418a9701c69f2dcca8286e5f01 vs ed2c4ede; not a native build or functional runtime test",
+      "Source-level safety assertions in changed scripts prepared; GitHub Actions run #233 is executing, result pending"
+    ],
+    "not_run": [
+      "Build #233 terminal conclusion, artifact verification, iPhone SideStore test",
+      "Filesystem fault injection for legacy model move, corrupt History index, Conversation copy/delete",
+      "Native AVAudioPlayer completion callback, UIKit foreign-field interactions, LLM undo/redo on-device",
+      "Outstanding X0-X7 high-risk root cause repairs; no external Alibaba OCR CLI"
+    ]
   },
-  "verified_outputs": [],
-  "blocked_reasons": [],
-  "next_action": "Implement first bounded repairs on fresh main without PR, preserving TEST IPA path and prior usable IPA; update acceptance with exact results.",
+  "verified_outputs": [
+    "review/full-history-20261114/acceptance.json",
+    "review/full-history-20261114/stages/X8.json",
+    "review/full-history-20261114/findings.json",
+    "review/full-history-20261114/coverage.json",
+    "review/full-history-20261114/diagrams/X8-repaired-contracts.mmd",
+    "main@0ab1269138a731418a9701c69f2dcca8286e5f01"
+  ],
+  "blocked_reasons": [
+    "Physical iPhone acceptance not observed; CI Build #233 pending",
+    "Predeclared mandatory functional cases not all executed; six-task gate below 90%",
+    "Other confirmed high findings F-0001, F-0019, F-0022, F-0023, F-0028 remain open"
+  ],
+  "next_action": "Inspect run #233 result, repair compile/contract failures if any without replacing rolling IPA. Obtain iPhone evidence for six tasks. Continue remaining X8 high findings before declaring X8 complete.",
   "evidence_notes": [
     "Initial repair batch predeclared BEFORE production edits: F-0018, F-0020, F-0027, F-0031, F-0036, F-0037.",
     "Other high/critical findings remain open; X8 is not complete, pending per-task mandatory tests and 90% acceptance.",
     "iPhone and UIKit/AVAudioSession tests cannot be certified from GitHub source or CI alone.",
-    "One existing unsigned IPA workflow remains sole build path."
+    "One existing unsigned IPA workflow remains sole build path.",
+    "Production commit 0ab1269138a731418a9701c69f2dcca8286e5f01 is a single main fast-forward with [TEST IPA]; no PR/merge and no review artifacts on main.",
+    "Changed files 12/12 inspected manually in commit diff. Test scripts currently contain source assertions; behavioral tests require runtime evidence.",
+    "Per-task preliminary verified source-inspection weights: F-0018=20/100, F-0020=10/100, F-0027=15/100, F-0031=15/100, F-0036=85/100, F-0037=85/100. These are NOT acceptance percentages.",
+    "All six scoped tasks remain test_only_pending; weighted acceptance >=90 AND mandatory tests is the promotion gate."
   ]
 }

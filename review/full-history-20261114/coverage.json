@@ -7,7 +7,7 @@
     "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
     "review_branch": "review/full-history-20261114"
   },
-  "status": "X0-X7 scoped source/owner audit checkpoint complete with explicit residual unreviewed file paths; X8 pending; physical iPhone not tested",
+  "status": "X0-X7 source coverage snapshot plus X8 changed-file manual review; TEST IPA Build #233 pending",
   "expected_current_tracked_files_observed": 577,
   "current_tracked_files": 577,
   "initial_tracked_files": 356,
@@ -11015,6 +11015,32 @@
         "Mutable revision/checksum consistency not network-tested",
         "Remaining UI, tests, source and other paths individually not_reviewed",
         "No independent reviewer or Alibaba OCR CLI"
+      ]
+    },
+    "X8": {
+      "status": "12_changed_paths_manual_diff_reviewed; tests/device_pending",
+      "candidate_source_sha": "0ab1269138a731418a9701c69f2dcca8286e5f01",
+      "baseline_source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+      "changed_paths": [
+        "Sayboard/Services/AudioPlayerService.swift",
+        "Sayboard/Services/ConversationCoordinator.swift",
+        "Sayboard/Services/LegacyModelMigration.swift",
+        "Sayboard/Services/MeetingAudioPlayback.swift",
+        "Sayboard/Services/MeetingRecordingCoordinator.swift",
+        "SayboardKeyboard/KeyboardState.swift",
+        "SayboardKeyboard/KeyboardViewController+LLM.swift",
+        "SayboardKeyboard/KeyboardViewController.swift",
+        "Shared/DictationRequestPolicy.swift",
+        "Shared/HistoryStore.swift",
+        "scripts/test_operation_ownership.py",
+        "scripts/verify-recording-policies.swift"
+      ],
+      "device_acceptance": "not_run",
+      "historical_and_unaffected_file_coverage": "X7 captured source SHA preserved, no blanket rebasing of untouched files",
+      "limitations": [
+        "Static source string predicates are not executable behavioral tests",
+        "iOS compile/SideStore actual result not yet available",
+        "F-0019, F-0022, F-0023, F-0028 remain unresolved high findings"
       ]
     }
   },

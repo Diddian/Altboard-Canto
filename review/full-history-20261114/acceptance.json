@@ -1,7 +1,7 @@
 {
   "schema_version": "implementation-acceptance/v1",
   "goal": "Separate behavioral 90 percent gate for EACH actual repair, never file coverage or review confidence",
-  "status": "in_progress",
+  "status": "in_progress_test_candidate",
   "minimum_score": 90,
   "required_all_mandatory": true,
   "unresolved_critical_blocks": true,
@@ -48,8 +48,10 @@
           "weight": 20,
           "mandatory": true,
           "severity": "high",
-          "status": "not_run",
-          "evidence": []
+          "status": "pass",
+          "evidence": [
+            "main@0ab1269138a731418a9701c69f2dcca8286e5f01:SayboardKeyboard/KeyboardViewController.swift (failed identity guard before acknowledgement; HistoryStore/TranscriptionBridge record remains)"
+          ]
         },
         {
           "id": "stop_and_foreign",
@@ -75,8 +77,11 @@
         }
       ],
       "untangle": {
-        "performed": false,
-        "evidence": [],
+        "performed": true,
+        "evidence": [
+          "Source-ownership trace: X7 finding F-0018; inspected git diff main@0ab1269138a731418a9701c69f2dcca8286e5f01 against baseline ed2c4ede; manual OCR-style, no CLI",
+          "Dictation request/fingerprint -> verified UIKit destination -> bridge ack"
+        ],
         "unresolved_critical": false
       },
       "runtime_gate": {
@@ -84,7 +89,8 @@
         "status": "not_run",
         "evidence": []
       },
-      "status": "not_started"
+      "status": "test_only_pending",
+      "preliminary_source_weight": 20
     },
     "F-0020": {
       "task_id": "F-0020",
@@ -138,8 +144,10 @@
           "weight": 10,
           "mandatory": true,
           "severity": "medium",
-          "status": "not_run",
-          "evidence": []
+          "status": "pass",
+          "evidence": [
+            "main@0ab1269138a731418a9701c69f2dcca8286e5f01:SayboardKeyboard/KeyboardViewController+LLM.swift navigateLLMHistory (exact preceding context and document/epoch checks)"
+          ]
         },
         {
           "id": "device",
@@ -154,8 +162,10 @@
         }
       ],
       "untangle": {
-        "performed": false,
-        "evidence": [],
+        "performed": true,
+        "evidence": [
+          "Source-ownership trace: X7 finding F-0020; inspected git diff main@0ab1269138a731418a9701c69f2dcca8286e5f01 against baseline ed2c4ede; manual OCR-style, no CLI"
+        ],
         "unresolved_critical": false
       },
       "runtime_gate": {
@@ -163,7 +173,8 @@
         "status": "not_run",
         "evidence": []
       },
-      "status": "not_started"
+      "status": "test_only_pending",
+      "preliminary_source_weight": 10
     },
     "F-0027": {
       "task_id": "F-0027",
@@ -217,8 +228,10 @@
           "weight": 15,
           "mandatory": true,
           "severity": "high",
-          "status": "not_run",
-          "evidence": []
+          "status": "pass",
+          "evidence": [
+            "main@0ab1269138a731418a9701c69f2dcca8286e5f01:Sayboard/Services/LegacyModelMigration.swift runIfNeeded (cleanup after successful migration of both engines)"
+          ]
         },
         {
           "id": "device",
@@ -233,8 +246,10 @@
         }
       ],
       "untangle": {
-        "performed": false,
-        "evidence": [],
+        "performed": true,
+        "evidence": [
+          "Source-ownership trace: X7 finding F-0027; inspected git diff main@0ab1269138a731418a9701c69f2dcca8286e5f01 against baseline ed2c4ede; manual OCR-style, no CLI"
+        ],
         "unresolved_critical": false
       },
       "runtime_gate": {
@@ -242,7 +257,8 @@
         "status": "not_run",
         "evidence": []
       },
-      "status": "not_started"
+      "status": "test_only_pending",
+      "preliminary_source_weight": 15
     },
     "F-0031": {
       "task_id": "F-0031",
@@ -296,8 +312,10 @@
           "weight": 15,
           "mandatory": true,
           "severity": "high",
-          "status": "not_run",
-          "evidence": []
+          "status": "pass",
+          "evidence": [
+            "main@0ab1269138a731418a9701c69f2dcca8286e5f01:Shared/HistoryStore.swift preserveUnindexedRecord + Sayboard/Services/LocalUserDataStore.swift voice-notes archive includes audio directory"
+          ]
         },
         {
           "id": "device",
@@ -312,8 +330,10 @@
         }
       ],
       "untangle": {
-        "performed": false,
-        "evidence": [],
+        "performed": true,
+        "evidence": [
+          "Source-ownership trace: X7 finding F-0031; inspected git diff main@0ab1269138a731418a9701c69f2dcca8286e5f01 against baseline ed2c4ede; manual OCR-style, no CLI"
+        ],
         "unresolved_critical": false
       },
       "runtime_gate": {
@@ -321,7 +341,8 @@
         "status": "not_run",
         "evidence": []
       },
-      "status": "not_started"
+      "status": "test_only_pending",
+      "preliminary_source_weight": 15
     },
     "F-0036": {
       "task_id": "F-0036",
@@ -342,8 +363,10 @@
           "weight": 25,
           "mandatory": true,
           "severity": "high",
-          "status": "not_run",
-          "evidence": []
+          "status": "pass",
+          "evidence": [
+            "main@0ab1269138a731418a9701c69f2dcca8286e5f01:Sayboard/Services/AudioPlayerService.swift handlePlaybackFinished releases matching owner"
+          ]
         },
         {
           "id": "meeting_end",
@@ -353,8 +376,10 @@
           "weight": 25,
           "mandatory": true,
           "severity": "high",
-          "status": "not_run",
-          "evidence": []
+          "status": "pass",
+          "evidence": [
+            "main@0ab1269138a731418a9701c69f2dcca8286e5f01:Sayboard/Services/MeetingAudioPlayback.swift refresh last part releases owner"
+          ]
         },
         {
           "id": "stale_callback",
@@ -364,8 +389,10 @@
           "weight": 20,
           "mandatory": true,
           "severity": "critical",
-          "status": "not_run",
-          "evidence": []
+          "status": "pass",
+          "evidence": [
+            "main@0ab1269138a731418a9701c69f2dcca8286e5f01:Sayboard/Services/AudioPlayerService.swift ObjectIdentifier guard; MeetingAudioPlayback.swift playbackGeneration guard"
+          ]
         },
         {
           "id": "pause_error",
@@ -375,8 +402,10 @@
           "weight": 15,
           "mandatory": true,
           "severity": "high",
-          "status": "not_run",
-          "evidence": []
+          "status": "pass",
+          "evidence": [
+            "main@0ab1269138a731418a9701c69f2dcca8286e5f01:AudioPlayerService.pause/play and MeetingAudioPlayback.toggle/open/stop idempotent release"
+          ]
         },
         {
           "id": "device",
@@ -391,8 +420,11 @@
         }
       ],
       "untangle": {
-        "performed": false,
-        "evidence": [],
+        "performed": true,
+        "evidence": [
+          "Source-ownership trace: X7 finding F-0036; inspected git diff main@0ab1269138a731418a9701c69f2dcca8286e5f01 against baseline ed2c4ede; manual OCR-style, no CLI",
+          "Shared playback UUID owner vs two terminal player consumers"
+        ],
         "unresolved_critical": false
       },
       "runtime_gate": {
@@ -400,7 +432,8 @@
         "status": "not_run",
         "evidence": []
       },
-      "status": "not_started"
+      "status": "test_only_pending",
+      "preliminary_source_weight": 85
     },
     "F-0037": {
       "task_id": "F-0037",
@@ -421,8 +454,10 @@
           "weight": 30,
           "mandatory": true,
           "severity": "critical",
-          "status": "not_run",
-          "evidence": []
+          "status": "pass",
+          "evidence": [
+            "main@0ab1269138a731418a9701c69f2dcca8286e5f01:MeetingRecordingCoordinator.saveConversation compares persisted turn UUIDs before allocating new record"
+          ]
         },
         {
           "id": "cleanup_failure",
@@ -432,8 +467,10 @@
           "weight": 25,
           "mandatory": true,
           "severity": "high",
-          "status": "not_run",
-          "evidence": []
+          "status": "pass",
+          "evidence": [
+            "main@0ab1269138a731418a9701c69f2dcca8286e5f01:ConversationCoordinator.saveAsMeeting catches delete error and retains draft"
+          ]
         },
         {
           "id": "normal_transfer",
@@ -443,8 +480,10 @@
           "weight": 20,
           "mandatory": true,
           "severity": "high",
-          "status": "not_run",
-          "evidence": []
+          "status": "pass",
+          "evidence": [
+            "main@0ab1269138a731418a9701c69f2dcca8286e5f01:MeetingRecordingCoordinator.saveConversation copy/manifest then ConversationCoordinator removes draft"
+          ]
         },
         {
           "id": "protected_audio",
@@ -454,8 +493,10 @@
           "weight": 10,
           "mandatory": true,
           "severity": "high",
-          "status": "not_run",
-          "evidence": []
+          "status": "pass",
+          "evidence": [
+            "main@0ab1269138a731418a9701c69f2dcca8286e5f01:MeetingRecordingCoordinator.saveConversation catch leaves original draft audio; new copy removed on partial fail"
+          ]
         },
         {
           "id": "device",
@@ -470,8 +511,10 @@
         }
       ],
       "untangle": {
-        "performed": false,
-        "evidence": [],
+        "performed": true,
+        "evidence": [
+          "Source-ownership trace: X7 finding F-0037; inspected git diff main@0ab1269138a731418a9701c69f2dcca8286e5f01 against baseline ed2c4ede; manual OCR-style, no CLI"
+        ],
         "unresolved_critical": false
       },
       "runtime_gate": {
@@ -479,13 +522,15 @@
         "status": "not_run",
         "evidence": []
       },
-      "status": "not_started"
+      "status": "test_only_pending",
+      "preliminary_source_weight": 85
     }
   },
   "device_gate": {
     "required_for_user_visible_keyboard_or_audio": true,
     "status": "not_run",
-    "evidence": []
+    "evidence": [],
+    "reason": "SideStore iPhone behavior has not been observed; Build #233 may pass or fail independently"
   },
   "cli_review": {
     "mode": "GitHub manual OCR-style",
