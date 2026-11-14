@@ -490,17 +490,7 @@ final class KeyboardViewController: UIInputViewController {
       cancelled: settings.dictationCancellationRequested,
       hasSelection: selected
     )
-    let sameDocumentlessHost = self.viewIfLoaded?.window != nil
-      && DictationRequestPolicy.mayDeliverWithoutDocumentIdentifier(
-        deliveryToken: delivery.sessionToken, requestedToken: nil,
-        activeToken: settings.dictationSessionToken,
-        deliveryEpoch: delivery.destinationEpoch, currentDocument: document,
-        fingerprint: settings.dictationDestinationFingerprint,
-        originProcessMarker: settings.dictationOriginProcessMarker,
-        currentHost: self.hostProcess, recording: settings.isRecording,
-        cancelled: settings.dictationCancellationRequested, hasSelection: selected
-      )
-    guard sameDocument || sameDocumentlessHost else { return }
+    guard sameDocument else { return }
     self.dictationRequestToken = delivery.sessionToken
     self.dictationDocumentID = document
     if let epoch = delivery.destinationEpoch {
@@ -542,22 +532,8 @@ final class KeyboardViewController: UIInputViewController {
         sessionToken: self.dictationRequestToken, document: currentDocument,
         fingerprint: settings.dictationDestinationFingerprint
       )
-    // Some UIKit hosts return no document UUID. In that case accept only
-    // a recent completed request from this exact originating host process.
-    let matchesDocumentlessHost = self.viewIfLoaded?.window != nil
-      && DictationRequestPolicy.mayDeliverWithoutDocumentIdentifier(
-        deliveryToken: delivery.sessionToken,
-        requestedToken: self.dictationRequestToken,
-        activeToken: settings.dictationSessionToken,
-        deliveryEpoch: delivery.destinationEpoch, currentDocument: currentDocument,
-        fingerprint: settings.dictationDestinationFingerprint,
-        originProcessMarker: settings.dictationOriginProcessMarker,
-        currentHost: self.hostProcess, recording: settings.isRecording,
-        cancelled: settings.dictationCancellationRequested,
-        hasSelection: !(self.textDocumentProxy.selectedText?.isEmpty ?? true)
-      )
     guard !settings.dictationCancellationRequested,
-          (matchesDocument || matchesDocumentlessHost) else {
+          matchesDocument else {
       // Keep the pending delivery in the outbox and in History. A new keyboard
       // can stop capture, but may not write into an unverified host field.
       let reason: FeatureDiagnostics.FailureReason = currentDocument == nil
@@ -580,28 +556,22 @@ final class KeyboardViewController: UIInputViewController {
       self.abandonExperimentalLiveOwnership()
       Self.blockedLiveSessionToken = nil
       self.liveTranscriptionBlockedToken = nil
-      if !matchesDocumentlessHost {
-        FeatureDiagnostics.record(.bridge, .fallback)
-        return
-      }
+      FeatureDiagnostics.record(.bridge, .fallback)
+      return
     }
-    // A documentless return has no live-edit anchor to reconcile. After
-    // verifying the original host process, use the ordinary insertion path.
-    if !matchesDocumentlessHost {
-      switch self.completeExperimentalLiveText(
-        delivery, cancellationRequested: settings.dictationCancellationRequested
-      ) {
-      case .inserted:
-        TranscriptionBridge.acknowledgeDelivery(delivery.resultID)
-        self.keyboardState.showFinalOutputPreview(text)
-        FeatureDiagnostics.record(.bridge, .completed)
-        return
-      case .review:
-        FeatureDiagnostics.record(.bridge, .fallback)
-        return
-      case .notApplicable:
-        break
-      }
+    switch self.completeExperimentalLiveText(
+      delivery, cancellationRequested: settings.dictationCancellationRequested
+    ) {
+    case .inserted:
+      TranscriptionBridge.acknowledgeDelivery(delivery.resultID)
+      self.keyboardState.showFinalOutputPreview(text)
+      FeatureDiagnostics.record(.bridge, .completed)
+      return
+    case .review:
+      FeatureDiagnostics.record(.bridge, .fallback)
+      return
+    case .notApplicable:
+      break
     }
     if self.autoApplyLLMIfNeeded(directText: text) {
       // The existing keyboard LLM bridge now owns the pending output.

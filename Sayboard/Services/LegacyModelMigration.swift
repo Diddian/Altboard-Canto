@@ -1,4 +1,3 @@
-
 import Foundation
 
 private let migrationKey = "hasCompletedR2Migration"
@@ -11,74 +10,99 @@ enum LegacyModelMigration {
     let defaults = UserDefaults.standard
     guard !defaults.bool(forKey: migrationKey) else { return }
 
-    try? ModelStorageManager.ensureRootExists()
-    self.migrateWhisperKitModels(defaults: defaults)
-    self.migrateParakeetModels(defaults: defaults)
+    do { try ModelStorageManager.ensureRootExists() }
+    catch {
+      FeatureDiagnostics.record(.speechModel, .failed)
+      return
+    }
+    let whisperComplete = self.migrateWhisperKitModels(defaults: defaults)
+    let parakeetComplete = self.migrateParakeetModels(defaults: defaults)
+    guard whisperComplete && parakeetComplete else {
+      FeatureDiagnostics.record(.speechModel, .fallback)
+      return
+    }
     self.cleanupLegacyCaches()
-
     defaults.set(true, forKey: migrationKey)
   }
 
-  private static func migrateWhisperKitModels(defaults: UserDefaults) {
+  @discardableResult
+  private static func migrateWhisperKitModels(defaults: UserDefaults) -> Bool {
     let fm = FileManager.default
+    var completed = true
     for variant in ModelVariant.allCases where variant.engine == .whisperKit {
       let key = "\(legacyWhisperKitPathPrefix)\(variant.rawValue)"
       guard let oldPath = defaults.string(forKey: key), !oldPath.isEmpty else { continue }
+      if ModelStorageManager.isDownloaded(variant) {
+        defaults.removeObject(forKey: key)
+        continue
+      }
+
       let oldURL = URL(fileURLWithPath: oldPath)
       guard fm.fileExists(atPath: oldURL.path) else {
-        defaults.removeObject(forKey: key)
+        completed = false
         continue
       }
-
       let newDir = ModelStorageManager.directory(for: variant)
-      guard !fm.fileExists(atPath: newDir.path) else {
-        defaults.removeObject(forKey: key)
-        continue
-      }
-
       do {
         try fm.createDirectory(at: newDir, withIntermediateDirectories: true)
         let destination = newDir.appendingPathComponent(oldURL.lastPathComponent)
-        try fm.moveItem(at: oldURL, to: destination)
+        if !fm.fileExists(atPath: destination.path) {
+          try fm.moveItem(at: oldURL, to: destination)
+        }
+        if ModelStorageManager.isDownloaded(variant) {
+          defaults.removeObject(forKey: key)
+        } else {
+          completed = false
+        }
       } catch {
-        let _ = error.localizedDescription
+        completed = false
       }
-      defaults.removeObject(forKey: key)
     }
+    return completed
   }
 
-  private static func migrateParakeetModels(defaults: UserDefaults) {
+  @discardableResult
+  private static func migrateParakeetModels(defaults: UserDefaults) -> Bool {
     let fm = FileManager.default
+    var completed = true
     for variant in ModelVariant.allCases where variant.engine == .parakeet {
       let key = "\(legacyParakeetDownloadedPrefix)\(variant.rawValue)"
       guard defaults.bool(forKey: key) else { continue }
-      guard let repoFolder = variant.parakeetRepoFolderName else { continue }
-
-      self.moveParakeetModel(variant: variant, repoFolder: repoFolder, fm: fm)
-      defaults.removeObject(forKey: key)
+      if ModelStorageManager.isDownloaded(variant) {
+        defaults.removeObject(forKey: key)
+        continue
+      }
+      guard let repoFolder = variant.parakeetRepoFolderName,
+            let appSupport = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+      else {
+        completed = false
+        continue
+      }
+      let oldDir = appSupport
+        .appendingPathComponent("FluidAudio")
+        .appendingPathComponent("Models")
+        .appendingPathComponent(repoFolder)
+      guard fm.fileExists(atPath: oldDir.path) else {
+        completed = false
+        continue
+      }
+      let newDir = ModelStorageManager.directory(for: variant)
+      do {
+        try fm.createDirectory(at: newDir, withIntermediateDirectories: true)
+        let destination = newDir.appendingPathComponent(repoFolder)
+        if !fm.fileExists(atPath: destination.path) {
+          try fm.moveItem(at: oldDir, to: destination)
+        }
+        if ModelStorageManager.isDownloaded(variant) {
+          defaults.removeObject(forKey: key)
+        } else {
+          completed = false
+        }
+      } catch {
+        completed = false
+      }
     }
-  }
-
-  private static func moveParakeetModel(variant: ModelVariant, repoFolder: String, fm: FileManager) {
-    guard let appSupportDir = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return }
-
-    let oldDir = appSupportDir
-      .appendingPathComponent("FluidAudio")
-      .appendingPathComponent("Models")
-      .appendingPathComponent(repoFolder)
-
-    guard fm.fileExists(atPath: oldDir.path) else { return }
-
-    let newDir = ModelStorageManager.directory(for: variant)
-    guard !fm.fileExists(atPath: newDir.path) else { return }
-
-    do {
-      try fm.createDirectory(at: newDir, withIntermediateDirectories: true)
-      let destination = newDir.appendingPathComponent(repoFolder)
-      try fm.moveItem(at: oldDir, to: destination)
-    } catch {
-      let _ = error.localizedDescription
-    }
+    return completed
   }
 
   private static func cleanupLegacyCaches() {

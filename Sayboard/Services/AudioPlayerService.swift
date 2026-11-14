@@ -17,8 +17,8 @@ final class AudioPlayerService: ObservableObject {
       guard BackgroundAudioSession.configurePlayback(owner: self.playbackOwner, stop: { [weak self] in
         self?.stop()
       }) else { return }
-      player.play()
-      self.isPlaying = true
+      self.isPlaying = player.play()
+      if !self.isPlaying { self.stop() }
       return
     }
 
@@ -31,12 +31,16 @@ final class AudioPlayerService: ObservableObject {
       let newPlayer = try AVAudioPlayer(contentsOf: url)
       newPlayer.delegate = self.delegateAdapter
       newPlayer.prepareToPlay()
-      newPlayer.play()
-      player = newPlayer
+      guard newPlayer.play() else {
+        BackgroundAudioSession.releasePlayback(owner: self.playbackOwner)
+        return
+      }
+      self.player = newPlayer
       self.currentFileURL = url
       self.duration = newPlayer.duration
       self.isPlaying = true
     } catch {
+      BackgroundAudioSession.releasePlayback(owner: self.playbackOwner)
       self.isPlaying = false
     }
   }
@@ -44,6 +48,7 @@ final class AudioPlayerService: ObservableObject {
   func pause() {
     self.player?.pause()
     self.isPlaying = false
+    BackgroundAudioSession.releasePlayback(owner: self.playbackOwner)
   }
 
   func stop() {
@@ -70,11 +75,14 @@ final class AudioPlayerService: ObservableObject {
 
   private let playbackOwner = UUID()
   private var player: AVAudioPlayer?
-  private lazy var delegateAdapter = PlayerDelegateAdapter { [weak self] in
-    self?.handlePlaybackFinished()
+  private lazy var delegateAdapter = PlayerDelegateAdapter { [weak self] completedPlayer in
+    self?.handlePlaybackFinished(completedPlayer)
   }
 
-  private func handlePlaybackFinished() {
+  private func handlePlaybackFinished(_ completedPlayer: ObjectIdentifier) {
+    guard let player = self.player, ObjectIdentifier(player) == completedPlayer else { return }
+    BackgroundAudioSession.releasePlayback(owner: self.playbackOwner)
+    self.player = nil
     self.isPlaying = false
     self.duration = 0
     self.currentFileURL = nil
@@ -83,17 +91,18 @@ final class AudioPlayerService: ObservableObject {
 
 private final class PlayerDelegateAdapter: NSObject, AVAudioPlayerDelegate {
 
-  init(onFinish: @escaping @MainActor () -> Void) {
+  init(onFinish: @escaping @MainActor (ObjectIdentifier) -> Void) {
     self.onFinish = onFinish
   }
 
-  func audioPlayerDidFinishPlaying(_: AVAudioPlayer, successfully _: Bool) {
+  func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully _: Bool) {
     let callback = self.onFinish
+    let completedPlayer = ObjectIdentifier(player)
     Task { @MainActor in
-      callback()
+      callback(completedPlayer)
     }
   }
 
-  private let onFinish: @MainActor () -> Void
+  private let onFinish: @MainActor (ObjectIdentifier) -> Void
 }
 

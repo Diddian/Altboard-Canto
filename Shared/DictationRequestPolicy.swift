@@ -20,9 +20,9 @@ enum DictationRequestPolicy {
     return actual == fingerprint
   }
 
-  /// When UIKit provides no document ID at either end of the same
-  /// dictation, a request-bound host-process fingerprint is the only bounded
-  /// automatic fallback. A changed/known document ID always fails closed.
+  /// Compatibility marker for diagnostics and request provenance only.
+  /// The same host process can own different fields: never use this as
+  /// authorization to insert text without a UIKit document identifier.
   static func originProcessMarker(
     token: String?, process: (pid: Int, version: Int)?
   ) -> String? {
@@ -32,25 +32,8 @@ enum DictationRequestPolicy {
     return Data(SHA256.hash(data: input)).base64EncodedString()
   }
 
-  static func mayDeliverWithoutDocumentIdentifier(
-    deliveryToken: String, requestedToken: String?, activeToken: String?,
-    deliveryEpoch: UUID?, currentDocument: UUID?, fingerprint: String?,
-    originProcessMarker: String?, currentHost: (pid: Int, version: Int)?,
-    recording: Bool, cancelled: Bool, hasSelection: Bool
-  ) -> Bool {
-    guard UUID(uuidString: deliveryToken) != nil,
-          (requestedToken == nil || requestedToken == deliveryToken),
-          (activeToken == nil || activeToken == deliveryToken),
-          deliveryEpoch == nil, currentDocument == nil, fingerprint == nil,
-          !recording, !cancelled, !hasSelection,
-          let originProcessMarker,
-          let current = self.originProcessMarker(token: deliveryToken, process: currentHost)
-    else { return false }
-    return originProcessMarker == current
-  }
-
   /// Finished results may regain auto-insertion only in the original
-  /// UIKit document, or through the process-bound documentless path above.
+  /// UIKit document. A host process alone is not field identity.
   static func mayRecoverCompleted(
     requestedToken: String?, activeToken: String?, deliveryToken: String,
     deliveryEpoch: UUID?, currentDocument: UUID?, fingerprint: String?,

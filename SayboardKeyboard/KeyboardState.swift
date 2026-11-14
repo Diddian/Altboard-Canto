@@ -39,6 +39,8 @@ final class KeyboardState: ObservableObject {
   @Published var llmTextHistory = [String]()
   @Published var llmHistoryIndex = -1
   var llmHistorySuffix = ""
+  var llmHistoryDocumentIdentifier: UUID?
+  var llmHistoryEpoch: UUID?
   @Published var showLLMActions = false
   @Published var llmError: LLMError?
   @Published var dictationOutcome: DictationOutcome?
@@ -106,11 +108,12 @@ final class KeyboardState: ObservableObject {
   }
 
   var canUndoLLM: Bool {
-    self.llmHistoryIndex > 0
+    self.llmHistoryDocumentIdentifier != nil && self.llmHistoryIndex > 0
   }
 
   var canRedoLLM: Bool {
-    self.llmHistoryIndex >= 0 && self.llmHistoryIndex < self.llmTextHistory.count - 1
+    self.llmHistoryDocumentIdentifier != nil && self.llmHistoryIndex >= 0
+      && self.llmHistoryIndex < self.llmTextHistory.count - 1
   }
 
   var hasLLMHistory: Bool {
@@ -142,6 +145,8 @@ final class KeyboardState: ObservableObject {
     self.llmTextHistory = []
     self.llmHistoryIndex = -1
     self.llmHistorySuffix = ""
+    self.llmHistoryDocumentIdentifier = nil
+    self.llmHistoryEpoch = nil
   }
 
   func bootstrapLayoutSettings() {

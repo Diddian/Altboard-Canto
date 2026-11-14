@@ -62,19 +62,23 @@ struct HistoryStore: Sendable {
     return records.sorted { $0.date > $1.date }
   }
 
-  func saveRecord(_ record: HistoryRecord) {
+  @discardableResult
+  func saveRecord(_ record: HistoryRecord) -> Bool {
     guard SharedSettings().retentionPolicy != .never else {
-      self.deleteAudioFile(named: record.audioFileName)
-      return
+      return self.deleteAudioFile(named: record.audioFileName)
     }
     guard var records = try? self.readRecords() else {
-      self.deleteAudioFile(named: record.audioFileName)
-      return
+      self.preserveUnindexedRecord(record)
+      FeatureDiagnostics.record(.data, .fallback)
+      return false
     }
     records.insert(record, at: 0)
-    if !self.writeRecords(records) {
-      self.deleteAudioFile(named: record.audioFileName)
+    guard self.writeRecords(records) else {
+      self.preserveUnindexedRecord(record)
+      FeatureDiagnostics.record(.data, .failed)
+      return false
     }
+    return true
   }
 
   @discardableResult
@@ -215,6 +219,19 @@ struct HistoryStore: Sendable {
       return true
     } catch {
       return false
+    }
+  }
+
+  /// Keep metadata beside the recorded audio if the primary history index
+  /// cannot be read or written. Data export includes this private audio folder.
+  private func preserveUnindexedRecord(_ record: HistoryRecord) {
+    guard let folder = self.audioDirectoryURL,
+          let data = try? JSONEncoder.historyEncoder.encode(record) else { return }
+    let url = folder.appendingPathComponent("unindexed-\(record.id.uuidString).json")
+    do {
+      try data.write(to: url, options: [.atomic, .completeFileProtection])
+    } catch {
+      FeatureDiagnostics.record(.data, .failed)
     }
   }
 

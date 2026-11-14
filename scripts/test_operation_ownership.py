@@ -187,9 +187,35 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("DictationRequestPolicy.mayRecoverCompleted(", recovery)
         self.assertIn("fingerprint: settings.dictationDestinationFingerprint", recovery)
         self.assertIn("self.keyboardState.documentEpoch = epoch", recovery)
-        self.assertIn("DictationRequestPolicy.mayDeliverWithoutDocumentIdentifier(", recovery)
-        self.assertIn("currentHost: self.hostProcess", recovery)
+        self.assertIn("guard sameDocument else { return }", recovery)
+        self.assertNotIn("mayDeliverWithoutDocumentIdentifier", policy)
         self.assertIn("static let automaticRecoveryWindow: TimeInterval = 90", controller)
+
+    def test_documentless_and_history_cross_field_mutations_fail_closed(self):
+        policy = source("Shared/DictationRequestPolicy.swift")
+        keyboard = source("SayboardKeyboard/KeyboardViewController.swift")
+        llm = source("SayboardKeyboard/KeyboardViewController+LLM.swift")
+        state = source("SayboardKeyboard/KeyboardState.swift")
+        self.assertNotIn("mayDeliverWithoutDocumentIdentifier(", policy + keyboard)
+        self.assertIn("static func originProcessMarker(", policy)
+        self.assertIn("guard sameDocument else { return }", keyboard)
+        self.assertIn("self.keyboardState.llmHistoryDocumentIdentifier", llm)
+        self.assertIn("self.availableDocumentIdentifier() == origin", llm)
+        self.assertIn("self.keyboardState.llmHistoryEpoch == self.keyboardState.documentEpoch", llm)
+        self.assertIn("self.llmHistoryDocumentIdentifier = nil", state)
+
+    def test_corrupt_history_keeps_new_audio_and_migration_retries(self):
+        history = source("Shared/HistoryStore.swift")
+        migration = source("Sayboard/Services/LegacyModelMigration.swift")
+        save = function("Shared/HistoryStore.swift", "func saveRecord(", "func saveCorrectedTranscript(")
+        self.assertIn("self.preserveUnindexedRecord(record)", save)
+        self.assertIn("FeatureDiagnostics.record(.data, .fallback)", save)
+        self.assertEqual(save.count("self.deleteAudioFile(named: record.audioFileName)"), 1)
+        self.assertIn("unindexed-\\(record.id.uuidString).json", history)
+        self.assertIn("guard whisperComplete && parakeetComplete else", migration)
+        self.assertIn("if ModelStorageManager.isDownloaded(variant)", migration)
+        self.assertLess(migration.index("guard whisperComplete && parakeetComplete else"),
+                        migration.index('defaults.set(true, forKey: migrationKey)'))
 
     def test_146_style_automatic_callbacks_keep_scoped_delivery(self):
         controller = source("SayboardKeyboard/KeyboardViewController.swift")
@@ -200,8 +226,8 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("matching: token, allowAnyDestination: true", insert)
         self.assertNotIn("defer { TranscriptionBridge.acknowledgeDelivery", insert)
         self.assertIn("let matchesDocument = delivery.canInsert(", insert)
-        self.assertIn("let matchesDocumentlessHost =", insert)
-        self.assertIn("matchesDocument || matchesDocumentlessHost", insert)
+        self.assertNotIn("matchesDocumentlessHost", insert)
+        self.assertIn("matchesDocument else {", insert)
         self.assertLess(insert.index("delivery.canInsert"), insert.index("TranscriptionBridge.acknowledgeDelivery"))
         self.assertIn("self.insertSpacedText(text)", insert)
         self.assertIn("TranscriptionBridge.acknowledgeDelivery(delivery.resultID)", insert)
@@ -403,6 +429,23 @@ class OperationOwnershipTests(unittest.TestCase):
     def test_conversation_journals_before_opening_audio(self):
         body = function("Sayboard/Services/ConversationCoordinator.swift", "func start(", "func stop(using")
         self.assertLess(body.index("guard self.persistDraft()"), body.index("self.recorder.startRecording("))
+
+    def test_playback_lease_terminal_paths_and_stale_callback(self):
+        history = source("Sayboard/Services/AudioPlayerService.swift")
+        meeting = source("Sayboard/Services/MeetingAudioPlayback.swift")
+        self.assertIn("ObjectIdentifier(player) == completedPlayer", history)
+        self.assertIn("BackgroundAudioSession.releasePlayback(owner: self.playbackOwner)", history)
+        self.assertIn("if !self.isPlaying { self.stop() }", history)
+        self.assertIn("let generation = self.playbackGeneration", meeting)
+        self.assertIn("self.playbackGeneration == generation", meeting)
+        self.assertIn("BackgroundAudioSession.releasePlayback(owner: self.playbackOwner)", meeting)
+
+    def test_conversation_meeting_transfer_is_idempotent(self):
+        conversation = source("Sayboard/Services/ConversationCoordinator.swift")
+        meeting = source("Sayboard/Services/MeetingRecordingCoordinator.swift")
+        self.assertIn("try FileManager.default.removeItem(at: folder)", conversation)
+        self.assertIn("Meeting saved. Conversation draft could not be cleared", conversation)
+        self.assertIn("self.records.contains(where: { $0.conversationTurns?.map(\\.id) == turnIDs })", meeting)
 
     def test_restore_discovers_orphan_audio_and_normalizes_active_turns(self):
         body = function("Sayboard/Services/ConversationCoordinator.swift", "private func restoreDraft()", "private static func readAudio")

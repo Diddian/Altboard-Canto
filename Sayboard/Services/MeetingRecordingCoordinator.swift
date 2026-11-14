@@ -607,6 +607,14 @@ final class MeetingRecordingCoordinator: ObservableObject {
     guard !turns.isEmpty, !self.isRecording, !self.isFinalizing,
           self.translatingRecordID == nil,
           let root = Self.meetingsDirectory() else { return false }
+    // A previous import may already be committed even when its source draft
+    // could not be removed. Compare stable turn IDs before allocating a new meeting.
+    self.reloadRecords()
+    let turnIDs = turns.map(\.id)
+    if self.records.contains(where: { $0.conversationTurns?.map(\.id) == turnIDs }) {
+      FeatureDiagnostics.record(.conversation, .resumed)
+      return true
+    }
     let id = UUID()
     let folder = root.appendingPathComponent(id.uuidString, isDirectory: true)
     let destination = folder.appendingPathComponent("audio", isDirectory: true)

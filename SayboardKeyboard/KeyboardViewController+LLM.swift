@@ -127,6 +127,10 @@ extension KeyboardViewController {
 
     self.keyboardState.isLLMProcessing = true
 
+    if self.keyboardState.llmHistoryDocumentIdentifier != self.llmDocumentIdentifier
+        || self.keyboardState.llmHistoryEpoch != self.keyboardState.documentEpoch {
+      self.keyboardState.clearLLMHistory()
+    }
     if self.keyboardState.llmTextHistory.isEmpty {
       self.keyboardState.llmTextHistory = [inputText]
       self.keyboardState.llmHistoryIndex = 0
@@ -134,6 +138,9 @@ extension KeyboardViewController {
       let idx = self.keyboardState.llmHistoryIndex
       self.keyboardState.llmTextHistory = Array(self.keyboardState.llmTextHistory.prefix(idx + 1))
     }
+    self.keyboardState.llmHistoryDocumentIdentifier = self.llmDocumentIdentifier
+    self.keyboardState.llmHistoryEpoch = self.llmDocumentIdentifier == nil
+      ? nil : self.keyboardState.documentEpoch
 
     let language = Self.detectLanguage(from: inputText)
 
@@ -361,8 +368,18 @@ extension KeyboardViewController {
 
   private func navigateLLMHistory(to targetIndex: Int) {
     let currentIndex = self.keyboardState.llmHistoryIndex
+    let history = self.keyboardState.llmTextHistory
+    guard let origin = self.keyboardState.llmHistoryDocumentIdentifier,
+          self.availableDocumentIdentifier() == origin,
+          self.keyboardState.llmHistoryEpoch == self.keyboardState.documentEpoch,
+          history.indices.contains(currentIndex), history.indices.contains(targetIndex),
+          (self.textDocumentProxy.selectedText?.isEmpty ?? true) else {
+      self.keyboardState.clearLLMHistory()
+      FeatureDiagnostics.record(.aiActions, .rejected, failureReason: .destinationChanged)
+      return
+    }
     let suffix = self.keyboardState.llmHistorySuffix
-    let currentExpected = self.keyboardState.llmTextHistory[currentIndex] + suffix
+    let currentExpected = history[currentIndex] + suffix
 
     let beforeText = textDocumentProxy.documentContextBeforeInput ?? ""
     guard beforeText == currentExpected else {

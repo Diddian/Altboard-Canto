@@ -17,25 +17,30 @@ final class MeetingAudioPlayback: ObservableObject {
   private var partIndex = 0
   private var partStart: TimeInterval = 0
   private var tick: Timer?
+  private var playbackGeneration = UUID()
 
   func toggle(_ record: MeetingRecord) {
-    guard BackgroundAudioSession.configurePlayback(owner: self.playbackOwner, stop: { [weak self] in
-      self?.stop()
-    }) else { return }
-    if self.recordID != record.id {
+    if self.recordID == record.id && self.isPlaying {
+      self.player?.pause()
+      self.isPlaying = false
+      self.tick?.invalidate()
+      self.tick = nil
+      self.playbackGeneration = UUID()
+      BackgroundAudioSession.releasePlayback(owner: self.playbackOwner)
+      return
+    }
+    if self.recordID != record.id || self.position >= self.duration - 0.1 {
       _ = self.open(record, at: 0, autoplay: true)
       return
     }
+    guard BackgroundAudioSession.configurePlayback(owner: self.playbackOwner, stop: { [weak self] in
+      self?.stop()
+    }) else { return }
+    self.isPlaying = self.player?.play() ?? false
     if self.isPlaying {
-      self.player?.pause()
-      self.isPlaying = false
+      self.startTimer()
     } else {
-      if self.position >= self.duration - 0.1 {
-        _ = self.open(record, at: 0, autoplay: true)
-      } else {
-        self.isPlaying = self.player?.play() ?? false
-        self.startTimer()
-      }
+      BackgroundAudioSession.releasePlayback(owner: self.playbackOwner)
     }
   }
 
@@ -48,6 +53,7 @@ final class MeetingAudioPlayback: ObservableObject {
   }
 
   func stop() {
+    self.playbackGeneration = UUID()
     BackgroundAudioSession.releasePlayback(owner: self.playbackOwner)
     self.tick?.invalidate()
     self.tick = nil
@@ -82,12 +88,21 @@ final class MeetingAudioPlayback: ObservableObject {
     let selected = parts[selectedIndex]
     guard let url = self.audioURL(for: selected, record: record),
           let audio = try? AVAudioPlayer(contentsOf: url) else {
-      self.isPlaying = false
+      self.stop()
       return false
     }
+    if autoplay {
+      guard BackgroundAudioSession.configurePlayback(owner: self.playbackOwner, stop: { [weak self] in
+        self?.stop()
+      }) else { return false }
+    }
     self.player?.stop()
-    audio.prepareToPlay()
+    guard audio.prepareToPlay() else {
+      self.stop()
+      return false
+    }
     audio.currentTime = min(audio.duration, max(0, target - begin))
+    self.playbackGeneration = UUID()
     self.player = audio
     self.current = record
     self.recordID = record.id
@@ -95,12 +110,11 @@ final class MeetingAudioPlayback: ObservableObject {
     self.partStart = begin
     self.position = target
     self.duration = total
-    if autoplay {
-      guard BackgroundAudioSession.configurePlayback(owner: self.playbackOwner, stop: { [weak self] in
-        self?.stop()
-      }) else { return false }
-    }
     self.isPlaying = autoplay ? audio.play() : false
+    if autoplay && !self.isPlaying {
+      self.stop()
+      return false
+    }
     self.startTimer()
     return true
   }
@@ -118,8 +132,12 @@ final class MeetingAudioPlayback: ObservableObject {
   private func startTimer() {
     self.tick?.invalidate()
     guard self.isPlaying else { self.tick = nil; return }
+    let generation = self.playbackGeneration
     let timer = Timer(timeInterval: 0.25, repeats: true) { [weak self] _ in
-      Task { @MainActor [weak self] in self?.refresh() }
+      Task { @MainActor [weak self] in
+        guard let self, self.playbackGeneration == generation else { return }
+        self.refresh()
+      }
     }
     RunLoop.main.add(timer, forMode: .common)
     self.tick = timer
@@ -138,6 +156,10 @@ final class MeetingAudioPlayback: ObservableObject {
       self.isPlaying = false
       self.tick?.invalidate()
       self.tick = nil
+      self.playbackGeneration = UUID()
+      BackgroundAudioSession.releasePlayback(owner: self.playbackOwner)
+      self.player?.stop()
+      self.player = nil
     }
   }
 }

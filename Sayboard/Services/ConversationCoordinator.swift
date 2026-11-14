@@ -361,8 +361,17 @@ final class ConversationCoordinator: ObservableObject {
       FeatureDiagnostics.record(.conversation, .failed)
       return false
     }
+    do {
+      if FileManager.default.fileExists(atPath: folder.path) {
+        try FileManager.default.removeItem(at: folder)
+      }
+    } catch {
+      // The Meeting is committed. Keep the draft so cleanup can be retried.
+      self.status = "Meeting saved. Conversation draft could not be cleared; retry Save as Meeting."
+      FeatureDiagnostics.record(.conversation, .fallback)
+      return false
+    }
     self.turns = []
-    try? FileManager.default.removeItem(at: folder)
     self.status = "Saved in Meetings"
     FeatureDiagnostics.record(.conversation, .completed)
     return true
