@@ -64,7 +64,8 @@
       "Native AVAudioPlayer completion callback, UIKit foreign-field interactions, LLM undo/redo on-device",
       "Outstanding X0-X7 high-risk root cause repairs; no external Alibaba OCR CLI",
       "Build #234 exact-SHA terminal compilation, package and artifact upload: pending",
-      "Build #235 terminal result, new Swift Testing fixture execution, native iPhone Live Dictation replay and download corruption/restart fault injection"
+      "Build #235 terminal result, new Swift Testing fixture execution, native iPhone Live Dictation replay and download corruption/restart fault injection",
+      "F-0022/F-0023 disconnected candidate 089f6cda1588609561e5637135f62aae5b3c2cdd: executable Swift verifier and iPhone user recovery not yet run"
     ]
   },
   "verified_outputs": [
@@ -78,9 +79,10 @@
   "blocked_reasons": [
     "Predeclared mandatory functional cases not all executed; six-task gate below 90%",
     "Other confirmed high findings F-0001, F-0019, F-0022, F-0023, F-0028 remain open",
-    "Build #235 is in progress; compiled/test-only candidate not yet verified."
+    "Build #235 is in progress; compiled/test-only candidate not yet verified.",
+    "F-0022/F-0023 recovery candidate not pushed to main; user-visible Diagnostics recovery not device tested"
   ],
-  "next_action": "Check #235 exact SHA preflights, Xcode compile, IPA artifact; resolve failures, then iPhone tests and remaining high findings F-0022/F-0023 etc. Do not certify runtime or complete X8 before mandatory gates.",
+  "next_action": "Wait for Build #235 terminal result before any main ref change. Inspect preflight/Xcode/artifact at main@9433d29e. Only after successful build and scoped defect review consider fast-forwarding staged F-0022/F-0023 candidate 089f6cda1588609561e5637135f62aae5b3c2cdd with one [TEST IPA] workflow. Physical SideStore acceptance pending; do not mark X8 complete.",
   "evidence_notes": [
     "Initial repair batch predeclared BEFORE production edits: F-0018, F-0020, F-0027, F-0031, F-0036, F-0037.",
     "Other high/critical findings remain open; X8 is not complete, pending per-task mandatory tests and 90% acceptance.",
@@ -96,6 +98,7 @@
     "Build #234 concluded success with TEST IPA artifact Altboard-Canto-TEST.ipa at source e396d72f5f93ff572f8479cf28b4a728c4eff49c (run 43625422370).",
     "Build #235 started for main@9433d29e82e04fb00eb374fbe825aacbf0d23350 (run 43626960646); its conclusion and device behavior pending.",
     "F-0019 receipt before UIKit mutation uses O_EXCL per session; restarted controller refuses replay and preserves outbox for manual recovery. Claim not equivalent to physical receipt-after-insert proof.",
-    "F-0028 damaged index quarantined, unknown owned-session URLSession tasks cancelled, known task IDs reattached, original model SHA gate retained. Event-driven restore on foreground, not polling."
+    "F-0028 damaged index quarantined, unknown owned-session URLSession tasks cancelled, known task IDs reattached, original model SHA gate retained. Event-driven restore on foreground, not polling.",
+    "F-0022/F-0023 recovery work staged as unpushed GitHub commit 089f6cda1588609561e5637135f62aae5b3c2cdd (parent main@9433d29e); after source review of 6 changed files. Saves original LLM request on host failure, exposes user-confirmed clipboard recovery in existing Diagnostics, and expands executable Swift verifier; NO CI/IPA/device verification."
   ]
 }
