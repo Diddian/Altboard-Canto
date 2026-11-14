@@ -22,3 +22,17 @@ flowchart TD
   end
   classDef gap stroke:#b46c1e,stroke-width:2px;
   class O,REJ,RETRY,KEEP,CLEAN gap;
+
+  %% Second source batch at main@9433d29e82e0. No physical-device validation.
+  PARTIAL["Live Qwen partial: request+field"] --> RECEIPT{"O_EXCL host-insertion receipt"}
+  RECEIPT -->|first claim only| HOST["UIKit live insert (only local owner)"]
+  RECEIPT -->|already claimed / unreadable| PREVIEW["Preview only; final outbox retained"]
+  REENTRY["New keyboard controller"] --> CHECK["Inspect receipt and local owner"]
+  CHECK --> PREVIEW
+  INDEX["Stored active-downloads.json"] --> DECODE{"Decodes?"}
+  DECODE -->|yes| REATTACH["Reattach known URLSession tasks by session+ID"]
+  DECODE -->|corrupt| QUARANTINE["Preserve damaged metadata; show retry notice"]
+  QUARANTINE --> ORPHAN["Cancel unknown owned-session tasks"]
+  REATTACH --> HASH["SHA-256 verified before atomic model promotion"]
+  ORPHAN --> RETRY["User chooses Retry; no automatic restart"]
+  HISTBAD["Unreadable history.json"] --> EXPORT["Voluntary Voice Notes export: CAF + original index bytes + warning"]

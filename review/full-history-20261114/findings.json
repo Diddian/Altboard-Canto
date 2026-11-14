@@ -1,7 +1,7 @@
 {
   "schema_version": "untangle-ocr-findings/v1",
   "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
-  "status": "X0-X7 findings retained; six X8 root-cause candidates on main@0ab1269138a731418a9701c69f2dcca8286e5f01 pending CI/device; remaining high findings still open",
+  "status": "X8 second source batch on main@9433d29e82e04fb00eb374fbe825aacbf0d23350; F-0019/F-0028 candidates; source-based F-0031 export gate patched; others remain unverified",
   "findings": [
     {
       "id": "F-0001",
@@ -860,7 +860,14 @@
       "verification": [
         "Confirmed source sequence permits duplicate partial under stated preconditions; actual iPhone duplicate not recorded.",
         "Build #228 has same live source blob; not introduced by #232."
-      ]
+      ],
+      "x8_candidate": {
+        "main_sha": "9433d29e82e04fb00eb374fbe825aacbf0d23350",
+        "phase": "source_patched_but_mandatory_tests_pending",
+        "build_run": 235,
+        "approval": "pending",
+        "notes": ""
+      }
     },
     {
       "first_detected_build": null,
@@ -1267,7 +1274,14 @@
       "verification": [
         "Source-level orphaning path confirmed; actual background URLSession lifecycle and disk fault injection NOT executed.",
         "Blob changed between historical Build #193 and #228; introduction commit not established."
-      ]
+      ],
+      "x8_candidate": {
+        "main_sha": "9433d29e82e04fb00eb374fbe825aacbf0d23350",
+        "phase": "source_patched_but_mandatory_tests_pending",
+        "build_run": 235,
+        "approval": "pending",
+        "notes": ""
+      }
     },
     {
       "id": "F-0029",
@@ -1419,11 +1433,11 @@
         "Deterministic source path verified; no malformed real user history or audio fault test executed."
       ],
       "x8_candidate": {
-        "main_sha": "e396d72f5f93ff572f8479cf28b4a728c4eff49c",
-        "phase": "source_patched_test_IPA_building",
-        "build_run": 234,
-        "review_scope": "X8 bounded batch",
-        "approval": "pending"
+        "main_sha": "9433d29e82e04fb00eb374fbe825aacbf0d23350",
+        "phase": "source_patched_but_mandatory_tests_pending",
+        "build_run": 235,
+        "approval": "pending",
+        "notes": "Corrupt history index no longer aborts voluntary raw-audio export"
       }
     },
     {
@@ -1706,11 +1720,11 @@
         "Source-level branch and error swallow confirmed; no disk fault injection, restart runtime or device test executed."
       ],
       "x8_candidate": {
-        "main_sha": "e396d72f5f93ff572f8479cf28b4a728c4eff49c",
-        "phase": "source_patched_test_IPA_building",
-        "build_run": 234,
-        "review_scope": "X8 bounded batch",
-        "approval": "pending"
+        "main_sha": "9433d29e82e04fb00eb374fbe825aacbf0d23350",
+        "phase": "source_patched_but_mandatory_tests_pending",
+        "build_run": 235,
+        "approval": "pending",
+        "notes": "Same-turn edited text fails closed"
       }
     },
     {

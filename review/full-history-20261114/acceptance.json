@@ -312,9 +312,9 @@
           "weight": 15,
           "mandatory": true,
           "severity": "high",
-          "status": "fail",
+          "status": "pass",
           "evidence": [
-            "Read-only inspection: Sayboard/Services/LocalUserDataStore.swift export() uses try HistoryStore.shared.readRecords() before preparing archive, so malformed history.json prevents voluntary Voice Notes export despite preserved unindexed audio; recovery export not verified."
+            "main@9433d29e82e04fb00eb374fbe825aacbf0d23350: LocalUserDataStore.export catches unreadable history index, copies surviving Audio, saves original damaged index if accessible and writes History-Recovery.txt. Source inspected; export fault-injection NOT RUN."
           ]
         },
         {
@@ -341,8 +341,8 @@
         "status": "not_run",
         "evidence": []
       },
-      "status": "blocked_source_recovery_gap",
-      "preliminary_source_weight": 0
+      "status": "test_only_pending",
+      "preliminary_source_weight": 15
     },
     "F-0036": {
       "task_id": "F-0036",
@@ -523,7 +523,9 @@
         "evidence": []
       },
       "status": "test_only_pending",
-      "preliminary_source_weight": 85
+      "preliminary_source_weight": 85,
+      "candidate_sha": "9433d29e82e04fb00eb374fbe825aacbf0d23350",
+      "additional_note": "Same turn IDs with edited transcript now fail closed instead of deleting newer draft as duplicate import."
     },
     "F-0019": {
       "task_id": "F-0019",
@@ -593,8 +595,10 @@
         }
       ],
       "untangle": {
-        "performed": false,
-        "evidence": [],
+        "performed": true,
+        "evidence": [
+          "main@9433d29e82e04fb00eb374fbe825aacbf0d23350: changed-file manual owner and immediate caller review; source-level state and file-IO contract only, no independent OCR CLI"
+        ],
         "unresolved_critical": false
       },
       "runtime_gate": {
@@ -602,7 +606,8 @@
         "status": "not_run",
         "evidence": []
       },
-      "status": "not_started"
+      "status": "test_only_pending",
+      "candidate_sha": "9433d29e82e04fb00eb374fbe825aacbf0d23350"
     },
     "F-0028": {
       "task_id": "F-0028",
@@ -656,8 +661,10 @@
           "method": "source_inspection",
           "severity": "critical",
           "mandatory": true,
-          "status": "not_run",
-          "evidence": []
+          "status": "pass",
+          "evidence": [
+            "main@9433d29e82e04fb00eb374fbe825aacbf0d23350: BackgroundDownloadManager+Processing.processDownloadedFile verifies expected SHA-256 of incoming bytes before ModelDownloadInstaller.promote. Missing-task reconciliation no longer treats destination existence as verified completion."
+          ]
         },
         {
           "id": "device",
@@ -672,8 +679,10 @@
         }
       ],
       "untangle": {
-        "performed": false,
-        "evidence": [],
+        "performed": true,
+        "evidence": [
+          "main@9433d29e82e04fb00eb374fbe825aacbf0d23350: changed-file manual owner and immediate caller review; source-level state and file-IO contract only, no independent OCR CLI"
+        ],
         "unresolved_critical": false
       },
       "runtime_gate": {
@@ -681,7 +690,9 @@
         "status": "not_run",
         "evidence": []
       },
-      "status": "not_started"
+      "status": "test_only_pending",
+      "preliminary_source_weight": 15,
+      "candidate_sha": "9433d29e82e04fb00eb374fbe825aacbf0d23350"
     },
     "F-0022": {
       "task_id": "F-0022",
@@ -834,8 +845,10 @@
   "source_verification": {
     "source_sha": "e396d72f5f93ff572f8479cf28b4a728c4eff49c",
     "build_233": "failed_no_IPA: obsolete verifier compilation",
-    "build_234": "preflights_passed; Xcode compile in_progress",
+    "build_234": "success; exact SHA e396d72f5f93ff572f8479cf28b4a728c4eff49c; GitHub Actions 43625422370; TEST IPA artifact uploaded",
     "no_device_evidence": true,
-    "additional_gap": "F-0031 recovery_export fails on corrupted JSON index; source acceptance downgraded 15 -> 0 on this criterion; needs read-only raw-audio recovery export before accepted"
+    "additional_gap": "F-0031 recovery_export fails on corrupted JSON index; source acceptance downgraded 15 -> 0 on this criterion; needs read-only raw-audio recovery export before accepted",
+    "build_235": "in_progress; exact SHA 9433d29e82e04fb00eb374fbe825aacbf0d23350; GitHub Actions 43626960646",
+    "device_acceptance": "not_run"
   }
 }

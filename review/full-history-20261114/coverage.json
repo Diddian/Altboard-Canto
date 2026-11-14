@@ -11019,7 +11019,7 @@
     },
     "X8": {
       "status": "12_changed_paths_manual_diff_reviewed; tests/device_pending",
-      "candidate_source_sha": "e396d72f5f93ff572f8479cf28b4a728c4eff49c",
+      "candidate_source_sha": "9433d29e82e04fb00eb374fbe825aacbf0d23350",
       "baseline_source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
       "changed_paths": [
         "Sayboard/Services/AudioPlayerService.swift",
@@ -11034,7 +11034,19 @@
         "Shared/HistoryStore.swift",
         "scripts/test_operation_ownership.py",
         "scripts/verify-recording-policies.swift",
-        "scripts/verify-microphone-press.swift"
+        "scripts/verify-microphone-press.swift",
+        "Sayboard/SayboardApp.swift",
+        "Sayboard/Services/BackgroundDownloadManager+Processing.swift",
+        "Sayboard/Services/BackgroundDownloadManager.swift",
+        "Sayboard/Services/LLMDownloadService.swift",
+        "Sayboard/Services/LocalUserDataStore.swift",
+        "Sayboard/Services/ModelDownloadService.swift",
+        "Sayboard/Views/ModelsView.swift",
+        "SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift",
+        "SayboardTests/LiveInsertionReceiptTests.swift",
+        "Shared/ConversationTurn.swift",
+        "Shared/ExperimentalLiveTranscription.swift",
+        "scripts/test_settings_contract.py"
       ],
       "device_acceptance": "not_run",
       "historical_and_unaffected_file_coverage": "X7 captured source SHA preserved, no blanket rebasing of untouched files",
@@ -11050,7 +11062,9 @@
         "subsequent_run": 234,
         "status": "in_progress_compiling",
         "runURL": "https://github.com/Diddian/Altboard-Canto/actions/runs/43625422370"
-      }
+      },
+      "build_234": "success at e396d72f5f93ff572f8479cf28b4a728c4eff49c",
+      "build_235": "in_progress at 9433d29e82e04fb00eb374fbe825aacbf0d23350"
     }
   },
   "counts": {
