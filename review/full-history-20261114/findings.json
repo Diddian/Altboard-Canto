@@ -1,7 +1,7 @@
 {
   "schema_version": "untangle-ocr-findings/v1",
   "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
-  "status": "X0-X4 scoped source reviews complete; X5-X7 pending; X8 production repair not started; iPhone not verified",
+  "status": "X0-X5 scoped source reviews complete; X6-X7 pending; X8 repairs not started; iPhone not verified",
   "findings": [
     {
       "id": "F-0001",
@@ -1154,6 +1154,347 @@
       "regression_oracle": "German target receives synthetically wrong short English, English target receives German short text, and true German, mixed technical proper nouns, and numbers: enforce correct allow/reject/uncertain outcomes.",
       "verification": [
         "Deterministic validator accepts short foreign-Latin candidate as plausible; no actual model mistranslation reported."
+      ]
+    },
+    {
+      "id": "F-0027",
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X5/manual-source",
+      "assigned_stage": "X8",
+      "severity": "high",
+      "state": "confirmed",
+      "area": "migration_retry",
+      "paths": [
+        "Sayboard/Services/LegacyModelMigration.swift",
+        "Sayboard/Services/ModelDownloadService.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Sayboard/Services/LegacyModelMigration.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "10-20",
+          "observation": "runIfNeeded sets hasCompletedR2Migration after sub-migrations irrespective of move failures"
+        },
+        {
+          "path": "Sayboard/Services/LegacyModelMigration.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "23-47",
+          "observation": "Whisper migration catches move failure silently yet removes legacy model path key after the failed move"
+        },
+        {
+          "path": "Sayboard/Services/LegacyModelMigration.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "50-82",
+          "observation": "Parakeet migration removes legacy download marker even when moveParakeetModel fails"
+        }
+      ],
+      "scenario": "Upgrade a prior install while a model file cannot move because of insufficient storage or a transient filesystem error.",
+      "causal_chain": "Move fails -> old per-model key is cleared and global migration marker set -> subsequent startup will not retry the intended migration; existing model is stranded at legacy path.",
+      "root_owner": "LegacyModelMigration.runIfNeeded and destructive per-model key cleanup",
+      "smallest_repair": "Mark migration complete only after verifying each relevant file is valid at its new destination; retain retry markers and old files after error, with idempotent retries.",
+      "regression_oracle": "Synthetic filesystem failure on the first move and success on second launch: legacy source and key remain on failure, destination verified before cleanup, second launch succeeds without deleting the last model.",
+      "verification": [
+        "Direct source control flow verified; precise user data loss and upgrade reproduction NOT performed.",
+        "Same LegacyModelMigration blob observed at Builds #84, #136, #193, #228 and #232."
+      ]
+    },
+    {
+      "id": "F-0028",
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X5/manual-source",
+      "assigned_stage": "X8",
+      "severity": "high",
+      "state": "confirmed",
+      "area": "download_recovery",
+      "paths": [
+        "Sayboard/Services/BackgroundDownloadManager.swift",
+        "Sayboard/Services/BackgroundDownloadManager+Processing.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Sayboard/Services/BackgroundDownloadManager.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "329-335",
+          "observation": "Active background task metadata persists atomically but write failures are ignored"
+        },
+        {
+          "path": "Sayboard/Services/BackgroundDownloadManager.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "398-408",
+          "observation": "On JSON decode failure, activeMetadata is set empty and the metadata file is deleted"
+        },
+        {
+          "path": "Sayboard/Services/BackgroundDownloadManager.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "141-155",
+          "observation": "restoreSession returns before enumerating background URLSession tasks when persisted metadata is empty"
+        },
+        {
+          "path": "Sayboard/Services/BackgroundDownloadManager.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "165-178",
+          "observation": "Background completion without matching metadata is ignored"
+        }
+      ],
+      "scenario": "iOS restarts the containing app during a multi-GB background model download with truncated/corrupt active-downloads.json.",
+      "causal_chain": "Metadata decode error deletes the only task mapping -> restoreSession skips getAllTasks -> real URLSession task can continue but cannot be reconciled or accepted by delegate callbacks.",
+      "root_owner": "BackgroundDownloadManager metadata persistence and restoreSession join",
+      "smallest_repair": "Quarantine corrupt metadata instead of silently deleting it, enumerate system tasks even when mapping is missing, and expose bounded retry/manual recovery without falsely accepting an unverified model.",
+      "regression_oracle": "Corrupt and missing active-downloads.json while URLSession tasks exist: no silent loss of task visibility; repair/retry or explicitly cancel orphan, verify SHA before install; interrupted restart after cancelled task remains cancelled.",
+      "verification": [
+        "Source-level orphaning path confirmed; actual background URLSession lifecycle and disk fault injection NOT executed.",
+        "Blob changed between historical Build #193 and #228; introduction commit not established."
+      ]
+    },
+    {
+      "id": "F-0029",
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X5/manual-source",
+      "assigned_stage": "X8",
+      "severity": "medium",
+      "state": "confirmed",
+      "area": "model_state_reconciliation",
+      "paths": [
+        "Sayboard/Services/ModelDownloadService.swift",
+        "Sayboard/Services/LLMDownloadService.swift",
+        "Sayboard/Services/ModelStorageManager.swift",
+        "Sayboard/Services/LLMModelStorageManager.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Sayboard/Services/ModelDownloadService.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "212-245",
+          "observation": "STT delete catches file removal failure, then unconditionally advertises .notDownloaded and may change selected variant"
+        },
+        {
+          "path": "Sayboard/Services/LLMDownloadService.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "152-179",
+          "observation": "Text model delete also catches failure then unconditionally advertises .notDownloaded"
+        },
+        {
+          "path": "Sayboard/Services/ModelStorageManager.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "29-33",
+          "observation": "ModelStorageManager.delete can throw from removeItem"
+        },
+        {
+          "path": "Sayboard/Services/LLMModelStorageManager.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "40-44",
+          "observation": "LLMModelStorageManager.delete can throw from removeItem"
+        }
+      ],
+      "scenario": "User deletes last usable speech or text model but filesystem removal fails (file protected, low storage or permission failure).",
+      "causal_chain": "Storage still holds model while view state becomes notDownloaded and usable-model flag/selection changes; displayed and persisted model availability diverge.",
+      "root_owner": "ModelDownloadService.deleteModel and LLMDownloadService.deleteModel terminal state",
+      "smallest_repair": "On delete failure retain/recalculate on-disk status and selected usable model, report error and allow explicit retry; do not unconditionally mark notDownloaded.",
+      "regression_oracle": "Inject removal error for STT and LLM selected/last model, assert model remains recognized, selection and capability remain truthful and retry succeeds; successful delete still removes exactly one model.",
+      "verification": [
+        "Confirmed source path; filesystem failure and UI outcome not reproduced on physical device."
+      ]
+    },
+    {
+      "id": "F-0030",
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X5/manual-source",
+      "assigned_stage": "X8",
+      "severity": "medium",
+      "state": "confirmed",
+      "area": "data_export_delete_scope",
+      "paths": [
+        "Sayboard/Services/LocalUserDataStore.swift",
+        "Sayboard/Views/DataAndStorageSettingsView.swift",
+        "Shared/SharedSettings.swift",
+        "Sayboard/Views/SnippetsView.swift",
+        "SayboardKeyboard/EmojiCatalog.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Sayboard/Services/LocalUserDataStore.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "5-16,76-113,115-169",
+          "observation": "Export/delete categories cover voice notes, meetings, vocabulary and conversation draft, not user-authored snippets or Emoji recent/tone"
+        },
+        {
+          "path": "Sayboard/Views/DataAndStorageSettingsView.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "105-128,152-155",
+          "observation": "UI calls these category sets Export All Data and Delete All Data; footnote says app settings are retained"
+        },
+        {
+          "path": "Shared/SharedSettings.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "640-650",
+          "observation": "User-authored Snippet objects persist separately in shared defaults"
+        },
+        {
+          "path": "Sayboard/Views/SnippetsView.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "25-29,107-109",
+          "observation": "Snippet editor writes user-defined trigger and replacement strings"
+        },
+        {
+          "path": "SayboardKeyboard/EmojiCatalog.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "53-61,128-153",
+          "observation": "Emoji skin tone and recents persist in App Group defaults"
+        }
+      ],
+      "scenario": "User selects Export All Data to preserve user-created shortcut phrases before reinstall, or Delete All Data expecting their learned/personal content removed.",
+      "causal_chain": "The four export/delete categories omit snippets and Emoji recents; data can remain after Delete All, and snippets are not recoverable from the export, despite being user-created content. App settings are explicitly retained, so the exact intended scope needs a product decision.",
+      "root_owner": "LocalUserDataStore category inventory vs SharedSettings.snippets and EmojiCatalog persisted history",
+      "smallest_repair": "Define a consistent user-data inventory; include snippets and any in-scope Emoji history in export/delete, or relabel actions and add separate explicit controls. Preserve ordinary app settings/models as promised.",
+      "regression_oracle": "Seed synthetic snippet and Emoji recent/tone; export and compare inventory, delete selected categories, relaunch both processes; verify documented scope precisely and no unintended model/settings deletion.",
+      "verification": [
+        "Export/delete omissions are directly visible in source; whether 'all' should intentionally exclude Emoji preferences is a product-scope decision.",
+        "No real export or deletion executed."
+      ]
+    },
+    {
+      "id": "F-0031",
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X5/manual-source",
+      "assigned_stage": "X8",
+      "severity": "high",
+      "state": "confirmed",
+      "area": "history_corruption_loss",
+      "paths": [
+        "Shared/HistoryStore.swift",
+        "Sayboard/Services/LocalUserDataStore.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Shared/HistoryStore.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "54-63",
+          "observation": "loadRecords maps read/decode errors to empty list while readRecords throws on corrupt history.json"
+        },
+        {
+          "path": "Shared/HistoryStore.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "65-78",
+          "observation": "saveRecord deletes the new recording audio when readRecords fails, then silently returns without persistent record"
+        },
+        {
+          "path": "Shared/HistoryStore.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "203-219",
+          "observation": "History JSON is written atomically; no backup recovery or quarantine path in inspected store"
+        }
+      ],
+      "scenario": "An existing history.json is malformed or unreadable when a new recording finishes successfully.",
+      "causal_chain": "readRecords throws -> saveRecord deletes freshly generated audio and returns -> new recording is lost and original corrupt history remains unrecoverable through normal UI.",
+      "root_owner": "HistoryStore.saveRecord failure handling for corrupt prior history",
+      "smallest_repair": "Never destroy newly captured audio because old JSON fails decoding; quarantine damaged index, preserve recoverable audio, expose error/diagnostic and idempotent rebuilding policy.",
+      "regression_oracle": "Seed malformed history.json and a synthetic new audio recording: new audio survives failure and is recoverable; old file preserved for repair, no unapproved overwrite, valid history continues atomic append.",
+      "verification": [
+        "Deterministic source path verified; no malformed real user history or audio fault test executed."
+      ]
+    },
+    {
+      "id": "F-0032",
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X5/manual-source",
+      "assigned_stage": "X8",
+      "severity": "medium",
+      "state": "confirmed",
+      "area": "history_delete_privacy",
+      "paths": [
+        "Shared/HistoryStore.swift",
+        "Sayboard/Views/HistoryStorageSettingsView.swift",
+        "Sayboard/Services/LocalUserDataStore.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Shared/HistoryStore.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "143-154",
+          "observation": "deleteAllRecords writes empty history index before removing individual audio, returns false on some file failures"
+        },
+        {
+          "path": "Shared/HistoryStore.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "221-229",
+          "observation": "removeItem failures return false; no orphan scan in this owner"
+        },
+        {
+          "path": "Sayboard/Views/HistoryStorageSettingsView.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "89-105",
+          "observation": "Direct Delete Voice Notes UI calls HistoryStore.deleteAllRecords, not LocalUserDataStore delete(.voiceNotes)"
+        },
+        {
+          "path": "Sayboard/Services/LocalUserDataStore.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "76-95",
+          "observation": "Different global delete path enumerates/removes entire audio directory after clearing records"
+        }
+      ],
+      "scenario": "User deletes voice notes; JSON removal succeeds but one protected audio file fails removal.",
+      "causal_chain": "History index becomes empty while audio file remains -> subsequent Delete Voice Notes enumerates zero records and cannot identify or remove the orphan, violating deletion completeness.",
+      "root_owner": "HistoryStore.deleteAllRecords record-first deletion order vs standalone HistoryStorageSettingsView",
+      "smallest_repair": "Use a shared delete contract that identifies all recordings including orphan audio and verifies deletion; do not report success until cleanup is complete, retain a recoverable deletion journal on partial failure.",
+      "regression_oracle": "Inject failure on one audio file after clearing record index, retry Delete Voice Notes, confirm no orphan persists or is falsely reported deleted; validate unrelated pending dictation/history remains safe.",
+      "verification": [
+        "Source-level orphan window confirmed; physical file permission failure and retry not executed."
+      ]
+    },
+    {
+      "id": "F-0033",
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X5/manual-source",
+      "assigned_stage": "X8",
+      "severity": "medium",
+      "state": "confirmed",
+      "area": "appgroup_settings_divergence",
+      "paths": [
+        "Shared/Constants.swift",
+        "Shared/SharedSettings.swift",
+        "Sayboard/Views/KeyboardSettingsView.swift",
+        "Sayboard/Views/SettingsView.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Shared/Constants.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "3-31",
+          "observation": "AppGroup resolves a suite once, returns nil when no authorized group; identifier still returns default ID"
+        },
+        {
+          "path": "Shared/SharedSettings.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "3-10",
+          "observation": "SharedSettings silently switches to process-local UserDefaults.standard when App Group is unavailable"
+        },
+        {
+          "path": "Sayboard/Views/KeyboardSettingsView.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "7-30",
+          "observation": "Keyboard preference controls read group or standard fallback, while others instantiate suiteName directly"
+        },
+        {
+          "path": "Sayboard/Views/SettingsView.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "8-12",
+          "observation": "Settings also use direct suiteName for keyboard kind/model state"
+        }
+      ],
+      "scenario": "SideStore resigning/entitlement mismatch temporarily makes the App Group unavailable for either app or extension.",
+      "causal_chain": "One process can write settings into .standard and another reads a missing group suite or different local standard; UI may appear saved but App Group owner invariants and cross-process persistence are not met.",
+      "root_owner": "AppGroup.resolvedGroup and SharedSettings initializer fallback selection",
+      "smallest_repair": "Expose App Group unavailability as a degraded state; preserve existing group data and prevent false 'synced' claims, reconcile explicitly after authorization is restored without silently migrating local values.",
+      "regression_oracle": "Simulate unavailable/renamed App Group for host and extension; explicitly OFF haptics remains OFF in real shared suite, no silent divergent overwrites, clear recoverable error; valid SideStore suffix shares exactly one domain.",
+      "verification": [
+        "Conditional split-source path confirmed in source; no actual SideStore entitlement failure or cross-process test performed."
       ]
     }
   ],

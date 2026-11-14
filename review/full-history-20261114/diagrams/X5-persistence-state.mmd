@@ -1,0 +1,25 @@
+flowchart TB
+  HOST["Sayboard host app: Settings, model downloads, History"] --> AG["AppGroup defaults: SharedKey and SharedSettings"]
+  KB["Keyboard extension: layout, haptics, Emoji, snippets"] --> AG
+  AG --> PREF["Keyboard and LLM preferences\nexplicit OFF vs missing"]
+  AG --> LEARN["Confirmed choices, corrections, snippets\nEmoji recents / tone"]
+  HOST --> MODELS["STT / LLM ModelDownloadService"]
+  MODELS --> BG["BackgroundDownloadManager\nURLSession task + active-downloads.json"]
+  BG --> STAGE["SHA check and atomic ModelDownloadInstaller"]
+  STAGE --> STORE["ApplicationSupport Models / LLMModels"]
+  LEGACY["LegacyModelMigration\nUserDefaults.standard legacy keys"] --> STORE
+  LEGACY -. "F-0027: move fails, marker still cleared" .-> LOST["Unrecoverable legacy migration"]
+  BG -. "F-0028: corrupt metadata removed" .-> ORPHAN["Background task no longer mapped"]
+  STORE -. "F-0029: delete fails, state marks absent" .-> MISMATCH["False model availability"]
+  HOST --> HISTORY["HistoryStore: history.json + audio"]
+  HISTORY -. "F-0031: corrupt index" .-> LOSTAUDIO["New recording audio deleted"]
+  HISTORY -. "F-0032: partial delete" .-> ORPHANAUDIO["Orphan audio after empty index"]
+  HOST --> DATA["LocalUserDataStore: export / delete by category"]
+  DATA --> HISTORY
+  DATA --> LEARN
+  DATA -. "F-0030: omitted" .-> OMIT["Snippet content and Emoji history"]
+  AG -. "F-0033: entitlement unavailable" .-> LOCAL["Process-local UserDefaults.standard\nnot cross-process shared"]
+  HOST --> DIAG["FeatureDiagnostics\nApp Group bounded JSONL; manual export"]
+  KB --> DIAG
+  classDef risk fill:#fff5eb,stroke:#b45309,color:#713f12
+  class LOST,ORPHAN,MISMATCH,LOSTAUDIO,ORPHANAUDIO,OMIT,LOCAL risk

@@ -1,24 +1,211 @@
 {
   "schema_version": "altboard-review-stage/v1",
   "id": "X5",
-  "status": "blocked",
-  "source_sha_at_review": null,
-  "review_branch_head_at_start": null,
-  "started_at": null,
-  "finished_at": null,
-  "review_mode": "GitHub manual OCR-style; Alibaba OCR CLI not run",
-  "untangle_status": "not_run",
-  "files_reviewed": [],
+  "status": "complete",
+  "source_sha_at_review": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+  "review_branch_head_at_start": "1b9375b7efa4955475000e72b5d1bf8cfb5dc57e",
+  "started_at": "2026-11-14",
+  "finished_at": "2026-11-14",
+  "review_mode": "Connected GitHub source/commit-blob audit, Untangle owner map plus data-integrity review; external Alibaba Open Code Review CLI NOT RUN",
+  "untangle_status": "scoped persistence ownership, migration idempotency, App Group split, download recovery, retention and export/delete reviewed",
+  "files_reviewed": [
+    "Shared/SharedSettings.swift",
+    "Sayboard/Services/ModelDownloadService.swift",
+    "Sayboard/Services/LLMDownloadService.swift",
+    "Sayboard/Services/LocalUserDataStore.swift",
+    "Shared/HistoryStore.swift",
+    "Sayboard/Services/LegacyModelMigration.swift",
+    "Sayboard/Services/ModelDownloadInstaller.swift",
+    "Sayboard/Services/ModelDownloadService+Execution.swift",
+    "Sayboard/Services/BackgroundDownloadManager.swift",
+    "Sayboard/Services/BackgroundDownloadManager+Processing.swift",
+    "Sayboard/Services/LLMModelStorageManager.swift",
+    "Sayboard/Services/ModelDiskReserve.swift",
+    "Sayboard/Views/DataAndStorageSettingsView.swift",
+    "Shared/Snippet.swift",
+    "Shared/PersonalVocabularyExport.swift",
+    "Sayboard/Views/LearningDataSettingsView.swift",
+    "SayboardTests/ModelDownloadInstallerTests.swift",
+    "SayboardTests/HistoryRetentionTests.swift",
+    "Shared/SharedSettings+Entitlement.swift",
+    "Shared/SharedSettings+Onboarding.swift",
+    "Sayboard/Services/ParakeetV3JointMigration.swift"
+  ],
   "files_excluded": [],
-  "files_not_reviewed": [],
-  "new_or_updated_findings": [],
-  "diagram_paths": [],
+  "files_not_reviewed": [
+    "Shared/Constants.swift — scoped source only: 3-42 group resolution, 74-172 shared key catalog",
+    "Sayboard/Views/KeyboardSettingsView.swift — scoped source only: 7-30 @AppStorage ownership; 44-126 haptics, layout and reset; preview details not reviewed",
+    "Sayboard/Views/SettingsView.swift — scoped source only: 8-35 settings store ownership; full navigation unreviewed",
+    "Sayboard/Views/SnippetsView.swift — scoped source only: 25-29 read, 50-109 edit/delete/write; remaining UI unreviewed",
+    "Sayboard/Views/HistoryStorageSettingsView.swift — scoped source only: 70-132 record delete and cache; other UI unreviewed",
+    "SayboardKeyboard/EmojiCatalog.swift — scoped source only: 53-85 skin tone, 128-153 recent read/write; catalog generator/keyboard usage for X6",
+    "Sayboard/Services/ModelStorageManager.swift — scoped source only: 4-43 model validity/deletion, 45-125 cache paths; remaining cache implementation for X7",
+    "Shared/FeatureDiagnostics.swift — scoped source only: 51-115 and 189-210 bounded append/lock, export/reset; other diagnostics for X7",
+    "Shared/KeyboardHaptics.swift — scoped source only: 146-185 shared feedback config; state ownership previously examined X2",
+    "Shared/KeyboardHapticDriver.swift — scoped source only: 5-13 driver variants; no duplicated state owner asserted",
+    "SayboardTests/SharedSettingsDefaultsTests.swift — scoped source only: selected assertions 9-285 explicit false/haptic reset; Swift Testing not executed",
+    "scripts/test_settings_contract.py — scoped source only: test list and settings-specific assertions 561-578/1050-1137; source contract not executed",
+    "Shared/LatinSpeechCorrectionLearning.swift — scoped source only: 12-14 storage key, 76-90 bounded rules; full implementation for X6",
+    "Sayboard/Services/ModelStorageManager.swift — scoped source only: rest of cache owner and symlink policy not audited here"
+  ],
+  "new_or_updated_findings": [
+    "F-0027",
+    "F-0028",
+    "F-0029",
+    "F-0030",
+    "F-0031",
+    "F-0032",
+    "F-0033"
+  ],
+  "diagram_paths": [
+    "review/full-history-20261114/diagrams/X5-persistence-state.mmd"
+  ],
   "tests": {
-    "executed": [],
-    "not_run": []
+    "executed": [
+      "GitHub read-only inspection and direct predicate cross-check of source owner/caller contracts; no executable tests or runtime simulation",
+      "Historical Git blob comparison for selected persistent owners at Builds #84, #136, #193, #228, #232 (not full commit-by-commit attribution)"
+    ],
+    "not_run": [
+      "python3 -m unittest discover -s scripts -p 'test_settings_contract.py'",
+      "SayboardTests/SharedSettingsDefaultsTests.swift, ModelDownloadInstallerTests.swift, HistoryRetentionTests.swift and downstream iOS tests",
+      "Corrupt JSON + interrupted URLSession, legacy file move failure, write/delete fault injection, cross-process concurrency",
+      "ZIP export/import round-trip, SideStore resign/reinstall, physical haptics/sound/host app, iPhone device verification",
+      "External Alibaba OCR CLI and independent reviewer; no IPA built or production source modified"
+    ]
   },
-  "verified_outputs": [],
+  "verified_outputs": [
+    "review/full-history-20261114/manifest.json",
+    "review/full-history-20261114/stages/X5.json",
+    "review/full-history-20261114/coverage.json",
+    "review/full-history-20261114/findings.json",
+    "review/full-history-20261114/diagrams/X5-persistence-state.mmd"
+  ],
   "blocked_reasons": [],
-  "next_action": "Begin only after manifest previous stage gate; use stages.json for exact scope",
-  "evidence_notes": []
+  "next_action": "X6 multilingual IME/language/suggestions/Swipe/Emoji source audit; recheck main/review HEAD. All X5 production repairs deferred to X8; iPhone runtime remains unverified.",
+  "evidence_notes": [
+    "X5 stop gate covers discovered destructive/reset/migration state classes via 15 per-owner negative checks. These are proposed executable oracles, NOT passed tests.",
+    "Explicit OFF haptics preserved in SharedSettings; haptic reset covers only three haptic keys, and existing Swift tests assert it. App Group fallback remains conditional split risk (F-0033).",
+    "Legacy migration's completion marker is unconditional after potentially failed moves (F-0027), with identical source blobs across #84/#136/#193/#228/#232.",
+    "Background URLSession metadata is deleted on decode failure and restore skips task enumeration (F-0028); actual interrupted task untested.",
+    "Both STT and LLM model deletion mark downloaded=false after caught removal errors (F-0029). SHA check/staged installation are positive guards already present.",
+    "All Data categories omit separate user-created snippet values and Emoji usage history; app settings intentionally kept per UI text, so scope needs an explicit product decision (F-0030).",
+    "History corruption silently discards freshly recorded audio (F-0031); direct Delete Voice Notes can orphan audio after partial removal (F-0032).",
+    "No user text, actual audio, credentials, host process identifiers or transcripts recorded in audit artefacts.",
+    "X6/X7 still responsible for remaining source paths. All X5 device acceptance deferred, no % assigned to source review."
+  ],
+  "persisted_owner_inventory": [
+    {
+      "state": "shared suite and SideStore group resolution",
+      "owner": "AppGroup.resolvedGroup / SharedSettings.init",
+      "store": "group.app.sayboard.shared[.TEAM] plus process-local fallback",
+      "reset_migration": "entitlement/resign and app+extension domain changes",
+      "negative": "missing/renamed App Group must not silently split OFF choices; valid suffix points both targets to one suite"
+    },
+    {
+      "state": "keyboard type, layout, auto-capitalization, spelling, full-access, Globe, AI button and custom toolbar",
+      "owner": "SharedKey / SharedSettings / KeyboardSettingsView",
+      "store": "App Group UserDefaults",
+      "reset_migration": "settings reload/defaults; preserve explicit false",
+      "negative": "OFF persists across app+extension restart, keyboard kind not overwritten by haptic reset, required native Globe remains"
+    },
+    {
+      "state": "keyboard haptic selection, strength, enabled flag",
+      "owner": "SharedSettings.resetKeyboardHaptics / KeyboardHaptics",
+      "store": "App Group UserDefaults with nil-vs-explicit OFF",
+      "reset_migration": "reset only haptics and driver, not type/other keys",
+      "negative": "reset sets 0.55 + Core + ON; user OFF survives normal relaunch; failed App Group is visible"
+    },
+    {
+      "state": "voice output, spoken languages, translation and default LLM action",
+      "owner": "SharedSettings",
+      "store": "App Group defaults + encoded per-variant/preset JSON",
+      "reset_migration": "legacy language and defaultLLMAction migration",
+      "negative": "old valid action migrates once, no lost user-chosen language/target, malformed JSON fail visibly where necessary"
+    },
+    {
+      "state": "onboarding, practice PIDs, hint and activation state",
+      "owner": "SharedSettings+Onboarding / OnboardingProgress",
+      "store": "App Group defaults with timed PID markers",
+      "reset_migration": "process change and 30-minute TTL",
+      "negative": "stale practice marker or previous keyboard probe never activates incorrect host"
+    },
+    {
+      "state": "STT model downloaded binary and selected variant",
+      "owner": "ModelStorageManager / ModelDownloadService",
+      "store": "ApplicationSupport/Models and App Group selection",
+      "reset_migration": "verify first, cancel/delete, choose last valid model",
+      "negative": "delete error retains true on-disk status and user selection; interrupted file not accepted as downloaded"
+    },
+    {
+      "state": "LLM model binary, upgrades, selection and declined versions",
+      "owner": "LLMModelStorageManager / LLMDownloadService",
+      "store": "ApplicationSupport/LLMModels and shared variant/upgrade flags",
+      "reset_migration": "cancel upgrade, revert, remove orphan, delete installed last model",
+      "negative": "failed delete preserves last usable model; upgrade retry doesn't erase predecessor or manual selection"
+    },
+    {
+      "state": "download task IDs, SHA, source and destination",
+      "owner": "BackgroundDownloadManager / ModelDownloadInstaller",
+      "store": "App Group active-downloads.json and iOS background URLSession",
+      "reset_migration": "atomic stage; reboot/reconcile missing/corrupt metadata",
+      "negative": "corrupt metadata neither silently loses active task nor accepts unverified payload; SHA mismatch does not replace good model"
+    },
+    {
+      "state": "pre-R2 Whisper and Parakeet legacy model markers",
+      "owner": "LegacyModelMigration",
+      "store": "UserDefaults.standard and previous app-support paths",
+      "reset_migration": "one-time hasCompletedR2Migration and per-model path cleanup",
+      "negative": "failed move retains old path marker and attempts idempotent retry; no unverified deletion"
+    },
+    {
+      "state": "obsolete Parakeet V3 bundle",
+      "owner": "ParakeetV3JointMigration",
+      "store": "ApplicationSupport/Models and shared redownload flag",
+      "reset_migration": "delete pre-JointDecision model when not joint-compatible",
+      "negative": "delete failure doesn't erase working model; correct joint bundle preserved"
+    },
+    {
+      "state": "voice note JSON index, corrected text and audio",
+      "owner": "HistoryStore",
+      "store": "App Group history.json + protected audio directory",
+      "reset_migration": "retention, corrupt index, delete all, explicit corrections",
+      "negative": "malformed index cannot destroy new audio; partial delete can find and clean orphan on retry"
+    },
+    {
+      "state": "meeting records and conversation draft",
+      "owner": "MeetingRecordingCoordinator / ConversationCoordinator via LocalUserDataStore",
+      "store": "App Group meetings and conversation-draft directories",
+      "reset_migration": "export/delete selected categories with busy guard",
+      "negative": "active operations block deletion/export; failed deletion preserves recoverable state; X7 handles full operation internals"
+    },
+    {
+      "state": "learning counts, speech corrections, Cantonese aliases",
+      "owner": "LocalUserDataStore / SharedSettings.cantoneseCorrectionRules / LatinSpeechCorrectionLearning",
+      "store": "App Group defaults aggregate counts and encoded bounded rules",
+      "reset_migration": "Reset Learned Suggestions vs Delete Vocabulary intentionally differ",
+      "negative": "reset selections never erases recordings; delete vocabulary clears learning and manual correction without clearing unrelated preferences"
+    },
+    {
+      "state": "user-created snippets and Emoji recents / preferred skin tone",
+      "owner": "SharedSettings.snippets / SnippetsView / EmojiCatalog",
+      "store": "App Group defaults, separate from 4 export/delete categories",
+      "reset_migration": "Export All Data and Delete All Data currently omit these values",
+      "negative": "export/delete scope explicit; user-authored snippets recoverable or clearly excluded; Emoji history deletion controlled"
+    },
+    {
+      "state": "feature diagnostics and active download metadata",
+      "owner": "FeatureDiagnostics / BackgroundDownloadManager",
+      "store": "App Group bounded JSONL + atomic JSON metadata",
+      "reset_migration": "manual export/reset and 1 MB rotating events",
+      "negative": "concurrent app+appex writes don't interleave; reset never destroys unrelated logs/data; metadata corruption has observable recovery"
+    }
+  ],
+  "historical_checkpoints": [
+    84,
+    136,
+    193,
+    228,
+    232
+  ],
+  "observed_source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad"
 }

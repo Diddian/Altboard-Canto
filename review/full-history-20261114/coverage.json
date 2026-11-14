@@ -7,7 +7,7 @@
     "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
     "review_branch": "review/full-history-20261114"
   },
-  "status": "x4_voice_host_delivery_and_llm_owner_review_complete_x5_to_x7_pending",
+  "status": "x5_persistence_settings_model_history_review_complete_x6_to_x7_pending",
   "expected_current_tracked_files_observed": 577,
   "current_tracked_files": 577,
   "initial_tracked_files": 356,
@@ -951,13 +951,17 @@
       "path": "Sayboard/Services/BackgroundDownloadManager+Processing.swift",
       "sha": "ee2909ba6f4b5449520285ee781c81e3c12535bd",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X5",
+      "evidence": "X5 manual source review main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 8-47 task reconcile; 49-90 verify/install; 98-154 SHA/staged atomic promote and result"
     },
     {
       "path": "Sayboard/Services/BackgroundDownloadManager.swift",
       "sha": "76ce4ff9b12043f480bf1b1e13a8dce874ccff7d",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X5",
+      "evidence": "X5 manual source review main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 31-73 lock/task owner; 100-164 enqueue/cancel/restore; 165-264 delegate; 265-326 emit/fail; 329-409 persistence, corrupt recovery"
     },
     {
       "path": "Sayboard/Services/CantoneseOutput.swift",
@@ -997,7 +1001,9 @@
       "path": "Sayboard/Services/LLMDownloadService.swift",
       "sha": "5035217a9a5683fca0918f3fdb501b34bbb31aa2",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X5",
+      "evidence": "X5 manual source review main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 9-93 startup selection; 99-179 download, delete and failed state; 212-244 restart; 245-465 language, upgrade, disk budget and task flow"
     },
     {
       "path": "Sayboard/Services/LLMInferenceService.swift",
@@ -1009,7 +1015,9 @@
       "path": "Sayboard/Services/LLMModelStorageManager.swift",
       "sha": "262d5d7076fdb4b0d4263a240d04de5f0f239245",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X5",
+      "evidence": "X5 manual source review main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 6-44 model path and delete; 46-73 orphan remove/root; 76-90 usage"
     },
     {
       "path": "Sayboard/Services/LLMProcessingCoordinator.swift",
@@ -1030,13 +1038,17 @@
       "path": "Sayboard/Services/LegacyModelMigration.swift",
       "sha": "5ac6cbc50fec2fa1a242a8f2c056220f6500cf55",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X5",
+      "evidence": "X5 manual source review main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 10-20 one-time migration; 22-82 failed move and destructive marker; 84-107 cache cleanup"
     },
     {
       "path": "Sayboard/Services/LocalUserDataStore.swift",
       "sha": "0fd2aeeb93e5521343664ffb78204d283e40bbf5",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X5",
+      "evidence": "X5 manual source review main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 5-45 category/reset; 47-74 vocabulary export; 76-113 destructive delete; 115-200 cancellable ZIP"
     },
     {
       "path": "Sayboard/Services/MeetingAudioPlayback.swift",
@@ -1055,26 +1067,34 @@
       "path": "Sayboard/Services/ModelDiskReserve.swift",
       "sha": "13c621092cacb55b7c12c58d5ea0c658c5db7382",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X5",
+      "evidence": "X5 manual source review main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 4-29 storage headroom and availability"
     },
     {
       "path": "Sayboard/Services/ModelDownloadInstaller.swift",
       "sha": "f244c3fa69fe2c171305a4aa64211bd3d6ebb0a2",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X5",
+      "evidence": "X5 manual source review main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 5-34 staging/format check; 36-48 atomic promote"
     },
     {
       "path": "Sayboard/Services/ModelDownloadService+Execution.swift",
       "sha": "5c3d7444b9e35452ab90fd3d80a9761a08c8aff6",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X5",
+      "evidence": "X5 manual source review main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 9-24 subscription/task; 24-108 download, cancellation, reserve; 110-175 load/terminal event; 188-240 error policies"
     },
     {
       "path": "Sayboard/Services/ModelDownloadService.swift",
       "sha": "e9bfa227c11d21d8de341985712c32f2d323e814",
       "tracking": "current",
-      "review": "not_reviewed",
-      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 51-71 and 137-244 selection/busy guards; full persistence deferred X5; remainder not claimed reviewed"
+      "review": "reviewed",
+      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 51-71 and 137-244 selection/busy guards; full persistence deferred X5; remainder not claimed reviewed",
+      "stage": "X5",
+      "evidence": "X5 manual source review main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 8-28 startup owners; 51-70 selection; 114-153 verify; 155-210 downloads and cancel; 212-245 deletion failure; 251-328 interrupted recovery"
     },
     {
       "path": "Sayboard/Services/ModelManifest.swift",
@@ -1108,7 +1128,9 @@
       "path": "Sayboard/Services/ParakeetV3JointMigration.swift",
       "sha": "adbd7bdebf8e97c975f6b266550771e4f4edae46",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X5",
+      "evidence": "X5 manual source review main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 9-29 outdated Joint V3 deletion gate; 32-45 bundle identity check"
     },
     {
       "path": "Sayboard/Services/PermissionService.swift",
@@ -1243,7 +1265,9 @@
       "path": "Sayboard/Views/DataAndStorageSettingsView.swift",
       "sha": "670c3e1f253868a81215c974fb98482d29837e81",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X5",
+      "evidence": "X5 manual source review main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 20-70 active gate and confirmations; 74-160 categories/all actions; 163-231 delete/export/retention failure handling"
     },
     {
       "path": "Sayboard/Views/DefaultStylePickerView.swift",
@@ -1355,7 +1379,9 @@
       "path": "Sayboard/Views/LearningDataSettingsView.swift",
       "sha": "10b1a350ae05445132ee5206c120e0dda9473dd0",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X5",
+      "evidence": "X5 manual source review main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 11-67 learning reset/export; 70-108 editor and file document"
     },
     {
       "path": "Sayboard/Views/MainTabView.swift",
@@ -2199,7 +2225,9 @@
       "path": "SayboardTests/HistoryRetentionTests.swift",
       "sha": "1a1cb6e5fd2a82b7d18724e7f4a0da9c4bf16789",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X5",
+      "evidence": "X5 manual source review main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 9-68 policy fixtures only; no corrupt JSON or partial delete test (NOT run)"
     },
     {
       "path": "SayboardTests/HostApplicationMonitorTests.swift",
@@ -2293,7 +2321,9 @@
       "path": "SayboardTests/ModelDownloadInstallerTests.swift",
       "sha": "9f87dd1876f66e8fad2582aa3e0a2d765be90ab5",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X5",
+      "evidence": "X5 manual source review main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 8-48 normal, corrupt GGUF and ZIP fixtures (source inspected, NOT run)"
     },
     {
       "path": "SayboardTests/ModelEntryDiskReserveTests.swift",
@@ -2640,7 +2670,9 @@
       "path": "Shared/HistoryStore.swift",
       "sha": "f46f8ae48f3f3a9127c66ba69e38a14182b93a16",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X5",
+      "evidence": "X5 manual source review main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 7-63 storage/read/corruption; 65-132 write/correction; 134-188 retention, deletion; 203-254 atomic writer and audio cleanup"
     },
     {
       "path": "Shared/InformalNgramPolicy.swift",
@@ -2905,7 +2937,9 @@
       "path": "Shared/PersonalVocabularyExport.swift",
       "sha": "ce53e7772742cadcc4e67ed3fe08cf97f323dfae",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X5",
+      "evidence": "X5 manual source review main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 4-24 export payload fields; 26-54 bounded JSON"
     },
     {
       "path": "Shared/PreferredVoiceLanguages.swift",
@@ -2937,7 +2971,9 @@
       "path": "Shared/SharedSettings+Entitlement.swift",
       "sha": "5b1610ab2255646dbad69b0a752b3cba61ead22d",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X5",
+      "evidence": "X5 manual source review main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 6-35 defaults entitlement and consumption"
     },
     {
       "path": "Shared/SharedSettings+Onboarding.swift",
@@ -2945,7 +2981,8 @@
       "tracking": "current",
       "review": "reviewed",
       "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators Shared/SharedSettings+Onboarding.swift:6-29,36-64; X1 installation/activation/runtime ownership",
-      "stage": "X1"
+      "stage": "X1",
+      "x5_evidence": "X5 manual source review main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 6-34 onboarding process markers; 36-65 TTL and hint ownership"
     },
     {
       "path": "Shared/SharedSettings.swift",
@@ -2955,13 +2992,16 @@
       "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators Shared/SharedSettings.swift:3-9,83-116,365-368; X1 installation/activation/runtime ownership",
       "stage": "X1",
       "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 231-245 Globe config, 258-294 haptic settings and reset, 365-368 persisted needs key",
-      "x4_evidence": "X4 scoped path at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; 360-383 clipboard/output flags, 602-627 session destination fingerprint and process marker. Remainder not automatically marked reviewed."
+      "x4_evidence": "X4 scoped path at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; 360-383 clipboard/output flags, 602-627 session destination fingerprint and process marker. Remainder not automatically marked reviewed.",
+      "x5_evidence": "X5 manual source review main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 3-10 group defaults source; 17-175 STT/keyboard; 180-312 explicit OFF and haptics; 313-435 language/voice; 435-650 model/LLM/actions, preferences and user-created data; 653-685 request synchronization"
     },
     {
       "path": "Shared/Snippet.swift",
       "sha": "6cb03cc848be18a43d93b1160c4e4b35cd977881",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X5",
+      "evidence": "X5 manual source review main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 4-17 user-authored snippet model; 19-46 replacement"
     },
     {
       "path": "Shared/SpeechCorrectionLearning.swift",
@@ -10311,14 +10351,86 @@
         "short wrong-language model output",
         "crash between insert and ack"
       ]
+    },
+    "X5": {
+      "status": "complete_source_owner_review; no runtime, corruption-fault or device execution",
+      "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+      "reviewed_paths": [
+        "Shared/SharedSettings.swift",
+        "Sayboard/Services/ModelDownloadService.swift",
+        "Sayboard/Services/LLMDownloadService.swift",
+        "Sayboard/Services/LocalUserDataStore.swift",
+        "Shared/HistoryStore.swift",
+        "Sayboard/Services/LegacyModelMigration.swift",
+        "Sayboard/Services/ModelDownloadInstaller.swift",
+        "Sayboard/Services/ModelDownloadService+Execution.swift",
+        "Sayboard/Services/BackgroundDownloadManager.swift",
+        "Sayboard/Services/BackgroundDownloadManager+Processing.swift",
+        "Sayboard/Services/LLMModelStorageManager.swift",
+        "Sayboard/Services/ModelDiskReserve.swift",
+        "Sayboard/Views/DataAndStorageSettingsView.swift",
+        "Shared/Snippet.swift",
+        "Shared/PersonalVocabularyExport.swift",
+        "Sayboard/Views/LearningDataSettingsView.swift",
+        "SayboardTests/ModelDownloadInstallerTests.swift",
+        "SayboardTests/HistoryRetentionTests.swift",
+        "Shared/SharedSettings+Entitlement.swift",
+        "Shared/SharedSettings+Onboarding.swift",
+        "Sayboard/Services/ParakeetV3JointMigration.swift"
+      ],
+      "partial_paths": [
+        "Shared/Constants.swift",
+        "Sayboard/Views/KeyboardSettingsView.swift",
+        "Sayboard/Views/SettingsView.swift",
+        "Sayboard/Views/SnippetsView.swift",
+        "Sayboard/Views/HistoryStorageSettingsView.swift",
+        "SayboardKeyboard/EmojiCatalog.swift",
+        "Sayboard/Services/ModelStorageManager.swift",
+        "Shared/FeatureDiagnostics.swift",
+        "Shared/KeyboardHaptics.swift",
+        "Shared/KeyboardHapticDriver.swift",
+        "SayboardTests/SharedSettingsDefaultsTests.swift",
+        "scripts/test_settings_contract.py",
+        "Shared/LatinSpeechCorrectionLearning.swift",
+        "Sayboard/Services/ModelStorageManager.swift"
+      ],
+      "historical_checkpoints": [
+        84,
+        136,
+        193,
+        228,
+        232
+      ],
+      "historical_blob_evidence": [
+        "LegacyModelMigration unchanged across Builds #84/#136/#193/#228/#232",
+        "BackgroundDownloadManager blob changed between #193 and #228; introduction of fault unknown",
+        "HistoryStore blob at #136/#193/#228 equals #232; #84 differs"
+      ],
+      "newly_reviewed": 19,
+      "new_findings": [
+        "F-0027",
+        "F-0028",
+        "F-0029",
+        "F-0030",
+        "F-0031",
+        "F-0032",
+        "F-0033"
+      ],
+      "negative_case_count": 15,
+      "unverified": [
+        "No synthetic on-device/app-group corruption injection",
+        "No iOS runtime test of STT/LLM deletion and storage errors",
+        "No export/import ZIP round-trip or SideStore group-renaming test",
+        "No sound-toggle owner found in selected settings read set; not claim of app-wide absence"
+      ]
     }
   },
   "counts": {
     "current_total": 577,
     "historical_only": 14,
-    "reviewed": 99,
+    "reviewed": 118,
     "excluded": 0,
-    "not_reviewed": 492,
+    "not_reviewed": 473,
     "known_changed_path_occurrences": 983,
     "known_unique_changed_paths": 336
   },
