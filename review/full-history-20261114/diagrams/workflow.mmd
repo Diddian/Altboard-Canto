@@ -1,0 +1,12 @@
+flowchart LR
+  X0["X0 History and file inventory"] --> X1["X1 Startup / MUL / keyboard"]
+  X1 --> X2["X2 Touch / haptics / UI"]
+  X2 --> X3["X3 Audio / ASR / memory"]
+  X3 --> X4["X4 Host insertion / AI"]
+  X4 --> X5["X5 Settings / persistence"]
+  X5 --> X6["X6 Languages / IME / emoji"]
+  X6 --> X7["X7 Cross-domain all-files sweep"]
+  X7 --> X8["X8 Repair + unit gates + TEST IPA"]
+  X8 --> G{"All mandatory >=90%, CI and device evidence?"}
+  G -->|Yes| X9["X9 Re-review + delete temporary folder"]
+  G -->|No| X8

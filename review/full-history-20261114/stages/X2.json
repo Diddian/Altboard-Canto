@@ -1,0 +1,24 @@
+{
+  "schema_version": "altboard-review-stage/v1",
+  "id": "X2",
+  "status": "blocked",
+  "source_sha_at_review": null,
+  "review_branch_head_at_start": null,
+  "started_at": null,
+  "finished_at": null,
+  "review_mode": "GitHub manual OCR-style; Alibaba OCR CLI not run",
+  "untangle_status": "not_run",
+  "files_reviewed": [],
+  "files_excluded": [],
+  "files_not_reviewed": [],
+  "new_or_updated_findings": [],
+  "diagram_paths": [],
+  "tests": {
+    "executed": [],
+    "not_run": []
+  },
+  "verified_outputs": [],
+  "blocked_reasons": [],
+  "next_action": "Begin only after manifest previous stage gate; use stages.json for exact scope",
+  "evidence_notes": []
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": "temporary-review-cleanup/v1",
+  "status": "not_started",
+  "temporary_branch": "review/full-history-20261114",
+  "temporary_root": "review/full-history-20261114",
+  "main_must_be_preserved": true,
+  "delete_only_after": [
+    "X0-X8 complete or approved explicitly deferred",
+    "No unresolved critical/high findings hidden by scoring",
+    "All mandatory device checks performed or expressly blocked with evidence retained",
+    "User receives concise final code/CI/device-status report in Chat",
+    "Every temporary path accounted before delete"
+  ],
+  "method": "On review branch, create tree entries {path,mode:'100644',type:'blob',sha:null} for every tracked review-root file; create deletion commit and fast-forward ref after checking expected SHA. Verify review folder absent. Delete review branch through GitHub UI only if connector lacks delete-ref support.",
+  "caveat": "Deleting a folder in Git does NOT securely erase historical blobs/commits; never commit private user data at any stage.",
+  "cleanup_commit_sha": null,
+  "verified_absent": false
+}

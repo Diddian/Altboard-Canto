@@ -1,0 +1,26 @@
+flowchart LR
+  subgraph I["Keyboard extension (current candidate owners, source verification X1-X4)"]
+    Touch["UIKit keyboard touch"] --> View["SwiftUI KeyboardView"]
+    Input["IME / language / swipe"] --> Field["Host document"]
+    Haptics["Haptic preference + per-process driver"] --> Touch
+    Dictate["Dictation start/stop"] --> Bridge["App Group + Darwin notifications"]
+    Bridge --> Destination{"Verified request + field ownership?"}
+    Destination -->|Match| Field
+    Destination -->|Unknown| Retain["Keep recoverable result"]
+  end
+  subgraph A["Containing app (candidate owners, source verification X3-X7)"]
+    Bridge --> Speech["SpeechRecognitionService"]
+    Speech --> Audio["BackgroundAudioSession"]
+    Speech --> ASR["Qwen/other ASR load and decode"]
+    Speech --> LLM["Optional output processing"]
+    Meeting["Meeting + Conversation"] --> Audio
+    Meeting --> ASR
+    ASR --> Delivery["Token-scoped result"]
+    LLM --> Delivery
+    Delivery --> Bridge
+    Store["SharedSettings / disk state"] --> Speech
+    Store --> Input
+    Store --> Haptics
+  end
+  classDef unknown stroke-dasharray: 5 5
+  class Meeting,ASR,LLM unknown

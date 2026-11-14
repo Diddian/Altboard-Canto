@@ -1,0 +1,78 @@
+{
+  "schema_version": "altboard-review-candidates/v1",
+  "nature": "hypotheses_and_source_observations_not_accepted_findings",
+  "candidates": [
+    {
+      "id": "R1",
+      "area": "audio_cold_model",
+      "observation": "Build #228 user diagnostics reported stop/rearm and first-attempt Live errors; subsequent source repair in main. Inspect actual current callers and effects.",
+      "source_files": [
+        "Sayboard/Services/BackgroundAudioSession.swift",
+        "Sayboard/Services/SpeechRecognitionService.swift",
+        "Shared/AudioSessionRecoveryGate.swift"
+      ],
+      "assigned": "X3"
+    },
+    {
+      "id": "R2",
+      "area": "multilingual_first_install",
+      "observation": "NSExtensionAttributes.PrimaryLanguage is mul at Build #232; actual first selected keyboard/render behavior is a separate unresolved device issue.",
+      "source_files": [
+        "SayboardKeyboard/Info.plist",
+        "SayboardKeyboard/KeyboardViewController.swift",
+        "SayboardKeyboard/KeyboardState.swift"
+      ],
+      "assigned": "X1"
+    },
+    {
+      "id": "R3",
+      "area": "haptic_persistence_vs_engine",
+      "observation": "SharedSettings persists haptic preference; CoreHaptics engine failure and fallbacks need separate lifecycle review.",
+      "source_files": [
+        "Shared/SharedSettings.swift",
+        "Shared/KeyboardHaptics.swift",
+        "SayboardKeyboard/Views/KeyboardView.swift"
+      ],
+      "assigned": "X2"
+    },
+    {
+      "id": "R4",
+      "area": "host_insertion",
+      "observation": "Session destinationOwnerLost diagnostics historically reported; verify delivered text only reaches original host input and uncertain result remains recoverable.",
+      "source_files": [
+        "Shared/DictationRequestPolicy.swift",
+        "Shared/TranscriptionBridge.swift",
+        "SayboardKeyboard/KeyboardViewController.swift"
+      ],
+      "assigned": "X4"
+    },
+    {
+      "id": "R5",
+      "area": "stale_architecture_docs",
+      "observation": "docs/state-audit/state-machines.json records Build #193 and Build #199 snapshots; voice-session-state-machine.md contains older assumptions and superseded implementation descriptions.",
+      "source_files": [
+        "docs/state-audit/state-machines.json",
+        "docs/voice-session-state-machine.md"
+      ],
+      "assigned": "X0"
+    },
+    {
+      "id": "R6",
+      "area": "cross_audio_owner",
+      "observation": "Meeting/Conversation/Dictation share microphone and models; audit cancellation/ownership, storage and shutdown boundaries.",
+      "source_files": [
+        "Sayboard/Services/MeetingRecordingCoordinator.swift",
+        "Sayboard/Services/ConversationCoordinator.swift",
+        "Sayboard/Services/SpeechRecognitionService.swift"
+      ],
+      "assigned": "X7"
+    },
+    {
+      "id": "R7",
+      "area": "legacy_patches",
+      "observation": "History spans 376 changes from earliest recorded workflow SHA, and one compare returns only 300 files. Verify removed/reintroduced paths and duplicate fallback owners in bounded historical windows.",
+      "source_files": [],
+      "assigned": "X0"
+    }
+  ]
+}

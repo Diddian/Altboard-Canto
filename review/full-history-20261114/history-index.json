@@ -1,0 +1,36 @@
+{
+  "schema_version": "altboard-history-index/v1",
+  "captured_at": "2026-11-14",
+  "status": "seed_only_not_full_history",
+  "facts": {
+    "first_workflow_build": 1,
+    "first_build_sha": "d083c9aeaeba6b6d85b1c17b7c5f6627a85380eb",
+    "first_workflow_run_id": 41317801794,
+    "first_build_date": "2026-11-01T14:45:59Z",
+    "latest_workflow_build": 232,
+    "latest_build_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+    "latest_workflow_run_id": 43416033565,
+    "latest_build_ci": "success",
+    "latest_build_device_acceptance": "unverified",
+    "comparison_status": "ahead",
+    "comparison_commits_ahead": 376,
+    "comparison_files_reported": 300,
+    "comparison_file_limit": "API result capped; do not claim all historical paths enumerated",
+    "total_workflow_runs_observed": 234,
+    "repository_files_observed": 577,
+    "swift_files_observed": 368
+  },
+  "runs": [],
+  "history_windows": [],
+  "unresolved_gaps": [
+    "Full build-to-commit mapping not yet harvested",
+    "All earlier stages and deleted/renamed file inventory not yet mapped",
+    "No OCR CLI executed",
+    "No physical iPhone acceptance evidence"
+  ],
+  "citations": [
+    "https://github.com/Diddian/Altboard-Canto/actions/runs/41317801794",
+    "https://github.com/Diddian/Altboard-Canto/actions/runs/43416033565",
+    "https://github.com/Diddian/Altboard-Canto/compare/d083c9aeaeba6b6d85b1c17b7c5f6627a85380eb...ed2c4ede05567f3f63d2979ade81040c8fe799ad"
+  ]
+}

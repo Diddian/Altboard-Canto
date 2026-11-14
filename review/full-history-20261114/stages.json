@@ -1,0 +1,293 @@
+{
+  "schema_version": "altboard-review-stages/v1",
+  "stage_order": [
+    "X0",
+    "X1",
+    "X2",
+    "X3",
+    "X4",
+    "X5",
+    "X6",
+    "X7",
+    "X8",
+    "X9"
+  ],
+  "stages": [
+    {
+      "id": "X0",
+      "name": "Historical change inventory and evidence baseline",
+      "goal": "Index the entire Build #1 through Build #232 history, including failed/cancelled runs, commits, renames, deletions, original ownership and still-present behavior. This is NOT a last-build-only diff.",
+      "firstRead": [
+        ".github/workflows/build-unsigned-ipa.yml",
+        "docs/TASKS.md",
+        "docs/state-audit/state-machines.json",
+        "docs/state-audit/STATE-WORKFLOW.md"
+      ],
+      "focus": [
+        "Use Actions pagination and bounded compare windows, never a single capped 300-file comparison",
+        "Map build run -> SHA -> branch -> result -> affected paths; don't infer failure cause from conclusion alone",
+        "Build a deduplicated historical file inventory and current tracked-file inventory, including removed files",
+        "Identify historical changes plausibly regressing later builds without presuming causation"
+      ],
+      "outputs": [
+        "history-index.json",
+        "coverage.json",
+        "diagrams/history.mmd",
+        "stages/X0.json"
+      ],
+      "stop": "All run-number windows accounted for or explicitly marked unavailable; current files enumerated; comparison-truncation gaps named; NO production edits",
+      "estimatedTokens": "16k-28k"
+    },
+    {
+      "id": "X1",
+      "name": "Installation, lifecycle, keyboard activation and MUL",
+      "goal": "Trace first-install/onboarding and host-extension launch to the actual first visible keyboard; review MUL, OS input mode, empty/incorrect board, fallback and native Globe as distinct gates.",
+      "firstRead": [
+        "Sayboard/SayboardApp.swift",
+        "SayboardKeyboard/Info.plist",
+        "SayboardKeyboard/KeyboardViewController.swift",
+        "SayboardKeyboard/KeyboardState.swift",
+        "Shared/KeyboardLifecycleTrace.swift",
+        "scripts/test_keyboard_initial_layout.py",
+        "scripts/test_keyboard_safety_contract.py"
+      ],
+      "focus": [
+        "Inspect cold installation versus subsequent activation and app-to-keyboard state transfer",
+        "Distinguish primaryLanguage=mul from displayed preferred layout and iOS keyboard selection",
+        "Check reentry, duplicate initialization, owner identity, vanished views and inaccessible settings",
+        "Trace early historical introduction/removal of alternative boot paths"
+      ],
+      "outputs": [
+        "findings.json",
+        "coverage.json",
+        "diagrams/X1-lifecycle.mmd",
+        "stages/X1.json"
+      ],
+      "stop": "Every source-owned first-launch transition has owner, stale/cancel/retry path and test oracle; remaining iPhone-only checks marked not_run",
+      "estimatedTokens": "18k-30k"
+    },
+    {
+      "id": "X2",
+      "name": "UIKit, SwiftUI, touch, haptics, sounds, native Emoji and UI",
+      "goal": "Inspect keyboard rendering, interaction ownership, event duplication, feedback persistence/fallback, system Globe/Emoji and accessibility across historical changes.",
+      "firstRead": [
+        "SayboardKeyboard/KeyboardViewController.swift",
+        "SayboardKeyboard/Views/KeyboardView.swift",
+        "Shared/KeyboardHaptics.swift",
+        "Shared/KeyboardHapticTrace.swift",
+        "Shared/KeyboardHapticDriver.swift",
+        "Shared/KeyTouchMap.swift",
+        "scripts/test_symbol_visibility.py"
+      ],
+      "focus": [
+        "Exactly one gesture/one character/one feedback; no duplicate UIKit/SwiftUI touch owners",
+        "CoreHaptics prewarm error, UIKit/Sensory fallback; persisted preference versus actual physical feedback",
+        "Native Globe tap/hold and actual Emoji History must not be conflated",
+        "Keyboard kind, symbol boundaries, dynamic height, first appearance and accessibility labels"
+      ],
+      "outputs": [
+        "findings.json",
+        "coverage.json",
+        "diagrams/X2-input-events.mmd",
+        "stages/X2.json"
+      ],
+      "stop": "Event and rendering owners mapped and line-level defects supported or dismissed; device-dependent findings not marked pass",
+      "estimatedTokens": "18k-32k"
+    },
+    {
+      "id": "X3",
+      "name": "Mic session, audio, ASR/Live Dictation, native workers and memory",
+      "goal": "Inspect full model/audio lifecycle and every implicit cancellation/ownership gate from historical builds through cold Qwen repair.",
+      "firstRead": [
+        "Sayboard/Services/BackgroundAudioSession.swift",
+        "Sayboard/Services/SpeechRecognitionService.swift",
+        "Sayboard/Services/SpeechRecognitionService+ExperimentalLive.swift",
+        "Sayboard/Services/Qwen3TranscriptionService.swift",
+        "Shared/AudioSessionRecoveryGate.swift",
+        "Shared/LiveWarmupMemoryPolicy.swift",
+        "scripts/test_operation_ownership.py"
+      ],
+      "focus": [
+        "Warm/cold retries and host handshake verified by actual engine health, not stale flags",
+        "AVAudioSession resource release vs intentional arming; manual Stop, interruption and timeout",
+        "Native asynchronous load/unload/decode races, cancellation, memory pressure and safe fallback",
+        "Peak RAM, audio buffers, worker accounting, first-attempt Live and history recovery"
+      ],
+      "outputs": [
+        "findings.json",
+        "coverage.json",
+        "diagrams/X3-audio-state.mmd",
+        "stages/X3.json"
+      ],
+      "stop": "Each endSession/suspend/unload/rearm caller and dependent state mapped; unmeasured memory issues labelled hypotheses",
+      "estimatedTokens": "20k-38k"
+    },
+    {
+      "id": "X4",
+      "name": "Voice-to-host delivery, document ownership, LLM and output",
+      "goal": "Audit cross-process request identity, live/final transcription delivery, LLM transforms and exact host insertion safety.",
+      "firstRead": [
+        "Shared/TranscriptionBridge.swift",
+        "Shared/LLMBridge.swift",
+        "Shared/DictationRequestPolicy.swift",
+        "SayboardKeyboard/KeyboardViewController.swift",
+        "SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift",
+        "SayboardKeyboard/KeyboardViewController+LLM.swift",
+        "Sayboard/Services/LLMProcessingCoordinator.swift"
+      ],
+      "focus": [
+        "Prove original-document ownership before automatic insert; no unrelated field writes",
+        "Exactly-once delivery acknowledgment, stale token, cancellation and no-output retry",
+        "Documentless hosts and session/epoch recovery remain fail-closed",
+        "Undo/Redo, AI selected text, translation output, history and clipboard permissions"
+      ],
+      "outputs": [
+        "findings.json",
+        "coverage.json",
+        "diagrams/X4-delivery-state.mmd",
+        "stages/X4.json"
+      ],
+      "stop": "Delivery path has positive, foreign-field and interrupted cases; no invented host-specific runtime evidence",
+      "estimatedTokens": "18k-32k"
+    },
+    {
+      "id": "X5",
+      "name": "App Group, preferences, settings, onboarding, storage and downloads",
+      "goal": "Audit all persistent settings and model/data lifecycle, including upgrades, resets, migrations, device reinstall and corruption recovery.",
+      "firstRead": [
+        "Shared/SharedSettings.swift",
+        "Sayboard/Views/KeyboardSettingsView.swift",
+        "Sayboard/Services/ModelDownloadService.swift",
+        "Sayboard/Views/SettingsView.swift",
+        "Sayboard/Services/LocalUserDataStore.swift",
+        "scripts/test_settings_contract.py"
+      ],
+      "focus": [
+        "Shared-defaults source of truth across app/extension; explicit OFF vs nil and cold cache",
+        "Haptic and sound chosen setting persists across keyboard controllers and app relaunch",
+        "Model-download cancel/retry, disk reserve, cleanup and mismatched generation",
+        "History/export/import/corrections/Emoji History/last-model preservation and reset impact"
+      ],
+      "outputs": [
+        "findings.json",
+        "coverage.json",
+        "diagrams/X5-persistence-state.mmd",
+        "stages/X5.json"
+      ],
+      "stop": "All discovered stored keys with destructive/reset/migration effect have owner and negative check",
+      "estimatedTokens": "18k-32k"
+    },
+    {
+      "id": "X6",
+      "name": "Multilingual IME, suggestions, Cantonese variants, swipe and Emoji history",
+      "goal": "Review implementation and historical changes to Cantonese/English/German input, language priority, symbol/shapes, live suggestions and emoji state.",
+      "firstRead": [
+        "Shared/LanguagePriority.swift",
+        "Shared/CantoneseRomanizationVariants.swift",
+        "Shared/LatinWordSuggestionPolicy.swift",
+        "SayboardKeyboard/LatinSwipeDecoder.swift",
+        "SayboardKeyboard/JyutpingDictionary.swift",
+        "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift",
+        "scripts/test_universal_cantonese.py"
+      ],
+      "focus": [
+        "MUL system language metadata vs actual user-visible language layout and preferences",
+        "Jyutping/Yale/Sidney Lau, HK colloquial traditional characters, fuzzy maps and exact candidate ownership",
+        "English/German suggestions and next-word suggestions after commits",
+        "Emoji catalog/history persistence versus native iOS Emoji keyboard picker",
+        "Swipe path touch ownership and off-by-one/gesture-trigger duplication"
+      ],
+      "outputs": [
+        "findings.json",
+        "coverage.json",
+        "diagrams/X6-language-routing.mmd",
+        "stages/X6.json"
+      ],
+      "stop": "Language route and persistence state have test evidence or explicit device-only gap; earlier code variants considered",
+      "estimatedTokens": "18k-34k"
+    },
+    {
+      "id": "X7",
+      "name": "Everything-else cross-domain audit and historical regressions",
+      "goal": "Sweep every unreviewed source path and cross-module seam including Meetings, Conversation, translation, ASR/AI models, privacy/diagnostics, performance, release config and unexplained historical regressions.",
+      "firstRead": [
+        "Sayboard/Services/MeetingRecordingCoordinator.swift",
+        "Sayboard/Services/ConversationCoordinator.swift",
+        "Shared/FeatureDiagnostics.swift",
+        "docs/state-audit/state-machines.json",
+        "project.yml",
+        ".github/workflows/build-unsigned-ipa.yml"
+      ],
+      "focus": [
+        "Use coverage.json to find ALL unreviewed files; account for each as reviewed/excluded/not_reviewed",
+        "Check any implicit state gateway absent, not just ones in X1-X6",
+        "Speech/model sharing with meeting/conversation, audio capture, playback, LLM, export and failures",
+        "GitHub history, package dependencies, privacy, instrumentation, resource leaks and process termination",
+        "Reconcile historical source-only artifacts and stale docs with actual HEAD; no speculative false positives"
+      ],
+      "outputs": [
+        "findings.json",
+        "coverage.json",
+        "diagrams/X7-system-dependencies.mmd",
+        "stages/X7.json"
+      ],
+      "stop": "Full current-file accounting, historical-changes ledger accounted; high-risk seams have verified defect/disposition, unresolved gaps recorded",
+      "estimatedTokens": "22k-38k"
+    },
+    {
+      "id": "X8",
+      "name": "Verified root-cause repairs, tests and one unsigned TEST IPA",
+      "goal": "Prioritize confirmed findings across X0-X7, implement bounded root-cause repairs on fresh main, re-review with both lenses, and obtain a TEST unsigned IPA only when warranted.",
+      "firstRead": [
+        "findings.json",
+        "coverage.json",
+        "acceptance.json",
+        ".github/workflows/build-unsigned-ipa.yml",
+        "scripts/test_operation_ownership.py"
+      ],
+      "focus": [
+        "Predeclare weighted acceptance cases per real repair; critical/mandatory floors always block",
+        "Fix one canonical owner and immediate consumers, not layered workaround/version forks",
+        "Check main live HEAD and competing work; main only, no PR or merge, fast-forward only",
+        "New diagnostics when behavior changes; no private typing/audio, bounded App Group logging",
+        "Run cheapest regression gates first; build exactly one necessary TEST IPA if changes compile"
+      ],
+      "outputs": [
+        "acceptance.json",
+        "findings.json",
+        "coverage.json",
+        "diagrams/X8-repaired-contracts.mmd",
+        "stages/X8.json"
+      ],
+      "stop": "All critical/high findings either fixed with evidence or explicitly blocked; score >=90 per completed repair and mandatory tests pass; iPhone acceptance remains separate",
+      "estimatedTokens": "24k-45k"
+    },
+    {
+      "id": "X9",
+      "name": "Independent source reconciliation, release evidence and temporary review cleanup",
+      "goal": "Re-review X8 changes, verify every stage and artifact, get user-required iPhone evidence before acceptance, and delete temporary review folder only once blockers close.",
+      "firstRead": [
+        "manifest.json",
+        "stages.json",
+        "coverage.json",
+        "findings.json",
+        "acceptance.json",
+        "cleanup.json"
+      ],
+      "focus": [
+        "Independent fresh-context OCR-style and Untangle verification of repaired diffs; never self-certify independent agent",
+        "Verify matching source SHA/CI/artifact and App Group; preserve last usable IPA",
+        "Verify no critical/high unresolved issue and all mandatory >=90 acceptance cases (including human iPhone tests)",
+        "Present final in Chat; after gate success remove review folder from temp branch in ONE tree update and verify; branch deletion if supported",
+        "No cleanup if evidence needed to diagnose unresolved blocker"
+      ],
+      "outputs": [
+        "stages/X9.json",
+        "cleanup.json",
+        "temporary branch reviewed deletion commit"
+      ],
+      "stop": "Review repository folder absent and cleanup confirmed, or explicit BLOCKED with retained evidence",
+      "estimatedTokens": "12k-22k"
+    }
+  ]
+}

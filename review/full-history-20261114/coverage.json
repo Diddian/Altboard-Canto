@@ -1,0 +1,21 @@
+{
+  "schema_version": "untangle-ocr-coverage/v1",
+  "captured_at": "2026-11-14",
+  "subject": {
+    "repository": "Diddian/Altboard-Canto",
+    "first_sha": "d083c9aeaeba6b6d85b1c17b7c5f6627a85380eb",
+    "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+    "review_branch": "review/full-history-20261114"
+  },
+  "status": "not_enumerated",
+  "expected_current_tracked_files_observed": 577,
+  "files": [],
+  "historical_changes": [],
+  "per_stage": {},
+  "counts": {
+    "reviewed": 0,
+    "excluded": 0,
+    "not_reviewed": 0
+  },
+  "rule": "Create one record per current tracked path and for historical deleted/renamed source where relevant. reviewed requires file@sha or exact line locator; excluded requires reason. 577 is a bootstrap observation, not completed review."
+}

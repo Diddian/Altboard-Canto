@@ -1,0 +1,60 @@
+{
+  "schema_version": "altboard-full-history-review/v1",
+  "repository": "Diddian/Altboard-Canto",
+  "review_branch": "review/full-history-20261114",
+  "review_root": "review/full-history-20261114",
+  "authority": {
+    "source_of_truth": "main source at reviewed commit; review branch carries temporary evidence only",
+    "main_at_bootstrap": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+    "earliest_workflow_build": 1,
+    "earliest_build_sha": "d083c9aeaeba6b6d85b1c17b7c5f6627a85380eb",
+    "latest_workflow_build": 232,
+    "latest_build_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+    "main_device_acceptance": "not_verified",
+    "branch_policy": "sequential reviewers; one writer; no PR, force push, or merges"
+  },
+  "lifecycle": {
+    "phase": "coordinator_bootstrapped",
+    "next_stage": "X0",
+    "statuses": {
+      "X0": "ready",
+      "X1": "blocked",
+      "X2": "blocked",
+      "X3": "blocked",
+      "X4": "blocked",
+      "X5": "blocked",
+      "X6": "blocked",
+      "X7": "blocked",
+      "X8": "blocked",
+      "X9": "blocked"
+    },
+    "independent_reviewer_executed": false,
+    "ocr_cli_executed": false,
+    "project_sources_published": false
+  },
+  "artifacts": {
+    "stages": "stages.json",
+    "history": "history-index.json",
+    "coverage": "coverage.json",
+    "findings": "findings.json",
+    "acceptance": "acceptance.json",
+    "cleanup": "cleanup.json",
+    "diagrams": "diagrams/",
+    "per_stage": "stages/Xn.json"
+  },
+  "rules": {
+    "stage_sequence": "X0 through X9 strictly; do not begin next until current stage complete",
+    "stage_completion": "Write evidence and precise review coverage; commit stage JSON + canonical ledgers + diagrams in one atomic change; set stage status complete ONLY when gate met",
+    "main_drift": "Recheck main HEAD before each worker. If newer, record difference, reconcile referenced files, do not silently review stale code",
+    "review_writes": "All temporary review-only files on review branch; no test IPA from review-only commits",
+    "code_writes": "Only X8 repairs may change main after explicit case matrix, review, tests and HEAD check; never add review files to main",
+    "file_review": "Account for every in-scope file with reviewed/excluded/not_reviewed and evidence; no assumed completion",
+    "ocr": "Manual OCR-style through GitHub in Chat; CLI not run unless separately installed and authorized. Never invoke paid or external OCR model by default",
+    "untangle": "Canonical owners, hidden links, needless links, surplus code, special-case gates and cross-domain recovery",
+    "acceptance": "Per implemented task >=90% measured pass weights AND all mandatory/critical cases; not_run earns zero; device not inferred from CI",
+    "privacy": "Public repo. No private Project Sources, typing, transcripts, audio, user text, secrets or host identifiers in review files",
+    "budget": "One stage per Chat. Fetch narrow slices; checkpoint current stage on limits and resume SAME stage later; never skip evidence",
+    "cleanup": "At X9 after accepted results, delete temporary review folder from review branch with Git tree sha:null entries; if branch ref deletion unavailable, disclose it; Git history cannot guarantee erasure"
+  },
+  "scope": "Historical Build #1 to latest verified main, including removed code and all current feature groups; avoid last-build-only review"
+}

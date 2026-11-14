@@ -1,0 +1,20 @@
+{
+  "schema_version": "implementation-acceptance/v1",
+  "goal": "Separate behavioral 90 percent gate for EACH actual repair, never file coverage or review confidence",
+  "status": "not_started",
+  "minimum_score": 90,
+  "required_all_mandatory": true,
+  "unresolved_critical_blocks": true,
+  "stage": "integrate",
+  "cases_by_task": {},
+  "device_gate": {
+    "required_for_user_visible_keyboard_or_audio": true,
+    "status": "not_run",
+    "evidence": []
+  },
+  "cli_review": {
+    "mode": "GitHub manual OCR-style",
+    "ocr_cli": "NOT RUN"
+  },
+  "calculation": "sum of passed evidence-backed weights of 100 total per task; blocked/failed/not_run = 0; also every mandatory passes."
+}
