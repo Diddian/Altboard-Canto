@@ -1,7 +1,7 @@
 {
   "schema_version": "untangle-ocr-findings/v1",
   "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
-  "status": "X0-X6 scoped source audits complete; X7 sweep pending; X8 repairs not started; iPhone not verified",
+  "status": "X0-X7 scoped source findings with full path status ledger; X8 repair pending, device unverified",
   "findings": [
     {
       "id": "F-0001",
@@ -1584,6 +1584,135 @@
       ],
       "origin": "X6/manual-source",
       "assigned_stage": "X8"
+    },
+    {
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X7/manual-GitHub-source",
+      "assigned_stage": "X8",
+      "id": "F-0036",
+      "severity": "high",
+      "state": "confirmed",
+      "area": "playback_lease_lifecycle",
+      "paths": [
+        "Sayboard/Services/AudioPlayerService.swift",
+        "Sayboard/Services/MeetingAudioPlayback.swift",
+        "Sayboard/Services/BackgroundAudioSession.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Sayboard/Services/AudioPlayerService.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "15-40,77-82",
+          "observation": "play obtains global playback owner; catch and natural AVAudioPlayer delegate completion reset UI state but never call releasePlayback."
+        },
+        {
+          "path": "Sayboard/Services/MeetingAudioPlayback.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "21-38,84-105,128-145",
+          "observation": "after the final audio part, refresh sets isPlaying false and clears timer without releasing playback owner; failed open can follow earlier configurePlayback."
+        },
+        {
+          "path": "Sayboard/Services/BackgroundAudioSession.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "43-68,200-217",
+          "observation": "global static playback owner gates AudioSessionRecoveryGate.take via playbackFree; matching release is explicit."
+        }
+      ],
+      "scenario": "A History recording or last Meeting part finishes on its own; subsequent speech model loading parks an intentionally active microphone session.",
+      "causal_chain": "Natural-end/failed file open does not release shared playback lease; playbackFree stays false with no audible playback; parked session restoration declines.",
+      "root_owner": "AudioPlayerService.handlePlaybackFinished and MeetingAudioPlayback.refresh/open; shared consumer BackgroundAudioSession.restoreAfterModelLoad",
+      "smallest_repair": "Release only the matching playback UUID on every true terminal/error path; preserve pause and explicit Stop semantics, avoid duplicate or stale delegate completion releasing newer playback.",
+      "regression_oracle": "History natural finish, final meeting part, missing CAF and timed stop followed by cold model load: no orphan playback owner; manual Stop remains authoritative; no two concurrent audio owners.",
+      "verification": [
+        "Source-level owner/caller inspection and read-only predicate at pinned main SHA; iPhone AVAudioSession and native callback timing NOT RUN."
+      ]
+    },
+    {
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X7/manual-GitHub-source",
+      "assigned_stage": "X8",
+      "id": "F-0037",
+      "severity": "medium",
+      "state": "confirmed",
+      "area": "conversation_meeting_transfer",
+      "paths": [
+        "Sayboard/Services/ConversationCoordinator.swift",
+        "Sayboard/Services/MeetingRecordingCoordinator.swift",
+        "Sayboard/Views/ConversationView.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Sayboard/Services/ConversationCoordinator.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "354-369",
+          "observation": "saveAsMeeting clears turns, ignores failure of try? FileManager.default.removeItem at draft folder, then unconditionally reports Saved in Meetings."
+        },
+        {
+          "path": "Sayboard/Services/ConversationCoordinator.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "549-595",
+          "observation": "restoreDraft reloads turns.json and matching CAF after relaunch when original folder remains."
+        },
+        {
+          "path": "Sayboard/Services/MeetingRecordingCoordinator.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "604-673",
+          "observation": "saveConversation copies turn CAF into a new UUID meeting folder and writes a new manifest before caller deletes source draft."
+        }
+      ],
+      "scenario": "Conversation is saved as Meeting, destination copy succeeds but deleting source draft folder fails.",
+      "causal_chain": "Two-phase copy+delete without committed source consumption marker -> stale draft remains on disk -> restart restores it -> possible repeated saving and duplicate meetings.",
+      "root_owner": "ConversationCoordinator.saveAsMeeting / restoreDraft handoff to MeetingRecordingCoordinator.saveConversation",
+      "smallest_repair": "Make transfer completion idempotent, surface draft cleanup failure and preserve the saved Meeting; recover or remove original source only after safe confirmation.",
+      "regression_oracle": "Inject source-folder removeItem failure after confirmed destination write; relaunch must not present duplicate active draft or allow duplicate import; saved meeting audio retained.",
+      "verification": [
+        "Source-level branch and error swallow confirmed; no disk fault injection, restart runtime or device test executed."
+      ]
+    },
+    {
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X7/manual-GitHub-source",
+      "assigned_stage": "X8",
+      "id": "F-0038",
+      "severity": "medium",
+      "state": "confirmed",
+      "area": "model_integrity",
+      "paths": [
+        "Sayboard/Services/QwenHubDownloader.swift",
+        "Sayboard/Services/CustomQwenModelSource.swift",
+        "Sayboard/Services/ModelStorageManager.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Sayboard/Services/QwenHubDownloader.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "129-147,88-111",
+          "observation": "List API and independent downloads resolve mutable /main instead of the same immutable source commit."
+        },
+        {
+          "path": "Sayboard/Services/QwenHubDownloader.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "177-194",
+          "observation": "verifyFile always checks size but SHA-256 only when LFS oid is available and 64 characters; for other files no cryptographic digest is mandated."
+        },
+        {
+          "path": "Sayboard/Services/CustomQwenModelSource.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "18-46",
+          "observation": "User source validation accepts repository owner/name, not an immutable revision."
+        }
+      ],
+      "scenario": "Upstream model branch changes between catalog and file reads, or a matching-size file has no LFS oid.",
+      "causal_chain": "Unpinned revision plus optional per-file digest -> mixed-version artifacts or same-length mutated non-LFS bytes can pass current size checks.",
+      "root_owner": "QwenHubDownloader.listFiles / download / verifyFile",
+      "smallest_repair": "Pin source tree and downloads to one commit revision, require verifiable object identity per selected file, stage/commit whole compatible bundle; never replace last usable copy on failure.",
+      "regression_oracle": "Mock changing remote branch and same-size corrupted no-LFS model; installer must reject, clean staged data and keep previous verified model.",
+      "verification": [
+        "Source-level endpoint and SHA predicate verified; no actual malicious upstream behavior inferred and no corruption integration test run."
+      ]
     }
   ],
   "categories": [

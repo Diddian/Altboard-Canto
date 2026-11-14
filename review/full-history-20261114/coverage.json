@@ -7,7 +7,7 @@
     "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
     "review_branch": "review/full-history-20261114"
   },
-  "status": "X0-X6 scoped source reviews complete; X7 pending; X8 implementation not started",
+  "status": "X0-X7 scoped source/owner audit checkpoint complete with explicit residual unreviewed file paths; X8 pending; physical iPhone not tested",
   "expected_current_tracked_files_observed": 577,
   "current_tracked_files": 577,
   "initial_tracked_files": 356,
@@ -16,7 +16,9 @@
       "path": ".editorconfig",
       "sha": "697d530674d4ceaad3aa66e1ce2491bcd5c1b593",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "style/metadata configuration; out of cross-runtime execution scope"
     },
     {
       "path": ".githooks/pre-commit",
@@ -28,61 +30,80 @@
       "path": ".github/workflows/build-unsigned-ipa.yml",
       "sha": "daa019e4a4bad0ddaab1379708cf46030e1cce9c",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X7"
     },
     {
       "path": ".gitignore",
       "sha": "0d829f5d1647541a9179c0307496f08584f3fdb8",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "style/metadata configuration; out of cross-runtime execution scope"
     },
     {
       "path": ".swiftformat",
       "sha": "6d33ac44ac7ce210a19f4d4dd75cf6a3881ff977",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "style/metadata configuration; out of cross-runtime execution scope"
     },
     {
       "path": ".swiftlint.yml",
       "sha": "336c525689e3d80fc5c55ce0c56db642f65c6b8c",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "style/metadata configuration; out of cross-runtime execution scope"
     },
     {
       "path": "JyutpingResources/.gitkeep",
       "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "asset metadata or empty placeholder"
     },
     {
       "path": "JyutpingResources/HKCanCorAttribution.txt",
       "sha": "0d168cfd0df9ad6a3eb45830bf63d0ce8ce2531b",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "static lexicon, licensing or localization dataset; not runtime source reviewed"
     },
     {
       "path": "JyutpingResources/RimeStrokeGPLv3.txt",
       "sha": "f288702d2fa16d3cdf0035b15a9fcbc552cd88e7",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "static lexicon, licensing or localization dataset; not runtime source reviewed"
     },
     {
       "path": "JyutpingResources/RimeStrokeLicense.txt",
       "sha": "65c5ca88a67c30becee01c5a8816d964b03862f9",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "static lexicon, licensing or localization dataset; not runtime source reviewed"
     },
     {
       "path": "JyutpingResources/RimeStrokeNotice.txt",
       "sha": "4c8179d346475ec39c6037a5401aae81e4c90497",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "static lexicon, licensing or localization dataset; not runtime source reviewed"
     },
     {
       "path": "LICENSE",
       "sha": "f288702d2fa16d3cdf0035b15a9fcbc552cd88e7",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "historical/reference documentation; not current live execution authority"
     },
     {
       "path": "Packages/LlamaCpp/Package.swift",
@@ -94,115 +115,153 @@
       "path": "README.md",
       "sha": "461e9fcc853dd446094a6b3852a4d77bfcbb8ae2",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "historical/reference documentation; not current live execution authority"
     },
     {
       "path": "Sayboard/Assets.xcassets/AccentColor.colorset/Contents.json",
       "sha": "c0ace126c429c29e5b3021d3db6f49dfd16ff207",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "asset metadata or empty placeholder"
     },
     {
       "path": "Sayboard/Assets.xcassets/AppIcon.appiconset/AppIcon.png",
       "sha": "3f53711fa8c66938389a326c9fb31f4a65878a1d",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Assets.xcassets/AppIcon.appiconset/Contents.json",
       "sha": "cefcc878e08455cb63e46f6f8f78dbc6f45332d6",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "asset metadata or empty placeholder"
     },
     {
       "path": "Sayboard/Assets.xcassets/Contents.json",
       "sha": "73c00596a7fca3f3d4bdd64053b69d86745f9e10",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "asset metadata or empty placeholder"
     },
     {
       "path": "Sayboard/Assets.xcassets/icon-check.imageset/Contents.json",
       "sha": "18dc060594c38aa240dd41403b858bca818c7112",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "asset metadata or empty placeholder"
     },
     {
       "path": "Sayboard/Assets.xcassets/icon-check.imageset/icon-check.svg",
       "sha": "be0cbb845b8c4c7a91664b5781bdfe84bf43435e",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Assets.xcassets/icon-copy.imageset/Contents.json",
       "sha": "c3bbb71217ae3a7e4f5ec5437555723e87baf517",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "asset metadata or empty placeholder"
     },
     {
       "path": "Sayboard/Assets.xcassets/icon-copy.imageset/icon-copy.svg",
       "sha": "463025581e6d29a7f797a20e868130903453409e",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Assets.xcassets/icon-delete.imageset/Contents.json",
       "sha": "c52d6f0ba4d5fb63695afc02def6e21264c3db54",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "asset metadata or empty placeholder"
     },
     {
       "path": "Sayboard/Assets.xcassets/icon-delete.imageset/icon-delete.svg",
       "sha": "6694021de3ac3be05141ad822cfd9af67197184d",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Assets.xcassets/icon-grid.imageset/Contents.json",
       "sha": "447eb47ac4a67d4b9fe32a8acc0f4e198bd91cc2",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "asset metadata or empty placeholder"
     },
     {
       "path": "Sayboard/Assets.xcassets/icon-grid.imageset/icon-grid.svg",
       "sha": "996086f20ef6e85c667a4abb91d35486ba62c7ae",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Assets.xcassets/tab-history.imageset/Contents.json",
       "sha": "1615dd069793b6599c228f16cbb3f6e3604965ac",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "asset metadata or empty placeholder"
     },
     {
       "path": "Sayboard/Assets.xcassets/tab-history.imageset/tab-history.svg",
       "sha": "24f6a431e527883dca68f6d6890e1aa1bad0cc40",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Assets.xcassets/tab-models.imageset/Contents.json",
       "sha": "9d895bfb93189ae50042373b259065fcb859ef52",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "asset metadata or empty placeholder"
     },
     {
       "path": "Sayboard/Assets.xcassets/tab-models.imageset/tab-models.svg",
       "sha": "d9aff5f61fa80c49571becf68f808cd4cea46270",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Assets.xcassets/tab-settings.imageset/Contents.json",
       "sha": "ca675f44d4f74470ff79abab12540884cddc2349",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "asset metadata or empty placeholder"
     },
     {
       "path": "Sayboard/Assets.xcassets/tab-settings.imageset/tab-settings.svg",
       "sha": "2cc093bec0dd18364fd15ebac1da5bc1bc9a0843",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Helpers/AIButtonOffer.swift",
@@ -294,565 +353,751 @@
       "path": "Sayboard/Info.plist",
       "sha": "658e92a6baebfb3e8b19be254ce62236764f0ad2",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X7"
     },
     {
       "path": "Sayboard/InfoPlist.xcstrings",
       "sha": "ce5c5ad2024f202c402232bc37240ccac594895c",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "static lexicon, licensing or localization dataset; not runtime source reviewed"
     },
     {
       "path": "Sayboard/Localizable.xcstrings",
       "sha": "a25be125b9b533f1f925ce152c0b8c9c7034e81d",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "static lexicon, licensing or localization dataset; not runtime source reviewed"
     },
     {
       "path": "Sayboard/PrivacyInfo.xcprivacy",
       "sha": "cb15c2047e64596ed1549ecc9716bce21674b7cc",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X7"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-bg.mp4",
       "sha": "a44ccdc036184c86d4ceb26fbf6f324d0d12edac",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-cs.mp4",
       "sha": "53abd6adeb900f5d398c126a4be35c735d8bcdf5",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-da.mp4",
       "sha": "cc4a28f218e66601d211020ee0f82e8ca6ab6e28",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-de.mp4",
       "sha": "823fa0f7013b308098615d19ceffe20253099a07",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-el.mp4",
       "sha": "b80a7cfcd8b2894ee8fc0d4b3a98e04f987b08c8",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-en.mp4",
       "sha": "e66bb00b928aa99a5c2f862dff43b6b06f3649aa",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-es.mp4",
       "sha": "daab64b8cd700adc31f4648992ceb4740098e181",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-et.mp4",
       "sha": "bf1edb494242365c0a203b60f2c139cd23f5a575",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-fi.mp4",
       "sha": "282ebb0c532640dd2854bc164c09251232a2d9b0",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-fr.mp4",
       "sha": "3d02907b7b6ce35e0083486338aa542863ae38f3",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-hi.mp4",
       "sha": "0268fc1d9fc7cf78dec480d2a97366ab0bf03133",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-hr.mp4",
       "sha": "a7c22abc663649f2773ec9bbe7511416f614481e",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-hu.mp4",
       "sha": "155987a0fee4ed5528fa850dce8167b308f8dd32",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-it.mp4",
       "sha": "c82abb8924266194b4510339c618a3127ef4bf67",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-ja.mp4",
       "sha": "413fd06089ccca385373b6ed2d231feaa0b800bb",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-ko.mp4",
       "sha": "0e26c1ad0642c60a3db5a2ef105d3de7ee952cd5",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-lt.mp4",
       "sha": "8fc5737d6bad105b9acc01a4cd3f5adff024c2a8",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-lv.mp4",
       "sha": "09d0d7eaf59d557da1ef46fecc2045e1f4530055",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-nl.mp4",
       "sha": "13bdf274824b547343c0f7cdd2017192fffa9376",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-no.mp4",
       "sha": "0649ee6814c391557bb218fb5baf3bb2767075dc",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-pl.mp4",
       "sha": "cb250de7fa3e82271ff974fd5c5d15f665f3c893",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-pt.mp4",
       "sha": "db4ac008c5a031163e6ea2b961ed862550ae84d6",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-ro.mp4",
       "sha": "2c6d81a7c1836be34a7fd6e11de460a6b5d6098f",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-ru.mp4",
       "sha": "47de52a2922b937e9e68c8979a618491ed3af51b",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-sk.mp4",
       "sha": "8fa0ffe5474e80863304050b3ba1da8700f3a2c4",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-sl.mp4",
       "sha": "bd19572893095d51fc2d2914ca52c93324aa3510",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-sv.mp4",
       "sha": "b83745613d054bc04a8a73e0533c4143349702e4",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-tr.mp4",
       "sha": "f1c7ec0b0fb6ab2ab99d2b6e0e96b166e7541db8",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-uk.mp4",
       "sha": "f3981c80b8378de654520a5909ca9f7ff9bc356b",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-add-keyboard-zh.mp4",
       "sha": "7efa2cfb57c7421e3976218ae2cec3f25de72370",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-bg.mp4",
       "sha": "4db73b7ed5c250f5dc9e1ab4db10df37f907103a",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-cs.mp4",
       "sha": "3f6129cf6725a480a9cd213517271fe551fb66b7",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-da.mp4",
       "sha": "2206f99d96dd4ee679b7e975c2028840e478cffd",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-de.mp4",
       "sha": "ac32daf38b5af0681aedc515c14db2dfbd84245e",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-el.mp4",
       "sha": "7abae5bdd0bd21f9946a69e61d7cdf94dff55d52",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-en.mp4",
       "sha": "0e40de30113c37b37b8a6c498fe29e0f95290197",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-es.mp4",
       "sha": "7dc3a8261b5ee9e2611bf030652ac04c9af7d69b",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-et.mp4",
       "sha": "39421950d41ee52f2776438e8784c49b37446c1c",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-fi.mp4",
       "sha": "bfd1261704e33fed6415a4744ec1880916f6c5eb",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-fr.mp4",
       "sha": "a9d8fc56d5999f3f81e30f2320af79559397d876",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-hi.mp4",
       "sha": "704c5d6fc0f5bdafa073bac893640a44dfb3ef78",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-hr.mp4",
       "sha": "7bfe6c02f4dcd3ae6791821a1935dad07dec3cc7",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-hu.mp4",
       "sha": "1bcdfe5bf780218a3539ee2f5dc16a4ef76966de",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-it.mp4",
       "sha": "9f249ea22ba03ba9f1850122eadec0294ecc672c",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-ja.mp4",
       "sha": "bbf25bac9a2e93531a08f96f3b61971b8a1d36ef",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-ko.mp4",
       "sha": "4b9a73f4b6c53f7fb0f4e65f0d66cce5b4007f81",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-lt.mp4",
       "sha": "860b523cd4177a51d91ba474d2dba1706645396c",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-lv.mp4",
       "sha": "3fac1fbdbc251698bb3e20b063aff3c3635d2af5",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-nl.mp4",
       "sha": "3fa0cc477482658955d16e4c8d6c416d0e22cb2a",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-no.mp4",
       "sha": "e0dac3b715160a175ccb2bb7161f68667a9d6fc6",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-pl.mp4",
       "sha": "ca415e5a5e447c2e74dc6b5110762b0407fe8a86",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-pt.mp4",
       "sha": "fd4ab579756b313722ed04322ecaee35e366d975",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-ro.mp4",
       "sha": "23f8c642b4f0ce7c05ad41e49a854522541339fc",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-ru.mp4",
       "sha": "3f9563f36c204042e380f5793b343193750f14e3",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-sk.mp4",
       "sha": "38b21d139be120b63480cf6702241351e36844d1",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-sl.mp4",
       "sha": "20dbd2991c38650e5f896b1d0a1d073f1608da3f",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-sv.mp4",
       "sha": "f17683d682044783cf4f1c1f6467a65125f367d2",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-tr.mp4",
       "sha": "912f3b739232eccb16247df30993746747ab69eb",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-uk.mp4",
       "sha": "428eaa689ead9c8ddc1a6b86f227b59bba45b7bf",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-full-access-zh.mp4",
       "sha": "f3e16a26005a383f843b46e78dd981800eee7579",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-bg.mp4",
       "sha": "c807fe29dfd0b5caa089477ca2d7e6da4a452b6a",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-cs.mp4",
       "sha": "8d7d9bda8b5ddb107b64e69e207006827fd7f362",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-da.mp4",
       "sha": "12fb35b88913561197396540e9f734063efe2eb2",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-de.mp4",
       "sha": "9db2f1ae3ef9e5477af3247340e6972a6aa04d9e",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-el.mp4",
       "sha": "06f076828ea0efd2c53d61d0d747b457812863f2",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-en.mp4",
       "sha": "f8bac9bedcd49e814836c2c593a3d1d34da99794",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-es.mp4",
       "sha": "570fd264d1c088385f11716efae76ca138a10949",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-et.mp4",
       "sha": "e266b111350306bc5688742efb5ecdafd11be9e3",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-fi.mp4",
       "sha": "55bd58ea91573c81a09dc4d66827c7fbed299c52",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-fr.mp4",
       "sha": "02586aa80b270ecfb90a254234d56fb060b78a43",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-hi.mp4",
       "sha": "16472cdc0abb744c34ff780c1f11bc3d209e6aa9",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-hr.mp4",
       "sha": "29604b0c27e716dace476c022d695631ed203ae8",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-hu.mp4",
       "sha": "6c8e2f2083ee14c6fbdbbbd10801f63ba43e074d",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-it.mp4",
       "sha": "7e1cde083821dc535db9eba7212632fec9cd5843",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-ja.mp4",
       "sha": "ac3758fba71fa2498d254edc91c467fd8c02a3fe",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-ko.mp4",
       "sha": "811036ebc4ec7ee2219d0b363fd55b8f43faf1c7",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-lt.mp4",
       "sha": "5baafaaa9fac127bd72db8bf51fe94aa55d98356",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-lv.mp4",
       "sha": "32d64895df0a5307e55622811a985fc32a1df2a6",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-nl.mp4",
       "sha": "d686da5c32509756806abd1f26ead0f898fe8a61",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-no.mp4",
       "sha": "b2dda2a3f46db3aad3a13643172127aa2f888908",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-pl.mp4",
       "sha": "e2bdb8368a1b5df1ce37ca16ae206de0f555f331",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-pt.mp4",
       "sha": "104e613824456dd378c7c2d401360852faae728e",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-ro.mp4",
       "sha": "06218e2c7678c95738a006560b78db462777d88e",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-ru.mp4",
       "sha": "65f3b624b8edd9f5148b7920f52a0e5d19d45783",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-sk.mp4",
       "sha": "2e76abe286053c8fce4bd4f8332529143fbd1ed9",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-sl.mp4",
       "sha": "4abca674bb06e9043b0d494df527620ad828b0cf",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-sv.mp4",
       "sha": "02a488a8163b02676d1b0ff0c32d83677e0e66a0",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-tr.mp4",
       "sha": "d82f71a1ebd3f77ee8a9319bfcb584f164fc83bc",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-uk.mp4",
       "sha": "a13040cfafda33a54e5d97c587db8df1b81ec31f",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Resources/tutorial-microphone-zh.mp4",
       "sha": "0e338a29deab01f529d398994c6992061654c87d",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "Sayboard/Sayboard-Bridging-Header.h",
@@ -901,7 +1146,8 @@
       "path": "Sayboard/Services/AudioPlayerService.swift",
       "sha": "1bb83bd4ba183b7a27f06917be7de1e708af276e",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X7"
     },
     {
       "path": "Sayboard/Services/AudioRecorder.swift",
@@ -975,14 +1221,16 @@
       "path": "Sayboard/Services/ConversationCoordinator.swift",
       "sha": "22fd90249f5b76a2ce2b3eebbc7a99cd7da9e769",
       "tracking": "current",
-      "review": "not_reviewed",
-      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 48-99 beginCapture; 139-174 stop and endSession; full flow deferred X7; remainder not claimed reviewed"
+      "review": "reviewed",
+      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 48-99 beginCapture; 139-174 stop and endSession; full flow deferred X7; remainder not claimed reviewed",
+      "review_stage": "X7"
     },
     {
       "path": "Sayboard/Services/CustomQwenModelSource.swift",
       "sha": "b37840a5ddd545bdb7f38036fe9af847dd3cebd2",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X7"
     },
     {
       "path": "Sayboard/Services/HereticModelCatalog.swift",
@@ -994,8 +1242,9 @@
       "path": "Sayboard/Services/HostApplicationMonitor.swift",
       "sha": "1b8aceeee94f5f7b77366d3cd4e4fa1e32a51248",
       "tracking": "current",
-      "review": "not_reviewed",
-      "x4_evidence": "X4 scoped path at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; host process proof owner path; not fully reviewed; defer remaining lifecycle to X7. Remainder not automatically marked reviewed."
+      "review": "reviewed",
+      "x4_evidence": "X4 scoped path at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; host process proof owner path; not fully reviewed; defer remaining lifecycle to X7. Remainder not automatically marked reviewed.",
+      "review_stage": "X7"
     },
     {
       "path": "Sayboard/Services/LLMDownloadService.swift",
@@ -1054,14 +1303,16 @@
       "path": "Sayboard/Services/MeetingAudioPlayback.swift",
       "sha": "5f0f095fe7499ebddee802d20fc3a81bc54b7490",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X7"
     },
     {
       "path": "Sayboard/Services/MeetingRecordingCoordinator.swift",
       "sha": "be08be1ccdcf38850f41a830524facefb6c4bb93",
       "tracking": "current",
-      "review": "not_reviewed",
-      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 90-157 beginCapture; 205-227 stop and endSession; full flow deferred X7; remainder not claimed reviewed"
+      "review": "reviewed",
+      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 90-157 beginCapture; 205-227 stop and endSession; full flow deferred X7; remainder not claimed reviewed",
+      "review_stage": "X7"
     },
     {
       "path": "Sayboard/Services/ModelDiskReserve.swift",
@@ -1100,7 +1351,8 @@
       "path": "Sayboard/Services/ModelManifest.swift",
       "sha": "eedcac2196b1abcbf28b011f609107192113e2d7",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X7"
     },
     {
       "path": "Sayboard/Services/ModelStorageManager.swift",
@@ -1164,7 +1416,8 @@
       "path": "Sayboard/Services/QwenHubDownloader.swift",
       "sha": "11c7cb639a976142fb700adf679e2353e23802de",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X7"
     },
     {
       "path": "Sayboard/Services/R2ModelDownloader.swift",
@@ -1672,13 +1925,15 @@
       "path": "SayboardKeyboard/HostArbiter/KBHostArbiterHook.h",
       "sha": "66f0e6c258c0f17c54018299e60e31a60918621b",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X7"
     },
     {
       "path": "SayboardKeyboard/HostArbiter/KBHostArbiterHook.m",
       "sha": "53781b2af5aa81a8cb678010b3b6f59833fc9cd0",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X7"
     },
     {
       "path": "SayboardKeyboard/Info.plist",
@@ -1691,7 +1946,9 @@
       "path": "SayboardKeyboard/InfoPlist.xcstrings",
       "sha": "280d09d24be756af95ed81a67b7030924a15a833",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "static lexicon, licensing or localization dataset; not runtime source reviewed"
     },
     {
       "path": "SayboardKeyboard/InformalNgramStore.swift",
@@ -1757,7 +2014,8 @@
       "path": "SayboardKeyboard/KeyboardViewController+HostDetection.swift",
       "sha": "c9e223727f94580590c7187f0bd4dbf8abc762e4",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X7"
     },
     {
       "path": "SayboardKeyboard/KeyboardViewController+LLM.swift",
@@ -1812,7 +2070,9 @@
       "path": "SayboardKeyboard/Localizable.xcstrings",
       "sha": "a92e73b64f88339cef545854336f985f2863830e",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "static lexicon, licensing or localization dataset; not runtime source reviewed"
     },
     {
       "path": "SayboardKeyboard/PingValidator.swift",
@@ -1826,7 +2086,8 @@
       "path": "SayboardKeyboard/PrivacyInfo.xcprivacy",
       "sha": "cb15c2047e64596ed1549ecc9716bce21674b7cc",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X7"
     },
     {
       "path": "SayboardKeyboard/SayboardKeyboard-Bridging-Header.h",
@@ -2601,7 +2862,8 @@
       "path": "Shared/ConversationTurn.swift",
       "sha": "523af47fc3c75b2d0701c9803153f498f4e9d95f",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X7"
     },
     {
       "path": "Shared/CursorLineNavigation.swift",
@@ -2613,13 +2875,15 @@
       "path": "Shared/DiagnosticLog.swift",
       "sha": "19a83974c94b67e331fdb138504860d1e2fc550e",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X7"
     },
     {
       "path": "Shared/DictationAllowance.swift",
       "sha": "9341940cc3da104549031e78393528702c1c9705",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X7"
     },
     {
       "path": "Shared/DictationBreadcrumb.swift",
@@ -2675,8 +2939,9 @@
       "path": "Shared/FeatureDiagnostics.swift",
       "sha": "981fbb1e8826eeb0b939ff22c43c809d59c82f81",
       "tracking": "current",
-      "review": "not_reviewed",
-      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 12-73 speech/audio event and category contracts; full diagnostics deferred X7; remainder not claimed reviewed"
+      "review": "reviewed",
+      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 12-73 speech/audio event and category contracts; full diagnostics deferred X7; remainder not claimed reviewed",
+      "review_stage": "X7"
     },
     {
       "path": "Shared/HistoryKeyboardTestSession.swift",
@@ -2732,7 +2997,8 @@
       "path": "Shared/KeyboardExperimentMetrics.swift",
       "sha": "aab8be5ce8bcb73bf1384c6cb573ba2f0462a396",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X7"
     },
     {
       "path": "Shared/KeyboardHandoffAnalyzer.swift",
@@ -2782,7 +3048,8 @@
       "path": "Shared/KeyboardInputTrace.swift",
       "sha": "df53a347874d3acea53c906b6250dba53f9cac17",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X7"
     },
     {
       "path": "Shared/KeyboardKind.swift",
@@ -2916,7 +3183,8 @@
       "path": "Shared/MeetingTranslationPolicy.swift",
       "sha": "660eda502e068f5d9e2df6daf6aef66a88d5dfa7",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X7"
     },
     {
       "path": "Shared/MicMorphFrames.swift",
@@ -2995,7 +3263,8 @@
       "path": "Shared/RememberedHost.swift",
       "sha": "187d688c5a9047ee65fce8f14110337d803c9843",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X7"
     },
     {
       "path": "Shared/SentenceCapitalization.swift",
@@ -3125,85 +3394,113 @@
       "path": "assets/app-icon.svg",
       "sha": "fb696e7e7e25d52ee1478fd6655d8b5d3cd7c431",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "assets/app-store-badge.svg",
       "sha": "072b425a1ab785ee7143f0f0fba305f55bfb9678",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "assets/keyboard-dark.png",
       "sha": "80d19d3195a89ceaba8ec62fab4ae7e335e2f18e",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "assets/keyboard-light.png",
       "sha": "d5a6922a18627aac0ea97c4e73af9f9c626ce6a9",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "assets/screenshot-1.png",
       "sha": "c05b0646e4c62936d1cef4f88ca799ce50de0c56",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "assets/screenshot-2.png",
       "sha": "e32ea0405168a27405ce316a7f7b642106419517",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "assets/screenshot-3.png",
       "sha": "8732a445764bd50bc130714c4f238f8b9b417e71",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "assets/screenshot-4.png",
       "sha": "d4540ac4060e5f5bc6a8a49e82ce867afd3592c9",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "docs/APP-STRUCTURE.json",
       "sha": "ae5e0f6407df315f89a0ae06e715906fed2baf3d",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "historical/reference documentation; not current live execution authority"
     },
     {
       "path": "docs/CANTONESE-COLLOQUIAL-ASR-REVIEW.md",
       "sha": "73143176b3be032f575b8c299f4f69b3473290d8",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "historical/reference documentation; not current live execution authority"
     },
     {
       "path": "docs/CANTONESE-LONG-PHRASES-PLAN.md",
       "sha": "9eb72971899e7f249a44dbf9f845cf35b2b3cbd1",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "historical/reference documentation; not current live execution authority"
     },
     {
       "path": "docs/CANTONESE-UNIVERSAL-IME-ACCEPTANCE.md",
       "sha": "7dbdc7f06bdb29d3beb64263f0110985d94258a0",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "historical/reference documentation; not current live execution authority"
     },
     {
       "path": "docs/CODE-AUDIT-2026-11-02.md",
       "sha": "9a51807f169ddbff89a1b713ef5fa6df781359c6",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "historical/reference documentation; not current live execution authority"
     },
     {
       "path": "docs/EMOJI-DATA-NOTICE.md",
       "sha": "004815bac76a5fede2cbb847629190b25a8a2924",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "historical/reference documentation; not current live execution authority"
     },
     {
       "path": "docs/HAPTICS-DIAGNOSTICS.md",
@@ -3217,85 +3514,113 @@
       "path": "docs/JYUTPING-DATA-NOTICES.md",
       "sha": "86165e3c4a264815dbb7f3f434357bd04401074e",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "historical/reference documentation; not current live execution authority"
     },
     {
       "path": "docs/KEYBOARD-LOADING-CONFLICTS.md",
       "sha": "663967010440edfec2d321b28f455ba614861a84",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "historical/reference documentation; not current live execution authority"
     },
     {
       "path": "docs/MULTIMETHOD_INPUT_ARCHITECTURE.md",
       "sha": "84a5b019b4cbc37ced8f7a06a59bf322fa1bb748",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "historical/reference documentation; not current live execution authority"
     },
     {
       "path": "docs/REPO-HYGIENE-SWIPE-AUDIT-2026-11-02.md",
       "sha": "45988230006049680be239cf6b1390324ad2b373",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "historical/reference documentation; not current live execution authority"
     },
     {
       "path": "docs/SETTINGS-WORKFLOW-TREE.md",
       "sha": "7fe6f8b1b92f5746dad51e00f04d6899461b84ef",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "historical/reference documentation; not current live execution authority"
     },
     {
       "path": "docs/TASKS.md",
       "sha": "1c55ad50ff7d5a9d9ba6aeb64a357d7ea02e3496",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "historical/reference documentation; not current live execution authority"
     },
     {
       "path": "docs/assets/native-emoji-traced.svg",
       "sha": "738b86ea76ce6f0f9e1f717be49380b49dcbad53",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "binary/media asset; content not inspected"
     },
     {
       "path": "docs/ios-emoji-native-parity-IMG_9692.json",
       "sha": "7bebf6907205f05fa832a7cfa70e48e817da4fdc",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "historical/reference documentation; not current live execution authority"
     },
     {
       "path": "docs/ios-keyboard-alphabet-reference.json",
       "sha": "384a14c89f63a4f76e29b69c933e2389121c0332",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "historical/reference documentation; not current live execution authority"
     },
     {
       "path": "docs/ios-keyboard-native-vs-altboard-pixel-comparison.json",
       "sha": "f7347b2bb02d30faa6d36f1a2e8cebf9b7fba622",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "historical/reference documentation; not current live execution authority"
     },
     {
       "path": "docs/ios-keyboard-reference.json",
       "sha": "dbc7b1e20d7cadd4277035bea95d311f9b383722",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "historical/reference documentation; not current live execution authority"
     },
     {
       "path": "docs/ios-keyboard-symbols-reference.json",
       "sha": "0d5cd88971a951521478383252b1c57a3b3422fd",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "historical/reference documentation; not current live execution authority"
     },
     {
       "path": "docs/jyutping-ime-integration.md",
       "sha": "d42d9aedcbefa9d93b813bef31cea6143b72ae11",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "historical/reference documentation; not current live execution authority"
     },
     {
       "path": "docs/live-meeting-transcription-experiment.json",
       "sha": "0cb5f7ac353f4bf6fd884fb7d6da688696b8d90f",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "historical/reference documentation; not current live execution authority"
     },
     {
       "path": "docs/state-audit/STATE-WORKFLOW.md",
@@ -3308,13 +3633,17 @@
       "path": "docs/state-audit/state-machines.json",
       "sha": "e862433806937ed4939e5dd8a4a52cb566173bca",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "historical/reference documentation; not current live execution authority"
     },
     {
       "path": "docs/swipe-typing-en-de-plan.json",
       "sha": "9194a1152afdfc97c565c21df5eb940f0ecc50e2",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "historical/reference documentation; not current live execution authority"
     },
     {
       "path": "docs/voice-session-state-machine.md",
@@ -3327,7 +3656,8 @@
       "path": "project.yml",
       "sha": "f2ef8d672983b3f15bb0f329deadef1f50e65d37",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X7"
     },
     {
       "path": "scripts/bootstrap-llama.sh",
@@ -3371,7 +3701,9 @@
       "path": "scripts/cantonese-phrases.tsv",
       "sha": "4d530034b34e4e0ec17181c77f3beae4b8d81294",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "static lexicon, licensing or localization dataset; not runtime source reviewed"
     },
     {
       "path": "scripts/check-app-structure.py",
@@ -3389,73 +3721,97 @@
       "path": "scripts/contemporary-cantonese.tsv",
       "sha": "668bdeee3334521690e04edf991c1d8784c87c32",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "static lexicon, licensing or localization dataset; not runtime source reviewed"
     },
     {
       "path": "scripts/data/UnicodeLicense.txt",
       "sha": "d7e7973c2fd6f2586a8999a69dc21e39af26be0f",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "static lexicon, licensing or localization dataset; not runtime source reviewed"
     },
     {
       "path": "scripts/data/chinese-shapes/cangjie3.txt",
       "sha": "5ae9f8e99e996933b24b4399b18b622259c5604e",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "static lexicon, licensing or localization dataset; not runtime source reviewed"
     },
     {
       "path": "scripts/data/chinese-shapes/cangjie5.txt",
       "sha": "35ede60198ae0556dbc6e2ca9f2aff8ab8526898",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "static lexicon, licensing or localization dataset; not runtime source reviewed"
     },
     {
       "path": "scripts/data/chinese-shapes/quick3.txt",
       "sha": "995fcb5b4a9409c077c2b8ff2548c249e89fa8c0",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "static lexicon, licensing or localization dataset; not runtime source reviewed"
     },
     {
       "path": "scripts/data/chinese-shapes/quick5.txt",
       "sha": "4859cdf17d17d9f94cf71f344684aa6fadafb747",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "static lexicon, licensing or localization dataset; not runtime source reviewed"
     },
     {
       "path": "scripts/data/chinese-shapes/stroke5.txt",
       "sha": "a0d3b924bd4a109d57ebd0dfd03dcf77c18c53f5",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "static lexicon, licensing or localization dataset; not runtime source reviewed"
     },
     {
       "path": "scripts/data/emoji-test-17.0.txt",
       "sha": "e42fdef494399d2a05b9b75930a3231fe81b2436",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "static lexicon, licensing or localization dataset; not runtime source reviewed"
     },
     {
       "path": "scripts/hk-japanese-loanwords.tsv",
       "sha": "361a5f799777af05a9b9f909d3642c3f73e450fc",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "static lexicon, licensing or localization dataset; not runtime source reviewed"
     },
     {
       "path": "scripts/hk-rare-cantonese.tsv",
       "sha": "4f8c7c71535f087a27c23caa0c0fd4c5001d989f",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "static lexicon, licensing or localization dataset; not runtime source reviewed"
     },
     {
       "path": "scripts/informal-patterns.tsv",
       "sha": "ffd7c0efbb69b9547e28532029e0ef419cdce758",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "static lexicon, licensing or localization dataset; not runtime source reviewed"
     },
     {
       "path": "scripts/informal-terms.tsv",
       "sha": "8dcb97a62013263cc7b9207e6f4b9ecd184458d2",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "excluded",
+      "review_stage": "X7",
+      "x7_exclusion": "static lexicon, licensing or localization dataset; not runtime source reviewed"
     },
     {
       "path": "scripts/lint-strings.sh",
@@ -10607,14 +10963,67 @@
         "No IPA or iPhone tests",
         "X7 residual source sweep and X8 behavioral acceptance pending"
       ]
+    },
+    "X7": {
+      "status": "complete_scoped_high_risk_cross_domain_review_with_explicit_gaps",
+      "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+      "newly_reviewed_count": 24,
+      "reviewed_paths": [
+        "Sayboard/Services/MeetingRecordingCoordinator.swift",
+        "Sayboard/Services/ConversationCoordinator.swift",
+        "Sayboard/Services/MeetingAudioPlayback.swift",
+        "Sayboard/Services/AudioPlayerService.swift",
+        "Shared/FeatureDiagnostics.swift",
+        "Shared/DiagnosticLog.swift",
+        "Shared/KeyboardInputTrace.swift",
+        "Shared/KeyboardExperimentMetrics.swift",
+        "Shared/MeetingTranslationPolicy.swift",
+        "Shared/ConversationTurn.swift",
+        "Sayboard/Services/ModelManifest.swift",
+        "Sayboard/Services/CustomQwenModelSource.swift",
+        "Sayboard/Services/QwenHubDownloader.swift",
+        "Sayboard/Services/HostApplicationMonitor.swift",
+        "SayboardKeyboard/HostArbiter/KBHostArbiterHook.h",
+        "SayboardKeyboard/HostArbiter/KBHostArbiterHook.m",
+        "SayboardKeyboard/KeyboardViewController+HostDetection.swift",
+        "SayboardKeyboard/PrivacyInfo.xcprivacy",
+        "Sayboard/PrivacyInfo.xcprivacy",
+        "Sayboard/Info.plist",
+        "Shared/RememberedHost.swift",
+        "Shared/DictationAllowance.swift",
+        "project.yml",
+        ".github/workflows/build-unsigned-ipa.yml"
+      ],
+      "already_reviewed_paths": [],
+      "excluded_nonruntime_paths": 166,
+      "remaining_unreviewed_current_files": 246,
+      "remaining_unreviewed_historical_only": 14,
+      "outstanding_file_scope": "Each uninspected executable/UI/test file remains not_reviewed in files[]; X7 completion means stage stop gate (inventory, seams, documented gaps), NOT 100% line-level source coverage",
+      "high_risk_seams": [
+        "Shared capture owner / automatic playback completion / parked audio restoration",
+        "Conversation turns and audio to Meeting manifest conversion, cleanup and restart",
+        "Qwen model remote mutable revision and optional checksum",
+        "Meetings partial transcript, translation resume and saved manifest failure paths",
+        "Development diagnostics recording/export and release build config",
+        "Host identification UIKit private swizzles and fallback",
+        "GitHub unsigned main-only TEST IPA provenance"
+      ],
+      "historical_review": "X0 ledger: Builds #1-232; 234 Actions runs; 20 bounded compare windows, 376 range commits, 983 path appearances, 336 unique changed paths and 14 historical-only; historical mid-window deletion/re-add gaps remain disclosed",
+      "known_limits": [
+        "iPhone playback and manual Stop/restore tests unrun",
+        "Conversation file-system failure injection unrun",
+        "Mutable revision/checksum consistency not network-tested",
+        "Remaining UI, tests, source and other paths individually not_reviewed",
+        "No independent reviewer or Alibaba OCR CLI"
+      ]
     }
   },
   "counts": {
     "current_total": 577,
     "historical_only": 14,
-    "reviewed": 141,
-    "excluded": 0,
-    "not_reviewed": 450,
+    "reviewed": 165,
+    "excluded": 166,
+    "not_reviewed": 260,
     "known_changed_path_occurrences": 983,
     "known_unique_changed_paths": 336
   },

@@ -1,0 +1,48 @@
+flowchart TD
+  subgraph Runtime["Observed owner paths on main@ed2c4ede0556"]
+    K["Keyboard mic + dictation"]
+    S["SpeechRecognitionService"]
+    M["MeetingRecordingCoordinator"]
+    C["ConversationCoordinator"]
+    AUDIO["BackgroundAudioSession / captureOwner"]
+    DRAFT["Conversation turns.json + CAF"]
+    SAVED["Meeting manifest + copied CAF"]
+    L["Shared LLMProcessingCoordinator"]
+    P1["AudioPlayerService / History"]
+    P2["MeetingAudioPlayback"]
+    PL["Global playbackOwner UUID"]
+    RESTORE["AudioSessionRecoveryGate / playbackFree"]
+    DL["QwenHubDownloader"]
+    REMOTE["Mutable model tree + blob main refs"]
+    FD["FeatureDiagnostics / bounded App Group JSONL"]
+    EX["DiagnosticsView manual export"]
+    CI["main-only unsigned TEST IPA workflow"]
+  end
+  K --> S
+  M --> S
+  C --> S
+  S --> AUDIO
+  M --> AUDIO
+  C --> AUDIO
+  S --> L
+  M --> L
+  C --> L
+  C -->|"save + restore"|DRAFT
+  C -->|"copy / commit"|SAVED
+  P1 --> PL
+  P2 --> PL
+  PL -->|"must release when finished"|RESTORE
+  AUDIO --> RESTORE
+  DL --> REMOTE
+  AUDIO --> FD
+  S --> FD
+  M --> FD
+  C --> FD
+  FD --> EX
+  CI --> K
+  P1 -.->|"F-0036 natural end lacks release"|PL
+  P2 -.->|"F-0036 final part lacks release"|PL
+  DRAFT -.->|"F-0037 ignored cleanup may restore"|C
+  REMOTE -.->|"F-0038 mutable revision + optional checksum"|DL
+  H["R8: stale same-type capture lease, HYPOTHESIS ONLY"]
+  H -.-> AUDIO
