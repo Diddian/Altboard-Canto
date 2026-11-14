@@ -7,6 +7,7 @@ struct ModelCardView: View, Equatable {
   let isActive: Bool
   let downloadState: ModelDownloadState
   let preferredLanguages: Set<String>
+  var isRecommendedForLanguages = false
   var allowsLanguageEditing = true
   let onSelect: () -> Void
   let onDownload: () -> Void
@@ -58,6 +59,7 @@ struct ModelCardView: View, Equatable {
       && lhs.isActive == rhs.isActive
       && lhs.downloadState == rhs.downloadState
       && lhs.preferredLanguages == rhs.preferredLanguages
+      && lhs.isRecommendedForLanguages == rhs.isRecommendedForLanguages
       && lhs.allowsLanguageEditing == rhs.allowsLanguageEditing
   }
 
@@ -97,7 +99,7 @@ struct ModelCardView: View, Equatable {
       Text(verbatim: self.variant.displayName)
         .font(.headline)
       ModelBadgesRow(isActive: self.isActive) {
-        if self.variant.isRecommended {
+        if self.isRecommendedForLanguages {
           ModelBadgePill(text: Text("Recommended"), color: .green)
         }
         if self.variant.supportsTranslation {

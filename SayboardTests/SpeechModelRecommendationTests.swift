@@ -29,6 +29,38 @@ struct SpeechModelRecommendationTests {
   }
 
   @Test
+  func `Cantonese alone recommends the existing WSYue model`() {
+    #expect(Self.recommend(["yue"]) == .senseVoiceSmall)
+  }
+
+  @Test
+  func `Cantonese and English both fit the WSYue recognizer`() {
+    #expect(Self.recommend(["yue", "en"]) == .senseVoiceSmall)
+  }
+
+  @Test
+  func `adding German chooses the smaller compatible Qwen ONNX model`() {
+    #expect(Self.recommend(["yue", "en", "de"]) == .qwen3ASR06B)
+  }
+
+  @Test
+  func `unavailable WSYue falls back to Qwen 0 point 6`() {
+    #expect(Self.recommend(["yue", "en"]) { $0 != .senseVoiceSmall } == .qwen3ASR06B)
+  }
+
+  @Test
+  func `insufficient Qwen memory falls back without losing German support`() {
+    #expect(Self.recommend(["yue", "de"]) { $0 != .qwen3ASR06B } == .whisperSmall)
+  }
+
+  @Test
+  func `Cantonese support never silently discards another chosen language`() {
+    let selected = ["yue", "en", "de"]
+    let chosen = Self.recommend(selected)
+    #expect(Set(selected).isSubset(of: chosen.supportedLanguages))
+  }
+
+  @Test
   func `european languages get parakeet v3`() {
     #expect(Self.recommend(["ru", "en"]) == .parakeetV3)
   }

@@ -57,7 +57,7 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
     switch self {
     case .qwen3ASR06B: "Qwen3-ASR 0.6B (ONNX)"
     case .qwen3ASR17B: "Qwen3-ASR 1.7B (ONNX)"
-    case .senseVoiceSmall: "SenseVoice Small INT8 (Cantonese)"
+    case .senseVoiceSmall: "WSYue SenseVoice Small INT8"
     case .whisperTiny: "Whisper Tiny"
     case .whisperBase: "Whisper Base"
     case .whisperSmall: "Whisper Small"
@@ -79,7 +79,7 @@ enum ModelVariant: String, CaseIterable, Identifiable, Codable, Sendable {
     case .qwen3ASR17B:
       "Experimental higher-capacity Cantonese and multilingual ASR. Direct Hugging Face ONNX download; not compatible with MLX or GGUF."
     case .senseVoiceSmall:
-      "Compact Cantonese-finetuned ONNX model for Cantonese, Mandarin, English, Japanese and Korean. Not Turkish or Arabic. No punctuation model."
+      "Offline WSYue Cantonese-finetuned ONNX recognizer. Supports Cantonese, Mandarin, English, Japanese and Korean; not German. No built-in punctuation."
     case .whisperTiny: "Lightest multilingual model. Basic accuracy, but supports 100 languages."
 
     case .whisperBase: "Better accuracy than Whisper Tiny. Supports 100 languages."

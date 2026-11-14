@@ -69,7 +69,11 @@ struct ModelsView: View, Equatable {
       } else {
         available
       }
-    return variants.sorted { self.sortKey(for: $0).precedes(self.sortKey(for: $1)) }
+    let recommendation = self.recommendedVariant
+    return variants.sorted {
+      self.sortKey(for: $0, recommended: recommendation)
+        .precedes(self.sortKey(for: $1, recommended: recommendation))
+    }
   }
 
   private struct TrialLanguage: Identifiable {
@@ -248,13 +252,21 @@ struct ModelsView: View, Equatable {
     }
   }
 
-  private func sortKey(for variant: ModelVariant) -> ModelListSortKey {
+  private var recommendedVariant: ModelVariant {
+    // A trial filter is an explicit request to try recognition in that
+    // language; otherwise respect the person's saved spoken-language set.
+    let languages = self.selectedLanguageFilter.map { [$0] }
+      ?? SharedSettings().preferredSpokenLanguages
+    return SpeechModelRecommendation.recommendedVariant(languages: languages)
+  }
+
+  private func sortKey(for variant: ModelVariant, recommended: ModelVariant) -> ModelListSortKey {
     let isDownloaded = self.downloadService.isDownloaded(variant)
     return ModelListSortKey(
       isActive: isDownloaded && variant == self.effectiveSelectedVariant,
       isDownloaded: isDownloaded,
       isSupported: variant.isSupportedOnCurrentDevice,
-      isRecommended: variant.isRecommended,
+      isRecommended: variant == recommended,
       catalogRank: variant.catalogRank,
     )
   }
@@ -270,6 +282,7 @@ struct ModelsView: View, Equatable {
       preferredLanguages: SpeechModelRecommendation.preferredLanguages(
         for: variant, from: SharedSettings().preferredSpokenLanguages
       ),
+      isRecommendedForLanguages: variant == self.recommendedVariant,
       allowsLanguageEditing: false,
       onSelect: {
         self.selectionHapticTrigger.toggle()

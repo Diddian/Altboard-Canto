@@ -17,7 +17,22 @@ enum SpeechModelRecommendation {
     languages: [String],
     isSupported: (ModelVariant) -> Bool = { $0.isSupportedOnCurrentDevice },
   ) -> ModelVariant {
-    if self.wanted(languages).isSubset(of: SpeechLanguages.parakeetV3), isSupported(.parakeetV3) {
+    let wanted = self.wanted(languages)
+    if wanted.contains("yue") {
+      // Prefer the existing lightweight WSYue recognizer for Cantonese when
+      // it covers all chosen languages. Never silently drop German or others.
+      if wanted.isSubset(of: ModelVariant.senseVoiceSmall.supportedLanguages),
+         isSupported(.senseVoiceSmall) {
+        return .senseVoiceSmall
+      }
+      // The supported 0.6B ONNX runtime covers Cantonese + German/English.
+      // The new HK-tuned GGUF checkpoints require a different ASR runtime.
+      if wanted.isSubset(of: ModelVariant.qwen3ASR06B.supportedLanguages),
+         isSupported(.qwen3ASR06B) {
+        return .qwen3ASR06B
+      }
+    }
+    if wanted.isSubset(of: SpeechLanguages.parakeetV3), isSupported(.parakeetV3) {
       return .parakeetV3
     }
     return self.whisperFallbacks.first(where: isSupported) ?? .whisperTiny
