@@ -28,7 +28,7 @@ struct ConversationDraft: Codable {
   var turns: [ConversationTurn]
 }
 
-struct ConversationTurn: Identifiable, Codable, Sendable {
+struct ConversationTurn: Identifiable, Codable, Sendable, Equatable {
   let id: UUID
   let speaker: ConversationSpeaker
   let audioFileName: String

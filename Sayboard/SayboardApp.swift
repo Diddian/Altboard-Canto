@@ -399,6 +399,7 @@ private struct SayboardRootView: View {
       OnboardingRecordStore().forgetFinishedPostponements(
         SetupChecklist(permissions: self.permissionService, hasUsableModel: SharedSettings().hasUsableModel)
       )
+      BackgroundDownloadManager.shared.restoreSession()
       self.downloadService.resumeInterruptedDownloadIfNeeded()
       self.llmDownloadService.resumeInterruptedDownloadIfNeeded()
 

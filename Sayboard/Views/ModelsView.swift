@@ -16,6 +16,9 @@ struct ModelsView: View, Equatable {
         if !self.hasAnyDownloadedModel {
           self.noModelBanner
         }
+        if self.needsDownloadRecovery {
+          self.downloadRecoveryNotice
+        }
 
         self.languageTrials
         self.sttContent
@@ -41,6 +44,9 @@ struct ModelsView: View, Equatable {
   }
 
   @EnvironmentObject private var downloadService: ModelDownloadService
+  @AppStorage(BackgroundDownloadManager.recoveryNoticeKey,
+              store: UserDefaults(suiteName: AppGroup.identifier))
+  private var needsDownloadRecovery = false
   @State private var selectedVariant: ModelVariant?
   @State private var selectedLanguageFilter: String?
   @State private var showLanguagePicker = false
@@ -135,6 +141,27 @@ struct ModelsView: View, Equatable {
         }
       }
     }
+  }
+
+  private var downloadRecoveryNotice: some View {
+    HStack(alignment: .top, spacing: 10) {
+      Image(systemName: "exclamationmark.triangle")
+        .foregroundStyle(.orange)
+      VStack(alignment: .leading, spacing: 4) {
+        Text("Interrupted model download")
+          .font(.subheadline.weight(.semibold))
+        Text("Saved download details were damaged or an unfinished task lost its owner. Unverified data was not installed. Choose a model below and tap Retry or Download.")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+      }
+      Spacer(minLength: 4)
+      Button("Dismiss") { self.needsDownloadRecovery = false }
+        .font(.caption)
+        .accessibilityLabel("Dismiss interrupted download notice")
+    }
+    .padding(12)
+    .background(Color.orange.opacity(0.1))
+    .clipShape(RoundedRectangle(cornerRadius: 10))
   }
 
   private var noModelBanner: some View {

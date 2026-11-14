@@ -98,6 +98,11 @@ extension KeyboardViewController {
       for: update.text, before: before, after: proxy.documentContextAfterInput,
       isAddressField: proxy.keyboardType == .URL || proxy.keyboardType == .emailAddress
     ).leading
+    guard ExperimentalLiveTranscription.claimHostInsertion(for: update.sessionToken) else {
+      FeatureDiagnostics.record(.liveDictation, .fallback, operationID: update.sessionToken)
+      self.blockExperimentalLiveChanges(token: update.sessionToken)
+      return
+    }
     proxy.insertText(prefix + update.text)
     LiveDictationLatency.mark(.firstHostInsert, token: update.sessionToken)
     FeatureDiagnostics.record(.liveDictation, .firstHostInsert,

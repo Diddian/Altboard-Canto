@@ -230,6 +230,10 @@ final class LLMDownloadService: ObservableObject {
   }
 
   func resumeInterruptedDownloadIfNeeded() {
+    // A missing/corrupt task index cannot identify a safe resume owner.
+    // Require the user to choose Retry after unknown system tasks are cancelled.
+    guard AppGroup.sharedDefaults?.bool(forKey: BackgroundDownloadManager.recoveryNoticeKey) != true
+    else { return }
     let settings = SharedSettings()
     let interrupted = settings.llmDownloadInProgressVariants
     guard !interrupted.isEmpty else { return }

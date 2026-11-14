@@ -798,6 +798,16 @@ class SettingsContractTests(unittest.TestCase):
         self.assertNotIn("ActiveSessionToggle()", read("Sayboard/Views/SettingsNavigationViews.swift"))
         self.assertIn('selectedKind: self.keyboardKindBinding, inline: true', home)
 
+    def test_corrupt_voice_notes_can_export_original_audio_and_index(self):
+        store = read("Shared/HistoryStore.swift")
+        export = read("Sayboard/Services/LocalUserDataStore.swift")
+        self.assertIn("var rawHistoryIndexURL: URL?", store)
+        self.assertIn("do { records = try HistoryStore.shared.readRecords() }", export)
+        self.assertIn("historyIndexUnreadable = true", export)
+        self.assertIn("History-Recovery.txt", export)
+        self.assertIn("Original-History-Index.json", export)
+        self.assertIn("fm.copyItem(at: audio, to: notes.appendingPathComponent", export)
+
     def test_history_empty_state_does_not_block_keyboard_test_field(self):
         history = read("Sayboard/Views/HistoryListView.swift")
         overlay = history.split(".overlay {", 1)[1].split(".navigationTitle", 1)[0]

@@ -611,7 +611,13 @@ final class MeetingRecordingCoordinator: ObservableObject {
     // could not be removed. Compare stable turn IDs before allocating a new meeting.
     self.reloadRecords()
     let turnIDs = turns.map(\.id)
-    if self.records.contains(where: { $0.conversationTurns?.map(\.id) == turnIDs }) {
+    if let saved = self.records.first(where: { $0.conversationTurns?.map(\.id) == turnIDs }) {
+      // A retry may have changed the transcript or language without changing
+      // turn IDs. Never delete a newer draft because an older import exists.
+      guard saved.conversationTurns == turns else {
+        FeatureDiagnostics.record(.conversation, .blocked)
+        return false
+      }
       FeatureDiagnostics.record(.conversation, .resumed)
       return true
     }

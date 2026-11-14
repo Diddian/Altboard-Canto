@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(Darwin)
+import Darwin
+#endif
 
 /// Speech transcription only. Never stores the host application's text.
 struct ExperimentalLiveTranscript: Codable, Sendable {
@@ -10,6 +13,36 @@ struct ExperimentalLiveTranscript: Codable, Sendable {
 
 enum ExperimentalLiveTranscription {
   static let fileName = "experimental-live-transcript.json"
+  private static let hostReceiptPrefix = "experimental-live-inserted-"
+
+  /// A text-free, request-scoped receipt is committed BEFORE any UIKit write.
+  /// A fresh keyboard controller must not replay a partially inserted session.
+  static func hasHostInsertionStarted(
+    for token: String, container: URL? = AppGroup.containerURL
+  ) -> Bool {
+    guard let url = self.hostReceiptURL(for: token, container: container) else { return true }
+    return FileManager.default.fileExists(atPath: url.path)
+  }
+
+  /// O_EXCL is atomic across keyboard processes. A failed receipt write
+  /// disables live insertion; the final transcript remains in History/outbox.
+  @discardableResult
+  static func claimHostInsertion(
+    for token: String, container: URL? = AppGroup.containerURL
+  ) -> Bool {
+    guard let url = self.hostReceiptURL(for: token, container: container) else { return false }
+    return url.path.withCString { path in
+      let fd = open(path, O_WRONLY | O_CREAT | O_EXCL, mode_t(0o600))
+      guard fd >= 0 else { return false }
+      _ = close(fd)
+      return true
+    }
+  }
+
+  private static func hostReceiptURL(for token: String, container: URL?) -> URL? {
+    guard UUID(uuidString: token) != nil, let container else { return nil }
+    return container.appendingPathComponent(hostReceiptPrefix + token + ".receipt")
+  }
 
   static func read() -> ExperimentalLiveTranscript? {
     guard let url = AppGroup.containerURL?.appendingPathComponent(fileName),
@@ -38,8 +71,21 @@ enum ExperimentalLiveTranscription {
   }
 
   static func clear() {
-    guard let url = AppGroup.containerURL?.appendingPathComponent(fileName) else { return }
-    try? FileManager.default.removeItem(at: url)
+    guard let container = AppGroup.containerURL else { return }
+    try? FileManager.default.removeItem(at: container.appendingPathComponent(fileName))
+    // A new capture invalidates receipts for older tokens. Retain the current
+    // receipt until the final delivery is consumed or a newer capture starts.
+    let keep = SharedSettings().dictationSessionToken
+    let keepName = keep.map { hostReceiptPrefix + $0 + ".receipt" }
+    if let files = try? FileManager.default.contentsOfDirectory(
+      at: container, includingPropertiesForKeys: nil
+    ) {
+      for file in files where file.lastPathComponent.hasPrefix(hostReceiptPrefix)
+        && file.lastPathComponent.hasSuffix(".receipt")
+        && file.lastPathComponent != keepName {
+        try? FileManager.default.removeItem(at: file)
+      }
+    }
   }
 }
 

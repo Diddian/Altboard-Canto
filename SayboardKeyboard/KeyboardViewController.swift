@@ -544,6 +544,15 @@ final class KeyboardViewController: UIInputViewController {
         operationID: delivery.sessionToken, phase: .rejected)
       return
     }
+    // A new controller has no proof whether an earlier live partial reached
+    // UIKit. A durable receipt blocks both partial replay and duplicate final
+    // insertion; keep the original outbox result for manual recovery.
+    if ExperimentalLiveTranscription.hasHostInsertionStarted(for: delivery.sessionToken)
+        && self.liveTranscriptionOwnerToken != delivery.sessionToken {
+      FeatureDiagnostics.record(.bridge, .fallback,
+        failureReason: .awaitingUserInsertion, operationID: delivery.sessionToken)
+      return
+    }
     FeatureDiagnostics.record(.bridge, .started)
     self.keyboardState.dictationOutcome = nil
     if !self.isPerformingHistoryNavigation {
@@ -871,13 +880,21 @@ final class KeyboardViewController: UIInputViewController {
     if sameField, let epoch = settings.dictationDestinationEpoch {
       self.dictationDocumentID = document
       self.keyboardState.documentEpoch = epoch
-      // A recreated controller may resume live text only for the exact
-      // same request and UIKit destination. Never clear a foreign tombstone.
-      if self.liveTranscriptionBlockedToken == token {
-        self.liveTranscriptionBlockedToken = nil
-      }
-      if Self.blockedLiveSessionToken == token {
-        Self.blockedLiveSessionToken = nil
+      // A matching field does not prove whether a previous keyboard process
+      // already inserted live text. Only the controller that owns the live
+      // insertion may resume it; another controller stays preview-only.
+      if self.liveTranscriptionOwnerToken != token,
+         ExperimentalLiveTranscription.hasHostInsertionStarted(for: token) {
+        self.liveTranscriptionBlockedToken = token
+        Self.blockedLiveSessionToken = token
+        FeatureDiagnostics.record(.liveDictation, .fallback, operationID: token)
+      } else if self.liveTranscriptionOwnerToken == token {
+        if self.liveTranscriptionBlockedToken == token {
+          self.liveTranscriptionBlockedToken = nil
+        }
+        if Self.blockedLiveSessionToken == token {
+          Self.blockedLiveSessionToken = nil
+        }
       }
     } else {
       self.dictationDocumentID = nil

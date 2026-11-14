@@ -119,9 +119,22 @@ enum LocalUserDataStore {
     FeatureDiagnostics.record(.data, .started)
     do {
       guard let group = AppGroup.containerURL else { throw CocoaError(.fileReadNoSuchFile) }
-      let records = categories.contains(.voiceNotes) ? try HistoryStore.shared.readRecords() : []
+      let wantsNotes = categories.contains(.voiceNotes)
+      // A broken history index must not prevent the owner from exporting
+      // surviving CAF recordings and unindexed metadata.
+      var historyIndexUnreadable = false
+      var records = [HistoryRecord]()
+      if wantsNotes {
+        do { records = try HistoryStore.shared.readRecords() }
+        catch {
+          historyIndexUnreadable = true
+          FeatureDiagnostics.record(.data, .fallback)
+        }
+      }
       let historyData = try JSONEncoder().encode(records)
+      let rawIndexURL = historyIndexUnreadable ? HistoryStore.shared.rawHistoryIndexURL : nil
       let audioDirectory = HistoryStore.shared.audioDirectoryURL
+      let recoveryExport = historyIndexUnreadable
       let vocabulary = categories.contains(.vocabulary) ? try self.vocabularyData() : nil
       // Cancelled exports stop producing an archive, even when the view
       // disappears. A single worker owns and cleans its temporary directory.
@@ -136,6 +149,24 @@ enum LocalUserDataStore {
             let notes = folder.appendingPathComponent("Voice-Notes", isDirectory: true)
             try fm.createDirectory(at: notes, withIntermediateDirectories: true)
             try historyData.write(to: notes.appendingPathComponent("records.json"), options: .atomic)
+            if recoveryExport {
+              try Task.checkCancellation()
+              let warning = "The saved history index could not be decoded. " +
+                "The audio files and any unindexed recording metadata are retained in Audio. " +
+                "If available, the original index is preserved as Original-History-Index.json."
+              try warning.write(to: notes.appendingPathComponent("History-Recovery.txt"),
+                atomically: true, encoding: .utf8)
+              if let rawIndexURL, fm.fileExists(atPath: rawIndexURL.path) {
+                // Keep the original damaged bytes unchanged. An index-copy
+                // failure must not suppress a valid export of surviving audio.
+                do {
+                  try fm.copyItem(at: rawIndexURL,
+                    to: notes.appendingPathComponent("Original-History-Index.json"))
+                } catch {
+                  FeatureDiagnostics.record(.data, .failed)
+                }
+              }
+            }
             if let audio = audioDirectory, fm.fileExists(atPath: audio.path) {
               try Task.checkCancellation()
               try fm.copyItem(at: audio, to: notes.appendingPathComponent("Audio", isDirectory: true))

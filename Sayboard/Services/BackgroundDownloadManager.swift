@@ -38,11 +38,14 @@ final class BackgroundDownloadManager: NSObject, URLSessionDownloadDelegate, @un
   static let shared = BackgroundDownloadManager()
   static let sessionIdentifier = "app.sayboard.background-downloads"
   static let upgradeSessionIdentifier = "app.sayboard.background-upgrades"
+  static let recoveryNoticeKey = "canto.models.downloadRecoveryNeeded"
+  private static let damagedIndexPrefix = "active-downloads-corrupt-"
 
   let eventSubject = PassthroughSubject<DownloadEvent, Never>()
 
   let lock = NSLock()
   var activeMetadata = [String: DownloadMetadata]()
+  var metadataReadBlocked = false
   var activeTasks = [String: URLSessionDownloadTask]()
   var installingTasks = Set<String>()
   var lastFinishedTasks = [String: String]()
@@ -101,6 +104,15 @@ final class BackgroundDownloadManager: NSObject, URLSessionDownloadDelegate, @un
 
   func enqueueDownload(metadata: DownloadMetadata) {
     self.lock.lock()
+    guard !self.metadataReadBlocked else {
+      self.lock.unlock()
+      FeatureDiagnostics.record(.speechModel, .blocked)
+      DispatchQueue.main.async {
+        self.eventSubject.send(.failed(downloadType: metadata.downloadType,
+          variantRawValue: metadata.variantRawValue, error: CocoaError(.fileReadNoPermission)))
+      }
+      return
+    }
     defer { self.lock.unlock() }
 
     let existingKey = self.metadataKey(for: metadata)
@@ -141,13 +153,14 @@ final class BackgroundDownloadManager: NSObject, URLSessionDownloadDelegate, @un
   func restoreSession() {
     self.lock.lock()
     self.loadPersistedMetadata()
-    let metadataCopy = self.activeMetadata
+    let readBlocked = self.metadataReadBlocked
     self.lock.unlock()
 
-    guard !metadataCopy.isEmpty else {
-      return
-    }
-
+    // If file protection blocks the index, do not cancel system tasks on
+    // uncertain ownership. The next foreground activation retries restoration.
+    guard !readBlocked else { return }
+    // Enumerate even when activeMetadata is empty: corrupted JSON may have
+    // lost the only mapping for still-running URLSession download tasks.
     for session in [self.session, self.upgradeSession] {
       session.getAllTasks { [weak self] tasks in
         self?.reconcileMetadataWithTasks(tasks, sessionIdentifier: session.configuration.identifier)
@@ -327,7 +340,7 @@ final class BackgroundDownloadManager: NSObject, URLSessionDownloadDelegate, @un
   }
 
   func persistMetadata() {
-    guard let fileURL = self.metadataFileURL else { return }
+    guard !self.metadataReadBlocked, let fileURL = self.metadataFileURL else { return }
     do {
       let data = try JSONEncoder().encode(self.activeMetadata)
       try data.write(to: fileURL, options: [.atomic, .completeFileProtectionUnlessOpen])
@@ -396,15 +409,62 @@ final class BackgroundDownloadManager: NSObject, URLSessionDownloadDelegate, @un
   }
 
   private func loadPersistedMetadata() {
-    guard let fileURL = self.metadataFileURL else { return }
+    guard let fileURL = self.metadataFileURL else {
+      self.metadataReadBlocked = true
+      return
+    }
     let fm = FileManager.default
-    guard fm.fileExists(atPath: fileURL.path) else { return }
+    guard fm.fileExists(atPath: fileURL.path) else {
+      self.metadataReadBlocked = false
+      return
+    }
+    let bytes: Data
     do {
-      let data = try Data(contentsOf: fileURL)
-      self.activeMetadata = try JSONDecoder().decode([String: DownloadMetadata].self, from: data)
+      bytes = try Data(contentsOf: fileURL)
     } catch {
-      self.activeMetadata = [:]
-      try? fm.removeItem(at: fileURL)
+      // Locked/protected storage is not evidence of corruption. Do not
+      // overwrite the index or cancel active system tasks during this state.
+      self.metadataReadBlocked = true
+      FeatureDiagnostics.record(.speechModel, .blocked)
+      return
+    }
+    do {
+      self.activeMetadata = try JSONDecoder().decode([String: DownloadMetadata].self, from: bytes)
+      self.metadataReadBlocked = false
+    } catch {
+      // Preserve the original malformed bytes for deliberate local diagnosis.
+      let quarantine = fileURL.deletingLastPathComponent()
+        .appendingPathComponent(Self.damagedIndexPrefix + UUID().uuidString + ".json")
+      do {
+        try fm.moveItem(at: fileURL, to: quarantine)
+        self.activeMetadata = [:]
+        self.metadataReadBlocked = false
+        AppGroup.sharedDefaults?.set(true, forKey: Self.recoveryNoticeKey)
+        FeatureDiagnostics.record(.speechModel, .fallback)
+        self.trimDamagedIndexes(in: fileURL.deletingLastPathComponent())
+      } catch {
+        // If the original cannot be preserved, never replace it with an empty index.
+        self.metadataReadBlocked = true
+        FeatureDiagnostics.record(.speechModel, .failed)
+      }
+    }
+  }
+
+  private func trimDamagedIndexes(in directory: URL) {
+    let fm = FileManager.default
+    guard let files = try? fm.contentsOfDirectory(
+      at: directory, includingPropertiesForKeys: [.contentModificationDateKey]
+    ) else { return }
+    let backups = files.filter {
+      $0.lastPathComponent.hasPrefix(Self.damagedIndexPrefix)
+        && $0.pathExtension == "json"
+    }.sorted {
+      let a = (try? $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+      let b = (try? $1.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+      return a > b
+    }
+    for stale in backups.dropFirst(3) {
+      try? fm.removeItem(at: stale)
     }
   }
 

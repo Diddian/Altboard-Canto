@@ -430,6 +430,26 @@ class OperationOwnershipTests(unittest.TestCase):
         body = function("Sayboard/Services/ConversationCoordinator.swift", "func start(", "func stop(using")
         self.assertLess(body.index("guard self.persistDraft()"), body.index("self.recorder.startRecording("))
 
+    def test_background_download_restore_reconciles_orphans_safely(self):
+        manager = source("Sayboard/Services/BackgroundDownloadManager.swift")
+        processing = source("Sayboard/Services/BackgroundDownloadManager+Processing.swift")
+        models = source("Sayboard/Views/ModelsView.swift")
+        app = source("Sayboard/SayboardApp.swift")
+        self.assertNotIn("guard !metadataCopy.isEmpty", manager)
+        self.assertIn("session.getAllTasks", manager)
+        self.assertIn("self.metadataReadBlocked = true", manager)
+        self.assertIn("try fm.moveItem(at: fileURL, to: quarantine)", manager)
+        self.assertNotIn("try? fm.removeItem(at: fileURL)", manager)
+        self.assertIn("self.activeTasks[key] = download", processing)
+        self.assertIn("for task in unknownTasks { task.cancel() }", processing)
+        self.assertNotIn("DownloadEvent.completed(", processing.split("func processDownloadedFile", 1)[0])
+        self.assertIn("self.downloadRecoveryNotice", models)
+        self.assertIn("BackgroundDownloadManager.shared.restoreSession()", app)
+        self.assertIn("BackgroundDownloadManager.recoveryNoticeKey",
+                      source("Sayboard/Services/ModelDownloadService.swift"))
+        self.assertIn("BackgroundDownloadManager.recoveryNoticeKey",
+                      source("Sayboard/Services/LLMDownloadService.swift"))
+
     def test_playback_lease_terminal_paths_and_stale_callback(self):
         history = source("Sayboard/Services/AudioPlayerService.swift")
         meeting = source("Sayboard/Services/MeetingAudioPlayback.swift")
@@ -445,7 +465,10 @@ class OperationOwnershipTests(unittest.TestCase):
         meeting = source("Sayboard/Services/MeetingRecordingCoordinator.swift")
         self.assertIn("try FileManager.default.removeItem(at: folder)", conversation)
         self.assertIn("Meeting saved. Conversation draft could not be cleared", conversation)
-        self.assertIn("self.records.contains(where: { $0.conversationTurns?.map(\\.id) == turnIDs })", meeting)
+        self.assertIn("self.records.first(where: { $0.conversationTurns?.map(\\.id) == turnIDs })", meeting)
+        self.assertIn("guard saved.conversationTurns == turns else", meeting)
+        self.assertIn("struct ConversationTurn: Identifiable, Codable, Sendable, Equatable",
+                      source("Shared/ConversationTurn.swift"))
 
     def test_restore_discovers_orphan_audio_and_normalizes_active_turns(self):
         body = function("Sayboard/Services/ConversationCoordinator.swift", "private func restoreDraft()", "private static func readAudio")
@@ -487,6 +510,19 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("case .busy, .rejected: return previous == .requested", policy)
         self.assertNotIn("LLMBridge.clearRequest()", keyboard)
         self.assertNotIn("LLMBridge.clearResult()", keyboard)
+
+    def test_durable_live_insertion_receipt_blocks_reentry_replay(self):
+        store = source("Shared/ExperimentalLiveTranscription.swift")
+        live = source("SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift")
+        controller = source("SayboardKeyboard/KeyboardViewController.swift")
+        self.assertIn("O_WRONLY | O_CREAT | O_EXCL", store)
+        self.assertIn("hostReceiptPrefix + token + \".receipt\"", store)
+        self.assertIn("claimHostInsertion(for: update.sessionToken)", live)
+        self.assertLess(live.index("claimHostInsertion(for: update.sessionToken)"),
+                        live.index("proxy.insertText(prefix + update.text)"))
+        self.assertIn("self.liveTranscriptionOwnerToken != token", controller)
+        self.assertIn("hasHostInsertionStarted(for: delivery.sessionToken)", controller)
+        self.assertIn("failureReason: .awaitingUserInsertion", controller)
 
     def test_live_final_plan_and_cancel_tombstone(self):
         live = source("SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift")

@@ -7,42 +7,57 @@ extension BackgroundDownloadManager {
 
   func reconcileMetadataWithTasks(_ tasks: [URLSessionTask], sessionIdentifier: String?) {
     self.lock.lock()
-    defer {
+    guard !self.metadataReadBlocked else {
       self.lock.unlock()
-      self.persistMetadata()
+      return
     }
 
     let activeTaskIds = Set(tasks.map(\.taskIdentifier))
     let reportingSession = sessionIdentifier ?? Self.sessionIdentifier
+    var unknownTasks = [URLSessionTask]()
+
+    // Recover the actual URLSession tasks as well as their metadata so that
+    // Cancel still works after process death. Never infer ownership by URL alone.
+    for task in tasks {
+      if let (key, _) = self.findMetadata(
+        sessionIdentifier: reportingSession, taskIdentifier: task.taskIdentifier
+      ), let download = task as? URLSessionDownloadTask {
+        self.activeTasks[key] = download
+      } else {
+        unknownTasks.append(task)
+      }
+    }
 
     for (key, meta) in self.activeMetadata {
       guard (meta.sessionIdentifier ?? Self.sessionIdentifier) == reportingSession else { continue }
       guard let taskId = meta.taskIdentifier else {
         self.activeMetadata.removeValue(forKey: key)
+        self.activeTasks.removeValue(forKey: key)
         continue
       }
       guard !activeTaskIds.contains(taskId),
             !self.installingTasks.contains(self.installationID(meta)) else { continue }
 
+      // A folder existing on disk is not proof of checksum verification. Do
+      // not publish a false completed event for a missing system task.
       self.lastFinishedTasks[key] = self.installationID(meta)
-      let fm = FileManager.default
-      if fm.fileExists(atPath: meta.destinationDirectory.path) {
-        let completedEvent = DownloadEvent.completed(
-          downloadType: meta.downloadType,
-          variantRawValue: meta.variantRawValue,
-          destinationDirectory: meta.destinationDirectory,
-        )
-        self.emit(completedEvent, key: key, metadata: meta, terminal: true)
-      } else {
-        let failedEvent = DownloadEvent.failed(
-          downloadType: meta.downloadType,
-          variantRawValue: meta.variantRawValue,
-          error: R2DownloadError.cancelled,
-        )
-        self.emit(failedEvent, key: key, metadata: meta, terminal: true)
-      }
+      self.emit(.failed(
+        downloadType: meta.downloadType,
+        variantRawValue: meta.variantRawValue,
+        error: R2DownloadError.cancelled
+      ), key: key, metadata: meta, terminal: true)
       self.activeMetadata.removeValue(forKey: key)
       self.activeTasks.removeValue(forKey: key)
+    }
+    self.persistMetadata()
+    self.lock.unlock()
+
+    if !unknownTasks.isEmpty {
+      AppGroup.sharedDefaults?.set(true, forKey: Self.recoveryNoticeKey)
+      FeatureDiagnostics.record(.speechModel, .fallback)
+      // Without a verified source, expected digest or destination, resuming
+      // unknown tasks would risk installing unverifiable model bytes.
+      for task in unknownTasks { task.cancel() }
     }
   }
 

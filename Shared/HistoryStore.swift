@@ -46,6 +46,10 @@ struct HistoryStore: Sendable {
     return total
   }
 
+  /// Raw index for a deliberate export when JSON decoding fails.
+  /// Do not modify this file during recovery.
+  var rawHistoryIndexURL: URL? { self.historyFileURL }
+
   func historyModificationDate() -> Date? {
     guard let url = historyFileURL else { return nil }
     return try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
