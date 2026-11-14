@@ -7,7 +7,7 @@
     "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
     "review_branch": "review/full-history-20261114"
   },
-  "status": "x2_keyboard_input_feedback_review_complete_x3_to_x7_pending",
+  "status": "x3_audio_session_workers_history_source_review_complete_x4_to_x7_pending",
   "expected_current_tracked_files_observed": 577,
   "current_tracked_files": 577,
   "initial_tracked_files": 356,
@@ -872,7 +872,8 @@
       "tracking": "current",
       "review": "reviewed",
       "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators Sayboard/SayboardApp.swift:140-220,223-256,283-339,638-640; X1 installation/activation/runtime ownership",
-      "stage": "X1"
+      "stage": "X1",
+      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 140-175 startup App Group repair; 411-429 model changes; 493-635 dictate deep-link + model loading; remainder not claimed reviewed"
     },
     {
       "path": "Sayboard/Services/AppSearchService.swift",
@@ -884,13 +885,17 @@
       "path": "Sayboard/Services/AudioBufferAccumulator.swift",
       "sha": "54acd18071cd495a0fce6e74c6b86b23a746eaca",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 4-49 accumulator lock/read/append/reset"
     },
     {
       "path": "Sayboard/Services/AudioBufferMath.swift",
       "sha": "b060562e086f3aeea4f3707f2bda88e01eda471d",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 6-103 tap conversion buffers/RMS"
     },
     {
       "path": "Sayboard/Services/AudioPlayerService.swift",
@@ -902,13 +907,17 @@
       "path": "Sayboard/Services/AudioRecorder.swift",
       "sha": "0b3ef11a3759c237c9ebfd8fb3be4da56d839d57",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 5-99 CAF recorder ownership/atomic stop/write failure"
     },
     {
       "path": "Sayboard/Services/AudioSampleQueue.swift",
       "sha": "fe5ead6335e6d6c1d314c71dcb97e18b04e20c7c",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 5-82 FIFO buffer/optional cap/compaction"
     },
     {
       "path": "Sayboard/Services/AudioTrimmer.swift",
@@ -926,13 +935,17 @@
       "path": "Sayboard/Services/BackgroundAudioSession+Diagnostics.swift",
       "sha": "9e4299a170735af4198b94f39462199b5f91cde3",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 4-39 audio callback counters and reset"
     },
     {
       "path": "Sayboard/Services/BackgroundAudioSession.swift",
       "sha": "7e873f8334f42d1508a9ba908213952a5fddaa1a",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 37-88 audio session/single active owner; 90-219 start/stop/park/restore; 223-289 capture; 324-404 input tap; 406-480 timeout/interruption"
     },
     {
       "path": "Sayboard/Services/BackgroundDownloadManager+Processing.swift",
@@ -956,7 +969,8 @@
       "path": "Sayboard/Services/ConversationCoordinator.swift",
       "sha": "22fd90249f5b76a2ce2b3eebbc7a99cd7da9e769",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "not_reviewed",
+      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 48-99 beginCapture; 139-174 stop and endSession; full flow deferred X7; remainder not claimed reviewed"
     },
     {
       "path": "Sayboard/Services/CustomQwenModelSource.swift",
@@ -998,7 +1012,8 @@
       "path": "Sayboard/Services/LLMProcessingCoordinator.swift",
       "sha": "6307bdb404b8bd0664388d37eb73c8759367acbf",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "not_reviewed",
+      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 223,313-316 unload target; full voice output X4; remainder not claimed reviewed"
     },
     {
       "path": "Sayboard/Services/LLMPromptTemplates.swift",
@@ -1028,7 +1043,8 @@
       "path": "Sayboard/Services/MeetingRecordingCoordinator.swift",
       "sha": "be08be1ccdcf38850f41a830524facefb6c4bb93",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "not_reviewed",
+      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 90-157 beginCapture; 205-227 stop and endSession; full flow deferred X7; remainder not claimed reviewed"
     },
     {
       "path": "Sayboard/Services/ModelDiskReserve.swift",
@@ -1052,7 +1068,8 @@
       "path": "Sayboard/Services/ModelDownloadService.swift",
       "sha": "e9bfa227c11d21d8de341985712c32f2d323e814",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "not_reviewed",
+      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 51-71 and 137-244 selection/busy guards; full persistence deferred X5; remainder not claimed reviewed"
     },
     {
       "path": "Sayboard/Services/ModelManifest.swift",
@@ -1070,13 +1087,17 @@
       "path": "Sayboard/Services/MoonshineTranscriptionService.swift",
       "sha": "671e42ceeafb470e04d43b79dde976b5ce753f0b",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 12-33 decode; 36-56 load/unload; 62-132 native runner and generation"
     },
     {
       "path": "Sayboard/Services/ParakeetTranscriptionService.swift",
       "sha": "1f5c369c8d1e488b4860abadb7ff92351d195aab",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 20-59 decode; 61-113 load; 118-155 warmup/unload"
     },
     {
       "path": "Sayboard/Services/ParakeetV3JointMigration.swift",
@@ -1108,7 +1129,9 @@
       "path": "Sayboard/Services/Qwen3TranscriptionService.swift",
       "sha": "14d28c31eefe118c7cc8a023c44d43b749a5dc1b",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 35-45 recognizer owner; 47-124 load/generation/unload; 126-140 detached decode"
     },
     {
       "path": "Sayboard/Services/QwenHubDownloader.swift",
@@ -1138,31 +1161,41 @@
       "path": "Sayboard/Services/SenseVoiceTranscriptionService.swift",
       "sha": "44296995b259af32d0c65189fd3e7ba9ccc4ca4c",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 15-77 load/generation/unload; 79-97 decode"
     },
     {
       "path": "Sayboard/Services/SpeechRecognitionService+ExperimentalLive.swift",
       "sha": "f950d03df05e13f44f736c9909fd2f861749f615",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 5-124 live loop and publications; 127-159 bounded native worker stop"
     },
     {
       "path": "Sayboard/Services/SpeechRecognitionService+Transcription.swift",
       "sha": "8c81288a7116fe2ad6468581e51c0787c2a89d6a",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 7-21 token/abort; 44-260 final decoding/bridge; 262-319 history"
     },
     {
       "path": "Sayboard/Services/SpeechRecognitionService.swift",
       "sha": "ff980adbb4eb22d703f3d8de8d60a155a4c7dc1f",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 15-82 ownership; 84-258 start/warmup; 259-437 stop/cancel; 439-529 decode/load; 541-619 timeout/engine; 625-772 host notifications"
     },
     {
       "path": "Sayboard/Services/WhisperKitTranscriptionService.swift",
       "sha": "03992fc05e82d95dab3c8f578fd7a3a35d7d9509",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 31-88 load; 91-147 decode/unload"
     },
     {
       "path": "Sayboard/Views/AIButtonOfferCard.swift",
@@ -1702,7 +1735,9 @@
       "path": "SayboardKeyboard/KeyboardViewController+Timeout.swift",
       "sha": "6ce2ffa48e2437a6c9e97920231ddf3a1c80945c",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 6-99 processing hard deadline"
     },
     {
       "path": "SayboardKeyboard/KeyboardViewController.swift",
@@ -1711,7 +1746,8 @@
       "review": "reviewed",
       "evidence": "Full GitHub file read at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; scoped source locators SayboardKeyboard/KeyboardViewController.swift:67-200,307-465,647-709,721-739,1153-1199,1343-1479; X1 installation/activation/runtime ownership",
       "stage": "X1",
-      "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 7-11 click protocol, 98-200 lifecycle/Globe/Haptics, 382-465 render probe, 1153-1199 hosting, 1466-1472 native requirement"
+      "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 7-11 click protocol, 98-200 lifecycle/Globe/Haptics, 382-465 render probe, 1153-1199 hosting, 1466-1472 native requirement",
+      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 741-817 request acknowledgment; 900-1131 keyboard direct/delayed handshakes; prior X1 already full-reviewed; remainder not claimed reviewed"
     },
     {
       "path": "SayboardKeyboard/LatinSwipeDecoder.swift",
@@ -1735,7 +1771,9 @@
       "path": "SayboardKeyboard/PingValidator.swift",
       "sha": "23312826c8a0c84e5223595537c5f8551aed34dc",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 4-47 stale local state reset"
     },
     {
       "path": "SayboardKeyboard/PrivacyInfo.xcprivacy",
@@ -1925,7 +1963,8 @@
       "sha": "6e49965f75f8d910a173eaf3a41625211d29a272",
       "tracking": "current",
       "review": "not_reviewed",
-      "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 79-124 Button cancellation and 194-304 tap/hold arbitration (only partial; later stage owns full mic state)"
+      "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 79-124 Button cancellation and 194-304 tap/hold arbitration (only partial; later stage owns full mic state)",
+      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 79-124 mic Button + task; 194-322 release/tap and callback cancellation; animation off-scope; remainder not claimed reviewed"
     },
     {
       "path": "SayboardKeyboard/Views/Layouts/StandardKeyboardLayout.swift",
@@ -2415,13 +2454,17 @@
       "path": "Shared/AudioLevelBridge.swift",
       "sha": "684b10976088471260c5c2b071bfe342a929838c",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 4-32 App Group level bridge"
     },
     {
       "path": "Shared/AudioSessionRecoveryGate.swift",
       "sha": "5c54a2389d40714899475af33c5fcc53fbde512e",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 1-21 one-shot parked intent"
     },
     {
       "path": "Shared/CantoneseCorrections.swift",
@@ -2511,7 +2554,9 @@
       "path": "Shared/DictationBreadcrumb.swift",
       "sha": "845502c9a61802c7d03eb69c2557a62da5684b38",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 5-32 bounded diagnostic stages without text"
     },
     {
       "path": "Shared/DictationOutcome.swift",
@@ -2523,7 +2568,9 @@
       "path": "Shared/DictationRequestPolicy.swift",
       "sha": "f0a73346a18f84f5ae81b98973880428c9ce9d3f",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 4-84 destination/current session; 86-116 heartbeat and bounded warm/cold policy"
     },
     {
       "path": "Shared/DictationSpacing.swift",
@@ -2547,13 +2594,16 @@
       "path": "Shared/ExperimentalLiveTranscription.swift",
       "sha": "237f40be942c4170b1b1aa136473c3bd6a7fae19",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 4-44 atomic tokened live update; 46-58 punctuation join; 61-113 latency markers"
     },
     {
       "path": "Shared/FeatureDiagnostics.swift",
       "sha": "981fbb1e8826eeb0b939ff22c43c809d59c82f81",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "not_reviewed",
+      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 12-73 speech/audio event and category contracts; full diagnostics deferred X7; remainder not claimed reviewed"
     },
     {
       "path": "Shared/HistoryKeyboardTestSession.swift",
@@ -2753,7 +2803,9 @@
       "path": "Shared/LiveDictationChunkPolicy.swift",
       "sha": "be23094b889c91708cac6878952658d1e6c47864",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 5-38 first chunk, retries, offline thresholds"
     },
     {
       "path": "Shared/LiveDictationNotice.swift",
@@ -2765,7 +2817,9 @@
       "path": "Shared/LiveWarmupMemoryPolicy.swift",
       "sha": "fedb51c8c2d4e083f3b2ebf2229b8a8027c74c99",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 1-11 live/offline memory admission"
     },
     {
       "path": "Shared/LlamaRuntime.swift",
@@ -2789,13 +2843,16 @@
       "path": "Shared/MicrophonePressPolicy.swift",
       "sha": "84f9775bc2585effda9226be1faffb34a091d67d",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 5-64 tap/hold decision; 67-96 token-scoped Stop intent"
     },
     {
       "path": "Shared/ModelVariant.swift",
       "sha": "88a42bee65366f2f3c5eb814f42723252e52a094",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "not_reviewed",
+      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 119-149 estimated storage/RAM for Qwen, other variants; full model policy deferred X5; remainder not claimed reviewed"
     },
     {
       "path": "Shared/NativeEmojiGlyph.swift",
@@ -2837,7 +2894,9 @@
       "path": "Shared/ProcessFootprint.swift",
       "sha": "3acacad1feed7ae4fe34b4fca576a1ace7777dc3",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 5-28 main app footprint"
     },
     {
       "path": "Shared/RememberedHost.swift",
@@ -3362,7 +3421,8 @@
       "path": "scripts/test_operation_ownership.py",
       "sha": "d8d4ab3e104b38c9de723453d17480a5b893312a",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "not_reviewed",
+      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 17-89 recovery/health; 249-385 start/stop/native worker source-string assertions; full test suite X4-X7; remainder not claimed reviewed"
     },
     {
       "path": "scripts/test_settings_contract.py",
@@ -3389,13 +3449,17 @@
       "path": "scripts/verify-audio-sample-queue.swift",
       "sha": "daf8a365511804f2f1b60a4c3d93258e26eeae69",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 3-64 FIFO and boundary cases (source read, NOT executed)"
     },
     {
       "path": "scripts/verify-audio-session-recovery.swift",
       "sha": "351748670fd769fd21e25f2d681c2df2a8306141",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "stage": "X3",
+      "evidence": "X3 source review at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 3-38 pure Swift gate cases (source read, NOT executed)"
     },
     {
       "path": "scripts/verify-cantonese-ngram.swift",
@@ -3551,7 +3615,8 @@
       "path": "scripts/verify-microphone-press.swift",
       "sha": "4b6db17ec802a6d34ab904861ad4d3bf6cac6058",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "not_reviewed",
+      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 3-49 hold policy, verified source test case startThenStop; rest out of scope; remainder not claimed reviewed"
     },
     {
       "path": "scripts/verify-operation-contracts.swift",
@@ -10076,14 +10141,84 @@
         "system-cancelled gesture",
         "pixel render"
       ]
+    },
+    "X3": {
+      "status": "complete_source_owner_review; physical_iPhone_NOT_RUN",
+      "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+      "reviewed_paths": [
+        "Sayboard/Services/BackgroundAudioSession.swift",
+        "Sayboard/Services/BackgroundAudioSession+Diagnostics.swift",
+        "Sayboard/Services/SpeechRecognitionService.swift",
+        "Sayboard/Services/SpeechRecognitionService+ExperimentalLive.swift",
+        "Sayboard/Services/SpeechRecognitionService+Transcription.swift",
+        "Sayboard/Services/Qwen3TranscriptionService.swift",
+        "Sayboard/Services/ParakeetTranscriptionService.swift",
+        "Sayboard/Services/SenseVoiceTranscriptionService.swift",
+        "Sayboard/Services/MoonshineTranscriptionService.swift",
+        "Sayboard/Services/WhisperKitTranscriptionService.swift",
+        "Sayboard/Services/AudioBufferAccumulator.swift",
+        "Sayboard/Services/AudioSampleQueue.swift",
+        "Sayboard/Services/AudioRecorder.swift",
+        "Sayboard/Services/AudioBufferMath.swift",
+        "Shared/AudioSessionRecoveryGate.swift",
+        "Shared/LiveWarmupMemoryPolicy.swift",
+        "Shared/LiveDictationChunkPolicy.swift",
+        "Shared/ProcessFootprint.swift",
+        "Shared/AudioLevelBridge.swift",
+        "Shared/ExperimentalLiveTranscription.swift",
+        "Shared/MicrophonePressPolicy.swift",
+        "Shared/DictationRequestPolicy.swift",
+        "Shared/DictationBreadcrumb.swift",
+        "SayboardKeyboard/PingValidator.swift",
+        "SayboardKeyboard/KeyboardViewController+Timeout.swift",
+        "scripts/verify-audio-session-recovery.swift",
+        "scripts/verify-audio-sample-queue.swift"
+      ],
+      "scoped_not_reviewed_paths": [
+        "SayboardKeyboard/Views/Layouts/MicAnimatedButton.swift",
+        "SayboardKeyboard/KeyboardViewController.swift",
+        "Sayboard/SayboardApp.swift",
+        "Sayboard/Services/MeetingRecordingCoordinator.swift",
+        "Sayboard/Services/ConversationCoordinator.swift",
+        "Sayboard/Services/ModelDownloadService.swift",
+        "Shared/ModelVariant.swift",
+        "scripts/test_operation_ownership.py",
+        "scripts/verify-microphone-press.swift",
+        "Shared/FeatureDiagnostics.swift",
+        "Sayboard/Services/LLMProcessingCoordinator.swift"
+      ],
+      "source_predicates": {
+        "observed": 20,
+        "total": 20,
+        "nature": "read-only code-path assertions; NOT compiled tests or operational acceptance"
+      },
+      "historical_checkpoints": [
+        84,
+        136,
+        193,
+        228,
+        232
+      ],
+      "known_risks": [
+        "F-0012 confirmed diagnostic tri-state collapse",
+        "F-0013 mic accepted-press ambiguity",
+        "F-0014 early stale active state skips new handshake",
+        "F-0015 unscoped timer Tasks",
+        "F-0016 30min RAM peak unknown",
+        "F-0017 realtime tap I/O budget unknown",
+        "R8 same-type capture ownership pending X7"
+      ],
+      "not_run": [
+        "unit tests, Swift toolchain against exact GitHub blobs, physical device and iOS 27.2 memory measurements"
+      ]
     }
   },
   "counts": {
     "current_total": 577,
     "historical_only": 14,
-    "reviewed": 60,
+    "reviewed": 87,
     "excluded": 0,
-    "not_reviewed": 531,
+    "not_reviewed": 504,
     "known_changed_path_occurrences": 983,
     "known_unique_changed_paths": 336
   },

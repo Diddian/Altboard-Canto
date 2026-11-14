@@ -1,24 +1,244 @@
 {
   "schema_version": "altboard-review-stage/v1",
   "id": "X3",
-  "status": "blocked",
-  "source_sha_at_review": null,
-  "review_branch_head_at_start": null,
-  "started_at": null,
-  "finished_at": null,
-  "review_mode": "GitHub manual OCR-style; Alibaba OCR CLI not run",
-  "untangle_status": "not_run",
-  "files_reviewed": [],
+  "status": "complete",
+  "source_sha_at_review": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+  "review_branch_head_at_start": "09f6c96618ae20bf99727c06d7ea916f2815ea8c",
+  "started_at": "2026-11-14",
+  "finished_at": "2026-11-14",
+  "review_mode": "Connected GitHub manual OCR-style source and historical checkpoint review; Alibaba OCR CLI NOT RUN",
+  "untangle_status": "performed_source_owner_audio_capture_park_restore_decode_worker_lifecycle_memory_risk_and_history_audit",
+  "files_reviewed": [
+    "Sayboard/Services/BackgroundAudioSession.swift",
+    "Sayboard/Services/BackgroundAudioSession+Diagnostics.swift",
+    "Sayboard/Services/SpeechRecognitionService.swift",
+    "Sayboard/Services/SpeechRecognitionService+ExperimentalLive.swift",
+    "Sayboard/Services/SpeechRecognitionService+Transcription.swift",
+    "Sayboard/Services/Qwen3TranscriptionService.swift",
+    "Sayboard/Services/ParakeetTranscriptionService.swift",
+    "Sayboard/Services/SenseVoiceTranscriptionService.swift",
+    "Sayboard/Services/MoonshineTranscriptionService.swift",
+    "Sayboard/Services/WhisperKitTranscriptionService.swift",
+    "Sayboard/Services/AudioBufferAccumulator.swift",
+    "Sayboard/Services/AudioSampleQueue.swift",
+    "Sayboard/Services/AudioRecorder.swift",
+    "Sayboard/Services/AudioBufferMath.swift",
+    "Shared/AudioSessionRecoveryGate.swift",
+    "Shared/LiveWarmupMemoryPolicy.swift",
+    "Shared/LiveDictationChunkPolicy.swift",
+    "Shared/ProcessFootprint.swift",
+    "Shared/AudioLevelBridge.swift",
+    "Shared/ExperimentalLiveTranscription.swift",
+    "Shared/MicrophonePressPolicy.swift",
+    "Shared/DictationRequestPolicy.swift",
+    "Shared/DictationBreadcrumb.swift",
+    "SayboardKeyboard/PingValidator.swift",
+    "SayboardKeyboard/KeyboardViewController+Timeout.swift",
+    "scripts/verify-audio-session-recovery.swift",
+    "scripts/verify-audio-sample-queue.swift"
+  ],
   "files_excluded": [],
-  "files_not_reviewed": [],
-  "new_or_updated_findings": [],
-  "diagram_paths": [],
+  "files_not_reviewed": [
+    "SayboardKeyboard/Views/Layouts/MicAnimatedButton.swift — X3 scoped path inspected; non-X3 remainder not claimed reviewed",
+    "SayboardKeyboard/KeyboardViewController.swift — X3 scoped path inspected; non-X3 remainder not claimed reviewed",
+    "Sayboard/SayboardApp.swift — X3 scoped path inspected; non-X3 remainder not claimed reviewed",
+    "Sayboard/Services/MeetingRecordingCoordinator.swift — X3 scoped path inspected; non-X3 remainder not claimed reviewed",
+    "Sayboard/Services/ConversationCoordinator.swift — X3 scoped path inspected; non-X3 remainder not claimed reviewed",
+    "Sayboard/Services/ModelDownloadService.swift — X3 scoped path inspected; non-X3 remainder not claimed reviewed",
+    "Shared/ModelVariant.swift — X3 scoped path inspected; non-X3 remainder not claimed reviewed",
+    "scripts/test_operation_ownership.py — X3 scoped path inspected; non-X3 remainder not claimed reviewed",
+    "scripts/verify-microphone-press.swift — X3 scoped path inspected; non-X3 remainder not claimed reviewed",
+    "Shared/FeatureDiagnostics.swift — X3 scoped path inspected; non-X3 remainder not claimed reviewed",
+    "Sayboard/Services/LLMProcessingCoordinator.swift — X3 scoped path inspected; non-X3 remainder not claimed reviewed",
+    "Remaining repo files and transient per-commit diffs retained not_reviewed for X4-X7.",
+    "Actual AVAudioEngine/AVAudioSession health, microphone gesture cancellation, jetsam, native memory and ASR throughput have not been observed on physical iPhone."
+  ],
+  "new_or_updated_findings": [
+    "F-0012",
+    "F-0013",
+    "F-0014",
+    "F-0015",
+    "F-0016",
+    "F-0017"
+  ],
+  "diagram_paths": [
+    "review/full-history-20261114/diagrams/X3-audio-state.mmd"
+  ],
   "tests": {
-    "executed": [],
-    "not_run": []
+    "executed": [
+      "20/20 read-only code-path predicates from connected GitHub at pinned main SHA. They confirm presence/absence of named source paths, including negative-risk paths; they are NOT functional tests."
+    ],
+    "not_run": [
+      "swiftc -swift-version 6 Shared/AudioSessionRecoveryGate.swift Shared/LiveWarmupMemoryPolicy.swift scripts/verify-audio-session-recovery.swift — NOT RUN (runtime could not retrieve exact repository files; container raw.githubusercontent.com DNS unavailable)",
+      "swiftc Shared/AudioSampleQueue.swift scripts/verify-audio-sample-queue.swift — source inspected, NOT RUN",
+      "scripts/test_operation_ownership.py and Xcode tests — source inspected only, NOT RUN",
+      "Physical iPhone/SideStore Start→Stop, first/second Live Qwen, memory-pressure, interruption, Bluetooth, foreign-field and full-length capture tests — NOT RUN",
+      "External Alibaba OCR CLI/independent agent — NOT RUN; no build, IPA or production source change"
+    ]
   },
-  "verified_outputs": [],
+  "verified_outputs": [
+    "review/full-history-20261114/manifest.json",
+    "review/full-history-20261114/findings.json",
+    "review/full-history-20261114/coverage.json",
+    "review/full-history-20261114/diagrams/X3-audio-state.mmd",
+    "review/full-history-20261114/stages/X3.json"
+  ],
   "blocked_reasons": [],
-  "next_action": "Begin only after manifest previous stage gate; use stages.json for exact scope",
-  "evidence_notes": []
+  "next_action": "X4 only: original-document owner, final/live delivery, LLM and target output; first recheck live main and review HEAD. X3 repairs deferred to X8, preserve prior IPA and require physical iPhone evidence.",
+  "evidence_notes": [
+    "Historical Build #84/#136 had no UnifiedCaptureOwner; #193 implemented shared capture owner; #228 no isSessionHealthy/park; #232 adds recovery gate and bounded host handshake. Snapshot code and compare #228→#232 inspected; no causal device claim.",
+    "Host SpeechRecognitionService.ensureSessionActive uses isSessionHealthy (isSessionActive && audioEngine.isRunning && activeSession identity). Keyboard's early reentry path still trusts persisted isRecording/isSessionActive before issuing bounded start handshake.",
+    "AVAudioSession input tap is installed once on session start; captureOwner enum gates tap-state acquisition, and Callback read/write uses an OSAllocatedUnfairLock. Same-enum stale endCapture remains R8 hypothesis deferred X7.",
+    "Current stopRecording releases capture then waits bounded 4s for live worker; if still decoding, preserves CAF and fails closed rather than start competing final decode. Speech workers counted until transcribe returns.",
+    "Cold Qwen finalization captures audio in FIFO before loading; suspendForModelLoad keeps intent without sending sessionEnded; defer checks same request token/cancellation and restores once when capture/playback/competing session absent.",
+    "restoreAfterModelLoad false gate is collapsed to nil; wrapper returns before audioSessionRestoreFailed, so diagnostic does not distinguish declined recovery from missing intent.",
+    "MicrophonePressPolicy can return startThenStop on a long release without hold activation; MicAnimatedButton.dispatchRelease ignores buttonActivated for this branch. Whether SwiftUI sends such a cancelled release is device-dependent.",
+    "SwiftUI timers for app max recording and idle audio auto-stop enqueue unscoped MainActor Task callbacks after scheduled Timer fires. Session epoch not captured; stale invocation after new session is hypothesis.",
+    "At default 16kHz Float32, 30 minutes would accumulate 28.8M samples = 115.2MB (~110MiB) before other model/file buffers; queue's default maximumUnreadSamples nil. No peak RAM measured; risk not classified observed OOM.",
+    "Realtime audio tap uses UserDefaults heartbeat approx 0.5s and level flush up to 30Hz, allocates converter buffers and writes CAF under callback lock. Actual glitches/latency not measured; examine throttled out-of-callback transport at X8 only if evidence.",
+    "LLM/model change guards, parked session manual end/cancel, temporary background task and token-scoped live update present. Native Task.detached decode not cancellable in-flight; generation checks stop stale model publication, not immediate native termination.",
+    "Explicit interrupted-in-flight cold Qwen restoration ordering, stale same-kind capture release (R8), and physical first-attempt Live RAM tolerance remain unverified; X7 cross-meeting/conversation ownership still pending.",
+    "No private text, audio, transcript, host bundle identifiers or credentials written into this review branch."
+  ],
+  "owner_transitions": [
+    {
+      "id": "A01",
+      "name": "Keyboard start intent",
+      "owner": "KeyboardViewController.startDictationViaDarwin + DictationRequestPolicy",
+      "path": "stale stored flags -> token/destination -> Darwin start -> bounded timer/host fallback",
+      "stale_cancel_retry": "session-status ping + PingValidator one-second local reset; early stored-recording shortcut skips bounded new request",
+      "oracle": "fresh vs stale App Group flags; first tap in WhatsApp; app alive/dead"
+    },
+    {
+      "id": "A02",
+      "name": "Host audio health",
+      "owner": "SpeechRecognitionService.ensureSessionActive + BackgroundAudioSession",
+      "path": "input start -> isSessionHealthy -> AVAudioSession active -> AVAudioEngine start -> input persistent tap",
+      "stale_cancel_retry": "stale flag triggers endSession/restart if no capture; failures clear settings and do not claim recording",
+      "oracle": "healthy/stale flag, engine stopped, tap absent and app restart"
+    },
+    {
+      "id": "A03",
+      "name": "Capture ownership",
+      "owner": "BackgroundAudioSession.captureOwner",
+      "path": "dictation/meeting/conversation enum -> beginCapture -> tapState recorder/accumulator -> endCapture",
+      "stale_cancel_retry": "single owner enum and lock; no per-acquisition generation, R8 deferred X7",
+      "oracle": "same-kind old cleanup vs new capture, cross-feature contention"
+    },
+    {
+      "id": "A04",
+      "name": "Audio frame capture",
+      "owner": "BackgroundAudioSession.installPersistentTap + AudioRecorder + AudioBufferAccumulator",
+      "path": "PCM input -> resample 16kHz -> append FIFO + CAF -> live snapshots",
+      "stale_cancel_retry": "capture lock closes before recorder stop; converter errors counted and silence/file-write failure distinguished",
+      "oracle": "30m max, sample count, write error, conversion error, rolling memory"
+    },
+    {
+      "id": "A05",
+      "name": "Warm model allocation",
+      "owner": "SpeechRecognitionService.scheduleQwenWarmupAfterCapture + LiveWarmupMemoryPolicy",
+      "path": "200ms after capture -> unload inactive models -> available headroom threshold -> Qwen.loadModel",
+      "stale_cancel_retry": "guard recording/model/permission and defer final load when memory insufficient",
+      "oracle": "available MB either side of Qwen 0.6/1.7B thresholds, repeated warm start"
+    },
+    {
+      "id": "A06",
+      "name": "Native model lifecycle",
+      "owner": "Qwen3/SenseVoice/Parakeet/Moonshine/WhisperKit service + SpeechRecognitionService counters",
+      "path": "load generation -> native Task -> model loaded -> decode -> unload",
+      "stale_cancel_retry": "generation guard prevents stale publish; cancellation not interrupting synchronous native decode; speechWorkers lifetime spans await",
+      "oracle": "unload during pending initializer/decode and model selection changes"
+    },
+    {
+      "id": "A07",
+      "name": "Experimental live partials",
+      "owner": "SpeechRecognitionService+ExperimentalLive",
+      "path": "bounded FIFO chunks -> shared speechWorkers decode -> token+revision App Group file -> keyboard preview",
+      "stale_cancel_retry": "retry same initial audio if too-short/no text; cancellation and live status; document ownership outside X3",
+      "oracle": "first live update, noSpeech short windows, cancelled worker, stale token"
+    },
+    {
+      "id": "A08",
+      "name": "Stop/finalization",
+      "owner": "SpeechRecognitionService.stopRecording",
+      "path": "stop capture -> 4s live wait -> snapshot raw -> load model -> decode -> voice pipeline -> history/bridge",
+      "stale_cancel_retry": "if native live decoder persists, save audio before reset; token check before writes; model failure preserves audio",
+      "oracle": "forced decode stall, empty samples, native failure, normal text"
+    },
+    {
+      "id": "A09",
+      "name": "Cold audio parking and restoration",
+      "owner": "BackgroundAudioSession+AudioSessionRecoveryGate",
+      "path": "session armed, capture free -> park -> close engine silently -> model load -> take gate -> restart once",
+      "stale_cancel_retry": "manual end/cancel/interruption/playback/competing owner cancels or denies, but denied return nil lacks reason",
+      "oracle": "stop during cold load, playback acquisition, session competitor, engine fails after take"
+    },
+    {
+      "id": "A10",
+      "name": "Manual cancel",
+      "owner": "SpeechRecognitionService.cancelRecording",
+      "path": "cancel live task -> capture release/file removal -> endSession -> tombstone token -> bounded native worker cleanup",
+      "stale_cancel_retry": "cancellationTask single owner and no new recording while still stopping, workers gate new inference",
+      "oracle": "cancel before start acknowledged, during decode, during parked load"
+    },
+    {
+      "id": "A11",
+      "name": "Audio interruption and timeout",
+      "owner": "BackgroundAudioSession.handleInterruption / timers + SpeechRecognitionService maxDuration",
+      "path": "AV interruption -> deactivate tap and async Stop; idle/end timers schedule MainActor end",
+      "stale_cancel_retry": "parked interruption cancels gate; normal interruption restore ordering and stale timers need device evidence",
+      "oracle": "system call/Siri interruption during live and cold Qwen, resumed and not-resumed; stale timer callback"
+    },
+    {
+      "id": "A12",
+      "name": "Playback and cross-feature handoff",
+      "owner": "BackgroundAudioSession.configurePlayback and Meeting/Conversation coordinators",
+      "path": "playback owner disallows capture and suppresses park restore, recording stops playback before capture",
+      "stale_cancel_retry": "single static owner; per-feature endSession only if sessionStartedHere; cross-domain full review X7",
+      "oracle": "meeting/conversation vs dictation capture, playback during parked load"
+    },
+    {
+      "id": "A13",
+      "name": "Rearm and host return",
+      "owner": "SpeechRecognitionService.restoreParkedAudioSession + SayboardApp + keyboard ack",
+      "path": "once session healthy -> sessionStarted + request-scoped dictationStarted; return to original host separately",
+      "stale_cancel_retry": "cold fallback URL requires manual host return if OS cannot guarantee; no destination proof claim X3",
+      "oracle": "first and second WhatsApp recording, no extra host switch, origin insertion X4"
+    },
+    {
+      "id": "A14",
+      "name": "Diagnostics and resource headroom",
+      "owner": "FeatureDiagnostics + DictationBreadcrumb + ProcessFootprint + LiveDictationLatency",
+      "path": "start/slow/failure/recovery events -> bounded counters/measurements, not raw audio",
+      "stale_cancel_retry": "record outcomes with no text, bounded ring; current declined recovery not traceable",
+      "oracle": "matching event/token sequence for cold restore, RAM refusal, final fallback"
+    }
+  ],
+  "historical_checkpoints": [
+    {
+      "build": 84,
+      "audioSession": "no UnifiedCaptureOwner; no isSessionHealthy/parking",
+      "evidence": "BackgroundAudioSession.swift hash 9dd49c6; SpeechRecognitionService hash 9f5e4df"
+    },
+    {
+      "build": 136,
+      "audioSession": "prior audio engine implementation and live worker",
+      "evidence": "BackgroundAudioSession hash unchanged from #84; SpeechRecognitionService f39504e"
+    },
+    {
+      "build": 193,
+      "audioSession": "UnifiedCaptureOwner introduced; no health/parking",
+      "evidence": "BackgroundAudioSession hash be31f3a"
+    },
+    {
+      "build": 228,
+      "audioSession": "pre-repair cold Qwen finalization without parking",
+      "evidence": "BackgroundAudioSession 3ae3fb8; SpeechRecognitionService bf1d9cb"
+    },
+    {
+      "build": 232,
+      "audioSession": "one-shot parked recovery/engine health/bounded keyboard handshake",
+      "evidence": "ed2c4ede05567f3f63d2979ade81040c8fe799ad"
+    }
+  ]
 }

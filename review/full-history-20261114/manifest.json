@@ -14,14 +14,14 @@
     "branch_policy": "sequential reviewers; one writer; no PR, force push, or merges"
   },
   "lifecycle": {
-    "phase": "X2_complete",
-    "next_stage": "X3",
+    "phase": "X3_complete",
+    "next_stage": "X4",
     "statuses": {
       "X0": "complete",
       "X1": "complete",
       "X2": "complete",
-      "X3": "ready",
-      "X4": "blocked",
+      "X3": "complete",
+      "X4": "ready",
       "X5": "blocked",
       "X6": "blocked",
       "X7": "blocked",

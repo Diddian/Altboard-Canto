@@ -1,7 +1,7 @@
 {
   "schema_version": "untangle-ocr-findings/v1",
   "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
-  "status": "x2_scoped_source_findings_recorded; X3-X7 pending; X8 not started; device tests unverified",
+  "status": "X0-X3 scoped GitHub review complete; X4-X7 pending; X8 repairs not started; iPhone unverified",
   "findings": [
     {
       "id": "F-0001",
@@ -499,6 +499,273 @@
       "regression_oracle": "Simulate absent sensory consumer and overlapping controller, check trace/fallback and no replay/double pulse.",
       "verification": [
         "Control-flow discrepancy supported; real-world trigger remains unverified."
+      ]
+    },
+    {
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X3/manual-source",
+      "assigned_stage": "X8",
+      "id": "F-0012",
+      "severity": "medium",
+      "state": "confirmed",
+      "area": "diagnostics",
+      "paths": [
+        "Shared/AudioSessionRecoveryGate.swift",
+        "Sayboard/Services/BackgroundAudioSession.swift",
+        "Sayboard/Services/SpeechRecognitionService.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Shared/AudioSessionRecoveryGate.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "13-20",
+          "observation": "take returns false when parked but safety gate rejects restoration; nil only when no pending parked intent"
+        },
+        {
+          "path": "Sayboard/Services/BackgroundAudioSession.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "198-219",
+          "observation": "on false gate, finishParkedSession and return nil; method's documented nil/false outcomes are collapsed"
+        },
+        {
+          "path": "Sayboard/Services/SpeechRecognitionService.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "482-490",
+          "observation": "wrapper guard let restored else return; only false records audioSessionRestoreFailed"
+        }
+      ],
+      "scenario": "Session parked for Qwen and recovery denied because playback/competitor/cancel is active.",
+      "causal_chain": "take returns false -> restoreAfterModelLoad returns nil -> wrapper exits without rejected/failure diagnostic -> exported trace cannot distinguish safety denial from no parked session.",
+      "root_owner": "BackgroundAudioSession.restoreAfterModelLoad tri-state contract + SpeechRecognitionService.restoreParkedAudioSession",
+      "smallest_repair": "Preserve semantic distinction: no parked intent vs safety-rejected vs attempted-start failure; give declined reason-coded bounded diagnostic, while manual Stop stays expected cancellation (not failure). Avoid rearming.",
+      "regression_oracle": "For each gate (allowed=false, captureBusy, playbackBusy, competingSession), assert exactly one terminal denial event and zero restart; no-intent returns nil without false failure; healthy restore reports resumed.",
+      "verification": [
+        "Return-value mismatch and caller suppression confirmed at pinned code SHA; physical no-rearm behavior not inferred.",
+        "Existing pure Swift gate verifier tests false gate but not restore wrapper mapping."
+      ]
+    },
+    {
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X3/manual-source",
+      "assigned_stage": "X8",
+      "id": "F-0013",
+      "severity": "high",
+      "state": "hypothesis",
+      "area": "async_ownership",
+      "paths": [
+        "Shared/MicrophonePressPolicy.swift",
+        "SayboardKeyboard/Views/Layouts/MicAnimatedButton.swift",
+        "scripts/verify-microphone-press.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Shared/MicrophonePressPolicy.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "36-58",
+          "observation": "a held >=280ms idle press without activateHold returns startThenStop"
+        },
+        {
+          "path": "SayboardKeyboard/Views/Layouts/MicAnimatedButton.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "211-250,260-270",
+          "observation": "pressed-state release calls dispatchRelease(buttonActivated:false), but startThenStop invokes handleTap() regardless of buttonActivated"
+        },
+        {
+          "path": "scripts/verify-microphone-press.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "20-22",
+          "observation": "existing test asserts startThenStop for a >=280ms unactivated hold, but does not test cancelled Button release"
+        }
+      ],
+      "scenario": "Finger holds idle microphone slightly past 280ms, SwiftUI accepted Button action does not fire because the press is dragged off/cancelled, and delayed hold activation never ran (main actor load).",
+      "causal_chain": "pressPolicy.release says startThenStop -> dispatchRelease ignores acceptance -> handleTap starts recording then requests stop, despite no accepted tap. Exact OS callback ordering remains unverified.",
+      "root_owner": "MicAnimatedButton.dispatchRelease vs MicrophonePressPolicy release acceptance",
+      "smallest_repair": "Separate accepted/held-started transition from cancellation; never generate a new Start on a cancelled Button release. Keep token-scoped Stop for a genuine already-started hold.",
+      "regression_oracle": "With synthetic delayed hold task, simulate 0.3s drag-off cancelled press vs accepted Button press; assert cancelled produces no start, accepted short press exactly one start, genuine hold exactly one start + stop. Confirm on SideStore iPhone.",
+      "verification": [
+        "Conditional code branch confirmed; actual SwiftUI cancelled-release event/order and unintended microphone activation NOT observed."
+      ]
+    },
+    {
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X3/manual-source",
+      "assigned_stage": "X8",
+      "id": "F-0014",
+      "severity": "medium",
+      "state": "confirmed",
+      "area": "platform_lifecycle",
+      "paths": [
+        "SayboardKeyboard/KeyboardViewController.swift",
+        "SayboardKeyboard/PingValidator.swift",
+        "Sayboard/Services/SpeechRecognitionService.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "SayboardKeyboard/KeyboardViewController.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "924-938",
+          "observation": "when shared settings isRecording and isSessionActive are true with valid token, startDictationViaDarwin returns after ping, without new start request or scheduled timeout"
+        },
+        {
+          "path": "SayboardKeyboard/PingValidator.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "6-34",
+          "observation": "independent 1s validator resets only local keyboard booleans when host silent, not the persisted flags"
+        },
+        {
+          "path": "Sayboard/Services/SpeechRecognitionService.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "625-640",
+          "observation": "actual health is verified when host processes requestSessionStatus; no host response means no proof"
+        }
+      ],
+      "scenario": "App host has terminated but left shared isRecording/isSessionActive=true and valid token; user taps microphone before local PingValidator has reset state.",
+      "causal_chain": "reentry branch assumes active recording from cached values -> skips start request/fallback scheduling -> one press does not initiate capture; a later tap may be needed. App death and timing not reproduced.",
+      "root_owner": "KeyboardViewController.startDictationViaDarwin early reentry shortcut",
+      "smallest_repair": "Gate active-recording shortcut on request-scoped host acknowledgement or bounded health handshake, not persisted booleans alone; preserve existing session/destination and avoid duplicate arming.",
+      "regression_oracle": "Inject stale App Group active flags + silent host and tap immediately after keyboard appears; assert bounded start/fallback and no phantom 'recording'. With responsive host, assert no duplicate capture and no app jump.",
+      "verification": [
+        "Early return and lack of start/fallback scheduling on that branch confirmed in source; actual user-facing missed tap unobserved."
+      ]
+    },
+    {
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X3/manual-source",
+      "assigned_stage": "X8",
+      "id": "F-0015",
+      "severity": "medium",
+      "state": "hypothesis",
+      "area": "async_ownership",
+      "paths": [
+        "Sayboard/Services/BackgroundAudioSession.swift",
+        "Sayboard/Services/SpeechRecognitionService.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Sayboard/Services/BackgroundAudioSession.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "406-424",
+          "observation": "session inactivity Timer callback enqueues MainActor Task calling endSession without expected session generation/owner"
+        },
+        {
+          "path": "Sayboard/Services/SpeechRecognitionService.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "541-549",
+          "observation": "recording 30-minute Timer schedules async stopRecording without expected token"
+        }
+      ],
+      "scenario": "Previous session's Timer fires, enqueues a delayed MainActor task, and a different session begins before that task executes.",
+      "causal_chain": "old callback lacks generation check -> stale endSession/stopRecording may terminate the new capture, if that interleaving occurs.",
+      "root_owner": "Audio idle and recording-duration Timer-to-Task handoff",
+      "smallest_repair": "Capture and validate the session generation or dictation token in each Timer callback and again on MainActor before irreversible end/stop; keep one Timer owner and normal cancellation.",
+      "regression_oracle": "Manually queue old callback, advance session generation, invoke callback; assert new session active and no extra stop. Repeat for genuine timeout and interruption.",
+      "verification": [
+        "Missing token/generation check confirmed; an actual queued-callback interleaving has not been reproduced."
+      ]
+    },
+    {
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X3/manual-source",
+      "assigned_stage": "X8",
+      "id": "F-0016",
+      "severity": "medium",
+      "state": "hypothesis",
+      "area": "performance_memory",
+      "paths": [
+        "Sayboard/Services/AudioBufferAccumulator.swift",
+        "Sayboard/Services/AudioSampleQueue.swift",
+        "Sayboard/Services/SpeechRecognitionService.swift",
+        "Shared/LiveWarmupMemoryPolicy.swift",
+        "Shared/ModelVariant.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Sayboard/Services/AudioBufferAccumulator.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "18-20,40-45",
+          "observation": "default maximumUnreadSamples=nil and consumeAll materializes full snapshot"
+        },
+        {
+          "path": "Sayboard/Services/AudioSampleQueue.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "9-30,52-65",
+          "observation": "queue appends indefinitely absent optional bound; consumeAll creates copy then resets"
+        },
+        {
+          "path": "Sayboard/Services/SpeechRecognitionService.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "24,312-318",
+          "observation": "30-minute recording cap and snapshot before cold Qwen model allocation"
+        },
+        {
+          "path": "Shared/LiveWarmupMemoryPolicy.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "1-10",
+          "observation": "memory threshold controls model warmup, not the final accumulated audio buffer capacity"
+        }
+      ],
+      "scenario": "Long Qwen recording approaches 30min during memory-pressure or cold model load.",
+      "causal_chain": "16k Float32 * 1800s = 115.2 MB (~110MiB) of retained samples plus consumeAll copy, CAF buffers, native model and decode allocations; unmeasured peak could exceed iOS limits. No actual OOM confirmed.",
+      "root_owner": "AudioBufferAccumulator unbounded dictation capture and final full-buffer transcription",
+      "smallest_repair": "Benchmark true high-water RAM and current model decode needs first; consider bounded segmentation/disk-backed 16k sample storage or explicit length gate without dropping beginning audio or breaking offline final inference.",
+      "regression_oracle": "1, 5, 20 and 30-minute simulated captures, Qwen 0.6/1.7B loaded and cold, compare peak footprint and saved/decoded audio parity, reenter safely after memory warning; iPhone jetsam diagnostics.",
+      "verification": [
+        "Exact upper-bound sample size derived from source constants; real model peak RAM and device crash NOT measured."
+      ]
+    },
+    {
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "origin": "X3/manual-source",
+      "assigned_stage": "X8",
+      "id": "F-0017",
+      "severity": "medium",
+      "state": "hypothesis",
+      "area": "performance_reliability",
+      "paths": [
+        "Sayboard/Services/BackgroundAudioSession.swift",
+        "Shared/AudioLevelBridge.swift",
+        "Sayboard/Services/AudioBufferMath.swift",
+        "Sayboard/Services/AudioRecorder.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Sayboard/Services/BackgroundAudioSession.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "341-403",
+          "observation": "input tap callback writes heartbeat to App Group UserDefaults (~0.5s), flushes audioLevel up to 30Hz, resamples, appends to FIFO and writes CAF"
+        },
+        {
+          "path": "Shared/AudioLevelBridge.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "15-27",
+          "observation": "flushToDefaults writes SharedSettings.audioLevel synchronously in callback path"
+        },
+        {
+          "path": "Sayboard/Services/AudioBufferMath.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "12-64,98-100",
+          "observation": "per callback conversion buffer and array allocation"
+        },
+        {
+          "path": "Sayboard/Services/AudioRecorder.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "35-53",
+          "observation": "AVAudioFile.write happens in locked appendBuffer on callback path"
+        }
+      ],
+      "scenario": "High-frequency audio callback under low memory or disk I/O contention.",
+      "causal_chain": "allocation, shared defaults and synchronous CAF I/O inside audio input callback could add jitter/dropouts despite lock-scoped safety; no traced audio loss observed.",
+      "root_owner": "BackgroundAudioSession persistent tap's real-time work vs storage/bridge responsibilities",
+      "smallest_repair": "Use bounded timing/dropout telemetry first; if needed move persistence/UI bridge to one controlled worker and keep tap callback to lightweight sample enqueue, without introducing duplicate taps or polling.",
+      "regression_oracle": "Measure audio callback duration/gaps, buffer errors and dropped samples during 30min dictation and backgrounding under low memory; assert recorded PCM counts and first-word preservation.",
+      "verification": [
+        "Code-level synchronous work observed; realtime glitch/OOM not measured on device."
       ]
     }
   ],

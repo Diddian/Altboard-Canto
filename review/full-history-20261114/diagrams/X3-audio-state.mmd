@@ -1,0 +1,37 @@
+flowchart TD
+  USER["Keyboard mic press"] --> KB["KeyboardViewController intent / destination token"]
+  KB --> BOOT{"Persisted active recording?"}
+  BOOT -->|yes F-0014: stale shortcut| PING["Host ping only, no bounded start request"]
+  BOOT -->|no| DARWIN["Darwin start + bounded retry/fallback"]
+  DARWIN --> HOST["SpeechRecognitionService.startCapture"]
+  HOST --> HEALTH{"AVAudioEngine isRunning + session owner?"}
+  HEALTH -->|no| START["startSession: AVAudioSession + persistent input tap"]
+  HEALTH -->|yes| CAPTURE["beginCapture: single enum owner"]
+  START --> CAPTURE
+  CAPTURE --> BUFFER["16k FIFO accumulator + CAF history"]
+  CAPTURE --> WARM{"Qwen loaded and RAM headroom?"}
+  WARM -->|yes| LIVE["Live task: bounded chunks + speechWorkers decode"]
+  WARM -->|no| DEFER["No live decode yet; defer model load"]
+  LIVE --> PARTIAL["App Group partial + token/revision"]
+  BUFFER --> STOP["Stop: endCapture + cancel live task"]
+  LIVE --> STOP
+  STOP --> WAIT{"Worker exits within 4 seconds?"}
+  WAIT -->|no| PRESERVE["Save original CAF, processing failure"]
+  WAIT -->|yes| SNAP["consumeAll FIFO -> savedSamples"]
+  SNAP --> COLD{"Cold Qwen?"}
+  COLD -->|yes| PARK["AudioSessionRecoveryGate.park / close without user Stop"]
+  COLD -->|no| FINAL["Final native ASR and optional output"]
+  PARK --> MODEL["Qwen native load with generation"]
+  DEFER --> MODEL
+  MODEL --> FINAL
+  FINAL --> HIST["save History, original audio on ASR failure"]
+  FINAL --> BRIDGE["Bridge output to original field (X4 review)"]
+  FINAL --> RESTORE["Once: gate.take + session health restore"]
+  RESTORE -->|allowed| ARM["AVAudioEngine restarted / sessionStarted"]
+  RESTORE -->|denied F-0012| SILENT["Declined recovery incorrectly reported as nil"]
+  CANCEL["Manual cancel/endSession/interruption"] --> INVALIDATE["Cancel parked gate; no rearm"]
+  INVALIDATE --> RESTORE
+  TIMER["Idle and 30min Timer F-0015"] -.->|stale MainActor callback?| CANCEL
+  BUFFER -.->|F-0016 peak RAM unmeasured| MODEL
+  CAPTURE -.->|F-0017 callback I/O jitter unmeasured| BUFFER
+  USER -.->|F-0013 cancelled hold might start/stop| DARWIN
