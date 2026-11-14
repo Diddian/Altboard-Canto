@@ -112,7 +112,7 @@ struct ModelCardView: View, Equatable {
 
   @ViewBuilder
   private var statBars: some View {
-    if self.variant == .senseVoiceSmall {
+    if self.variant == .senseVoiceSmall || self.variant.engine == .qwen3 {
       VStack(alignment: .trailing, spacing: 2) {
         Text("Accuracy: Unrated")
         Text("Speed: Unrated")

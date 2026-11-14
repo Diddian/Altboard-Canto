@@ -19,17 +19,13 @@ enum SpeechModelRecommendation {
   ) -> ModelVariant {
     let wanted = self.wanted(languages)
     if wanted.contains("yue") {
-      // Prefer the existing lightweight WSYue recognizer for Cantonese when
-      // it covers all chosen languages. Never silently drop German or others.
-      if wanted.isSubset(of: ModelVariant.senseVoiceSmall.supportedLanguages),
-         isSupported(.senseVoiceSmall) {
-        return .senseVoiceSmall
-      }
-      // The supported 0.6B ONNX runtime covers Cantonese + German/English.
-      // The new HK-tuned GGUF checkpoints require a different ASR runtime.
-      if wanted.isSubset(of: ModelVariant.qwen3ASR06B.supportedLanguages),
-         isSupported(.qwen3ASR06B) {
-        return .qwen3ASR06B
+      // Cantonese first uses the full-size, already-supported Qwen3 ONNX.
+      // Keep the HK-tuned GGUF out of this path until its audio backend exists.
+      // Do not lower the model size merely because an iPhone is the device.
+      for candidate in [ModelVariant.qwen3ASR17B, .qwen3ASR06B, .senseVoiceSmall] {
+        if wanted.isSubset(of: candidate.supportedLanguages), isSupported(candidate) {
+          return candidate
+        }
       }
     }
     if wanted.isSubset(of: SpeechLanguages.parakeetV3), isSupported(.parakeetV3) {

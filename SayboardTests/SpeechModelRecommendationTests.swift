@@ -29,28 +29,29 @@ struct SpeechModelRecommendationTests {
   }
 
   @Test
-  func `Cantonese alone recommends the existing WSYue model`() {
-    #expect(Self.recommend(["yue"]) == .senseVoiceSmall)
+  func `Cantonese recommends full size Qwen3 on capable devices`() {
+    #expect(Self.recommend(["yue"]) == .qwen3ASR17B)
+    #expect(Self.recommend(["yue", "en"]) == .qwen3ASR17B)
+    #expect(Self.recommend(["yue", "en", "de"]) == .qwen3ASR17B)
   }
 
   @Test
-  func `Cantonese and English both fit the WSYue recognizer`() {
-    #expect(Self.recommend(["yue", "en"]) == .senseVoiceSmall)
+  func `Cantonese offers Qwen 0 point 6 when full size is unsupported`() {
+    #expect(Self.recommend(["yue", "en"]) { $0 != .qwen3ASR17B } == .qwen3ASR06B)
   }
 
   @Test
-  func `adding German chooses the smaller compatible Qwen ONNX model`() {
-    #expect(Self.recommend(["yue", "en", "de"]) == .qwen3ASR06B)
+  func `WSYue remains fallback for Cantonese and English`() {
+    #expect(Self.recommend(["yue", "en"]) {
+      $0 != .qwen3ASR17B && $0 != .qwen3ASR06B
+    } == .senseVoiceSmall)
   }
 
   @Test
-  func `unavailable WSYue falls back to Qwen 0 point 6`() {
-    #expect(Self.recommend(["yue", "en"]) { $0 != .senseVoiceSmall } == .qwen3ASR06B)
-  }
-
-  @Test
-  func `insufficient Qwen memory falls back without losing German support`() {
-    #expect(Self.recommend(["yue", "de"]) { $0 != .qwen3ASR06B } == .whisperSmall)
+  func `Whisper stays as a fallback for Cantonese and German`() {
+    #expect(Self.recommend(["yue", "de"]) {
+      $0 != .qwen3ASR17B && $0 != .qwen3ASR06B
+    } == .whisperSmall)
   }
 
   @Test
