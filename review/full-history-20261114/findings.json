@@ -1,7 +1,7 @@
 {
   "schema_version": "untangle-ocr-findings/v1",
-  "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
-  "status": "39 deduplicated root findings; Build #236 CI succeeded; X8 mandatory/native/iPhone acceptance unverified; 426 paths queued for X9-X13",
+  "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+  "status": "41 deduplicated findings; Build #236 CI success, X8 mandatory/native/iPhone acceptance outstanding; X9 partial audit ongoing",
   "findings": [
     {
       "id": "F-0001",
@@ -1870,6 +1870,94 @@
       ],
       "origin": "X0-X8 independent test-execution audit",
       "assigned_stage": "X11/X14"
+    },
+    {
+      "id": "F-0040",
+      "severity": "medium",
+      "state": "confirmed",
+      "area": "model_integrity",
+      "review_priority": "P1",
+      "first_detected_build": null,
+      "last_affected_build": 236,
+      "paths": [
+        "Sayboard/Services/SenseVoiceModelDownloader.swift",
+        "Sayboard/Services/SenseVoiceModelBundle.swift",
+        "Sayboard/Services/SenseVoiceTranscriptionService.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Sayboard/Services/SenseVoiceModelDownloader.swift",
+          "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+          "lines": "34-56,84-98",
+          "observation": "ONNX SHA-256 verified; tokens.txt accepted by size and fixed prefix, fetched from mutable /resolve/main."
+        },
+        {
+          "path": "Sayboard/Services/SenseVoiceModelBundle.swift",
+          "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+          "lines": "15-27",
+          "observation": "Installed bundle verifies model marker and sizes but not tokens digest."
+        },
+        {
+          "path": "Sayboard/Services/SenseVoiceTranscriptionService.swift",
+          "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+          "lines": "17-45",
+          "observation": "Recognizer consumes unpinned tokens alongside model.int8.onnx."
+        }
+      ],
+      "scenario": "Mutable upstream tokens change while remaining same size and prefix, or local tokenizer bytes change after download.",
+      "causal_chain": "Model digest is pinned but tokenizer identity is not -> different vocabulary can pass bundle validation -> model/token mismatch possible; no runtime mismatch yet observed.",
+      "root_owner": "SenseVoiceModelDownloader.fetch + SenseVoiceModelBundle.locate",
+      "smallest_repair": "Pin all bundle files to one immutable revision and require expected SHA-256 for both before installation and re-use; preserve existing bundle on any failure.",
+      "regression_oracle": "Use same-size modified tokenizer with expected prefix: stage/install/re-open must reject it and retain previous verified model. Execute real native test separately.",
+      "verification": [
+        "Exact source evidence inspected at c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b; structural integrity gap confirmed, live fault-injection and iPhone tests not_run."
+      ],
+      "origin": "X9/manual-GitHub-source",
+      "assigned_stage": "X8"
+    },
+    {
+      "id": "F-0041",
+      "severity": "medium",
+      "state": "hypothesis",
+      "area": "performance",
+      "review_priority": "P1",
+      "first_detected_build": null,
+      "last_affected_build": 236,
+      "paths": [
+        "Sayboard/Services/AudioTrimmer.swift",
+        "Sayboard/Services/SpeechRecognitionService+Transcription.swift",
+        "Sayboard/Services/SpeechRecognitionService.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Sayboard/Services/AudioTrimmer.swift",
+          "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+          "lines": "21-48,56-103,106-136,139-194",
+          "observation": "Reads full trimmed PCM, writes/replaces audio and computes waveform synchronously."
+        },
+        {
+          "path": "Sayboard/Services/SpeechRecognitionService+Transcription.swift",
+          "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+          "lines": "264-300",
+          "observation": "saveHistoryRecord invokes trimToSpeech directly without off-actor scheduling."
+        },
+        {
+          "path": "Sayboard/Services/SpeechRecognitionService.swift",
+          "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+          "lines": "12-20",
+          "observation": "Owning SpeechRecognitionService is @MainActor."
+        }
+      ],
+      "scenario": "A long dictation creates a sizable audio trim with direct synchronous I/O on the main actor.",
+      "causal_chain": "MainActor history-save -> synchronous PCM memory/I-O work -> possible UI stall or memory pressure; observed actor binding, performance impact unmeasured.",
+      "root_owner": "SpeechRecognitionService.saveHistoryRecord -> AudioTrimmer.trimToSpeech",
+      "smallest_repair": "Measure elapsed main-actor blocking and peak RAM with synthetic recordings first; if over budget, move I/O off actor with correct file ownership and rollback.",
+      "regression_oracle": "Measure main-thread response for 1-, 10-, 30-minute synthetic recordings; fail replacement path and confirm history/audio consistency.",
+      "verification": [
+        "Static @MainActor call and synchronous I/O verified at c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b; latency/memory/physical iPhone not_run."
+      ],
+      "origin": "X9/manual-GitHub-source",
+      "assigned_stage": "X8"
     }
   ],
   "categories": [

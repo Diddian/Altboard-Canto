@@ -1,0 +1,10 @@
+flowchart LR
+  A["SpeechRecognitionService @MainActor"] -->|"saveHistoryRecord"| B["AudioTrimmer synchronous PCM processing"]
+  B -->|"file replacement"| C["History audio file"]
+  B -->|"duration + waveform"| D["HistoryRecord"]
+  M["ModelDownloadService"] -->|"enqueueDownload"| N["SenseVoiceModelDownloader"]
+  N -->|"model SHA-256"| O["model.int8.onnx"]
+  N -->|"tokens size/prefix only: F-0040"| P["tokens.txt"]
+  O --> V["SenseVoiceModelBundle.locate"]
+  P --> V
+  V --> S["SenseVoiceTranscriptionService"]

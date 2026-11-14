@@ -273,7 +273,10 @@
       "path": "Sayboard/Helpers/EntitlementResolver.swift",
       "sha": "464bb3094601e614ef827315914fec8844b66273",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X9",
+      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Helpers/HostAppOpener.swift",
@@ -303,13 +306,19 @@
       "path": "Sayboard/Helpers/ObjCExceptionCatcher.h",
       "sha": "6450d074cb1778755a51b5875eec304be0affd93",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X9",
+      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Helpers/ObjCExceptionCatcher.m",
       "sha": "11b80ab504e30383d8462252ba784f71f18c2c9c",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X9",
+      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Helpers/OnboardingProgress.swift",
@@ -1169,7 +1178,10 @@
       "path": "Sayboard/Services/AudioTrimmer.swift",
       "sha": "9a6fef8efe0548546d0dc88fce8f852d3d1e1ab7",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X9",
+      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Services/AudioWaveformPeaks.swift",
@@ -1358,7 +1370,10 @@
       "path": "Sayboard/Services/ModelStorageManager.swift",
       "sha": "6866fb37c9fb0c0a0d541d3c215b8ccd4e7c5ca0",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X9",
+      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Services/MoonshineTranscriptionService.swift",
@@ -1402,7 +1417,10 @@
       "path": "Sayboard/Services/PurchaseService.swift",
       "sha": "9c4ef756cd22375cd20d984e7bd1e2680038523e",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X9",
+      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Services/Qwen3TranscriptionService.swift",
@@ -1423,7 +1441,10 @@
       "path": "Sayboard/Services/R2ModelDownloader.swift",
       "sha": "b3040ff35fa5b73e0eb0ba3ddce2fe00f163745c",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X9",
+      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Services/SenseVoiceModelBundle.swift",
@@ -1435,7 +1456,10 @@
       "path": "Sayboard/Services/SenseVoiceModelDownloader.swift",
       "sha": "c4a9a1c638c6172ec230ccdae3cb9f70813123a6",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X9",
+      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Services/SenseVoiceTranscriptionService.swift",
@@ -3104,7 +3128,10 @@
       "path": "Shared/KeyboardProcessMemory.swift",
       "sha": "39235cfdd945a38475437ebcb53d7c45e5825bef",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X9",
+      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "test_status": "not_run"
     },
     {
       "path": "Shared/LLMBridge.swift",
@@ -11095,9 +11122,10 @@
       "status": "in_progress",
       "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
       "planned_paths": 65,
-      "reviewed_new": 3,
+      "reviewed_new": 9,
       "queue_path": "review/full-history-20261114/review-queue.json",
-      "pending": 62
+      "pending": 53,
+      "reviewed_limited": 3
     },
     "X10": {
       "status": "queued_blocked_until_predecessor",
@@ -11139,11 +11167,12 @@
   "counts": {
     "current_total": 578,
     "historical_only": 14,
-    "reviewed": 169,
+    "reviewed": 175,
     "excluded": 166,
-    "not_reviewed": 257,
+    "not_reviewed": 248,
     "known_changed_path_occurrences": 983,
-    "known_unique_changed_paths": 336
+    "known_unique_changed_paths": 336,
+    "reviewed_limited": 3
   },
   "rule": "A file is reviewed only after whole-file read and material caller/consumer + exact source SHA and test oracle. Queued/excluded paths are not cleared without type-appropriate evidence; historic source requires a genuine old commit. Binary content not inspected must be explicitly reviewed_limited or blocked.",
   "current_snapshot": {
@@ -11155,10 +11184,11 @@
     "conclusion": "success",
     "physical_iphone": "not_run",
     "tracked_files": 578,
-    "reviewed_source": 169,
-    "queued_unreviewed_current": 243,
+    "reviewed_source": 175,
+    "queued_unreviewed_current": 234,
     "queued_previously_excluded_current": 166,
     "queued_historical_only": 14,
-    "queue_path": "review/full-history-20261114/review-queue.json"
+    "queue_path": "review/full-history-20261114/review-queue.json",
+    "reviewed_limited_source": 3
   }
 }

@@ -509,10 +509,19 @@
       "stage": "X9",
       "provisional_priority": "P0",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+          "blob_sha": "464bb3094601e614ef827315914fec8844b66273",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Whole 32-line reducer and PurchaseService.swift lines 174-192, EntitlementResolverTests.swift lines 7-87. Confirmed purchase wins; two ruled-out facts revoke; missing data preserves previous only within StoreKit environment.",
+          "negative_oracle": "Sandbox vs production, revoked purchase, store unavailable; native tests not_run.",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -584,10 +593,19 @@
       "stage": "X9",
       "provisional_priority": "P0",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+          "blob_sha": "6450d074cb1778755a51b5875eec304be0affd93",
+          "content_review": "whole_file_caller_incomplete",
+          "observation": "Whole 10-line Objective-C interface and Sayboard-Bridging-Header.h import examined; no concrete invocation established by targeted model, ASR and LLM reads. Caller search incomplete.",
+          "negative_oracle": "Find real caller or prove unused; injected NSException maps to NSError; not_run.",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -599,10 +617,19 @@
       "stage": "X9",
       "provisional_priority": "P0",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+          "blob_sha": "11b80ab504e30383d8462252ba784f71f18c2c9c",
+          "content_review": "whole_file_caller_incomplete",
+          "observation": "Whole 23-line @try/@catch, NSError conversion and bridge import examined. Unindexed GitHub code search cannot prove all callers; no dead-code claim.",
+          "negative_oracle": "At actual consumer test ObjC exception recovery and no private-data log leakage; not_run.",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2114,10 +2141,21 @@
       "stage": "X9",
       "provisional_priority": "P0",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
-      "findings": [],
-      "evidence": [],
+      "review_status": "reviewed",
+      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "findings": [
+        "F-0041"
+      ],
+      "evidence": [
+        {
+          "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+          "blob_sha": "9a6fef8efe0548546d0dc88fce8f852d3d1e1ab7",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Whole 196-line PCM read, fade, waveform and temp-file replacement. @MainActor SpeechRecognitionService.saveHistoryRecord calls it synchronously at SpeechRecognitionService+Transcription.swift 264-300. Performance hypothesis F-0041.",
+          "negative_oracle": "Synthetic long recording, replace failure preserves original audio and History duration, responsiveness; not_run.",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2189,10 +2227,22 @@
       "stage": "X9",
       "provisional_priority": "P0",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
-      "findings": [],
-      "evidence": [],
+      "review_status": "reviewed",
+      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "findings": [
+        "F-0029",
+        "F-0038"
+      ],
+      "evidence": [
+        {
+          "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+          "blob_sha": "6866fb37c9fb0c0a0d541d3c215b8ccd4e7c5ca0",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Whole 307-line model folders, deletion, CoreML cache path/symlink and validity probes. Checked ModelDownloadService.swift 73-81,124-130,202-228, +Execution.swift 30-51,77-119 and CoreMLCacheSymlinkTests.swift 11-61. F-0029/F-0038 remain unverified.",
+          "negative_oracle": "Cache migration under stale/current symlinks; failed deletion visible; no Xcode @Test executed.",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2219,10 +2269,19 @@
       "stage": "X9",
       "provisional_priority": "P0",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+          "blob_sha": "9c4ef756cd22375cd20d984e7bd1e2680038523e",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Whole 217-line APPSTORE-only StoreKit purchase, restore, asynchronous entitlement refresh and settings revalidation. EntitlementResolver + native tests examined. Not executed by Development IPA.",
+          "negative_oracle": "Revoke/restore with concurrent environment change, pending purchase and StoreKit unavailable; not_run.",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2234,10 +2293,19 @@
       "stage": "X9",
       "provisional_priority": "P0",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+          "blob_sha": "b3040ff35fa5b73e0eb0ba3ddce2fe00f163745c",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Whole 38-line R2 error definitions; ModelDownloadService+Execution.swift 76-105,188-229 owns dispatch, localization, disk reserve and errors. No second downloader here.",
+          "negative_oracle": "Bad SHA, full disk, HTTP, cancel and extraction failure are differentiated; fault-injection not_run.",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2264,10 +2332,21 @@
       "stage": "X9",
       "provisional_priority": "P0",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
-      "findings": [],
-      "evidence": [],
+      "review_status": "reviewed",
+      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "findings": [
+        "F-0040"
+      ],
+      "evidence": [
+        {
+          "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+          "blob_sha": "c4a9a1c638c6172ec230ccdae3cb9f70813123a6",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Whole 124-line staged downloader and backup rollback. Checked +Execution.swift 28-57, SenseVoiceModelBundle.swift 3-27 and SenseVoiceTranscriptionService.swift 16-52. Model has SHA, tokens only size/prefix. F-0040.",
+          "negative_oracle": "Same-size changed tokens must be rejected; canceled reinstall preserves old model; source predicate fails, runtime not_run.",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4631,10 +4710,19 @@
       "stage": "X9",
       "provisional_priority": "P0",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+          "blob_sha": "39235cfdd945a38475437ebcb53d7c45e5825bef",
+          "content_review": "whole_file_caller_incomplete",
+          "observation": "Whole 62-line iOS non-APPSTORE diagnostic snapshot; footprint/headroom capped, no raw text. Consumer not found by targeted KeyboardViewController and FeatureDiagnostics checks; review limited.",
+          "negative_oracle": "Identify Snapshot consumer, verify Mach info and iOS budget on real device; not_run.",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -6439,14 +6527,15 @@
     }
   ],
   "review_progress": {
-    "reviewed": 3,
-    "pending": 423,
+    "reviewed": 9,
+    "pending": 414,
     "blocked": 0,
-    "limited": 0,
+    "limited": 3,
     "by_stage": {
       "X9": {
-        "reviewed": 3,
-        "pending": 62
+        "reviewed": 9,
+        "pending": 53,
+        "limited": 3
       },
       "X10": {
         "reviewed": 0,

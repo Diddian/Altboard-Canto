@@ -7,19 +7,31 @@
   "started_at": "2026-11-14",
   "finished_at": null,
   "review_mode": "Manual GitHub Untangle + manual OCR-style; external OCR CLI NOT RUN",
-  "untangle_status": "not_run",
+  "untangle_status": "in_progress; canonical owners/consumers traced for six files; three caller-limited",
   "files_reviewed": [
     "Shared/KeyboardDocumentIdentifier.swift",
     "Shared/HistoryRecord.swift",
-    "SayboardKeyboard/KeyboardTouchLearning.swift"
+    "SayboardKeyboard/KeyboardTouchLearning.swift",
+    "Sayboard/Helpers/EntitlementResolver.swift",
+    "Sayboard/Services/AudioTrimmer.swift",
+    "Sayboard/Services/ModelStorageManager.swift",
+    "Sayboard/Services/PurchaseService.swift",
+    "Sayboard/Services/R2ModelDownloader.swift",
+    "Sayboard/Services/SenseVoiceModelDownloader.swift"
   ],
   "files_excluded": [],
   "files_not_reviewed": [],
-  "new_or_updated_findings": [],
-  "diagram_paths": [],
+  "new_or_updated_findings": [
+    "F-0040",
+    "F-0041"
+  ],
+  "diagram_paths": [
+    "review/full-history-20261114/diagrams/X9-runtime-source-batch1.mmd"
+  ],
   "tests": {
     "executed": [
-      "Read-only whole-file + caller inspection at pinned main c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b for KeyboardDocumentIdentifier, HistoryRecord, KeyboardTouchLearning; no executable runtime test."
+      "Read-only whole-file + caller inspection at pinned main c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b for KeyboardDocumentIdentifier, HistoryRecord, KeyboardTouchLearning; no executable runtime test.",
+      "Manual pinned-source and immediate-caller inspection only; no executable test commands or iPhone tests run."
     ],
     "not_run": [
       "Whole-file content and caller/owner review for assigned queue",
@@ -29,18 +41,25 @@
   },
   "verified_outputs": [],
   "blocked_reasons": [],
-  "next_action": "Continue X9 P0 source/call-site review of ModelStorageManager, LLMInferenceService, other assigned runtime files. 62/65 queue paths remain. Maintain X8 device gate separately.",
+  "next_action": "Continue X9 P0 LLMInferenceService, remaining runtime files and missing caller ownership. 53/65 pending, 3 reviewed_limited. X8 device gate separate.",
   "evidence_notes": [
     "All 65 assigned paths are queued, NOT reviewed. Original review/exclusion status is preserved in review-queue.json.",
     "Shared/KeyboardDocumentIdentifier.swift: Full 28-line source inspected; KeyboardViewController.swift lines 1353-1374 and 1429-1439 consume safe-nil handling to invalidate touch epoch, not to authorize arbitrary host text insertion.",
     "Shared/HistoryRecord.swift: Full 74-line Codable record and HistoryStore.swift lines 62-87, 92-105, 213-249 inspected. Backward decode supplies waveform/language defaults; unreadable index throws and save preserves unindexed record. Does NOT close F-0031/F-0032 runtime gates.",
-    "SayboardKeyboard/KeyboardTouchLearning.swift: Full 56-line in-memory adjacent-key correction classifier read; AlphabeticTouchRow.swift lines 290-307 and KeyboardViewController.swift lines 1354-1371 inspected. Tap position kept locally in process, no raw typing persistence in this owner. Lifecycle invalidates on field change."
+    "SayboardKeyboard/KeyboardTouchLearning.swift: Full 56-line in-memory adjacent-key correction classifier read; AlphabeticTouchRow.swift lines 290-307 and KeyboardViewController.swift lines 1354-1371 inspected. Tap position kept locally in process, no raw typing persistence in this owner. Lifecycle invalidates on field change.",
+    "At c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b: 6 complete whole-file/caller reviews and 3 source-read but caller-limited reviews; test outcomes not_run.",
+    "F-0040 source-confirmed tokenizer integrity gap; F-0041 unmeasured main-actor history-save performance hypothesis."
   ],
   "review_plan_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
   "assigned_count": 65,
   "review_queue": "review/full-history-20261114/review-queue.json",
-  "reviewed_count": 3,
-  "reviewed_limited_count": 0,
+  "reviewed_count": 9,
+  "reviewed_limited_count": 3,
   "blocked_count": 0,
-  "queue_owns_pending_paths": true
+  "queue_owns_pending_paths": true,
+  "files_reviewed_limited": [
+    "Sayboard/Helpers/ObjCExceptionCatcher.h",
+    "Sayboard/Helpers/ObjCExceptionCatcher.m",
+    "Shared/KeyboardProcessMemory.swift"
+  ]
 }
