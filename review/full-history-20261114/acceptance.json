@@ -847,7 +847,7 @@
     "required_for_user_visible_keyboard_or_audio": true,
     "status": "not_run",
     "evidence": [],
-    "reason": "SideStore iPhone behavior has not been observed; Build #233 may pass or fail independently"
+    "reason": "No device evidence for #236; green unsigned IPA cannot certify UIKit, microphone, Globe or recovery."
   },
   "cli_review": {
     "mode": "GitHub manual OCR-style",
@@ -862,6 +862,8 @@
     "additional_gap": "F-0031 recovery_export fails on corrupted JSON index; source acceptance downgraded 15 -> 0 on this criterion; needs read-only raw-audio recovery export before accepted",
     "build_235": "completed success, SHA 9433d29e82e04fb00eb374fbe825aacbf0d23350, TEST IPA artifact available, run 43626960646",
     "device_acceptance": "not_run",
-    "build_236": "in_progress at SHA c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b; preflight policy/ownership checks passed, full compile not verified"
+    "build_236": "success at c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b; GitHub Actions #236 run 43629599094; Altboard-Canto-TEST.ipa 80,455,514 bytes; device NOT RUN",
+    "latest_build_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+    "native_SayboardTests": "NOT EXECUTED in existing .github/workflows/build-unsigned-ipa.yml"
   }
 }

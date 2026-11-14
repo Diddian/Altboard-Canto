@@ -1,7 +1,7 @@
 {
   "schema_version": "untangle-ocr-findings/v1",
   "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
-  "status": "X8 second source batch on main@9433d29e82e04fb00eb374fbe825aacbf0d23350; F-0019/F-0028 candidates; source-based F-0031 export gate patched; others remain unverified",
+  "status": "39 deduplicated root findings; Build #236 CI succeeded; X8 mandatory/native/iPhone acceptance unverified; 426 paths queued for X9-X13",
   "findings": [
     {
       "id": "F-0001",
@@ -52,7 +52,8 @@
         "Build #232 success only; code/runtime behavior not accepted."
       ],
       "origin": "H-001",
-      "assigned_stage": "X7/X8"
+      "assigned_stage": "X7/X8",
+      "review_priority": "P1"
     },
     {
       "id": "F-0002",
@@ -119,7 +120,8 @@
         "X2: manual source call-site review confirms onEmojiAction callback is unused; no user-visible Emoji defect proven."
       ],
       "origin": "H-005",
-      "assigned_stage": "X2/X6"
+      "assigned_stage": "X2/X6",
+      "review_priority": "P2"
     },
     {
       "id": "F-0003",
@@ -177,7 +179,8 @@
         "X2 native UIKit picker remains distinct from custom Emoji code; first-render system needsInputModeSwitchKey can still be stale."
       ],
       "origin": "X1/R2",
-      "assigned_stage": "X8; verify with X2 native globe review"
+      "assigned_stage": "X8; verify with X2 native globe review",
+      "review_priority": "P2"
     },
     {
       "id": "F-0004",
@@ -214,7 +217,8 @@
         "iOS removal/re-add test NOT RUN; no OS installation API correctness claim."
       ],
       "origin": "X1/R2",
-      "assigned_stage": "X8"
+      "assigned_stage": "X8",
+      "review_priority": "P1"
     },
     {
       "id": "F-0005",
@@ -265,7 +269,8 @@
         "Host KeyboardSelectionProbe only correlates source events temporally and explicitly says field unconfirmed."
       ],
       "origin": "X1/R2",
-      "assigned_stage": "X8"
+      "assigned_stage": "X8",
+      "review_priority": "P2"
     },
     {
       "id": "F-0006",
@@ -310,7 +315,8 @@
         "X2 found one effective SwiftUI layout and separate UIKit row touch owners; blank pixels/host window state remain iPhone-only."
       ],
       "origin": "X1/R2",
-      "assigned_stage": "X8; complement X2 keyboard render review"
+      "assigned_stage": "X8; complement X2 keyboard render review",
+      "review_priority": "P2"
     },
     {
       "first_detected_build": null,
@@ -347,7 +353,8 @@
       "verification": [
         "Confirmed code-path defect only; not an observed physical iPhone haptic failure.",
         "Same optional player retry exists at Build #223."
-      ]
+      ],
+      "review_priority": "P1"
     },
     {
       "first_detected_build": null,
@@ -383,7 +390,8 @@
       "regression_oracle": "Cancel held Delete while view stays visible, assert no further delete; repeat with cursor tracking and restored focus; physical device mandatory.",
       "verification": [
         "Source shows absent independent cancellation path; actual cancellation behavior unverified."
-      ]
+      ],
+      "review_priority": "P1"
     },
     {
       "first_detected_build": null,
@@ -419,7 +427,8 @@
       "regression_oracle": "VoiceOver focus & activate Space/Delete, switch control, physical long press, one operation per activation, no duplicated feedback.",
       "verification": [
         "Missing explicit accessibility handlers confirmed in source; actual VoiceOver failure unverified."
-      ]
+      ],
+      "review_priority": "P2"
     },
     {
       "first_detected_build": null,
@@ -463,7 +472,8 @@
       "regression_oracle": "Instrument sound requests for short tap, hold, cancel and slide; no click solely on popup; actual audible result iPhone only.",
       "verification": [
         "Two system click requests statically confirmed; iOS may suppress actual second sound."
-      ]
+      ],
+      "review_priority": "P2"
     },
     {
       "first_detected_build": null,
@@ -499,7 +509,8 @@
       "regression_oracle": "Simulate absent sensory consumer and overlapping controller, check trace/fallback and no replay/double pulse.",
       "verification": [
         "Control-flow discrepancy supported; real-world trigger remains unverified."
-      ]
+      ],
+      "review_priority": "P2"
     },
     {
       "first_detected_build": null,
@@ -543,7 +554,8 @@
       "verification": [
         "Return-value mismatch and caller suppression confirmed at pinned code SHA; physical no-rearm behavior not inferred.",
         "Existing pure Swift gate verifier tests false gate but not restore wrapper mapping."
-      ]
+      ],
+      "review_priority": "P2"
     },
     {
       "first_detected_build": null,
@@ -586,7 +598,8 @@
       "regression_oracle": "With synthetic delayed hold task, simulate 0.3s drag-off cancelled press vs accepted Button press; assert cancelled produces no start, accepted short press exactly one start, genuine hold exactly one start + stop. Confirm on SideStore iPhone.",
       "verification": [
         "Conditional code branch confirmed; actual SwiftUI cancelled-release event/order and unintended microphone activation NOT observed."
-      ]
+      ],
+      "review_priority": "P1"
     },
     {
       "first_detected_build": null,
@@ -629,7 +642,8 @@
       "regression_oracle": "Inject stale App Group active flags + silent host and tap immediately after keyboard appears; assert bounded start/fallback and no phantom 'recording'. With responsive host, assert no duplicate capture and no app jump.",
       "verification": [
         "Early return and lack of start/fallback scheduling on that branch confirmed in source; actual user-facing missed tap unobserved."
-      ]
+      ],
+      "review_priority": "P1"
     },
     {
       "first_detected_build": null,
@@ -665,7 +679,8 @@
       "regression_oracle": "Manually queue old callback, advance session generation, invoke callback; assert new session active and no extra stop. Repeat for genuine timeout and interruption.",
       "verification": [
         "Missing token/generation check confirmed; an actual queued-callback interleaving has not been reproduced."
-      ]
+      ],
+      "review_priority": "P1"
     },
     {
       "first_detected_build": null,
@@ -716,7 +731,8 @@
       "regression_oracle": "1, 5, 20 and 30-minute simulated captures, Qwen 0.6/1.7B loaded and cold, compare peak footprint and saved/decoded audio parity, reenter safely after memory warning; iPhone jetsam diagnostics.",
       "verification": [
         "Exact upper-bound sample size derived from source constants; real model peak RAM and device crash NOT measured."
-      ]
+      ],
+      "review_priority": "P2"
     },
     {
       "first_detected_build": null,
@@ -766,7 +782,8 @@
       "regression_oracle": "Measure audio callback duration/gaps, buffer errors and dropped samples during 30min dictation and backgrounding under low memory; assert recorded PCM counts and first-word preservation.",
       "verification": [
         "Code-level synchronous work observed; realtime glitch/OOM not measured on device."
-      ]
+      ],
+      "review_priority": "P2"
     },
     {
       "first_detected_build": null,
@@ -811,12 +828,13 @@
         "Confirmed policy cannot distinguish two fields sharing a host-process marker; no physical iPhone foreign-field insertion observed."
       ],
       "x8_candidate": {
-        "main_sha": "e396d72f5f93ff572f8479cf28b4a728c4eff49c",
-        "phase": "source_patched_test_IPA_building",
-        "build_run": 234,
+        "main_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+        "phase": "CI_236_success_mandatory_tests_and_iPhone_pending",
+        "build_run": 236,
         "review_scope": "X8 bounded batch",
         "approval": "pending"
-      }
+      },
+      "review_priority": "P0"
     },
     {
       "first_detected_build": null,
@@ -862,12 +880,13 @@
         "Build #228 has same live source blob; not introduced by #232."
       ],
       "x8_candidate": {
-        "main_sha": "9433d29e82e04fb00eb374fbe825aacbf0d23350",
-        "phase": "source_patched_but_mandatory_tests_pending",
-        "build_run": 235,
+        "main_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+        "phase": "CI_236_success_mandatory_tests_and_iPhone_pending",
+        "build_run": 236,
         "approval": "pending",
         "notes": ""
-      }
+      },
+      "review_priority": "P0"
     },
     {
       "first_detected_build": null,
@@ -912,12 +931,13 @@
         "Confirmed source-level unauthorized cross-document mutation path under matching text; iPhone UI test not run."
       ],
       "x8_candidate": {
-        "main_sha": "e396d72f5f93ff572f8479cf28b4a728c4eff49c",
-        "phase": "source_patched_test_IPA_building",
-        "build_run": 234,
+        "main_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+        "phase": "CI_236_success_mandatory_tests_and_iPhone_pending",
+        "build_run": 236,
         "review_scope": "X8 bounded batch",
         "approval": "pending"
-      }
+      },
+      "review_priority": "P0"
     },
     {
       "first_detected_build": null,
@@ -959,7 +979,8 @@
       "regression_oracle": "Put synthetic sentinel on clipboard; trigger selection/document mismatch in default LLM and auto-LLM; assert sentinel retained and safe result shown. Explicit clipboard workflow should replace clipboard on user action.",
       "verification": [
         "Unconditional clipboard write statically confirmed; actual pasteboard permission/system alerts and user harm not observed."
-      ]
+      ],
+      "review_priority": "P0"
     },
     {
       "first_detected_build": null,
@@ -1005,11 +1026,12 @@
       ],
       "x8_candidate": {
         "main_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
-        "phase": "source_patched_preflight_passed_build_pending",
+        "phase": "CI_236_success_mandatory_tests_and_iPhone_pending",
         "build_run": 236,
         "approval": "pending",
         "notes": "Predeclared acceptance and direct controller/bridge diff reviewed; device unverified"
-      }
+      },
+      "review_priority": "P0"
     },
     {
       "first_detected_build": null,
@@ -1063,11 +1085,12 @@
       ],
       "x8_candidate": {
         "main_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
-        "phase": "source_patched_preflight_passed_build_pending",
+        "phase": "CI_236_success_mandatory_tests_and_iPhone_pending",
         "build_run": 236,
         "approval": "pending",
         "notes": "Predeclared acceptance and direct controller/bridge diff reviewed; device unverified"
-      }
+      },
+      "review_priority": "P0"
     },
     {
       "first_detected_build": null,
@@ -1110,7 +1133,8 @@
       "regression_oracle": "Outbox A and newer B; focus A -> A is available for safe recovery (or explicit manual pickup), B remains pending. Repeat after restart and 64-item bound.",
       "verification": [
         "Selection order and single-candidate recovery confirmed by source; actual stranded result on iPhone not reproduced."
-      ]
+      ],
+      "review_priority": "P0"
     },
     {
       "first_detected_build": null,
@@ -1146,7 +1170,8 @@
       "regression_oracle": "Fault inject between host insertion and ack and after ack I/O failure; recreate controller same field, assert never blind replay; pending text remains recoverable when exact ownership cannot be proven.",
       "verification": [
         "Irreversible insertion/ack gap confirmed; actual process kill interleaving and duplication not observed."
-      ]
+      ],
+      "review_priority": "P0"
     },
     {
       "first_detected_build": null,
@@ -1189,7 +1214,8 @@
       "regression_oracle": "German target receives synthetically wrong short English, English target receives German short text, and true German, mixed technical proper nouns, and numbers: enforce correct allow/reject/uncertain outcomes.",
       "verification": [
         "Deterministic validator accepts short foreign-Latin candidate as plausible; no actual model mistranslation reported."
-      ]
+      ],
+      "review_priority": "P2"
     },
     {
       "id": "F-0027",
@@ -1234,12 +1260,13 @@
         "Same LegacyModelMigration blob observed at Builds #84, #136, #193, #228 and #232."
       ],
       "x8_candidate": {
-        "main_sha": "e396d72f5f93ff572f8479cf28b4a728c4eff49c",
-        "phase": "source_patched_test_IPA_building",
-        "build_run": 234,
+        "main_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+        "phase": "CI_236_success_mandatory_tests_and_iPhone_pending",
+        "build_run": 236,
         "review_scope": "X8 bounded batch",
         "approval": "pending"
-      }
+      },
+      "review_priority": "P1"
     },
     {
       "id": "F-0028",
@@ -1290,12 +1317,13 @@
         "Blob changed between historical Build #193 and #228; introduction commit not established."
       ],
       "x8_candidate": {
-        "main_sha": "9433d29e82e04fb00eb374fbe825aacbf0d23350",
-        "phase": "source_patched_but_mandatory_tests_pending",
-        "build_run": 235,
+        "main_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+        "phase": "CI_236_success_mandatory_tests_and_iPhone_pending",
+        "build_run": 236,
         "approval": "pending",
         "notes": ""
-      }
+      },
+      "review_priority": "P1"
     },
     {
       "id": "F-0029",
@@ -1345,7 +1373,8 @@
       "regression_oracle": "Inject removal error for STT and LLM selected/last model, assert model remains recognized, selection and capability remain truthful and retry succeeds; successful delete still removes exactly one model.",
       "verification": [
         "Confirmed source path; filesystem failure and UI outcome not reproduced on physical device."
-      ]
+      ],
+      "review_priority": "P1"
     },
     {
       "id": "F-0030",
@@ -1403,7 +1432,8 @@
       "verification": [
         "Export/delete omissions are directly visible in source; whether 'all' should intentionally exclude Emoji preferences is a product-scope decision.",
         "No real export or deletion executed."
-      ]
+      ],
+      "review_priority": "P1"
     },
     {
       "id": "F-0031",
@@ -1447,12 +1477,13 @@
         "Deterministic source path verified; no malformed real user history or audio fault test executed."
       ],
       "x8_candidate": {
-        "main_sha": "9433d29e82e04fb00eb374fbe825aacbf0d23350",
-        "phase": "source_patched_but_mandatory_tests_pending",
-        "build_run": 235,
+        "main_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+        "phase": "CI_236_success_mandatory_tests_and_iPhone_pending",
+        "build_run": 236,
         "approval": "pending",
         "notes": "Corrupt history index no longer aborts voluntary raw-audio export"
-      }
+      },
+      "review_priority": "P0"
     },
     {
       "id": "F-0032",
@@ -1501,7 +1532,8 @@
       "regression_oracle": "Inject failure on one audio file after clearing record index, retry Delete Voice Notes, confirm no orphan persists or is falsely reported deleted; validate unrelated pending dictation/history remains safe.",
       "verification": [
         "Source-level orphan window confirmed; physical file permission failure and retry not executed."
-      ]
+      ],
+      "review_priority": "P0"
     },
     {
       "id": "F-0033",
@@ -1551,7 +1583,8 @@
       "regression_oracle": "Simulate unavailable/renamed App Group for host and extension; explicitly OFF haptics remains OFF in real shared suite, no silent divergent overwrites, clear recoverable error; valid SideStore suffix shares exactly one domain.",
       "verification": [
         "Conditional split-source path confirmed in source; no actual SideStore entitlement failure or cross-process test performed."
-      ]
+      ],
+      "review_priority": "P1"
     },
     {
       "id": "F-0034",
@@ -1602,7 +1635,8 @@
         "Dedicated .german key layout absent #84, present #136; decoder ASCII normalization visible #84 and persists #232; exact introducing commit not established."
       ],
       "origin": "X6/manual-source",
-      "assigned_stage": "X8"
+      "assigned_stage": "X8",
+      "review_priority": "P2"
     },
     {
       "id": "F-0035",
@@ -1639,7 +1673,8 @@
         "AlphabeticKeyboardLayout changed #84/#136/#193/#228, unchanged #228/#232; exact introducing commit not established."
       ],
       "origin": "X6/manual-source",
-      "assigned_stage": "X8"
+      "assigned_stage": "X8",
+      "review_priority": "P2"
     },
     {
       "first_detected_build": null,
@@ -1684,12 +1719,13 @@
         "Source-level owner/caller inspection and read-only predicate at pinned main SHA; iPhone AVAudioSession and native callback timing NOT RUN."
       ],
       "x8_candidate": {
-        "main_sha": "e396d72f5f93ff572f8479cf28b4a728c4eff49c",
-        "phase": "source_patched_test_IPA_building",
-        "build_run": 234,
+        "main_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+        "phase": "CI_236_success_mandatory_tests_and_iPhone_pending",
+        "build_run": 236,
         "review_scope": "X8 bounded batch",
         "approval": "pending"
-      }
+      },
+      "review_priority": "P2"
     },
     {
       "first_detected_build": null,
@@ -1734,12 +1770,13 @@
         "Source-level branch and error swallow confirmed; no disk fault injection, restart runtime or device test executed."
       ],
       "x8_candidate": {
-        "main_sha": "9433d29e82e04fb00eb374fbe825aacbf0d23350",
-        "phase": "source_patched_but_mandatory_tests_pending",
-        "build_run": 235,
+        "main_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+        "phase": "CI_236_success_mandatory_tests_and_iPhone_pending",
+        "build_run": 236,
         "approval": "pending",
         "notes": "Same-turn edited text fails closed"
-      }
+      },
+      "review_priority": "P2"
     },
     {
       "first_detected_build": null,
@@ -1782,7 +1819,57 @@
       "regression_oracle": "Mock changing remote branch and same-size corrupted no-LFS model; installer must reject, clean staged data and keep previous verified model.",
       "verification": [
         "Source-level endpoint and SHA predicate verified; no actual malicious upstream behavior inferred and no corruption integration test run."
-      ]
+      ],
+      "review_priority": "P1"
+    },
+    {
+      "id": "F-0039",
+      "severity": "high",
+      "state": "confirmed",
+      "review_priority": "P0",
+      "area": "ci_test_execution",
+      "first_detected_build": 235,
+      "last_affected_build": 236,
+      "paths": [
+        ".github/workflows/build-unsigned-ipa.yml",
+        "project.yml",
+        "SayboardTests/LiveInsertionReceiptTests.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": ".github/workflows/build-unsigned-ipa.yml",
+          "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+          "lines": "285-315",
+          "observation": "The existing IPA workflow invokes xcodebuild ... build for generic iOS. It does not invoke xcodebuild test."
+        },
+        {
+          "path": "project.yml",
+          "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+          "lines": "92-100,130-145",
+          "observation": "SayboardTests is a unit-test target and is named in a test scheme; the unsigned IPA build does not execute this target."
+        },
+        {
+          "path": "SayboardTests/LiveInsertionReceiptTests.swift",
+          "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+          "lines": "1-33",
+          "observation": "Native Swift Testing @Test functions are present but no native unit-test execution is evident in the single IPA workflow."
+        },
+        {
+          "source": "https://github.com/Diddian/Altboard-Canto/actions/runs/43629599094",
+          "observation": "Build #236 completed compile, packaging and artifact upload; no native SayboardTests execution was reported."
+        }
+      ],
+      "scenario": "Swift @Test regression fails but GitHub Actions still publishes a successful unsigned TEST IPA, because only source/policy smoke tests and Xcode build run.",
+      "causal_chain": "Native test target is declared -> IPA workflow invokes xcodebuild build instead of test -> @Test assertions not executed -> CI green is incorrectly taken as behavioral acceptance.",
+      "root_owner": ".github/workflows/build-unsigned-ipa.yml and SayboardTests invocation",
+      "smallest_repair": "Use the existing workflow to add an appropriate executable native-test gate at the cheapest supported destination; do not create a second IPA workflow or assume device behavior. Verify that a deliberately failing test fails CI, and revert the fixture.",
+      "regression_oracle": "Run a deterministic native @Test positive and deliberate negative case on supported runtime. Verify failure prevents acceptance and normal pass succeeds. Keep SideStore device test separate.",
+      "verification": [
+        "Workflow and target source inspected at c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+        "Build #236 run 43629599094 succeeded, but no native xcodebuild test gate; executable native @Test remains not_run."
+      ],
+      "origin": "X0-X8 independent test-execution audit",
+      "assigned_stage": "X11/X14"
     }
   ],
   "categories": [
