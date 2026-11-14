@@ -239,9 +239,9 @@
       "name": "Verified root-cause repairs, tests and one unsigned TEST IPA",
       "goal": "Prioritize confirmed findings across X0-X7, implement bounded root-cause repairs on fresh main, re-review with both lenses, and obtain a TEST unsigned IPA only when warranted.",
       "firstRead": [
-        "findings.json",
-        "coverage.json",
-        "acceptance.json",
+        "review/full-history-20261114/findings.json",
+        "review/full-history-20261114/coverage.json",
+        "review/full-history-20261114/acceptance.json",
         ".github/workflows/build-unsigned-ipa.yml",
         "scripts/test_operation_ownership.py"
       ],
@@ -260,19 +260,23 @@
         "stages/X8.json"
       ],
       "stop": "All critical/high findings either fixed with evidence or explicitly blocked; score >=90 per completed repair and mandatory tests pass; iPhone acceptance remains separate",
-      "estimatedTokens": "24k-45k"
+      "estimatedTokens": "24k-45k",
+      "readRefs": {
+        "review_only": "review/full-history-20261114: review/full-history-20261114/",
+        "source_code": "main at verified SHA"
+      }
     },
     {
       "id": "X9",
       "name": "Independent source reconciliation, release evidence and temporary review cleanup",
       "goal": "Re-review X8 changes, verify every stage and artifact, get user-required iPhone evidence before acceptance, and delete temporary review folder only once blockers close.",
       "firstRead": [
-        "manifest.json",
-        "stages.json",
-        "coverage.json",
-        "findings.json",
-        "acceptance.json",
-        "cleanup.json"
+        "review/full-history-20261114/manifest.json",
+        "review/full-history-20261114/stages.json",
+        "review/full-history-20261114/coverage.json",
+        "review/full-history-20261114/findings.json",
+        "review/full-history-20261114/acceptance.json",
+        "review/full-history-20261114/cleanup.json"
       ],
       "focus": [
         "Independent fresh-context OCR-style and Untangle verification of repaired diffs; never self-certify independent agent",
@@ -287,7 +291,11 @@
         "temporary branch reviewed deletion commit"
       ],
       "stop": "Review repository folder absent and cleanup confirmed, or explicit BLOCKED with retained evidence",
-      "estimatedTokens": "12k-22k"
+      "estimatedTokens": "12k-22k",
+      "readRefs": {
+        "review_only": "review/full-history-20261114: review/full-history-20261114/",
+        "source_code": "main at verified SHA"
+      }
     }
   ]
 }
