@@ -1,12 +1,487 @@
 {
   "schema_version": "implementation-acceptance/v1",
   "goal": "Separate behavioral 90 percent gate for EACH actual repair, never file coverage or review confidence",
-  "status": "not_started",
+  "status": "in_progress",
   "minimum_score": 90,
   "required_all_mandatory": true,
   "unresolved_critical_blocks": true,
   "stage": "integrate",
-  "cases_by_task": {},
+  "cases_by_task": {
+    "F-0018": {
+      "task_id": "F-0018",
+      "baseline": "main@ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+      "maturity": {
+        "stage": "integrate",
+        "exposure": "local_real",
+        "goal": "Documentless host fields never receive unauthenticated automatic dictation",
+        "scope": "X8 targeted source plus CI then iPhone device acceptance",
+        "promotion_trigger": "All mandatory device and recovery gates verified"
+      },
+      "cases": [
+        {
+          "id": "same_host_deny",
+          "criterion": "Two documentless fields in same host must not authorize auto insertion",
+          "expected": "Two documentless fields in same host must not authorize auto insertion",
+          "method": "automated",
+          "weight": 25,
+          "mandatory": true,
+          "severity": "critical",
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "identified_field",
+          "criterion": "Verified original nonnil document and scoped epoch can insert once",
+          "expected": "Verified original nonnil document and scoped epoch can insert once",
+          "method": "automated",
+          "weight": 20,
+          "mandatory": true,
+          "severity": "critical",
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "outbox_recover",
+          "criterion": "Denied final text stays available in outbox and History",
+          "expected": "Denied final text stays available in outbox and History",
+          "method": "source_inspection",
+          "weight": 20,
+          "mandatory": true,
+          "severity": "high",
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "stop_and_foreign",
+          "criterion": "Cancellation, other host and selection never authorize insertion",
+          "expected": "Cancellation, other host and selection never authorize insertion",
+          "method": "automated",
+          "weight": 15,
+          "mandatory": true,
+          "severity": "high",
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "device",
+          "criterion": "iPhone host field reentry and manual recovery do not write to wrong field",
+          "expected": "iPhone host field reentry and manual recovery do not write to wrong field",
+          "method": "manual",
+          "weight": 20,
+          "mandatory": true,
+          "severity": "critical",
+          "status": "not_run",
+          "evidence": []
+        }
+      ],
+      "untangle": {
+        "performed": false,
+        "evidence": [],
+        "unresolved_critical": false
+      },
+      "runtime_gate": {
+        "required": true,
+        "status": "not_run",
+        "evidence": []
+      },
+      "status": "not_started"
+    },
+    "F-0020": {
+      "task_id": "F-0020",
+      "baseline": "main@ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+      "maturity": {
+        "stage": "integrate",
+        "exposure": "local_real",
+        "goal": "LLM Undo/Redo bound to original verified document and epoch",
+        "scope": "X8 targeted source plus CI then iPhone device acceptance",
+        "promotion_trigger": "All mandatory device and recovery gates verified"
+      },
+      "cases": [
+        {
+          "id": "same_document",
+          "criterion": "Undo/Redo in originating document reconstruct original and rewritten text",
+          "expected": "Undo/Redo in originating document reconstruct original and rewritten text",
+          "method": "automated",
+          "weight": 25,
+          "mandatory": true,
+          "severity": "high",
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "foreign_field",
+          "criterion": "Second field with identical context cannot receive history navigation edits",
+          "expected": "Second field with identical context cannot receive history navigation edits",
+          "method": "automated",
+          "weight": 25,
+          "mandatory": true,
+          "severity": "critical",
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "nil_document",
+          "criterion": "Missing document or stale epoch fails closed",
+          "expected": "Missing document or stale epoch fails closed",
+          "method": "automated",
+          "weight": 20,
+          "mandatory": true,
+          "severity": "high",
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "external_typing",
+          "criterion": "Manually edited context invalidates stale history",
+          "expected": "Manually edited context invalidates stale history",
+          "method": "source_inspection",
+          "weight": 10,
+          "mandatory": true,
+          "severity": "medium",
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "device",
+          "criterion": "iPhone undo/redo original field plus identical-text foreign field",
+          "expected": "iPhone undo/redo original field plus identical-text foreign field",
+          "method": "manual",
+          "weight": 20,
+          "mandatory": true,
+          "severity": "critical",
+          "status": "not_run",
+          "evidence": []
+        }
+      ],
+      "untangle": {
+        "performed": false,
+        "evidence": [],
+        "unresolved_critical": false
+      },
+      "runtime_gate": {
+        "required": true,
+        "status": "not_run",
+        "evidence": []
+      },
+      "status": "not_started"
+    },
+    "F-0027": {
+      "task_id": "F-0027",
+      "baseline": "main@ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+      "maturity": {
+        "stage": "integrate",
+        "exposure": "local_real",
+        "goal": "Legacy installed speech model migration remains retryable after faults",
+        "scope": "X8 targeted source plus CI then iPhone device acceptance",
+        "promotion_trigger": "All mandatory device and recovery gates verified"
+      },
+      "cases": [
+        {
+          "id": "move_failure",
+          "criterion": "Failed model move retains legacy key and old file; no completed marker",
+          "expected": "Failed model move retains legacy key and old file; no completed marker",
+          "method": "automated",
+          "weight": 30,
+          "mandatory": true,
+          "severity": "critical",
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "retry_success",
+          "criterion": "Retry after recovered filesystem verifies installed model then clears key",
+          "expected": "Retry after recovered filesystem verifies installed model then clears key",
+          "method": "automated",
+          "weight": 25,
+          "mandatory": true,
+          "severity": "high",
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "invalid_target",
+          "criterion": "Incomplete destination cannot overwrite valid legacy data or mark complete",
+          "expected": "Incomplete destination cannot overwrite valid legacy data or mark complete",
+          "method": "automated",
+          "weight": 20,
+          "mandatory": true,
+          "severity": "critical",
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "cache_cleanup",
+          "criterion": "Cache cleanup only after all migrations succeed",
+          "expected": "Cache cleanup only after all migrations succeed",
+          "method": "source_inspection",
+          "weight": 15,
+          "mandatory": true,
+          "severity": "high",
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "device",
+          "criterion": "Upgrade preserves the last usable model after SideStore reinstall/upgrade",
+          "expected": "Upgrade preserves the last usable model after SideStore reinstall/upgrade",
+          "method": "manual",
+          "weight": 10,
+          "mandatory": true,
+          "severity": "high",
+          "status": "not_run",
+          "evidence": []
+        }
+      ],
+      "untangle": {
+        "performed": false,
+        "evidence": [],
+        "unresolved_critical": false
+      },
+      "runtime_gate": {
+        "required": true,
+        "status": "not_run",
+        "evidence": []
+      },
+      "status": "not_started"
+    },
+    "F-0031": {
+      "task_id": "F-0031",
+      "baseline": "main@ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+      "maturity": {
+        "stage": "integrate",
+        "exposure": "local_real",
+        "goal": "History corruption never destroys a new recording",
+        "scope": "X8 targeted source plus CI then iPhone device acceptance",
+        "promotion_trigger": "All mandatory device and recovery gates verified"
+      },
+      "cases": [
+        {
+          "id": "corrupt_index",
+          "criterion": "Malformed index quarantined without overwriting original bytes",
+          "expected": "Malformed index quarantined without overwriting original bytes",
+          "method": "automated",
+          "weight": 25,
+          "mandatory": true,
+          "severity": "critical",
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "new_audio",
+          "criterion": "New valid recording survives corrupt and write-failure paths",
+          "expected": "New valid recording survives corrupt and write-failure paths",
+          "method": "automated",
+          "weight": 25,
+          "mandatory": true,
+          "severity": "critical",
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "valid_append",
+          "criterion": "Valid history still writes atomically with retention behavior intact",
+          "expected": "Valid history still writes atomically with retention behavior intact",
+          "method": "automated",
+          "weight": 20,
+          "mandatory": true,
+          "severity": "high",
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "recovery_export",
+          "criterion": "Recovered/diagnostic data can be recognized and voluntarily exported",
+          "expected": "Recovered/diagnostic data can be recognized and voluntarily exported",
+          "method": "source_inspection",
+          "weight": 15,
+          "mandatory": true,
+          "severity": "high",
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "device",
+          "criterion": "Physical iPhone saved voice remains replayable after recorded error",
+          "expected": "Physical iPhone saved voice remains replayable after recorded error",
+          "method": "manual",
+          "weight": 15,
+          "mandatory": true,
+          "severity": "critical",
+          "status": "not_run",
+          "evidence": []
+        }
+      ],
+      "untangle": {
+        "performed": false,
+        "evidence": [],
+        "unresolved_critical": false
+      },
+      "runtime_gate": {
+        "required": true,
+        "status": "not_run",
+        "evidence": []
+      },
+      "status": "not_started"
+    },
+    "F-0036": {
+      "task_id": "F-0036",
+      "baseline": "main@ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+      "maturity": {
+        "stage": "integrate",
+        "exposure": "local_real",
+        "goal": "Playback global lease released at every terminal path",
+        "scope": "X8 targeted source plus CI then iPhone device acceptance",
+        "promotion_trigger": "All mandatory device and recovery gates verified"
+      },
+      "cases": [
+        {
+          "id": "history_end",
+          "criterion": "History audio natural completion releases token and stops old player",
+          "expected": "History audio natural completion releases token and stops old player",
+          "method": "source_inspection",
+          "weight": 25,
+          "mandatory": true,
+          "severity": "high",
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "meeting_end",
+          "criterion": "Last Meeting part completion releases token and preserves seek/replay",
+          "expected": "Last Meeting part completion releases token and preserves seek/replay",
+          "method": "source_inspection",
+          "weight": 25,
+          "mandatory": true,
+          "severity": "high",
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "stale_callback",
+          "criterion": "Old AVAudioPlayer callback cannot terminate newer playback",
+          "expected": "Old AVAudioPlayer callback cannot terminate newer playback",
+          "method": "source_inspection",
+          "weight": 20,
+          "mandatory": true,
+          "severity": "critical",
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "pause_error",
+          "criterion": "Pause, missing CAF and failed .play release token; explicit stop idempotent",
+          "expected": "Pause, missing CAF and failed .play release token; explicit stop idempotent",
+          "method": "source_inspection",
+          "weight": 15,
+          "mandatory": true,
+          "severity": "high",
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "device",
+          "criterion": "iPhone natural end to cold model load restores microphone when authorized",
+          "expected": "iPhone natural end to cold model load restores microphone when authorized",
+          "method": "manual",
+          "weight": 15,
+          "mandatory": true,
+          "severity": "critical",
+          "status": "not_run",
+          "evidence": []
+        }
+      ],
+      "untangle": {
+        "performed": false,
+        "evidence": [],
+        "unresolved_critical": false
+      },
+      "runtime_gate": {
+        "required": true,
+        "status": "not_run",
+        "evidence": []
+      },
+      "status": "not_started"
+    },
+    "F-0037": {
+      "task_id": "F-0037",
+      "baseline": "main@ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+      "maturity": {
+        "stage": "integrate",
+        "exposure": "local_real",
+        "goal": "Conversation saved as Meeting only once across draft cleanup failure",
+        "scope": "X8 targeted source plus CI then iPhone device acceptance",
+        "promotion_trigger": "All mandatory device and recovery gates verified"
+      },
+      "cases": [
+        {
+          "id": "duplicate_import",
+          "criterion": "Same saved Conversation turn IDs never create a second Meeting",
+          "expected": "Same saved Conversation turn IDs never create a second Meeting",
+          "method": "source_inspection",
+          "weight": 30,
+          "mandatory": true,
+          "severity": "critical",
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "cleanup_failure",
+          "criterion": "Failed draft deletion leaves the source recoverable with truthful status",
+          "expected": "Failed draft deletion leaves the source recoverable with truthful status",
+          "method": "source_inspection",
+          "weight": 25,
+          "mandatory": true,
+          "severity": "high",
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "normal_transfer",
+          "criterion": "Successful copy+manifest and source deletion remains functional",
+          "expected": "Successful copy+manifest and source deletion remains functional",
+          "method": "source_inspection",
+          "weight": 20,
+          "mandatory": true,
+          "severity": "high",
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "protected_audio",
+          "criterion": "Raw audio and translations retained when transfer fails",
+          "expected": "Raw audio and translations retained when transfer fails",
+          "method": "source_inspection",
+          "weight": 10,
+          "mandatory": true,
+          "severity": "high",
+          "status": "not_run",
+          "evidence": []
+        },
+        {
+          "id": "device",
+          "criterion": "iPhone Save as Meeting and relaunch shows no duplicated transfer",
+          "expected": "iPhone Save as Meeting and relaunch shows no duplicated transfer",
+          "method": "manual",
+          "weight": 15,
+          "mandatory": true,
+          "severity": "high",
+          "status": "not_run",
+          "evidence": []
+        }
+      ],
+      "untangle": {
+        "performed": false,
+        "evidence": [],
+        "unresolved_critical": false
+      },
+      "runtime_gate": {
+        "required": true,
+        "status": "not_run",
+        "evidence": []
+      },
+      "status": "not_started"
+    }
+  },
   "device_gate": {
     "required_for_user_visible_keyboard_or_audio": true,
     "status": "not_run",

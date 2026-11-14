@@ -1,13 +1,13 @@
 {
   "schema_version": "altboard-review-stage/v1",
   "id": "X8",
-  "status": "blocked",
-  "source_sha_at_review": null,
-  "review_branch_head_at_start": null,
-  "started_at": null,
+  "status": "in_progress",
+  "source_sha_at_review": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+  "review_branch_head_at_start": "00d11a6e8b81cc31dbb3b7909020549f34c5b035",
+  "started_at": "2026-11-14",
   "finished_at": null,
-  "review_mode": "GitHub manual OCR-style; Alibaba OCR CLI not run",
-  "untangle_status": "not_run",
+  "review_mode": "Scoped GitHub manual Untangle/OCR-style and targeted regression matrix; external Alibaba OCR CLI not run",
+  "untangle_status": "planned, pending changed-diff review",
   "files_reviewed": [],
   "files_excluded": [],
   "files_not_reviewed": [],
@@ -19,6 +19,11 @@
   },
   "verified_outputs": [],
   "blocked_reasons": [],
-  "next_action": "Begin only after manifest previous stage gate; use stages.json for exact scope",
-  "evidence_notes": []
+  "next_action": "Implement first bounded repairs on fresh main without PR, preserving TEST IPA path and prior usable IPA; update acceptance with exact results.",
+  "evidence_notes": [
+    "Initial repair batch predeclared BEFORE production edits: F-0018, F-0020, F-0027, F-0031, F-0036, F-0037.",
+    "Other high/critical findings remain open; X8 is not complete, pending per-task mandatory tests and 90% acceptance.",
+    "iPhone and UIKit/AVAudioSession tests cannot be certified from GitHub source or CI alone.",
+    "One existing unsigned IPA workflow remains sole build path."
+  ]
 }
