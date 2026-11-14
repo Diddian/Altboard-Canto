@@ -1,8 +1,105 @@
 {
   "schema_version": "untangle-ocr-findings/v1",
   "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
-  "status": "unreviewed",
-  "findings": [],
+  "status": "x0_source_evidence_only_unverified_runtime_paths_deferred",
+  "findings": [
+    {
+      "id": "F-0001",
+      "severity": "high",
+      "state": "confirmed",
+      "area": "ci_release",
+      "first_detected_build": 229,
+      "last_affected_build": 231,
+      "paths": [
+        "scripts/test_operation_ownership.py",
+        "scripts/test_settings_contract.py",
+        "SayboardKeyboard/KeyboardViewController.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "scripts/test_operation_ownership.py",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "317-334",
+          "observation": "The current static test asserts exact Swift source fragments, including deep-link call location and source text."
+        },
+        {
+          "path": "scripts/test_settings_contract.py",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "218-234",
+          "observation": "The current test checks exact fragments for audioAlive and retryCount."
+        },
+        {
+          "source": "https://github.com/Diddian/Altboard-Canto/actions/runs/43416033565",
+          "observation": "Build #232 success is not a runtime acceptance test."
+        },
+        {
+          "source": "https://github.com/Diddian/Altboard-Canto/actions/runs/43415000580",
+          "observation": "Build #229 source-string assertion failed in job 131850551054."
+        },
+        {
+          "source": "https://github.com/Diddian/Altboard-Canto/actions/runs/43415392921",
+          "observation": "Build #231 source-string assertion failed in job 131851954137."
+        }
+      ],
+      "scenario": "Build #229 and #231 failed pre-Xcode source-inspection test assertions. #229 expected a specific cold deep-link call in a method; #231 expected settings.isSessionActive) && retryCount == 0. Both failed even though implementation moved or split guards.",
+      "causal_chain": "Internal source refactor or renamed expression -> exact-string assertion misses changed layout -> CI preflight fails before compiling; a pass also does not prove actual iPhone first-attempt behavior.",
+      "root_owner": "scripts/test_operation_ownership.py and scripts/test_settings_contract.py (source-string contracts)",
+      "smallest_repair": "Keep useful static invariants but add executable boundary/behavior checks for one-shot arming, host handshake, cancellation and first-window retry. Avoid changing production logic solely to match a string.",
+      "regression_oracle": "A semantically equivalent refactor of warm-start flow should still satisfy executable behavioral tests; actual failed session should fail. Run preflights, then Xcode and iPhone separately.",
+      "verification": [
+        "Build #229 job 131850551054: 44 tests, one assertion failure in test_cold_and_warm_microphone_share_one_request_owner.",
+        "Build #231 job 131851954137: 70 tests, one assertion failure in test_conversation_reuses_selected_first_window_and_preserves_preview.",
+        "Build #232 success only; code/runtime behavior not accepted."
+      ],
+      "origin": "H-001",
+      "assigned_stage": "X7/X8"
+    },
+    {
+      "id": "F-0002",
+      "severity": "medium",
+      "state": "confirmed",
+      "area": "correctness",
+      "first_detected_build": null,
+      "last_affected_build": 232,
+      "paths": [
+        "docs/TASKS.md",
+        "docs/voice-session-state-machine.md",
+        "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift",
+        "SayboardKeyboard/Views/EmojiKeyboardView.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "docs/TASKS.md",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "11-15",
+          "observation": "States custom Emoji catalog is retired and glyph is only an icon."
+        },
+        {
+          "path": "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "lines": "21,144-150,1665-1680",
+          "observation": "Current source retains showsEmojiPage state and invokes EmojiKeyboardView."
+        },
+        {
+          "path": "SayboardKeyboard/Views/EmojiKeyboardView.swift",
+          "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+          "observation": "Present in current main tree; removed #63-68, re-added #70-84."
+        }
+      ],
+      "scenario": "A reviewer using archive/task guidance to assume the custom Emoji page is absent would miss the current rendering path.",
+      "causal_chain": "Earlier removal recorded as lasting feature decision -> source later reintroduces the Emoji page -> task documentation does not describe active source state.",
+      "root_owner": "Stale documentation contract vs current AlphabeticKeyboardLayout.swift Emoji page",
+      "smallest_repair": "At X2/X6 trace actual Emoji page and native Globe ownership, decide expected behavior from current requirements before changing any source or docs.",
+      "regression_oracle": "Inspect actual iOS Emoji and Globe handling and selection; check no duplicate picker/gesture or inaccessible keyboard switching; verify on iPhone.",
+      "verification": [
+        "Git window #63-68 shows EmojiKeyboardView.swift removed; #70-84 shows it added.",
+        "At main source SHA, AlphabeticKeyboardLayout.swift lines 144-150 mounts EmojiKeyboardView.",
+        "Mismatch confirmed; end-user behavioral regression unverified."
+      ],
+      "origin": "H-005",
+      "assigned_stage": "X2/X6"
+    }
+  ],
   "categories": [
     "correctness",
     "async_ownership",

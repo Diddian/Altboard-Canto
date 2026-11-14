@@ -11,7 +11,10 @@
         "Sayboard/Services/SpeechRecognitionService.swift",
         "Shared/AudioSessionRecoveryGate.swift"
       ],
-      "assigned": "X3"
+      "assigned": "X3",
+      "h0_cross_reference": [
+        "H-003"
+      ]
     },
     {
       "id": "R2",
@@ -22,7 +25,11 @@
         "SayboardKeyboard/KeyboardViewController.swift",
         "SayboardKeyboard/KeyboardState.swift"
       ],
-      "assigned": "X1"
+      "assigned": "X1",
+      "h0_cross_reference": [
+        "H-002",
+        "H-006"
+      ]
     },
     {
       "id": "R3",
@@ -33,7 +40,10 @@
         "Shared/KeyboardHaptics.swift",
         "SayboardKeyboard/Views/KeyboardView.swift"
       ],
-      "assigned": "X2"
+      "assigned": "X2",
+      "h0_cross_reference": [
+        "H-006"
+      ]
     },
     {
       "id": "R4",
@@ -44,7 +54,10 @@
         "Shared/TranscriptionBridge.swift",
         "SayboardKeyboard/KeyboardViewController.swift"
       ],
-      "assigned": "X4"
+      "assigned": "X4",
+      "h0_cross_reference": [
+        "historical destinationOwnerLost"
+      ]
     },
     {
       "id": "R5",
@@ -54,7 +67,11 @@
         "docs/state-audit/state-machines.json",
         "docs/voice-session-state-machine.md"
       ],
-      "assigned": "X0"
+      "assigned": "X0",
+      "h0_cross_reference": [
+        "H-005",
+        "F-0002"
+      ]
     },
     {
       "id": "R6",
@@ -65,14 +82,37 @@
         "Sayboard/Services/ConversationCoordinator.swift",
         "Sayboard/Services/SpeechRecognitionService.swift"
       ],
-      "assigned": "X7"
+      "assigned": "X7",
+      "h0_cross_reference": [
+        "H-004"
+      ]
     },
     {
       "id": "R7",
       "area": "legacy_patches",
       "observation": "History spans 376 changes from earliest recorded workflow SHA, and one compare returns only 300 files. Verify removed/reintroduced paths and duplicate fallback owners in bounded historical windows.",
       "source_files": [],
-      "assigned": "X0"
+      "assigned": "X0",
+      "h0_cross_reference": [
+        "H-002"
+      ]
+    },
+    {
+      "id": "R8",
+      "area": "same_type_stale_capture_release",
+      "observation": "At main SHA, BackgroundAudioSession.beginCapture stores a UnifiedCaptureOwner enum, and endCapture(owner:) compares only the enum before deactivating tap. Potential stale completion from an earlier same-type capture releasing a newer capture is unproven without tracing callers and ordered callbacks.",
+      "source_files": [
+        "Sayboard/Services/BackgroundAudioSession.swift"
+      ],
+      "source_lines": [
+        "beginCapture:220-236",
+        "endCapture:238-241"
+      ],
+      "assigned": "X3/X7",
+      "h0_cross_reference": [
+        "H-004"
+      ],
+      "status": "hypothesis_not_a_confirmed_defect"
     }
   ]
 }

@@ -1,0 +1,17 @@
+flowchart LR
+  B1["#1 First IPA workflow; 356 initial blobs"] --> B20["#20-31 old Compose/Globe sources removed"]
+  B20 --> B68["#63-68 Emoji resources removed"]
+  B68 --> B84["#70-84 Emoji resources reintroduced; #84 comparison baseline"]
+  B84 --> B85["#84-85 typing fallback changes"]
+  B85 --> B136["#120-136 keyboard lifecycle changes"]
+  B136 --> B150["#136-150 old KeyboardInputView removed"]
+  B150 --> B193["#193 historical state audit"]
+  B193 --> B223["#223 onwards audio/session repair windows"]
+  B223 --> B232["#232 successful CI; main source baseline"]
+  B136 -. "Keyboard blank reported in prior development; attribution NOT proven" .-> X1["X1/X2 runtime and lifecycle review"]
+  B232 -. "Live microphone and delivery unverified on device" .-> X3["X3/X4 audio and destination review"]
+  B84 -. "Historical Emoji ownership needs device confirmation" .-> X2["X2/X6 Globe and Emoji review"]
+  B232 --> CI["#229/#231 static preflight failures; source-string coupling confirmed"]
+  classDef verified stroke:#555,stroke-width:1px
+  classDef hypothesis stroke-dasharray:5 4
+  class X1,X2,X3 hypothesis

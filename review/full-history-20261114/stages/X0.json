@@ -1,24 +1,56 @@
 {
   "schema_version": "altboard-review-stage/v1",
   "id": "X0",
-  "status": "ready",
-  "source_sha_at_review": null,
-  "review_branch_head_at_start": null,
-  "started_at": null,
-  "finished_at": null,
+  "status": "complete",
+  "source_sha_at_review": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
+  "review_branch_head_at_start": "f44ba3b60d1fa394444fb87f976ea45e31cff6b7",
+  "started_at": "2026-11-14",
+  "finished_at": "2026-11-14",
   "review_mode": "GitHub manual OCR-style; Alibaba OCR CLI not run",
-  "untangle_status": "not_run",
-  "files_reviewed": [],
+  "untangle_status": "performed_scoped_historical_change_and_ownership_trace",
+  "files_reviewed": [
+    "docs/state-audit/STATE-WORKFLOW.md",
+    "docs/voice-session-state-machine.md",
+    "SayboardKeyboard/Info.plist"
+  ],
   "files_excluded": [],
-  "files_not_reviewed": [],
-  "new_or_updated_findings": [],
-  "diagram_paths": [],
+  "files_not_reviewed": [
+    "588 documented path entries in coverage.json; X1-X7 own deep file-level reviews"
+  ],
+  "new_or_updated_findings": [
+    "F-0001",
+    "F-0002"
+  ],
+  "diagram_paths": [
+    "review/full-history-20261114/diagrams/history.mmd"
+  ],
   "tests": {
     "executed": [],
-    "not_run": []
+    "not_run": [
+      "No iOS build, new CI run, local unit test or real iPhone test performed at X0",
+      "Alibaba Open Code Review CLI NOT RUN"
+    ]
   },
-  "verified_outputs": [],
+  "verified_outputs": [
+    "review/full-history-20261114/history-index.json",
+    "review/full-history-20261114/coverage.json",
+    "review/full-history-20261114/findings.json",
+    "review/full-history-20261114/candidate-risks.json",
+    "review/full-history-20261114/diagrams/history.mmd",
+    "review/full-history-20261114/stages/X0.json",
+    "review/full-history-20261114/manifest.json"
+  ],
   "blocked_reasons": [],
-  "next_action": "Begin only after manifest previous stage gate; use stages.json for exact scope",
-  "evidence_notes": []
+  "next_action": "X1 only: keyboard activation, MUL / primaryLanguage and render recovery at pinned main source; retain historical findings, no source changes",
+  "evidence_notes": [
+    "Actions REST three pages: 234 total runs, 232 unsigned IPA numbered consecutively #1-#232; 115 success, 78 failure, 39 cancelled, two non-IPA workflows.",
+    "20 bounded head-to-head compare windows touch 21 build checkpoints; sum 376 commits, 983 changed-path occurrences, no window hit GitHub 300-file cap.",
+    "First workflow SHA tree: 356 blobs; latest main tree: 577 blobs, both untruncated.",
+    "Removed/renamed plus reintroduced files are distinguishable by window statuses; 14 known historical-only paths; 4 Emoji resource paths removed #63-68 and reintroduced #70-84.",
+    "Windows can miss files created and removed between endpoint commits, and GitHub rename detection is heuristic; explicit gap left for X1-X7.",
+    "H0 mapping: H-001 => F-0001; H-002 => R2/R7; H-003 => R1; H-004 => R6/R8; H-005 => F-0002/R5; H-006 => R2/R3. No duplicate defect opened for unverified risk.",
+    "Old docs/state-audit main source records audit Build #193 and later check #199; not a #232 runtime proof.",
+    "#229 job 131850551054 and #231 job 131851954137 logs confirm brittle static source-string assertions as preflight failure causes.",
+    "X0 inventory gate completed; the per-feature >=90% behavioral gate remains NOT RUN for all fixes."
+  ]
 }
