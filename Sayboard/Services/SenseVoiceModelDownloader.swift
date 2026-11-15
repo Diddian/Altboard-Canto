@@ -25,6 +25,7 @@ enum SenseVoiceModelDownloader {
     if let available = ModelDiskReserve.availableBytes(), available < required {
       throw DownloadError.storage
     }
+    progress(0.01) // Connection establishment is not yet transferred bytes.
     try ModelStorageManager.ensureRootExists()
     let staging = ModelStorageManager.modelsRoot
       .appendingPathComponent(".sensevoice-" + UUID().uuidString, isDirectory: true)

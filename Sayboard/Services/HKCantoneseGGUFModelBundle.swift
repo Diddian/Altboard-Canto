@@ -83,6 +83,7 @@ enum HKCantoneseGGUFDownloader {
       progress(1)
       return
     }
+    progress(0.01) // Metadata lookup can be slow; show an immediate connecting state.
     let repo = HKCantoneseGGUFModelBundle.repository
     let revisionURL = URL(string: "https://huggingface.co/api/models/\(repo)")!
     let (revisionData, revisionResponse) = try await URLSession.shared.data(from: revisionURL)

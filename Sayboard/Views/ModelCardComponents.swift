@@ -253,10 +253,16 @@ struct DownloadStatusView: View {
         .tint(Color.accentColor)
         .frame(maxWidth: .infinity)
         .animation(.linear(duration: 0.2), value: progress)
-      Text(verbatim: "\(Int(progress * 100))%")
+      Group {
+        if progress <= 0.01 {
+          Text("Connecting…")
+        } else {
+          Text(verbatim: "\(Int(progress * 100))%")
+        }
+      }
         .font(.caption.monospacedDigit())
         .foregroundStyle(.secondary)
-        .frame(width: 32, alignment: .trailing)
+        .frame(minWidth: 32, alignment: .trailing)
       if !isLoadingPhase {
         Button(action: self.onCancel) {
           Image(systemName: "xmark.circle.fill")

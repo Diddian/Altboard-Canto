@@ -16,6 +16,7 @@ enum FeatureDiagnostics {
   enum Event: String, Sendable {
     case started, completed, stopped, cancelled, failed, blocked, fallback
     case selected, queued, downloaded, deleted, slow, noSpeech, rejected, resumed
+    case downloadFirstByte, downloadSourceFallback
     case unavailable, interrupted, firstUpdate, firstChunkReady, firstHostInsert, rotated
     case rootWaiting, rootReady, layoutMounted, letterRowMounted
     case strokeGridMounted, trailOverlayMounted, llmPromptMounted

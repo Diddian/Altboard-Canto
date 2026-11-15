@@ -112,6 +112,13 @@ jobs:
             Shared/SpeechModelRecommendation.swift scripts/verify-speech-recommendation.swift
           "$RUNNER_TEMP/speech-recommendation-smoke"
 
+      - name: Verify speech model download source fallback
+        run: |
+          set -euo pipefail
+          swiftc -swift-version 6 -parse-as-library -o "$RUNNER_TEMP/asr-download-source-smoke" \
+            Sayboard/Services/ASRDownloadSources.swift scripts/verify-asr-download-sources.swift
+          "$RUNNER_TEMP/asr-download-source-smoke"
+
       - name: Bootstrap llama.cpp framework
         run: |
           set -euo pipefail
