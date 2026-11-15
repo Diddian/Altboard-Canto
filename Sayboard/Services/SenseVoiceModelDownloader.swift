@@ -32,23 +32,15 @@ enum SenseVoiceModelDownloader {
     try fm.createDirectory(at: staging, withIntermediateDirectories: true)
     defer { try? fm.removeItem(at: staging) }
     do {
-      let model = try await self.fetch(
+      _ = try await self.fetch(
         name: "model.int8.onnx", into: staging,
         progress: { value in progress(value * 0.94) }
       )
       try Task.checkCancellation()
-      guard try BackgroundDownloadManager.computeSHA256(of: model)
-              == SenseVoiceModelBundle.modelSHA256 else {
-        throw DownloadError.checksum
-      }
       progress(0.95)
-      let tokens = try await self.fetch(
+      _ = try await self.fetch(
         name: "tokens.txt", into: staging, progress: { value in progress(0.95 + value * 0.02) }
       )
-      let data = try Data(contentsOf: tokens)
-      guard (100_000...1_000_000).contains(data.count),
-            data.starts(with: Data("<unk> 0".utf8))
-      else { throw DownloadError.invalidTokenizer }
       try Task.checkCancellation()
       try SenseVoiceModelBundle.modelSHA256.write(
         to: staging.appendingPathComponent(SenseVoiceModelBundle.markerName),
@@ -82,43 +74,41 @@ enum SenseVoiceModelDownloader {
     name: String, into folder: URL,
     progress: @escaping @MainActor @Sendable (Double) -> Void
   ) async throws -> URL {
-    let source =
-      "https://huggingface.co/" + SenseVoiceModelBundle.repository +
-      "/resolve/main/" + name + "?download=true"
-    guard let url = URL(string: source) else { throw DownloadError.invalidResponse }
-    let observer = SenseVoiceDownloadProgressObserver { fraction in
-      Task { @MainActor in progress(fraction) }
-    }
-    let (temp, response) = try await URLSession.shared.download(from: url, delegate: observer)
-    try Task.checkCancellation()
-    guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
-      throw DownloadError.invalidResponse
-    }
+    let temporary = try await ASRDownloadSources.download(
+      relativePath: "\(SenseVoiceModelBundle.repository)/resolve/main/\(name)?download=true",
+      report: self.recordSourceEvent,
+      progress: progress,
+      verify: { file in
+        switch name {
+        case "model.int8.onnx":
+          let digest = try await Task.detached(priority: .utility) {
+            try BackgroundDownloadManager.computeSHA256(of: file)
+          }.value
+          guard digest == SenseVoiceModelBundle.modelSHA256 else {
+            throw DownloadError.checksum
+          }
+        case "tokens.txt":
+          let bytes = try Data(contentsOf: file)
+          guard (100_000...1_000_000).contains(bytes.count),
+                bytes.starts(with: Data("<unk> 0".utf8))
+          else { throw DownloadError.invalidTokenizer }
+        default:
+          throw DownloadError.invalidResponse
+        }
+      }
+    )
     let target = folder.appendingPathComponent(name)
-    try FileManager.default.moveItem(at: temp, to: target)
+    try FileManager.default.moveItem(at: temporary, to: target)
     return target
   }
-}
 
-
-private final class SenseVoiceDownloadProgressObserver: NSObject, URLSessionDownloadDelegate, @unchecked Sendable {
-  let report: @Sendable (Double) -> Void
-
-  init(report: @escaping @Sendable (Double) -> Void) {
-    self.report = report
+  private static func recordSourceEvent(_ event: ASRDownloadSources.Event) {
+    switch event {
+    case .sourceFallback:
+      FeatureDiagnostics.record(.speechModel, .downloadSourceFallback)
+    case .firstByte(milliseconds: let ms):
+      FeatureDiagnostics.record(.speechModel, .downloadFirstByte, durationMs: ms)
+    }
   }
 
-  func urlSession(
-    _ session: URLSession, downloadTask: URLSessionDownloadTask,
-    didWriteData bytesWritten: Int64, totalBytesWritten: Int64,
-    totalBytesExpectedToWrite: Int64
-  ) {
-    guard totalBytesExpectedToWrite > 0 else { return }
-    self.report(min(1, Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)))
-  }
-
-  func urlSession(
-    _ session: URLSession, downloadTask: URLSessionDownloadTask,
-    didFinishDownloadingTo location: URL
-  ) {}
 }

@@ -83,19 +83,18 @@ enum HKCantoneseGGUFDownloader {
       progress(1)
       return
     }
-    progress(0.01) // Metadata lookup can be slow; show an immediate connecting state.
+    progress(0.01) // Metadata lookup has not transferred model bytes yet.
     let repo = HKCantoneseGGUFModelBundle.repository
-    let revisionURL = URL(string: "https://huggingface.co/api/models/\(repo)")!
-    let (revisionData, revisionResponse) = try await URLSession.shared.data(from: revisionURL)
-    guard (revisionResponse as? HTTPURLResponse)?.statusCode == 200,
-          let revision = try? JSONDecoder().decode(Revision.self, from: revisionData).sha,
-          revision.count == 40, revision.allSatisfy({ $0.isHexDigit })
+    let revision = try await ASRDownloadSources.metadata(
+      Revision.self, relativePath: "api/models/\(repo)",
+      report: self.recordSourceEvent
+    ).sha
+    guard revision.count == 40, revision.allSatisfy({ $0.isHexDigit })
     else { throw Failure.catalog }
-    let listURL = URL(string: "https://huggingface.co/api/models/\(repo)/tree/\(revision)")!
-    let (listData, listResponse) = try await URLSession.shared.data(from: listURL)
-    guard (listResponse as? HTTPURLResponse)?.statusCode == 200,
-          let entries = try? JSONDecoder().decode([Entry].self, from: listData)
-    else { throw Failure.catalog }
+    let entries = try await ASRDownloadSources.metadata(
+      [Entry].self, relativePath: "api/models/\(repo)/tree/\(revision)",
+      report: self.recordSourceEvent
+    )
     let model = try self.require(entries, name: HKCantoneseGGUFModelBundle.modelName,
                                  minimumSize: 1_000_000_000)
     let audio = try self.require(entries, name: HKCantoneseGGUFModelBundle.audioName,
@@ -160,7 +159,7 @@ enum HKCantoneseGGUFDownloader {
     progress(1)
   }
 
-  private struct Expected {
+  private struct Expected: Sendable {
     let bytes: Int64
     let sha: String
   }
@@ -177,45 +176,33 @@ enum HKCantoneseGGUFDownloader {
     name: String, revision: String, expected: Expected, into folder: URL,
     progress: @escaping @MainActor @Sendable (Double) -> Void
   ) async throws -> URL {
-    guard let url = URL(string: "https://huggingface.co/\(HKCantoneseGGUFModelBundle.repository)/resolve/\(revision)/\(name)?download=true") else {
-      throw Failure.catalog
-    }
-    let observer = HKGGUFDownloadObserver { fraction in
-      Task { @MainActor in progress(fraction) }
-    }
-    let (temp, response) = try await URLSession.shared.download(from: url, delegate: observer)
-    try Task.checkCancellation()
-    guard (response as? HTTPURLResponse)?.statusCode == 200 else {
-      throw Failure.response
-    }
-    let digest = try await Task.detached(priority: .utility) {
-      try HKCantoneseGGUFModelBundle.sha256(of: temp)
-    }.value
-    try Task.checkCancellation()
-    guard digest == expected.sha, HKCantoneseGGUFModelBundle.fileSize(temp) == expected.bytes else {
-      throw Failure.checksum
-    }
+    let temporary = try await ASRDownloadSources.download(
+      relativePath: "\(HKCantoneseGGUFModelBundle.repository)/resolve/\(revision)/\(name)?download=true",
+      report: self.recordSourceEvent,
+      progress: progress,
+      verify: { file in
+        let digest = try await Task.detached(priority: .utility) {
+          try HKCantoneseGGUFModelBundle.sha256(of: file)
+        }.value
+        try Task.checkCancellation()
+        guard digest == expected.sha,
+              HKCantoneseGGUFModelBundle.fileSize(file) == expected.bytes
+        else { throw Failure.checksum }
+      }
+    )
     let target = folder.appendingPathComponent(name)
-    try FileManager.default.moveItem(at: temp, to: target)
+    try FileManager.default.moveItem(at: temporary, to: target)
     return target
   }
-}
 
-private final class HKGGUFDownloadObserver: NSObject, URLSessionDownloadDelegate, @unchecked Sendable {
-  let report: @Sendable (Double) -> Void
-  init(report: @escaping @Sendable (Double) -> Void) { self.report = report }
-
-  func urlSession(
-    _ session: URLSession, downloadTask: URLSessionDownloadTask,
-    didWriteData bytesWritten: Int64, totalBytesWritten: Int64,
-    totalBytesExpectedToWrite: Int64
-  ) {
-    guard totalBytesExpectedToWrite > 0 else { return }
-    report(min(1, Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)))
+  private static func recordSourceEvent(_ event: ASRDownloadSources.Event) {
+    switch event {
+    case .sourceFallback:
+      FeatureDiagnostics.record(.speechModel, .downloadSourceFallback)
+    case .firstByte(milliseconds: let ms):
+      FeatureDiagnostics.record(.speechModel, .downloadFirstByte, durationMs: ms)
+    }
   }
 
-  func urlSession(
-    _ session: URLSession, downloadTask: URLSessionDownloadTask,
-    didFinishDownloadingTo location: URL
-  ) {}
 }
+
