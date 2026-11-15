@@ -153,7 +153,10 @@ class SettingsContractTests(unittest.TestCase):
         for label in ("Türkçe", "日本語", "العربية"):
             self.assertIn(label, models)
         self.assertIn("try await SenseVoiceModelDownloader.download", source)
-        self.assertIn("computeSHA256(of: model)", download)
+        # The file must be checksum-verified before a source is accepted.
+        self.assertIn("try await ASRDownloadSources.download(", download)
+        self.assertIn("computeSHA256(of: file)", download)
+        self.assertIn("guard digest == SenseVoiceModelBundle.modelSHA256", download)
         self.assertIn("try Task.checkCancellation()", download)
         self.assertIn('modelSHA256 =', installed)
         self.assertIn("isDownloaded(variant)", read("Sayboard/Services/ModelDownloadService.swift"))
