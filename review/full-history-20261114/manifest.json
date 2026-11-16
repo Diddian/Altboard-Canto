@@ -8,15 +8,19 @@
     "main_at_bootstrap": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
     "earliest_workflow_build": 1,
     "earliest_build_sha": "d083c9aeaeba6b6d85b1c17b7c5f6627a85380eb",
-    "latest_workflow_build": 236,
-    "latest_build_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+    "latest_workflow_build": 245,
+    "latest_build_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
     "main_device_acceptance": "not_verified",
     "branch_policy": "sequential reviewers; one writer; no PR, force push, or merges",
-    "latest_workflow_run_id": 43629599094
+    "latest_workflow_run_id": 43658568427,
+    "latest_workflow_status": "in_progress at X9 review, SHA check current main (run ID may differ)",
+    "last_verified_successful_workflow_build": 242,
+    "last_verified_successful_workflow_sha": "54673f98a4f9c5bfc7ed400370a036ed19a76c66",
+    "live_main_tree_blobs": 583
   },
   "lifecycle": {
-    "phase": "X8_in_progress_X9_source_review_in_progress",
-    "next_stage": "X9",
+    "phase": "X8_in_progress_X9_review_complete_X10_waiting",
+    "next_stage": "X10 (requires user/coordination START)",
     "statuses": {
       "X0": "complete",
       "X1": "complete",
@@ -27,7 +31,7 @@
       "X6": "complete",
       "X7": "complete",
       "X8": "in_progress",
-      "X9": "in_progress",
+      "X9": "complete",
       "X10": "blocked",
       "X11": "blocked",
       "X12": "blocked",
@@ -39,17 +43,23 @@
     "ocr_cli_executed": false,
     "project_sources_published": false,
     "x9_progress": {
-      "reviewed": 10,
+      "reviewed": 62,
       "reviewed_limited": 3,
-      "pending": 52,
-      "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
-      "checkpoint_date": "2026-11-14",
+      "pending": 0,
+      "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "checkpoint_date": "2026-11-16",
       "new_findings": [
         "F-0040",
         "F-0041",
-        "F-0042"
+        "F-0042",
+        "F-0043"
       ],
-      "runtime_tests": "not_run"
+      "runtime_tests": "not_run",
+      "limited_paths": [
+        "Packages/LlamaCpp/Package.swift",
+        "Sayboard/Helpers/HostAppOpener.swift",
+        "Shared/DiskSpace.swift"
+      ]
     }
   },
   "artifacts": {
@@ -78,5 +88,17 @@
     "budget": "One stage per Chat. Fetch narrow slices; checkpoint current stage on limits and resume SAME stage later; never skip evidence",
     "cleanup": "Only X15 after completed acceptance, durable archive and explicit user approval. No automatic deletion of review records."
   },
-  "scope": "Build #1 through Build #236; 578 current tracked files, 14 historical-only; 426 queued from X0-X7 gaps across X9-X13. No physical iPhone test inferred."
+  "scope": "Build #1 through Build #236; 578 current tracked files, 14 historical-only; 426 queued from X0-X7 gaps across X9-X13. No physical iPhone test inferred.",
+  "x9_live_drift": {
+    "main_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+    "previous_success_sha": "54673f98a4f9c5bfc7ed400370a036ed19a76c66",
+    "changed_paths_since_previous_success": [
+      "SayboardKeyboard/KeyboardViewController.swift",
+      "Shared/DictationRequestPolicy.swift",
+      "scripts/test_operation_ownership.py",
+      "scripts/verify-microphone-press.swift"
+    ],
+    "x9_assigned_source_sha_unchanged": true,
+    "out_of_scope_blobs_unassigned": 5
+  }
 }

@@ -1,8 +1,8 @@
 {
   "schema_version": "altboard-review-queue/v1",
-  "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+  "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
   "historical_source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
-  "status": "X9_in_progress",
+  "status": "X9_source_complete_runtime_not_run",
   "definition": "Each entry is a review obligation, NOT a completed review. Previously excluded files must be inspected with the appropriate evidence depth.",
   "counts": {
     "total": 426,
@@ -194,10 +194,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "5005fdafb0b64d052027e0844cb661bcd8b8ca16",
+          "content_review": "whole_file_caller_or_binary_unverified",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 17-20 binary XCFramework target; project.yml:58,84 package dependency. Explicit scope limitation.",
+          "negative_oracle": "Binary ABI/architectures not inspected; test IPA linkage; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -494,10 +503,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "e248bebe0afcb4b85e33257d3fff3f0d359dd339",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 3-7 eligibility gate; HistoryListView.swift:48,67 dismissal/availability consumer. Source review only; not device acceptance.",
+          "negative_oracle": "Test no model, locked dictation, dismissed; not_run; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -510,7 +528,7 @@
       "provisional_priority": "P0",
       "file_kind": "swift",
       "review_status": "reviewed",
-      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
       "evidence": [
         {
@@ -533,10 +551,19 @@
       "stage": "X9",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "3eefd9a09183ccaed9ae6ad9fc2d0211b2c5c340",
+          "content_review": "whole_file_caller_or_binary_unverified",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: Dynamic LSApplicationWorkspace selector; HostApplicationMonitor and keyboard host detection checked, no confirmed caller. Explicit scope limitation.",
+          "negative_oracle": "Private launch path and caller not established; investigate actual invocation/rejection; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -548,10 +575,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "0468bd2f6e33bffbcbd5cc609789d3461255e2f9",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 16-28 entitlement cutoff; PurchaseService.swift:108 consumer. Source review only; not device acceptance.",
+          "negative_oracle": "Test sandbox rejection and old production purchases; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -563,10 +599,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "7ff3d6c6c24e500680646b1296a3742205b76056",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 3-7 localization helper; LanguagePickerView.swift:224. Source review only; not device acceptance.",
+          "negative_oracle": "Test code fallback and non-Latin capitalization; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -578,10 +623,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "7e10ce985dac82c53241b88a79d422c8828e25a9",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 10-23 persisted onboarding one-time flag; MainTabView.swift:236,298. Source review only; not device acceptance.",
+          "negative_oracle": "Test pre/post onboarding and reset; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -593,8 +647,8 @@
       "stage": "X9",
       "provisional_priority": "P0",
       "file_kind": "config_or_other",
-      "review_status": "reviewed_limited",
-      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
       "evidence": [
         {
@@ -603,6 +657,14 @@
           "content_review": "whole_file_caller_incomplete",
           "observation": "Whole 10-line Objective-C interface and Sayboard-Bridging-Header.h import examined; no concrete invocation established by targeted model, ASR and LLM reads. Caller search incomplete.",
           "negative_oracle": "Find real caller or prove unused; injected NSException maps to NSError; not_run.",
+          "device": "not_run"
+        },
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "6450d074cb1778755a51b5875eec304be0affd93",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Header bridged into Sayboard target by project.yml:73; consumer BackgroundAudioSession.installPersistentTap at line341. ObjC error test not_run.",
+          "negative_oracle": "Physical exception/pressure and diagnostic paths not_run.",
           "device": "not_run"
         }
       ],
@@ -617,8 +679,8 @@
       "stage": "X9",
       "provisional_priority": "P0",
       "file_kind": "config_or_other",
-      "review_status": "reviewed_limited",
-      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
       "evidence": [
         {
@@ -627,6 +689,14 @@
           "content_review": "whole_file_caller_incomplete",
           "observation": "Whole 23-line @try/@catch, NSError conversion and bridge import examined. Unindexed GitHub code search cannot prove all callers; no dead-code claim.",
           "negative_oracle": "At actual consumer test ObjC exception recovery and no private-data log leakage; not_run.",
+          "device": "not_run"
+        },
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "11b80ab504e30383d8462252ba784f71f18c2c9c",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Full 23-line @try/@catch with NSError conversion; immediate BackgroundAudioSession.installPersistentTap:341-395. Exception injection on iPhone not_run.",
+          "negative_oracle": "Physical exception/pressure and diagnostic paths not_run.",
           "device": "not_run"
         }
       ],
@@ -641,10 +711,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "0e8c75f7455d07cdcd7bae199d5cf070a911ee5c",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 2-17 independent permission flags; SetupView.swift:61-62,133 and HistoryListView.swift:57-58. Source review only; not device acceptance.",
+          "negative_oracle": "Test four missing gate combinations; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -656,10 +735,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "47b8bbc25d1631b22dc9bd8e343b28274296763a",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 2-4 StoreKit product ID; PurchaseService.swift:42,135,152,199. Source review only; not device acceptance.",
+          "negative_oracle": "Reject unrelated purchases and revoked entitlement; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -671,10 +759,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "19f1071321d1163803fa7166eab82d67220bb46c",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 5-64 support URLs, device/version metadata; FeedbackSection.swift:10,49,52. Source review only; not device acceptance.",
+          "negative_oracle": "Require user initiation; avoid sending host text; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -686,10 +783,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "067fc142bf56a9b142636143697ed4f8bdb727c8",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 3-15 localized bundled video and fallback; PiPTutorialService.swift:16-23. Source review only; not device acceptance.",
+          "negative_oracle": "Test absent-language asset and PiP fallback; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -701,10 +807,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "c7eeebe7d381b10d82ae2b2f8bd24232f0290656",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 4-15 NLTokenizer word accounting; SpeechRecognitionService+Transcription.swift:232. Source review only; not device acceptance.",
+          "negative_oracle": "Test mixed Han/Latin counts and allowance; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2096,10 +2211,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "2cfb6ebf43b39479bc747e8745e9cc9decbf20a4",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 1 ObjC bridge import; project.yml:73 and BackgroundAudioSession.swift:341. Source review only; not device acceptance.",
+          "negative_oracle": "Compile host bridge, injected ObjC exception recovery; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2126,10 +2250,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "f9a91c1e997c985c0e3d3c17165d1663930ea801",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 38-98 @MainActor cancellable/debounced search; WritingStyleListView.swift:49. Source review only; not device acceptance.",
+          "negative_oracle": "Test rapidly superseded network queries, no stale result; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2142,7 +2275,7 @@
       "provisional_priority": "P0",
       "file_kind": "swift",
       "review_status": "reviewed",
-      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [
         "F-0041"
       ],
@@ -2167,10 +2300,19 @@
       "stage": "X9",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "864817708b3ce1961d86a595e50d73674b046f66",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: Peak compaction bounded to 4096 samples; AudioRecorder.swift:93. Source review only; not device acceptance.",
+          "negative_oracle": "Test long/silent/loud buffers, finite peak and size; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2182,10 +2324,19 @@
       "stage": "X9",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "d0142a3cd65df959b551da4096e9ce3c9b02e105",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: Pinned model metadata/hash; LLMDownloadService.swift:321-333. Source review only; not device acceptance.",
+          "negative_oracle": "Reject mismatched SHA/unsupported llama version; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2198,7 +2349,7 @@
       "provisional_priority": "P0",
       "file_kind": "swift",
       "review_status": "reviewed",
-      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [
         "F-0042"
       ],
@@ -2223,10 +2374,19 @@
       "stage": "X9",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "28d0a05ea620f70824c4277a8ea4bdc881f96097",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: System/action prompt templates; LLMProcessingCoordinator.swift:477-479. Source review only; not device acceptance.",
+          "negative_oracle": "Test locale, role delimiter and empty prompt boundaries; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2234,12 +2394,12 @@
       "original_tracking": "current",
       "original_disposition": "not_reviewed",
       "baseline_blob_sha": "6866fb37c9fb0c0a0d541d3c215b8ccd4e7c5ca0",
-      "main_blob_sha": "6866fb37c9fb0c0a0d541d3c215b8ccd4e7c5ca0",
+      "main_blob_sha": "5d38ffc99779d83670794300c076d0d9b267b4d2",
       "stage": "X9",
       "provisional_priority": "P0",
       "file_kind": "swift",
       "review_status": "reviewed",
-      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [
         "F-0029",
         "F-0038"
@@ -2251,6 +2411,14 @@
           "content_review": "whole_file_and_immediate_consumers",
           "observation": "Whole 307-line model folders, deletion, CoreML cache path/symlink and validity probes. Checked ModelDownloadService.swift 73-81,124-130,202-228, +Execution.swift 30-51,77-119 and CoreMLCacheSymlinkTests.swift 11-61. F-0029/F-0038 remain unverified.",
           "negative_oracle": "Cache migration under stale/current symlinks; failed deletion visible; no Xcode @Test executed.",
+          "device": "not_run"
+        },
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "5d38ffc99779d83670794300c076d0d9b267b4d2",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Whole current 309-line model storage re-read; new HK GGUF receipt routing vs ONNX at lines 15-28; consumer ModelDownloadService.swift:74-75 and +Execution.swift:57,94-95. Recovery tests not_run; preserve F-0029.",
+          "negative_oracle": "Corrupted/stale/cancellation recovery not_run.",
           "device": "not_run"
         }
       ],
@@ -2265,10 +2433,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "572f3120790679fc14f47355abb73d669e6ebdb9",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 7-212 PiP lifecycle and audio lease; SetupCardView.swift:23, SetupView.swift:57. Source review only; not device acceptance.",
+          "negative_oracle": "Test unsupported PiP, interruption and teardown; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2281,7 +2458,7 @@
       "provisional_priority": "P0",
       "file_kind": "swift",
       "review_status": "reviewed",
-      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
       "evidence": [
         {
@@ -2305,7 +2482,7 @@
       "provisional_priority": "P0",
       "file_kind": "swift",
       "review_status": "reviewed",
-      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
       "evidence": [
         {
@@ -2328,10 +2505,19 @@
       "stage": "X9",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "3eb08bfa900c4a338614a1bb017e3f7b4d6c20b9",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: Pinned model/token marker; SenseVoiceModelDownloader.swift:45-50,77-98 and ModelStorageManager.swift:26. Source review only; not device acceptance.",
+          "negative_oracle": "F-0040 token-integrity recovery; no download troubleshooting; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2339,12 +2525,12 @@
       "original_tracking": "current",
       "original_disposition": "not_reviewed",
       "baseline_blob_sha": "c4a9a1c638c6172ec230ccdae3cb9f70813123a6",
-      "main_blob_sha": "c4a9a1c638c6172ec230ccdae3cb9f70813123a6",
+      "main_blob_sha": "c08fdbf6678ba9c8e15286980e9c1bb75176e8cf",
       "stage": "X9",
       "provisional_priority": "P0",
       "file_kind": "swift",
       "review_status": "reviewed",
-      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [
         "F-0040"
       ],
@@ -2355,6 +2541,14 @@
           "content_review": "whole_file_and_immediate_consumers",
           "observation": "Whole 124-line staged downloader and backup rollback. Checked +Execution.swift 28-57, SenseVoiceModelBundle.swift 3-27 and SenseVoiceTranscriptionService.swift 16-52. Model has SHA, tokens only size/prefix. F-0040.",
           "negative_oracle": "Same-size changed tokens must be rejected; canceled reinstall preserves old model; source predicate fails, runtime not_run.",
+          "device": "not_run"
+        },
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "c08fdbf6678ba9c8e15286980e9c1bb75176e8cf",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Whole current 115-line verified staging, SHA check lines84-89, tokenizer length/prefix lines90-95 and rollback lines52-63 re-read; consumer ModelDownloadService+Execution.swift:31-38; F-0040 still open. Download user-confirmed working; no download repair.",
+          "negative_oracle": "Corrupted/stale/cancellation recovery not_run.",
           "device": "not_run"
         }
       ],
@@ -3239,10 +3433,19 @@
       "stage": "X9",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "165195de1fa5140b5b20ef90bd2d5baa6f7e36e6",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: Readonly SQLite and bounded candidate learning; AlphabeticKeyboardLayout.swift:491,1164,1556. Source review only; not device acceptance.",
+          "negative_oracle": "Test corrupt dictionary and unicode glyph fallback; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3269,10 +3472,19 @@
       "stage": "X9",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "af683c693151fbb79e2ef60a00f45619918e24a3",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 3-134 !APPSTORE event-only nonhit-testing HUD; KeyboardViewController.swift:288. Source review only; not device acceptance.",
+          "negative_oracle": "Release excludes overlay; no raw typing; iPhone touch check; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3285,7 +3497,7 @@
       "provisional_priority": "P0",
       "file_kind": "swift",
       "review_status": "reviewed",
-      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
       "evidence": [
         {
@@ -3308,10 +3520,19 @@
       "stage": "X9",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "8f13bc237ff4795c167080e45ef6ba65e562d070",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 7-35 host document safety + preferred column; CursorLineNavigation.swift:13-38. Source review only; not device acceptance.",
+          "negative_oracle": "Test nil document, newline bounds, changed host; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3323,10 +3544,19 @@
       "stage": "X9",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "4336666e15706509d07f8b5c09a2d0b574855cc2",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 7-44 host text proxy and period shortcut; DictationSpacing.swift:6-16, PeriodShortcut.swift:12-24. Source review only; not device acceptance.",
+          "negative_oracle": "Test cursor change, email/URL, mid-field selection; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3353,10 +3583,19 @@
       "stage": "X9",
       "provisional_priority": "P1",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "3f910f4e63ba652731257cfda10df20fba5c3d69",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 1 KBHostArbiterHook import; project.yml:127, KeyboardViewController+HostDetection.swift:19. Source review only; not device acceptance.",
+          "negative_oracle": "Fail closed on unsupported private host detection; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4508,10 +4747,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "1589ee26223138e9003fd7e0f05523e7ea57af8e",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 4-20 Unicode scalar classifier; DictationSpacing.swift:90-92, PeriodShortcut.swift:74-75. Source review only; not device acceptance.",
+          "negative_oracle": "Test CJK/emoji graphemes, punctuation no unwanted spaces; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4523,10 +4771,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "5e1f9571ee997bfc9b80b36b40471b833e2a27f5",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 5-23 pure quote state reset per newline; AlphabeticKeyboardLayout Chinese quote insertion path. Source review only; not device acceptance.",
+          "negative_oracle": "Test nested corner quotes with host caret movement; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4538,10 +4795,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "66dbf155058409acf1ab1187d9e1df447cab9241",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 3-42 App Group mapping and shared keys/notification names; SharedSettings.swift and KeyboardViewController.swift. Source review only; not device acceptance.",
+          "negative_oracle": "Test SideStore App Group divergence F-0033 and absent storage; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4553,10 +4819,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "656103e55ec0bb5dc8c2c979b92825c2289d7e3f",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 13-38 pure newline offset calculation; KeyboardViewController+CursorNavigation.swift:19-28. Source review only; not device acceptance.",
+          "negative_oracle": "Test shorter columns, nil context and multiline edge; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4568,10 +4843,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "83051552a234083d6420bc326bda886ac58823c4",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 4-14 typed outcomes; SpeechRecognitionService+Transcription.swift:53,83,165. Source review only; not device acceptance.",
+          "negative_oracle": "Test distinct engine/noSpeech/cancel/failure; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4583,10 +4867,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "8cbe13a3f6bb6388e503dd651dc204e6bdc08490",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 6-165 context-aware spacing; KeyboardViewController+Spacing.swift:10-16 and +ExperimentalLive.swift:97. Source review only; not device acceptance.",
+          "negative_oracle": "Test Unicode quotes, French elision and nil context; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4598,10 +4891,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "98df8c796dd59ad15e005bd519e13f39d2bd13d8",
+          "content_review": "whole_file_caller_or_binary_unverified",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 3-17 low-space advisory, nil treated as sufficient; ModelDiskReserve and DataAndStorageSettingsView inspected. Explicit scope limitation.",
+          "negative_oracle": "Exact live consumer unproven; test unavailable capacity and caller or retirement; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4613,10 +4915,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "9ab9f56afa661dca86c9d223624c6d15fabf536b",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 5-10 explicit OK-only casing; AlphabeticKeyboardLayout.swift:679. Source review only; not device acceptance.",
+          "negative_oracle": "No unsolicited other-case replacements; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4628,10 +4939,19 @@
       "stage": "X9",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "0875be8b2286a9236503662bc52b328905008d0f",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 5-26 App Group focus flag TTL; HistoryListView.swift:21-31 and KeyboardViewController.swift:961,1023. Source review only; not device acceptance.",
+          "negative_oracle": "Test exit, crash, 1h expiry and other hosts; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4644,7 +4964,7 @@
       "provisional_priority": "P0",
       "file_kind": "swift",
       "review_status": "reviewed",
-      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
       "evidence": [
         {
@@ -4668,7 +4988,7 @@
       "provisional_priority": "P0",
       "file_kind": "swift",
       "review_status": "reviewed",
-      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
       "evidence": [
         {
@@ -4691,10 +5011,19 @@
       "stage": "X9",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "f94c02363c37d9e2eb86386cbb3de5c73044f2ae",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 5-14 finite @MainActor measured size; KeyboardViewController.swift:624. Source review only; not device acceptance.",
+          "negative_oracle": "Test 0/NaN and rotation size; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4706,10 +5035,19 @@
       "stage": "X9",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "02f8bafcf4d90de6c6c46e6f05cc559379688116",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 5-109 host UIKeyboardType and return roles; KeyboardViewController.swift:1499. Source review only; not device acceptance.",
+          "negative_oracle": "Test URL/email/numeric/secure fields; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4721,8 +5059,8 @@
       "stage": "X9",
       "provisional_priority": "P0",
       "file_kind": "swift",
-      "review_status": "reviewed_limited",
-      "verified_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
       "evidence": [
         {
@@ -4731,6 +5069,14 @@
           "content_review": "whole_file_caller_incomplete",
           "observation": "Whole 62-line iOS non-APPSTORE diagnostic snapshot; footprint/headroom capped, no raw text. Consumer not found by targeted KeyboardViewController and FeatureDiagnostics checks; review limited.",
           "negative_oracle": "Identify Snapshot consumer, verify Mach info and iOS budget on real device; not_run.",
+          "device": "not_run"
+        },
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "39235cfdd945a38475437ebcb53d7c45e5825bef",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Full 62-line !APPSTORE process-only Mach/advisory snapshot; immediate consumer KeyboardLifecycleTrace.swift:135,156,159; runtime memory budget not_run.",
+          "negative_oracle": "Physical exception/pressure and diagnostic paths not_run.",
           "device": "not_run"
         }
       ],
@@ -4745,10 +5091,19 @@
       "stage": "X9",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "e9bbf998a487df14d31caebec7d6a9f0823fc770",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 3-380 LLM model/action enum and persisted/memory policies; LLMDownloadService.swift:42-50,318 and coordinator. Source review only; not device acceptance.",
+          "negative_oracle": "Test migration, token limits and model memory; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4760,10 +5115,19 @@
       "stage": "X9",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "28a69fb2750be23471bf9f86dc611ba8f6f7f2be",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 3-57 memory/availability policy; LLMDownloadService.swift:43,50,72. Source review only; not device acceptance.",
+          "negative_oracle": "Test 4/8GB thresholds and concurrent use; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4775,10 +5139,19 @@
       "stage": "X9",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "bf2da8b171769c627404dbe01bc2b2800b662998",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 5-114 EN/DE minimum-three correction rules; HistoryStore.swift:126-137 and SpeechRecognitionService+Transcription.swift:119. Source review only; not device acceptance.",
+          "negative_oracle": "Test mixed language, conflicts, no raw text retention; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4790,10 +5163,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "0a4f80173a6cfc964f128a71123c4fbbf66e6101",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 4-142 Latin symbol hold choices; AlphabeticLetterKey.swift:17 and AlphabeticKeyboardLayout symbol hold. Source review only; not device acceptance.",
+          "negative_oracle": "Test QWERTZ umlaut/hold selection direction; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4805,10 +5187,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "8796f5040ceda6f3b1324587b1c5a94429763a48",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 5-39 host suffix guard; AlphabeticKeyboardLayout.swift:126. Source review only; not device acceptance.",
+          "negative_oracle": "Test truncated context must prevent deletion; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4820,10 +5211,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "dba4f4e0cc1444ed196bc45d828b8b84903a7956",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 5-106 localized status mapping; KeyboardChrome.swift:81,95. Source review only; not device acceptance.",
+          "negative_oracle": "Test Yue locale status, no transcript mutation; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4835,10 +5235,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "69d2828505f025639b5b2c60579928594461f434",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 3-7 pinned llama build number; LLMDownloadService.swift:332-334. Source review only; not device acceptance.",
+          "negative_oracle": "Test incompatible model rejected and F-0042; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4850,10 +5259,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "5d6de3d1bcfd6641a531c90577bd812c31c257cc",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 4-403 shapes and SVG parser; MicMorphAnimation.swift:33-47 frame owner. Source review only; not device acceptance.",
+          "negative_oracle": "Test clamp, animation reverse and low-memory draw; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4861,14 +5279,23 @@
       "original_tracking": "current",
       "original_disposition": "not_reviewed",
       "baseline_blob_sha": "88a42bee65366f2f3c5eb814f42723252e52a094",
-      "main_blob_sha": "88a42bee65366f2f3c5eb814f42723252e52a094",
+      "main_blob_sha": "ef1596d058931d1ae7ef1ee628bd624fbdf1477f",
       "stage": "X9",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "ef1596d058931d1ae7ef1ee628bd624fbdf1477f",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 3-349 STT model policies incl HK GGUF; SpeechRecognitionService.swift:75-84 and ModelDownloadService.swift:74-75. Source review only; not device acceptance.",
+          "negative_oracle": "Test HK vs ONNX isolation, RAM support and languages; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4880,10 +5307,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "11c57b397c38beb56770bd088237e67b09a59275",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 3-10 version gates; KeyboardViewController+HostDetection.swift:19, ModelVariant.swift:297. Source review only; not device acceptance.",
+          "negative_oracle": "Test OS 26.4/27 runtime fallback; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4895,10 +5331,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "420adc0c2f75cbbbe81306a5d6afc4f7fde5bc1d",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 4-87 double-space context check; KeyboardViewController+Spacing.swift:29-41. Source review only; not device acceptance.",
+          "negative_oracle": "Test changed host/cursor, rapid taps, Chinese period; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4910,10 +5355,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "c97fdd7f6179abb998d6834678312af148f0aa96",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 4-14 contextual first letter; AlphabeticKeyboardLayout.swift:1720. Source review only; not device acceptance.",
+          "negative_oracle": "Test multiline and unwanted midword capital; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4925,10 +5379,19 @@
       "stage": "X9",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "49be19318e4f9c44ec11b99e6d31bb3fce15968c",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 5-72 three-record Chinese corrections; HistoryStore.swift:106. Source review only; not device acceptance.",
+          "negative_oracle": "Test conflicting, one-off and malformed history; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4940,10 +5403,19 @@
       "stage": "X9",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "9f5d9a99ba2bc7648b33c5b73f882eb22aab9bad",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 3-138 language sets; ModelVariant.swift:227-243, SpeechLanguagesSettingsView.swift:61. Source review only; not device acceptance.",
+          "negative_oracle": "Test forbidden model-language routing; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4951,14 +5423,23 @@
       "original_tracking": "current",
       "original_disposition": "not_reviewed",
       "baseline_blob_sha": "79df87678b848fd221982b59a8641fa6d682a930",
-      "main_blob_sha": "79df87678b848fd221982b59a8641fa6d682a930",
+      "main_blob_sha": "d3874e28be814401c031d9f5df0de12e2c2d6817",
       "stage": "X9",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "d3874e28be814401c031d9f5df0de12e2c2d6817",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 5-60 Cantonese multilingual fallback; ModelsView.swift:260,282 and SpeechLanguagesSettingsView.swift:52. Source review only; not device acceptance.",
+          "negative_oracle": "Test Yue+German never chooses HK-only model; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4970,10 +5451,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "ea4306ddb480900201cfc89d01d71c8b33bce7b3",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 5-132 quantity normalization; SpeechRecognitionService+Transcription.swift:187. Source review only; not device acceptance.",
+          "negative_oracle": "Test decimal, unit, no accidental identifiers; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4985,10 +5475,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "e5c1d01104a1df8c9044ef7e86e43499f2984f60",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 5-19 punctuation separator behavior; SpeechRecognitionService+Transcription.swift:228 and LLMProcessingCoordinator.swift:69,169. Source review only; not device acceptance.",
+          "negative_oracle": "Swift reproduction F-0043 'don't' -> 'don t', 3.5 -> 3 5; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5000,10 +5499,19 @@
       "stage": "X9",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "f85f583f3d9a4000b39f1903213aea4bb7d2a05c",
+          "content_review": "whole_file_and_immediate_consumers",
+          "observation": "Owner, state/failure, privacy and Untangle caller inspection: 3-223 style serialization, literal protection, App Group persistence; coordinator.swift:461, transcription.swift:40, DefaultStylePickerView.swift:52. Source review only; not device acceptance.",
+          "negative_oracle": "Test old-style migration, email/URL safety, per-host selection; native/iPhone not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -6538,14 +7046,14 @@
     }
   ],
   "review_progress": {
-    "reviewed": 10,
-    "pending": 413,
+    "reviewed": 62,
+    "pending": 361,
     "blocked": 0,
     "limited": 3,
     "by_stage": {
       "X9": {
-        "reviewed": 10,
-        "pending": 52,
+        "reviewed": 62,
+        "pending": 0,
         "limited": 3
       },
       "X10": {
@@ -6565,5 +7073,6 @@
         "pending": 14
       }
     }
-  }
+  },
+  "out_of_queue_live_main_paths_delta": 5
 }

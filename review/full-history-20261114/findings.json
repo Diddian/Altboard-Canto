@@ -1,7 +1,7 @@
 {
   "schema_version": "untangle-ocr-findings/v1",
-  "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
-  "status": "42 deduplicated findings; X9 source review remains in_progress; native/iPhone test gates not_run",
+  "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+  "status": "43 deduplicated findings; X9 source reviewed, X8 microphone changes not device tested",
   "findings": [
     {
       "id": "F-0001",
@@ -1910,7 +1910,8 @@
       "smallest_repair": "Pin all bundle files to one immutable revision and require expected SHA-256 for both before installation and re-use; preserve existing bundle on any failure.",
       "regression_oracle": "Use same-size modified tokenizer with expected prefix: stage/install/re-open must reject it and retain previous verified model. Execute real native test separately.",
       "verification": [
-        "Exact source evidence inspected at c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b; structural integrity gap confirmed, live fault-injection and iPhone tests not_run."
+        "Exact source evidence inspected at c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b; structural integrity gap confirmed, live fault-injection and iPhone tests not_run.",
+        "Rechecked SenseVoiceModelDownloader source and ASRDownloadSources consumer at 5bad88df03a44c319f2fba8a0fd6ae67d79f681d; tokenizer verification still prefix+size only, download user-confirmed working."
       ],
       "origin": "X9/manual-GitHub-source",
       "assigned_stage": "X8"
@@ -2005,6 +2006,50 @@
         "Static branch behavior verified at c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b and pinned upstream llama.cpp b10333 source; no actual GGUF fixture, native runtime or iPhone test executed."
       ],
       "origin": "X9/manual-GitHub-pinned-backend",
+      "assigned_stage": "X8"
+    },
+    {
+      "id": "F-0043",
+      "severity": "medium",
+      "state": "confirmed",
+      "area": "voice_output_integrity",
+      "review_priority": "P1",
+      "first_detected_build": 245,
+      "last_affected_build": 245,
+      "paths": [
+        "Shared/VoicePunctuationPolicy.swift",
+        "Sayboard/Services/SpeechRecognitionService+Transcription.swift",
+        "Sayboard/Services/LLMProcessingCoordinator.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Shared/VoicePunctuationPolicy.swift",
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "lines": "5-19",
+          "observation": "Disabled punctuation translates apostrophe/decimal separator into pending whitespace before next letter/digit."
+        },
+        {
+          "path": "Sayboard/Services/SpeechRecognitionService+Transcription.swift",
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "lines": "228-232",
+          "observation": "Final dictation output calls VoicePunctuationPolicy."
+        },
+        {
+          "path": "Sayboard/Services/LLMProcessingCoordinator.swift",
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "lines": "69,89,116,169",
+          "observation": "Optional LLM cleanup and fallback calls policy."
+        }
+      ],
+      "scenario": "Disable punctuation on a dictation/LLM result containing contractions or decimals.",
+      "causal_chain": "All punctuation treated as word separators -> don't becomes don t; 3.5 becomes 3 5 -> semantic text integrity damage.",
+      "root_owner": "VoicePunctuationPolicy.render",
+      "smallest_repair": "Preserve meaningful inner-word apostrophes and numeric decimal points while suppressing sentence punctuation, with locale-aware tests.",
+      "regression_oracle": "'don't stop' must not become 'don t stop'; '3.5 GB' must not become '3 5 GB'; punctuation enabled remains unchanged.",
+      "verification": [
+        "Read pinned main source and executed a targeted assistant-side pure-Swift copy of this function; outputs exactly don t stop and 3 5 GB. No native/Xcode/iPhone run."
+      ],
+      "origin": "X9/manual_source_pure_swift",
       "assigned_stage": "X8"
     }
   ],
