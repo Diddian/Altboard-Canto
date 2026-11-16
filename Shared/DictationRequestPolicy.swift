@@ -85,6 +85,17 @@ enum DictationRequestPolicy {
       || hasRecentAudioHeartbeat(heartbeat, now: now)
   }
 
+  /// Replacement of a persisted recording requires both a missing
+  /// request-scoped capture acknowledgment and a stale real audio heartbeat.
+  /// A healthy input tap is never rearmed using an old document token.
+  static func shouldRestartUnacknowledgedRecording(
+    requestToken: String?, currentToken: String?, cancelled: Bool,
+    acknowledged: Bool, heartbeat: TimeInterval, now: TimeInterval
+  ) -> Bool {
+    isCurrent(started: requestToken, current: currentToken, cancelled: cancelled)
+      && !acknowledged && !hasRecentAudioHeartbeat(heartbeat, now: now)
+  }
+
   static func shouldOpenColdFallback(
     requestToken: String?, currentToken: String?, cancelled: Bool,
     keyboardVisible: Bool, recording: Bool, appAcknowledged: Bool,

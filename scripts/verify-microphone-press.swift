@@ -161,6 +161,29 @@ struct VerifyMicrophonePress {
       keyboardActive: false, appActive: false, heartbeat: 1, now: 10,
       practiceFocused: false
     ))
+    // A stale persisted recording must not trap the next microphone press.
+    // Neither a late callback, cancellation nor a live audio tap may create
+    // another capture owner.
+    precondition(DictationRequestPolicy.shouldRestartUnacknowledgedRecording(
+      requestToken: token, currentToken: token, cancelled: false,
+      acknowledged: false, heartbeat: 1, now: 10
+    ))
+    precondition(!DictationRequestPolicy.shouldRestartUnacknowledgedRecording(
+      requestToken: token, currentToken: token, cancelled: false,
+      acknowledged: false, heartbeat: 9.5, now: 10
+    ))
+    precondition(!DictationRequestPolicy.shouldRestartUnacknowledgedRecording(
+      requestToken: token, currentToken: token, cancelled: false,
+      acknowledged: true, heartbeat: 1, now: 10
+    ))
+    precondition(!DictationRequestPolicy.shouldRestartUnacknowledgedRecording(
+      requestToken: token, currentToken: token, cancelled: true,
+      acknowledged: false, heartbeat: 1, now: 10
+    ))
+    precondition(!DictationRequestPolicy.shouldRestartUnacknowledgedRecording(
+      requestToken: token, currentToken: UUID().uuidString, cancelled: false,
+      acknowledged: false, heartbeat: 1, now: 10
+    ))
     print("Microphone tap, hold, release and token-scoped stop checks passed")
   }
 }

@@ -917,16 +917,25 @@ final class KeyboardViewController: UIInputViewController {
   private func startDictationViaDarwin() {
     let settings = SharedSettings()
     settings.synchronize()
-    // A recreated keyboard must not rearm a capture that is already running.
+    // A persisted recording flag is not proof of a live capture. Probe the
+    // host before reusing its token or changing the destination field.
     if settings.isRecording && settings.isSessionActive
         && !settings.dictationCancellationRequested,
        let token = settings.dictationSessionToken,
        UUID(uuidString: token) != nil {
-      FeatureDiagnostics.record(.speech, .selected, operationID: token)
       self.recoverActiveDictationAfterReentry()
+      self.keyboardState.isRecording = false
+      self.keyboardState.isStartingRecording = true
+      self.keyboardState.stopLevelPolling()
+      self.warmStartSessionAcknowledged = false
       self.pingMainAppForSessionStatus()
+      self.verifyReenteredRecording(token: token)
       return
     }
+    self.beginFreshDictation()
+  }
+
+  private func beginFreshDictation() {
     guard !self.keyboardState.isProcessing, !self.keyboardState.isRecording,
           !self.keyboardState.isStartingRecording else { return }
     self.saveHostBundleId()
@@ -960,6 +969,51 @@ final class KeyboardViewController: UIInputViewController {
       token: token, retryCount: 0,
       timeout: direct ? Self.staleFallbackTimeout : 0.8
     )
+  }
+
+  /// Recover only after the old recording fails a bounded host handshake
+  /// AND its audio-tap heartbeat is stale. A live or unknown capture keeps
+  /// its original owner; never replace its token on a timer alone.
+  private func verifyReenteredRecording(token: String) {
+    self.staleFallbackTimer?.invalidate()
+    self.staleFallbackTimer = Timer.scheduledTimer(
+      withTimeInterval: Self.staleFallbackTimeout, repeats: false
+    ) { [weak self] _ in
+      DispatchQueue.main.async { [weak self] in
+        guard let self else { return }
+        self.staleFallbackTimer = nil
+        let settings = SharedSettings()
+        settings.synchronize()
+        guard self.viewIfLoaded?.window != nil,
+              DictationRequestPolicy.isCurrent(
+                started: token, current: settings.dictationSessionToken,
+                cancelled: settings.dictationCancellationRequested
+              ),
+              !self.warmStartSessionAcknowledged,
+              !self.keyboardState.isRecording else { return }
+        guard DictationRequestPolicy.shouldRestartUnacknowledgedRecording(
+          requestToken: token, currentToken: settings.dictationSessionToken,
+          cancelled: settings.dictationCancellationRequested,
+          acknowledged: self.warmStartSessionAcknowledged,
+          heartbeat: settings.mainAppHeartbeat, now: CFAbsoluteTimeGetCurrent()
+        ) else {
+          self.keyboardState.isStartingRecording = false
+          FeatureDiagnostics.record(.speech, .blocked,
+            failureReason: .warmStartUnacknowledged, operationID: token)
+          return
+        }
+        // The prior host is no longer responding or emitting audio. Start
+        // one fresh, destination-bound request using the existing fallback.
+        FeatureDiagnostics.record(.speech, .fallback,
+          failureReason: .warmStartUnacknowledged, operationID: token)
+        self.keyboardState.isSessionActive = false
+        self.keyboardState.isRecording = false
+        self.keyboardState.isStartingRecording = false
+        self.dictationRequestToken = nil
+        self.dictationDocumentID = nil
+        self.beginFreshDictation()
+      }
+    }
   }
 
   private func scheduleWarmStartCheck(
