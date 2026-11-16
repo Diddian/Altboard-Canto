@@ -936,6 +936,8 @@ final class KeyboardViewController: UIInputViewController {
   }
 
   private func beginFreshDictation() {
+    let settings = SharedSettings()
+    settings.synchronize()
     guard !self.keyboardState.isProcessing, !self.keyboardState.isRecording,
           !self.keyboardState.isStartingRecording else { return }
     self.saveHostBundleId()
@@ -990,7 +992,8 @@ final class KeyboardViewController: UIInputViewController {
                 cancelled: settings.dictationCancellationRequested
               ),
               !self.warmStartSessionAcknowledged,
-              !self.keyboardState.isRecording else { return }
+              !self.keyboardState.isRecording,
+              !self.keyboardState.isProcessing else { return }
         guard DictationRequestPolicy.shouldRestartUnacknowledgedRecording(
           requestToken: token, currentToken: settings.dictationSessionToken,
           cancelled: settings.dictationCancellationRequested,
