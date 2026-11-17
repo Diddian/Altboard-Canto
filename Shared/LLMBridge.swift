@@ -219,13 +219,19 @@ struct LLMBridge: Sendable {
     self.clearRequest(matching: request.requestID)
   }
 
-  static func clearResult(matching requestID: UUID) {
-    _ = self.withBridgeLock {
+  @discardableResult
+  static func clearResult(matching requestID: UUID) -> Bool {
+    self.withBridgeLock {
       guard self.readResult(matching: requestID) != nil,
             let url = resultFileURL else { return false }
-      try? FileManager.default.removeItem(at: url)
-      return true
-    }
+      do {
+        try FileManager.default.removeItem(at: url)
+        return !FileManager.default.fileExists(atPath: url.path)
+      } catch {
+        FeatureDiagnostics.record(.bridge, .failed)
+        return false
+      }
+    } ?? false
   }
 
   static func clearResult() {

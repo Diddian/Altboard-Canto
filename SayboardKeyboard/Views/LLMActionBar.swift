@@ -12,7 +12,7 @@ struct LLMActionBar: View {
     ScrollView(.horizontal, showsIndicators: false) {
       HStack(spacing: 6.kbScaled) {
         if self.keyboardState.hasRecoverableLLMResult {
-          LLMActionChip(label: "Copy saved AI result", isLocalized: true) {
+          LLMActionChip(label: "Copy saved text", isLocalized: true) {
             self.onRecoverResult()
           }
         }

@@ -185,28 +185,62 @@ extension KeyboardViewController {
     return true
   }
 
+  private func recoverableDictationForManualCopy() -> DictationDelivery? {
+    let settings = SharedSettings()
+    settings.synchronize()
+    guard !settings.isRecording,
+          !self.keyboardState.isLLMProcessing,
+          let delivery = TranscriptionBridge.readDelivery(),
+          !delivery.text.isEmpty,
+          !LLMBridge.ownsDelivery(delivery.resultID) else { return nil }
+    return delivery
+  }
+
   func refreshRecoverableLLMResult() {
     self.keyboardState.hasRecoverableLLMResult = LLMBridge.recoverableResult() != nil
+      || self.recoverableDictationForManualCopy() != nil
   }
 
   /// Explicit user-initiated copy; do not paste an orphan into the focused field.
   func copyRecoverableLLMResult() {
-    guard let result = LLMBridge.recoverableResult() else {
+    if let result = LLMBridge.recoverableResult() {
+      UIPasteboard.general.string = result.text
+      guard UIPasteboard.general.string == result.text else {
+        FeatureDiagnostics.record(.aiActions, .failed)
+        self.keyboardState.showFinalOutputPreview("Copy failed. AI result remains saved.")
+        return
+      }
+      // Release the original ASR only after a confirmed user copy and
+      // successful result cleanup; a busy App Group lock can be retried.
+      guard LLMBridge.clearResult(matching: result.requestID) else {
+        FeatureDiagnostics.record(.bridge, .failed)
+        self.keyboardState.showFinalOutputPreview("Result copied. Cleanup pending; retry later.")
+        return
+      }
+      if let deliveryID = result.sourceDeliveryID {
+        TranscriptionBridge.acknowledgeDelivery(deliveryID)
+      }
+      self.keyboardState.showFinalOutputPreview("Saved AI result copied. Paste where intended.")
+      FeatureDiagnostics.record(.aiActions, .resumed)
       self.refreshRecoverableLLMResult()
       return
     }
-    UIPasteboard.general.string = result.text
-    guard UIPasteboard.general.string == result.text else {
-      FeatureDiagnostics.record(.aiActions, .failed)
-      self.keyboardState.showFinalOutputPreview("Copy failed. AI result remains saved.")
+
+    // A failed or timed-out AI request can leave only the original ASR.
+    // User explicitly chooses Copy saved text; never paste into another app.
+    guard let delivery = self.recoverableDictationForManualCopy() else {
+      self.refreshRecoverableLLMResult()
       return
     }
-    self.keyboardState.showFinalOutputPreview("Saved AI result copied. Paste where intended.")
-    FeatureDiagnostics.record(.aiActions, .resumed)
-    LLMBridge.clearResult(matching: result.requestID)
-    if let deliveryID = result.sourceDeliveryID {
-      TranscriptionBridge.acknowledgeDelivery(deliveryID)
+    UIPasteboard.general.string = delivery.text
+    guard UIPasteboard.general.string == delivery.text else {
+      FeatureDiagnostics.record(.bridge, .failed)
+      self.keyboardState.showFinalOutputPreview("Copy failed. Original dictation remains saved.")
+      return
     }
+    TranscriptionBridge.acknowledgeDelivery(delivery.resultID)
+    self.keyboardState.showFinalOutputPreview("Saved dictation copied. Paste where intended.")
+    FeatureDiagnostics.record(.bridge, .resumed)
     self.refreshRecoverableLLMResult()
   }
 
@@ -436,7 +470,7 @@ extension KeyboardViewController {
     self.llmSelectionContextAfter = nil
     self.llmClipboardOnly = false
     self.pendingManualLLMAction = nil
-    if preserveResultForRecovery { self.refreshRecoverableLLMResult() }
+    self.refreshRecoverableLLMResult()
   }
 
   private func navigateLLMHistory(to targetIndex: Int) {

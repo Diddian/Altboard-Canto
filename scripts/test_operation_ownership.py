@@ -562,7 +562,7 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertNotIn("textDocumentProxy.insertText", copy)
         self.assertIn("copyRecoverableLLMResult: () -> Void", keyboard)
         self.assertIn("onRecoverResult:", toolbar)
-        self.assertIn("Copy saved AI result", menu)
+        self.assertIn("Copy saved text", menu)
         self.assertIn("precondition(LLMBridge.ownsDelivery(deliveryID))", verifier)
         self.assertIn("precondition(LLMBridge.recoverableResult()?.text", verifier)
 
@@ -590,6 +590,26 @@ class OperationOwnershipTests(unittest.TestCase):
                         "func copyRecoverableLLMResult()", "func requestLLMClipboardProcessing()")
         self.assertLess(copy.index("UIPasteboard.general.string == result.text"),
                         copy.index("LLMBridge.clearResult(matching: result.requestID)"))
+
+    def test_failed_ai_exposes_manual_dictation_without_wrong_field_paste(self):
+        actions = source("SayboardKeyboard/KeyboardViewController+LLM.swift")
+        menu = source("SayboardKeyboard/Views/LLMActionBar.swift")
+        bridge = source("Shared/LLMBridge.swift")
+        manual = function("SayboardKeyboard/KeyboardViewController+LLM.swift",
+                          "func copyRecoverableLLMResult()", "func requestLLMClipboardProcessing()")
+        recovery = function("SayboardKeyboard/KeyboardViewController+LLM.swift",
+                            "private func recoverableDictationForManualCopy()",
+                            "func copyRecoverableLLMResult()")
+        self.assertIn("TranscriptionBridge.readDelivery()", recovery)
+        self.assertIn("!LLMBridge.ownsDelivery(delivery.resultID)", recovery)
+        self.assertIn("|| self.recoverableDictationForManualCopy() != nil", actions)
+        self.assertIn("Copy saved text", menu)
+        self.assertIn("UIPasteboard.general.string = delivery.text", manual)
+        self.assertLess(manual.index("UIPasteboard.general.string == delivery.text"),
+                        manual.index("TranscriptionBridge.acknowledgeDelivery(delivery.resultID)"))
+        self.assertNotIn("textDocumentProxy.insertText", manual)
+        self.assertIn("guard LLMBridge.clearResult(matching: result.requestID)", manual)
+        self.assertIn("static func clearResult(matching requestID: UUID) -> Bool", bridge)
 
     def test_llm_terminal_status_outlives_keyboard_ack(self):
         bridge = source("Shared/LLMBridge.swift")

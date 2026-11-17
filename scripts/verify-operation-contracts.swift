@@ -73,10 +73,10 @@ enum VerifyOperationContracts {
     precondition(LLMBridge.readRequest()?.requestID == a.requestID)
     precondition(LLMBridge.writeResult("result", requestID: a.requestID))
     precondition(LLMBridge.readStatus(matching: a.requestID)?.phase == .completed)
-    LLMBridge.clearResult(matching: b.requestID)
+    precondition(!LLMBridge.clearResult(matching: b.requestID))
     precondition(LLMBridge.readResult(matching: a.requestID) == "result")
     precondition(!LLMBridge.writeRequest(b))
-    LLMBridge.clearResult(matching: a.requestID)
+    precondition(LLMBridge.clearResult(matching: a.requestID))
     precondition(!LLMBridge.hasResult())
     LLMBridge.clearRequest(matching: a.requestID)
     precondition(LLMBridge.readRequest() == nil)
@@ -119,6 +119,16 @@ enum VerifyOperationContracts {
     let newer = TranscriptionBridge.readDelivery()!
     precondition(newer.resultID != pending.resultID)
     precondition(newer.text == "a newer synthetic result")
+    // A failed AI request releases its claim but never deletes the ASR source.
+    let linked = LLMRequest(text: newer.text, action: .rewrite,
+      customPromptId: nil, language: "en", sourceDeliveryID: newer.resultID)
+    precondition(LLMBridge.writeRequest(linked))
+    precondition(LLMBridge.ownsDelivery(newer.resultID))
+    precondition(LLMBridge.writeStatus(.failed, requestID: linked.requestID))
+    LLMBridge.clearRequest(matching: linked.requestID)
+    precondition(!LLMBridge.ownsDelivery(newer.resultID))
+    precondition(TranscriptionBridge.readDelivery()?.resultID == newer.resultID)
+    // Deliberate manual recovery would confirm clipboard readback first.
     TranscriptionBridge.acknowledgeDelivery(newer.resultID)
     precondition(TranscriptionBridge.readDelivery() == nil)
     TranscriptionBridge.requestCancellation(for: "00000000-0000-0000-0000-000000000003")
