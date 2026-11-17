@@ -196,6 +196,11 @@ extension KeyboardViewController {
       return
     }
     UIPasteboard.general.string = result.text
+    guard UIPasteboard.general.string == result.text else {
+      FeatureDiagnostics.record(.aiActions, .failed)
+      self.keyboardState.showFinalOutputPreview("Copy failed. AI result remains saved.")
+      return
+    }
     self.keyboardState.showFinalOutputPreview("Saved AI result copied. Paste where intended.")
     FeatureDiagnostics.record(.aiActions, .resumed)
     LLMBridge.clearResult(matching: result.requestID)
@@ -243,13 +248,15 @@ extension KeyboardViewController {
           let status = LLMBridge.readStatus(matching: id) else { return false }
     switch status.phase {
     case .busy, .failed, .rejected, .cancelled:
-      let hadFallback = self.pendingAutoActionText != nil
-      self.insertPendingAutoActionFallback()
+      let hadOriginal = self.pendingAutoActionText != nil
+      let insertedFallback = self.insertPendingAutoActionFallback()
       self.keyboardState.showFinalOutputPreview(
-        status.phase == .busy ? "Text model busy. Try again after the current task."
-          : "Text action unavailable. Your original text is unchanged."
+        !insertedFallback && hadOriginal
+          ? "Text action unavailable. Original dictation retained for recovery."
+          : (status.phase == .busy ? "Text model busy. Try again after the current task."
+            : "Text action unavailable. Your original text is unchanged.")
       )
-      self.finishLLMInsertion(acknowledgeSource: hadFallback)
+      self.finishLLMInsertion(acknowledgeSource: insertedFallback)
       return true
     case .requested, .accepted, .running:
       self.keyboardState.isLLMProcessing = true
@@ -266,10 +273,14 @@ extension KeyboardViewController {
       return
     }
     LLMBridge.writeStatus(.cancelled, requestID: id)
-    let hadFallback = self.pendingAutoActionText != nil
-    self.insertPendingAutoActionFallback()
-    self.keyboardState.showFinalOutputPreview("Text action timed out. Original text retained.")
-    self.finishLLMInsertion(acknowledgeSource: hadFallback)
+    let hadOriginal = self.pendingAutoActionText != nil
+    let insertedFallback = self.insertPendingAutoActionFallback()
+    self.keyboardState.showFinalOutputPreview(
+      hadOriginal && !insertedFallback
+        ? "Text action timed out. Original dictation retained for recovery."
+        : "Text action timed out. Original text retained."
+    )
+    self.finishLLMInsertion(acknowledgeSource: insertedFallback)
   }
 
   private static func detectLanguage(from text: String) -> String? {
@@ -289,15 +300,18 @@ extension KeyboardViewController {
       && proxy.selectedText == self.llmDirectSelectedText
   }
 
-  private func insertPendingAutoActionFallback() {
-    guard let fallbackText = self.pendingAutoActionText else { return }
-    if self.currentLLMFieldMatches() {
-      self.keyboardState.llmHistorySuffix = self.insertSpacedText(fallbackText).trailing
-    } else {
-      UIPasteboard.general.string = fallbackText
-      self.keyboardState.showFinalOutputPreview("Input changed. Dictation copied.")
+  @discardableResult
+  private func insertPendingAutoActionFallback() -> Bool {
+    guard let fallbackText = self.pendingAutoActionText else { return false }
+    guard self.currentLLMFieldMatches() else {
+      // The original ASR delivery remains in the outbox for deliberate recovery.
+      // Never acknowledge it or write private speech to the clipboard here.
+      FeatureDiagnostics.record(.bridge, .fallback, failureReason: .destinationChanged)
+      return false
     }
+    self.keyboardState.llmHistorySuffix = self.insertSpacedText(fallbackText).trailing
     self.pendingAutoActionText = nil
+    return true
   }
 
   private func insertLLMResult() {
@@ -336,9 +350,8 @@ extension KeyboardViewController {
         FeatureDiagnostics.record(.bridge, .completed)
         self.keyboardState.showFinalOutputPreview("Selected text rewritten")
       } else {
-        FeatureDiagnostics.record(.bridge, .fallback)
-        UIPasteboard.general.string = result
-        self.keyboardState.showFinalOutputPreview("Selection changed. Rewrite copied.")
+        self.deferLLMResultForManualRecovery()
+        return
       }
       self.keyboardState.clearLLMHistory()
       self.finishLLMInsertion(acknowledgeSource: true)
@@ -346,11 +359,7 @@ extension KeyboardViewController {
     }
 
     guard self.currentLLMFieldMatches() else {
-      FeatureDiagnostics.record(.bridge, .fallback)
-      UIPasteboard.general.string = result
-      self.keyboardState.showFinalOutputPreview("Input changed. Rewrite copied.")
-      self.keyboardState.clearLLMHistory()
-      self.finishLLMInsertion(acknowledgeSource: true)
+      self.deferLLMResultForManualRecovery()
       return
     }
 
@@ -359,10 +368,7 @@ extension KeyboardViewController {
     guard expected.isEmpty || currentBeforeText == expected else {
       FeatureDiagnostics.record(.bridge, .rejected)
       DiagnosticLog.write("llm/kb: document changed under the request, refusing to replace")
-      UIPasteboard.general.string = result
-      self.keyboardState.showFinalOutputPreview("Input changed. Rewrite copied.")
-      self.keyboardState.clearLLMHistory()
-      self.finishLLMInsertion(acknowledgeSource: true)
+      self.deferLLMResultForManualRecovery()
       return
     }
 
@@ -389,11 +395,28 @@ extension KeyboardViewController {
     self.finishLLMInsertion(acknowledgeSource: true)
   }
 
-  private func finishLLMInsertion(acknowledgeSource: Bool = false) {
+  private func deferLLMResultForManualRecovery() {
+    // Keep the completed bridge result and original ASR delivery until
+    // the user explicitly selects Copy Result in the existing keyboard UI.
+    FeatureDiagnostics.record(.bridge, .fallback, failureReason: .destinationChanged)
+    self.keyboardState.showFinalOutputPreview(
+      "Input changed. AI result saved. Use Copy Result to recover."
+    )
+    self.keyboardState.clearLLMHistory()
+    self.finishLLMInsertion(preserveResultForRecovery: true)
+  }
+
+  private func finishLLMInsertion(
+    acknowledgeSource: Bool = false, preserveResultForRecovery: Bool = false
+  ) {
     let sourceID = self.llmSourceDeliveryID
       ?? LLMBridge.readResultPayload(matching: self.llmRequestID)?.sourceDeliveryID
     if let id = self.llmRequestID {
-      LLMBridge.clearResult(matching: id)
+      if !preserveResultForRecovery {
+        LLMBridge.clearResult(matching: id)
+      }
+      // Removing the completed request exposes the retained manual result.
+      // Only explicit recovery may release its associated ASR outbox.
       LLMBridge.clearRequest(matching: id)
       LLMBridge.clearStatus(matching: id)
     }
@@ -413,6 +436,7 @@ extension KeyboardViewController {
     self.llmSelectionContextAfter = nil
     self.llmClipboardOnly = false
     self.pendingManualLLMAction = nil
+    if preserveResultForRecovery { self.refreshRecoverableLLMResult() }
   }
 
   private func navigateLLMHistory(to targetIndex: Int) {

@@ -566,6 +566,31 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("precondition(LLMBridge.ownsDelivery(deliveryID))", verifier)
         self.assertIn("precondition(LLMBridge.recoverableResult()?.text", verifier)
 
+    def test_llm_destination_change_preserves_original_and_manual_result(self):
+        actions = source("SayboardKeyboard/KeyboardViewController+LLM.swift")
+        fallback = function("SayboardKeyboard/KeyboardViewController+LLM.swift",
+                            "private func insertPendingAutoActionFallback() -> Bool",
+                            "private func insertLLMResult()")
+        result = function("SayboardKeyboard/KeyboardViewController+LLM.swift",
+                          "private func insertLLMResult()",
+                          "private func deferLLMResultForManualRecovery()")
+        finish = function("SayboardKeyboard/KeyboardViewController+LLM.swift",
+                          "private func finishLLMInsertion(", "private func navigateLLMHistory")
+        self.assertNotIn("UIPasteboard.general.string =", fallback)
+        self.assertIn("guard self.currentLLMFieldMatches()", fallback)
+        self.assertIn("return false", fallback)
+        self.assertEqual(actions.count("acknowledgeSource: insertedFallback"), 2)
+        self.assertEqual(result.count("self.deferLLMResultForManualRecovery()"), 3)
+        self.assertNotIn("UIPasteboard.general.string = result", result.split(
+            "if self.llmClipboardOnly", 1)[1].split(
+            "if let originalSelection", 1)[1])
+        self.assertIn("if !preserveResultForRecovery", finish)
+        self.assertIn("self.refreshRecoverableLLMResult()", finish)
+        copy = function("SayboardKeyboard/KeyboardViewController+LLM.swift",
+                        "func copyRecoverableLLMResult()", "func requestLLMClipboardProcessing()")
+        self.assertLess(copy.index("UIPasteboard.general.string == result.text"),
+                        copy.index("LLMBridge.clearResult(matching: result.requestID)"))
+
     def test_llm_terminal_status_outlives_keyboard_ack(self):
         bridge = source("Shared/LLMBridge.swift")
         self.assertIn("if self.readStatus(matching: requestID)?.phase.isTerminal == true", bridge)
