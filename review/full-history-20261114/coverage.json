@@ -7,7 +7,7 @@
     "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
     "review_branch": "review/full-history-20261114"
   },
-  "status": "X10 source disposition complete (35 reviewed, 42 limited); remaining native/iPhone gates not_run",
+  "status": "X11 104 source dispositions complete; static/CI evidence only; native and iPhone acceptance not_run",
   "expected_current_tracked_files_observed": 578,
   "current_tracked_files": 578,
   "initial_tracked_files": 356,
@@ -24,7 +24,10 @@
       "path": ".githooks/pre-commit",
       "sha": "2cb47329b4fb98aff964d7bfd04c752c03fd994d",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": ".github/workflows/build-unsigned-ipa.yml",
@@ -1154,7 +1157,10 @@
       "path": "Sayboard/Sayboard.entitlements",
       "sha": "c1eccd660b3a272e9bcab08e0b2e5cd9ac3e8d35",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "Sayboard/SayboardApp.swift",
@@ -2374,7 +2380,10 @@
       "path": "SayboardKeyboard/SayboardKeyboard.entitlements",
       "sha": "dcfbb7ba4aea8e570a327cadb09e4ae8327deaa7",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "SayboardKeyboard/SwipeWordLexicon.swift",
@@ -2717,19 +2726,28 @@
       "path": "SayboardTests/AIButtonOfferTests.swift",
       "sha": "7fdcb18288d2a63da615a34c3e66fb228c3531cc",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/AppLanguageConfigTests.swift",
       "sha": "248588026eccb2a061ba00bfd7c68dfb0dfaab5b",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/AppStyleStoreTests.swift",
       "sha": "f41bb96649db8f6fd67e3dfadcc6f060ccc6736b",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/BasicKeyboardFallbackTests.swift",
@@ -2743,86 +2761,128 @@
       "path": "SayboardTests/CantoneseCorrectionsTests.swift",
       "sha": "f1d1ad0f6c907b633abdf985a15094e43ead47d4",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/CantoneseSyllableEditingTests.swift",
       "sha": "eb893eb6e00504ac558671406c7b964136661a69",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/ChatTemplateTests.swift",
       "sha": "f5c5d5da1277ec5d81619fe5e3e2dad3af47dc27",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/ChinesePunctuationPolicyTests.swift",
       "sha": "5493ae345b6463a78d272b18a5eb4690e2cdaeaa",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/ConversationTurnPolicyTests.swift",
       "sha": "cf87af198a0a699d3630b84298f5cf0236f9a48e",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/CoreMLCacheSymlinkTests.swift",
       "sha": "219645b14fd7a3a85a0bc0fe4bed158c8459c1e2",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/CursorLineNavigationTests.swift",
       "sha": "5bd40b81b498f967f4f3dffe4b2d6fa2a6a9bf3c",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/DictationAllowanceTests.swift",
       "sha": "29b7d7a974ade3caf9e3eb2f34d4e7ab1fde0f95",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/DictationSpacingTests.swift",
       "sha": "d4df5f8ad93e89e8ddb1b7fec89d7a589017f4bc",
       "tracking": "current",
-      "review": "not_reviewed",
-      "x4_evidence": "X4 scoped path at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; 7-210 localized insertion spacing test catalogue; not run. Remainder not automatically marked reviewed."
+      "review": "reviewed",
+      "x4_evidence": "X4 scoped path at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; 7-210 localized insertion spacing test catalogue; not run. Remainder not automatically marked reviewed.",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/DownloadErrorMessageTests.swift",
       "sha": "dd29acedd950f0c47f3a3d191b2bae5d38f3db65",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/DownloadProgressThrottleTests.swift",
       "sha": "931c3d3f1d95b1994e330f149c132d8a82226edc",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/EnglishCaseSuggestionTests.swift",
       "sha": "248067ab41ddd67a6ec42699f7d0ce1ce7d8d415",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/EntitlementResolverTests.swift",
       "sha": "2c3225e281a3cd530896be3691d9335a9b593727",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/HereticModelCatalogTests.swift",
       "sha": "3b204dc3d2eb724401cc65d5bf0cdf49664b6e13",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/HistoryRetentionTests.swift",
@@ -2836,19 +2896,28 @@
       "path": "SayboardTests/HostApplicationMonitorTests.swift",
       "sha": "d7073a96d698e0a3593df9275d58f09be667d390",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/HostResolutionTests.swift",
       "sha": "10ca1d3a9213b3df5e36022b7793ad2da8207474",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/JyutpingCompositionTests.swift",
       "sha": "00fcb2e409d81cc22b2cdab85fd217d019d15148",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/KeyTouchMapTests.swift",
@@ -2862,7 +2931,10 @@
       "path": "SayboardTests/KeyboardHostInputTraitsTests.swift",
       "sha": "906e2ea0dc6cdb31541698cb3a1b9b5bf0fa1708",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/LLMActionSelectionTests.swift",
@@ -2876,49 +2948,73 @@
       "path": "SayboardTests/LLMGenerationBudgetTests.swift",
       "sha": "081d76bd97a8381cd6b4be4763e0acf6f85432ac",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/LLMModelEntryTests.swift",
       "sha": "4f0d3a4705ef451a22be1ab1aa9b408af2407036",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/LLMModelVariantCatalogTests.swift",
       "sha": "e564cec4a59af23ff9e70d103351cf01a558efb0",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/LatinWordSuggestionPolicyTests.swift",
       "sha": "a88c77f7e98eafa8f17aab8acddd03748cb0c055",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/LegacyPurchaseRuleTests.swift",
       "sha": "5a89c313d3fd119996e5bfd59685ab0d6835e44c",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/LetterKeyAlternatesTests.swift",
       "sha": "65c3114fadae1502e11f41a70386fe97e8eaa084",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/LiveCantoneseSafetyTests.swift",
       "sha": "989bc7d9514b9b18631608d77cf3459e23d0e3e8",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/MegabyteUnitTests.swift",
       "sha": "b117d50aac14b9b498a281517bd64a87acd83fe6",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/ModelDownloadInstallerTests.swift",
@@ -2932,86 +3028,128 @@
       "path": "SayboardTests/ModelEntryDiskReserveTests.swift",
       "sha": "f938b2b4457e5dacfa42d6d4904c5f60e358e821",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/ModelListSortKeyTests.swift",
       "sha": "04f1739af734b97be2d94bbcc724dbb5711c4bcf",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/ModelVariantCapabilityTests.swift",
       "sha": "9a1b8da99ac095c3d505ee7bf5e665ce4b141119",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/ModelVariantNeuralEngineTests.swift",
       "sha": "9f471956f88efdc7d6644f7db5144046bb1d256f",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/ModelVariantRankingTests.swift",
-      "sha": "2b611a0f0cd3aee77de8369423b14f3e6f506a33",
+      "sha": "0e9386d52395c52a9d550e3bb0e268a89aeb927d",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/NewNameNoticeTests.swift",
       "sha": "0de7edc2c4404a4ba91ecfb9e424a1d9589e286b",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/OnboardingProgressTests.swift",
       "sha": "0a66da7f7c9c6da2f93f0c348e9b6d28875737eb",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/OnboardingTextEntryTests.swift",
       "sha": "f10ac65cbf69df7ecc643f844bb9e942f6fa8cf4",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/ParakeetWarmUpTests.swift",
       "sha": "ce845bddeaf601c234d3f16f8404efa13ec636e6",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/PeriodShortcutTests.swift",
       "sha": "a047bbcad5afedca1bdc5a56c95c6c2b27f40ab6",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/SentenceCapitalizationTests.swift",
       "sha": "f10d27d8188d4b11cfc310f004d2c1c8223f05ec",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/SetupChecklistTests.swift",
       "sha": "f185325b32121219cf356b73a9e02d5cbac33a9a",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/SharedSettingsDefaultsTests.swift",
       "sha": "edca27b10c694a0b0a76f8194eb6a787bc8d64a5",
       "tracking": "current",
-      "review": "not_reviewed",
-      "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 29-46 default, 101-114 persisted haptic OFF, 249-265 strength"
+      "review": "reviewed_limited",
+      "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 29-46 default, 101-114 persisted haptic OFF, 249-265 strength",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/SharedSettingsEntitlementTests.swift",
       "sha": "3a3b64e4614a49234193af8977b6f9e16f86bc83",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/SharedSettingsGlobeKeyTests.swift",
@@ -3025,80 +3163,119 @@
       "path": "SayboardTests/SharedSettingsLLMUpgradeTests.swift",
       "sha": "84d0947bb234034da1bd63d141d5928e443533c8",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/SharedSettingsLanguageTests.swift",
       "sha": "327d4c5b90f330d8a0c081586a21db88de5f25f9",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/SharedSettingsMicHintTests.swift",
       "sha": "d2805a541946115fd5cda7343c5ccf2b22fa0d82",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/SnippetExpanderTests.swift",
       "sha": "85af4ad8e48cd7103f3056f3d79686baf370094d",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/SpeechCorrectionLearningTests.swift",
       "sha": "f7d7d7029825fd9685f27eb8628502ba4f377b38",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/SpeechLanguagesTests.swift",
       "sha": "6c62a56ca06e0c1221f73e4b4b15d0227f39eddf",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/SpeechModelRecommendationTests.swift",
-      "sha": "25d2943eedb8276ad5623546812140f3ade12324",
+      "sha": "c3caca75cd8468731277e9e25615e226909db2fb",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/StoreKitConfigurationTests.swift",
       "sha": "d9fcfc09f98e496092fd8e39dbe0ed4b4380a0d5",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/TechnicalTextFormatterTests.swift",
       "sha": "c39a108da4627c8ee91692f3a19f48525f80cfe2",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/TextSanitizerTests.swift",
       "sha": "6c85cae30d69138898ac97ef961e32dad16c0443",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/TextStyleFormatterTests.swift",
       "sha": "3ce862ab6c70f2f443b4ecad20ed8b53f1e47353",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/VoiceOutputPipelineTests.swift",
       "sha": "d0d4fac7d584b81804611771dd1e590ec100d7d3",
       "tracking": "current",
-      "review": "not_reviewed",
-      "x4_evidence": "X4 scoped path at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; 9-100 target and source validation; 115-169 preference retries/script conversion; 187-240 specific locale cases; not run. Remainder not automatically marked reviewed."
+      "review": "reviewed_limited",
+      "x4_evidence": "X4 scoped path at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; 9-100 target and source validation; 115-169 preference retries/script conversion; 187-240 specific locale cases; not run. Remainder not automatically marked reviewed.",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/WordCounterTests.swift",
       "sha": "69503cefd2edff00c0272e4d0d0ca5939ad02034",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Shared/AudioLevelBridge.swift",
@@ -3820,7 +3997,10 @@
       "path": "StoreKit/Sayboard.storekit",
       "sha": "724d2ae1aae6268b52b7ad0ed3b7960ff7c300ef",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "assets/app-icon.svg",
@@ -4095,31 +4275,46 @@
       "path": "scripts/bootstrap-llama.sh",
       "sha": "fb79ad05f1ad6edfe33cbc4ab3b89e565b047855",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/build-cantonese-ngrams.py",
       "sha": "647de7057c2a224765dfa7421aabaf788a8caa69",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/build-chinese-shapes.py",
       "sha": "d059e06267eaed2056b65d153d051d1830c7f92f",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/build-emoji-catalog.py",
       "sha": "6a860f0875e551633089f099705090215ed15d68",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/build-informal-ngrams.py",
       "sha": "9284adc4299899f3c36d67b822f42b807c405a6c",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/build-jyutping-lexicon.py",
@@ -4141,13 +4336,19 @@
       "path": "scripts/check-app-structure.py",
       "sha": "af506af6d0283ba7bdcbd00ccb58c3499f395a25",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/check-model-sizes.sh",
       "sha": "5aa7240815ef734cade80c88b663e78f6c43be39",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "scripts/contemporary-cantonese.tsv",
@@ -4249,19 +4450,28 @@
       "path": "scripts/lint-strings.sh",
       "sha": "aa478b06b7b42519a15ef2bb021054d117b15fbe",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "scripts/test_cantonese_ngrams.py",
       "sha": "04b4fd7e7c4f963cddc0e41c19d245a8f3719140",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/test_chinese_shapes.py",
       "sha": "c8c0f6ea06076baeadbb8ff5c835cccc5df923ba",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/test_emoji_catalog.py",
@@ -4275,31 +4485,46 @@
       "path": "scripts/test_hk_japanese_lexicon.py",
       "sha": "481b5da4323231b5ff71b9a710c20bcd6592055c",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/test_informal_ngrams.py",
       "sha": "164ce591bbf15a9088608da19b2fc12c532b4724",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/test_interface_localizations.py",
       "sha": "6e535479ec53caede1cbc41d7a5b61f8c0e20d13",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/test_ipa_bundle.py",
       "sha": "cc16d9b683bac8dd97996bd85dd6a438a1ff8d67",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/test_jyutping_yale.py",
       "sha": "1b6773d2c5d568242bf406a868122e9d6abc9d4f",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/test_keyboard_initial_layout.py",
@@ -4319,18 +4544,24 @@
     },
     {
       "path": "scripts/test_operation_ownership.py",
-      "sha": "d8d4ab3e104b38c9de723453d17480a5b893312a",
+      "sha": "5790bb2f3b3108df58c2ff06f4a64b06dd2cbcde",
       "tracking": "current",
-      "review": "not_reviewed",
+      "review": "reviewed_limited",
       "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 17-89 recovery/health; 249-385 start/stop/native worker source-string assertions; full test suite X4-X7; remainder not claimed reviewed",
-      "x4_evidence": "X4 scoped path at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; 144-236 host/delivery id guards, 436-506 status/bridge smoke cases; source-string checks only; not run. Remainder not automatically marked reviewed."
+      "x4_evidence": "X4 scoped path at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; 144-236 host/delivery id guards, 436-506 status/bridge smoke cases; source-string checks only; not run. Remainder not automatically marked reviewed.",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/test_settings_contract.py",
-      "sha": "a1e5ce7be4e87749e80694039b856f691a2528bf",
+      "sha": "9519125884b63695aa3acd16bee880faa27829c0",
       "tracking": "current",
-      "review": "not_reviewed",
-      "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 24-45 system click/source assertions, 60-74 settings owner"
+      "review": "reviewed_limited",
+      "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 24-45 system click/source assertions, 60-74 settings owner",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/test_symbol_visibility.py",
@@ -4368,49 +4599,73 @@
       "path": "scripts/verify-cantonese-ngram.swift",
       "sha": "d17a976406a410f855b7ee46418537b331bdeab1",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-chinese-input.swift",
       "sha": "ff1982d5980bdbf956d442a3d8ae8fa832e6cc1b",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-chinese-punctuation.swift",
       "sha": "d1a159e4e7c6c877921b060be0fffe04fb059dc1",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-confirmed-choice-learning.swift",
       "sha": "d3b71dbf5d6dbeaab93e7cbd04d2ff4cd4ec7a3b",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-conversation-turns.swift",
       "sha": "e723caf49da0f197cb047caef1bf46be26c11bac",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-cursor-navigation.swift",
       "sha": "6dc51af8e394c72b25b9960bc4155b0e9a8bab60",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-informal-ngram.swift",
       "sha": "df1ecf71dc7679958e5710da0fcf1f36844e9778",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-ipa-bundle.py",
       "sha": "f1347cfcd9327a229fd65236c35c9fea5890b0e6",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-key-touch-map.swift",
@@ -4424,13 +4679,19 @@
       "path": "scripts/verify-keyboard-core.swift",
       "sha": "c3edb0b27ad10be2623035316442d4c10d5c9a15",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-keyboard-document-identifier.swift",
       "sha": "80324cbd7f9eb1b2c78cd137f377966a55ee7fcb",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-keyboard-handoff.swift",
@@ -4444,13 +4705,19 @@
       "path": "scripts/verify-keyboard-host-geometry.swift",
       "sha": "c22d56ed50b18727fde8c39bd8708b4ed8fd5605",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-keyboard-layout.swift",
       "sha": "23984a2e8736d1987059b5fb3958670307ca4ea2",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-keyboard-lifecycle-timing.swift",
@@ -4472,13 +4739,19 @@
       "path": "scripts/verify-latin-speech-learning.swift",
       "sha": "a90002132083044d82998af2183389334b5e3ba4",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-latin-suggestions.swift",
       "sha": "68d671ab7e3a612ea84cc6201c0d658efad14c63",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-latin-swipe.swift",
@@ -4492,57 +4765,84 @@
       "path": "scripts/verify-letter-hold.swift",
       "sha": "89a0f1ef308ead8a4c29767bc6f6c8e5f6d786e2",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-live-dictation-notice.swift",
       "sha": "124f846b11a654c9f6b75e1e6a39fc010a3ee098",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-llm-bridge.swift",
-      "sha": "026e55b73b7990cb1173d0bb95d02c5eb0718d9b",
+      "sha": "4717ad1d36c0f95ace449fd02359e4c9a72a4a76",
       "tracking": "current",
-      "review": "not_reviewed",
-      "x4_evidence": "X4 scoped path at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; 30-131 one-slot request/status/lock contention fixture; no reentry orphan scenario asserted; not run. Remainder not automatically marked reviewed."
+      "review": "reviewed_limited",
+      "x4_evidence": "X4 scoped path at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; 30-131 one-slot request/status/lock contention fixture; no reentry orphan scenario asserted; not run. Remainder not automatically marked reviewed.",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-llm-device-policy.swift",
       "sha": "564c30b12d0b8603f6d1b7913a17df06cdec6af0",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-meeting-translation.swift",
       "sha": "2067674d1c120fb67a81a7d351fbe4b6135038c8",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-microphone-press.swift",
-      "sha": "4b6db17ec802a6d34ab904861ad4d3bf6cac6058",
+      "sha": "a0bc8dabfe7b3dc61560b8e3675c27e114df64f8",
       "tracking": "current",
-      "review": "not_reviewed",
-      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 3-49 hold policy, verified source test case startThenStop; rest out of scope; remainder not claimed reviewed"
+      "review": "reviewed_limited",
+      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 3-49 hold policy, verified source test case startThenStop; rest out of scope; remainder not claimed reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-operation-contracts.swift",
       "sha": "2d15de3646c11db5c7b70c6546301e0ebc4b818b",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-recording-policies.swift",
-      "sha": "b619910aaaa6bb9360c7d98f961871c90161d927",
+      "sha": "490ead29135552e6534a1e2bed84426e40b3e2f5",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-scheme-preference.swift",
       "sha": "42a8c708607f890b21b980ae2353a56d3a36fc0c",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-universal-cantonese.swift",
@@ -4556,25 +4856,37 @@
       "path": "scripts/verify-vocabulary-export.swift",
       "sha": "aa7aaa47582bb8ad652e3d22e143b2687417e3a4",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-voice-output-selection.swift",
       "sha": "35d3622ad4551a17c1bd28c690884d54b534b224",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-voice-punctuation.swift",
       "sha": "d2bc9fa7f8934b483fe5219913da7e555f3879b6",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-voice-script.swift",
       "sha": "651d1602af2def54051d3e465ceb8c85b30c2c90",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X11",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "pass"
     },
     {
       "path": "SayboardKeyboard/Views/ComposeModeButton.swift",
@@ -11602,11 +11914,80 @@
       "device": "not_run"
     },
     "X11": {
-      "status": "queued_blocked_until_predecessor",
-      "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "status": "104_source_dispositions_complete; native_and_physical_not_run",
+      "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "planned_paths": 104,
-      "reviewed_new": 0,
-      "queue_path": "review/full-history-20261114/review-queue.json"
+      "reviewed_new": 59,
+      "reviewed_limited": 45,
+      "pending": 0,
+      "limited_paths": [
+        ".githooks/pre-commit",
+        "SayboardTests/AppStyleStoreTests.swift",
+        "SayboardTests/ConversationTurnPolicyTests.swift",
+        "SayboardTests/CoreMLCacheSymlinkTests.swift",
+        "SayboardTests/DownloadErrorMessageTests.swift",
+        "SayboardTests/DownloadProgressThrottleTests.swift",
+        "SayboardTests/HereticModelCatalogTests.swift",
+        "SayboardTests/HostApplicationMonitorTests.swift",
+        "SayboardTests/HostResolutionTests.swift",
+        "SayboardTests/KeyboardHostInputTraitsTests.swift",
+        "SayboardTests/LLMGenerationBudgetTests.swift",
+        "SayboardTests/LLMModelEntryTests.swift",
+        "SayboardTests/LLMModelVariantCatalogTests.swift",
+        "SayboardTests/ModelEntryDiskReserveTests.swift",
+        "SayboardTests/ModelListSortKeyTests.swift",
+        "SayboardTests/ModelVariantCapabilityTests.swift",
+        "SayboardTests/ModelVariantNeuralEngineTests.swift",
+        "SayboardTests/ModelVariantRankingTests.swift",
+        "SayboardTests/NewNameNoticeTests.swift",
+        "SayboardTests/OnboardingProgressTests.swift",
+        "SayboardTests/OnboardingTextEntryTests.swift",
+        "SayboardTests/SharedSettingsDefaultsTests.swift",
+        "SayboardTests/SharedSettingsEntitlementTests.swift",
+        "SayboardTests/SharedSettingsLLMUpgradeTests.swift",
+        "SayboardTests/SharedSettingsLanguageTests.swift",
+        "SayboardTests/SharedSettingsMicHintTests.swift",
+        "SayboardTests/SpeechModelRecommendationTests.swift",
+        "SayboardTests/StoreKitConfigurationTests.swift",
+        "SayboardTests/VoiceOutputPipelineTests.swift",
+        "StoreKit/Sayboard.storekit",
+        "scripts/bootstrap-llama.sh",
+        "scripts/build-cantonese-ngrams.py",
+        "scripts/build-chinese-shapes.py",
+        "scripts/build-emoji-catalog.py",
+        "scripts/check-model-sizes.sh",
+        "scripts/lint-strings.sh",
+        "scripts/test_interface_localizations.py",
+        "scripts/test_operation_ownership.py",
+        "scripts/test_settings_contract.py",
+        "scripts/verify-keyboard-document-identifier.swift",
+        "scripts/verify-keyboard-host-geometry.swift",
+        "scripts/verify-llm-bridge.swift",
+        "scripts/verify-microphone-press.swift",
+        "scripts/verify-operation-contracts.swift",
+        "scripts/verify-recording-policies.swift"
+      ],
+      "drift_reconciled": [
+        "SayboardTests/ModelVariantRankingTests.swift",
+        "SayboardTests/SpeechModelRecommendationTests.swift",
+        "scripts/test_operation_ownership.py",
+        "scripts/test_settings_contract.py",
+        "scripts/verify-microphone-press.swift"
+      ],
+      "ci_direct_preflights": 42,
+      "ci_build_hook_source": "scripts/lint-strings.sh",
+      "native_test_files_not_run": 56,
+      "config_no_execution": [
+        ".githooks/pre-commit",
+        "StoreKit/Sayboard.storekit",
+        "scripts/check-model-sizes.sh"
+      ],
+      "known_findings": [
+        "F-0001",
+        "F-0039",
+        "F-0049"
+      ],
+      "device": "not_run"
     },
     "X12": {
       "status": "queued_blocked_until_predecessor",
@@ -11634,12 +12015,12 @@
   "counts": {
     "current_total": 578,
     "historical_only": 14,
-    "reviewed": 263,
+    "reviewed": 322,
     "excluded": 166,
-    "not_reviewed": 118,
+    "not_reviewed": 14,
     "known_changed_path_occurrences": 983,
     "known_unique_changed_paths": 336,
-    "reviewed_limited": 45
+    "reviewed_limited": 90
   },
   "rule": "A file is reviewed only after whole-file read and material caller/consumer + exact source SHA and test oracle. Queued/excluded paths are not cleared without type-appropriate evidence; historic source requires a genuine old commit. Binary content not inspected must be explicitly reviewed_limited or blocked.",
   "current_snapshot": {
@@ -11668,5 +12049,6 @@
     "latest_actions_status_observed": "completed_success",
     "last_verified_successful_actions": 245,
     "consumer_changes_owned_by": "X8"
-  }
+  },
+  "x11_live_tree_blobs": 583
 }

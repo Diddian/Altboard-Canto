@@ -1,7 +1,7 @@
 {
   "schema_version": "untangle-ocr-findings/v1",
   "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
-  "status": "48 deduplicated source findings; X10 77/77 dispositions, device and native tests not_run",
+  "status": "49 deduplicated source findings; X11 104/104 source dispositions; native @Test and iPhone not_run.",
   "findings": [
     {
       "id": "F-0001",
@@ -39,6 +39,18 @@
         {
           "source": "https://github.com/Diddian/Altboard-Canto/actions/runs/43415392921",
           "observation": "Build #231 source-string assertion failed in job 131851954137."
+        },
+        {
+          "path": "scripts/test_operation_ownership.py",
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "lines": "78-90,346-363",
+          "observation": "Current code still compares exact textual fragments in warm-session and cold-start guards; the earlier brittle-test mechanism persists."
+        },
+        {
+          "path": "scripts/test_settings_contract.py",
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "lines": "221-238",
+          "observation": "Current test asserts literal first-window retry, source comments and '&& retryCount == 0'; this is source text, not an executed iPhone handshake."
         }
       ],
       "scenario": "Build #229 and #231 failed pre-Xcode source-inspection test assertions. #229 expected a specific cold deep-link call in a method; #231 expected settings.isSessionActive) && retryCount == 0. Both failed even though implementation moved or split guards.",
@@ -49,7 +61,8 @@
       "verification": [
         "Build #229 job 131850551054: 44 tests, one assertion failure in test_cold_and_warm_microphone_share_one_request_owner.",
         "Build #231 job 131851954137: 70 tests, one assertion failure in test_conversation_reuses_selected_first_window_and_preserves_preview.",
-        "Build #232 success only; code/runtime behavior not accepted."
+        "Build #232 success only; code/runtime behavior not accepted.",
+        "Build #245 succeeded at 5bad88df03a44c319f2fba8a0fd6ae67d79f681d with source assertion suites; historical #229/#231 failures remain evidence of brittleness, not a newly observed #245 failure."
       ],
       "origin": "H-001",
       "assigned_stage": "X7/X8",
@@ -1834,7 +1847,7 @@
       "review_priority": "P0",
       "area": "ci_test_execution",
       "first_detected_build": 235,
-      "last_affected_build": 236,
+      "last_affected_build": 245,
       "paths": [
         ".github/workflows/build-unsigned-ipa.yml",
         "project.yml",
@@ -1862,6 +1875,28 @@
         {
           "source": "https://github.com/Diddian/Altboard-Canto/actions/runs/43629599094",
           "observation": "Build #236 completed compile, packaging and artifact upload; no native SayboardTests execution was reported."
+        },
+        {
+          "path": ".github/workflows/build-unsigned-ipa.yml",
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "lines": "305-329",
+          "observation": "The single Actions job executes xcodebuild -scheme Sayboard ... build; no xcodebuild test/test-without-building in this workflow."
+        },
+        {
+          "path": "project.yml",
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "lines": "88-106,143-160",
+          "observation": "SayboardTests unit-test target is present in Sayboard scheme test configuration; build action does not prove test compilation or @Test execution."
+        },
+        {
+          "path": "SayboardTests/LiveInsertionReceiptTests.swift",
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "lines": "1-34",
+          "observation": "Native receipt @Test cases exist, but run #245 did not execute the test scheme."
+        },
+        {
+          "source": "https://github.com/Diddian/Altboard-Canto/actions/runs/43895710585",
+          "observation": "Build #245 completed success at 5bad88df03a44c319f2fba8a0fd6ae67d79f681d without native @Test execution; 42 direct assigned CI preflight scripts plus one configured lint build hook were distinguished from 56 native test files."
         }
       ],
       "scenario": "Swift @Test regression fails but GitHub Actions still publishes a successful unsigned TEST IPA, because only source/policy smoke tests and Xcode build run.",
@@ -1871,7 +1906,8 @@
       "regression_oracle": "Run a deterministic native @Test positive and deliberate negative case on supported runtime. Verify failure prevents acceptance and normal pass succeeds. Keep SideStore device test separate.",
       "verification": [
         "Workflow and target source inspected at c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
-        "Build #236 run 43629599094 succeeded, but no native xcodebuild test gate; executable native @Test remains not_run."
+        "Build #236 run 43629599094 succeeded, but no native xcodebuild test gate; executable native @Test remains not_run.",
+        "Run #245 success is an unsigned iOS build and preflight result; native SayboardTests unexecuted and test-target compilation not independently demonstrated."
       ],
       "origin": "X0-X8 independent test-execution audit",
       "assigned_stage": "X11/X14"
@@ -2249,6 +2285,39 @@
       ],
       "origin": "X10/manual-GitHub-source",
       "assigned_stage": "X8"
+    },
+    {
+      "id": "F-0049",
+      "severity": "medium",
+      "state": "confirmed_source_validation_gap",
+      "review_priority": "P1",
+      "area": "build_dependency_integrity",
+      "first_detected_build": 245,
+      "last_affected_build": 245,
+      "paths": [
+        "scripts/bootstrap-llama.sh",
+        "Shared/LlamaRuntime.swift",
+        ".github/workflows/build-unsigned-ipa.yml"
+      ],
+      "line_evidence": [
+        {
+          "path": "scripts/bootstrap-llama.sh",
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "lines": "13-32,34-48",
+          "observation": "Bootstrap resolves a versioned GitHub release URL but accepts any existing llama.xcframework directory immediately, with no version/hash check; curl/unzip path has no pinned archive checksum."
+        }
+      ],
+      "scenario": "A preexisting wrong-version or incomplete llama.xcframework directory can make the bootstrap step report success; a downloaded archive is not authenticated against a pinned digest.",
+      "causal_chain": "Exists-directory shortcut or unverified release artifact -> runtime build/version mismatch or modified dependencies not detected at bootstrap; downstream build may fail or reuse wrong binary. No tampering or device failure observed.",
+      "root_owner": "scripts/bootstrap-llama.sh (and its existing workflow caller)",
+      "smallest_repair": "Within X8-authorized repair only, validate expected build identity and pinned digest/manifest for the downloaded XCFramework and cached path; reject mismatches without changing the single workflow.",
+      "regression_oracle": "Fixture with stale/wrong-version framework and a corrupt/truncated zip must fail bootstrap; valid pinned binary succeeds; no new IPA workflow.",
+      "verification": [
+        "Whole bootstrap source inspected at 5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+        "Build #245 passed bootstrap but neither corruption nor mismatch negative fixture was executed."
+      ],
+      "origin": "X11 full script audit",
+      "assigned_stage": "X11/X8"
     }
   ],
   "categories": [

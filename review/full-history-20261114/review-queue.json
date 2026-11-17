@@ -2,7 +2,7 @@
   "schema_version": "altboard-review-queue/v1",
   "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
   "historical_source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
-  "status": "X9 complete; X10 77/77 source dispositions (35 reviewed, 42 reviewed_limited); native/iPhone tests not_run",
+  "status": "X11 104/104 source dispositions (59 reviewed, 45 reviewed_limited); 56 native test files not executed; device tests not_run.",
   "definition": "Each entry is a review obligation, NOT a completed review. Previously excluded files must be inspected with the appropriate evidence depth.",
   "counts": {
     "total": 426,
@@ -44,10 +44,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "2cb47329b4fb98aff964d7bfd04c752c03fd994d",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; local hook or StoreKit test fixture. No #245 test invocation established for this file. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run local hook on deliberately misformatted staged Swift file; confirm absence from Actions is not treated as enforcement.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2235,11 +2245,21 @@
       "stage": "X11",
       "provisional_priority": "P0",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "c1eccd660b3a272e9bcab08e0b2e5cd9ac3e8d35",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; signed App Group entitlement. Run #245 codesign and embedded App Group inspection passed; real OS entitlement access not tested.",
+          "negative_oracle": "Confirm host/extension App Group access and microphone recovery after SideStore install on device; inspect signed entitlements and negative mismatched group.",
+          "ci_result": "pass_packaging_only",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "Sayboard/Services/AppSearchService.swift",
@@ -4129,11 +4149,21 @@
       "stage": "X11",
       "provisional_priority": "P0",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "dcfbb7ba4aea8e570a327cadb09e4ae8327deaa7",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; signed App Group entitlement. Run #245 codesign and embedded App Group inspection passed; real OS entitlement access not tested.",
+          "negative_oracle": "Confirm host/extension App Group access and microphone recovery after SideStore install on device; inspect signed entitlements and negative mismatched group.",
+          "ci_result": "pass_packaging_only",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "SayboardKeyboard/Views/BlockerPrompt.swift",
@@ -4600,10 +4630,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "7fdcb18288d2a63da615a34c3e66fb228c3531cc",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for AIButtonOfferTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4615,10 +4655,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "248588026eccb2a061ba00bfd7c68dfb0dfaab5b",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for AppLanguageConfigTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4630,10 +4680,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "f41bb96649db8f6fd67e3dfadcc6f060ccc6736b",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for AppStyleStoreTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4645,10 +4705,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "f1d1ad0f6c907b633abdf985a15094e43ead47d4",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for CantoneseCorrectionsTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4660,10 +4730,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "eb893eb6e00504ac558671406c7b964136661a69",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for CantoneseSyllableEditingTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4675,10 +4755,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "f5c5d5da1277ec5d81619fe5e3e2dad3af47dc27",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for ChatTemplateTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4690,10 +4780,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "5493ae345b6463a78d272b18a5eb4690e2cdaeaa",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for ChinesePunctuationPolicyTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4705,10 +4805,20 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "cf87af198a0a699d3630b84298f5cf0236f9a48e",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for ConversationTurnPolicyTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4720,10 +4830,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "219645b14fd7a3a85a0bc0fe4bed158c8459c1e2",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for CoreMLCacheSymlinkTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4735,10 +4855,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "5bd40b81b498f967f4f3dffe4b2d6fa2a6a9bf3c",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for CursorLineNavigationTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4750,10 +4880,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "29b7d7a974ade3caf9e3eb2f34d4e7ab1fde0f95",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for DictationAllowanceTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4765,10 +4905,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "d4df5f8ad93e89e8ddb1b7fec89d7a589017f4bc",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for DictationSpacingTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4780,10 +4930,20 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "dd29acedd950f0c47f3a3d191b2bae5d38f3db65",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for DownloadErrorMessageTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4795,10 +4955,20 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "931c3d3f1d95b1994e330f149c132d8a82226edc",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for DownloadProgressThrottleTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4810,10 +4980,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "248067ab41ddd67a6ec42699f7d0ce1ce7d8d415",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for EnglishCaseSuggestionTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4825,10 +5005,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "2c3225e281a3cd530896be3691d9335a9b593727",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for EntitlementResolverTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4840,10 +5030,20 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "3b204dc3d2eb724401cc65d5bf0cdf49664b6e13",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for HereticModelCatalogTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4855,10 +5055,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "d7073a96d698e0a3593df9275d58f09be667d390",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for HostApplicationMonitorTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4870,10 +5080,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "10ca1d3a9213b3df5e36022b7793ad2da8207474",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for HostResolutionTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4885,10 +5105,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "00fcb2e409d81cc22b2cdab85fd217d019d15148",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for JyutpingCompositionTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4900,10 +5130,20 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "906e2ea0dc6cdb31541698cb3a1b9b5bf0fa1708",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for KeyboardHostInputTraitsTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4915,10 +5155,20 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "081d76bd97a8381cd6b4be4763e0acf6f85432ac",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for LLMGenerationBudgetTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4930,10 +5180,20 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "4f0d3a4705ef451a22be1ab1aa9b408af2407036",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for LLMModelEntryTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4945,10 +5205,20 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "e564cec4a59af23ff9e70d103351cf01a558efb0",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for LLMModelVariantCatalogTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4960,10 +5230,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "a88c77f7e98eafa8f17aab8acddd03748cb0c055",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for LatinWordSuggestionPolicyTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4975,10 +5255,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "5a89c313d3fd119996e5bfd59685ab0d6835e44c",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for LegacyPurchaseRuleTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -4990,10 +5280,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "65c3114fadae1502e11f41a70386fe97e8eaa084",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for LetterKeyAlternatesTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5005,10 +5305,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "989bc7d9514b9b18631608d77cf3459e23d0e3e8",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for LiveCantoneseSafetyTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5020,10 +5330,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "b117d50aac14b9b498a281517bd64a87acd83fe6",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for MegabyteUnitTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5035,10 +5355,20 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "f938b2b4457e5dacfa42d6d4904c5f60e358e821",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for ModelEntryDiskReserveTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5050,10 +5380,20 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "04f1739af734b97be2d94bbcc724dbb5711c4bcf",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for ModelListSortKeyTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5065,10 +5405,20 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "9a1b8da99ac095c3d505ee7bf5e665ce4b141119",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for ModelVariantCapabilityTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5080,10 +5430,20 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "9f471956f88efdc7d6644f7db5144046bb1d256f",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for ModelVariantNeuralEngineTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5091,14 +5451,24 @@
       "original_tracking": "current",
       "original_disposition": "not_reviewed",
       "baseline_blob_sha": "2b611a0f0cd3aee77de8369423b14f3e6f506a33",
-      "main_blob_sha": "2b611a0f0cd3aee77de8369423b14f3e6f506a33",
+      "main_blob_sha": "0e9386d52395c52a9d550e3bb0e268a89aeb927d",
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "0e9386d52395c52a9d550e3bb0e268a89aeb927d",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for ModelVariantRankingTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5110,10 +5480,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "0de7edc2c4404a4ba91ecfb9e424a1d9589e286b",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for NewNameNoticeTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5125,10 +5505,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "0a66da7f7c9c6da2f93f0c348e9b6d28875737eb",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for OnboardingProgressTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5140,10 +5530,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "f10ac65cbf69df7ecc643f844bb9e942f6fa8cf4",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for OnboardingTextEntryTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5155,10 +5555,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "ce845bddeaf601c234d3f16f8404efa13ec636e6",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for ParakeetWarmUpTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5170,10 +5580,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "a047bbcad5afedca1bdc5a56c95c6c2b27f40ab6",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for PeriodShortcutTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5185,10 +5605,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "f10d27d8188d4b11cfc310f004d2c1c8223f05ec",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for SentenceCapitalizationTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5200,10 +5630,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "f185325b32121219cf356b73a9e02d5cbac33a9a",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for SetupChecklistTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5215,10 +5655,20 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "edca27b10c694a0b0a76f8194eb6a787bc8d64a5",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for SharedSettingsDefaultsTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5230,10 +5680,20 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "3a3b64e4614a49234193af8977b6f9e16f86bc83",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for SharedSettingsEntitlementTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5245,10 +5705,20 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "84d0947bb234034da1bd63d141d5928e443533c8",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for SharedSettingsLLMUpgradeTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5260,10 +5730,20 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "327d4c5b90f330d8a0c081586a21db88de5f25f9",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for SharedSettingsLanguageTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5275,10 +5755,20 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "d2805a541946115fd5cda7343c5ccf2b22fa0d82",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for SharedSettingsMicHintTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5290,10 +5780,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "85af4ad8e48cd7103f3056f3d79686baf370094d",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for SnippetExpanderTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5305,10 +5805,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "f7d7d7029825fd9685f27eb8628502ba4f377b38",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for SpeechCorrectionLearningTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5320,10 +5830,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "6c62a56ca06e0c1221f73e4b4b15d0227f39eddf",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for SpeechLanguagesTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5331,14 +5851,24 @@
       "original_tracking": "current",
       "original_disposition": "not_reviewed",
       "baseline_blob_sha": "25d2943eedb8276ad5623546812140f3ade12324",
-      "main_blob_sha": "25d2943eedb8276ad5623546812140f3ade12324",
+      "main_blob_sha": "c3caca75cd8468731277e9e25615e226909db2fb",
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "c3caca75cd8468731277e9e25615e226909db2fb",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for SpeechModelRecommendationTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5350,10 +5880,20 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "d9fcfc09f98e496092fd8e39dbe0ed4b4380a0d5",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for StoreKitConfigurationTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5365,10 +5905,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "c39a108da4627c8ee91692f3a19f48525f80cfe2",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for TechnicalTextFormatterTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5380,10 +5930,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "6c85cae30d69138898ac97ef961e32dad16c0443",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for TextSanitizerTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5395,10 +5955,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "3ce862ab6c70f2f443b4ecad20ed8b53f1e47353",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for TextStyleFormatterTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5410,10 +5980,20 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "d0d4fac7d584b81804611771dd1e590ec100d7d3",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the native @Test cases for VoiceOutputPipelineTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -5425,10 +6005,20 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "69503cefd2edff00c0272e4d0d0ca5939ad02034",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Swift Testing @Test file (test-only target). No xcodebuild test or test-without-building in run #245; target not proven compiled or executed.",
+          "negative_oracle": "Run the native @Test cases for WordCounterTests.swift on a supported simulator; verify a deliberately failing assertion fails the gate; host/device interactions remain separately not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -6216,10 +6806,20 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "724d2ae1aae6268b52b7ad0ed3b7960ff7c300ef",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; local hook or StoreKit test fixture. No #245 test invocation established for this file. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run the StoreKit test target with a supported version, include failing purchase/restore case; simulator disabled case remains not_run.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -6681,11 +7281,23 @@
       "stage": "X11",
       "provisional_priority": "P0",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
-      "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "findings": [
+        "F-0049"
+      ],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "fb79ad05f1ad6edfe33cbc4ab3b89e565b047855",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; external llama XCFramework bootstrap. Run #245 successful; existing workflow invokes scripts/bootstrap-llama.sh in CI.  Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Place a stale/wrong-version or truncated existing XCFramework and require a fail-closed check; verify pinned download digest and version.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/build-cantonese-ngrams.py",
@@ -6696,11 +7308,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "647de7057c2a224765dfa7421aabaf788a8caa69",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; offline lexicon/resource generator. Run #245 successful; existing workflow invokes scripts/build-cantonese-ngrams.py in CI.  Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Negative/fault fixture for build-cantonese-ngrams.py must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/build-chinese-shapes.py",
@@ -6711,11 +7333,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "d059e06267eaed2056b65d153d051d1830c7f92f",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; offline lexicon/resource generator. Run #245 successful; existing workflow invokes scripts/build-chinese-shapes.py in CI.  Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Negative/fault fixture for build-chinese-shapes.py must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/build-emoji-catalog.py",
@@ -6726,11 +7358,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "6a860f0875e551633089f099705090215ed15d68",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; offline lexicon/resource generator. Run #245 successful; existing workflow invokes scripts/build-emoji-catalog.py in CI.  Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Negative/fault fixture for build-emoji-catalog.py must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/build-informal-ngrams.py",
@@ -6741,11 +7383,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "9284adc4299899f3c36d67b822f42b807c405a6c",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; offline lexicon/resource generator. Run #245 successful; existing workflow invokes scripts/build-informal-ngrams.py in CI. ",
+          "negative_oracle": "Negative/fault fixture for build-informal-ngrams.py must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/cantonese-phrases.tsv",
@@ -6771,11 +7423,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "af506af6d0283ba7bdcbd00ccb58c3499f395a25",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; configuration or script. Run #245 successful; existing workflow invokes scripts/check-app-structure.py in CI. ",
+          "negative_oracle": "Negative/fault fixture for check-app-structure.py must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/check-model-sizes.sh",
@@ -6786,10 +7448,20 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "5aa7240815ef734cade80c88b663e78f6c43be39",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; manual remote model-size verifier. No #245 test invocation established for this file. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Run --declared and live manifest checks with missing entries and mismatched model sizes; not invoked in Build #245.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -6981,10 +7653,20 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "aa478b06b7b42519a15ef2bb021054d117b15fbe",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; post-compile localization linter. Referenced by project.yml postCompileScripts; standalone execution log not checked. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Negative/fault fixture for lint-strings.sh must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "not_proven_executed",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -6996,11 +7678,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "04b4fd7e7c4f963cddc0e41c19d245a8f3719140",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Python executable test fixtures. Run #245 successful; existing workflow invokes this Python unittest pattern in CI. ",
+          "negative_oracle": "Negative/fault fixture for test_cantonese_ngrams.py must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/test_chinese_shapes.py",
@@ -7011,11 +7703,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "c8c0f6ea06076baeadbb8ff5c835cccc5df923ba",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Python executable test fixtures. Run #245 successful; existing workflow invokes this Python unittest pattern in CI. ",
+          "negative_oracle": "Negative/fault fixture for test_chinese_shapes.py must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/test_hk_japanese_lexicon.py",
@@ -7026,11 +7728,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "481b5da4323231b5ff71b9a710c20bcd6592055c",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Python executable test fixtures. Run #245 successful; existing workflow invokes this Python unittest pattern in CI. ",
+          "negative_oracle": "Negative/fault fixture for test_hk_japanese_lexicon.py must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/test_informal_ngrams.py",
@@ -7041,11 +7753,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "164ce591bbf15a9088608da19b2fc12c532b4724",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Python executable test fixtures. Run #245 successful; existing workflow invokes this Python unittest pattern in CI. ",
+          "negative_oracle": "Negative/fault fixture for test_informal_ngrams.py must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/test_interface_localizations.py",
@@ -7056,11 +7778,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "6e535479ec53caede1cbc41d7a5b61f8c0e20d13",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Python executable test fixtures. Run #245 successful; existing workflow invokes this Python unittest pattern in CI.  Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Negative/fault fixture for test_interface_localizations.py must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/test_ipa_bundle.py",
@@ -7071,11 +7803,21 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "cc16d9b683bac8dd97996bd85dd6a438a1ff8d67",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Python executable test fixtures. Run #245 successful; existing workflow invokes this Python unittest pattern in CI. ",
+          "negative_oracle": "Negative/fault fixture for test_ipa_bundle.py must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/test_jyutping_yale.py",
@@ -7086,41 +7828,75 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "1b6773d2c5d568242bf406a868122e9d6abc9d4f",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; Python executable test fixtures. Run #245 successful; existing workflow invokes this Python unittest pattern in CI. ",
+          "negative_oracle": "Negative/fault fixture for test_jyutping_yale.py must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/test_operation_ownership.py",
       "original_tracking": "current",
       "original_disposition": "not_reviewed",
       "baseline_blob_sha": "d8d4ab3e104b38c9de723453d17480a5b893312a",
-      "main_blob_sha": "844038721c91428a000c2319cf6110c162cec1a6",
+      "main_blob_sha": "5790bb2f3b3108df58c2ff06f4a64b06dd2cbcde",
       "stage": "X11",
       "provisional_priority": "P0",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
-      "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "findings": [
+        "F-0001"
+      ],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "5790bb2f3b3108df58c2ff06f4a64b06dd2cbcde",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Python source-string assertion suite. Run #245 successful; existing workflow invokes this Python unittest pattern in CI. This inspects Swift source fragments, not live state transitions. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Refactor an equivalent Swift guard without changing behavior and ensure CI does not spuriously fail; inject wrong-owner, canceled, and stale-session states into executable tests.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/test_settings_contract.py",
       "original_tracking": "current",
       "original_disposition": "not_reviewed",
       "baseline_blob_sha": "a1e5ce7be4e87749e80694039b856f691a2528bf",
-      "main_blob_sha": "e56363260b7448ff0ba67cf766bdfdeefe5e54c5",
+      "main_blob_sha": "9519125884b63695aa3acd16bee880faa27829c0",
       "stage": "X11",
       "provisional_priority": "P0",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
-      "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "findings": [
+        "F-0001"
+      ],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "9519125884b63695aa3acd16bee880faa27829c0",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; Python source-string assertion suite. Run #245 successful; existing workflow invokes this Python unittest pattern in CI. This inspects Swift source fragments, not live state transitions. Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Refactor an equivalent Swift guard without changing behavior and ensure CI does not spuriously fail; inject wrong-owner, canceled, and stale-session states into executable tests.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-cantonese-ngram.swift",
@@ -7131,11 +7907,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "d17a976406a410f855b7ee46418537b331bdeab1",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-cantonese-ngram.swift in CI. ",
+          "negative_oracle": "Negative/fault fixture for verify-cantonese-ngram.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-chinese-input.swift",
@@ -7146,11 +7932,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "ff1982d5980bdbf956d442a3d8ae8fa832e6cc1b",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-chinese-input.swift in CI. ",
+          "negative_oracle": "Negative/fault fixture for verify-chinese-input.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-chinese-punctuation.swift",
@@ -7161,11 +7957,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "d1a159e4e7c6c877921b060be0fffe04fb059dc1",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-chinese-punctuation.swift in CI. ",
+          "negative_oracle": "Negative/fault fixture for verify-chinese-punctuation.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-confirmed-choice-learning.swift",
@@ -7176,11 +7982,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "d3b71dbf5d6dbeaab93e7cbd04d2ff4cd4ec7a3b",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-confirmed-choice-learning.swift in CI. ",
+          "negative_oracle": "Negative/fault fixture for verify-confirmed-choice-learning.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-conversation-turns.swift",
@@ -7191,11 +8007,21 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "e723caf49da0f197cb047caef1bf46be26c11bac",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-conversation-turns.swift in CI. ",
+          "negative_oracle": "Negative/fault fixture for verify-conversation-turns.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-cursor-navigation.swift",
@@ -7206,11 +8032,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "6dc51af8e394c72b25b9960bc4155b0e9a8bab60",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-cursor-navigation.swift in CI. ",
+          "negative_oracle": "Negative/fault fixture for verify-cursor-navigation.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-informal-ngram.swift",
@@ -7221,11 +8057,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "df1ecf71dc7679958e5710da0fcf1f36844e9778",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-informal-ngram.swift in CI. ",
+          "negative_oracle": "Negative/fault fixture for verify-informal-ngram.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-ipa-bundle.py",
@@ -7236,11 +8082,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "f1347cfcd9327a229fd65236c35c9fea5890b0e6",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-ipa-bundle.py in CI. ",
+          "negative_oracle": "Negative/fault fixture for verify-ipa-bundle.py must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-keyboard-core.swift",
@@ -7251,11 +8107,21 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "c3edb0b27ad10be2623035316442d4c10d5c9a15",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-keyboard-core.swift in CI. ",
+          "negative_oracle": "Negative/fault fixture for verify-keyboard-core.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-keyboard-document-identifier.swift",
@@ -7266,11 +8132,21 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "80324cbd7f9eb1b2c78cd137f377966a55ee7fcb",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-keyboard-document-identifier.swift in CI.  Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Negative/fault fixture for verify-keyboard-document-identifier.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-keyboard-host-geometry.swift",
@@ -7281,11 +8157,21 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "c22d56ed50b18727fde8c39bd8708b4ed8fd5605",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-keyboard-host-geometry.swift in CI.  Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Negative/fault fixture for verify-keyboard-host-geometry.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-keyboard-layout.swift",
@@ -7296,11 +8182,21 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "23984a2e8736d1987059b5fb3958670307ca4ea2",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-keyboard-layout.swift in CI. ",
+          "negative_oracle": "Negative/fault fixture for verify-keyboard-layout.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-latin-speech-learning.swift",
@@ -7311,11 +8207,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "a90002132083044d82998af2183389334b5e3ba4",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-latin-speech-learning.swift in CI. ",
+          "negative_oracle": "Negative/fault fixture for verify-latin-speech-learning.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-latin-suggestions.swift",
@@ -7326,11 +8232,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "68d671ab7e3a612ea84cc6201c0d658efad14c63",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-latin-suggestions.swift in CI. ",
+          "negative_oracle": "Negative/fault fixture for verify-latin-suggestions.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-letter-hold.swift",
@@ -7341,11 +8257,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "89a0f1ef308ead8a4c29767bc6f6c8e5f6d786e2",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-letter-hold.swift in CI. ",
+          "negative_oracle": "Negative/fault fixture for verify-letter-hold.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-live-dictation-notice.swift",
@@ -7356,11 +8282,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "124f846b11a654c9f6b75e1e6a39fc010a3ee098",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-live-dictation-notice.swift in CI. ",
+          "negative_oracle": "Negative/fault fixture for verify-live-dictation-notice.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-llm-bridge.swift",
@@ -7371,11 +8307,21 @@
       "stage": "X11",
       "provisional_priority": "P0",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "4717ad1d36c0f95ace449fd02359e4c9a72a4a76",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-llm-bridge.swift in CI.  Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Negative/fault fixture for verify-llm-bridge.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-llm-device-policy.swift",
@@ -7386,11 +8332,21 @@
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "564c30b12d0b8603f6d1b7913a17df06cdec6af0",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-llm-device-policy.swift in CI. ",
+          "negative_oracle": "Negative/fault fixture for verify-llm-device-policy.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-meeting-translation.swift",
@@ -7401,26 +8357,46 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "2067674d1c120fb67a81a7d351fbe4b6135038c8",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-meeting-translation.swift in CI. ",
+          "negative_oracle": "Negative/fault fixture for verify-meeting-translation.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-microphone-press.swift",
       "original_tracking": "current",
       "original_disposition": "not_reviewed",
       "baseline_blob_sha": "4b6db17ec802a6d34ab904861ad4d3bf6cac6058",
-      "main_blob_sha": "f0921eafaa428c3646a944becab40fc74876394b",
+      "main_blob_sha": "a0bc8dabfe7b3dc61560b8e3675c27e114df64f8",
       "stage": "X11",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "a0bc8dabfe7b3dc61560b8e3675c27e114df64f8",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-microphone-press.swift in CI.  Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Negative/fault fixture for verify-microphone-press.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-operation-contracts.swift",
@@ -7431,11 +8407,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "2d15de3646c11db5c7b70c6546301e0ebc4b818b",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-operation-contracts.swift in CI.  Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Negative/fault fixture for verify-operation-contracts.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-recording-policies.swift",
@@ -7446,11 +8432,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "490ead29135552e6534a1e2bed84426e40b3e2f5",
+          "content_review": "whole_file_read_cross_boundary_or_negative_cases_limited",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-recording-policies.swift in CI.  Dependent consumer, fault injection or native runtime proof remains limited.",
+          "negative_oracle": "Negative/fault fixture for verify-recording-policies.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-scheme-preference.swift",
@@ -7461,11 +8457,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "42a8c708607f890b21b980ae2353a56d3a36fc0c",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-scheme-preference.swift in CI. ",
+          "negative_oracle": "Negative/fault fixture for verify-scheme-preference.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-vocabulary-export.swift",
@@ -7476,11 +8482,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "aa7aaa47582bb8ad652e3d22e143b2687417e3a4",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-vocabulary-export.swift in CI. ",
+          "negative_oracle": "Negative/fault fixture for verify-vocabulary-export.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-voice-output-selection.swift",
@@ -7491,11 +8507,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "35d3622ad4551a17c1bd28c690884d54b534b224",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-voice-output-selection.swift in CI. ",
+          "negative_oracle": "Negative/fault fixture for verify-voice-output-selection.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-voice-punctuation.swift",
@@ -7506,11 +8532,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "d2bc9fa7f8934b483fe5219913da7e555f3879b6",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-voice-punctuation.swift in CI. ",
+          "negative_oracle": "Negative/fault fixture for verify-voice-punctuation.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "scripts/verify-voice-script.swift",
@@ -7521,11 +8557,21 @@
       "stage": "X11",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "651d1602af2def54051d3e465ceb8c85b30c2c90",
+          "content_review": "whole_file_read_scoped_test_owner_and_fail_path",
+          "observation": "Whole file retrieved at 5bad88df03a4; standalone Swift policy verifier / IPA validator. Run #245 successful; existing workflow invokes scripts/verify-voice-script.swift in CI. ",
+          "negative_oracle": "Negative/fault fixture for verify-voice-script.swift must fail; verify consumers and device boundaries where relevant.",
+          "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "pass"
     },
     {
       "path": "SayboardKeyboard/Views/ComposeModeButton.swift",
@@ -7739,10 +8785,10 @@
     }
   ],
   "review_progress": {
-    "reviewed": 97,
-    "pending": 284,
+    "reviewed": 156,
+    "pending": 180,
     "blocked": 0,
-    "limited": 45,
+    "limited": 90,
     "by_stage": {
       "X9": {
         "reviewed": 62,
@@ -7755,8 +8801,9 @@
         "limited": 42
       },
       "X11": {
-        "reviewed": 0,
-        "pending": 104
+        "reviewed": 59,
+        "limited": 45,
+        "pending": 0
       },
       "X12": {
         "reviewed": 0,

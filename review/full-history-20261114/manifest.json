@@ -19,8 +19,8 @@
     "live_main_tree_blobs": 583
   },
   "lifecycle": {
-    "phase": "X8_in_progress_X9_X10_review_complete_X11_waiting",
-    "next_stage": "X11 (requires explicit user/coordination START)",
+    "phase": "X8_in_progress_X9_X10_X11_review_complete_X12_waiting",
+    "next_stage": "X12 (requires explicit START after coordinator verifies X11)",
     "statuses": {
       "X0": "complete",
       "X1": "complete",
@@ -33,7 +33,7 @@
       "X8": "in_progress",
       "X9": "complete",
       "X10": "complete",
-      "X11": "blocked",
+      "X11": "complete",
       "X12": "blocked",
       "X13": "blocked",
       "X14": "blocked",
@@ -118,6 +118,77 @@
         "SayboardKeyboard/Views/SayboardWordmark.swift",
         "SayboardKeyboard/Views/SpinnerMorphAnimation.swift",
         "SayboardKeyboard/Views/SpinnerMorphFrames.swift"
+      ]
+    },
+    "x11_progress": {
+      "reviewed": 59,
+      "reviewed_limited": 45,
+      "pending": 0,
+      "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "checkpoint_date": "2026-11-17",
+      "new_findings": [
+        "F-0049"
+      ],
+      "reconciled_findings": [
+        "F-0001",
+        "F-0039"
+      ],
+      "drift_reconciled": [
+        "SayboardTests/ModelVariantRankingTests.swift",
+        "SayboardTests/SpeechModelRecommendationTests.swift",
+        "scripts/test_operation_ownership.py",
+        "scripts/test_settings_contract.py",
+        "scripts/verify-microphone-press.swift"
+      ],
+      "native_test_files_unexecuted": 56,
+      "ci_assigned_scripts_invoked": 42,
+      "device_acceptance": "not_run",
+      "limited_paths": [
+        ".githooks/pre-commit",
+        "SayboardTests/AppStyleStoreTests.swift",
+        "SayboardTests/ConversationTurnPolicyTests.swift",
+        "SayboardTests/CoreMLCacheSymlinkTests.swift",
+        "SayboardTests/DownloadErrorMessageTests.swift",
+        "SayboardTests/DownloadProgressThrottleTests.swift",
+        "SayboardTests/HereticModelCatalogTests.swift",
+        "SayboardTests/HostApplicationMonitorTests.swift",
+        "SayboardTests/HostResolutionTests.swift",
+        "SayboardTests/KeyboardHostInputTraitsTests.swift",
+        "SayboardTests/LLMGenerationBudgetTests.swift",
+        "SayboardTests/LLMModelEntryTests.swift",
+        "SayboardTests/LLMModelVariantCatalogTests.swift",
+        "SayboardTests/ModelEntryDiskReserveTests.swift",
+        "SayboardTests/ModelListSortKeyTests.swift",
+        "SayboardTests/ModelVariantCapabilityTests.swift",
+        "SayboardTests/ModelVariantNeuralEngineTests.swift",
+        "SayboardTests/ModelVariantRankingTests.swift",
+        "SayboardTests/NewNameNoticeTests.swift",
+        "SayboardTests/OnboardingProgressTests.swift",
+        "SayboardTests/OnboardingTextEntryTests.swift",
+        "SayboardTests/SharedSettingsDefaultsTests.swift",
+        "SayboardTests/SharedSettingsEntitlementTests.swift",
+        "SayboardTests/SharedSettingsLLMUpgradeTests.swift",
+        "SayboardTests/SharedSettingsLanguageTests.swift",
+        "SayboardTests/SharedSettingsMicHintTests.swift",
+        "SayboardTests/SpeechModelRecommendationTests.swift",
+        "SayboardTests/StoreKitConfigurationTests.swift",
+        "SayboardTests/VoiceOutputPipelineTests.swift",
+        "StoreKit/Sayboard.storekit",
+        "scripts/bootstrap-llama.sh",
+        "scripts/build-cantonese-ngrams.py",
+        "scripts/build-chinese-shapes.py",
+        "scripts/build-emoji-catalog.py",
+        "scripts/check-model-sizes.sh",
+        "scripts/lint-strings.sh",
+        "scripts/test_interface_localizations.py",
+        "scripts/test_operation_ownership.py",
+        "scripts/test_settings_contract.py",
+        "scripts/verify-keyboard-document-identifier.swift",
+        "scripts/verify-keyboard-host-geometry.swift",
+        "scripts/verify-llm-bridge.swift",
+        "scripts/verify-microphone-press.swift",
+        "scripts/verify-operation-contracts.swift",
+        "scripts/verify-recording-policies.swift"
       ]
     }
   },
