@@ -2,12 +2,12 @@
   "schema_version": "altboard-review-stage/v1",
   "id": "X15",
   "status": "blocked",
-  "source_sha_at_review": null,
+  "source_sha_at_review": "d37d36fdf171802c12cc5b91f60c714fb9375db5",
   "review_plan_source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
-  "started_at": null,
+  "started_at": "2026-11-17",
   "finished_at": null,
   "review_mode": "Manual GitHub Untangle + manual OCR-style; external OCR CLI NOT RUN",
-  "untangle_status": "not_run",
+  "untangle_status": "Non-destructive metadata inventory prepared: 65 branch refs, 6 tag refs, 6 published releases with six IPA assets, 39 baseline audit blobs. X8/X14 acceptance remains open.",
   "assigned_count": 0,
   "review_queue": "review/full-history-20261114/review-queue.json",
   "reviewed_count": 0,
@@ -20,18 +20,34 @@
   "new_or_updated_findings": [],
   "diagram_paths": [],
   "tests": {
-    "executed": [],
+    "executed": [
+      "Verified live GitHub branch/tag/release metadata and review tree; compared main@4a762ae9 to main@d37d36fd (one commit, five modified paths)."
+    ],
     "not_run": [
-      "Whole-file content and caller/owner review for assigned queue",
-      "Device/real runtime tests where required"
+      "X8 mandatory functional and native Xcode tests",
+      "Physical iPhone/SideStore original-field, microphone, recovery and cancel acceptance",
+      "Independent binary checksums and off-repository archival",
+      "X12 localization blocked file and visually uninspected media"
     ]
   },
-  "verified_outputs": [],
-  "blocked_reasons": [
-    "X14 evidence gate open; explicit user approval for cleanup not given"
+  "verified_outputs": [
+    "review/full-history-20261114/cleanup.json",
+    "review/full-history-20261114/stages/X15.json",
+    "review/full-history-20261114/manifest.json"
   ],
-  "next_action": "Open only when predecessor is completed, reconcile latest source HEAD.",
+  "blocked_reasons": [
+    "X8 is in_progress: ten acceptance matrices have mandatory and device cases not_run; no >=90 percent completion evidence for all repairs.",
+    "X14 is in_progress: reconciled 426 queue dispositions but post-#246 LLM changes in main@d37d36fd require source-drift verification.",
+    "One localization file is blocked and 237 queue entries remain reviewed_limited; 90 MP4 videos lack visual frame review.",
+    "Native SayboardTests and physical SideStore/iPhone acceptance are not verified; #247 was in_progress at inspection.",
+    "No separate explicit authorization for deleting any branch, file, audit record, release, or artifact."
+  ],
+  "next_action": "Inventory checkpoint prepared, but archive not certified and no cleanup promotion. Await X8/X14 evidence and user-approved independent archive location; deletion requires a separate exact approval.",
   "evidence_notes": [
-    "All 0 assigned paths are queued, NOT reviewed. Original review/exclusion status is preserved in review-queue.json."
+    "Review snapshot bd74ffe8526522df07378d9212ae38c3117fb303 and main d37d36fdf171802c12cc5b91f60c714fb9375db5 checked before checkpoint. No source, release or branch changes.",
+    "Review queue 426: 188 reviewed, 237 reviewed_limited, one blocked. This is not a 90 percent acceptance score.",
+    "History index 234 run records, not proof that every Build #1-#247 IPA artifact remains downloadable.",
+    "Published six releases with six IPA assets; assets are mutable and no immutable off-repo backup is verified.",
+    "X15 stage stays blocked pending X14 and specific cleanup approval. iPhone tests not_run."
   ]
 }

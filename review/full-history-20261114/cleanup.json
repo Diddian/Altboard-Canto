@@ -1,6 +1,6 @@
 {
   "schema_version": "temporary-review-cleanup/v1",
-  "status": "blocked_pending_X8_to_X14_acceptance_and_explicit_user_approval",
+  "status": "archive_preparation_recorded_cleanup_blocked",
   "temporary_branch": "review/full-history-20261114",
   "temporary_root": "review/full-history-20261114",
   "main_must_be_preserved": true,
@@ -18,5 +18,637 @@
   "deferred_to_stage": "X15",
   "requires_explicit_user_approval": true,
   "auto_cleanup_allowed": false,
-  "next_action": "Retain all review records until X15 and separately approved cleanup. Deleting Git files does not securely erase Git history."
+  "next_action": "Retain all review records, refs and releases. Complete X8/X14, verify latest main/Actions, agree on a durable binary archive location if needed. No deletion without separate approval.",
+  "archive_preparation": {
+    "prepared_at": "2026-11-17",
+    "phase": "non_destructive_inventory_checkpoint_only",
+    "source_main_sha": "d37d36fdf171802c12cc5b91f60c714fb9375db5",
+    "review_baseline": {
+      "branch": "review/full-history-20261114",
+      "head_sha": "bd74ffe8526522df07378d9212ae38c3117fb303",
+      "tree_sha": "b867c4395bf293c2b76bf19fa21d7c5b526e4a41"
+    },
+    "branch_inventory": {
+      "snapshot_count": 65,
+      "as_of_review_preparation": true,
+      "entries": [
+        {
+          "name": "backup/build-142-before-136-loading-experiment",
+          "sha": "820ce72b30787f93597887b278cdf3c877aee49b"
+        },
+        {
+          "name": "backup/build-148-20261106",
+          "sha": "ef613e066ad42b08f02667f97dcbc93359f328b9"
+        },
+        {
+          "name": "chore/audit-hygiene-swipe-plan-20261102",
+          "sha": "1b3c2c4d3fcfddf318e7a5468173a76c7b5c23ee"
+        },
+        {
+          "name": "chore/settings-audit-tree-20261102",
+          "sha": "d3a1541de1761c6706db59c0c7de31e17d91e97e"
+        },
+        {
+          "name": "docs/chat-mode-workspace-20261103",
+          "sha": "7583397ae7c1a28233fce7ce9d278e3999897977"
+        },
+        {
+          "name": "docs/roadmap-after-swipe-before-live-20261102",
+          "sha": "65bf43b570849d6c29f2b7720ddffecb9cac5f30"
+        },
+        {
+          "name": "feat/canto-dictation-lifecycle-20261101",
+          "sha": "57d5bf4b9cf40ebcb321d464db45b40200302552"
+        },
+        {
+          "name": "feat/cantonese-ime-full-emoji-20261102",
+          "sha": "e0c1901d5202014809fd22a2e4eb92be6dff4bfa"
+        },
+        {
+          "name": "feat/cantonese-qwen3-offline-mvp",
+          "sha": "b4c8c50dcf3f4b7a9785840773819a2719f27326"
+        },
+        {
+          "name": "feat/combined-qa-system-emoji-swipe-20261102",
+          "sha": "26dc7cdc30e346a2d3f428f8be600d1e912fa573"
+        },
+        {
+          "name": "feat/compose-emoji-keyboard-ux",
+          "sha": "e8b257155bb9c086627d3e98fe628c62256686ff"
+        },
+        {
+          "name": "feat/compose-style-return-audit",
+          "sha": "57d5bf4b9cf40ebcb321d464db45b40200302552"
+        },
+        {
+          "name": "feat/consistent-confirmed-learning-20261104",
+          "sha": "4199fddca71c3e2281cf65a24458d0d227e2e949"
+        },
+        {
+          "name": "feat/curated-multilingual-ngrams-20261104",
+          "sha": "bc84a90ffe9fd307bcee114638fe92de3ed86c0a"
+        },
+        {
+          "name": "feat/fixed-keyboard-settings-20261102",
+          "sha": "db687a77984790605c7b0fe5d5d2068fbb8cb5af"
+        },
+        {
+          "name": "feat/initial-keys-settings-meetings-20261105",
+          "sha": "c8f91ea5afdad97c408307c936658e286995b757"
+        },
+        {
+          "name": "feat/instant-controls-manual-ai-voice-warning-20261102",
+          "sha": "471ffeda13e315329a5acb4158215992c3cb4bbe"
+        },
+        {
+          "name": "feat/instant-input-ai-swipe-20261102",
+          "sha": "8c1d6b22ef55b30e7c52940374fc0f377924a37e"
+        },
+        {
+          "name": "feat/live-yale-haptics-diagnostics-20261102",
+          "sha": "32d699eb06cf74a26577b91e298c22ab2db6990f"
+        },
+        {
+          "name": "feat/mic-first-voice-state-machine",
+          "sha": "57d5bf4b9cf40ebcb321d464db45b40200302552"
+        },
+        {
+          "name": "feat/native-keyboard-diagnostics-yale-20261102",
+          "sha": "b4c8c50dcf3f4b7a9785840773819a2719f27326"
+        },
+        {
+          "name": "feat/swipe-trail-emoji-native-parity-20261102",
+          "sha": "9b6df866ba00812c904e78a2ff3f675cc95da645"
+        },
+        {
+          "name": "feat/voice-compose-emoji-ux",
+          "sha": "d3731d4d23ada896c52873a552cbc29f6fa09d26"
+        },
+        {
+          "name": "fix/ae-async-diagnostics-test-20261111",
+          "sha": "bccc93a2fcbc4eec87ff8b077c0c3a583493acb6"
+        },
+        {
+          "name": "fix/ae-bounded-inference-contract-20261111",
+          "sha": "302228dc7e644e924514dda20fc0dd6b2e6901f3"
+        },
+        {
+          "name": "fix/ae-test-field-ownership-contract-20261111",
+          "sha": "962ee62384df2d8e44b8365dcb1c7f3d29eba757"
+        },
+        {
+          "name": "fix/ae-translation-owner-assertions-20261111",
+          "sha": "47c3e407631288be6019d92d2c1291d5528fc3be"
+        },
+        {
+          "name": "fix/ae-translation-test-target-owner-20261111",
+          "sha": "5f71e12cdb69ef550d6b457c719a334c111a41ba"
+        },
+        {
+          "name": "fix/build136-build84-keyboard-loading",
+          "sha": "cca6aca22602a6326739525923121ffb9d68ed18"
+        },
+        {
+          "name": "fix/build210-mic-compiler",
+          "sha": "122bb27f2ec28b3d12c347eb743fcc02a9967709"
+        },
+        {
+          "name": "fix/build211-missing-brace",
+          "sha": "b73bd0dbd0024c466efe8df5b5848efbde69cdb6"
+        },
+        {
+          "name": "fix/cold-dictation-emoji-stability-20261112",
+          "sha": "5fb4944fcbced99d9c0f9b7caa31595151fa6ebf"
+        },
+        {
+          "name": "fix/cold-qwen-session-20261113",
+          "sha": "243e844ca82069e86960bf011e8708cf090ed336"
+        },
+        {
+          "name": "fix/deep-audit-safety-20261104",
+          "sha": "818a4dad4545858250ea99cc028791a429a22940"
+        },
+        {
+          "name": "fix/dictation-auto-insert-no-ui-20261112",
+          "sha": "60f9571d73177ae64b2f7dd98e74d04574941f60"
+        },
+        {
+          "name": "fix/haptic-core-canto-ime-20261102",
+          "sha": "c6673851b63b3be830af9a40a25dd8591f6cdbd3"
+        },
+        {
+          "name": "fix/haptics-warm-session-diagnostics-20261113",
+          "sha": "ddec23880340da7bc35a20b2ff87ac97897610b9"
+        },
+        {
+          "name": "fix/history-focus-mic-stop-20261111",
+          "sha": "4fd840e4f6c54d9487b67b54af2366091ad9d6f2"
+        },
+        {
+          "name": "fix/instant-touchdown-highlight-20261102",
+          "sha": "471ffeda13e315329a5acb4158215992c3cb4bbe"
+        },
+        {
+          "name": "fix/integrated-live-conversation-warm-20261111",
+          "sha": "29f1d60323491e2189efef7f50b66afbeb002b8b"
+        },
+        {
+          "name": "fix/integrated-test-compiler-language-20261111",
+          "sha": "37ffd402403cc4ca2cbece8bfabdfa4d90f2c81e"
+        },
+        {
+          "name": "fix/ios-keyboard-haptics-caps-20261102",
+          "sha": "b4c8c50dcf3f4b7a9785840773819a2719f27326"
+        },
+        {
+          "name": "fix/keyboard-native-candidates-20261102",
+          "sha": "4048a14aa76671c02921e1313453010413673749"
+        },
+        {
+          "name": "fix/keyboard-rearm-lifecycle-20261111",
+          "sha": "f455bf2a5ef08e1bd8825935e977a8a9d7068837"
+        },
+        {
+          "name": "fix/keyboard-visibility-settings-20261105",
+          "sha": "183cdcdc4c9ad118a23d039901d63772a4f00869"
+        },
+        {
+          "name": "fix/learning-crosslanguage-bughunt-20261104",
+          "sha": "56866efeb018fc2afea46c54406bef48ccbc79f3"
+        },
+        {
+          "name": "fix/live-dictation-globe-gate-20261111",
+          "sha": "971a161113ec92bc5ae1f12385052c5c89e73c90"
+        },
+        {
+          "name": "fix/pending-dictation-host-delivery-20261112",
+          "sha": "ef0076c40d23fe1b3b4a782d8cf47b0a22385dd6"
+        },
+        {
+          "name": "fix/settings-translation-rendering-20261105",
+          "sha": "387e4014828126f9a0e0bf83207655d6d8cd4fd8"
+        },
+        {
+          "name": "fix/swiftui-section-footer-20261105",
+          "sha": "0ef836f5a255786c486becbcba8f2b75bd7ef528"
+        },
+        {
+          "name": "fix/v146-automatic-dictation-no-extra-ui-20261112",
+          "sha": "ef0076c40d23fe1b3b4a782d8cf47b0a22385dd6"
+        },
+        {
+          "name": "fix/voice-session-state-machine",
+          "sha": "57d5bf4b9cf40ebcb321d464db45b40200302552"
+        },
+        {
+          "name": "integrate/altboard-a-e-after-rearm-20261111",
+          "sha": "06884cda4510e581521b3464db17d4d61ad21442"
+        },
+        {
+          "name": "main",
+          "sha": "d37d36fdf171802c12cc5b91f60c714fb9375db5"
+        },
+        {
+          "name": "review/full-history-20261114",
+          "sha": "bd74ffe8526522df07378d9212ae38c3117fb303"
+        },
+        {
+          "name": "review/qa-half-wave1-20261102",
+          "sha": "4e7d6c6e7446f13551505ea694b7dbb7078cbcf0"
+        },
+        {
+          "name": "work/altboard210-a-input",
+          "sha": "8b694c293946f5a382eccf5b2217aad189864e5a"
+        },
+        {
+          "name": "work/altboard210-asr",
+          "sha": "584df9d9deef9a564137a175d17f3ebfc785727e"
+        },
+        {
+          "name": "work/altboard210-b-asr",
+          "sha": "7238d560508af7484821937a6ae692898e13537d"
+        },
+        {
+          "name": "work/altboard210-c-llm",
+          "sha": "e999984750eac699eff5ad725c57a1b93023ab01"
+        },
+        {
+          "name": "work/altboard210-d-bridge",
+          "sha": "86072da74e31a5f27372c03d699d7994637162fc"
+        },
+        {
+          "name": "work/altboard210-e-controls",
+          "sha": "109d739e68994d66b9432abcfe65abeac0253a75"
+        },
+        {
+          "name": "work/altboard210-input",
+          "sha": "584df9d9deef9a564137a175d17f3ebfc785727e"
+        },
+        {
+          "name": "work/altboard210-lifecycle",
+          "sha": "584df9d9deef9a564137a175d17f3ebfc785727e"
+        },
+        {
+          "name": "work/altboard210-translation",
+          "sha": "584df9d9deef9a564137a175d17f3ebfc785727e"
+        }
+      ]
+    },
+    "release_inventory": {
+      "snapshot_count": 6,
+      "entries": [
+        {
+          "tag": "altboard-canto-main-dev",
+          "release_id": 432134398,
+          "assets": [
+            {
+              "asset_id": 755389310,
+              "name": "Altboard-Canto-SideStore.ipa",
+              "bytes": 80518444,
+              "created_at": "2026-11-16T15:36:47Z"
+            }
+          ],
+          "published_at": "2026-11-03T00:59:00Z"
+        },
+        {
+          "tag": "altboard-canto-combined-preview",
+          "release_id": 432079338,
+          "assets": [
+            {
+              "asset_id": 703766639,
+              "name": "Altboard-Canto-SideStore.ipa",
+              "bytes": 66242358,
+              "created_at": "2026-11-03T01:02:10Z"
+            }
+          ],
+          "published_at": "2026-11-02T23:28:13Z"
+        },
+        {
+          "tag": "altboard-canto-swipe-beta",
+          "release_id": 431963334,
+          "assets": [
+            {
+              "asset_id": 703355929,
+              "name": "Altboard-Canto-SideStore.ipa",
+              "bytes": 66297214,
+              "created_at": "2026-11-02T22:15:18Z"
+            }
+          ],
+          "published_at": "2026-11-02T20:59:41Z"
+        },
+        {
+          "tag": "altboard-canto-instant-touch-preview",
+          "release_id": 431789172,
+          "assets": [
+            {
+              "asset_id": 702980547,
+              "name": "Altboard-Canto-SideStore.ipa",
+              "bytes": 61603472,
+              "created_at": "2026-11-02T19:52:03Z"
+            }
+          ],
+          "published_at": "2026-11-02T17:56:55Z"
+        },
+        {
+          "tag": "altboard-canto-fixed-preview",
+          "release_id": 431530742,
+          "assets": [
+            {
+              "asset_id": 702361012,
+              "name": "Altboard-Canto-SideStore.ipa",
+              "bytes": 61553988,
+              "created_at": "2026-11-02T16:16:38Z"
+            }
+          ],
+          "published_at": "2026-11-02T14:02:25Z"
+        },
+        {
+          "tag": "altboard-canto-dev",
+          "release_id": 430804634,
+          "assets": [
+            {
+              "asset_id": 700077576,
+              "name": "Altboard-Canto-SideStore.ipa",
+              "bytes": 61027508,
+              "created_at": "2026-11-02T01:22:49Z"
+            }
+          ],
+          "published_at": "2026-11-01T19:26:33Z"
+        }
+      ]
+    },
+    "tag_inventory": {
+      "snapshot_count": 6,
+      "entries": [
+        {
+          "name": "altboard-canto-combined-preview",
+          "sha": "26dc7cdc30e346a2d3f428f8be600d1e912fa573",
+          "type": "commit"
+        },
+        {
+          "name": "altboard-canto-dev",
+          "sha": "c6673851b63b3be830af9a40a25dd8591f6cdbd3",
+          "type": "commit"
+        },
+        {
+          "name": "altboard-canto-fixed-preview",
+          "sha": "db687a77984790605c7b0fe5d5d2068fbb8cb5af",
+          "type": "commit"
+        },
+        {
+          "name": "altboard-canto-instant-touch-preview",
+          "sha": "471ffeda13e315329a5acb4158215992c3cb4bbe",
+          "type": "commit"
+        },
+        {
+          "name": "altboard-canto-main-dev",
+          "sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "type": "commit"
+        },
+        {
+          "name": "altboard-canto-swipe-beta",
+          "sha": "8c1d6b22ef55b30e7c52940374fc0f377924a37e",
+          "type": "commit"
+        }
+      ]
+    },
+    "review_record_inventory": {
+      "snapshot_count": 39,
+      "scope": "Tracked blob entries beneath review root before X15 preparation commit; modified checkpoint files acquire new blobs in this commit",
+      "entries": [
+        {
+          "path": "review/full-history-20261114/REVIEW_COMPLETENESS_PLAN.md",
+          "blob_sha": "17d9b9638acf9ef6457e96abedbce863caabcba8",
+          "bytes": 8808
+        },
+        {
+          "path": "review/full-history-20261114/START_HERE.md",
+          "blob_sha": "d359dabcba920aef2c25900f7b6839bbfc556b58",
+          "bytes": 2408
+        },
+        {
+          "path": "review/full-history-20261114/acceptance.json",
+          "blob_sha": "ef15df0710adeb17be943bfb30a051b2768abbaf",
+          "bytes": 35709
+        },
+        {
+          "path": "review/full-history-20261114/candidate-risks.json",
+          "blob_sha": "da16b2f19e633662981c5a823043358706760e61",
+          "bytes": 4300
+        },
+        {
+          "path": "review/full-history-20261114/cleanup.json",
+          "blob_sha": "c37200bfcb0f89085968ca8d89df9eef6bd3680e",
+          "bytes": 1498
+        },
+        {
+          "path": "review/full-history-20261114/coverage.json",
+          "blob_sha": "5ab335e4cd123750326ac1ed41436f61e1cb2373",
+          "bytes": 455513
+        },
+        {
+          "path": "review/full-history-20261114/diagrams/X1-lifecycle.mmd",
+          "blob_sha": "e9fe57bab4a598ae562153209e1f18f80bbd914a",
+          "bytes": 2834
+        },
+        {
+          "path": "review/full-history-20261114/diagrams/X2-input-events.mmd",
+          "blob_sha": "2df307fd93c3f757d9ec8cff5ebe30a731f8e94e",
+          "bytes": 1619
+        },
+        {
+          "path": "review/full-history-20261114/diagrams/X3-audio-state.mmd",
+          "blob_sha": "ffa8b566e44d1d95df743a8a753db860ae50b38d",
+          "bytes": 2102
+        },
+        {
+          "path": "review/full-history-20261114/diagrams/X4-delivery-state.mmd",
+          "blob_sha": "ffbc64e815489f48122676946686d6fea3084cf2",
+          "bytes": 1811
+        },
+        {
+          "path": "review/full-history-20261114/diagrams/X5-persistence-state.mmd",
+          "blob_sha": "5b2e6d05879f51993a30fb60b12cb2b6cddc5a1d",
+          "bytes": 1713
+        },
+        {
+          "path": "review/full-history-20261114/diagrams/X6-language-routing.mmd",
+          "blob_sha": "312342366083f9dfcbef568a7cd81fd240f2474d",
+          "bytes": 1251
+        },
+        {
+          "path": "review/full-history-20261114/diagrams/X7-system-dependencies.mmd",
+          "blob_sha": "d1dfdd510a69cd18fb6cc5df02f7f98fc976b041",
+          "bytes": 1403
+        },
+        {
+          "path": "review/full-history-20261114/diagrams/X8-repaired-contracts.mmd",
+          "blob_sha": "d7602d89b07813d71e49e44ae40d54b6286c6a13",
+          "bytes": 3096
+        },
+        {
+          "path": "review/full-history-20261114/diagrams/X9-runtime-source-batch1.mmd",
+          "blob_sha": "53c79e8ea968cf1681da2eb22f9e00da7f3e2093",
+          "bytes": 756
+        },
+        {
+          "path": "review/full-history-20261114/diagrams/history.mmd",
+          "blob_sha": "7c02a339189159d962806a5abdaa8f34dff2e49c",
+          "bytes": 1111
+        },
+        {
+          "path": "review/full-history-20261114/diagrams/system-candidates.mmd",
+          "blob_sha": "6071518dceecd05f6153dff6d4c41c1ce732cc0a",
+          "bytes": 1153
+        },
+        {
+          "path": "review/full-history-20261114/diagrams/workflow.mmd",
+          "blob_sha": "3e4c99eb14ec343e8ff03726220f9f592167e208",
+          "bytes": 516
+        },
+        {
+          "path": "review/full-history-20261114/findings.json",
+          "blob_sha": "ecd07d6e64dab40725de9541d97679e833618806",
+          "bytes": 136543
+        },
+        {
+          "path": "review/full-history-20261114/history-index.json",
+          "blob_sha": "8d11f0d8b4528f032cabde4f6fd10007af2186cb",
+          "bytes": 113464
+        },
+        {
+          "path": "review/full-history-20261114/manifest.json",
+          "blob_sha": "5edc5bbe44831c39b7cb1583d2084248669fa896",
+          "bytes": 12513
+        },
+        {
+          "path": "review/full-history-20261114/review-queue.json",
+          "blob_sha": "19dc12a6ed85b26486d13c44b47ae91dd3febba1",
+          "bytes": 565287
+        },
+        {
+          "path": "review/full-history-20261114/stages.json",
+          "blob_sha": "3c286c35fa4aeb29bc935b1e6a4a59a457796cd6",
+          "bytes": 22453
+        },
+        {
+          "path": "review/full-history-20261114/stages/X0.json",
+          "blob_sha": "a2b81b604585e554ebbece5f71c4cb0f4fea0419",
+          "bytes": 2936
+        },
+        {
+          "path": "review/full-history-20261114/stages/X1.json",
+          "blob_sha": "6b8843432b55869c12f9f29eddd2b7541c663c12",
+          "bytes": 12459
+        },
+        {
+          "path": "review/full-history-20261114/stages/X10.json",
+          "blob_sha": "d9e5f79bb43b75478194cd221399fe8e4cfee4ea",
+          "bytes": 7246
+        },
+        {
+          "path": "review/full-history-20261114/stages/X11.json",
+          "blob_sha": "14718d0c3649b33f80f167a0de37bf2d8f816468",
+          "bytes": 8799
+        },
+        {
+          "path": "review/full-history-20261114/stages/X12.json",
+          "blob_sha": "89af72f829f5b2a3f3692ea72e1d2562ecf68a9a",
+          "bytes": 11872
+        },
+        {
+          "path": "review/full-history-20261114/stages/X13.json",
+          "blob_sha": "f8a652f51f7435485fe5ff019bb4b68e3aff6e63",
+          "bytes": 3818
+        },
+        {
+          "path": "review/full-history-20261114/stages/X14.json",
+          "blob_sha": "1afd1b17847cb9c59c2db55e4fef4a3b338284cc",
+          "bytes": 6176
+        },
+        {
+          "path": "review/full-history-20261114/stages/X15.json",
+          "blob_sha": "11b21a67cc19c8f26c9b6389de5860a0619a095e",
+          "bytes": 1242
+        },
+        {
+          "path": "review/full-history-20261114/stages/X2.json",
+          "blob_sha": "20cd3d312b644a22c048404a3a8194c1a926074c",
+          "bytes": 8222
+        },
+        {
+          "path": "review/full-history-20261114/stages/X3.json",
+          "blob_sha": "06ad8787bc649da48dca374ffe72a64ffa15ac0d",
+          "bytes": 16303
+        },
+        {
+          "path": "review/full-history-20261114/stages/X4.json",
+          "blob_sha": "0f662bf7664316483f611f4f6af7a492fee3d969",
+          "bytes": 11890
+        },
+        {
+          "path": "review/full-history-20261114/stages/X5.json",
+          "blob_sha": "998134c42e3d54fb3cfb83d1fcf70c375130134b",
+          "bytes": 13421
+        },
+        {
+          "path": "review/full-history-20261114/stages/X6.json",
+          "blob_sha": "ca82ed9120a8aae8f95f5821a22622b79c4d5a6b",
+          "bytes": 5154
+        },
+        {
+          "path": "review/full-history-20261114/stages/X7.json",
+          "blob_sha": "c70198a12f4ba39bce89e57108326291c3f2b260",
+          "bytes": 24817
+        },
+        {
+          "path": "review/full-history-20261114/stages/X8.json",
+          "blob_sha": "4ed9f495200c069a4bb1b46189423a3b3bdde288",
+          "bytes": 10189
+        },
+        {
+          "path": "review/full-history-20261114/stages/X9.json",
+          "blob_sha": "39b6822dfa2c8344960d00e0f44361a4bc8545b5",
+          "bytes": 7793
+        }
+      ]
+    },
+    "source_audit": {
+      "queue_total": 426,
+      "reviewed": 188,
+      "reviewed_limited": 237,
+      "blocked": 1,
+      "findings": 50,
+      "history_index_run_entries": 234,
+      "stage_X8": "in_progress",
+      "stage_X14": "in_progress"
+    },
+    "preservation_policy": {
+      "git_refs": "Keep all observed branch refs and all observed tags. No deletion, renaming, forced updates, squashing or pruning.",
+      "review_evidence": "Keep the complete review root, stages, source history index, review queue, coverage, findings, acceptance and diagrams, plus prior Git history.",
+      "ipa_releases": "Keep all six published releases and six present IPA assets; do not replace mutable release assets or delete older usable IPA.",
+      "actions": "Actions artifacts/logs may expire. This metadata inventory is not an immutable copy; separately back up still-available historical artifacts to an expressly approved private destination if permanent binary retention is required.",
+      "privacy": "Treat review ref as potentially public. Never upload raw typing, host text, audio/transcripts, credentials, private project sources or unredacted device diagnostics. No user data moved or deleted.",
+      "backup": "Git refs, review blobs and release asset presence verified at this snapshot, but no off-repository backup or full binary checksum verification was performed.",
+      "future_cleanup": "Require separate exact user approval for each proposed branch, path group, release or artifact deletion. Archiving never itself grants deletion.",
+      "git_history": "Deleting a Git file or ref does not securely erase historical objects or remote copies."
+    },
+    "gates": [
+      "X8 is in_progress: ten acceptance matrices have mandatory and device cases not_run; no >=90 percent completion evidence for all repairs.",
+      "X14 is in_progress: reconciled 426 queue dispositions but post-#246 LLM changes in main@d37d36fd require source-drift verification.",
+      "One localization file is blocked and 237 queue entries remain reviewed_limited; 90 MP4 videos lack visual frame review.",
+      "Native SayboardTests and physical SideStore/iPhone acceptance are not verified; #247 was in_progress at inspection.",
+      "No separate explicit authorization for deleting any branch, file, audit record, release, or artifact."
+    ],
+    "archival_completion": "pending_X14_acceptance_and_user_approved_durable_backup_location",
+    "cleanup_authorized": false,
+    "deletion_performed": false,
+    "tests": {
+      "metadata_inventory": "executed_against_GitHub",
+      "binary_integrity": "not_run",
+      "native_tests": "not_run",
+      "device_acceptance": "not_run",
+      "full_private_data_scan": "not_run"
+    }
+  }
 }

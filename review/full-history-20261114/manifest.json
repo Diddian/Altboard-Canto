@@ -240,6 +240,18 @@
       "corrected_x7_labels": 166,
       "supplemental_files_limited": 5,
       "status": "in_progress"
+    },
+    "x15_archive_preparation": {
+      "date": "2026-11-17",
+      "state": "metadata_inventory_checkpointed_cleanup_blocked",
+      "branch_snapshot_count": 65,
+      "tag_snapshot_count": 6,
+      "published_release_count": 6,
+      "release_asset_count": 6,
+      "review_blob_baseline_count": 39,
+      "main_snapshot_sha": "d37d36fdf171802c12cc5b91f60c714fb9375db5",
+      "review_snapshot_sha": "bd74ffe8526522df07378d9212ae38c3117fb303",
+      "remaining_gate": "X8/X14 acceptance, backup destination and separate cleanup approval"
     }
   },
   "artifacts": {
