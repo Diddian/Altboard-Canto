@@ -2394,5 +2394,29 @@
     "regression_oracle": "",
     "verification": []
   },
-  "dedup_rule": "One root-cause finding with multiple observations; evidence only. Do not add unverified candidate as confirmed finding."
+  "dedup_rule": "One root-cause finding with multiple observations; evidence only. Do not add unverified candidate as confirmed finding.",
+  "x14_reconciliation": {
+    "source_sha": "4a762ae9b8323123dff4fee23410388cf533061d",
+    "existing_findings": 50,
+    "unique_ids": 50,
+    "new_findings": 0,
+    "open_high": [
+      "F-0001",
+      "F-0008",
+      "F-0013",
+      "F-0018",
+      "F-0019",
+      "F-0020",
+      "F-0022",
+      "F-0023",
+      "F-0027",
+      "F-0028",
+      "F-0031",
+      "F-0036",
+      "F-0039",
+      "F-0044"
+    ],
+    "evidence_status": "preserved pending X8 acceptance",
+    "note": "X8 repaired F-0022/F-0023 in commit 4a762ae9b8323123dff4fee23410388cf533061d; no findings closed from source or CI preflight alone; physical and native tests not run."
+  }
 }

@@ -24,7 +24,8 @@
     "source_inspections": [
       "Compared full 592-entry historical coverage inventory with 426/426 prior queue dispositions; corrected 166 old exclusion labels retaining X7 origin.",
       "Compared 10 commits/25 changed paths from c1b3a108 to 4a762ae9b8323123dff4fee23410388cf533061d; five new files source-read as reviewed_limited; updated changed test blob.",
-      "Verified #245 prior CI success and #246 started; no native/physical test inferred."
+      "Verified #245 prior CI success and #246 started; no native/physical test inferred.",
+      "Reconciled the 50 existing distinct finding IDs; no inferred closure of F-0022/F-0023 from passing source-contract checks."
     ],
     "not_run": [
       "X8 mandatory cases including original-field and LLM recovery",
@@ -36,7 +37,9 @@
   "verified_outputs": [
     "review/full-history-20261114/coverage.json",
     "review/full-history-20261114/stages/X14.json",
-    "review/full-history-20261114/manifest.json"
+    "review/full-history-20261114/manifest.json",
+    "review/full-history-20261114/review-queue.json",
+    "review/full-history-20261114/findings.json"
   ],
   "blocked_reasons": [
     "X8 still lacks mandatory pass evidence and physical iPhone acceptance; ten task matrices remain open.",
@@ -47,7 +50,8 @@
   "evidence_notes": [
     "All 0 assigned paths are queued, NOT reviewed. Original review/exclusion status is preserved in review-queue.json.",
     "2026-11-17 preflight is NOT an X14 activation or X14 reviewed-file evidence. One-review-writer policy preserved; no production source, queue, coverage or acceptance labels changed.",
-    "X14 coverage normalized without changing canonical 426-item queue, failing tests, or finding statuses. New five-file scope is supplemental, not a retroactive pass."
+    "X14 coverage normalized without changing canonical 426-item queue, failing tests, or finding statuses. New five-file scope is supplemental, not a retroactive pass.",
+    "X14 canonical queue and findings register reconciled against main@4a762ae9b8323123dff4fee23410388cf533061d; #246 operation-contract CI step passed but complete build and iPhone unverified."
   ],
   "preflight": {
     "observed_date": "2026-11-17",

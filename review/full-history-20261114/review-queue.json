@@ -1,8 +1,8 @@
 {
   "schema_version": "altboard-review-queue/v1",
-  "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+  "source_sha": "4a762ae9b8323123dff4fee23410388cf533061d",
   "historical_source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
-  "status": "X13 14/14 historical evidence dispositions: 10 reviewed, 4 reviewed_limited; pre-existing X12 localization blocked; native/iPhone not_run.",
+  "status": "X14 queue reconciled against main@4a762ae9b8323123dff4fee23410388cf533061d: 426/426 existing dispositions preserved, 188 reviewed / 237 limited / 1 blocked, no pending. New five sources outside original queue recorded in coverage; runtime/device acceptance remains open.",
   "definition": "Each entry is a review obligation, NOT a completed review. Previously excluded files must be inspected with the appropriate evidence depth.",
   "counts": {
     "total": 426,
@@ -9847,12 +9847,12 @@
       "original_tracking": "current",
       "original_disposition": "not_reviewed",
       "baseline_blob_sha": "d8d4ab3e104b38c9de723453d17480a5b893312a",
-      "main_blob_sha": "5790bb2f3b3108df58c2ff06f4a64b06dd2cbcde",
+      "main_blob_sha": "518ec787b1504d7c4f159693cff6a641ea530c63",
       "stage": "X11",
       "provisional_priority": "P0",
       "file_kind": "config_or_other",
       "review_status": "reviewed_limited",
-      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "verified_source_sha": "4a762ae9b8323123dff4fee23410388cf533061d",
       "findings": [
         "F-0001"
       ],
@@ -9864,6 +9864,18 @@
           "observation": "Whole file retrieved at 5bad88df03a4; Python source-string assertion suite. Run #245 successful; existing workflow invokes this Python unittest pattern in CI. This inspects Swift source fragments, not live state transitions. Dependent consumer, fault injection or native runtime proof remains limited.",
           "negative_oracle": "Refactor an equivalent Swift guard without changing behavior and ensure CI does not spuriously fail; inject wrong-owner, canceled, and stale-session states into executable tests.",
           "ci_result": "pass_source_or_policy_preflight",
+          "device": "not_run"
+        },
+        {
+          "source_sha": "4a762ae9b8323123dff4fee23410388cf533061d",
+          "blob_sha": "518ec787b1504d7c4f159693cff6a641ea530c63",
+          "content_review": "full_source_read",
+          "observation": "X8 added regression for original-field fallback, manual result retention and clipboard-readback. #246 operation identity preflight step completed successfully, but native/runtime/UI tests are not proven.",
+          "consumer": "KeyboardViewController+LLM.swift",
+          "negative_oracle": "iPhone foreign field and interrupted ASR/AI must not auto paste or lose recoverable output.",
+          "test_status": "pass",
+          "ci_run_id": 44135482003,
+          "ci_job_id": 134223767909,
           "device": "not_run"
         }
       ],
@@ -11045,5 +11057,17 @@
       }
     }
   },
-  "out_of_queue_live_main_paths_delta": 5
+  "out_of_queue_live_main_paths_delta": 5,
+  "x14_reconciliation": {
+    "source_sha": "4a762ae9b8323123dff4fee23410388cf533061d",
+    "queue_total": 426,
+    "queue_reviewed": 188,
+    "queue_limited": 237,
+    "queue_blocked": 1,
+    "queue_pending": 0,
+    "main_new_supplemental_limited_paths": 5,
+    "changed_queue_path": "scripts/test_operation_ownership.py",
+    "previous_baseline_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+    "source_review_is_not_runtime_acceptance": true
+  }
 }
