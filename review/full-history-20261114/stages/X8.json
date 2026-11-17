@@ -2,7 +2,7 @@
   "schema_version": "altboard-review-stage/v1",
   "id": "X8",
   "status": "in_progress",
-  "source_sha_at_review": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+  "source_sha_at_review": "d37d36fdf171802c12cc5b91f60c714fb9375db5",
   "review_branch_head_at_start": "00d11a6e8b81cc31dbb3b7909020549f34c5b035",
   "started_at": "2026-11-14",
   "finished_at": null,
@@ -70,7 +70,8 @@
       "X8 second batch main@9433d29e82e04fb00eb374fbe825aacbf0d23350 has source-level read-only invariants and added a nonexecuted Swift Testing fixture; Build #235 executing.",
       "Build #235 success: Xcode 26.2 unsigned compile, App Group entitlements, test IPA package/artifact upload at 9433d29e.",
       "Build #236 operation-identity preflight PASS with executable Swift single-slot bridge + orphan recovery tests on main@c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b; final build outcome pending.",
-      "Build #236 (run 43629599094), SHA c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b: source tests and Swift policy verifiers passed, Xcode Release iOS compiled, TEST IPA uploaded (80,455,514 bytes). Native SayboardTests and physical iPhone checks NOT RUN."
+      "Build #236 (run 43629599094), SHA c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b: source tests and Swift policy verifiers passed, Xcode Release iOS compiled, TEST IPA uploaded (80,455,514 bytes). Native SayboardTests and physical iPhone checks NOT RUN.",
+      "Build #246 (run 44135482003), source 4a762ae9: operation identity preflight, other existing policy checks and unsigned IPA packaging completed success. Source assertion regression only; native Swift Testing not executed."
     ],
     "not_run": [
       "Filesystem fault injection for legacy model move, corrupt History index, Conversation copy/delete",
@@ -78,7 +79,9 @@
       "Outstanding X0-X7 high-risk root cause repairs; no external Alibaba OCR CLI",
       "F-0022/F-0023 disconnected candidate 089f6cda1588609561e5637135f62aae5b3c2cdd: executable Swift verifier and iPhone user recovery not yet run",
       "iPhone SideStore: LLM auto-result original field, keyboard reentry, orphan copy button, manual Stop, failed/cancelled model recovery",
-      "Build #236 native Swift Testing @Test cases, including LiveInsertionReceiptTests.swift, are NOT executed by the existing xcodebuild build-only workflow (F-0039)."
+      "Build #236 native Swift Testing @Test cases, including LiveInsertionReceiptTests.swift, are NOT executed by the existing xcodebuild build-only workflow (F-0039).",
+      "Build #247 (run 44138943180) result pending, current main d37d36fdf171802c12cc5b91f60c714fb9375db5",
+      "Native SayboardTests test target and real iPhone safety/recovery cases not executed"
     ]
   },
   "verified_outputs": [
@@ -95,7 +98,7 @@
     "F-0022/F-0023 functional end-to-end and physical-iPhone acceptance remain not_run",
     "Build #236 passes compile/IPA but no native SayboardTests execution and no mandatory physical device evidence; ten repair task matrices below full acceptance."
   ],
-  "next_action": "Keep X8 open for transactional ASR/LLM cleanup, native test execution, outstanding confirmed findings and exact-#236 SideStore checks; independent read-only X9 file audit is now ready.",
+  "next_action": "Check #247 build and regression output; exercise ten original X8 acceptance matrices without relabelling tests as passed. iPhone test required for physical-UIKit behaviour. X14 source coverage reconciled independently.",
   "evidence_notes": [
     "Initial repair batch predeclared BEFORE production edits: F-0018, F-0020, F-0027, F-0031, F-0036, F-0037.",
     "Other high/critical findings remain open; X8 is not complete, pending per-task mandatory tests and 90% acceptance.",
@@ -117,6 +120,7 @@
     "F-0022/F-0023 integrated source on main@c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b (10 changed files). Verified preflight bridge test in Build #236; Xcode result and iPhone remain unverified.",
     "Alternative unmerged candidate 089f6cd addresses a similar owner using Diagnostics recovery; not merged or applied; avoid duplicate recovery handlers.",
     "Build #236 confirmed CI success, artifact ID 14127992826. User iPhone and SideStore acceptance not observed.",
-    "X9-X13 file review can proceed read-only while X8 mandatory cases remain open. F-0039 records missing native test execution gate."
+    "X9-X13 file review can proceed read-only while X8 mandatory cases remain open. F-0039 records missing native test execution gate.",
+    "X8 repair 2026-11-17: main@4a762ae9 preserved completed AI result on changed field and avoided automatic clipboard writes; Build #246 (run 44135482003) completed success with operation preflight and unsigned iOS build. No native test target or physical iPhone acceptance. Then main@d37d36fdf171802c12cc5b91f60c714fb9375db5 added user-initiated Copy saved text fallback for unclaimed ASR, readback check and result-slot clear success reporting; Build #247 run 44138943180 queued, NOT a verified pass."
   ]
 }
