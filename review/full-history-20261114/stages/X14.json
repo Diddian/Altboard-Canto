@@ -28,10 +28,85 @@
   },
   "verified_outputs": [],
   "blocked_reasons": [
-    "X8 acceptance and X9-X13 file-review gates open"
+    "X8 still in_progress: ten X8 acceptance task matrices have unpassed mandatory cases; no task has >=90/100 evidence-backed pass weight.",
+    "X8 physical iPhone/SideStore gate not_run; #245 green CI cannot substitute device acceptance or native SayboardTests execution.",
+    "X12 has one blocked 2,092,603-byte Localizable.xcstrings and 143 reviewed_limited paths; X9/X10/X11/X13 also retain explicit limited evidence.",
+    "coverage.files retains 166 historical X7 excluded labels, although review-queue.json now records 22 reviewed, 143 reviewed_limited and 1 blocked for those same paths; normalization is deferred until X14 gates open."
   ],
-  "next_action": "Open only when predecessor is completed, reconcile latest source HEAD.",
+  "next_action": "Keep X14 blocked. X8 must supply >=90/100 evidence-backed pass weights and all mandatory/critical cases, plus physical iPhone evidence. When gates are verified, reconcile 166 stale coverage.files X7 labels against 426 pinned review-queue dispositions, address 237 limited and 1 blocked evidence gaps, review 5 new out-of-queue source paths and reconcile 9-commit/24-path live drift before any X14 completion claim.",
   "evidence_notes": [
-    "All 0 assigned paths are queued, NOT reviewed. Original review/exclusion status is preserved in review-queue.json."
-  ]
+    "All 0 assigned paths are queued, NOT reviewed. Original review/exclusion status is preserved in review-queue.json.",
+    "2026-11-17 preflight is NOT an X14 activation or X14 reviewed-file evidence. One-review-writer policy preserved; no production source, queue, coverage or acceptance labels changed."
+  ],
+  "preflight": {
+    "observed_date": "2026-11-17",
+    "stage_started": false,
+    "main_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+    "review_head_checked": "df2c3f84db2b12b714e02e449024e010a51a5cd0",
+    "last_successful_ci": {
+      "run_number": 245,
+      "run_id": 43895710585,
+      "conclusion": "success",
+      "head_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "native_xcodebuild_tests": "not_run",
+      "device_acceptance": "not_verified"
+    },
+    "predecessor_statuses": {
+      "X8": "in_progress",
+      "X9": "complete",
+      "X10": "complete",
+      "X11": "complete",
+      "X12": "complete_with_1_blocked_and_143_limited",
+      "X13": "complete"
+    },
+    "acceptance": {
+      "task_count": 10,
+      "all_task_mandatory_cases_satisfied": false,
+      "all_tasks_measured_ge_90": false,
+      "device_gate": "not_run",
+      "acceptance_status": "in_progress_test_candidate"
+    },
+    "source_drift": {
+      "base_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "ahead_commits": 9,
+      "changed_paths": 24,
+      "added_paths": 5,
+      "queue_source_sha_matches_main": true
+    },
+    "queue": {
+      "total": 426,
+      "reviewed": 188,
+      "reviewed_limited": 237,
+      "blocked": 1,
+      "pending": 0,
+      "test_status_pass_entries": 44,
+      "test_status_not_run_entries": 382
+    },
+    "coverage_ledger": {
+      "files_total": 592,
+      "current_files_baseline": 578,
+      "historical_only": 14,
+      "stale_x7_excluded_labels": 166,
+      "queue_dispositions_for_stale_labels": {
+        "reviewed": 22,
+        "reviewed_limited": 143,
+        "blocked": 1
+      },
+      "counts_already_normalized": true,
+      "change_deferred_due_to_stage_gate": true
+    },
+    "unresolved_evidence": [
+      "90 MP4 containers inspected but video frames not visually reviewed",
+      "Sayboard/Localizable.xcstrings full content inaccessible",
+      "56 native test files not proven executed by the existing IPA-only workflow",
+      "device microphone/host text ownership/recovery evidence unavailable",
+      "limited caller/failure/negative-path inspections across X9-X13"
+    ],
+    "open_tests": [
+      "X8 ten predeclared acceptance task matrices: all mandatory cases",
+      "Physical SideStore/iPhone keyboard microphone, original-field insertion, stop/cancel and recovery",
+      "Native Swift Testing/XCTest target execution",
+      "X12 localization complete parse and video visual sample review"
+    ]
+  }
 }
