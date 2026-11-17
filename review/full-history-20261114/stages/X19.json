@@ -1,0 +1,99 @@
+{
+  "schema_version": "altboard-review-stage/v1",
+  "id": "X19",
+  "status": "draft",
+  "source_sha_at_review": "830480ad94f94e2dfe27af2b35350384e4942771",
+  "review_branch_head_at_start": "01656793f703896830b393a44d93d1f8a4bd166e",
+  "started_at": null,
+  "finished_at": null,
+  "review_mode": "planning_only; no code changes or runtime inspection executed for this stage",
+  "untangle_status": "not_run",
+  "assigned_findings": [
+    "F-0016",
+    "F-0017",
+    "F-0027",
+    "F-0028",
+    "F-0029",
+    "F-0038",
+    "F-0040",
+    "F-0041",
+    "F-0049"
+  ],
+  "files_reviewed": [],
+  "files_excluded": [],
+  "files_not_reviewed": [
+    "Shared/ModelVariant.swift",
+    "Shared/SpeechModelRecommendation.swift",
+    "Sayboard/Services/ASRDownloadSources.swift",
+    "Sayboard/Services/HKCantoneseGGUFModelBundle.swift",
+    "Sayboard/Services/SenseVoiceModelDownloader.swift",
+    "Sayboard/Services/BackgroundDownloadManager.swift"
+  ],
+  "new_or_updated_findings": [],
+  "diagram_paths": [],
+  "tests": {
+    "executed": [],
+    "not_run": [
+      "Approved model-integrity cases pass with prior models intact, verified checksums, observable recovery, per-task >=90% acceptance and device performance characterized rather than assumed.",
+      "Model download/selection, offline dictation, cold/warm transitions, language accuracy and RAM observations."
+    ]
+  },
+  "verified_outputs": [],
+  "blocked_reasons": [
+    "Draft plan awaiting user iPhone findings and Grill Me decisions; no repair has been accepted as complete."
+  ],
+  "next_action": "After X16 intake and explicit approval, recheck main HEAD and inspect Shared/ModelVariant.swift plus dependent tests before any edit.",
+  "proposal": {
+    "name": "Cantonese ASR, models and resource reliability",
+    "priority": "P1",
+    "depends_on": [
+      "X16"
+    ],
+    "goal": "Verify WSYue SenseVoice and HK Cantonese Qwen3 GGUF installation, integrity, recovery and memory; preserve other models.",
+    "scope_finding_ids": [
+      "F-0016",
+      "F-0017",
+      "F-0027",
+      "F-0028",
+      "F-0029",
+      "F-0038",
+      "F-0040",
+      "F-0041",
+      "F-0049"
+    ],
+    "firstRead": [
+      "Shared/ModelVariant.swift",
+      "Shared/SpeechModelRecommendation.swift",
+      "Sayboard/Services/ASRDownloadSources.swift",
+      "Sayboard/Services/HKCantoneseGGUFModelBundle.swift",
+      "Sayboard/Services/SenseVoiceModelDownloader.swift",
+      "Sayboard/Services/BackgroundDownloadManager.swift",
+      "scripts/bootstrap-llama.sh"
+    ],
+    "authoritative_owners_to_verify": [
+      "Existing model download/verification owners",
+      "HKCantoneseGGUFModelBundle and SenseVoiceModelBundle",
+      "Existing llama.cpp bootstrap / single IPA workflow"
+    ],
+    "proposed_work": [
+      "Distinguish existing source fixes from unverified legacy F-IDs; do not reset verified models",
+      "Reproduce corrupt/truncated file, wrong digest, partial download and version change using fixtures",
+      "Verify optional fallback after cancellation and offline failure without unintended downloads",
+      "Measure real per-model memory/latency before imposing device thresholds; compare Cantonese, English and German scope"
+    ],
+    "acceptance_gate": "Approved model-integrity cases pass with prior models intact, verified checksums, observable recovery, per-task >=90% acceptance and device performance characterized rather than assumed.",
+    "user_evidence": "Model download/selection, offline dictation, cold/warm transitions, language accuracy and RAM observations.",
+    "code_policy": "only after user approves scope; reuse current model and diagnostic modules",
+    "do_not_duplicate": [
+      "X8 partial repair and approval ledger",
+      "Existing App Group diagnostics and user recovery paths",
+      "Single unsigned IPA workflow"
+    ],
+    "status": "draft_for_grill_me"
+  },
+  "evidence_notes": [
+    "Build #248 passed CI at 830480ad94f94e2dfe27af2b35350384e4942771; SideStore/iPhone behavior not independently verified.",
+    "Existing F-0043/F-0048/F-0050 source-level patches are not device acceptance; recheck before reworking.",
+    "Do not silently close findings because the historical source is newer or one CI build passed."
+  ]
+}

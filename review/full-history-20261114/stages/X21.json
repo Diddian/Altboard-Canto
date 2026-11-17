@@ -1,0 +1,91 @@
+{
+  "schema_version": "altboard-review-stage/v1",
+  "id": "X21",
+  "status": "draft",
+  "source_sha_at_review": "830480ad94f94e2dfe27af2b35350384e4942771",
+  "review_branch_head_at_start": "01656793f703896830b393a44d93d1f8a4bd166e",
+  "started_at": null,
+  "finished_at": null,
+  "review_mode": "planning_only; no code changes or runtime inspection executed for this stage",
+  "untangle_status": "not_run",
+  "assigned_findings": [
+    "F-0026",
+    "F-0034",
+    "F-0035",
+    "F-0042",
+    "F-0043"
+  ],
+  "files_reviewed": [],
+  "files_excluded": [],
+  "files_not_reviewed": [
+    "Shared/VoicePunctuationPolicy.swift",
+    "Shared/VoiceOutputOptions.swift",
+    "Sayboard/Services/LLMInferenceService.swift",
+    "SayboardKeyboard/LatinSwipeDecoder.swift",
+    "SayboardKeyboard/JyutpingDictionary.swift",
+    "Shared/KeyboardKind.swift"
+  ],
+  "new_or_updated_findings": [],
+  "diagram_paths": [],
+  "tests": {
+    "executed": [],
+    "not_run": [
+      "All approved text/selection boundaries are deterministic and do not corrupt insertion; per-task >=90% verified, iPhone speech and swipe acceptance separate.",
+      "English/German punctuation, German swipe, Cantonese next suggestions, short translations and LLM long outputs."
+    ]
+  },
+  "verified_outputs": [],
+  "blocked_reasons": [
+    "Draft plan awaiting user iPhone findings and Grill Me decisions; no repair has been accepted as complete."
+  ],
+  "next_action": "After X16 intake and explicit approval, recheck main HEAD and inspect Shared/VoicePunctuationPolicy.swift plus dependent tests before any edit.",
+  "proposal": {
+    "name": "Multilingual typing, translation and text integrity",
+    "priority": "P1",
+    "depends_on": [
+      "X16"
+    ],
+    "goal": "Protect output fidelity for Cantonese, English and German, including swipe geometry, next-word context and LLM output.",
+    "scope_finding_ids": [
+      "F-0026",
+      "F-0034",
+      "F-0035",
+      "F-0042",
+      "F-0043"
+    ],
+    "firstRead": [
+      "Shared/VoicePunctuationPolicy.swift",
+      "Shared/VoiceOutputOptions.swift",
+      "Sayboard/Services/LLMInferenceService.swift",
+      "SayboardKeyboard/LatinSwipeDecoder.swift",
+      "SayboardKeyboard/JyutpingDictionary.swift",
+      "Shared/KeyboardKind.swift"
+    ],
+    "authoritative_owners_to_verify": [
+      "VoiceOutputSelectionPolicy / final output renderer",
+      "LatinSwipeDecoder keyboard geometry",
+      "Cantonese confirmed-context candidate owner",
+      "Existing llama token-to-piece decoder"
+    ],
+    "proposed_work": [
+      "Treat F-0043 punctuation handling as source-patched in #248, not device-proven",
+      "Use synthetic positive and counterexample cases for apostrophes, decimals, wrong-language short outputs and Unicode boundary",
+      "Prove German Ü/ß swipe coordinates against actual keyboard shape",
+      "Keep Cantonese context tied to confirmed insertion and invalidate on field/cursor changes"
+    ],
+    "acceptance_gate": "All approved text/selection boundaries are deterministic and do not corrupt insertion; per-task >=90% verified, iPhone speech and swipe acceptance separate.",
+    "user_evidence": "English/German punctuation, German swipe, Cantonese next suggestions, short translations and LLM long outputs.",
+    "code_policy": "only after user approves scope; do not replace original input owners",
+    "do_not_duplicate": [
+      "X8 partial repair and approval ledger",
+      "Existing App Group diagnostics and user recovery paths",
+      "Single unsigned IPA workflow"
+    ],
+    "status": "draft_for_grill_me"
+  },
+  "evidence_notes": [
+    "Build #248 passed CI at 830480ad94f94e2dfe27af2b35350384e4942771; SideStore/iPhone behavior not independently verified.",
+    "Existing F-0043/F-0048/F-0050 source-level patches are not device acceptance; recheck before reworking.",
+    "Do not silently close findings because the historical source is newer or one CI build passed."
+  ]
+}

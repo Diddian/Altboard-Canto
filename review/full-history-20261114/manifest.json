@@ -37,7 +37,14 @@
       "X12": "complete",
       "X13": "complete",
       "X14": "in_progress",
-      "X15": "blocked"
+      "X15": "blocked",
+      "X16": "draft",
+      "X17": "draft",
+      "X18": "draft",
+      "X19": "draft",
+      "X20": "draft",
+      "X21": "draft",
+      "X22": "draft"
     },
     "independent_reviewer_executed": false,
     "ocr_cli_executed": false,
@@ -252,6 +259,36 @@
       "main_snapshot_sha": "d37d36fdf171802c12cc5b91f60c714fb9375db5",
       "review_snapshot_sha": "bd74ffe8526522df07378d9212ae38c3117fb303",
       "remaining_gate": "X8/X14 acceptance, backup destination and separate cleanup approval"
+    },
+    "draft_repair_extension": {
+      "status": "draft_unapproved",
+      "stages": [
+        "X16",
+        "X17",
+        "X18",
+        "X19",
+        "X20",
+        "X21",
+        "X22"
+      ],
+      "source_main_sha": "830480ad94f94e2dfe27af2b35350384e4942771",
+      "review_branch_checkpoint": "01656793f703896830b393a44d93d1f8a4bd166e",
+      "intake_file": "review/full-history-20261114/DRAFT_FIX_LIST.md",
+      "build_evidence": {
+        "build": 248,
+        "sha": "830480ad94f94e2dfe27af2b35350384e4942771",
+        "run_id": 44143269130,
+        "status": "completed_success",
+        "artifact": "Altboard-Canto-TEST.ipa",
+        "artifact_id": 14357795009,
+        "source": "https://github.com/Diddian/Altboard-Canto/actions/runs/44143269130",
+        "device": "not_verified"
+      },
+      "legacy_stages_unchanged": true,
+      "production_repairs_authorized": false,
+      "requires_user_grill_me": true,
+      "existing_code_writes_rule_unchanged": true,
+      "manual_device_acceptance": "not_run"
     }
   },
   "artifacts": {
@@ -264,7 +301,8 @@
     "diagrams": "diagrams/",
     "per_stage": "stages/Xn.json",
     "review_queue": "review-queue.json",
-    "review_plan": "REVIEW_COMPLETENESS_PLAN.md"
+    "review_plan": "REVIEW_COMPLETENESS_PLAN.md",
+    "draft_fix_list": "DRAFT_FIX_LIST.md"
   },
   "rules": {
     "stage_sequence": "X0-X7 complete as historical source audits; X8 repairs/acceptance still in progress. X9-X13 sequential read-only full-file review permitted while X8 awaits device tests. X14 blocked until all gates; X15 cleanup only after explicit approval.",

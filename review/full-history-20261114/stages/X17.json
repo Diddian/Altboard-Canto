@@ -1,0 +1,107 @@
+{
+  "schema_version": "altboard-review-stage/v1",
+  "id": "X17",
+  "status": "draft",
+  "source_sha_at_review": "830480ad94f94e2dfe27af2b35350384e4942771",
+  "review_branch_head_at_start": "01656793f703896830b393a44d93d1f8a4bd166e",
+  "started_at": null,
+  "finished_at": null,
+  "review_mode": "planning_only; no code changes or runtime inspection executed for this stage",
+  "untangle_status": "not_run",
+  "assigned_findings": [
+    "F-0012",
+    "F-0013",
+    "F-0014",
+    "F-0015",
+    "F-0018",
+    "F-0019",
+    "F-0020",
+    "F-0021",
+    "F-0022",
+    "F-0023",
+    "F-0024",
+    "F-0025",
+    "F-0036"
+  ],
+  "files_reviewed": [],
+  "files_excluded": [],
+  "files_not_reviewed": [
+    "Shared/DictationRequestPolicy.swift",
+    "Shared/TranscriptionBridge.swift",
+    "Shared/LLMBridge.swift",
+    "SayboardKeyboard/KeyboardViewController.swift",
+    "SayboardKeyboard/KeyboardViewController+LLM.swift",
+    "Sayboard/Services/BackgroundAudioSession.swift"
+  ],
+  "new_or_updated_findings": [],
+  "diagram_paths": [],
+  "tests": {
+    "executed": [],
+    "not_run": [
+      "Each approved change passes predeclared critical automated boundaries and >=90% verified per-task case weight; physical original-field/mic approval remains separate and must pass before closure.",
+      "Real host app original-field, first/second dictation, Stop, AI recovery, redo and playback finish."
+    ]
+  },
+  "verified_outputs": [],
+  "blocked_reasons": [
+    "Draft plan awaiting user iPhone findings and Grill Me decisions; no repair has been accepted as complete."
+  ],
+  "next_action": "After X16 intake and explicit approval, recheck main HEAD and inspect Shared/DictationRequestPolicy.swift plus dependent tests before any edit.",
+  "proposal": {
+    "name": "Host-field, microphone and result recovery safety",
+    "priority": "P0",
+    "depends_on": [
+      "X16"
+    ],
+    "goal": "Prevent cross-field insertion, double delivery, lost ASR/AI results and unsafe microphone session transitions.",
+    "scope_finding_ids": [
+      "F-0012",
+      "F-0013",
+      "F-0014",
+      "F-0015",
+      "F-0018",
+      "F-0019",
+      "F-0020",
+      "F-0021",
+      "F-0022",
+      "F-0023",
+      "F-0024",
+      "F-0025",
+      "F-0036"
+    ],
+    "firstRead": [
+      "Shared/DictationRequestPolicy.swift",
+      "Shared/TranscriptionBridge.swift",
+      "Shared/LLMBridge.swift",
+      "SayboardKeyboard/KeyboardViewController.swift",
+      "SayboardKeyboard/KeyboardViewController+LLM.swift",
+      "Sayboard/Services/BackgroundAudioSession.swift",
+      "review/full-history-20261114/acceptance.json"
+    ],
+    "authoritative_owners_to_verify": [
+      "KeyboardViewController host-document ownership",
+      "TranscriptionBridge and LLMBridge durable result handoff",
+      "BackgroundAudioSession and existing playback-lease owners"
+    ],
+    "proposed_work": [
+      "Compare repaired current source with existing X8 matrices before editing; do not add a second recovery owner",
+      "Prove original-field ownership and safe fail-closed/manual recovery with synthetic two-field cases",
+      "Trace manual Stop/cancel/reentry, one-shot arming, late callbacks and exactly-once/at-most-once insertion",
+      "Keep diagnostics bounded, privacy-safe and resilient across App Group restarts"
+    ],
+    "acceptance_gate": "Each approved change passes predeclared critical automated boundaries and >=90% verified per-task case weight; physical original-field/mic approval remains separate and must pass before closure.",
+    "user_evidence": "Real host app original-field, first/second dictation, Stop, AI recovery, redo and playback finish.",
+    "code_policy": "only after user approves scope; production owner policy must be reconciled with X8",
+    "do_not_duplicate": [
+      "X8 partial repair and approval ledger",
+      "Existing App Group diagnostics and user recovery paths",
+      "Single unsigned IPA workflow"
+    ],
+    "status": "draft_for_grill_me"
+  },
+  "evidence_notes": [
+    "Build #248 passed CI at 830480ad94f94e2dfe27af2b35350384e4942771; SideStore/iPhone behavior not independently verified.",
+    "Existing F-0043/F-0048/F-0050 source-level patches are not device acceptance; recheck before reworking.",
+    "Do not silently close findings because the historical source is newer or one CI build passed."
+  ]
+}

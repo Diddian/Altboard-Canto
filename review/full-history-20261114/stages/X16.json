@@ -1,0 +1,65 @@
+{
+  "schema_version": "altboard-review-stage/v1",
+  "id": "X16",
+  "status": "draft",
+  "source_sha_at_review": "830480ad94f94e2dfe27af2b35350384e4942771",
+  "review_branch_head_at_start": "01656793f703896830b393a44d93d1f8a4bd166e",
+  "started_at": null,
+  "finished_at": null,
+  "review_mode": "planning_only; no code changes or runtime inspection executed for this stage",
+  "untangle_status": "not_run",
+  "assigned_findings": [],
+  "files_reviewed": [],
+  "files_excluded": [],
+  "files_not_reviewed": [],
+  "new_or_updated_findings": [],
+  "diagram_paths": [],
+  "tests": {
+    "executed": [],
+    "not_run": [
+      "Every submitted finding is reproduced or clearly marked unverified/deferred; user chooses the approved repair scope. This is NOT a device-pass gate.",
+      "User test results pending; no in-chat device access."
+    ]
+  },
+  "verified_outputs": [],
+  "blocked_reasons": [
+    "Draft plan awaiting user iPhone findings and Grill Me decisions; no repair has been accepted as complete."
+  ],
+  "next_action": "User installs Build #248 and adds only reproducible issues to DRAFT_FIX_LIST.md; then Grill Me prioritizes approved slices.",
+  "proposal": {
+    "name": "Draft intake: iPhone findings and approval decisions",
+    "priority": "intake",
+    "depends_on": [],
+    "goal": "Record reproducible observations against a pinned TEST IPA and decide what to repair during Grill Me; do not implement speculative fixes.",
+    "scope_finding_ids": [],
+    "firstRead": [
+      "review/full-history-20261114/DRAFT_FIX_LIST.md",
+      "review/full-history-20261114/manifest.json",
+      "review/full-history-20261114/findings.json"
+    ],
+    "authoritative_owners_to_verify": [
+      "User's SideStore/iPhone observations",
+      "Existing diagnostics export (user-initiated only)"
+    ],
+    "proposed_work": [
+      "Recheck live main, matching SHA and Actions artifact before treating test results as comparable",
+      "Deduplicate new user reports against F-0001–F-0050; log a new draft ID only for a distinct issue",
+      "Record expected, observed, environment, reproduction and recovery without raw text, audio or secrets",
+      "Grill Me resolves scope, severity and acceptance before a draft is promoted"
+    ],
+    "acceptance_gate": "Every submitted finding is reproduced or clearly marked unverified/deferred; user chooses the approved repair scope. This is NOT a device-pass gate.",
+    "user_evidence": "User test results pending; no in-chat device access.",
+    "code_policy": "none in draft",
+    "do_not_duplicate": [
+      "X8 partial repair and approval ledger",
+      "Existing App Group diagnostics and user recovery paths",
+      "Single unsigned IPA workflow"
+    ],
+    "status": "draft_for_grill_me"
+  },
+  "evidence_notes": [
+    "Build #248 passed CI at 830480ad94f94e2dfe27af2b35350384e4942771; SideStore/iPhone behavior not independently verified.",
+    "Existing F-0043/F-0048/F-0050 source-level patches are not device acceptance; recheck before reworking.",
+    "Do not silently close findings because the historical source is newer or one CI build passed."
+  ]
+}

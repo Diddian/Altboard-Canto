@@ -1,0 +1,92 @@
+{
+  "schema_version": "altboard-review-stage/v1",
+  "id": "X18",
+  "status": "draft",
+  "source_sha_at_review": "830480ad94f94e2dfe27af2b35350384e4942771",
+  "review_branch_head_at_start": "01656793f703896830b393a44d93d1f8a4bd166e",
+  "started_at": null,
+  "finished_at": null,
+  "review_mode": "planning_only; no code changes or runtime inspection executed for this stage",
+  "untangle_status": "not_run",
+  "assigned_findings": [
+    "F-0030",
+    "F-0031",
+    "F-0032",
+    "F-0033",
+    "F-0037",
+    "F-0044"
+  ],
+  "files_reviewed": [],
+  "files_excluded": [],
+  "files_not_reviewed": [
+    "Shared/HistoryStore.swift",
+    "Sayboard/Services/LocalUserDataStore.swift",
+    "Sayboard/Services/ConversationCoordinator.swift",
+    "Sayboard/Services/MeetingRecordingCoordinator.swift",
+    "Sayboard/Views/HistoryListView.swift",
+    "Shared/SharedSettings.swift"
+  ],
+  "new_or_updated_findings": [],
+  "diagram_paths": [],
+  "tests": {
+    "executed": [],
+    "not_run": [
+      "Every approved read/write/delete/export failure case is supported by deterministic evidence, zero unacknowledged data loss, per-task >=90% gates and explicit device testing where needed.",
+      "Safe non-destructive validation on iPhone; destructive scenarios use synthetic fixtures only."
+    ]
+  },
+  "verified_outputs": [],
+  "blocked_reasons": [
+    "Draft plan awaiting user iPhone findings and Grill Me decisions; no repair has been accepted as complete."
+  ],
+  "next_action": "After X16 intake and explicit approval, recheck main HEAD and inspect Shared/HistoryStore.swift plus dependent tests before any edit.",
+  "proposal": {
+    "name": "History, persistence, deletion and export integrity",
+    "priority": "P0",
+    "depends_on": [
+      "X16"
+    ],
+    "goal": "Make stored dictation/meeting data recoverable and deletion/export truthful despite interruption and corrupt metadata.",
+    "scope_finding_ids": [
+      "F-0030",
+      "F-0031",
+      "F-0032",
+      "F-0033",
+      "F-0037",
+      "F-0044"
+    ],
+    "firstRead": [
+      "Shared/HistoryStore.swift",
+      "Sayboard/Services/LocalUserDataStore.swift",
+      "Sayboard/Services/ConversationCoordinator.swift",
+      "Sayboard/Services/MeetingRecordingCoordinator.swift",
+      "Sayboard/Views/HistoryListView.swift",
+      "Shared/SharedSettings.swift"
+    ],
+    "authoritative_owners_to_verify": [
+      "HistoryStore canonical record/audio inventory",
+      "LocalUserDataStore export/delete authority",
+      "Conversation-to-Meeting transfer and App Group settings"
+    ],
+    "proposed_work": [
+      "Use synthetic fixtures for corrupt index, partially removed audio and interrupted transfer",
+      "Never report deletion or save success before verified durable state; preserve recoverable user audio",
+      "Reconcile export/delete category scope, orphan files and persisted settings across host/extension",
+      "Test failure, restart, retry and rollback; no destructive real user-data migration"
+    ],
+    "acceptance_gate": "Every approved read/write/delete/export failure case is supported by deterministic evidence, zero unacknowledged data loss, per-task >=90% gates and explicit device testing where needed.",
+    "user_evidence": "Safe non-destructive validation on iPhone; destructive scenarios use synthetic fixtures only.",
+    "code_policy": "only after user approves scope; no migration without rollback",
+    "do_not_duplicate": [
+      "X8 partial repair and approval ledger",
+      "Existing App Group diagnostics and user recovery paths",
+      "Single unsigned IPA workflow"
+    ],
+    "status": "draft_for_grill_me"
+  },
+  "evidence_notes": [
+    "Build #248 passed CI at 830480ad94f94e2dfe27af2b35350384e4942771; SideStore/iPhone behavior not independently verified.",
+    "Existing F-0043/F-0048/F-0050 source-level patches are not device acceptance; recheck before reworking.",
+    "Do not silently close findings because the historical source is newer or one CI build passed."
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "schema_version": "altboard-review-stage/v1",
+  "id": "X22",
+  "status": "draft",
+  "source_sha_at_review": "830480ad94f94e2dfe27af2b35350384e4942771",
+  "review_branch_head_at_start": "01656793f703896830b393a44d93d1f8a4bd166e",
+  "started_at": null,
+  "finished_at": null,
+  "review_mode": "planning_only; no code changes or runtime inspection executed for this stage",
+  "untangle_status": "not_run",
+  "assigned_findings": [
+    "F-0001",
+    "F-0039"
+  ],
+  "files_reviewed": [],
+  "files_excluded": [],
+  "files_not_reviewed": [
+    ".github/workflows/build-unsigned-ipa.yml",
+    "project.yml",
+    "SayboardTests/LiveInsertionReceiptTests.swift"
+  ],
+  "new_or_updated_findings": [],
+  "diagram_paths": [],
+  "tests": {
+    "executed": [],
+    "not_run": [
+      "No critical unverified mandatory case is reported as passed; native tests and a matching exact-SHA TEST IPA have observable results; user separately accepts required device cases. X15 cleanup stays separately approval-gated.",
+      "Final user signoff after reviewing redacted diagnostics; no implicit device pass."
+    ]
+  },
+  "verified_outputs": [],
+  "blocked_reasons": [
+    "Draft plan awaiting user iPhone findings and Grill Me decisions; no repair has been accepted as complete.",
+    "X8 and X14 acceptance evidence remains incomplete; X15 cleanup separately gated."
+  ],
+  "next_action": "After X16 intake and explicit approval, recheck main HEAD and inspect .github/workflows/build-unsigned-ipa.yml plus dependent tests before any edit.",
+  "proposal": {
+    "name": "Executable regression gate and development acceptance",
+    "priority": "gate",
+    "depends_on": [
+      "X16",
+      "X17",
+      "X18",
+      "X19",
+      "X20",
+      "X21"
+    ],
+    "goal": "Close only evidence-backed repairs, establish native Swift Testing execution, reconcile X8/X14 without rewriting historical evidence and preserve X15 cleanup approval.",
+    "scope_finding_ids": [
+      "F-0001",
+      "F-0039"
+    ],
+    "firstRead": [
+      ".github/workflows/build-unsigned-ipa.yml",
+      "project.yml",
+      "SayboardTests/LiveInsertionReceiptTests.swift",
+      "review/full-history-20261114/acceptance.json",
+      "review/full-history-20261114/stages/X8.json",
+      "review/full-history-20261114/stages/X14.json",
+      "review/full-history-20261114/cleanup.json"
+    ],
+    "authoritative_owners_to_verify": [
+      "Existing single unsigned IPA workflow",
+      "Native SayboardTests plus Swift/Python policy gates",
+      "Canonical X8/X14 evidence and X15 retention controls"
+    ],
+    "proposed_work": [
+      "Determine cheapest supported native-test destination on available Xcode runner; no second IPA workflow",
+      "Demonstrate negative-control failure and positive test execution; build success alone is not native or device acceptance",
+      "Recheck all committed patches against live source, findings register and predeclared per-task >=90% mandatory gates",
+      "Preserve working IPA and user review branch; no RC or archival cleanup without explicit approval"
+    ],
+    "acceptance_gate": "No critical unverified mandatory case is reported as passed; native tests and a matching exact-SHA TEST IPA have observable results; user separately accepts required device cases. X15 cleanup stays separately approval-gated.",
+    "user_evidence": "Final user signoff after reviewing redacted diagnostics; no implicit device pass.",
+    "code_policy": "only if explicitly authorized, using existing workflow, no duplicate release path",
+    "do_not_duplicate": [
+      "X8 partial repair and approval ledger",
+      "Existing App Group diagnostics and user recovery paths",
+      "Single unsigned IPA workflow"
+    ],
+    "status": "draft_for_grill_me"
+  },
+  "evidence_notes": [
+    "Build #248 passed CI at 830480ad94f94e2dfe27af2b35350384e4942771; SideStore/iPhone behavior not independently verified.",
+    "Existing F-0043/F-0048/F-0050 source-level patches are not device acceptance; recheck before reworking.",
+    "Do not silently close findings because the historical source is newer or one CI build passed."
+  ]
+}
