@@ -2,7 +2,7 @@
   "schema_version": "altboard-review-queue/v1",
   "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
   "historical_source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
-  "status": "X9_source_complete_runtime_not_run",
+  "status": "X9 complete; X10 77/77 source dispositions (35 reviewed, 42 reviewed_limited); native/iPhone tests not_run",
   "definition": "Each entry is a review obligation, NOT a completed review. Previously excluded files must be inspected with the appropriate evidence depth.",
   "counts": {
     "total": 426,
@@ -2563,10 +2563,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "20d66620d37305ed4a66de09fe4a862b9293824d",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Offer card routes click/close via injected closures, not a new entitlement or model source owner.",
+          "negative_oracle": "Dynamic Type, VoiceOver/focus, rapid interaction and Reduced Motion on iPhone; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2578,10 +2587,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "009e2b1d8b07736f527f81022928ec4a28bf0e5e",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "App language list uses SharedKey.appLanguage AppStorage rather than another ad-hoc source; selected language persists through shared setting.",
+          "negative_oracle": "App Group unavailable, relaunch/reopen synchronization, save failure, VoiceOver activation and Dynamic Type; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2593,10 +2611,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "962493c3cc1a208a00e82f2448e7340d00c500d7",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Cantonese correction persist 113-128 verifies App Group availability and re-read before confirming success; UI does not own durable word learning.",
+          "negative_oracle": "App Group unavailable, relaunch/reopen synchronization, save failure, VoiceOver activation and Dynamic Type; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2608,10 +2635,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "ae95608164f82fcd7ee4a68b34c15eebd3480eb0",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/CantoneseRomanizationDiagnosticsView.swift whole source retrieved: Diagnostic view is consumer of bounded counters and explicit export/reset; no raw private data stored in review evidence. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "Reset, export failure, stale UI, no unintended raw text/audio in diagnostics, VoiceOver; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2623,10 +2659,19 @@
       "stage": "X10",
       "provisional_priority": "P0",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "a64b5c8b0ee682e5180be9183954f9996a37e7fb",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/ConversationView.swift whole source retrieved: UI renders/dispatches operations; service/HistoryStore owns durable audio and records, so visible state must not precede verified save/delete. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "Deletion I/O failure, interruption/reentry, stale callback, playback natural finish and VoiceOver playback; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2638,10 +2683,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "dabdb7e59a78635b5cc669df57a2105d91f2e304",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Model source form validates normalized repository and blocks source change during download/installed 32-47,75-80; no reopening of resolved model download problem.",
+          "negative_oracle": "Cancel/retry/error, invalid source, unavailable model, inaccessible icon controls, app restart; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2653,10 +2707,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "69ac12bf2a5c64077fe8af2e6c87920382f0ecd4",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/DefaultStylePickerView.swift whole source retrieved: UI local/Binding state delegates persisted configuration to SharedSettings/App Group or parent settings owner. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "App Group unavailable, relaunch/reopen synchronization, save failure, VoiceOver activation and Dynamic Type; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2668,10 +2731,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "c48bfd625dda950352fe2a320f66ed488b617ecb",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/DiagnosticsView.swift whole source retrieved: Diagnostic view is consumer of bounded counters and explicit export/reset; no raw private data stored in review evidence. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "Reset, export failure, stale UI, no unintended raw text/audio in diagnostics, VoiceOver; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2683,10 +2755,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "802e35957501e792086c956b54e5bc314a973cab",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/FeedbackSection.swift whole source retrieved: Static presentation/local navigation or control surface; no independently verified runtime ownership beyond observed Swift view actions. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "Dynamic Type, VoiceOver/focus, rapid interaction and Reduced Motion on iPhone; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2698,10 +2779,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "22ae76b5ce0b2841ac6335b829849b0ae3585d6a",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Self-contained SwiftUI Layout measurement and placement; no persistence or independent gesture/event owner.",
+          "negative_oracle": "Dynamic Type, VoiceOver/focus, rapid interaction and Reduced Motion on iPhone; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2713,10 +2803,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "5ec656cc15b7c91f47f60668be9d45f228b29a17",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Full-access simulated instruction animation loops 27-29,136-205; no accessibilityReduceMotion gate, visuals hidden from VoiceOver.",
+          "negative_oracle": "Open/close/reverse, permission denied, reduce motion, VoiceOver, app relaunch and failed network path; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2728,10 +2827,19 @@
       "stage": "X10",
       "provisional_priority": "P0",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "e8f5da6893d933b1d24692bb565a93a4932491ba",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "HistoryListView.deleteRecord lines 205-211 optimistically deletes list item; HistoryStore.deleteRecord lines 142-149 can fail silently. Local view state is not the durable history owner.",
+          "negative_oracle": "Deletion I/O failure, interruption/reentry, stale callback, playback natural finish and VoiceOver playback; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2743,10 +2851,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "d5200e3329178e144d0fc79a864fd2c14e196aa4",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Correction editor checks save failure at lines 147-156; copy/delete icon-only buttons lines 182-215 omit explicit accessible labels. HistoryStore owns persisted record.",
+          "negative_oracle": "Deletion I/O failure, interruption/reentry, stale callback, playback natural finish and VoiceOver playback; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2758,10 +2875,19 @@
       "stage": "X10",
       "provisional_priority": "P0",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "caddd41c9d39ae267ea412d4ea79ac0d7dc7252f",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Delete All uses Bool and alert lines 99-105,152-155; retention setting lines 163-166 invokes void applyRetentionPolicy; HistoryStore writes metadata before audio removal (188-195).",
+          "negative_oracle": "Deletion I/O failure, interruption/reentry, stale callback, playback natural finish and VoiceOver playback; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2773,10 +2899,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "384ba5450e3e68480ca318fabccae8e5d47759ca",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "UIKit Pan and Tap recognizers own scrub interaction, onEnded runs on .ended/.cancelled at lines 38-64; coordinator closures refresh in updateUIView 92-97. No accessibility action exists.",
+          "negative_oracle": "Dynamic Type, VoiceOver/focus, rapid interaction and Reduced Motion on iPhone; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2788,10 +2923,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "c92990d8998f1348e08d282ca96dbfff3d8d6c31",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/HostReturnHintOverlay.swift whole source retrieved: Static presentation/local navigation or control surface; no independently verified runtime ownership beyond observed Swift view actions. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "Dynamic Type, VoiceOver/focus, rapid interaction and Reduced Motion on iPhone; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2803,10 +2947,19 @@
       "stage": "X10",
       "provisional_priority": "P0",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "3c9bc9234f5f06c62e37e687238fbcdd793435a7",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Optional Globe/Settings/Output/AI toggles use parent bindings in 8-11,26-31, not an independent persisted owner; preserve keyboard native Globe behavior.",
+          "negative_oracle": "One input per gesture, cancellation/release, VoiceOver, native Globe, zero unexpected haptic, low-memory resume; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2818,10 +2971,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "49a599dde3ed038f7ea785d4b8b35813e524e9f5",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/LLMModelCardView.swift whole source retrieved: UI reflects model/LLM service selection or download state; does not by itself prove model, download or bridge correctness. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "Cancel/retry/error, invalid source, unavailable model, inaccessible icon controls, app restart; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2833,10 +2995,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "ead8bfcd8995faadae1b7d607a70bbcedf9e737a",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/LLMModelsSection.swift whole source retrieved: UI reflects model/LLM service selection or download state; does not by itself prove model, download or bridge correctness. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "Cancel/retry/error, invalid source, unavailable model, inaccessible icon controls, app restart; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2848,10 +3019,19 @@
       "stage": "X10",
       "provisional_priority": "P0",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "b77d9082f3f38c00beae4412dae6334fc2754c50",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "LLMActionSelection and custom prompts sourced from SharedSettings onAppear; disabling reconciles defaults 200-229 and deleting prompts reconciles presets 247-266.",
+          "negative_oracle": "Cancel/retry/error, invalid source, unavailable model, inaccessible icon controls, app restart; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2863,10 +3043,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "808bc09746f9944dbf5ffd81ca8cb0a9ad10bdea",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Single/multi language selection rows 114-129 and 201-216 use onTapGesture on HStack with no explicit Button or accessibilityAction; LanguagePriority owns ordering.",
+          "negative_oracle": "App Group unavailable, relaunch/reopen synchronization, save failure, VoiceOver activation and Dynamic Type; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2878,10 +3067,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "9bb8f8233df8cc94c93e9f6ecc24a765159b10ea",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/MainTabView.swift whole source retrieved: Static presentation/local navigation or control surface; no independently verified runtime ownership beyond observed Swift view actions. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "Dynamic Type, VoiceOver/focus, rapid interaction and Reduced Motion on iPhone; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2893,10 +3091,19 @@
       "stage": "X10",
       "provisional_priority": "P0",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "257ae5f63b52b08038c32dbcf15f1fdbab0c6295",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/MeetingRecordsView.swift whole source retrieved: UI renders/dispatches operations; service/HistoryStore owns durable audio and records, so visible state must not precede verified save/delete. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "Deletion I/O failure, interruption/reentry, stale callback, playback natural finish and VoiceOver playback; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2908,10 +3115,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "aa83d45f66a43a14b17db400d669a6116fc7768e",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Tutorial uses recurring .task and while-loop 20-25,70-102; no accessibilityReduceMotion observation; no persistent state owner.",
+          "negative_oracle": "Open/close/reverse, permission denied, reduce motion, VoiceOver, app relaunch and failed network path; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2919,14 +3135,23 @@
       "original_tracking": "current",
       "original_disposition": "not_reviewed",
       "baseline_blob_sha": "8024ab5718f4a11f67e9d22d726a391a81dab754",
-      "main_blob_sha": "8024ab5718f4a11f67e9d22d726a391a81dab754",
+      "main_blob_sha": "cee2eb01aaaf9ea71908bc5602dbea44e5522153",
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "cee2eb01aaaf9ea71908bc5602dbea44e5522153",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "DownloadStatusView 163-290 renders persisted download state from ModelDownloadService; icon-only remove/cancel buttons 225-233,266-273 lack explicit accessibility labels.",
+          "negative_oracle": "Cancel/retry/error, invalid source, unavailable model, inaccessible icon controls, app restart; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2934,14 +3159,23 @@
       "original_tracking": "current",
       "original_disposition": "not_reviewed",
       "baseline_blob_sha": "1da6951b1dfee674ecc940056f65e962ede7c7a5",
-      "main_blob_sha": "1da6951b1dfee674ecc940056f65e962ede7c7a5",
+      "main_blob_sha": "157010b99098821d414c9a3c1ae390afd48dfb3d",
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "157010b99098821d414c9a3c1ae390afd48dfb3d",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/ModelCardView.swift whole source retrieved: UI reflects model/LLM service selection or download state; does not by itself prove model, download or bridge correctness. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "Cancel/retry/error, invalid source, unavailable model, inaccessible icon controls, app restart; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2953,10 +3187,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "046512133881d3c7dce31d958af7e9214bfb227f",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Self-contained ordering comparator, no persisted source of truth or asynchronous side effect.",
+          "negative_oracle": "Cancel/retry/error, invalid source, unavailable model, inaccessible icon controls, app restart; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2964,14 +3207,23 @@
       "original_tracking": "current",
       "original_disposition": "not_reviewed",
       "baseline_blob_sha": "f45cf7f64496176e7d50d16ee7fc71ce09d7c388",
-      "main_blob_sha": "352ae5ad4ff5b769275dabda5364e36054613256",
+      "main_blob_sha": "fb704e0e08ee3767cefe0d25ccad0b8985de7088",
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "fb704e0e08ee3767cefe0d25ccad0b8985de7088",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/ModelsView.swift whole source retrieved: UI reflects model/LLM service selection or download state; does not by itself prove model, download or bridge correctness. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "Cancel/retry/error, invalid source, unavailable model, inaccessible icon controls, app restart; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2983,10 +3235,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "299443bcdae32f2a79d572ca7f2250b0601d0cb2",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/Onboarding/KeyboardLayoutPreview.swift whole source retrieved: Onboarding/entitlement UI state is not acceptance of real iOS system modal, permissions or purchase delivery. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "Open/close/reverse, permission denied, reduce motion, VoiceOver, app relaunch and failed network path; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -2998,10 +3259,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "64acde51fdd4fc2f1affc2f01cf0d2d03c9d5326",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/Onboarding/KeyboardPhonePreview.swift whole source retrieved: Onboarding/entitlement UI state is not acceptance of real iOS system modal, permissions or purchase delivery. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "Open/close/reverse, permission denied, reduce motion, VoiceOver, app relaunch and failed network path; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3013,10 +3283,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "8ea570fe1e99aa44e325fdf2f2a006194f27893d",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Microphone permission illustration runs recurring animated simulation 84-123 without reduceMotion; display-only tutorial, not the actual permission request.",
+          "negative_oracle": "Open/close/reverse, permission denied, reduce motion, VoiceOver, app relaunch and failed network path; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3028,10 +3307,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "2243b3f6db407df16201d6dad5b1240d15bbe498",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/Onboarding/OnboardingComponents.swift whole source retrieved: Onboarding/entitlement UI state is not acceptance of real iOS system modal, permissions or purchase delivery. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "Open/close/reverse, permission denied, reduce motion, VoiceOver, app relaunch and failed network path; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3043,10 +3331,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "f9ec46ae12e6a3b3403f91f347878e0cbf89ed65",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "OnboardingLanguageDraft is local; 123-175 maps device language, stores selection in SharedSettings, calls ModelDownloadService and cancels previous in-flight download; download success not reopened.",
+          "negative_oracle": "Open/close/reverse, permission denied, reduce motion, VoiceOver, app relaunch and failed network path; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3058,10 +3355,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "d780c495e6957f4b5172919496ef19139bac29bf",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/Onboarding/OnboardingMicrophoneView.swift whole source retrieved: Onboarding/entitlement UI state is not acceptance of real iOS system modal, permissions or purchase delivery. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "Open/close/reverse, permission denied, reduce motion, VoiceOver, app relaunch and failed network path; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3073,10 +3379,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "b16c098eb9608792938e14b436cc88e0b1edf1b6",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/Onboarding/OnboardingModelStatusView.swift whole source retrieved: Onboarding/entitlement UI state is not acceptance of real iOS system modal, permissions or purchase delivery. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "Open/close/reverse, permission denied, reduce motion, VoiceOver, app relaunch and failed network path; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3088,10 +3403,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "a3075d6e1d537f40848b86f8c9afb58d06efe223",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/Onboarding/OnboardingWritingStyleView.swift whole source retrieved: Onboarding/entitlement UI state is not acceptance of real iOS system modal, permissions or purchase delivery. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "Open/close/reverse, permission denied, reduce motion, VoiceOver, app relaunch and failed network path; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3103,10 +3427,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "fcba2e3ae7480453f22ed689daf08471512d40ad",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/Onboarding/SetupCardView.swift whole source retrieved: Onboarding/entitlement UI state is not acceptance of real iOS system modal, permissions or purchase delivery. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "Open/close/reverse, permission denied, reduce motion, VoiceOver, app relaunch and failed network path; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3118,10 +3451,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "de362e9d592fe28dee59b8eefbc58ea55b03cbc1",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/PaywallView.swift whole source retrieved: Onboarding/entitlement UI state is not acceptance of real iOS system modal, permissions or purchase delivery. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "Open/close/reverse, permission denied, reduce motion, VoiceOver, app relaunch and failed network path; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3133,10 +3475,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "88b25b4153b7505724fafa62e779f25f86ff9f8f",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Self-contained playback icon path geometry; player state is external and not mutated by shape.",
+          "negative_oracle": "Dynamic Type, VoiceOver/focus, rapid interaction and Reduced Motion on iPhone; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3148,10 +3499,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "c117337690921f761324b7c22d5444cb28d8a517",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/PurchaseSection.swift whole source retrieved: Onboarding/entitlement UI state is not acceptance of real iOS system modal, permissions or purchase delivery. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "Open/close/reverse, permission denied, reduce motion, VoiceOver, app relaunch and failed network path; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3163,10 +3523,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "56a82343796e9287580ae1991f653fa4b51f1067",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/SessionInfoView.swift whole source retrieved: Static presentation/local navigation or control surface; no independently verified runtime ownership beyond observed Swift view actions. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "Dynamic Type, VoiceOver/focus, rapid interaction and Reduced Motion on iPhone; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3178,10 +3547,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "8874a03707b929f7e8c273f9f8146ff6e01068b0",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/SettingsNavigationViews.swift whole source retrieved: UI local/Binding state delegates persisted configuration to SharedSettings/App Group or parent settings owner. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "App Group unavailable, relaunch/reopen synchronization, save failure, VoiceOver activation and Dynamic Type; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3193,10 +3571,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "567211a9f9e57a24be88e05b7b77b9febc0f0ce2",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/SettingsView.swift whole source retrieved: UI local/Binding state delegates persisted configuration to SharedSettings/App Group or parent settings owner. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "App Group unavailable, relaunch/reopen synchronization, save failure, VoiceOver activation and Dynamic Type; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3208,10 +3595,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "13e81ad5c84bbec9209e855f5585f340576e6f16",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/SetupBannerView.swift whole source retrieved: Onboarding/entitlement UI state is not acceptance of real iOS system modal, permissions or purchase delivery. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "Open/close/reverse, permission denied, reduce motion, VoiceOver, app relaunch and failed network path; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3223,10 +3619,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "1e949c900d62c4abd4b2c7f478d5a1cf78289d6c",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/SetupView.swift whole source retrieved: Onboarding/entitlement UI state is not acceptance of real iOS system modal, permissions or purchase delivery. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "Open/close/reverse, permission denied, reduce motion, VoiceOver, app relaunch and failed network path; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3238,10 +3643,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "6f6d763c259904c7c9dcd7c9b60c07fb3cfbae89",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/SnippetsView.swift whole source retrieved: UI local/Binding state delegates persisted configuration to SharedSettings/App Group or parent settings owner. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "App Group unavailable, relaunch/reopen synchronization, save failure, VoiceOver activation and Dynamic Type; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3253,10 +3667,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "0b5283109150edca4f74bd32e5647e70b9845062",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Preferred speech languages are edited through LanguagePicker and saved to SharedSettings; reorder/selection need VoiceOver and persistence acceptance.",
+          "negative_oracle": "App Group unavailable, relaunch/reopen synchronization, save failure, VoiceOver activation and Dynamic Type; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3268,10 +3691,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "52fd8c36d6bb1abf75e9868b58ef385f9b8babe1",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Style card invokes supplied onTap callback, not a second persistence owner.",
+          "negative_oracle": "App Group unavailable, relaunch/reopen synchronization, save failure, VoiceOver activation and Dynamic Type; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3283,10 +3715,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "75b169fbdd4e735f2aac702bafd776145e0d3d06",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Presentation-only writing style option; writing style authority remains external.",
+          "negative_oracle": "App Group unavailable, relaunch/reopen synchronization, save failure, VoiceOver activation and Dynamic Type; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3298,10 +3739,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "d69fedb66b402e3378b2714109116adbf0642408",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/StyleSelectionView.swift whole source retrieved: UI local/Binding state delegates persisted configuration to SharedSettings/App Group or parent settings owner. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "App Group unavailable, relaunch/reopen synchronization, save failure, VoiceOver activation and Dynamic Type; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3313,10 +3763,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "acd8f552dac21793a8bf87e355ddaf4e529bdcd0",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Diagnostics toggles stored in App Group and reset control; test error/reset actions require device confirmation; raw touch input not added to review.",
+          "negative_oracle": "One input per gesture, cancellation/release, VoiceOver, native Globe, zero unexpected haptic, low-memory resume; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3328,10 +3787,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "9d05c36e57c1ef14dea4281bf14816c01732e8cb",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/TabBarTapInterceptor.swift whole source retrieved: Static presentation/local navigation or control surface; no independently verified runtime ownership beyond observed Swift view actions. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "Dynamic Type, VoiceOver/focus, rapid interaction and Reduced Motion on iPhone; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3343,10 +3811,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "0e1cb06c189843b34d4bc01ca1c7d39dfe99dbe8",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/TextOutputSection.swift whole source retrieved: UI local/Binding state delegates persisted configuration to SharedSettings/App Group or parent settings owner. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "App Group unavailable, relaunch/reopen synchronization, save failure, VoiceOver activation and Dynamic Type; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3358,10 +3835,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "4d20801fe596143e0d0168dad5e2d309df4b3187",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Presentation-only cursor pointer; no real input/permission side effect.",
+          "negative_oracle": "Open/close/reverse, permission denied, reduce motion, VoiceOver, app relaunch and failed network path; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3373,10 +3859,19 @@
       "stage": "X10",
       "provisional_priority": "P0",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "c02c67f92a263579c585551e74d39d9d142abb03",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Output preferences use AppStorage via AppGroup.sharedDefaults ?? .standard lines 7-16; display/input validation through VoiceOutputTarget, preserving known F-0033 fallback risk.",
+          "negative_oracle": "App Group unavailable, relaunch/reopen synchronization, save failure, VoiceOver activation and Dynamic Type; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3388,10 +3883,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "9afade56161291798723edc01c2c50abd6ae1dc1",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Play button 55-71 lacks accessible name; seek through HorizontalPanGestureView at 82-105 and 220-234 has no accessibilityAdjustableAction or alternative accessible seek control; HistoryRowView embeds player.",
+          "negative_oracle": "Deletion I/O failure, interruption/reentry, stale callback, playback natural finish and VoiceOver playback; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3403,10 +3907,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "66cba3d43624e407c678a6649b025d05b6cbe5ea",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/WordCorrectionsView.swift whole source retrieved: UI local/Binding state delegates persisted configuration to SharedSettings/App Group or parent settings owner. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "App Group unavailable, relaunch/reopen synchronization, save failure, VoiceOver activation and Dynamic Type; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3418,10 +3931,19 @@
       "stage": "X10",
       "provisional_priority": "P2",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "2c55814d93d73ff3b389ab05d12f92e40b0c49a3",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "Sayboard/Views/WritingStyleListView.swift whole source retrieved: UI local/Binding state delegates persisted configuration to SharedSettings/App Group or parent settings owner. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "App Group unavailable, relaunch/reopen synchronization, save failure, VoiceOver activation and Dynamic Type; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3622,10 +4144,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "cabf08692f04cc503caa48d01327e7de5e289e4f",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Display-only keyboard prompt, no independent persistence or document writes.",
+          "negative_oracle": "One input per gesture, cancellation/release, VoiceOver, native Globe, zero unexpected haptic, low-memory resume; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3637,10 +4168,19 @@
       "stage": "X10",
       "provisional_priority": "P0",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "8a6282a58aeb92fc2a5650f677e6fe9a61a7bf2d",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "ImmediateKeyTouchSurface is touch owner at 116-136; VoiceOver invokes default stroke only; hold 151-169 uses task and repeats KeyboardHaptics.key, linked F-0010.",
+          "negative_oracle": "One input per gesture, cancellation/release, VoiceOver, native Globe, zero unexpected haptic, low-memory resume; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3652,10 +4192,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "9c71f8947439fb81a74061f3b22c8088e8399a94",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Display-only lock state, no audio/session ownership.",
+          "negative_oracle": "One input per gesture, cancellation/release, VoiceOver, native Globe, zero unexpected haptic, low-memory resume; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3667,10 +4216,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "d23ae76c24875f31fba1a0dafa248a8066598586",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Display-only dictation outcome, no result insertion ownership.",
+          "negative_oracle": "One input per gesture, cancellation/release, VoiceOver, native Globe, zero unexpected haptic, low-memory resume; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3682,10 +4240,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "6a4f8af707d7d392bbde9f3c0b3f6c6ea66fa840",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Geometry-only glyph path; no touch, insertion or persistent state.",
+          "negative_oracle": "One input per gesture, cancellation/release, VoiceOver, native Globe, zero unexpected haptic, low-memory resume; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3697,10 +4264,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "4fead016adc035baba6e6aa9372522799a5356da",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "SwiftUI Shape and key preview; no touch ownership or host insertion side effects.",
+          "negative_oracle": "One input per gesture, cancellation/release, VoiceOver, native Globe, zero unexpected haptic, low-memory resume; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3712,10 +4288,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "61f672f15f2721882e2a471ee7fecc821f60314b",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "SayboardKeyboard/Views/KeyboardAnimations.swift whole source retrieved: Keyboard UI delegates physical touch, keyboard state, ASR and host text mutation to existing UIKit/controller/service owners; no source edit. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "One input per gesture, cancellation/release, VoiceOver, native Globe, zero unexpected haptic, low-memory resume; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3727,10 +4312,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "7c587a62a48592050ecdc4fa5277b0cac278f93e",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "SayboardKeyboard/Views/KeyboardLLMActionsToolbar.swift whole source retrieved: Keyboard UI delegates physical touch, keyboard state, ASR and host text mutation to existing UIKit/controller/service owners; no source edit. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "One input per gesture, cancellation/release, VoiceOver, native Globe, zero unexpected haptic, low-memory resume; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3742,10 +4336,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "4010c4c975d934759a7512cd92f1c4b14ba27d46",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "SayboardKeyboard/Views/LLMActionBar.swift whole source retrieved: Keyboard UI delegates physical touch, keyboard state, ASR and host text mutation to existing UIKit/controller/service owners; no source edit. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "One input per gesture, cancellation/release, VoiceOver, native Globe, zero unexpected haptic, low-memory resume; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3757,10 +4360,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "bd8a850768b75d2664cd203b6eb37e51641ce278",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "SayboardKeyboard/Views/LLMErrorPrompt.swift whole source retrieved: Keyboard UI delegates physical touch, keyboard state, ASR and host text mutation to existing UIKit/controller/service owners; no source edit. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "One input per gesture, cancellation/release, VoiceOver, native Globe, zero unexpected haptic, low-memory resume; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3772,10 +4384,19 @@
       "stage": "X10",
       "provisional_priority": "P0",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "6e49965f75f8d910a173eaf3a41625211d29a272",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Press policy 194-274 and token-scoped stop intent 276-293 control short tap/hold; controller owns dictation request; ambiguous cancelled release F-0013 remains device unverified.",
+          "negative_oracle": "One input per gesture, cancellation/release, VoiceOver, native Globe, zero unexpected haptic, low-memory resume; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3787,10 +4408,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "5dd0b3112e528c795767a42556e97459e80e68ca",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "SayboardKeyboard/Views/LongRecordingNotice.swift whole source retrieved: Keyboard UI delegates physical touch, keyboard state, ASR and host text mutation to existing UIKit/controller/service owners; no source edit. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "One input per gesture, cancellation/release, VoiceOver, native Globe, zero unexpected haptic, low-memory resume; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3802,10 +4432,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "60a838a74ebaedfe6efd98220fc815c2748632fe",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Presentation-only microphone arrow; no real recording start/stop.",
+          "negative_oracle": "One input per gesture, cancellation/release, VoiceOver, native Globe, zero unexpected haptic, low-memory resume; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3817,10 +4456,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "0ad6f58882a7850dec4dbd8a5a94fe4b175bd156",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "SayboardKeyboard/Views/MicMorphAnimation.swift whole source retrieved: Keyboard UI delegates physical touch, keyboard state, ASR and host text mutation to existing UIKit/controller/service owners; no source edit. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "One input per gesture, cancellation/release, VoiceOver, native Globe, zero unexpected haptic, low-memory resume; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3832,10 +4480,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "e4453c721974a1135323baeba6f5c01aef936301",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "SayboardKeyboard/Views/ModelLoadingLabel.swift whole source retrieved: Keyboard UI delegates physical touch, keyboard state, ASR and host text mutation to existing UIKit/controller/service owners; no source edit. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "One input per gesture, cancellation/release, VoiceOver, native Globe, zero unexpected haptic, low-memory resume; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3847,10 +4504,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "4783afa42fbd187aa3a134c8496468573bfc1ae8",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "SayboardKeyboard/Views/SayboardWordmark.swift whole source retrieved: Keyboard UI delegates physical touch, keyboard state, ASR and host text mutation to existing UIKit/controller/service owners; no source edit. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "One input per gesture, cancellation/release, VoiceOver, native Globe, zero unexpected haptic, low-memory resume; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3862,10 +4528,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "5dd0ea8eb43e19c5f4780355df598c8e02d609f8",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "SayboardKeyboard/Views/SpinnerMorphAnimation.swift whole source retrieved: Keyboard UI delegates physical touch, keyboard state, ASR and host text mutation to existing UIKit/controller/service owners; no source edit. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "One input per gesture, cancellation/release, VoiceOver, native Globe, zero unexpected haptic, low-memory resume; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3877,10 +4552,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "9670679af7fdafa2effd344743def5860b17b2a0",
+          "content_review": "whole_file_read_callers_or_negative_cases_limited",
+          "observation": "SayboardKeyboard/Views/SpinnerMorphFrames.swift whole source retrieved: Keyboard UI delegates physical touch, keyboard state, ASR and host text mutation to existing UIKit/controller/service owners; no source edit. Specific complete cross-module caller/failure review remains limited.",
+          "negative_oracle": "One input per gesture, cancellation/release, VoiceOver, native Globe, zero unexpected haptic, low-memory resume; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -3892,10 +4576,19 @@
       "stage": "X10",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "findings": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "blob_sha": "e15db9021ffa5c13cbf409a62cb100592dffeffe",
+          "content_review": "whole_file_with_scoped_owner_or_self_contained_consumer",
+          "observation": "Visual waveform levels; actual audio buffer and session owned elsewhere.",
+          "negative_oracle": "One input per gesture, cancellation/release, VoiceOver, native Globe, zero unexpected haptic, low-memory resume; not_run",
+          "device": "not_run"
+        }
+      ],
       "test_status": "not_run"
     },
     {
@@ -7046,10 +7739,10 @@
     }
   ],
   "review_progress": {
-    "reviewed": 62,
-    "pending": 361,
+    "reviewed": 97,
+    "pending": 284,
     "blocked": 0,
-    "limited": 3,
+    "limited": 45,
     "by_stage": {
       "X9": {
         "reviewed": 62,
@@ -7057,8 +7750,9 @@
         "limited": 3
       },
       "X10": {
-        "reviewed": 0,
-        "pending": 77
+        "reviewed": 35,
+        "pending": 0,
+        "limited": 42
       },
       "X11": {
         "reviewed": 0,

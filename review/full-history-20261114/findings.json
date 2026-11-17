@@ -1,7 +1,7 @@
 {
   "schema_version": "untangle-ocr-findings/v1",
   "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
-  "status": "43 deduplicated findings; X9 source reviewed, X8 microphone changes not device tested",
+  "status": "48 deduplicated source findings; X10 77/77 dispositions, device and native tests not_run",
   "findings": [
     {
       "id": "F-0001",
@@ -471,7 +471,8 @@
       "smallest_repair": "Keep intentional hold vibration but call playsSound:false for popup confirmation; respect iOS sound preference.",
       "regression_oracle": "Instrument sound requests for short tap, hold, cancel and slide; no click solely on popup; actual audible result iPhone only.",
       "verification": [
-        "Two system click requests statically confirmed; iOS may suppress actual second sound."
+        "Two system click requests statically confirmed; iOS may suppress actual second sound.",
+        "X10 ChineseStrokeGrid.swift lines 161,169 calls KeyboardHaptics.key both on touch-down and popup activation; separate feedback event semantics remain needed."
       ],
       "review_priority": "P2"
     },
@@ -597,7 +598,8 @@
       "smallest_repair": "Separate accepted/held-started transition from cancellation; never generate a new Start on a cancelled Button release. Keep token-scoped Stop for a genuine already-started hold.",
       "regression_oracle": "With synthetic delayed hold task, simulate 0.3s drag-off cancelled press vs accepted Button press; assert cancelled produces no start, accepted short press exactly one start, genuine hold exactly one start + stop. Confirm on SideStore iPhone.",
       "verification": [
-        "Conditional code branch confirmed; actual SwiftUI cancelled-release event/order and unintended microphone activation NOT observed."
+        "Conditional code branch confirmed; actual SwiftUI cancelled-release event/order and unintended microphone activation NOT observed.",
+        "X10 MicAnimatedButton.swift lines 194-274 retains press policy, hold activation delay and suppress-action path; no physical cancelled-touch verification."
       ],
       "review_priority": "P1"
     },
@@ -1531,7 +1533,8 @@
       "smallest_repair": "Use a shared delete contract that identifies all recordings including orphan audio and verifies deletion; do not report success until cleanup is complete, retain a recoverable deletion journal on partial failure.",
       "regression_oracle": "Inject failure on one audio file after clearing record index, retry Delete Voice Notes, confirm no orphan persists or is falsely reported deleted; validate unrelated pending dictation/history remains safe.",
       "verification": [
-        "Source-level orphan window confirmed; physical file permission failure and retry not executed."
+        "Source-level orphan window confirmed; physical file permission failure and retry not executed.",
+        "X10 HistoryStorageSettingsView.swift lines 163-166 calls void applyRetentionPolicy, and HistoryStore.swift lines 188-195 writes index before audio deletion without a verified result."
       ],
       "review_priority": "P0"
     },
@@ -1582,7 +1585,8 @@
       "smallest_repair": "Expose App Group unavailability as a degraded state; preserve existing group data and prevent false 'synced' claims, reconcile explicitly after authorization is restored without silently migrating local values.",
       "regression_oracle": "Simulate unavailable/renamed App Group for host and extension; explicitly OFF haptics remains OFF in real shared suite, no silent divergent overwrites, clear recoverable error; valid SideStore suffix shares exactly one domain.",
       "verification": [
-        "Conditional split-source path confirmed in source; no actual SideStore entitlement failure or cross-process test performed."
+        "Conditional split-source path confirmed in source; no actual SideStore entitlement failure or cross-process test performed.",
+        "X10 VoiceOutputSettingsView.swift lines 7-16 retains AppGroup.sharedDefaults ?? .standard setting fallback; extension/app reconciliation device gate remains open."
       ],
       "review_priority": "P1"
     },
@@ -1767,7 +1771,8 @@
       "smallest_repair": "Make transfer completion idempotent, surface draft cleanup failure and preserve the saved Meeting; recover or remove original source only after safe confirmation.",
       "regression_oracle": "Inject source-folder removeItem failure after confirmed destination write; relaunch must not present duplicate active draft or allow duplicate import; saved meeting audio retained.",
       "verification": [
-        "Source-level branch and error swallow confirmed; no disk fault injection, restart runtime or device test executed."
+        "Source-level branch and error swallow confirmed; no disk fault injection, restart runtime or device test executed.",
+        "X10 ConversationView.swift lines 68-72 ignores saveAsMeeting return, so a failed/partial transfer has no on-screen error acknowledgment."
       ],
       "x8_candidate": {
         "main_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
@@ -2050,6 +2055,199 @@
         "Read pinned main source and executed a targeted assistant-side pure-Swift copy of this function; outputs exactly don t stop and 3 5 GB. No native/Xcode/iPhone run."
       ],
       "origin": "X9/manual_source_pure_swift",
+      "assigned_stage": "X8"
+    },
+    {
+      "id": "F-0044",
+      "severity": "high",
+      "state": "confirmed",
+      "area": "history_ui_storage_consistency",
+      "review_priority": "P0",
+      "first_detected_build": null,
+      "last_affected_build": 245,
+      "paths": [
+        "Sayboard/Views/HistoryListView.swift",
+        "Shared/HistoryStore.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Sayboard/Views/HistoryListView.swift",
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "lines": "205-211",
+          "observation": "Calls void deleteRecord then unconditionally removes row from local records and animates."
+        },
+        {
+          "path": "Shared/HistoryStore.swift",
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "lines": "142-149",
+          "observation": "Returns without UI signal on failed read/write; audio deletion return not checked."
+        }
+      ],
+      "scenario": "Delete one history recording while shared storage is unavailable/read-only.",
+      "causal_chain": "HistoryStore refuses write -> caller receives no success/failure -> HistoryListView removes row anyway -> UI falsely implies durable deletion; the recording can reappear and protected audio may persist.",
+      "root_owner": "HistoryStore.deleteRecord result contract plus HistoryListView.deleteRecord",
+      "smallest_repair": "Return a verified deletion outcome and update the list only after confirmed metadata/audio disposition; make failure visible without destroying record or audio.",
+      "regression_oracle": "Fault-inject history index read/write failure and protected audio-file deletion: row must remain or show pending/error, no false success. Reopen and check index/audio consistency.",
+      "verification": [
+        "Read-only pinned whole-source and immediate consumer inspection at main@5bad88df03a44c319f2fba8a0fd6ae67d79f681d; native XCTest, SideStore/iPhone and VoiceOver not_run."
+      ],
+      "origin": "X10/manual-GitHub-source",
+      "assigned_stage": "X8"
+    },
+    {
+      "id": "F-0045",
+      "severity": "medium",
+      "state": "confirmed",
+      "area": "accessibility_language_selection",
+      "review_priority": "P1",
+      "first_detected_build": null,
+      "last_affected_build": 245,
+      "paths": [
+        "Sayboard/Views/LanguagePickerView.swift",
+        "Sayboard/Views/SpeechLanguagesSettingsView.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Sayboard/Views/LanguagePickerView.swift",
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "lines": "114-129,201-216",
+          "observation": "Selection rows expose HStack and onTapGesture only; no Button/accessibilityAction/explicit accessibility trait or selected value."
+        },
+        {
+          "path": "Sayboard/Views/SpeechLanguagesSettingsView.swift",
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "lines": "73-99",
+          "observation": "Opens language priority editor using this picker."
+        }
+      ],
+      "scenario": "Navigate single/multiple language selection using VoiceOver or external keyboard.",
+      "causal_chain": "Custom gesture-only selection rows omit explicit semantic control and selected-state affordance; actual VoiceOver synthesis/activation on device is unverified.",
+      "root_owner": "LanguagePickerView.headerRowContent and languageRowContent",
+      "smallest_repair": "Use semantic Button/toggle or explicit accessibility action with value/selection traits while retaining the approved visual design.",
+      "regression_oracle": "VoiceOver swipe, announce selected language, double-tap to toggle or select, hardware keyboard focus; ensure ordering remains accessible, test on device.",
+      "verification": [
+        "Read-only pinned whole-source and immediate consumer inspection at main@5bad88df03a44c319f2fba8a0fd6ae67d79f681d; native XCTest, SideStore/iPhone and VoiceOver not_run."
+      ],
+      "origin": "X10/manual-GitHub-source",
+      "assigned_stage": "X8"
+    },
+    {
+      "id": "F-0046",
+      "severity": "medium",
+      "state": "confirmed",
+      "area": "accessibility_waveform",
+      "review_priority": "P1",
+      "first_detected_build": null,
+      "last_affected_build": 245,
+      "paths": [
+        "Sayboard/Views/WaveformPlayerView.swift",
+        "Sayboard/Views/HorizontalPanGestureView.swift",
+        "Sayboard/Views/HistoryRowView.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Sayboard/Views/WaveformPlayerView.swift",
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "lines": "55-71,82-105,220-234",
+          "observation": "Shape-only play/pause control lacks accessible label; scrubbing/seek solely overlay gesture with no accessible adjustable value or seek buttons."
+        },
+        {
+          "path": "Sayboard/Views/HorizontalPanGestureView.swift",
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "lines": "38-64,72-97",
+          "observation": "UIKit recognizers only, no UIAccessibility actions or adjustable element."
+        }
+      ],
+      "scenario": "VoiceOver user wants to play/pause or navigate within a saved voice note.",
+      "causal_chain": "Gesture and icon controls have no explicit accessible transport contract; screen-reader seek is not discoverable from this source.",
+      "root_owner": "WaveformPlayerView control and HorizontalPanGestureView gesture bridge",
+      "smallest_repair": "Expose named play/pause control and accessible adjustable seek or equivalent increment/decrement; leave UIKit pointer scrub owner unchanged.",
+      "regression_oracle": "VoiceOver play, pause, move ahead/back, announce time/value; horizontal pan cancel must resume playback correctly; physical iPhone test.",
+      "verification": [
+        "Read-only pinned whole-source and immediate consumer inspection at main@5bad88df03a44c319f2fba8a0fd6ae67d79f681d; native XCTest, SideStore/iPhone and VoiceOver not_run."
+      ],
+      "origin": "X10/manual-GitHub-source",
+      "assigned_stage": "X8"
+    },
+    {
+      "id": "F-0047",
+      "severity": "medium",
+      "state": "confirmed",
+      "area": "accessibility_reduced_motion",
+      "review_priority": "P1",
+      "first_detected_build": null,
+      "last_affected_build": 245,
+      "paths": [
+        "Sayboard/Views/MicrophoneTutorialView.swift",
+        "Sayboard/Views/FullAccessTutorialView.swift",
+        "Sayboard/Views/Onboarding/MicrophonePromptTutorialView.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Sayboard/Views/MicrophoneTutorialView.swift",
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "lines": "20-25,70-102",
+          "observation": "Unconditional looping cursor/toggle animation with sleeps and withAnimation; no reduce-motion gate."
+        },
+        {
+          "path": "Sayboard/Views/FullAccessTutorialView.swift",
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "lines": "25-29,136-205",
+          "observation": "Looping keyboard-settings tutorial has no reduce-motion gate."
+        },
+        {
+          "path": "Sayboard/Views/Onboarding/MicrophonePromptTutorialView.swift",
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "lines": "84-123",
+          "observation": "Simulated system microphone prompt animates repeatedly with no reduce-motion gate."
+        }
+      ],
+      "scenario": "User enables iOS Reduce Motion and opens the animated setup guidance.",
+      "causal_chain": "Three tutorial owners ignore accessibilityReduceMotion, so decorative looping motion remains; cancellation is only checked at the outer loop, while try? sleeps may finish a cycle after cancellation.",
+      "root_owner": "Three standalone tutorial runAnimationLoop implementations",
+      "smallest_repair": "Show a static readable tutorial state or non-motion steps under Reduce Motion; check cancellation immediately after awaits without touching actual permission flow.",
+      "regression_oracle": "With Reduce Motion enabled, all instructions stay visible and usable without looping cursor motion; disabling it restores normal optional tutorial; dismiss while animation active.",
+      "verification": [
+        "Read-only pinned whole-source and immediate consumer inspection at main@5bad88df03a44c319f2fba8a0fd6ae67d79f681d; native XCTest, SideStore/iPhone and VoiceOver not_run."
+      ],
+      "origin": "X10/manual-GitHub-source",
+      "assigned_stage": "X8"
+    },
+    {
+      "id": "F-0048",
+      "severity": "medium",
+      "state": "confirmed",
+      "area": "accessibility_icon_controls",
+      "review_priority": "P1",
+      "first_detected_build": null,
+      "last_affected_build": 245,
+      "paths": [
+        "Sayboard/Views/HistoryRowView.swift",
+        "Sayboard/Views/ModelCardComponents.swift"
+      ],
+      "line_evidence": [
+        {
+          "path": "Sayboard/Views/HistoryRowView.swift",
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "lines": "182-215",
+          "observation": "Copy/delete Button labels contain only icon assets and lack explicit accessibilityLabel."
+        },
+        {
+          "path": "Sayboard/Views/ModelCardComponents.swift",
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "lines": "225-233,266-273",
+          "observation": "Model remove and cancel icon-only Buttons lack explicit accessibilityLabel; confirmation cannot compensate for missing initial affordance."
+        }
+      ],
+      "scenario": "VoiceOver user navigates icon-only copy/delete and download cancel controls.",
+      "causal_chain": "Multiple icon-only button owners rely on image fallback instead of explicit action name/state, so critical destructive/cancel controls have uncertain spoken output.",
+      "root_owner": "HistoryRowView icon buttons and DownloadStatusView icon buttons",
+      "smallest_repair": "Add localized, context-specific accessibilityLabel and hint where necessary, preserving visual dimensions and action wiring.",
+      "regression_oracle": "VoiceOver reads Copy transcript, Delete recording, Remove model and Cancel download with correct context and enabled state; no double activation.",
+      "verification": [
+        "Read-only pinned whole-source and immediate consumer inspection at main@5bad88df03a44c319f2fba8a0fd6ae67d79f681d; native XCTest, SideStore/iPhone and VoiceOver not_run."
+      ],
+      "origin": "X10/manual-GitHub-source",
       "assigned_stage": "X8"
     }
   ],

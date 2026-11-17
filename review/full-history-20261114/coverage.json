@@ -7,7 +7,7 @@
     "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
     "review_branch": "review/full-history-20261114"
   },
-  "status": "X9 complete source-review disposition 62+3=65, runtime/device not_run. Live 583 blobs, original 578 source queue inventory requires +5 path reconciliation outside X9.",
+  "status": "X10 source disposition complete (35 reviewed, 42 limited); remaining native/iPhone gates not_run",
   "expected_current_tracked_files_observed": 578,
   "current_tracked_files": 578,
   "initial_tracked_files": 356,
@@ -1563,37 +1563,55 @@
       "path": "Sayboard/Views/AIButtonOfferCard.swift",
       "sha": "20d66620d37305ed4a66de09fe4a862b9293824d",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/AppLanguageListView.swift",
       "sha": "009e2b1d8b07736f527f81022928ec4a28bf0e5e",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/CantoneseCorrectionsView.swift",
       "sha": "962493c3cc1a208a00e82f2448e7340d00c500d7",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/CantoneseRomanizationDiagnosticsView.swift",
       "sha": "ae95608164f82fcd7ee4a68b34c15eebd3480eb0",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/ConversationView.swift",
       "sha": "a64b5c8b0ee682e5180be9183954f9996a37e7fb",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/CustomQwenModelView.swift",
       "sha": "dabdb7e59a78635b5cc669df57a2105d91f2e304",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/DataAndStorageSettingsView.swift",
@@ -1607,67 +1625,100 @@
       "path": "Sayboard/Views/DefaultStylePickerView.swift",
       "sha": "69ac12bf2a5c64077fe8af2e6c87920382f0ecd4",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/DiagnosticsView.swift",
       "sha": "c48bfd625dda950352fe2a320f66ed488b617ecb",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/FeedbackSection.swift",
       "sha": "802e35957501e792086c956b54e5bc314a973cab",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/FlowLayout.swift",
       "sha": "22ae76b5ce0b2841ac6335b829849b0ae3585d6a",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/FullAccessTutorialView.swift",
       "sha": "5ec656cc15b7c91f47f60668be9d45f228b29a17",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/HistoryListView.swift",
       "sha": "e8f5da6893d933b1d24692bb565a93a4932491ba",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/HistoryRowView.swift",
       "sha": "d5200e3329178e144d0fc79a864fd2c14e196aa4",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/HistoryStorageSettingsView.swift",
       "sha": "caddd41c9d39ae267ea412d4ea79ac0d7dc7252f",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/HorizontalPanGestureView.swift",
       "sha": "384ba5450e3e68480ca318fabccae8e5d47759ca",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/HostReturnHintOverlay.swift",
       "sha": "c92990d8998f1348e08d282ca96dbfff3d8d6c31",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/KeyboardCustomizationView.swift",
       "sha": "3c9bc9234f5f06c62e37e687238fbcdd793435a7",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/KeyboardSelectionProbeView.swift",
@@ -1689,25 +1740,37 @@
       "path": "Sayboard/Views/LLMModelCardView.swift",
       "sha": "49a599dde3ed038f7ea785d4b8b35813e524e9f5",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/LLMModelsSection.swift",
       "sha": "ead8bfcd8995faadae1b7d607a70bbcedf9e737a",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/LLMSettingsView.swift",
       "sha": "b77d9082f3f38c00beae4412dae6334fc2754c50",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/LanguagePickerView.swift",
       "sha": "808bc09746f9944dbf5ffd81ca8cb0a9ad10bdea",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/LearningDataSettingsView.swift",
@@ -1721,55 +1784,82 @@
       "path": "Sayboard/Views/MainTabView.swift",
       "sha": "9bb8f8233df8cc94c93e9f6ecc24a765159b10ea",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/MeetingRecordsView.swift",
       "sha": "257ae5f63b52b08038c32dbcf15f1fdbab0c6295",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/MicrophoneTutorialView.swift",
       "sha": "aa83d45f66a43a14b17db400d669a6116fc7768e",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/ModelCardComponents.swift",
-      "sha": "8024ab5718f4a11f67e9d22d726a391a81dab754",
+      "sha": "cee2eb01aaaf9ea71908bc5602dbea44e5522153",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/ModelCardView.swift",
-      "sha": "1da6951b1dfee674ecc940056f65e962ede7c7a5",
+      "sha": "157010b99098821d414c9a3c1ae390afd48dfb3d",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/ModelListSortKey.swift",
       "sha": "046512133881d3c7dce31d958af7e9214bfb227f",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/ModelsView.swift",
-      "sha": "f45cf7f64496176e7d50d16ee7fc71ce09d7c388",
+      "sha": "fb704e0e08ee3767cefe0d25ccad0b8985de7088",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/Onboarding/KeyboardLayoutPreview.swift",
       "sha": "299443bcdae32f2a79d572ca7f2250b0601d0cb2",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/Onboarding/KeyboardPhonePreview.swift",
       "sha": "64acde51fdd4fc2f1affc2f01cf0d2d03c9d5326",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/Onboarding/KeyboardSwitchTutorialView.swift",
@@ -1783,13 +1873,19 @@
       "path": "Sayboard/Views/Onboarding/MicrophonePromptTutorialView.swift",
       "sha": "8ea570fe1e99aa44e325fdf2f2a006194f27893d",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/Onboarding/OnboardingComponents.swift",
       "sha": "2243b3f6db407df16201d6dad5b1240d15bbe498",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/Onboarding/OnboardingKeyboardTypeView.swift",
@@ -1811,19 +1907,28 @@
       "path": "Sayboard/Views/Onboarding/OnboardingLanguagesView.swift",
       "sha": "f9ec46ae12e6a3b3403f91f347878e0cbf89ed65",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/Onboarding/OnboardingMicrophoneView.swift",
       "sha": "d780c495e6957f4b5172919496ef19139bac29bf",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/Onboarding/OnboardingModelStatusView.swift",
       "sha": "b16c098eb9608792938e14b436cc88e0b1edf1b6",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/Onboarding/OnboardingPracticeView.swift",
@@ -1845,13 +1950,19 @@
       "path": "Sayboard/Views/Onboarding/OnboardingWritingStyleView.swift",
       "sha": "a3075d6e1d537f40848b86f8c9afb58d06efe223",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/Onboarding/SetupCardView.swift",
       "sha": "fcba2e3ae7480453f22ed689daf08471512d40ad",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/OnboardingView.swift",
@@ -1865,128 +1976,191 @@
       "path": "Sayboard/Views/PaywallView.swift",
       "sha": "de362e9d592fe28dee59b8eefbc58ea55b03cbc1",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/PlayPauseShape.swift",
       "sha": "88b25b4153b7505724fafa62e779f25f86ff9f8f",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/PurchaseSection.swift",
       "sha": "c117337690921f761324b7c22d5444cb28d8a517",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/SessionInfoView.swift",
       "sha": "56a82343796e9287580ae1991f653fa4b51f1067",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/SettingsNavigationViews.swift",
       "sha": "8874a03707b929f7e8c273f9f8146ff6e01068b0",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/SettingsView.swift",
       "sha": "567211a9f9e57a24be88e05b7b77b9febc0f0ce2",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/SetupBannerView.swift",
       "sha": "13e81ad5c84bbec9209e855f5585f340576e6f16",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/SetupView.swift",
       "sha": "1e949c900d62c4abd4b2c7f478d5a1cf78289d6c",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/SnippetsView.swift",
       "sha": "6f6d763c259904c7c9dcd7c9b60c07fb3cfbae89",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/SpeechLanguagesSettingsView.swift",
       "sha": "0b5283109150edca4f74bd32e5647e70b9845062",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/StyleCard.swift",
       "sha": "52fd8c36d6bb1abf75e9868b58ef385f9b8babe1",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/StyleOptionRow.swift",
       "sha": "75b169fbdd4e735f2aac702bafd776145e0d3d06",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/StyleSelectionView.swift",
       "sha": "d69fedb66b402e3378b2714109116adbf0642408",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/SwipeTouchDiagnosticsView.swift",
       "sha": "acd8f552dac21793a8bf87e355ddaf4e529bdcd0",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/TabBarTapInterceptor.swift",
       "sha": "9d05c36e57c1ef14dea4281bf14816c01732e8cb",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/TextOutputSection.swift",
       "sha": "0e1cb06c189843b34d4bc01ca1c7d39dfe99dbe8",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/TutorialCursor.swift",
       "sha": "4d20801fe596143e0d0168dad5e2d309df4b3187",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/VoiceOutputSettingsView.swift",
       "sha": "c02c67f92a263579c585551e74d39d9d142abb03",
       "tracking": "current",
-      "review": "not_reviewed",
-      "x4_evidence": "X4 scoped path at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; 11-109 explicit target selector and BCP47 validation. Remainder not automatically marked reviewed."
+      "review": "reviewed",
+      "x4_evidence": "X4 scoped path at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad; 11-109 explicit target selector and BCP47 validation. Remainder not automatically marked reviewed.",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/WaveformPlayerView.swift",
       "sha": "9afade56161291798723edc01c2c50abd6ae1dc1",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/WordCorrectionsView.swift",
       "sha": "66cba3d43624e407c678a6649b025d05b6cbe5ea",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "Sayboard/Views/WritingStyleListView.swift",
       "sha": "2c55814d93d73ff3b389ab05d12f92e40b0c49a3",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardKeyboard/ChineseShapeDictionary.swift",
@@ -2238,26 +2412,38 @@
       "path": "SayboardKeyboard/Views/BlockerPrompt.swift",
       "sha": "cabf08692f04cc503caa48d01327e7de5e289e4f",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardKeyboard/Views/ChineseStrokeGrid.swift",
       "sha": "8a6282a58aeb92fc2a5650f677e6fe9a61a7bf2d",
       "tracking": "current",
-      "review": "not_reviewed",
-      "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 12-18 gesture state, 81-135 touch and a11y, 156-170 haptic (only partial; X6 owns full review)"
+      "review": "reviewed",
+      "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 12-18 gesture state, 81-135 touch and a11y, 156-170 haptic (only partial; X6 owns full review)",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardKeyboard/Views/DictationLockedLabel.swift",
       "sha": "9c71f8947439fb81a74061f3b22c8088e8399a94",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardKeyboard/Views/DictationOutcomeLabel.swift",
       "sha": "d23ae76c24875f31fba1a0dafa248a8066598586",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardKeyboard/Views/EmojiKeyboardView.swift",
@@ -2271,7 +2457,10 @@
       "path": "SayboardKeyboard/Views/GlyphPath.swift",
       "sha": "6a4f8af707d7d392bbde9f3c0b3f6c6ea66fa840",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardKeyboard/Views/ImmediateKeyTouchSurface.swift",
@@ -2293,13 +2482,19 @@
       "path": "SayboardKeyboard/Views/KeyCallout.swift",
       "sha": "4fead016adc035baba6e6aa9372522799a5356da",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardKeyboard/Views/KeyboardAnimations.swift",
       "sha": "61f672f15f2721882e2a471ee7fecc821f60314b",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardKeyboard/Views/KeyboardHapticEnvironment.swift",
@@ -2311,9 +2506,12 @@
     },
     {
       "path": "SayboardKeyboard/Views/KeyboardLLMActionsToolbar.swift",
-      "sha": "97f4fc77b5bc3a2d69478cc72f4420f482943015",
+      "sha": "7c587a62a48592050ecdc4fa5277b0cac278f93e",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardKeyboard/Views/KeyboardReturnKey.swift",
@@ -2334,15 +2532,21 @@
     },
     {
       "path": "SayboardKeyboard/Views/LLMActionBar.swift",
-      "sha": "2b4c24c71346daa239931540ef51f3f68cb40ce8",
+      "sha": "4010c4c975d934759a7512cd92f1c4b14ba27d46",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardKeyboard/Views/LLMErrorPrompt.swift",
       "sha": "bd8a850768b75d2664cd203b6eb37e51641ce278",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift",
@@ -2373,9 +2577,12 @@
       "path": "SayboardKeyboard/Views/Layouts/MicAnimatedButton.swift",
       "sha": "6e49965f75f8d910a173eaf3a41625211d29a272",
       "tracking": "current",
-      "review": "not_reviewed",
+      "review": "reviewed",
       "x2_evidence": "X2 scoped check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 79-124 Button cancellation and 194-304 tap/hold arbitration (only partial; later stage owns full mic state)",
-      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 79-124 mic Button + task; 194-322 release/tap and callback cancellation; animation off-scope; remainder not claimed reviewed"
+      "x3_evidence": "X3 scoped caller check at main@ed2c4ede05567f3f63d2979ade81040c8fe799ad: 79-124 mic Button + task; 194-322 release/tap and callback cancellation; animation off-scope; remainder not claimed reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardKeyboard/Views/Layouts/StandardKeyboardLayout.swift",
@@ -2397,25 +2604,37 @@
       "path": "SayboardKeyboard/Views/LongRecordingNotice.swift",
       "sha": "5dd0b3112e528c795767a42556e97459e80e68ca",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardKeyboard/Views/MicHintArrow.swift",
       "sha": "60a838a74ebaedfe6efd98220fc815c2748632fe",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardKeyboard/Views/MicMorphAnimation.swift",
       "sha": "0ad6f58882a7850dec4dbd8a5a94fe4b175bd156",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardKeyboard/Views/ModelLoadingLabel.swift",
       "sha": "e4453c721974a1135323baeba6f5c01aef936301",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardKeyboard/Views/NativeInputModeSwitchKey.swift",
@@ -2438,7 +2657,10 @@
       "path": "SayboardKeyboard/Views/SayboardWordmark.swift",
       "sha": "4783afa42fbd187aa3a134c8496468573bfc1ae8",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardKeyboard/Views/SpaceBarKey.swift",
@@ -2452,13 +2674,19 @@
       "path": "SayboardKeyboard/Views/SpinnerMorphAnimation.swift",
       "sha": "5dd0ea8eb43e19c5f4780355df598c8e02d609f8",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardKeyboard/Views/SpinnerMorphFrames.swift",
       "sha": "9670679af7fdafa2effd344743def5860b17b2a0",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed_limited",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardKeyboard/Views/SymbolHoldKey.swift",
@@ -2480,7 +2708,10 @@
       "path": "SayboardKeyboard/Views/WaveformBars.swift",
       "sha": "e15db9021ffa5c13cbf409a62cb100592dffeffe",
       "tracking": "current",
-      "review": "not_reviewed"
+      "review": "reviewed",
+      "review_stage": "X10",
+      "verified_source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+      "test_status": "not_run"
     },
     {
       "path": "SayboardTests/AIButtonOfferTests.swift",
@@ -11306,11 +11537,69 @@
       "device": "not_run"
     },
     "X10": {
-      "status": "queued_blocked_until_predecessor",
-      "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "status": "source_dispositions_complete; high-risk caller checks_limited; native/iPhone_not_run",
+      "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "planned_paths": 77,
-      "reviewed_new": 0,
-      "queue_path": "review/full-history-20261114/review-queue.json"
+      "reviewed_new": 35,
+      "reviewed_limited": 42,
+      "pending": 0,
+      "limited_paths": [
+        "Sayboard/Views/CantoneseRomanizationDiagnosticsView.swift",
+        "Sayboard/Views/ConversationView.swift",
+        "Sayboard/Views/DefaultStylePickerView.swift",
+        "Sayboard/Views/DiagnosticsView.swift",
+        "Sayboard/Views/FeedbackSection.swift",
+        "Sayboard/Views/HostReturnHintOverlay.swift",
+        "Sayboard/Views/LLMModelCardView.swift",
+        "Sayboard/Views/LLMModelsSection.swift",
+        "Sayboard/Views/MainTabView.swift",
+        "Sayboard/Views/MeetingRecordsView.swift",
+        "Sayboard/Views/ModelCardView.swift",
+        "Sayboard/Views/ModelsView.swift",
+        "Sayboard/Views/Onboarding/KeyboardLayoutPreview.swift",
+        "Sayboard/Views/Onboarding/KeyboardPhonePreview.swift",
+        "Sayboard/Views/Onboarding/OnboardingComponents.swift",
+        "Sayboard/Views/Onboarding/OnboardingMicrophoneView.swift",
+        "Sayboard/Views/Onboarding/OnboardingModelStatusView.swift",
+        "Sayboard/Views/Onboarding/OnboardingWritingStyleView.swift",
+        "Sayboard/Views/Onboarding/SetupCardView.swift",
+        "Sayboard/Views/PaywallView.swift",
+        "Sayboard/Views/PurchaseSection.swift",
+        "Sayboard/Views/SessionInfoView.swift",
+        "Sayboard/Views/SettingsNavigationViews.swift",
+        "Sayboard/Views/SettingsView.swift",
+        "Sayboard/Views/SetupBannerView.swift",
+        "Sayboard/Views/SetupView.swift",
+        "Sayboard/Views/SnippetsView.swift",
+        "Sayboard/Views/StyleSelectionView.swift",
+        "Sayboard/Views/TabBarTapInterceptor.swift",
+        "Sayboard/Views/TextOutputSection.swift",
+        "Sayboard/Views/WordCorrectionsView.swift",
+        "Sayboard/Views/WritingStyleListView.swift",
+        "SayboardKeyboard/Views/KeyboardAnimations.swift",
+        "SayboardKeyboard/Views/KeyboardLLMActionsToolbar.swift",
+        "SayboardKeyboard/Views/LLMActionBar.swift",
+        "SayboardKeyboard/Views/LLMErrorPrompt.swift",
+        "SayboardKeyboard/Views/LongRecordingNotice.swift",
+        "SayboardKeyboard/Views/MicMorphAnimation.swift",
+        "SayboardKeyboard/Views/ModelLoadingLabel.swift",
+        "SayboardKeyboard/Views/SayboardWordmark.swift",
+        "SayboardKeyboard/Views/SpinnerMorphAnimation.swift",
+        "SayboardKeyboard/Views/SpinnerMorphFrames.swift"
+      ],
+      "drift_reconciled": [
+        "Sayboard/Views/ModelCardComponents.swift",
+        "Sayboard/Views/ModelCardView.swift",
+        "Sayboard/Views/ModelsView.swift"
+      ],
+      "new_findings": [
+        "F-0044",
+        "F-0045",
+        "F-0046",
+        "F-0047",
+        "F-0048"
+      ],
+      "device": "not_run"
     },
     "X11": {
       "status": "queued_blocked_until_predecessor",
@@ -11345,12 +11634,12 @@
   "counts": {
     "current_total": 578,
     "historical_only": 14,
-    "reviewed": 228,
+    "reviewed": 263,
     "excluded": 166,
-    "not_reviewed": 195,
+    "not_reviewed": 118,
     "known_changed_path_occurrences": 983,
     "known_unique_changed_paths": 336,
-    "reviewed_limited": 3
+    "reviewed_limited": 45
   },
   "rule": "A file is reviewed only after whole-file read and material caller/consumer + exact source SHA and test oracle. Queued/excluded paths are not cleared without type-appropriate evidence; historic source requires a genuine old commit. Binary content not inspected must be explicitly reviewed_limited or blocked.",
   "current_snapshot": {
@@ -11376,8 +11665,8 @@
     "original_inventory_blobs": 578,
     "unassigned_new_blobs": 5,
     "latest_actions_number_observed": 245,
-    "latest_actions_status_observed": "in_progress",
-    "last_verified_successful_actions": 242,
+    "latest_actions_status_observed": "completed_success",
+    "last_verified_successful_actions": 245,
     "consumer_changes_owned_by": "X8"
   }
 }
