@@ -7,7 +7,7 @@
     "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
     "review_branch": "review/full-history-20261114"
   },
-  "status": "X11 104 source dispositions complete; static/CI evidence only; native and iPhone acceptance not_run",
+  "status": "X12 166 file dispositions recorded; 90 MP4 content headers checked; video frames and iPhone not_run; 1 large xcstrings inaccessible.",
   "expected_current_tracked_files_observed": 578,
   "current_tracked_files": 578,
   "initial_tracked_files": 356,
@@ -11990,11 +11990,32 @@
       "device": "not_run"
     },
     "X12": {
-      "status": "queued_blocked_until_predecessor",
-      "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "status": "complete_with_one_documented_content_blocker; no_visual_or_device_acceptance",
+      "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "planned_paths": 166,
-      "reviewed_new": 0,
-      "queue_path": "review/full-history-20261114/review-queue.json"
+      "reviewed_new": 22,
+      "reviewed_limited": 143,
+      "blocked": 1,
+      "pending": 0,
+      "blocked_paths": [
+        "Sayboard/Localizable.xcstrings"
+      ],
+      "media": {
+        "mp4": 90,
+        "container_verified": 90,
+        "frames_visually_reviewed": 0,
+        "duration_seconds": 16,
+        "dimensions_px": [
+          1136,
+          640
+        ]
+      },
+      "verified_visual_pngs": 7,
+      "document_mixed_review": "contents inspected at pinned Git blob; historical evidence not live behaviour",
+      "new_findings": [
+        "F-0050"
+      ],
+      "device": "not_run"
     },
     "X13": {
       "status": "queued_blocked_until_predecessor",
@@ -12015,12 +12036,13 @@
   "counts": {
     "current_total": 578,
     "historical_only": 14,
-    "reviewed": 322,
-    "excluded": 166,
+    "reviewed": 344,
+    "excluded": 0,
     "not_reviewed": 14,
     "known_changed_path_occurrences": 983,
     "known_unique_changed_paths": 336,
-    "reviewed_limited": 90
+    "reviewed_limited": 233,
+    "blocked": 1
   },
   "rule": "A file is reviewed only after whole-file read and material caller/consumer + exact source SHA and test oracle. Queued/excluded paths are not cleared without type-appropriate evidence; historic source requires a genuine old commit. Binary content not inspected must be explicitly reviewed_limited or blocked.",
   "current_snapshot": {
@@ -12034,11 +12056,18 @@
     "tracked_files": 583,
     "reviewed_source": 228,
     "queued_unreviewed_current": 181,
-    "queued_previously_excluded_current": 166,
+    "queued_previously_excluded_current": 0,
     "queued_historical_only": 14,
     "queue_path": "review/full-history-20261114/review-queue.json",
     "reviewed_limited_source": 3,
-    "last_verified_successful_build": 242
+    "last_verified_successful_build": 242,
+    "x12_source_dispositions": {
+      "reviewed": 22,
+      "limited": 143,
+      "blocked": 1,
+      "queued": 0,
+      "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d"
+    }
   },
   "live_main_drift": {
     "reviewed_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",

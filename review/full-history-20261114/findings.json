@@ -2318,6 +2318,53 @@
       ],
       "origin": "X11 full script audit",
       "assigned_stage": "X11/X8"
+    },
+    {
+      "id": "F-0050",
+      "severity": "medium",
+      "state": "confirmed_source_localization_mismatch",
+      "area": "localized_tutorial_media_resolution",
+      "review_priority": "P1",
+      "first_detected_build": 245,
+      "last_affected_build": 245,
+      "paths": [
+        "Sayboard/Helpers/TutorialVideo.swift",
+        "Shared/Constants.swift",
+        "Sayboard/Resources/tutorial-add-keyboard-zh.mp4",
+        "Sayboard/Resources/tutorial-full-access-zh.mp4",
+        "Sayboard/Resources/tutorial-microphone-zh.mp4"
+      ],
+      "line_evidence": [
+        {
+          "path": "Shared/Constants.swift",
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "lines": "286-321",
+          "observation": "AppLanguageConfig supports zh-Hans and zh-Hant, with English fallback; does not use generic zh for display language."
+        },
+        {
+          "path": "Sayboard/Helpers/TutorialVideo.swift",
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "lines": "4-13",
+          "observation": "TutorialVideo.url(for:) constructs resource name from exact supported language, then falls back directly to English if missing; no zh-Hans/zh-Hant -> zh video mapping."
+        },
+        {
+          "path": "Sayboard/Resources/tutorial-add-keyboard-zh.mp4",
+          "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "lines": "binary asset",
+          "observation": "Three tutorial families each bundle only -zh.mp4 for Chinese, no -zh-Hans or -zh-Hant files at pinned main tree."
+        }
+      ],
+      "scenario": "Select Traditional or Simplified Chinese app interface and launch Add Keyboard, Full Access or Microphone PiP tutorial.",
+      "causal_chain": "App locale is zh-Hant/zh-Hans → lookup requests nonexistent family-zh-Hant/zh-Hans.mp4 → generic zh is skipped → English video is used.",
+      "root_owner": "Sayboard/Helpers/TutorialVideo.swift language-to-resource resolver",
+      "smallest_repair": "Map zh-Hans and zh-Hant to an intentional Chinese video resource when language-specific video exists; otherwise explicitly choose a separate correct variant, then retain English as final fallback.",
+      "regression_oracle": "For each tutorial family, the Chinese locale selects a Chinese asset and never silently resolves to English; unsupported locale still resolves to English; PiP opens and recovers on iPhone.",
+      "verification": [
+        "Pinned live main tree and all 90 MP4 byte headers inspected at 5bad88df03a44c319f2fba8a0fd6ae67d79f681d; 16-second 1136×640 avc1 container verified; visual caption accuracy and iPhone PiP behavior not_run.",
+        "Read TutorialVideo.url and AppLanguageConfig at pinned source; native runtime test not_run."
+      ],
+      "origin": "X12/manual-GitHub-media-and-source",
+      "assigned_stage": "X8"
     }
   ],
   "categories": [
