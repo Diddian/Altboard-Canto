@@ -1,7 +1,7 @@
 {
   "schema_version": "untangle-ocr-findings/v1",
   "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
-  "status": "49 deduplicated source findings; X11 104/104 source dispositions; native @Test and iPhone not_run.",
+  "status": "50 deduplicated source findings; X13 14/14 historical paths dispositioned, no new findings; 4 limited, native/iPhone not_run.",
   "findings": [
     {
       "id": "F-0001",

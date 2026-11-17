@@ -2,7 +2,7 @@
   "schema_version": "altboard-review-queue/v1",
   "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
   "historical_source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
-  "status": "X12 166/166 evidence-based dispositions (22 reviewed, 143 reviewed_limited, 1 blocked); visual MP4 and iPhone tests not_run.",
+  "status": "X13 14/14 historical evidence dispositions: 10 reviewed, 4 reviewed_limited; pre-existing X12 localization blocked; native/iPhone not_run.",
   "definition": "Each entry is a review obligation, NOT a completed review. Previously excluded files must be inspected with the appropriate evidence depth.",
   "counts": {
     "total": 426,
@@ -10580,11 +10580,26 @@
       "stage": "X13",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "11395ebe909fb675f413f583b3e8bfa3434ba0d8",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "11395ebe909fb675f413f583b3e8bfa3434ba0d8",
+          "blob_sha": "75c52dc0408a4f4537bf2b99c25624464451e86d",
+          "current_main_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "removal_sha": "aedaac8f25e8042d73de13c22edd4401e09ec90d",
+          "content_review": "complete_historical_source_and_owner_review",
+          "observation": "All 27 lines read. Button toggled isComposeMode, disabled during record/process. Deleted with Compose mode; current voice process edits/translates dictation and has no Compose toggle.",
+          "consumer": "Historical KeyboardState.isComposeMode -> current KeyboardState / LLMProcessingCoordinator",
+          "negative_oracle": "No duplicate Compose state; preserve mic start/cancel and output target on iPhone (not_run).",
+          "test_status": "not_run",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "not_run",
+      "historical_blob_sha": "75c52dc0408a4f4537bf2b99c25624464451e86d",
+      "historical_removal_sha": "aedaac8f25e8042d73de13c22edd4401e09ec90d"
     },
     {
       "path": "SayboardKeyboard/Views/ComposePresetBar.swift",
@@ -10595,11 +10610,26 @@
       "stage": "X13",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "11395ebe909fb675f413f583b3e8bfa3434ba0d8",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "11395ebe909fb675f413f583b3e8bfa3434ba0d8",
+          "blob_sha": "efc8841439c8abf680e3ef68fcf2968c1311015b",
+          "current_main_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "removal_sha": "aedaac8f25e8042d73de13c22edd4401e09ec90d",
+          "content_review": "complete_historical_source_and_owner_review",
+          "observation": "All 32 lines read. Horizontal presets changed state during idle. Bar, state and metric deliberately deleted in aedaac8; not a surviving current setting.",
+          "consumer": "Historical KeyboardState.composePreset -> current KeyboardChrome/voice settings",
+          "negative_oracle": "No retired preset UI reappears, including during processing (device not_run).",
+          "test_status": "not_run",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "not_run",
+      "historical_blob_sha": "efc8841439c8abf680e3ef68fcf2968c1311015b",
+      "historical_removal_sha": "aedaac8f25e8042d73de13c22edd4401e09ec90d"
     },
     {
       "path": "SayboardTests/VoiceComposePromptTests.swift",
@@ -10610,11 +10640,28 @@
       "stage": "X13",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
-      "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "review_status": "reviewed",
+      "verified_source_sha": "11395ebe909fb675f413f583b3e8bfa3434ba0d8",
+      "findings": [
+        "F-0039"
+      ],
+      "evidence": [
+        {
+          "source_sha": "11395ebe909fb675f413f583b3e8bfa3434ba0d8",
+          "blob_sha": "7847cd589e2afcf116d81ab456a8a7b19527ed23",
+          "current_main_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "removal_sha": "aedaac8f25e8042d73de13c22edd4401e09ec90d",
+          "content_review": "complete_historical_source_and_owner_review",
+          "observation": "All 34 lines read. Three Swift Testing cases cover medium/language/Cantonese retry for removed Compose prompt. Historical test was removed with the feature; source is not test execution evidence.",
+          "consumer": "Historical VoiceComposePrompt; current VoiceOutputPrompt/VoiceOutputPipelineTests",
+          "negative_oracle": "Current native output tests must execute separately from IPA compile; not_run.",
+          "test_status": "not_run",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "not_run",
+      "historical_blob_sha": "7847cd589e2afcf116d81ab456a8a7b19527ed23",
+      "historical_removal_sha": "aedaac8f25e8042d73de13c22edd4401e09ec90d"
     },
     {
       "path": "Shared/VoiceComposePreset.swift",
@@ -10625,11 +10672,26 @@
       "stage": "X13",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "11395ebe909fb675f413f583b3e8bfa3434ba0d8",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "11395ebe909fb675f413f583b3e8bfa3434ba0d8",
+          "blob_sha": "7ba407d17274ef337253f578a1c2b4fadba9daf1",
+          "current_main_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "removal_sha": "aedaac8f25e8042d73de13c22edd4401e09ec90d",
+          "content_review": "complete_historical_source_and_owner_review",
+          "observation": "All 91 lines read. Enum and NaturalLanguage fallback inferred writing register; current output language selector is not equivalent to retired Compose preset.",
+          "consumer": "Historical VoiceComposePreset/VoiceComposeLanguage -> VoiceOutputConfiguration",
+          "negative_oracle": "Output target and language persistence need real device test; not_run.",
+          "test_status": "not_run",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "not_run",
+      "historical_blob_sha": "7ba407d17274ef337253f578a1c2b4fadba9daf1",
+      "historical_removal_sha": "aedaac8f25e8042d73de13c22edd4401e09ec90d"
     },
     {
       "path": "Shared/VoiceComposePrompt.swift",
@@ -10640,11 +10702,26 @@
       "stage": "X13",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "11395ebe909fb675f413f583b3e8bfa3434ba0d8",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "11395ebe909fb675f413f583b3e8bfa3434ba0d8",
+          "blob_sha": "90f81740c162e5f54d1a96ff733c5eec9e377fff",
+          "current_main_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "removal_sha": "aedaac8f25e8042d73de13c22edd4401e09ec90d",
+          "content_review": "complete_historical_source_and_owner_review",
+          "observation": "All 122 lines read. The retired prompt interpreted dictated instructions to write WhatsApp/email/letter. Current path treats ASR as untrusted text for cleanup/translation. Feature deletion is deliberate, not a simple rename.",
+          "consumer": "Historical VoiceComposePrompt -> current VoiceOutputPrompt/LLMProcessingCoordinator",
+          "negative_oracle": "Current dictation must not execute user transcript as instructions; native/model test not_run.",
+          "test_status": "not_run",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "not_run",
+      "historical_blob_sha": "90f81740c162e5f54d1a96ff733c5eec9e377fff",
+      "historical_removal_sha": "aedaac8f25e8042d73de13c22edd4401e09ec90d"
     },
     {
       "path": "SayboardKeyboard/Views/GlobeKey.swift",
@@ -10655,11 +10732,28 @@
       "stage": "X13",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
-      "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "review_status": "reviewed",
+      "verified_source_sha": "11395ebe909fb675f413f583b3e8bfa3434ba0d8",
+      "findings": [
+        "F-0003"
+      ],
+      "evidence": [
+        {
+          "source_sha": "11395ebe909fb675f413f583b3e8bfa3434ba0d8",
+          "blob_sha": "facd37ca39a61f311d0b85e741e196a9f167fda9",
+          "current_main_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "removal_sha": "aedaac8f25e8042d73de13c22edd4401e09ec90d",
+          "content_review": "complete_historical_source_and_owner_review",
+          "observation": "All 20 lines read. Globe face overlaid NextKeyboardButton. Deleted with old Globe UI; current selector uses UIKit UIButton and noninteractive glyph child.",
+          "consumer": "NativeInputModeSwitchKey -> KeyboardViewController selector",
+          "negative_oracle": "System Globe tap/hold and return to keyboard exactly once on iPhone; not_run.",
+          "test_status": "not_run",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "not_run",
+      "historical_blob_sha": "facd37ca39a61f311d0b85e741e196a9f167fda9",
+      "historical_removal_sha": "aedaac8f25e8042d73de13c22edd4401e09ec90d"
     },
     {
       "path": "SayboardKeyboard/Views/NextKeyboardButton.swift",
@@ -10670,11 +10764,28 @@
       "stage": "X13",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
-      "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "review_status": "reviewed",
+      "verified_source_sha": "11395ebe909fb675f413f583b3e8bfa3434ba0d8",
+      "findings": [
+        "F-0003"
+      ],
+      "evidence": [
+        {
+          "source_sha": "11395ebe909fb675f413f583b3e8bfa3434ba0d8",
+          "blob_sha": "88014bbc1482f7ac37359b5607e75e5d94916df9",
+          "current_main_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "removal_sha": "aedaac8f25e8042d73de13c22edd4401e09ec90d",
+          "content_review": "complete_historical_source_and_owner_review",
+          "observation": "All 19 lines read. Old UIViewRepresentable installed nil target on allTouchEvents; replacement removes existing explicit controller target and adds native selector; no duplicate old wrapper.",
+          "consumer": "NativeInputModeSwitchKey/KeyboardViewController.configureInputModeListButton",
+          "negative_oracle": "Switching must not duplicate touch events; iPhone not_run.",
+          "test_status": "not_run",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "not_run",
+      "historical_blob_sha": "88014bbc1482f7ac37359b5607e75e5d94916df9",
+      "historical_removal_sha": "aedaac8f25e8042d73de13c22edd4401e09ec90d"
     },
     {
       "path": "Sayboard/Views/Onboarding/OnboardingDebugMenu.swift",
@@ -10685,11 +10796,26 @@
       "stage": "X13",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "89a79dbd90bf5c00f15d9ff446849ed1b0655ed0",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "89a79dbd90bf5c00f15d9ff446849ed1b0655ed0",
+          "blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+          "current_main_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "removal_sha": "a5c27b08cc5b09aa9a493f4281bae3fc34869362",
+          "content_review": "complete_historical_source_and_owner_review",
+          "observation": "Genuine historical zero-byte Git blob read; removed as an empty unused debug placeholder; no executable route existed in it.",
+          "consumer": "No executable state owner; current onboarding screens",
+          "negative_oracle": "No runtime oracle for empty placeholder; live onboarding device test not_run.",
+          "test_status": "not_run",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "not_run",
+      "historical_blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "historical_removal_sha": "a5c27b08cc5b09aa9a493f4281bae3fc34869362"
     },
     {
       "path": "EmojiResources/.gitkeep",
@@ -10700,11 +10826,28 @@
       "stage": "X13",
       "provisional_priority": "P2",
       "file_kind": "config_or_other",
-      "review_status": "queued",
-      "verified_source_sha": null,
-      "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "review_status": "reviewed",
+      "verified_source_sha": "9b6df866ba00812c904e78a2ff3f675cc95da645",
+      "findings": [
+        "F-0002"
+      ],
+      "evidence": [
+        {
+          "source_sha": "9b6df866ba00812c904e78a2ff3f675cc95da645",
+          "blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+          "current_main_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "removal_sha": "166e820ac533f26658470a8ac1f96b03be5ba260",
+          "content_review": "complete_historical_source_and_owner_review",
+          "observation": "Zero-byte placeholder inspected. Removed during native Emoji transition; current CI regenerates emoji_catalog.tsv and UnicodeLicense before XcodeGen. Remaining custom Emoji view is tracked by F-0002.",
+          "consumer": "scripts/build-emoji-catalog.py -> generated EmojiResources; project.yml",
+          "negative_oracle": "Build #245 resource checks succeeded; actual native Emoji key use not_run.",
+          "test_status": "not_run",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "not_run",
+      "historical_blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "historical_removal_sha": "166e820ac533f26658470a8ac1f96b03be5ba260"
     },
     {
       "path": "docs/IPA-DEVICE-TEST-REPORT.md",
@@ -10715,11 +10858,26 @@
       "stage": "X13",
       "provisional_priority": "P2",
       "file_kind": "document_data",
-      "review_status": "queued",
-      "verified_source_sha": null,
+      "review_status": "reviewed",
+      "verified_source_sha": "006f0c0a1b5405df09357cca50367846a0e5b014",
       "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "evidence": [
+        {
+          "source_sha": "006f0c0a1b5405df09357cca50367846a0e5b014",
+          "blob_sha": "133a070137150514502598d004272158e45a243a",
+          "current_main_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "removal_sha": "08bdc48692b9df74d2e7ca82c49a38df17fe24f2",
+          "content_review": "complete_historical_source_and_owner_review",
+          "observation": "All 20 lines read. SideStore/Emoji/Swipe/Cantonese/mic/haptics rows marked untested. Removed for repository hygiene, no completed phone evidence.",
+          "consumer": "Historical manual-device checklist, not production source",
+          "negative_oracle": "Physical iPhone acceptance remains not_run; no QA checklist committed to main.",
+          "test_status": "not_run",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "not_run",
+      "historical_blob_sha": "133a070137150514502598d004272158e45a243a",
+      "historical_removal_sha": "08bdc48692b9df74d2e7ca82c49a38df17fe24f2"
     },
     {
       "path": "SayboardKeyboard/KeyboardInputView.swift",
@@ -10730,11 +10888,28 @@
       "stage": "X13",
       "provisional_priority": "P1",
       "file_kind": "swift",
-      "review_status": "queued",
-      "verified_source_sha": null,
-      "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "12ce64c64197bc3d5ea18e2ee4dfac03c06c95ce",
+      "findings": [
+        "F-0006"
+      ],
+      "evidence": [
+        {
+          "source_sha": "12ce64c64197bc3d5ea18e2ee4dfac03c06c95ce",
+          "blob_sha": "5ed0e1f8818554b1027db1c0e8163afe236aefdc",
+          "current_main_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "removal_sha": "cffa5559c2532bdc8e50030c9c7e7bb566cc5f9c",
+          "content_review": "complete_historical_source_limited_runtime_evidence",
+          "observation": "All 53 lines read. Deleted self-sizing custom UIInputView/KeyboardHostingRoot cached last valid zero-proposal width. Current UIInputViewController uses constraints, retained UIHostingController and ignores invalid geometry; old fallback wrapper absent. Difference is not proof of blank board.",
+          "consumer": "KeyboardViewController.loadView/setupKeyboardView/applyKeyboardHeight; Shared/KeyboardHostGeometry",
+          "negative_oracle": "Repeated focus, transient zero bounds, host switch and text insertion must be observed on device; not_run.",
+          "test_status": "not_run",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "not_run",
+      "historical_blob_sha": "5ed0e1f8818554b1027db1c0e8163afe236aefdc",
+      "historical_removal_sha": "cffa5559c2532bdc8e50030c9c7e7bb566cc5f9c"
     },
     {
       "path": "PWA_APP_DESIGN_GUIDE.md",
@@ -10745,11 +10920,28 @@
       "stage": "X13",
       "provisional_priority": "P2",
       "file_kind": "document_data",
-      "review_status": "queued",
-      "verified_source_sha": null,
-      "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "12ce64c64197bc3d5ea18e2ee4dfac03c06c95ce",
+      "findings": [
+        "F-0006"
+      ],
+      "evidence": [
+        {
+          "source_sha": "12ce64c64197bc3d5ea18e2ee4dfac03c06c95ce",
+          "blob_sha": "b9e695af29d56fcf97b6a2418c8c1b5e3e74bc7c",
+          "current_main_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "removal_sha": "cffa5559c2532bdc8e50030c9c7e7bb566cc5f9c",
+          "content_review": "complete_historical_source_limited_runtime_evidence",
+          "observation": "All 83 lines read. Despite name, guide explicitly describes native SwiftUI/UIKit. Build #123 layout assertions and ink-pad report are dated, with no acceptance evidence. Removed during build-84 integration.",
+          "consumer": "Historical UI guidelines; current native MainTabView/KeyboardChrome/KeyboardPalette",
+          "negative_oracle": "Current design ownership and rendering need fresh device acceptance; historical video not re-inspected.",
+          "test_status": "not_run",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "not_run",
+      "historical_blob_sha": "b9e695af29d56fcf97b6a2418c8c1b5e3e74bc7c",
+      "historical_removal_sha": "cffa5559c2532bdc8e50030c9c7e7bb566cc5f9c"
     },
     {
       "path": "docs/CHAT-DEVELOPMENT.md",
@@ -10760,11 +10952,29 @@
       "stage": "X13",
       "provisional_priority": "P2",
       "file_kind": "document_data",
-      "review_status": "queued",
-      "verified_source_sha": null,
-      "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "12ce64c64197bc3d5ea18e2ee4dfac03c06c95ce",
+      "findings": [
+        "F-0003",
+        "F-0006"
+      ],
+      "evidence": [
+        {
+          "source_sha": "12ce64c64197bc3d5ea18e2ee4dfac03c06c95ce",
+          "blob_sha": "5ee965ca71b490df566e64bcf8becb8cba945f5c",
+          "current_main_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "removal_sha": "cffa5559c2532bdc8e50030c9c7e7bb566cc5f9c",
+          "content_review": "complete_historical_source_limited_runtime_evidence",
+          "observation": "All 135 lines read. Build #120/#123 context, alternative-keyboard hypothesis and navigation decisions are archival; removal in cffa555 does not prove current device behaviour.",
+          "consumer": "Historical integration handoff; current SettingsView/KeyboardViewController",
+          "negative_oracle": "Identify active keyboard and diagnostics under blank-board reproduction; iPhone not_run.",
+          "test_status": "not_run",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "not_run",
+      "historical_blob_sha": "5ee965ca71b490df566e64bcf8becb8cba945f5c",
+      "historical_removal_sha": "cffa5559c2532bdc8e50030c9c7e7bb566cc5f9c"
     },
     {
       "path": "docs/KNOWN-ISSUES.json",
@@ -10775,18 +10985,36 @@
       "stage": "X13",
       "provisional_priority": "P2",
       "file_kind": "document_data",
-      "review_status": "queued",
-      "verified_source_sha": null,
-      "findings": [],
-      "evidence": [],
-      "test_status": "not_run"
+      "review_status": "reviewed_limited",
+      "verified_source_sha": "12ce64c64197bc3d5ea18e2ee4dfac03c06c95ce",
+      "findings": [
+        "F-0006",
+        "F-0030"
+      ],
+      "evidence": [
+        {
+          "source_sha": "12ce64c64197bc3d5ea18e2ee4dfac03c06c95ce",
+          "blob_sha": "dd3af1bd92208cabd14d95fb2a023aa03469c21f",
+          "current_main_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+          "removal_sha": "cffa5559c2532bdc8e50030c9c7e7bb566cc5f9c",
+          "content_review": "complete_historical_source_limited_runtime_evidence",
+          "observation": "All 161 lines parsed. Old meeting-model Settings path is corrected on current main (MeetingRecordsView:145, SettingsView:61-69); blank-board and storage concerns overlap F-0006/F-0030. Historic user reports and other risks are not verified current defects.",
+          "consumer": "Seven historical issue cases -> current SettingsView/MeetingRecordsView and existing F findings",
+          "negative_oracle": "Test native Settings navigation, storage scope and keyboard lifecycle on device; not_run.",
+          "test_status": "not_run",
+          "device": "not_run"
+        }
+      ],
+      "test_status": "not_run",
+      "historical_blob_sha": "dd3af1bd92208cabd14d95fb2a023aa03469c21f",
+      "historical_removal_sha": "cffa5559c2532bdc8e50030c9c7e7bb566cc5f9c"
     }
   ],
   "review_progress": {
-    "reviewed": 178,
-    "pending": 14,
+    "reviewed": 188,
+    "pending": 0,
     "blocked": 1,
-    "limited": 233,
+    "limited": 237,
     "by_stage": {
       "X9": {
         "reviewed": 62,
@@ -10810,8 +11038,10 @@
         "pending": 0
       },
       "X13": {
-        "reviewed": 0,
-        "pending": 14
+        "reviewed": 10,
+        "limited": 4,
+        "blocked": 0,
+        "pending": 0
       }
     }
   },

@@ -7,7 +7,7 @@
     "source_sha": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
     "review_branch": "review/full-history-20261114"
   },
-  "status": "X12 166 file dispositions recorded; 90 MP4 content headers checked; video frames and iPhone not_run; 1 large xcstrings inaccessible.",
+  "status": "X13 14/14 historical-only dispositions; 10 reviewed, 4 limited; 1 X12 localization block remains; native and iPhone not_run.",
   "expected_current_tracked_files_observed": 578,
   "current_tracked_files": 578,
   "initial_tracked_files": 356,
@@ -4891,7 +4891,7 @@
     {
       "path": "SayboardKeyboard/Views/ComposeModeButton.swift",
       "tracking": "historical_only",
-      "review": "not_reviewed",
+      "review": "reviewed",
       "historical_windows": [
         {
           "window": "1-20",
@@ -4903,12 +4903,18 @@
           "status": "removed",
           "previous_path": null
         }
-      ]
+      ],
+      "review_stage": "X13",
+      "historical_commit_sha": "11395ebe909fb675f413f583b3e8bfa3434ba0d8",
+      "historical_blob_sha": "75c52dc0408a4f4537bf2b99c25624464451e86d",
+      "removed_in_commit_sha": "aedaac8f25e8042d73de13c22edd4401e09ec90d",
+      "surviving_owner": "Historical KeyboardState.isComposeMode -> current KeyboardState / LLMProcessingCoordinator",
+      "review_evidence": "review-queue.json X13 pinned historical source and current owner"
     },
     {
       "path": "SayboardKeyboard/Views/ComposePresetBar.swift",
       "tracking": "historical_only",
-      "review": "not_reviewed",
+      "review": "reviewed",
       "historical_windows": [
         {
           "window": "1-20",
@@ -4920,12 +4926,18 @@
           "status": "removed",
           "previous_path": null
         }
-      ]
+      ],
+      "review_stage": "X13",
+      "historical_commit_sha": "11395ebe909fb675f413f583b3e8bfa3434ba0d8",
+      "historical_blob_sha": "efc8841439c8abf680e3ef68fcf2968c1311015b",
+      "removed_in_commit_sha": "aedaac8f25e8042d73de13c22edd4401e09ec90d",
+      "surviving_owner": "Historical KeyboardState.composePreset -> current KeyboardChrome/voice settings",
+      "review_evidence": "review-queue.json X13 pinned historical source and current owner"
     },
     {
       "path": "SayboardTests/VoiceComposePromptTests.swift",
       "tracking": "historical_only",
-      "review": "not_reviewed",
+      "review": "reviewed",
       "historical_windows": [
         {
           "window": "1-20",
@@ -4937,12 +4949,18 @@
           "status": "removed",
           "previous_path": null
         }
-      ]
+      ],
+      "review_stage": "X13",
+      "historical_commit_sha": "11395ebe909fb675f413f583b3e8bfa3434ba0d8",
+      "historical_blob_sha": "7847cd589e2afcf116d81ab456a8a7b19527ed23",
+      "removed_in_commit_sha": "aedaac8f25e8042d73de13c22edd4401e09ec90d",
+      "surviving_owner": "Historical VoiceComposePrompt; current VoiceOutputPrompt/VoiceOutputPipelineTests",
+      "review_evidence": "review-queue.json X13 pinned historical source and current owner"
     },
     {
       "path": "Shared/VoiceComposePreset.swift",
       "tracking": "historical_only",
-      "review": "not_reviewed",
+      "review": "reviewed",
       "historical_windows": [
         {
           "window": "1-20",
@@ -4954,12 +4972,18 @@
           "status": "removed",
           "previous_path": null
         }
-      ]
+      ],
+      "review_stage": "X13",
+      "historical_commit_sha": "11395ebe909fb675f413f583b3e8bfa3434ba0d8",
+      "historical_blob_sha": "7ba407d17274ef337253f578a1c2b4fadba9daf1",
+      "removed_in_commit_sha": "aedaac8f25e8042d73de13c22edd4401e09ec90d",
+      "surviving_owner": "Historical VoiceComposePreset/VoiceComposeLanguage -> VoiceOutputConfiguration",
+      "review_evidence": "review-queue.json X13 pinned historical source and current owner"
     },
     {
       "path": "Shared/VoiceComposePrompt.swift",
       "tracking": "historical_only",
-      "review": "not_reviewed",
+      "review": "reviewed",
       "historical_windows": [
         {
           "window": "1-20",
@@ -4971,48 +4995,72 @@
           "status": "removed",
           "previous_path": null
         }
-      ]
+      ],
+      "review_stage": "X13",
+      "historical_commit_sha": "11395ebe909fb675f413f583b3e8bfa3434ba0d8",
+      "historical_blob_sha": "90f81740c162e5f54d1a96ff733c5eec9e377fff",
+      "removed_in_commit_sha": "aedaac8f25e8042d73de13c22edd4401e09ec90d",
+      "surviving_owner": "Historical VoiceComposePrompt -> current VoiceOutputPrompt/LLMProcessingCoordinator",
+      "review_evidence": "review-queue.json X13 pinned historical source and current owner"
     },
     {
       "path": "SayboardKeyboard/Views/GlobeKey.swift",
       "tracking": "historical_only",
-      "review": "not_reviewed",
+      "review": "reviewed",
       "historical_windows": [
         {
           "window": "20-31",
           "status": "removed",
           "previous_path": null
         }
-      ]
+      ],
+      "review_stage": "X13",
+      "historical_commit_sha": "11395ebe909fb675f413f583b3e8bfa3434ba0d8",
+      "historical_blob_sha": "facd37ca39a61f311d0b85e741e196a9f167fda9",
+      "removed_in_commit_sha": "aedaac8f25e8042d73de13c22edd4401e09ec90d",
+      "surviving_owner": "NativeInputModeSwitchKey -> KeyboardViewController selector",
+      "review_evidence": "review-queue.json X13 pinned historical source and current owner"
     },
     {
       "path": "SayboardKeyboard/Views/NextKeyboardButton.swift",
       "tracking": "historical_only",
-      "review": "not_reviewed",
+      "review": "reviewed",
       "historical_windows": [
         {
           "window": "20-31",
           "status": "removed",
           "previous_path": null
         }
-      ]
+      ],
+      "review_stage": "X13",
+      "historical_commit_sha": "11395ebe909fb675f413f583b3e8bfa3434ba0d8",
+      "historical_blob_sha": "88014bbc1482f7ac37359b5607e75e5d94916df9",
+      "removed_in_commit_sha": "aedaac8f25e8042d73de13c22edd4401e09ec90d",
+      "surviving_owner": "NativeInputModeSwitchKey/KeyboardViewController.configureInputModeListButton",
+      "review_evidence": "review-queue.json X13 pinned historical source and current owner"
     },
     {
       "path": "Sayboard/Views/Onboarding/OnboardingDebugMenu.swift",
       "tracking": "historical_only",
-      "review": "not_reviewed",
+      "review": "reviewed",
       "historical_windows": [
         {
           "window": "43-51",
           "status": "removed",
           "previous_path": null
         }
-      ]
+      ],
+      "review_stage": "X13",
+      "historical_commit_sha": "89a79dbd90bf5c00f15d9ff446849ed1b0655ed0",
+      "historical_blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "removed_in_commit_sha": "a5c27b08cc5b09aa9a493f4281bae3fc34869362",
+      "surviving_owner": "No executable state owner; current onboarding screens",
+      "review_evidence": "review-queue.json X13 pinned historical source and current owner"
     },
     {
       "path": "EmojiResources/.gitkeep",
       "tracking": "historical_only",
-      "review": "not_reviewed",
+      "review": "reviewed",
       "historical_windows": [
         {
           "window": "51-63",
@@ -5024,12 +5072,18 @@
           "status": "removed",
           "previous_path": null
         }
-      ]
+      ],
+      "review_stage": "X13",
+      "historical_commit_sha": "9b6df866ba00812c904e78a2ff3f675cc95da645",
+      "historical_blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "removed_in_commit_sha": "166e820ac533f26658470a8ac1f96b03be5ba260",
+      "surviving_owner": "scripts/build-emoji-catalog.py -> generated EmojiResources; project.yml",
+      "review_evidence": "review-queue.json X13 pinned historical source and current owner"
     },
     {
       "path": "docs/IPA-DEVICE-TEST-REPORT.md",
       "tracking": "historical_only",
-      "review": "not_reviewed",
+      "review": "reviewed",
       "historical_windows": [
         {
           "window": "63-68",
@@ -5041,12 +5095,18 @@
           "status": "removed",
           "previous_path": null
         }
-      ]
+      ],
+      "review_stage": "X13",
+      "historical_commit_sha": "006f0c0a1b5405df09357cca50367846a0e5b014",
+      "historical_blob_sha": "133a070137150514502598d004272158e45a243a",
+      "removed_in_commit_sha": "08bdc48692b9df74d2e7ca82c49a38df17fe24f2",
+      "surviving_owner": "Historical manual-device checklist, not production source",
+      "review_evidence": "review-queue.json X13 pinned historical source and current owner"
     },
     {
       "path": "SayboardKeyboard/KeyboardInputView.swift",
       "tracking": "historical_only",
-      "review": "not_reviewed",
+      "review": "reviewed_limited",
       "historical_windows": [
         {
           "window": "100-120",
@@ -5063,12 +5123,18 @@
           "status": "removed",
           "previous_path": null
         }
-      ]
+      ],
+      "review_stage": "X13",
+      "historical_commit_sha": "12ce64c64197bc3d5ea18e2ee4dfac03c06c95ce",
+      "historical_blob_sha": "5ed0e1f8818554b1027db1c0e8163afe236aefdc",
+      "removed_in_commit_sha": "cffa5559c2532bdc8e50030c9c7e7bb566cc5f9c",
+      "surviving_owner": "KeyboardViewController.loadView/setupKeyboardView/applyKeyboardHeight; Shared/KeyboardHostGeometry",
+      "review_evidence": "review-queue.json X13 pinned historical source and current owner"
     },
     {
       "path": "PWA_APP_DESIGN_GUIDE.md",
       "tracking": "historical_only",
-      "review": "not_reviewed",
+      "review": "reviewed_limited",
       "historical_windows": [
         {
           "window": "120-136",
@@ -5080,12 +5146,18 @@
           "status": "removed",
           "previous_path": null
         }
-      ]
+      ],
+      "review_stage": "X13",
+      "historical_commit_sha": "12ce64c64197bc3d5ea18e2ee4dfac03c06c95ce",
+      "historical_blob_sha": "b9e695af29d56fcf97b6a2418c8c1b5e3e74bc7c",
+      "removed_in_commit_sha": "cffa5559c2532bdc8e50030c9c7e7bb566cc5f9c",
+      "surviving_owner": "Historical UI guidelines; current native MainTabView/KeyboardChrome/KeyboardPalette",
+      "review_evidence": "review-queue.json X13 pinned historical source and current owner"
     },
     {
       "path": "docs/CHAT-DEVELOPMENT.md",
       "tracking": "historical_only",
-      "review": "not_reviewed",
+      "review": "reviewed_limited",
       "historical_windows": [
         {
           "window": "120-136",
@@ -5097,12 +5169,18 @@
           "status": "removed",
           "previous_path": null
         }
-      ]
+      ],
+      "review_stage": "X13",
+      "historical_commit_sha": "12ce64c64197bc3d5ea18e2ee4dfac03c06c95ce",
+      "historical_blob_sha": "5ee965ca71b490df566e64bcf8becb8cba945f5c",
+      "removed_in_commit_sha": "cffa5559c2532bdc8e50030c9c7e7bb566cc5f9c",
+      "surviving_owner": "Historical integration handoff; current SettingsView/KeyboardViewController",
+      "review_evidence": "review-queue.json X13 pinned historical source and current owner"
     },
     {
       "path": "docs/KNOWN-ISSUES.json",
       "tracking": "historical_only",
-      "review": "not_reviewed",
+      "review": "reviewed_limited",
       "historical_windows": [
         {
           "window": "120-136",
@@ -5114,7 +5192,13 @@
           "status": "removed",
           "previous_path": null
         }
-      ]
+      ],
+      "review_stage": "X13",
+      "historical_commit_sha": "12ce64c64197bc3d5ea18e2ee4dfac03c06c95ce",
+      "historical_blob_sha": "dd3af1bd92208cabd14d95fb2a023aa03469c21f",
+      "removed_in_commit_sha": "cffa5559c2532bdc8e50030c9c7e7bb566cc5f9c",
+      "surviving_owner": "Seven historical issue cases -> current SettingsView/MeetingRecordsView and existing F findings",
+      "review_evidence": "review-queue.json X13 pinned historical source and current owner"
     },
     {
       "path": "SayboardTests/LiveInsertionReceiptTests.swift",
@@ -12018,11 +12102,16 @@
       "device": "not_run"
     },
     "X13": {
-      "status": "queued_blocked_until_predecessor",
-      "source_sha": "c1b3a1082f8be5af0e10ea85fad19e27e74f1b6b",
+      "status": "complete_with_limited_runtime_evidence",
+      "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
       "planned_paths": 14,
-      "reviewed_new": 0,
-      "queue_path": "review/full-history-20261114/review-queue.json"
+      "reviewed_new": 10,
+      "reviewed_limited": 4,
+      "blocked": 0,
+      "pending": 0,
+      "original_deletion_commits": 5,
+      "tests": "not_run",
+      "device_acceptance": "not_run"
     },
     "X14": {
       "status": "blocked",
@@ -12036,12 +12125,12 @@
   "counts": {
     "current_total": 578,
     "historical_only": 14,
-    "reviewed": 344,
+    "reviewed": 354,
     "excluded": 0,
-    "not_reviewed": 14,
+    "not_reviewed": 0,
     "known_changed_path_occurrences": 983,
     "known_unique_changed_paths": 336,
-    "reviewed_limited": 233,
+    "reviewed_limited": 237,
     "blocked": 1
   },
   "rule": "A file is reviewed only after whole-file read and material caller/consumer + exact source SHA and test oracle. Queued/excluded paths are not cleared without type-appropriate evidence; historic source requires a genuine old commit. Binary content not inspected must be explicitly reviewed_limited or blocked.",
@@ -12051,20 +12140,27 @@
     "artifact_name": null,
     "artifact_id": null,
     "artifact_size_bytes": null,
-    "conclusion": "in_progress",
+    "conclusion": "completed_success",
     "physical_iphone": "not_run",
     "tracked_files": 583,
     "reviewed_source": 228,
     "queued_unreviewed_current": 181,
     "queued_previously_excluded_current": 0,
-    "queued_historical_only": 14,
+    "queued_historical_only": 0,
     "queue_path": "review/full-history-20261114/review-queue.json",
     "reviewed_limited_source": 3,
-    "last_verified_successful_build": 242,
+    "last_verified_successful_build": 245,
     "x12_source_dispositions": {
       "reviewed": 22,
       "limited": 143,
       "blocked": 1,
+      "queued": 0,
+      "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d"
+    },
+    "x13_source_dispositions": {
+      "reviewed": 10,
+      "limited": 4,
+      "blocked": 0,
       "queued": 0,
       "source_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d"
     }
