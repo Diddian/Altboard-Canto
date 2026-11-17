@@ -8,19 +8,19 @@
     "main_at_bootstrap": "ed2c4ede05567f3f63d2979ade81040c8fe799ad",
     "earliest_workflow_build": 1,
     "earliest_build_sha": "d083c9aeaeba6b6d85b1c17b7c5f6627a85380eb",
-    "latest_workflow_build": 245,
-    "latest_build_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
+    "latest_workflow_build": 246,
+    "latest_build_sha": "4a762ae9b8323123dff4fee23410388cf533061d",
     "main_device_acceptance": "not_verified",
     "branch_policy": "sequential reviewers; one writer; no PR, force push, or merges",
-    "latest_workflow_run_id": 43895710585,
-    "latest_workflow_status": "completed success at X10 review, physical iPhone not_verified",
+    "latest_workflow_run_id": 44135482003,
+    "latest_workflow_status": "in_progress at X14 source reconciliation (last verified success #245)",
     "last_verified_successful_workflow_build": 245,
     "last_verified_successful_workflow_sha": "5bad88df03a44c319f2fba8a0fd6ae67d79f681d",
     "live_main_tree_blobs": 583
   },
   "lifecycle": {
-    "phase": "X8_in_progress_X9_X10_X11_X12_X13_review_complete",
-    "next_stage": "X14 (blocked until X8 mandatory repair and physical-device evidence)",
+    "phase": "X8_in_progress_X9_X13_complete_X14_in_progress",
+    "next_stage": "Finish X8 acceptance then X14 mandatory gate closure",
     "statuses": {
       "X0": "complete",
       "X1": "complete",
@@ -36,7 +36,7 @@
       "X11": "complete",
       "X12": "complete",
       "X13": "complete",
-      "X14": "blocked",
+      "X14": "in_progress",
       "X15": "blocked"
     },
     "independent_reviewer_executed": false,
@@ -230,6 +230,16 @@
       "runtime_tests": "not_run",
       "device_acceptance": "not_run",
       "endpoint_comparison_caution": "Endpoint diffs can miss transient files within one window."
+    },
+    "x14_reconciliation": {
+      "source_sha": "4a762ae9b8323123dff4fee23410388cf533061d",
+      "queue_total": 426,
+      "queue_reviewed": 188,
+      "queue_limited": 237,
+      "queue_blocked": 1,
+      "corrected_x7_labels": 166,
+      "supplemental_files_limited": 5,
+      "status": "in_progress"
     }
   },
   "artifacts": {
