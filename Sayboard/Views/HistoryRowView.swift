@@ -199,6 +199,7 @@ struct HistoryRowView: View {
         .scaleEffect(self.copied ? 1.2 : 1.0)
     }
     .buttonStyle(.plain)
+    .accessibilityLabel("Copy Transcript")
     .disabled(self.displayedText.isEmpty)
   }
 
@@ -212,5 +213,6 @@ struct HistoryRowView: View {
         .foregroundStyle(.secondary)
     }
     .buttonStyle(.plain)
+    .accessibilityLabel("Delete")
   }
 }

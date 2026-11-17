@@ -46,6 +46,16 @@ jobs:
           set -euo pipefail
           if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
 
+      - name: Verify localized tutorial resource fallback
+        run: |
+          set -euo pipefail
+          for family in microphone add-keyboard full-access; do
+            test -s "Sayboard/Resources/tutorial-${family}-zh.mp4"
+          done
+          swiftc -swift-version 6 -o "$RUNNER_TEMP/tutorial-video-smoke" \
+            Sayboard/Helpers/TutorialVideo.swift scripts/verify-tutorial-video.swift
+          "$RUNNER_TEMP/tutorial-video-smoke"
+
       - name: Validate keyboard document identity bridge
         run: |
           set -euo pipefail

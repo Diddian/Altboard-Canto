@@ -231,6 +231,7 @@ struct DownloadStatusView: View {
           .foregroundStyle(.secondary)
       }
       .buttonStyle(.plain)
+      .accessibilityLabel("Remove Model")
       .confirmationDialog(
         "Remove Model",
         isPresented: self.$showDeleteConfirmation,
@@ -270,6 +271,7 @@ struct DownloadStatusView: View {
             .foregroundStyle(.secondary)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("Cancel")
         .transition(.scale)
       }
     }
