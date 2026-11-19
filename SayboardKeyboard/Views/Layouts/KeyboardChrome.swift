@@ -133,6 +133,34 @@ private struct AnimatedDictationNoticeLine: View {
   }
 }
 
+/// One explicit user action for a completed result whose former field
+/// could not be proved after the keyboard extension was recreated.
+struct SavedDictationRecoveryButton: View {
+  @ObservedObject var keyboardState: KeyboardState
+
+  var body: some View {
+    Button {
+      self.keyboardState.insertRecoverableDictation?()
+    } label: {
+      HStack(spacing: 5) {
+        Image(systemName: "text.badge.plus")
+        VStack(alignment: .leading, spacing: 1) {
+          Text("Insert saved dictation").font(.caption2.weight(.semibold))
+          if let preview = self.keyboardState.recoverableDictationPreview {
+            Text(preview).font(.caption2).lineLimit(1).truncationMode(.tail)
+          }
+        }
+        Spacer(minLength: 0)
+      }
+      .frame(maxWidth: .infinity, minHeight: 36)
+      .contentShape(Rectangle())
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel("Insert saved dictation into the current field")
+    .accessibilityHint("Inspect the current field first to avoid repeating live text.")
+  }
+}
+
 /// Centered status in the existing control row; no extra keyboard height.
 struct KeyboardStatusStrip: View {
   @ObservedObject var keyboardState: KeyboardState
@@ -170,20 +198,8 @@ struct KeyboardStatusStrip: View {
         DictationOutcomeLabel(outcome: outcome) {
           self.keyboardState.dictationOutcome = nil
         }
-      } else if let pending = self.keyboardState.recoverableDictationPreview {
-        Button {
-          self.keyboardState.insertRecoverableDictation?()
-        } label: {
-          VStack(spacing: 1) {
-            Text("Insert saved dictation")
-              .font(.caption2.weight(.semibold))
-            Text(pending).font(.caption2).lineLimit(1).truncationMode(.tail)
-          }
-          .frame(maxWidth: .infinity, minHeight: 36)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Insert saved dictation into the current field")
-        .accessibilityHint("Check for text already inserted by Live Dictation to avoid repeats.")
+      } else if self.keyboardState.recoverableDictationPreview != nil {
+        SavedDictationRecoveryButton(keyboardState: self.keyboardState)
       } else if let preview = self.keyboardState.finalOutputPreview {
         Text(preview)
           .font(.caption2)

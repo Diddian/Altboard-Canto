@@ -356,7 +356,11 @@ struct AlphabeticKeyboardLayout: View {
           .frame(width: self.chrome.sideButtonWidth, height: KeyboardChromeMetrics.keyHeight)
         }
       }
-      if self.keyboardState.showLLMActions {
+      if self.keyboardState.recoverableDictationPreview != nil
+          && !self.keyboardState.isProcessing && !self.keyboardState.isRecording
+          && !self.keyboardState.isStartingRecording {
+        SavedDictationRecoveryButton(keyboardState: self.keyboardState)
+      } else if self.keyboardState.showLLMActions {
         KeyboardLLMActionsToolbar(proxy: self.proxy, keyboardState: self.keyboardState)
       } else if self.page == .letters && !self.swipeAlternatives.isEmpty {
         self.swipeCandidateStrip

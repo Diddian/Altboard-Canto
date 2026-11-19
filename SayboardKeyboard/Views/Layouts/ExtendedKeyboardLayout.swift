@@ -68,7 +68,11 @@ struct ExtendedKeyboardLayout: View {
 extension ExtendedKeyboardLayout {
   private var chromeRow: some View {
     HStack(alignment: .center, spacing: KeyboardChromeMetrics.buttonSpacing) {
-      if self.keyboardState.showLLMActions {
+      if self.keyboardState.recoverableDictationPreview != nil
+          && !self.keyboardState.isProcessing && !self.keyboardState.isRecording
+          && !self.keyboardState.isStartingRecording {
+        SavedDictationRecoveryButton(keyboardState: self.keyboardState)
+      } else if self.keyboardState.showLLMActions {
         KeyboardLLMActionsToolbar(proxy: self.proxy, keyboardState: self.keyboardState)
       } else {
       HStack(spacing: KeyboardChromeMetrics.buttonSpacing) {
