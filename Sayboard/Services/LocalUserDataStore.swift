@@ -35,6 +35,36 @@ enum LocalUserDataStore {
       || ConversationCoordinator.shared.processing
   }
 
+  /// Only files in the containing app's sandbox tmp directory are eligible.
+  /// Protect current exports, active captures and learned App Group data.
+  static func deleteOldTemporaryFiles() throws -> Int {
+    guard !LocalUserDataStore.hasActiveOperation else { throw CocoaError(.userCancelled) }
+    let fm = FileManager.default
+    let home = URL(fileURLWithPath: NSHomeDirectory(), isDirectory: true)
+      .resolvingSymlinksInPath().standardizedFileURL
+    let temporary = fm.temporaryDirectory.resolvingSymlinksInPath().standardizedFileURL
+    guard temporary.isFileURL, temporary.path.hasPrefix(home.path + "/") else {
+      throw CocoaError(.fileWriteNoPermission)
+    }
+    let cutoff = Date().addingTimeInterval(-3600)
+    let files = try fm.contentsOfDirectory(
+      at: temporary, includingPropertiesForKeys: [
+        .isRegularFileKey, .isSymbolicLinkKey, .contentModificationDateKey
+      ])
+    var deleted = 0
+    for file in files {
+      let values = try file.resourceValues(forKeys: [
+        .isRegularFileKey, .isSymbolicLinkKey, .contentModificationDateKey
+      ])
+      guard values.isSymbolicLink != true, values.isRegularFile == true,
+            let modified = values.contentModificationDate, modified < cutoff else { continue }
+      try fm.removeItem(at: file)
+      deleted += 1
+    }
+    FeatureDiagnostics.record(.storage, .completed)
+    return deleted
+  }
+
   static let learnedKeys = [
     ConfirmedChoiceLearning.chineseKey,
     CantoneseSchemePreference.candidateStorageKey,

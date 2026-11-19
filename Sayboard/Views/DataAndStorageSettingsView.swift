@@ -490,7 +490,7 @@ struct DataAndStorageSettingsView: View {
   private func deleteOldTemporaryFiles() {
     guard !self.recordingActive, !self.busy, self.exportURL == nil else { return }
     do {
-      _ = try StorageUsageService.deleteOldTemporaryFiles()
+      _ = try LocalUserDataStore.deleteOldTemporaryFiles()
       self.storageRefreshID = UUID()
     } catch {
       self.errorMessage = "Temporary-file cleanup failed: \(error.localizedDescription)"
