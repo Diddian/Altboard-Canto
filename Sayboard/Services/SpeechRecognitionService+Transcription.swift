@@ -270,6 +270,14 @@ extension SpeechRecognitionService {
       return
     }
 
+    // An installed tap can fail before writing any frames. Keep real failed
+    // recordings recoverable without adding empty files to voice history.
+    guard result.duration.isFinite, result.duration > 0 else {
+      try? FileManager.default.removeItem(at: result.url)
+      self.currentAudioFileName = nil
+      return
+    }
+
     let recognized = self.currentTranscription.isEmpty ? self.currentRawTranscription : self.currentTranscription
     let transcription = preserveUntranscribedAudio && recognized.isEmpty
       ? "Recognition interrupted — audio preserved for playback" : recognized

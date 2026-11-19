@@ -82,6 +82,18 @@ jobs:
             scripts/verify-recording-policies.swift
           "$RUNNER_TEMP/recording-policies-smoke"
 
+      - name: Verify capture confirmation and storage accounting
+        run: |
+          set -euo pipefail
+          swiftc -swift-version 6 -o "$RUNNER_TEMP/dictation-capture-smoke" \
+            Shared/DictationCapturePolicy.swift scripts/verify-dictation-capture.swift
+          "$RUNNER_TEMP/dictation-capture-smoke"
+          python3 -m unittest discover -s scripts -p 'test_storage_usage_contract.py'
+          swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
+            Sayboard/Services/StorageUsageInventory.swift scripts/verify-storage-usage.swift \
+            -o "$RUNNER_TEMP/storage-usage-smoke"
+          "$RUNNER_TEMP/storage-usage-smoke"
+
       - name: Verify resumable meeting translation policy
         run: |
           set -euo pipefail

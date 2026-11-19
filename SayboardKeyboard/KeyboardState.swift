@@ -159,12 +159,11 @@ final class KeyboardState: ObservableObject {
   func refresh() {
     self.settings.synchronize()
     self.isStartingRecording = false
-    self.isRecording = self.settings.isRecording
-    self.recordingStartedAt = self.settings.recordingStartedAt
+    // Shared flags may survive termination. Only a fresh host capture
+    // acknowledgment may turn the recording animation back on.
+    self.isRecording = false
+    self.recordingStartedAt = 0
     self.isSessionActive = self.settings.isSessionActive
-    if self.isRecording, !self.isSessionActive {
-      self.isRecording = false
-    }
     self.isProcessing = false
     self.voiceProcessingProgress = nil
     self.syncVoiceProcessingProgress()
@@ -204,25 +203,20 @@ final class KeyboardState: ObservableObject {
   func syncVoiceProcessingProgress() {
     self.settings.synchronize()
     guard let update = TranscriptionBridge.readVoiceProgress(),
-          update.sessionToken != nil,
-          update.sessionToken == self.settings.dictationSessionToken,
-          Date().timeIntervalSinceReferenceDate - update.updatedAt < 180
+          update.isCurrent(for: self.settings.dictationSessionToken,
+            cancelled: self.settings.dictationCancellationRequested)
     else {
       self.voiceProcessingProgress = nil
       return
     }
     self.voiceProcessingProgress = update
-    // The app owns the audio engine. Its first finalization update proves
-    // capture has ended, even when the mic was stopped by a timer or interrupt.
-    if update.stage == .stoppingAudio {
-      self.isRecording = false
-      self.isStartingRecording = false
-      self.recordingStartedAt = 0
-      self.stopLevelPolling()
-    }
-    if !self.isRecording {
-      self.isProcessing = true
-    }
+    // Every published stage belongs to finalization. A suspended keyboard
+    // may miss stoppingAudio and first observe loading/transcribing instead.
+    self.isRecording = false
+    self.isStartingRecording = false
+    self.recordingStartedAt = 0
+    self.stopLevelPolling()
+    self.isProcessing = true
   }
 
   func syncModelLoading() {

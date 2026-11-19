@@ -163,6 +163,80 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("self.insertDeferredAppearanceText()", controller)
         self.assertIn("self.insertSpacedText(text)", controller)
 
+    def test_keyboard_reentry_requires_live_capture_acknowledgment(self):
+        state = function("SayboardKeyboard/KeyboardState.swift", "func refresh()", "func syncVoiceProcessingProgress()")
+        self.assertNotIn("self.isRecording = self.settings.isRecording", state)
+        recovery = function("SayboardKeyboard/KeyboardViewController.swift", "func recoverActiveDictationAfterReentry()", "private func startDictationViaDarwin()")
+        self.assertNotIn("self.keyboardState.isRecording = settings.isRecording", recovery)
+        self.assertNotIn("self.beginFreshDictation()", recovery)
+        observer = function("SayboardKeyboard/KeyboardViewController.swift", "Self.dictationStartedObserver =", "Self.dictationStoppedObserver =")
+        self.assertLess(observer.index("vc.recoverActiveDictationAfterReentry()"), observer.index("DictationRequestPolicy.mayShowRecording("))
+        self.assertLess(observer.index("DictationRequestPolicy.mayShowRecording("), observer.index("vc.keyboardState.isRecording = true"))
+        self.assertLess(observer.index("guard !vc.keyboardState.isProcessing"), observer.index("vc.keyboardState.isRecording = true"))
+
+    def test_capture_acknowledgment_requires_frames_and_defers_early_stop(self):
+        start = function("Sayboard/Services/SpeechRecognitionService.swift", "func startCapture()", "private func awaitCaptureConfirmation()")
+        self.assertNotIn("self.settings.isRecording = true", start)
+        self.assertIn("self.currentWordBoundaries = nil", start)
+        self.assertIn("self.awaitCaptureConfirmation()", start)
+        ack = function("Sayboard/Services/SpeechRecognitionService.swift", "private func acknowledgeCaptureIfReady()", "private func failUnconfirmedCapture(")
+        self.assertLess(ack.index("self.session.captureConfirmation(owner: .dictation) == .confirmed"), ack.index("self.settings.isRecording = true"))
+        self.assertIn("self.activeDictationToken == token", ack)
+        self.assertIn("MicrophoneHoldStopIntent.consume(", ack)
+        service = source("Sayboard/Services/SpeechRecognitionService.swift")
+        self.assertIn("DictationCapturePolicy.shouldDeferRequestedStop(", service)
+        self.assertIn("self.captureConfirmationTask != nil", service)
+
+    def test_finalization_is_not_recording_or_an_unbounded_storage_lock(self):
+        stop = function("Sayboard/Services/SpeechRecognitionService.swift", "func stopRecording()", "func cancelRecording()")
+        self.assertLess(stop.index("self.settings.isRecording = false"), stop.index("TranscriptionBridge.writeVoiceProgress(.stoppingAudio)"))
+        busy = function("Sayboard/Services/LocalUserDataStore.swift", "static var hasActiveOperation:", "static let learnedKeys")
+        self.assertIn("DictationCapturePolicy.isPendingStart(", busy)
+        self.assertIn("TranscriptionBridge.readVoiceProgress()?.isCurrent(", busy)
+        rejection = function("Sayboard/Services/SpeechRecognitionService.swift", "private func rejectUnacceptedDictationRequest(", "func startCapture()")
+        self.assertIn("DictationCapturePolicy.canRejectUnacceptedRequest(", rejection)
+        self.assertIn("self.settings.dictationSessionToken = nil", rejection)
+        self.assertNotIn("self.session.endSession()", rejection)
+        self.assertNotIn("TranscriptionBridge.clearTranscription()", rejection)
+
+    def test_all_voice_progress_stages_stop_the_capture_presentation(self):
+        progress = function("SayboardKeyboard/KeyboardState.swift", "func syncVoiceProcessingProgress()", "func syncModelLoading()")
+        self.assertIn("update.isCurrent(", progress)
+        self.assertNotIn("update.stage == .stoppingAudio", progress)
+        self.assertIn("self.isRecording = false", progress)
+        self.assertIn("self.isProcessing = true", progress)
+        self.assertIn("self.stopLevelPolling()", progress)
+        observer = function("SayboardKeyboard/KeyboardViewController.swift", "private func setupVoiceProgressObserver()", "private func setupInputModeObserver()")
+        self.assertIn("vc.resumeProcessingTimeoutIfNeeded()", observer)
+
+    def test_processing_polls_durable_results_before_timeout_cancellation(self):
+        resume = function("SayboardKeyboard/KeyboardViewController+Timeout.swift", "func resumeProcessingTimeoutIfNeeded()", "func cancelProcessingTimeout()")
+        self.assertLess(resume.index("guard self.viewIfLoaded?.window != nil"), resume.index("self.startProcessingTimeout()"))
+        self.assertLess(resume.index("guard self.processingTimeoutTimer?.isValid != true"), resume.index("self.startProcessingTimeout()"))
+        timeout = function("SayboardKeyboard/KeyboardViewController+Timeout.swift", "func startProcessingTimeout()", "func resetProcessingState()")
+        self.assertLess(timeout.index("self.insertTranscribedText()"), timeout.index("if self.receivedPingDuringProcessing"))
+        self.assertLess(timeout.index("self.finalizeProcessingPipeline()"), timeout.index("self.cancelDictationViaDarwin()"))
+        self.assertIn("guard self.viewIfLoaded?.window != nil", timeout)
+        self.assertIn("self.processingTimeoutGeneration == generation", timeout)
+        self.assertLess(timeout.index("self.processingTimeoutTimer = nil"), timeout.index("guard self.viewIfLoaded?.window != nil", timeout.index("Timer.scheduledTimer")))
+        insertion = function("SayboardKeyboard/KeyboardViewController.swift", "func insertTranscribedText()", "func pingMainAppForSessionStatus()")
+        self.assertLess(insertion.index("guard self.viewIfLoaded?.window != nil"), insertion.index("self.insertSpacedText(text)"))
+        self.assertIn("defer { self.refreshRecoverableLLMResult() }", insertion)
+        observer = function("SayboardKeyboard/KeyboardViewController.swift", "private func setupTranscriptionObserver()", "private func setupVoiceProgressObserver()")
+        self.assertIn("if vc.insertTranscribedText()", observer)
+        self.assertNotIn("vc.cancelProcessingTimeout()", observer)
+
+    def test_mic_animation_reentry_invalidates_old_completions(self):
+        mic = source("SayboardKeyboard/Views/Layouts/MicAnimatedButton.swift")
+        self.assertIn("generation == self.animationGeneration", mic)
+        self.assertIn("self.isVisible = false", mic)
+        self.assertIn("self.resetMicTransitions()", mic)
+        idle = mic.split("let isIdle =", 1)[1].split("ZStack", 1)[0]
+        self.assertNotIn("pendingSpinnerMorph", idle)
+        morph = source("SayboardKeyboard/Views/MicMorphAnimation.swift")
+        self.assertIn(".onChange(of: self.direction)", morph)
+        self.assertIn("self.isComplete = false", morph)
+
     def test_final_delivery_keeps_pending_result_on_destination_mismatch(self):
         body = function("SayboardKeyboard/KeyboardViewController.swift", "func insertTranscribedText()", "func pingMainAppForSessionStatus")
         self.assertLess(body.index("delivery.canInsert"), body.index("acknowledgeDelivery"))
@@ -431,6 +505,20 @@ class OperationOwnershipTests(unittest.TestCase):
     def test_conversation_journals_before_opening_audio(self):
         body = function("Sayboard/Services/ConversationCoordinator.swift", "func start(", "func stop(using")
         self.assertLess(body.index("guard self.persistDraft()"), body.index("self.recorder.startRecording("))
+
+    def test_conversation_recovery_uses_shared_sample_budget_before_append(self):
+        path = "Sayboard/Services/ConversationCoordinator.swift"
+        body = function(path, "private static func readAudio(", "enum ConversationError")
+        self.assertIn("ConversationTurnPolicy.canRecoverAudio(", body)
+        self.assertIn("sampleRate: file.processingFormat.sampleRate", body)
+        self.assertIn("sampleRate: ConversationTurnPolicy.recoverySampleRate", body)
+        self.assertIn("samples.reserveCapacity(ConversationTurnPolicy.maximumRecoverySamples)", body)
+        self.assertLess(body.index("ConversationTurnPolicy.canAppendRecoverySamples("),
+                        body.index("samples.append(contentsOf: chunk)"))
+        self.assertNotIn("16_000 * 26", body)
+        retry = function(path, "func retry(", "func saveAsMeeting()")
+        self.assertIn(".conversation, .failed, operationID: turnID.uuidString", retry)
+        self.assertIn(".conversation, .resumed", retry)
 
     def test_background_download_restore_reconciles_orphans_safely(self):
         manager = source("Sayboard/Services/BackgroundDownloadManager.swift")

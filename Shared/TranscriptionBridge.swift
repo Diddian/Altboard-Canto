@@ -210,6 +210,19 @@ struct VoiceProcessingProgress: Codable, Equatable, Sendable {
   let startedAt: TimeInterval
   let updatedAt: TimeInterval
   let rawPreview: String?
+
+  func isCurrent(
+    for activeToken: String?, cancelled: Bool,
+    now: TimeInterval = Date().timeIntervalSinceReferenceDate,
+    maximumAge: TimeInterval = 180
+  ) -> Bool {
+    guard !cancelled, let sessionToken, UUID(uuidString: sessionToken) != nil,
+          sessionToken == activeToken,
+          startedAt.isFinite, updatedAt.isFinite, now.isFinite,
+          startedAt <= updatedAt, updatedAt <= now,
+          maximumAge > 0 else { return false }
+    return now - updatedAt < maximumAge
+  }
 }
 
 final class DarwinNotificationObserver: @unchecked Sendable {

@@ -4,6 +4,8 @@ import UIKit
 struct DataAndStorageSettingsView: View {
   var inline = false
   @EnvironmentObject private var speechService: SpeechRecognitionService
+  @Environment(\.locale) private var locale
+  @Environment(\.scenePhase) private var scenePhase
   @ObservedObject private var recorder = MeetingRecordingCoordinator.shared
   @State private var retentionPolicy = SharedSettings().retentionPolicy
   @State private var pendingRetentionPolicy: HistoryRetentionPolicy?
@@ -16,6 +18,10 @@ struct DataAndStorageSettingsView: View {
   @State private var exportTask: Task<Void, Never>?
   @State private var exportURL: URL?
   @State private var errorMessage: String?
+  @State private var storage: StorageUsageSnapshot?
+  @State private var storageRefreshID = UUID()
+  @State private var storageScanning = true
+  @State private var storageScanFailed = false
 
   private var recordingActive: Bool {
     LocalUserDataStore.hasActiveOperation
@@ -31,11 +37,15 @@ struct DataAndStorageSettingsView: View {
           .buttonStyle(.borderless)
       } else {
         Form { self.rows }
-          .navigationTitle("History & Storage")
+          .navigationTitle(Text("Storage & Usage", tableName: "Storage"))
           .navigationBarTitleDisplayMode(.inline)
       }
     }
-    .onAppear { self.reload() }
+    .onAppear { self.reload(refreshStorage: false) }
+    .task(id: self.storageRefreshID) { await self.scanStorage() }
+    .onChange(of: self.scenePhase) { _, phase in
+      if phase == .active { self.storageRefreshID = UUID() }
+    }
     .onDisappear {
       // The share sheet still owns its temporary file until dismissal.
       self.exportTask?.cancel()
@@ -73,6 +83,13 @@ struct DataAndStorageSettingsView: View {
   @ViewBuilder
   private var rows: some View {
     Group {
+      self.storageOverview
+      if let storage = self.storage {
+        self.storedFiles(storage.inventory)
+      }
+      Divider().padding(.vertical, 4)
+      Text("Manage Local Data", tableName: "Storage")
+        .font(.headline)
       ForEach(LocalUserDataStore.Category.allCases) { category in
         HStack {
           LabeledContent {
@@ -143,6 +160,7 @@ struct DataAndStorageSettingsView: View {
           Button("Clear Cache", role: .destructive) {
             guard !self.recordingActive, !self.busy else { return }
             ModelStorageManager.clearCompiledModelCache()
+            self.storageRefreshID = UUID()
           }
           Button("Cancel", role: .cancel) {}
         } message: {
@@ -160,6 +178,244 @@ struct DataAndStorageSettingsView: View {
     }
   }
 
+  private var storageOverview: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      HStack {
+        Text("Device Storage", tableName: "Storage").font(.headline)
+        Spacer(minLength: 8)
+        if self.storageScanning {
+          ProgressView()
+            .frame(minWidth: 44, minHeight: 44)
+            .accessibilityLabel(Text("Measuring Storage", tableName: "Storage"))
+        } else {
+          Button { self.storageRefreshID = UUID() } label: {
+            Image(systemName: "arrow.clockwise").frame(minWidth: 44, minHeight: 44)
+          }
+          .accessibilityLabel(Text("Refresh Storage", tableName: "Storage"))
+        }
+      }
+      if let device = self.storage?.device {
+        Text("\(self.formattedBytes(device.usedBytes)) of \(self.formattedBytes(device.totalBytes)) used",
+          tableName: "Storage")
+          .font(.subheadline)
+          .monospacedDigit()
+          .fixedSize(horizontal: false, vertical: true)
+        ProgressView(value: device.usedFraction)
+          .tint(.accentColor)
+          .accessibilityLabel(Text("Device Storage", tableName: "Storage"))
+          .accessibilityValue(Text(device.usedFraction, format: .percent.precision(.fractionLength(1))))
+        ViewThatFits(in: .horizontal) {
+          HStack {
+            self.usedPercentage(device)
+            Spacer(minLength: 12)
+            self.availableStorage(device)
+          }
+          VStack(alignment: .leading, spacing: 4) {
+            self.usedPercentage(device)
+            self.availableStorage(device)
+          }
+        }
+        .font(.caption)
+        .foregroundStyle(.secondary)
+      } else if !self.storageScanning {
+        Text("Device capacity is unavailable.", tableName: "Storage")
+          .font(.subheadline).foregroundStyle(.secondary)
+      }
+      if self.storageScanFailed {
+        if self.storage == nil {
+          Text("Storage could not be measured. Tap refresh to try again.", tableName: "Storage")
+            .font(.footnote).foregroundStyle(.secondary)
+        } else {
+          Text("Storage could not be refreshed. The previous measurement is shown.", tableName: "Storage")
+            .font(.footnote).foregroundStyle(.secondary)
+        }
+      } else if self.storageScanning {
+        Text("Measuring files on this iPhone…", tableName: "Storage")
+          .font(.footnote).foregroundStyle(.secondary)
+      }
+      if let storage = self.storage {
+        Divider()
+        ViewThatFits(in: .horizontal) {
+          HStack(alignment: .firstTextBaseline) {
+            Text("Altboard Files", tableName: "Storage").font(.headline)
+            Spacer(minLength: 12)
+            self.appStorageTotal(storage.inventory)
+          }
+          VStack(alignment: .leading, spacing: 4) {
+            Text("Altboard Files", tableName: "Storage").font(.headline)
+            self.appStorageTotal(storage.inventory)
+          }
+        }
+        if storage.inventory.totalBytes > 0 {
+          self.appStorageBar(storage.inventory)
+        }
+        Text("Includes the app installation and shared keyboard files. System-managed storage outside the app is excluded. Totals may differ from iOS Settings.",
+          tableName: "Storage")
+          .font(.footnote).foregroundStyle(.secondary)
+          .fixedSize(horizontal: false, vertical: true)
+        if storage.isIncomplete {
+          Label {
+            Text("Some files could not be measured. This total is incomplete.", tableName: "Storage")
+          } icon: {
+            Image(systemName: "exclamationmark.triangle")
+          }
+          .font(.footnote).foregroundStyle(.secondary)
+        }
+        if storage.inventory.usedSizeFallback {
+          Text("Some file sizes are estimates because allocated space was unavailable.", tableName: "Storage")
+            .font(.footnote).foregroundStyle(.secondary)
+        }
+      }
+    }
+    .padding(.vertical, 6)
+  }
+
+  private func usedPercentage(_ device: DeviceStorageUsage) -> some View {
+    Text("\(device.usedFraction.formatted(.percent.precision(.fractionLength(1)).locale(self.locale))) used",
+      tableName: "Storage")
+  }
+
+  private func availableStorage(_ device: DeviceStorageUsage) -> some View {
+    Text("\(self.formattedBytes(device.availableBytes)) available", tableName: "Storage")
+  }
+
+  private func appStorageTotal(_ inventory: StorageUsageInventory) -> some View {
+    Text(self.formattedBytes(inventory.totalBytes))
+      .font(.title3.weight(.semibold))
+      .monospacedDigit()
+  }
+
+  private func appStorageBar(_ inventory: StorageUsageInventory) -> some View {
+    GeometryReader { geometry in
+      HStack(spacing: 0) {
+        ForEach(StorageUsageCategory.allCases) { category in
+          let fraction = Double(inventory.bytes(for: category)) / Double(inventory.totalBytes)
+          self.storageColor(category)
+            .frame(width: geometry.size.width * fraction)
+        }
+      }
+      .clipShape(Capsule())
+    }
+    .frame(height: 10)
+    .accessibilityHidden(true)
+  }
+
+  @ViewBuilder
+  private func storedFiles(_ inventory: StorageUsageInventory) -> some View {
+    if inventory.items.isEmpty {
+      Text("No measurable files found.", tableName: "Storage")
+        .foregroundStyle(.secondary)
+    } else {
+      Text("Files on This iPhone", tableName: "Storage").font(.headline)
+      Text("Models include files still downloading or awaiting cleanup. Expand a row to inspect its files.",
+        tableName: "Storage")
+        .font(.footnote).foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
+      ForEach(inventory.items) { item in
+        DisclosureGroup {
+          VStack(alignment: .leading, spacing: 10) {
+            ForEach(item.files) { file in
+              VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: file.name)
+                  .font(.caption)
+                  .fixedSize(horizontal: false, vertical: true)
+                Text(self.formattedBytes(file.bytes))
+                  .font(.caption).foregroundStyle(.secondary).monospacedDigit()
+              }
+              .accessibilityElement(children: .combine)
+            }
+            if item.fileCount > item.files.count {
+              Text("Showing the largest files. Total includes all measured files.", tableName: "Storage")
+                .font(.caption).foregroundStyle(.secondary)
+            }
+          }
+          .padding(.vertical, 8)
+        } label: {
+          ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+              self.storageItemDescription(item)
+              Spacer(minLength: 4)
+              self.storageItemSize(item)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+              self.storageItemDescription(item)
+              self.storageItemSize(item)
+            }
+          }
+          .padding(.vertical, 4)
+          .frame(minHeight: 44)
+        }
+      }
+    }
+  }
+
+  private func storageItemDescription(_ item: StorageUsageItem) -> some View {
+    HStack(alignment: .firstTextBaseline, spacing: 8) {
+      Circle().fill(self.storageColor(item.category)).frame(width: 8, height: 8)
+        .accessibilityHidden(true)
+      VStack(alignment: .leading, spacing: 3) {
+        if let name = item.modelName {
+          Text(verbatim: name)
+        } else {
+          Text(LocalizedStringKey(item.category.titleKey), tableName: "Storage")
+        }
+        if item.modelName != nil {
+          Text(LocalizedStringKey(item.category.titleKey), tableName: "Storage")
+            .font(.caption).foregroundStyle(.secondary)
+        }
+        HStack(spacing: 4) {
+          Text("Files", tableName: "Storage")
+          Text(item.fileCount, format: .number)
+        }
+        .font(.caption).foregroundStyle(.secondary)
+      }
+    }
+  }
+
+  private func storageItemSize(_ item: StorageUsageItem) -> some View {
+    Text(self.formattedBytes(item.bytes))
+      .font(.subheadline).foregroundStyle(.secondary).monospacedDigit()
+      .fixedSize()
+  }
+
+  private func storageColor(_ category: StorageUsageCategory) -> Color {
+    switch category {
+    case .appInstallation: .red
+    case .speechModels: .blue
+    case .textModels: .purple
+    case .compiledModels: .orange
+    case .voiceNotes: .green
+    case .meetings: .teal
+    case .conversationDraft: .cyan
+    case .cache: .yellow
+    case .settings: .indigo
+    case .diagnostics: .pink
+    case .other: .gray
+    }
+  }
+
+  private func formattedBytes(_ bytes: Int64) -> String {
+    bytes.formatted(.byteCount(style: .file).locale(self.locale))
+  }
+
+  @MainActor
+  private func scanStorage() async {
+    self.storageScanning = true
+    self.storageScanFailed = false
+    defer {
+      if !Task.isCancelled { self.storageScanning = false }
+    }
+    do {
+      let result = try await StorageUsageService.scan()
+      try Task.checkCancellation()
+      self.storage = result
+    } catch is CancellationError {
+      // SwiftUI cancels this task when the destination closes or refreshes.
+    } catch {
+      if !Task.isCancelled { self.storageScanFailed = true }
+    }
+  }
+
   private func count(for category: LocalUserDataStore.Category) -> Int {
     switch category {
     case .voiceNotes: self.voiceNoteCount
@@ -169,7 +425,7 @@ struct DataAndStorageSettingsView: View {
     }
   }
 
-  private func reload() {
+  private func reload(refreshStorage: Bool = true) {
     do { self.voiceNoteCount = try HistoryStore.shared.readRecords().count }
     catch { self.errorMessage = error.localizedDescription }
     self.recorder.reloadRecords()
@@ -178,6 +434,7 @@ struct DataAndStorageSettingsView: View {
       $0 + (defaults?.dictionary(forKey: $1)?.count ?? 0)
     } + SharedSettings().cantoneseCorrectionRules.count
       + LatinSpeechCorrectionLearning.read(defaults: defaults).count
+    if refreshStorage { self.storageRefreshID = UUID() }
   }
 
   private var retentionBinding: Binding<HistoryRetentionPolicy> {
@@ -228,6 +485,7 @@ struct DataAndStorageSettingsView: View {
     guard let url = self.exportURL else { return }
     self.exportURL = nil
     try? FileManager.default.removeItem(at: url.deletingLastPathComponent())
+    self.storageRefreshID = UUID()
   }
 }
 

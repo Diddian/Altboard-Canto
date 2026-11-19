@@ -345,8 +345,14 @@ final class ConversationCoordinator: ObservableObject {
     guard let audio = Self.audioFolder?.appendingPathComponent(turn.audioFileName),
           let samples = Self.readAudio(at: audio), !samples.isEmpty else {
       self.status = "Saved audio could not be read."
+      FeatureDiagnostics.record(.conversation, .failed, operationID: turnID.uuidString)
       return
     }
+    FeatureDiagnostics.record(
+      .conversation, .resumed,
+      audioDurationMs: Int(Double(samples.count) / ConversationTurnPolicy.recoverySampleRate * 1_000),
+      operationID: turnID.uuidString
+    )
     self.processing = true
     await self.completeTurn(at: index, samples: samples, using: service, options: options)
   }
@@ -614,21 +620,25 @@ final class ConversationCoordinator: ObservableObject {
   private static func readAudio(at url: URL) -> [Float]? {
     guard ConversationTurnPolicy.validAudioFileName(url.lastPathComponent),
           let file = try? AVAudioFile(forReading: url),
-          file.length <= AVAudioFramePosition(ConversationTurnPolicy.maximumRecoverySeconds * file.processingFormat.sampleRate)
+          ConversationTurnPolicy.canRecoverAudio(
+            frameCount: file.length, sampleRate: file.processingFormat.sampleRate
+          )
     else { return nil }
     let format = file.processingFormat
     let destination = AVAudioFormat(
-      commonFormat: .pcmFormatFloat32, sampleRate: 16_000,
+      commonFormat: .pcmFormatFloat32, sampleRate: ConversationTurnPolicy.recoverySampleRate,
       channels: 1, interleaved: false
     )
     guard let destination else { return nil }
-    let converter = format.sampleRate == 16_000 && format.channelCount == 1
-      ? nil : AVAudioConverter(from: format, to: destination)
-    if (format.sampleRate != 16_000 || format.channelCount != 1) && converter == nil {
+    let needsConversion = format.sampleRate != ConversationTurnPolicy.recoverySampleRate
+      || format.channelCount != 1
+    let converter = needsConversion ? AVAudioConverter(from: format, to: destination) : nil
+    if needsConversion && converter == nil {
       return nil
     }
     let diagnostics = OSAllocatedUnfairLock(initialState: TapDiagnostics())
     var samples: [Float] = []
+    samples.reserveCapacity(ConversationTurnPolicy.maximumRecoverySamples)
     while file.framePosition < file.length {
       guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 4096)
       else { return nil }
@@ -638,8 +648,9 @@ final class ConversationCoordinator: ObservableObject {
         AudioBufferMath.resample(buffer, converter: $0, targetFormat: destination,
                                  diagnostics: diagnostics)
       } ?? AudioBufferMath.samples(from: buffer)
+      guard ConversationTurnPolicy.canAppendRecoverySamples(chunk.count, to: samples.count)
+      else { return nil }
       samples.append(contentsOf: chunk)
-      guard samples.count <= 16_000 * 26 else { return nil }
     }
     return samples
   }

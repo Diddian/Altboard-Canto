@@ -20,7 +20,14 @@ enum LocalUserDataStore {
 
   static var hasActiveOperation: Bool {
     let settings = SharedSettings()
-    return self.isExporting || settings.isRecording || settings.isLLMProcessing
+    let dictationPending = !settings.dictationCancellationRequested
+      && settings.dictationSessionToken.flatMap { UUID(uuidString: $0) } != nil
+      && (DictationCapturePolicy.isPendingStart(
+        startedAt: settings.recordingStartedAt, now: Date().timeIntervalSinceReferenceDate
+      ) || TranscriptionBridge.readVoiceProgress()?.isCurrent(
+        for: settings.dictationSessionToken, cancelled: settings.dictationCancellationRequested
+      ) == true)
+    return self.isExporting || settings.isRecording || dictationPending || settings.isLLMProcessing
       || MeetingRecordingCoordinator.shared.isRecording
       || MeetingRecordingCoordinator.shared.isFinalizing
       || MeetingRecordingCoordinator.shared.translatingRecordID != nil

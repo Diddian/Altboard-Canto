@@ -82,6 +82,7 @@ struct MicAnimatedButton: View {
   let proxy: KeyboardProxy
 
   @ObservedObject var keyboardState: KeyboardState
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
   var body: some View {
     Button(action: self.handleButtonAction) {
@@ -96,7 +97,15 @@ struct MicAnimatedButton: View {
     .onChange(of: self.isPressed) { _, isDown in
       self.handleMicPressChange(isDown: isDown)
     }
+    .onAppear {
+      self.isVisible = true
+      self.resetMicTransitions()
+      self.showSpinner = self.keyboardState.isProcessing
+    }
     .onDisappear {
+      self.isVisible = false
+      self.resetMicTransitions()
+      self.showSpinner = false
       self.holdActivationTask?.cancel()
       self.holdActivationTask = nil
       if self.holdStartedRecording {
@@ -105,6 +114,13 @@ struct MicAnimatedButton: View {
       self.pressPolicy.cancel()
       self.holdStartedRecording = false
       self.suppressButtonAction = false
+    }
+    .onChange(of: self.reduceMotion) { _, _ in
+      self.resetMicTransitions()
+      self.showSpinner = self.keyboardState.isProcessing
+    }
+    .onChange(of: self.keyboardState.isModelLoading) { _, loading in
+      if loading { self.resetMicTransitions() }
     }
     // A stuck inference must never disable the only microphone control.
     // During processing it becomes an explicit, token-scoped Cancel action.
@@ -126,6 +142,8 @@ struct MicAnimatedButton: View {
   private static let spinnerDelay = Duration.milliseconds(600)
 
   @State private var isPressed = false
+  @State private var isVisible = false
+  @State private var animationGeneration = UUID()
   @State private var pressPolicy = MicrophonePressPolicy()
   @State private var holdActivationTask: Task<Void, Never>?
   @State private var holdStartedRecording = false
@@ -143,16 +161,15 @@ struct MicAnimatedButton: View {
   private var micButtonLabel: some View {
     let shouldShowWave = self.keyboardState.isRecording
     let isLoading = self.keyboardState.isModelLoading && !self.keyboardState.isRecording
-    let isSpin = self.showSpinner || self.keyboardState.isStartingRecording
-      || (isLoading && !self.isSpinnerMorphing && !self.pendingSpinnerMorph)
+    let isSpin = self.showSpinner || self.keyboardState.isStartingRecording || isLoading
     let compactStatus = self.keyboardState.keyboardKind == .standard
       && KeyboardMetrics.isCompactStandard
       && !self.keyboardState.isRecording
       && (self.keyboardState.isProcessing || self.keyboardState.isStartingRecording
         || self.keyboardState.dictationOutcome != nil
         || self.keyboardState.finalOutputPreview != nil)
+    // Keep a real glyph visible while a spinner completion is pending.
     let isIdle = !shouldShowWave && !isSpin && !self.isMorphing && !self.isSpinnerMorphing
-      && !self.pendingSpinnerMorph
     ZStack {
       MicMorphShape(frameIndex: 0)
         .fill(.primary)
@@ -178,7 +195,7 @@ struct MicAnimatedButton: View {
       WaveformBars(levels: self.keyboardState.recentAudioLevels, scale: self.sizing.waveformScale)
         .opacity(
           shouldShowWave && !isSpin && !self.isMorphing
-            && !self.isSpinnerMorphing && !self.pendingSpinnerMorph ? 1 : 0
+            && !self.isSpinnerMorphing ? 1 : 0
         )
 
       self.spinnerView(isSpin: isSpin && !compactStatus)
@@ -319,6 +336,10 @@ struct MicAnimatedButton: View {
     } else if !isRecording, oldValue {
       self.recordingStopCount &+= 1
     }
+    if isRecording || self.reduceMotion || !self.isVisible {
+      self.resetMicTransitions()
+    }
+    guard self.isVisible, !self.reduceMotion else { return }
     if isRecording, !oldValue, !self.isMorphing {
       self.morphDirection = .toWave
       self.isMorphing = true
@@ -334,14 +355,16 @@ struct MicAnimatedButton: View {
   private func observeProcessing() async {
     let isProcessing = self.keyboardState.isProcessing
     if isProcessing {
+      self.resetMicTransitions()
       do {
         try await Task.sleep(for: Self.spinnerDelay)
       } catch {
         return
       }
+      guard self.isVisible, self.keyboardState.isProcessing else { return }
       self.showSpinner = true
     } else {
-      if self.showSpinner {
+      if self.showSpinner, !self.reduceMotion {
         self.pendingSpinnerMorph = true
       }
       self.showSpinner = false
@@ -349,13 +372,17 @@ struct MicAnimatedButton: View {
   }
 
   private func spinnerView(isSpin: Bool) -> some View {
-    TwoDotOrbitProcessing(size: self.sizing.spinnerSize)
+    let generation = self.animationGeneration
+    return TwoDotOrbitProcessing(size: self.sizing.spinnerSize)
       .scaleEffect(isSpin ? 1 : 0.01)
       .transaction(value: isSpin) { transaction in
-        transaction.animation = .easeOut(duration: 0.2)
-        if !isSpin {
+        transaction.animation = self.reduceMotion ? nil : .easeOut(duration: 0.2)
+        if !isSpin, !self.reduceMotion {
           transaction.addAnimationCompletion {
-            if self.pendingSpinnerMorph {
+            if self.isVisible, generation == self.animationGeneration,
+               self.pendingSpinnerMorph,
+               !self.keyboardState.isProcessing, !self.keyboardState.isRecording,
+               !self.keyboardState.isStartingRecording, !self.keyboardState.isModelLoading {
               self.pendingSpinnerMorph = false
               self.isSpinnerMorphing = true
               self.spinnerMorphCanStep = true
@@ -365,7 +392,19 @@ struct MicAnimatedButton: View {
       }
   }
 
+  private func resetMicTransitions() {
+    self.animationGeneration = UUID()
+    self.isMorphing = false
+    self.isSpinnerMorphing = false
+    self.spinnerMorphCanStep = false
+    self.pendingSpinnerMorph = false
+  }
+
   private func handleMicMorphComplete() {
+    guard self.isVisible, !self.reduceMotion else {
+      self.resetMicTransitions()
+      return
+    }
     let wantWave = self.keyboardState.isRecording
     self.isMorphing = false
     if self.morphDirection == .toWave, !wantWave {

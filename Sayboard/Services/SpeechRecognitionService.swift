@@ -44,6 +44,7 @@ final class SpeechRecognitionService: ObservableObject {
   private(set) var speechWorkers = 0
   private var modelLoadsInFlight = 0
   private var cancellationTask: Task<Void, Never>?
+  private var captureConfirmationTask: Task<Void, Never>?
 
   var canBeginTextWork: Bool {
     OperationPolicy.canBeginTextWork(
@@ -85,9 +86,37 @@ final class SpeechRecognitionService: ObservableObject {
   }
 
   func startRecording() {
-    guard self.activeLoadState == .loaded else { return }
+    guard self.activeLoadState == .loaded else {
+      self.rejectUnacceptedDictationRequest(reason: .modelLoadFailed)
+      return
+    }
     self.settings.dictationCancellationRequested = false
     self.startCapture()
+  }
+
+  private func rejectUnacceptedDictationRequest(
+    reason: FeatureDiagnostics.FailureReason? = nil,
+    outcome: DictationOutcome? = .activationFailed
+  ) {
+    self.settings.synchronize()
+    guard DictationCapturePolicy.canRejectUnacceptedRequest(
+      activeToken: self.activeDictationToken, recording: self.isRecording,
+      finalizing: self.isStopping, ownsCapture: self.session.captureOwner == .dictation
+    ), !self.settings.dictationCancellationRequested,
+      let token = self.settings.dictationSessionToken else { return }
+    self.settings.isRecording = false
+    self.settings.recordingStartedAt = 0
+    self.settings.keyboardRequestedDictation = false
+    self.settings.lastDictationOutcome = outcome
+    self.settings.dictationSessionToken = nil
+    self.settings.synchronize()
+    MicrophoneHoldStopIntent.clear(defaults: self.settings.defaults)
+    if TranscriptionBridge.readVoiceProgress()?.sessionToken == token {
+      TranscriptionBridge.clearVoiceProgress()
+    }
+    FeatureDiagnostics.record(.speech, .rejected,
+      failureReason: reason, operationID: token, phase: .rejected)
+    TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStopped)
   }
 
   func startCapture() {
@@ -103,17 +132,20 @@ final class SpeechRecognitionService: ObservableObject {
           !ConversationCoordinator.shared.processing,
           MeetingRecordingCoordinator.shared.translatingRecordID == nil,
           self.llmCoordinator?.isProcessing != true, self.speechWorkers == 0 else {
+      self.rejectUnacceptedDictationRequest(reason: .busy)
       return
     }
     guard micAuth else {
       FeatureDiagnostics.record(.speech, .blocked)
       self.errorMessage = "Microphone access is required for voice input."
+      self.rejectUnacceptedDictationRequest(reason: .audioCaptureUnavailable)
       return
     }
 
     self.errorMessage = nil
     self.currentTranscription = ""
     self.currentRawTranscription = ""
+    self.currentWordBoundaries = nil
     self.recordingSpokenLanguages = self.settings.preferredSpokenLanguages
     self.settings.lastVoiceOutputProcessed = false
     self.settings.lastDictationOutcome = nil
@@ -121,6 +153,8 @@ final class SpeechRecognitionService: ObservableObject {
       self.settings.dictationSessionToken = UUID().uuidString
     }
     self.activeDictationToken = self.settings.dictationSessionToken
+    self.settings.isRecording = false
+    self.settings.recordingStartedAt = 0
     TranscriptionBridge.clearTranscription()
     TranscriptionBridge.clearVoiceProgress()
     ExperimentalLiveTranscription.clear()
@@ -135,6 +169,7 @@ final class SpeechRecognitionService: ObservableObject {
       FeatureDiagnostics.record(.speech, .failed)
       self.currentAudioFileName = nil
       self.settings.dictationSessionToken = nil
+      self.activeDictationToken = nil
       self.settings.lastDictationOutcome = .activationFailed
       TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStopped)
       return
@@ -152,6 +187,7 @@ final class SpeechRecognitionService: ObservableObject {
       }
       self.currentAudioFileName = nil
       self.settings.dictationSessionToken = nil
+      self.activeDictationToken = nil
       self.accumulator.reset()
       self.session.endCapture(owner: .dictation)
       if sessionStartedHere { self.session.endSession() }
@@ -160,27 +196,121 @@ final class SpeechRecognitionService: ObservableObject {
     }
 
     self.isRecording = true
-    if let token = self.activeDictationToken {
-      LiveDictationLatency.mark(.audioCaptured, token: token)
-    }
-    FeatureDiagnostics.record(.speech, .started,
-      operationID: self.activeDictationToken, phase: .running)
-    self.settings.isRecording = true
     self.settings.recordingStartedAt = Date().timeIntervalSinceReferenceDate
+    self.settings.synchronize()
     self.armMaxDurationTimer()
+    self.awaitCaptureConfirmation()
+  }
+
+  private func awaitCaptureConfirmation() {
+    self.captureConfirmationTask?.cancel()
+    guard let token = self.activeDictationToken else { return }
+    let startedAt = CFAbsoluteTimeGetCurrent()
+    FeatureDiagnostics.record(.speechAudio, .queued,
+      operationID: token, phase: .accepted)
+    self.captureConfirmationTask = Task { @MainActor [weak self] in
+      guard let self else { return }
+      defer {
+        if self.activeDictationToken == token { self.captureConfirmationTask = nil }
+      }
+      while !Task.isCancelled {
+        guard self.isRecording, !self.isStopping,
+              self.activeDictationToken == token else { return }
+        self.settings.synchronize()
+        if self.settings.dictationCancellationRequested {
+          self.cancelRecording()
+          return
+        }
+        guard DictationRequestPolicy.isCurrent(
+          started: token, current: self.settings.dictationSessionToken,
+          cancelled: self.settings.dictationCancellationRequested
+        ) else {
+          self.failUnconfirmedCapture(token: token, reason: .audioCaptureUnavailable)
+          return
+        }
+        // A status request can confirm the same capture before this poll.
+        if self.settings.isRecording { return }
+        switch self.session.captureConfirmation(
+          owner: .dictation, elapsed: CFAbsoluteTimeGetCurrent() - startedAt
+        ) {
+        case .confirmed:
+          self.acknowledgeCaptureIfReady()
+          return
+        case .unavailable:
+          self.failUnconfirmedCapture(token: token, reason: .audioCaptureUnavailable)
+          return
+        case .timedOut:
+          self.failUnconfirmedCapture(token: token, reason: .audioCaptureUnconfirmed)
+          return
+        case .waiting:
+          do { try await Task.sleep(for: .milliseconds(50)) }
+          catch { return }
+        }
+      }
+    }
+  }
+
+  private func acknowledgeCaptureIfReady() {
+    self.settings.synchronize()
+    guard self.isRecording, !self.isStopping,
+          let token = self.activeDictationToken,
+          DictationRequestPolicy.isCurrent(
+            started: token, current: self.settings.dictationSessionToken,
+            cancelled: self.settings.dictationCancellationRequested
+          ), self.session.captureConfirmation(owner: .dictation) == .confirmed else { return }
+    let firstAcknowledgment = !self.settings.isRecording
+    self.settings.isRecording = true
+    self.settings.synchronize()
+    if firstAcknowledgment {
+      LiveDictationLatency.mark(.audioCaptured, token: token)
+      FeatureDiagnostics.record(.speech, .started,
+        operationID: token, phase: .running)
+    }
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStarted)
-    self.scheduleQwenWarmupAfterCapture()
-    self.startExperimentalLiveIfNeeded()
+    if firstAcknowledgment {
+      self.scheduleQwenWarmupAfterCapture()
+      self.startExperimentalLiveIfNeeded()
+    }
     // A hold may end before the keyboard receives the recording-start
     // notification. Honor that release exactly once after capture exists.
     if MicrophoneHoldStopIntent.consume(
       for: self.settings.dictationSessionToken, defaults: self.settings.defaults
     ) {
       Task { @MainActor [weak self] in
-        guard let self, self.isRecording else { return }
+        guard let self, self.isRecording, self.activeDictationToken == token else { return }
         await self.stopRecording()
       }
     }
+  }
+
+  private func failUnconfirmedCapture(
+    token: String, reason: FeatureDiagnostics.FailureReason
+  ) {
+    guard self.activeDictationToken == token, self.isRecording, !self.isStopping else { return }
+    self.captureConfirmationTask?.cancel()
+    self.captureConfirmationTask = nil
+    self.cancelMaxDurationTimer()
+    self.isRecording = false
+    let canEndSession = self.session.captureOwner == nil || self.session.captureOwner == .dictation
+    self.session.endCapture(owner: .dictation)
+    self.saveHistoryRecord(preserveUntranscribedAudio: true)
+    self.accumulator.reset()
+    self.activeDictationToken = nil
+    self.settings.synchronize()
+    if self.settings.dictationSessionToken == token {
+      self.settings.isRecording = false
+      self.settings.recordingStartedAt = 0
+      self.settings.lastDictationOutcome = .activationFailed
+      self.settings.dictationSessionToken = nil
+      self.settings.keyboardRequestedDictation = false
+      self.settings.synchronize()
+      MicrophoneHoldStopIntent.clear(defaults: self.settings.defaults)
+      TranscriptionBridge.clearVoiceProgress()
+    }
+    if canEndSession { self.session.endSession() }
+    FeatureDiagnostics.record(.speechAudio, .failed,
+      failureReason: reason, operationID: token, phase: .failed)
+    TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStopped)
   }
 
   /// Warm the offline recognizer while the user speaks, not before audio
@@ -280,8 +410,11 @@ final class SpeechRecognitionService: ObservableObject {
       return
     }
     self.isRecording = false
+    self.captureConfirmationTask?.cancel()
+    self.captureConfirmationTask = nil
     FeatureDiagnostics.record(.speech, .stopped,
       operationID: self.activeDictationToken, phase: .accepted)
+    self.settings.isRecording = false
     self.settings.recordingStartedAt = 0
     self.isStopping = true
     let finalizationToken = self.activeDictationToken
@@ -293,6 +426,7 @@ final class SpeechRecognitionService: ObservableObject {
     }
     let finalizationStartedAt = CFAbsoluteTimeGetCurrent()
     MicrophoneHoldStopIntent.clear(defaults: self.settings.defaults)
+    self.settings.synchronize()
     TranscriptionBridge.writeVoiceProgress(.stoppingAudio)
 
     self.cancelMaxDurationTimer()
@@ -397,6 +531,8 @@ final class SpeechRecognitionService: ObservableObject {
     FeatureDiagnostics.record(.speech, .cancelled,
       operationID: self.activeDictationToken, phase: .cancelled)
     MicrophoneHoldStopIntent.clear(defaults: self.settings.defaults)
+    self.captureConfirmationTask?.cancel()
+    self.captureConfirmationTask = nil
     self.liveDictationStatus = "Cancelled"
     let cancelledLive = self.experimentalLiveTask
     cancelledLive?.cancel()
@@ -650,8 +786,10 @@ extension SpeechRecognitionService {
         if healthy {
           TranscriptionBridge.postDarwinNotification(DarwinNotificationName.sessionStarted)
         }
-        if self.isRecording && healthy {
-          TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStarted)
+        if self.isStopping {
+          TranscriptionBridge.postDarwinNotification(DarwinNotificationName.voiceProgressUpdated)
+        } else if self.isRecording {
+          self.acknowledgeCaptureIfReady()
         }
       }
     }
@@ -710,6 +848,7 @@ extension SpeechRecognitionService {
         self.settings.synchronize()
         guard !self.settings.dictationCancellationRequested else { return }
         guard !self.settings.isDictationLocked else {
+          self.rejectUnacceptedDictationRequest(outcome: nil)
           TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationLockChanged)
           return
         }
@@ -719,7 +858,7 @@ extension SpeechRecognitionService {
             FeatureDiagnostics.record(.speech, .rejected)
             return
           }
-          TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStarted)
+          self.acknowledgeCaptureIfReady()
           return
         }
         await self.startRecordingAfterModelLoad()
@@ -747,6 +886,18 @@ extension SpeechRecognitionService {
         guard OperationPolicy.ownsCancellation(
           requested: TranscriptionBridge.stopToken(), active: self.activeDictationToken
         ) else { return }
+        if DictationCapturePolicy.shouldDeferRequestedStop(
+          confirmation: self.session.captureConfirmation(owner: .dictation),
+          awaitingConfirmation: self.isRecording && !self.isStopping
+            && self.captureConfirmationTask != nil
+        ) {
+          MicrophoneHoldStopIntent.request(
+            for: self.activeDictationToken, defaults: self.settings.defaults
+          )
+          FeatureDiagnostics.record(.speech, .queued,
+            operationID: self.activeDictationToken, phase: .accepted)
+          return
+        }
         await self.stopRecording()
       }
     }

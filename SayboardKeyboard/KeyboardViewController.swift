@@ -62,6 +62,7 @@ final class KeyboardViewController: UIInputViewController {
   #endif
 
   var processingTimeoutTimer: Timer?
+  var processingTimeoutGeneration = UUID()
   var processingStartTime: Date?
   var receivedPingDuringProcessing = false
 
@@ -186,6 +187,7 @@ final class KeyboardViewController: UIInputViewController {
     self.staleFallbackTimer = nil
     self.warmStartSessionAcknowledged = false
     self.pingValidator.cancel()
+    self.pauseProcessingTimeout()
     self.stopMemoryWatch()
     KeyboardHaptics.suspend(owner: self)
     self.renderProbeGeneration &+= 1
@@ -195,9 +197,7 @@ final class KeyboardViewController: UIInputViewController {
       self.liveTranscriptionBlockedToken = token
       Self.blockedLiveSessionToken = token
     }
-    if !self.keyboardState.isRecording, !self.keyboardState.isProcessing {
-      self.keyboardState.stopLevelPolling()
-    }
+    self.keyboardState.stopLevelPolling()
     self.recordKeyboardTrace(.willDisappear)
   }
 
@@ -502,7 +502,9 @@ final class KeyboardViewController: UIInputViewController {
       operationID: delivery.sessionToken, phase: .accepted)
   }
 
-  func insertTranscribedText() {
+  @discardableResult
+  func insertTranscribedText() -> Bool {
+    guard self.viewIfLoaded?.window != nil else { return false }
     self.recoverCompletedDictationDestination()
     // Never use an unscoped latest result for automatic insertion or
     // display. A fresh keyboard must first recover its scoped request;
@@ -519,8 +521,9 @@ final class KeyboardViewController: UIInputViewController {
       if let outcome = settings.lastDictationOutcome {
         self.keyboardState.dictationOutcome = outcome
       }
-      return
+      return false
     }
+    defer { self.refreshRecoverableLLMResult() }
     let text = delivery.text
     let settings = SharedSettings()
     settings.synchronize()
@@ -544,7 +547,7 @@ final class KeyboardViewController: UIInputViewController {
       FeatureDiagnostics.record(.bridge, .rejected,
         failureReason: reason,
         operationID: delivery.sessionToken, phase: .rejected)
-      return
+      return true
     }
     // A new controller has no proof whether an earlier live partial reached
     // UIKit. A durable receipt blocks both partial replay and duplicate final
@@ -553,7 +556,7 @@ final class KeyboardViewController: UIInputViewController {
         && self.liveTranscriptionOwnerToken != delivery.sessionToken {
       FeatureDiagnostics.record(.bridge, .fallback,
         failureReason: .awaitingUserInsertion, operationID: delivery.sessionToken)
-      return
+      return true
     }
     FeatureDiagnostics.record(.bridge, .started)
     self.keyboardState.dictationOutcome = nil
@@ -568,7 +571,7 @@ final class KeyboardViewController: UIInputViewController {
       Self.blockedLiveSessionToken = nil
       self.liveTranscriptionBlockedToken = nil
       FeatureDiagnostics.record(.bridge, .fallback)
-      return
+      return true
     }
     switch self.completeExperimentalLiveText(
       delivery, cancellationRequested: settings.dictationCancellationRequested
@@ -577,10 +580,10 @@ final class KeyboardViewController: UIInputViewController {
       TranscriptionBridge.acknowledgeDelivery(delivery.resultID)
       self.keyboardState.showFinalOutputPreview(text)
       FeatureDiagnostics.record(.bridge, .completed)
-      return
+      return true
     case .review:
       FeatureDiagnostics.record(.bridge, .fallback)
-      return
+      return true
     case .notApplicable:
       break
     }
@@ -588,11 +591,11 @@ final class KeyboardViewController: UIInputViewController {
       // The original ASR outbox remains owned until the AI output or fallback
       // is committed. A recreated keyboard must not re-run the same request.
       FeatureDiagnostics.record(.bridge, .resumed, operationID: delivery.sessionToken)
-      return
+      return true
     }
     if self.autoApplyLLMIfNeeded(directText: text, sourceDeliveryID: delivery.resultID) {
       FeatureDiagnostics.record(.bridge, .queued)
-      return
+      return true
     }
 
     DiagnosticLog.write("keyboard: inserting \(text.count) chars into textDocumentProxy")
@@ -600,6 +603,7 @@ final class KeyboardViewController: UIInputViewController {
     TranscriptionBridge.acknowledgeDelivery(delivery.resultID)
     FeatureDiagnostics.record(.bridge, .completed)
     self.keyboardState.showFinalOutputPreview(text)
+    return true
   }
 
   func pingMainAppForSessionStatus() {
@@ -657,10 +661,13 @@ final class KeyboardViewController: UIInputViewController {
         guard let vc = Self.activeInstance else {
           return
         }
-        vc.cancelProcessingTimeout()
         vc.keyboardState.syncDictationLock()
-        vc.insertTranscribedText()
-        vc.finalizeProcessingPipeline()
+        if vc.insertTranscribedText() {
+          vc.finalizeProcessingPipeline()
+        } else {
+          vc.keyboardState.syncVoiceProcessingProgress()
+          vc.resumeProcessingTimeoutIfNeeded()
+        }
       }
     }
   }
@@ -673,6 +680,7 @@ final class KeyboardViewController: UIInputViewController {
       DispatchQueue.main.async {
         guard let vc = Self.activeInstance else { return }
         vc.keyboardState.syncVoiceProcessingProgress()
+        vc.resumeProcessingTimeoutIfNeeded()
       }
     }
   }
@@ -707,6 +715,7 @@ final class KeyboardViewController: UIInputViewController {
     guard self.viewIfLoaded?.window != nil else { return }
     self.syncFullAccessIfChanged()
     self.keyboardState.refresh()
+    self.recoverActiveDictationAfterReentry()
     self.refreshHostInputTraits()
     self.keyboardState.keyboardAppearanceRevision &+= 1
     self.updateKeyboardHeight(actionBarVisible: false)
@@ -719,7 +728,7 @@ final class KeyboardViewController: UIInputViewController {
     self.pingMainAppForSessionStatus()
     self.keyboardState.appearedAt = CFAbsoluteTimeGetCurrent()
     self.resumeProcessingTimeoutIfNeeded()
-    self.insertTranscribedText()
+    if self.insertTranscribedText() { self.finalizeProcessingPipeline() }
     self.checkForPendingLLMResult()
   }
 
@@ -735,8 +744,17 @@ final class KeyboardViewController: UIInputViewController {
         }
         let settings = SharedSettings()
         settings.synchronize()
-        guard settings.isRecording,
-              settings.dictationSessionToken == vc.dictationRequestToken else { return }
+        // The keyboard may be recreated while the host is waiting for its
+        // first audio buffer. Recover control before validating this live ACK.
+        vc.recoverActiveDictationAfterReentry()
+        guard DictationRequestPolicy.mayShowRecording(
+          requestToken: vc.dictationRequestToken, currentToken: settings.dictationSessionToken,
+          cancelled: settings.dictationCancellationRequested,
+          recording: settings.isRecording, sessionActive: settings.isSessionActive,
+          captureAcknowledged: true, heartbeat: settings.mainAppHeartbeat,
+          now: CFAbsoluteTimeGetCurrent()
+        ) else { return }
+        vc.keyboardState.syncVoiceProcessingProgress()
         // Stop can be requested before the capture acknowledgment arrives.
         // Do not reactivate the recording UI during finalization.
         guard !vc.keyboardState.isProcessing else { return }
@@ -764,7 +782,7 @@ final class KeyboardViewController: UIInputViewController {
           vc.keyboardState.clearLLMHistory()
         }
         vc.keyboardState.isSessionActive = true
-        vc.keyboardState.startLevelPolling()
+        if vc.viewIfLoaded?.window != nil { vc.keyboardState.startLevelPolling() }
       }
     }
 
@@ -775,7 +793,15 @@ final class KeyboardViewController: UIInputViewController {
         guard let vc = Self.activeInstance else {
           return
         }
-        guard !SharedSettings().isRecording else { return }
+        let settings = SharedSettings()
+        settings.synchronize()
+        guard !settings.isRecording else { return }
+        // A delayed stop notification must not finish another live request.
+        guard settings.dictationSessionToken == nil else {
+          vc.keyboardState.syncVoiceProcessingProgress()
+          vc.resumeProcessingTimeoutIfNeeded()
+          return
+        }
         vc.cancelProcessingTimeout()
         vc.staleFallbackTimer?.invalidate()
         vc.staleFallbackTimer = nil
@@ -801,9 +827,15 @@ final class KeyboardViewController: UIInputViewController {
     self.setupModelLoadingObservers()
   }
 
-  private func finalizeProcessingPipeline() {
+  func finalizeProcessingPipeline() {
+    self.cancelProcessingTimeout()
+    self.keyboardState.isRecording = false
+    self.keyboardState.isStartingRecording = false
+    self.keyboardState.recordingStartedAt = 0
+    self.keyboardState.stopLevelPolling()
     self.keyboardState.voiceProcessingProgress = nil
     self.keyboardState.isProcessing = false
+    self.refreshRecoverableLLMResult()
     if self.keyboardState.isLLMProcessing {
       self.startProcessingTimeout()
     }
@@ -868,8 +900,13 @@ final class KeyboardViewController: UIInputViewController {
   func recoverActiveDictationAfterReentry() {
     let settings = SharedSettings()
     settings.synchronize()
+    let progress = TranscriptionBridge.readVoiceProgress()
+    let finalizing = progress?.isCurrent(for: settings.dictationSessionToken,
+      cancelled: settings.dictationCancellationRequested) == true
+    let stopPending = settings.dictationSessionToken != nil
+      && TranscriptionBridge.stopToken() == settings.dictationSessionToken
     guard !settings.dictationCancellationRequested,
-          (settings.isRecording || settings.isKeyboardRequestRecent()),
+          (settings.isRecording || settings.isKeyboardRequestRecent() || finalizing || stopPending),
           let token = settings.dictationSessionToken,
           UUID(uuidString: token) != nil else { return }
     let document = self.availableDocumentIdentifier()
@@ -877,6 +914,12 @@ final class KeyboardViewController: UIInputViewController {
       sessionToken: token, document: document,
       fingerprint: settings.dictationDestinationFingerprint
     )
+    if finalizing || stopPending {
+      self.keyboardState.isRecording = false
+      self.keyboardState.isStartingRecording = false
+      self.keyboardState.isProcessing = true
+      self.keyboardState.syncVoiceProcessingProgress()
+    }
     if self.dictationRequestToken == token,
        self.dictationDocumentID == document, sameField,
        self.keyboardState.documentEpoch == settings.dictationDestinationEpoch {
@@ -909,14 +952,19 @@ final class KeyboardViewController: UIInputViewController {
       FeatureDiagnostics.record(.bridge, .fallback, operationID: token)
     }
     self.keyboardState.isSessionActive = settings.isSessionActive
-    self.keyboardState.isRecording = settings.isRecording
-    self.keyboardState.isStartingRecording = !settings.isRecording
-    self.keyboardState.recordingStartedAt = settings.recordingStartedAt
+    // Recover control/field ownership, never capture truth from persisted flags.
+    // Appearance sends a status ping; only dictationStarted can show the wave.
+    self.keyboardState.isRecording = false
+    self.keyboardState.isStartingRecording = !self.keyboardState.isProcessing
+      && settings.isKeyboardRequestRecent()
+    self.keyboardState.recordingStartedAt = 0
   }
 
   private func startDictationViaDarwin() {
     let settings = SharedSettings()
     settings.synchronize()
+    self.keyboardState.syncVoiceProcessingProgress()
+    guard !self.keyboardState.isProcessing else { return }
     // A persisted recording flag is not proof of a live capture. Probe the
     // host before reusing its token or changing the destination field.
     if settings.isRecording && settings.isSessionActive
@@ -1454,6 +1502,7 @@ extension KeyboardViewController {
   override func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
     self.insertDeferredAppearanceText()
+    self.resumeProcessingTimeoutIfNeeded()
     self.recordKeyboardTrace(.didAppear)
     self.startMemoryWatch()
     self.scheduleRenderCheckpoint(checkpoint: "afterAppear")
@@ -1525,9 +1574,9 @@ extension KeyboardViewController {
   }
 
   private func insertDeferredAppearanceText() {
-    guard self.hasDeferredAppearanceInsert else { return }
+    guard self.hasDeferredAppearanceInsert, self.viewIfLoaded?.window != nil else { return }
     self.hasDeferredAppearanceInsert = false
-    self.insertTranscribedText()
+    if self.insertTranscribedText() { self.finalizeProcessingPipeline() }
     self.checkForPendingLLMResult()
   }
 }

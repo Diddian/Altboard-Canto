@@ -21,12 +21,14 @@ struct SpinnerMorphAnimation: View {
         }
     }
     .onAppear {
+      self.isComplete = false
       if self.canStep {
         self.startTime = Date()
       }
     }
     .onChange(of: self.canStep) { _, canStep in
       if canStep {
+        self.isComplete = false
         self.startTime = Date()
       }
     }

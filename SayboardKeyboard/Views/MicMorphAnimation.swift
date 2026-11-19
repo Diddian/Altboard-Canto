@@ -3,7 +3,7 @@ import SwiftUI
 
 struct MicMorphAnimation: View {
 
-  enum Direction {
+  enum Direction: Equatable {
     case toWave
     case toMic
   }
@@ -25,6 +25,11 @@ struct MicMorphAnimation: View {
         }
     }
     .onAppear {
+      self.isComplete = false
+      self.startTime = Date()
+    }
+    .onChange(of: self.direction) { _, _ in
+      self.isComplete = false
       self.startTime = Date()
     }
   }

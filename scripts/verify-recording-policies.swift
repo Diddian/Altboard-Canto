@@ -33,6 +33,26 @@ struct RecordingPolicyChecks {
     precondition(!p.hasRecentAudioHeartbeat(16.9, now: now))
     precondition(!p.hasRecentAudioHeartbeat(20.1, now: now))
     precondition(!p.hasRecentAudioHeartbeat(0, now: now))
+    func showsRecording(
+      request: String? = validColdToken, current: String? = validColdToken,
+      cancelled: Bool = false, recording: Bool = true, sessionActive: Bool = true,
+      acknowledged: Bool = true, heartbeat: TimeInterval = 19.5
+    ) -> Bool {
+      p.mayShowRecording(requestToken: request, currentToken: current,
+        cancelled: cancelled, recording: recording, sessionActive: sessionActive,
+        captureAcknowledged: acknowledged, heartbeat: heartbeat, now: now)
+    }
+    precondition(showsRecording())
+    // A stored recording flag and healthy idle audio session are insufficient.
+    precondition(!showsRecording(acknowledged: false))
+    precondition(!showsRecording(heartbeat: 16.9))
+    precondition(!showsRecording(heartbeat: 20.1))
+    precondition(!showsRecording(request: nil))
+    precondition(!showsRecording(current: UUID().uuidString))
+    precondition(!showsRecording(cancelled: true))
+    precondition(!showsRecording(recording: false))
+    precondition(!showsRecording(sessionActive: false))
+    precondition(!showsRecording(request: "invalid", current: "invalid"))
     precondition(p.shouldRequestWarmSession(
       keyboardActive: false, appActive: true, heartbeat: 19.5,
       now: now, practiceFocused: false

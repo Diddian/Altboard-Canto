@@ -158,6 +158,26 @@ enum VerifyOperationContracts {
     )
     let sharedTokenAfterHostStop: String? = nil
     precondition(sharedTokenAfterHostStop == nil)
+    // Any finalization stage can be the first one seen after keyboard reentry.
+    let progressStages: [VoiceProcessingStage] = [.stoppingAudio, .loadingRecognizer,
+      .transcribing, .translating, .editing, .finalizing]
+    for stage in progressStages {
+      let progress = VoiceProcessingProgress(sessionToken: finalToken,
+        stage: stage, startedAt: 100, updatedAt: 110, rawPreview: nil)
+      precondition(progress.isCurrent(for: finalToken, cancelled: false, now: 120))
+      precondition(!progress.isCurrent(for: nil, cancelled: false, now: 120))
+      precondition(!progress.isCurrent(for: UUID().uuidString, cancelled: false, now: 120))
+      precondition(!progress.isCurrent(for: finalToken, cancelled: true, now: 120))
+      precondition(!progress.isCurrent(for: finalToken, cancelled: false, now: 109))
+      precondition(!progress.isCurrent(for: finalToken, cancelled: false, now: 290))
+      precondition(!progress.isCurrent(for: finalToken, cancelled: false, now: .nan))
+    }
+    let reversedProgress = VoiceProcessingProgress(sessionToken: finalToken,
+      stage: .transcribing, startedAt: 121, updatedAt: 120, rawPreview: nil)
+    precondition(!reversedProgress.isCurrent(for: finalToken, cancelled: false, now: 122))
+    let unownedProgress = VoiceProcessingProgress(sessionToken: nil,
+      stage: .transcribing, startedAt: 100, updatedAt: 110, rawPreview: nil)
+    precondition(!unownedProgress.isCurrent(for: nil, cancelled: false, now: 120))
     func canFinish(
       _ payload: DictationDelivery = finalDelivery,
       request: String? = finalToken, owner: String? = finalToken,

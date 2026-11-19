@@ -240,7 +240,7 @@ enum ModelStorageManager {
     try resourceURL.setResourceValues(values)
   }
 
-  private static func compiledModelCacheURL() -> URL? {
+  static func compiledModelCacheURL() -> URL? {
     guard let cachesDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else {
       return nil
     }
@@ -249,7 +249,7 @@ enum ModelStorageManager {
       .appendingPathComponent(self.e5rtCacheDirName, isDirectory: true)
   }
 
-  private static func persistentCoreMLCacheURL() -> URL? {
+  static func persistentCoreMLCacheURL() -> URL? {
     guard let appSupportDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
     else {
       return nil

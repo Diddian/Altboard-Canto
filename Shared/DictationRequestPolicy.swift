@@ -72,6 +72,18 @@ enum DictationRequestPolicy {
     value > 0 && now >= value && now - value <= 3
   }
 
+  /// Persisted lifecycle flags and an idle audio tap cannot acknowledge capture.
+  static func mayShowRecording(
+    requestToken: String?, currentToken: String?, cancelled: Bool,
+    recording: Bool, sessionActive: Bool, captureAcknowledged: Bool,
+    heartbeat: TimeInterval, now: TimeInterval
+  ) -> Bool {
+    guard let requestToken, UUID(uuidString: requestToken) != nil else { return false }
+    return isCurrent(started: requestToken, current: currentToken, cancelled: cancelled)
+      && recording && sessionActive && captureAcknowledged
+      && hasRecentAudioHeartbeat(heartbeat, now: now)
+  }
+
   static func shouldRequestWarmSession(
     keyboardActive: Bool, appActive: Bool, heartbeat: TimeInterval,
     now: TimeInterval, practiceFocused: Bool, modelLoading: Bool = false

@@ -47,6 +47,21 @@ struct ConversationTurn: Identifiable, Codable, Sendable, Equatable {
 enum ConversationTurnPolicy {
   static let maximumCaptureSeconds: TimeInterval = 25
   static let maximumRecoverySeconds: TimeInterval = 35
+  static let recoverySampleRate: Double = 16_000
+  static let maximumRecoverySamples = Int(maximumRecoverySeconds * recoverySampleRate)
+
+  static func canRecoverAudio(frameCount: Int64, sampleRate: Double) -> Bool {
+    guard frameCount >= 0, sampleRate.isFinite, sampleRate > 0 else { return false }
+    return Double(frameCount) / sampleRate <= maximumRecoverySeconds
+  }
+
+  static func canAppendRecoverySamples(_ count: Int, to currentCount: Int) -> Bool {
+    guard count >= 0, currentCount >= 0, currentCount <= maximumRecoverySamples else {
+      return false
+    }
+    return count <= maximumRecoverySamples - currentCount
+  }
+
   /// A folder import may never resolve a filename outside its own audio dir.
   static func validAudioFileName(_ name: String) -> Bool {
     name.range(of: "^[A-Fa-f0-9-]{36}\\.caf$", options: .regularExpression) != nil

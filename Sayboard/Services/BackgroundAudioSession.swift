@@ -83,6 +83,17 @@ final class BackgroundAudioSession: ObservableObject {
     self.isSessionActive && self.audioEngine.isRunning && Self.activeSession === self
   }
 
+  func captureConfirmation(
+    owner: UnifiedCaptureOwner, elapsed: TimeInterval = 0
+  ) -> DictationCapturePolicy.Confirmation {
+    DictationCapturePolicy.confirmation(
+      sessionHealthy: self.isSessionHealthy,
+      ownsCapture: self.captureOwner == owner,
+      outputFrames: self.tapDiagnostics.withLock { $0.outputFrames },
+      elapsed: elapsed
+    )
+  }
+
   nonisolated let levelBridge = AudioLevelBridge(mode: .writer)
 
   nonisolated let tapDiagnostics = OSAllocatedUnfairLock<TapDiagnostics>(initialState: TapDiagnostics())
