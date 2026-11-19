@@ -46,6 +46,9 @@ final class KeyboardState: ObservableObject {
   @Published var llmError: LLMError?
   @Published var dictationOutcome: DictationOutcome?
   @Published var finalOutputPreview: String?
+  // Visible only until the user explicitly inserts an undelivered result.
+  @Published var recoverableDictationPreview: String?
+  var insertRecoverableDictation: (() -> Void)?
   @Published var liveSourcePreview: String?
   private var finalPreviewGeneration = UUID()
   @Published var voiceProcessingProgress: VoiceProcessingProgress?

@@ -103,6 +103,9 @@ final class KeyboardViewController: UIInputViewController {
     // button below the keyboard on Face ID iPhones.
     self.hasDictationKey = true
     self.keyboardState.bootstrapLayoutSettings()
+    self.keyboardState.insertRecoverableDictation = { [weak self] in
+      self?.insertSavedDictationByUser()
+    }
     #if !APPSTORE
     self.keyboardState.liveDebugAction = { [weak self] event in
       self?.recordLiveDebugAction(event)
@@ -466,6 +469,50 @@ final class KeyboardViewController: UIInputViewController {
     #endif
   }
 
+  private static let manualRecoveryWindow: TimeInterval = 60 * 60
+
+  /// Only a visible, deliberate tap may insert a result whose original UIKit
+  /// destination could not be verified. Automatic insertion remains scoped.
+  private func refreshRecoverableDictation() {
+    guard self.viewIfLoaded?.window != nil else { return }
+    let pending = TranscriptionBridge.readDelivery(
+      maxAgeSeconds: Self.manualRecoveryWindow
+    )
+    let excerpt = pending?.text.trimmingCharacters(in: .whitespacesAndNewlines)
+    self.keyboardState.recoverableDictationPreview = excerpt.flatMap {
+      $0.isEmpty ? nil : String($0.prefix(64))
+    }
+  }
+
+  private func insertSavedDictationByUser() {
+    guard self.viewIfLoaded?.window != nil else { return }
+    let settings = SharedSettings()
+    settings.synchronize()
+    guard !settings.isRecording, !self.keyboardState.isRecording,
+          !self.keyboardState.isStartingRecording, !self.keyboardState.isProcessing,
+          self.textDocumentProxy.isSecureTextEntry != true,
+          self.textDocumentProxy.selectedText?.isEmpty != false,
+          let delivery = TranscriptionBridge.readDelivery(
+            maxAgeSeconds: Self.manualRecoveryWindow
+          ),
+          TranscriptionBridge.cancellationToken() != delivery.sessionToken,
+          !delivery.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    else {
+      FeatureDiagnostics.record(.bridge, .rejected,
+        failureReason: .destinationUnavailable)
+      self.refreshRecoverableDictation()
+      return
+    }
+    // The user can inspect the current field and choose this specific text.
+    // Never reuse this explicit action to weaken automatic field validation.
+    self.insertSpacedText(delivery.text)
+    TranscriptionBridge.acknowledgeDelivery(delivery.resultID)
+    FeatureDiagnostics.record(.bridge, .completed,
+      operationID: delivery.sessionToken, phase: .completed)
+    self.keyboardState.showFinalOutputPreview(delivery.text)
+    self.refreshRecoverableDictation()
+  }
+
   private static let automaticRecoveryWindow: TimeInterval = 90
 
   /// A completed dictation may outlive the keyboard process and the main
@@ -505,6 +552,7 @@ final class KeyboardViewController: UIInputViewController {
   @discardableResult
   func insertTranscribedText() -> Bool {
     guard self.viewIfLoaded?.window != nil else { return false }
+    defer { self.refreshRecoverableDictation() }
     self.recoverCompletedDictationDestination()
     // Never use an unscoped latest result for automatic insertion or
     // display. A fresh keyboard must first recover its scoped request;
@@ -1578,6 +1626,7 @@ extension KeyboardViewController {
     self.hasDeferredAppearanceInsert = false
     if self.insertTranscribedText() { self.finalizeProcessingPipeline() }
     self.checkForPendingLLMResult()
+    self.refreshRecoverableDictation()
   }
 }
 

@@ -170,6 +170,20 @@ struct KeyboardStatusStrip: View {
         DictationOutcomeLabel(outcome: outcome) {
           self.keyboardState.dictationOutcome = nil
         }
+      } else if let pending = self.keyboardState.recoverableDictationPreview {
+        Button {
+          self.keyboardState.insertRecoverableDictation?()
+        } label: {
+          VStack(spacing: 1) {
+            Text("Insert saved dictation")
+              .font(.caption2.weight(.semibold))
+            Text(pending).font(.caption2).lineLimit(1).truncationMode(.tail)
+          }
+          .frame(maxWidth: .infinity, minHeight: 36)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Insert saved dictation into the current field")
+        .accessibilityHint("Check for text already inserted by Live Dictation to avoid repeats.")
       } else if let preview = self.keyboardState.finalOutputPreview {
         Text(preview)
           .font(.caption2)

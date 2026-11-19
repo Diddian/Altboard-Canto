@@ -14,6 +14,7 @@ struct DataAndStorageSettingsView: View {
   @State private var pendingDeletion: [LocalUserDataStore.Category] = []
   @State private var confirmDeletion = false
   @State private var confirmCacheClear = false
+  @State private var confirmTemporaryDelete = false
   @State private var busy = false
   @State private var exportTask: Task<Void, Never>?
   @State private var exportURL: URL?
@@ -61,8 +62,20 @@ struct DataAndStorageSettingsView: View {
       }
     } message: {
       Text(self.pendingRetentionPolicy == nil
-        ? "Permanently delete the selected recordings, transcripts or vocabulary. Export a copy first if you need one."
+        ? (self.pendingDeletion.contains(.vocabulary)
+          ? "This permanently deletes learned selections, personal corrections and vocabulary as well as any other selected records. Export a copy first. This cannot be undone."
+          : "Permanently delete the selected records. Learned vocabulary is kept unless separately selected.")
         : "Voice notes outside the selected retention period will be permanently deleted.")
+    }
+    .confirmationDialog("Delete Old Temporary Files?",
+      isPresented: self.$confirmTemporaryDelete, titleVisibility: .visible
+    ) {
+      Button("Delete Old Temporary Files", role: .destructive) {
+        self.deleteOldTemporaryFiles()
+      }
+      Button("Cancel", role: .cancel) {}
+    } message: {
+      Text("Only regular files over one hour old in Altboard's temporary directory will be deleted. Recordings, models, settings and learned vocabulary are not touched.")
     }
     .alert("Data Operation Failed", isPresented: Binding(
       get: { self.errorMessage != nil },
@@ -137,7 +150,7 @@ struct DataAndStorageSettingsView: View {
           self.pendingDeletion = LocalUserDataStore.Category.allCases
           self.confirmDeletion = true
         } label: {
-          Label("Delete All Data", systemImage: "trash")
+          Label("Delete All Data, Including Learning", systemImage: "trash")
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .disabled(self.busy || self.recordingActive)
@@ -312,38 +325,56 @@ struct DataAndStorageSettingsView: View {
         .font(.footnote).foregroundStyle(.secondary)
         .fixedSize(horizontal: false, vertical: true)
       ForEach(inventory.items) { item in
-        DisclosureGroup {
-          VStack(alignment: .leading, spacing: 10) {
-            ForEach(item.files) { file in
-              VStack(alignment: .leading, spacing: 2) {
-                Text(verbatim: file.name)
-                  .font(.caption)
-                  .fixedSize(horizontal: false, vertical: true)
-                Text(self.formattedBytes(file.bytes))
-                  .font(.caption).foregroundStyle(.secondary).monospacedDigit()
-              }
-              .accessibilityElement(children: .combine)
+        if item.category == .cache {
+          HStack(alignment: .center, spacing: 8) {
+            self.storageItemDescription(item)
+            Spacer(minLength: 4)
+            self.storageItemSize(item)
+            Button(role: .destructive) {
+              self.confirmTemporaryDelete = true
+            } label: {
+              Image(systemName: "trash")
+                .frame(minWidth: 44, minHeight: 44)
             }
-            if item.fileCount > item.files.count {
-              Text("Showing the largest files. Total includes all measured files.", tableName: "Storage")
-                .font(.caption).foregroundStyle(.secondary)
-            }
-          }
-          .padding(.vertical, 8)
-        } label: {
-          ViewThatFits(in: .horizontal) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-              self.storageItemDescription(item)
-              Spacer(minLength: 4)
-              self.storageItemSize(item)
-            }
-            VStack(alignment: .leading, spacing: 4) {
-              self.storageItemDescription(item)
-              self.storageItemSize(item)
-            }
+            .buttonStyle(.borderless)
+            .accessibilityLabel("Delete Old Temporary Files")
+            .disabled(self.busy || self.recordingActive || self.exportURL != nil)
           }
           .padding(.vertical, 4)
-          .frame(minHeight: 44)
+        } else {
+          DisclosureGroup {
+            VStack(alignment: .leading, spacing: 10) {
+              ForEach(item.files) { file in
+                VStack(alignment: .leading, spacing: 2) {
+                  Text(verbatim: file.name)
+                    .font(.caption)
+                    .fixedSize(horizontal: false, vertical: true)
+                  Text(self.formattedBytes(file.bytes))
+                    .font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                }
+                .accessibilityElement(children: .combine)
+              }
+              if item.fileCount > item.files.count {
+                Text("Showing the largest files. Total includes all measured files.", tableName: "Storage")
+                  .font(.caption).foregroundStyle(.secondary)
+              }
+            }
+            .padding(.vertical, 8)
+          } label: {
+            ViewThatFits(in: .horizontal) {
+              HStack(alignment: .firstTextBaseline, spacing: 8) {
+                self.storageItemDescription(item)
+                Spacer(minLength: 4)
+                self.storageItemSize(item)
+              }
+              VStack(alignment: .leading, spacing: 4) {
+                self.storageItemDescription(item)
+                self.storageItemSize(item)
+              }
+            }
+            .padding(.vertical, 4)
+            .frame(minHeight: 44)
+          }
         }
       }
     }
@@ -454,6 +485,16 @@ struct DataAndStorageSettingsView: View {
     SharedSettings().retentionPolicy = policy
     HistoryStore.shared.applyRetentionPolicy()
     self.reload()
+  }
+
+  private func deleteOldTemporaryFiles() {
+    guard !self.recordingActive, !self.busy, self.exportURL == nil else { return }
+    do {
+      _ = try StorageUsageService.deleteOldTemporaryFiles()
+      self.storageRefreshID = UUID()
+    } catch {
+      self.errorMessage = "Temporary-file cleanup failed: \(error.localizedDescription)"
+    }
   }
 
   private func deleteSelected() {
