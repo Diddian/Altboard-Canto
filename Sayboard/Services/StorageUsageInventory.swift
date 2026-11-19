@@ -86,14 +86,15 @@ enum StorageUsageScanner {
   static let resourceKeys: Set<URLResourceKey> = [
     .isDirectoryKey, .isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey,
     .totalFileAllocatedSizeKey, .fileAllocatedSizeKey,
-    .fileResourceIdentifierKey, .volumeIdentifierKey,
   ]
 
   static func scan(
     roots: [StorageUsageRoot], routes: [StorageUsageRoute],
     isCancelled: () -> Bool = { Task.isCancelled },
     readValues: (URL) throws -> URLResourceValues = {
-      try $0.resourceValues(forKeys: StorageUsageScanner.resourceKeys)
+      var url = $0
+      url.removeAllCachedResourceValues()
+      return try url.resourceValues(forKeys: StorageUsageScanner.resourceKeys)
     }
   ) throws -> StorageUsageInventory {
     let fm = FileManager.default
@@ -132,7 +133,7 @@ enum StorageUsageScanner {
     for root in uniqueRoots {
       try checkCancellation()
       guard let enumerator = fm.enumerator(
-        at: root.url, includingPropertiesForKeys: Array(self.resourceKeys),
+        at: root.url, includingPropertiesForKeys: nil,
         options: [], errorHandler: { _, _ in unreadable += 1; return true }
       ) else { unreadable += 1; continue }
       scannedRoots += 1
@@ -146,12 +147,19 @@ enum StorageUsageScanner {
           }
           guard values.isRegularFile == true else { continue }
           let path = url.standardizedFileURL.path
-          // Include the volume because resource identifiers are volume-local.
-          if let resource = values.fileResourceIdentifier as? AnyHashable,
-             let volume = values.volumeIdentifier as? AnyHashable {
-            guard visitedFiles.insert(FileIdentity(volume: volume, resource: resource)).inserted else {
-              continue
-            }
+          // Numeric device/inode identity also works when Foundation's opaque
+          // resource identifiers cannot be bridged to Swift Hashable values.
+          // attributesOfItem reads symlink metadata without following the link.
+          let attributes = try fm.attributesOfItem(atPath: path)
+          guard attributes[.type] as? FileAttributeType == .typeRegular,
+                let device = attributes[.systemNumber] as? NSNumber,
+                let inode = attributes[.systemFileNumber] as? NSNumber else {
+            unreadable += 1
+            continue
+          }
+          let identity = FileIdentity(device: device.uint64Value, inode: inode.uint64Value)
+          guard visitedFiles.insert(identity).inserted else {
+            continue
           }
           let allocated = values.totalFileAllocatedSize ?? values.fileAllocatedSize
           guard let size = allocated ?? values.fileSize, size >= 0 else {
@@ -197,8 +205,8 @@ enum StorageUsageScanner {
   }
 
   private struct FileIdentity: Hashable {
-    let volume: AnyHashable
-    let resource: AnyHashable
+    let device: UInt64
+    let inode: UInt64
   }
 
   private static func contains(_ url: URL, in root: URL) -> Bool {

@@ -45,7 +45,14 @@ enum VerifyStorageUsage {
     try fm.createSymbolicLink(at: app.appendingPathComponent("cache-link"), withDestinationURL: cache)
     try fm.createSymbolicLink(at: app.appendingPathComponent("outside-link"), withDestinationURL: outside)
     try fm.createSymbolicLink(at: fixture.appendingPathComponent("root-link"), withDestinationURL: outside)
-    try fm.linkItem(at: weights, to: models.appendingPathComponent("known/weights-hardlink.bin"))
+    let hardlink = models.appendingPathComponent("known/weights-hardlink.bin")
+    try fm.linkItem(at: weights, to: hardlink)
+    let sameContents = try write(app, "same-content.bin", 16_384)
+    let weightIdentity = try identity(weights)
+    let hardlinkIdentity = try identity(hardlink)
+    let copiedIdentity = try identity(sameContents)
+    require(weightIdentity == hardlinkIdentity, "Hard-link fixture must refer to the same device/inode")
+    require(weightIdentity != copiedIdentity, "Equal-content files must have different device/inode identities")
 
     let roots = [StorageUsageRoot(url: app, label: "App"), StorageUsageRoot(url: group, label: "Shared"),
       StorageUsageRoot(url: installation, label: "Application")]
@@ -62,8 +69,20 @@ enum VerifyStorageUsage {
     ]
     let inventory = try StorageUsageScanner.scan(roots: roots, routes: routes)
     let expectedBytes = try originalFiles.reduce(Int64(0)) { try $0 + bytes($1) }
-    require(inventory.totalBytes == expectedBytes, "Disk total must count each real file exactly once")
-    require(inventory.fileCount == originalFiles.count, "Symlinks and hard links must not add files")
+    if inventory.totalBytes != expectedBytes || inventory.fileCount != originalFiles.count {
+      // All names and numbers here belong to this synthetic temporary fixture.
+      diagnostic("Expected bytes=\(expectedBytes), files=\(originalFiles.count); " +
+        "actual bytes=\(inventory.totalBytes), files=\(inventory.fileCount), " +
+        "unreadable=\(inventory.unreadableItemCount), roots=\(inventory.scannedRootCount)")
+      for item in inventory.items {
+        diagnostic("\(item.id): bytes=\(item.bytes), files=\(item.fileCount)")
+        for file in item.files { diagnostic("  \(file.name): \(file.bytes)") }
+      }
+    }
+    require(inventory.totalBytes == expectedBytes,
+      "Disk total must count each real file exactly once: expected \(expectedBytes), actual \(inventory.totalBytes)")
+    require(inventory.fileCount == originalFiles.count,
+      "Symlinks and hard links must not add files: expected \(originalFiles.count), actual \(inventory.fileCount)")
     require(inventory.unreadableItemCount == 0 && inventory.scannedRootCount == 3, "Readable roots must scan completely")
     require(inventory.items.first { $0.category == .appInstallation }?.fileCount == 3,
       "App installation must include the executable, keyboard extension and frameworks")
@@ -90,7 +109,9 @@ enum VerifyStorageUsage {
 
     let partial = try StorageUsageScanner.scan(roots: roots, routes: routes, readValues: { url in
       if url.lastPathComponent == denied.lastPathComponent { throw CocoaError(.fileReadNoPermission) }
-      return try url.resourceValues(forKeys: StorageUsageScanner.resourceKeys)
+      var fresh = url
+      fresh.removeAllCachedResourceValues()
+      return try fresh.resourceValues(forKeys: StorageUsageScanner.resourceKeys)
     })
     require(partial.unreadableItemCount == 1, "A failed metadata read must mark the result incomplete")
     let deniedBytes = try bytes(denied)
@@ -125,8 +146,23 @@ enum VerifyStorageUsage {
   }
 
   private static func bytes(_ url: URL) throws -> Int64 {
-    let values = try url.resourceValues(forKeys: [.totalFileAllocatedSizeKey, .fileAllocatedSizeKey, .fileSizeKey])
+    var fresh = url
+    fresh.removeAllCachedResourceValues()
+    let values = try fresh.resourceValues(forKeys: [.totalFileAllocatedSizeKey, .fileAllocatedSizeKey, .fileSizeKey])
     return Int64(values.totalFileAllocatedSize ?? values.fileAllocatedSize ?? values.fileSize ?? 0)
+  }
+
+  private static func identity(_ url: URL) throws -> [UInt64] {
+    let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
+    guard let device = attributes[.systemNumber] as? NSNumber,
+          let inode = attributes[.systemFileNumber] as? NSNumber else {
+      throw CocoaError(.fileReadUnknown)
+    }
+    return [device.uint64Value, inode.uint64Value]
+  }
+
+  private static func diagnostic(_ message: String) {
+    try? FileHandle.standardError.write(contentsOf: Data((message + "\n").utf8))
   }
 
   private static func require(_ condition: @autoclosure () -> Bool, _ message: String) {
