@@ -864,7 +864,19 @@ class SettingsContractTests(unittest.TestCase):
         )
         self.assertIn("TranscriptionBridge.requestStop(for: self.dictationRequestToken)", stop)
         self.assertIn("guard !vc.keyboardState.isProcessing else { return }", host)
-        self.assertIn("if update.stage == .stoppingAudio", state)
+        progress = state.split("func syncVoiceProcessingProgress()", 1)[1].split(
+            "func syncModelLoading()", 1
+        )[0]
+        self.assertIn("guard let update = TranscriptionBridge.readVoiceProgress()", progress)
+        self.assertIn("update.isCurrent(for: self.settings.dictationSessionToken,", progress)
+        self.assertIn("cancelled: self.settings.dictationCancellationRequested", progress)
+        self.assertNotIn("update.stage == .stoppingAudio", progress)
+        self.assertLess(progress.index("update.isCurrent("),
+                        progress.index("self.isRecording = false"))
+        self.assertLess(progress.index("self.isRecording = false"),
+                        progress.index("self.isProcessing = true"))
+        self.assertLess(progress.index("self.stopLevelPolling()"),
+                        progress.index("self.isProcessing = true"))
         self.assertIn("await self.runFinalTranscription(samples: savedSamples", service)
         self.assertIn("MicrophoneHoldStopIntent.consume(", service)
 
