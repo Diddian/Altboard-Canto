@@ -108,7 +108,11 @@ struct MicAnimatedButton: View {
       self.showSpinner = false
       self.holdActivationTask?.cancel()
       self.holdActivationTask = nil
-      if self.holdStartedRecording {
+      // A cold dictation handoff can dismiss the keyboard before the app
+      // acknowledges audio capture. Do not queue an immediate Stop then:
+      // it would turn a long hold into an empty recording. Once capture is
+      // confirmed, disappearance may still stop the active held session.
+      if self.holdStartedRecording && self.keyboardState.isRecording {
         self.requestHeldStop()
       }
       self.pressPolicy.cancel()
