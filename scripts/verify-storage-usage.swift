@@ -79,6 +79,12 @@ enum VerifyStorageUsage {
         for file in item.files { diagnostic("  \(file.name): \(file.bytes)") }
       }
     }
+    let temporaryFileCount = inventory.items.first { $0.category == .cache }?.fileCount ?? 0
+    let textModelFileCount = inventory.items.first { $0.category == .textModels }?.fileCount ?? 0
+    require(temporaryFileCount == StorageUsageScanner.detailLimit + 5,
+      "Skipping symlinks must preserve every temporary sibling file: expected \(StorageUsageScanner.detailLimit + 5), actual \(temporaryFileCount)")
+    require(textModelFileCount == 1,
+      "Skipping symlinks must preserve the text-model sibling directory: expected 1 file, actual \(textModelFileCount)")
     require(inventory.totalBytes == expectedBytes,
       "Disk total must count each real file exactly once: expected \(expectedBytes), actual \(inventory.totalBytes)")
     require(inventory.fileCount == originalFiles.count,

@@ -141,8 +141,9 @@ enum StorageUsageScanner {
         try checkCancellation()
         do {
           let values = try readValues(url)
+          // DirectoryEnumerator already leaves symlink targets unvisited.
+          // Changing its descent state here can skip a real sibling directory.
           if values.isSymbolicLink == true {
-            enumerator.skipDescendants()
             continue
           }
           guard values.isRegularFile == true else { continue }
