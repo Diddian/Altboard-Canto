@@ -66,6 +66,13 @@ enum LatinWordSuggestionPolicy {
     return suggestion.prefix(1).uppercased() + suggestion.dropFirst()
   }
 
+  /// Automatic replacement needs one spelling across all installed dictionaries.
+  /// Keep the dictionary's case, including German nouns and proper names.
+  static func uniqueCorrection(_ candidates: Set<String>, typed: String) -> String? {
+    guard candidates.count == 1, let word = candidates.first else { return nil }
+    return matchCapitalization(word, typed: typed)
+  }
+
   /// Explicit split-word correction: somepeolpe -> some people.
   /// No automatic replacement; the user chooses the suggested phrase.
   static func splitPhraseCorrections(
@@ -73,26 +80,30 @@ enum LatinWordSuggestionPolicy {
   ) -> [String] {
     guard (6...28).contains(typed.count), limit > 0 else { return [] }
     let query = typed.lowercased()
-    let known = Set(dictionary.map { $0.lowercased() })
-    guard !known.contains(query) else { return [] }
+    let known = Dictionary(dictionary.map { ($0.lowercased(), $0) },
+                           uniquingKeysWith: { first, _ in first })
+    guard known[query] == nil else { return [] }
     let letters = Array(query)
-    var phrases = [String]()
-    for split in 2..<(letters.count - 2) {
+    var exact = Set<String>()
+    var corrections = Set<String>()
+    for split in 2...(letters.count - 2) {
       let left = String(letters[..<split]), right = String(letters[split...])
-      if known.contains(left) {
+      if let first = known[left], let second = known[right] {
+        exact.insert(first + " " + second)
+      } else if let first = known[left] {
         for word in dictionary where abs(word.count - right.count) <= 1
           && oneEditApart(right, word.lowercased()) {
-          phrases.append(matchCapitalization(left + " " + word.lowercased(), typed: typed))
+          corrections.insert(first + " " + word)
         }
-      }
-      if known.contains(right) {
+      } else if let second = known[right] {
         for word in dictionary where abs(word.count - left.count) <= 1
           && oneEditApart(left, word.lowercased()) {
-          phrases.append(matchCapitalization(word.lowercased() + " " + right, typed: typed))
+          corrections.insert(word + " " + second)
         }
       }
     }
-    return Array(Set(phrases)).sorted().prefix(limit).map { $0 }
+    let ranked = exact.sorted() + corrections.subtracting(exact).sorted()
+    return ranked.prefix(limit).map { matchCapitalization($0, typed: typed) }
   }
 
   /// A small offline safety net when UITextChecker is unavailable or does not

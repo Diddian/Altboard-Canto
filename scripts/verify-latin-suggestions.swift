@@ -40,6 +40,23 @@ struct VerifyLatinSuggestions {
     )
     precondition(split.contains("some people"),
                  "explicit split phrase correction should be offered: \(split)")
+    precondition(LatinWordSuggestionPolicy.uniqueCorrection(["Berlin"], typed: "berln") == "Berlin")
+    precondition(LatinWordSuggestionPolicy.uniqueCorrection(["form", "from"], typed: "frmo") == nil)
+    precondition(LatinWordSuggestionPolicy.uniqueCorrection(["morgen", "Morgen"], typed: "morgn") == nil)
+    precondition(LatinWordSuggestionPolicy.uniqueCorrection([], typed: "morgn") == nil)
+    let words = ["good", "morning", "in", "Berlin", "Morgen", "gut", "house", "household"]
+    precondition(LatinWordSuggestionPolicy.splitPhraseCorrections(
+      for: "goodmorning", dictionary: words, limit: 1
+    ) == ["good morning"])
+    precondition(LatinWordSuggestionPolicy.splitPhraseCorrections(
+      for: "inberlin", dictionary: words, limit: 1
+    ) == ["in Berlin"])
+    precondition(LatinWordSuggestionPolicy.splitPhraseCorrections(
+      for: "Berlinin", dictionary: words, limit: 1
+    ) == ["Berlin in"])
+    precondition(LatinWordSuggestionPolicy.splitPhraseCorrections(
+      for: "household", dictionary: words + ["hold"]
+    ).isEmpty)
     print("Multilingual Latin suggestion safety verified")
   }
 }

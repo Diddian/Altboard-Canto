@@ -27,7 +27,7 @@ final class LatinWordSuggestions {
     -> [LatinWordSuggestion] {
     let codes = LatinWordSuggestionPolicy.preferredCodes(preferred)
     let languageBoosts = LanguagePriority.boosts(preferred)
-    guard (2...32).contains(typed.count) else { return [] }
+    guard limit > 0, (2...32).contains(typed.count) else { return [] }
     var result = [LatinWordSuggestion]()
     var seen = Set<String>()
     // Previously confirmed custom words must be searchable again, including
@@ -61,8 +61,10 @@ final class LatinWordSuggestions {
     for choice in InformalNgramStore.shared.completions(
       for: typed, preferred: preferred, limit: min(3, limit)
     ) where choice.text.lowercased() != typed.lowercased() {
+      if result.count == limit { return result }
       if seen.insert(choice.text.lowercased()).inserted { result.append(choice) }
     }
+    if result.count == limit { return result }
     for code in codes where code == "en" || code == "de" {
       let words = Self.commonWords[code] ?? []
       let phrases = spellCheckEnabled
@@ -87,7 +89,7 @@ final class LatinWordSuggestions {
 
   func choices(for typed: String, preferred: [String], context: String? = nil,
                limit: Int = 9, spellCheckEnabled: Bool = false) -> [LatinWordSuggestion] {
-    guard (2...32).contains(typed.count) else { return [] }
+    guard limit > 0, (2...32).contains(typed.count) else { return [] }
     let codes = LatinWordSuggestionPolicy.preferredCodes(preferred)
     let languageBoosts = LanguagePriority.boosts(preferred)
 
@@ -175,11 +177,11 @@ final class LatinWordSuggestions {
         LatinWordSuggestionPolicy.oneEditApart(typed.lowercased(), $0.lowercased())
           && !$0.contains(" ") && (2...32).contains($0.count)
       }
-      guard candidates.count == 1, let candidate = candidates.first else { continue }
-      choices.insert(candidate.lowercased())
+      choices.formUnion(candidates)
+      // Include every plausible spelling across languages, including noun case.
+      if choices.count > 1 { return nil }
     }
-    guard choices.count == 1, let word = choices.first else { return nil }
-    return LatinWordSuggestionPolicy.matchCapitalization(word, typed: typed)
+    return LatinWordSuggestionPolicy.uniqueCorrection(choices, typed: typed)
   }
 
   /// A buffered shape spelling is kept as Latin only after an actual word
