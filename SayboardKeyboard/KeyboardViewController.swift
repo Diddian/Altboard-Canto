@@ -675,6 +675,7 @@ final class KeyboardViewController: UIInputViewController {
   private var hostingController: UIHostingController<KeyboardView>?
   private let hostGeometry = KeyboardHostGeometry()
   private var staleFallbackTimer: Timer?
+  var stoppedBeforeCaptureToken: String?
   private var warmStartSessionAcknowledged = false
   private var lastSyncedFullAccess = false
   private var hasPerformedInitialFullAccessSync = false
@@ -802,6 +803,7 @@ final class KeyboardViewController: UIInputViewController {
           captureAcknowledged: true, heartbeat: settings.mainAppHeartbeat,
           now: CFAbsoluteTimeGetCurrent()
         ) else { return }
+        vc.stoppedBeforeCaptureToken = nil
         vc.keyboardState.syncVoiceProcessingProgress()
         // Stop can be requested before the capture acknowledgment arrives.
         // Do not reactivate the recording UI during finalization.
@@ -1036,6 +1038,8 @@ final class KeyboardViewController: UIInputViewController {
     settings.synchronize()
     guard !self.keyboardState.isProcessing, !self.keyboardState.isRecording,
           !self.keyboardState.isStartingRecording else { return }
+    self.stoppedBeforeCaptureToken = nil
+    self.keyboardState.dictationOutcome = nil
     self.saveHostBundleId()
     self.keyboardState.isStartingRecording = true
     let token = UUID().uuidString
@@ -1223,6 +1227,9 @@ extension KeyboardViewController {
     self.staleFallbackTimer?.invalidate()
     self.staleFallbackTimer = nil
     self.saveHostBundleId()
+    if self.keyboardState.isStartingRecording && !self.warmStartSessionAcknowledged {
+      self.stoppedBeforeCaptureToken = self.dictationRequestToken
+    }
     // A Stop request ends the microphone interaction immediately; the host
     // retains ownership of audio capture and reports the final result later.
     self.keyboardState.isRecording = false

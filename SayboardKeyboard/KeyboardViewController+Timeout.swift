@@ -78,6 +78,24 @@ extension KeyboardViewController {
 
         let settings = SharedSettings()
         settings.synchronize()
+        // A released hold can outlive a host that never started. Allow time
+        // for a late capture acknowledgement and check durable progress first.
+        if self.keyboardState.isProcessing, elapsed >= 15,
+           let token = self.stoppedBeforeCaptureToken, token == self.dictationRequestToken,
+           DictationRequestPolicy.isCurrent(started: token, current: settings.dictationSessionToken,
+             cancelled: settings.dictationCancellationRequested),
+           !settings.isRecording, !settings.isModelLoading, !self.receivedPingDuringProcessing,
+           !DictationRequestPolicy.hasRecentAudioHeartbeat(settings.mainAppHeartbeat,
+             now: CFAbsoluteTimeGetCurrent()),
+           TranscriptionBridge.readVoiceProgress()?.isCurrent(for: token, cancelled: false) != true {
+          self.stoppedBeforeCaptureToken = nil
+          FeatureDiagnostics.record(.speech, .failed,
+            failureReason: .audioCaptureUnconfirmed, operationID: token)
+          self.cancelDictationViaDarwin()
+          self.keyboardState.dictationOutcome = .activationFailed
+          self.finalizeProcessingPipeline()
+          return
+        }
         if self.receivedPingDuringProcessing || settings.dictationSessionToken != nil
             || self.keyboardState.isLLMProcessing {
           if elapsed < Self.processingHardTimeout {

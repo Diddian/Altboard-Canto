@@ -226,6 +226,29 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("if vc.insertTranscribedText()", observer)
         self.assertNotIn("vc.cancelProcessingTimeout()", observer)
 
+    def test_early_release_requires_a_matching_unconfirmed_stop_before_recovery(self):
+        controller = source("SayboardKeyboard/KeyboardViewController.swift")
+        stop = controller.split("func stopDictationViaDarwin()", 1)[1].split(
+            "private func setupSessionLifecycleObservers()", 1)[0]
+        self.assertIn("isStartingRecording && !self.warmStartSessionAcknowledged", stop)
+        self.assertIn("self.stoppedBeforeCaptureToken = self.dictationRequestToken", stop)
+        ack = controller.split("Self.dictationStartedObserver =", 1)[1]
+        self.assertLess(ack.index("mayShowRecording("), ack.index("vc.stoppedBeforeCaptureToken = nil"))
+        timer = source("SayboardKeyboard/KeyboardViewController+Timeout.swift")
+        check = timer.split("elapsed >= 15", 1)[1].split("return", 1)[0]
+        for guard in ("token == self.dictationRequestToken", "current: settings.dictationSessionToken",
+                      "!settings.isRecording", "!settings.isModelLoading", "!self.receivedPingDuringProcessing",
+                      "hasRecentAudioHeartbeat", "readVoiceProgress()?.isCurrent"):
+            self.assertIn(guard, check)
+        self.assertIn("failureReason: .audioCaptureUnconfirmed, operationID: token", check)
+        self.assertIn("self.keyboardState.dictationOutcome = .activationFailed", check)
+
+    def test_idle_microphone_unmounts_repeating_animations(self):
+        mic = source("SayboardKeyboard/Views/Layouts/MicAnimatedButton.swift")
+        self.assertRegex(mic, r"if isSpin \{\s+TwoDotOrbitProcessing")
+        self.assertIn("if show { pulse }", mic)
+        self.assertIn(".frame(width: pulse.maxWidth, height: pulse.maxHeight)", mic)
+
     def test_mic_animation_reentry_invalidates_old_completions(self):
         mic = source("SayboardKeyboard/Views/Layouts/MicAnimatedButton.swift")
         self.assertIn("generation == self.animationGeneration", mic)

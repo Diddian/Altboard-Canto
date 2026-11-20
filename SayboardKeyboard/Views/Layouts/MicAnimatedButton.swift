@@ -377,8 +377,15 @@ struct MicAnimatedButton: View {
 
   private func spinnerView(isSpin: Bool) -> some View {
     let generation = self.animationGeneration
-    return TwoDotOrbitProcessing(size: self.sizing.spinnerSize)
-      .scaleEffect(isSpin ? 1 : 0.01)
+    return Color.clear
+      .frame(width: self.sizing.spinnerSize, height: self.sizing.spinnerSize)
+      .overlay {
+        if isSpin {
+          TwoDotOrbitProcessing(size: self.sizing.spinnerSize)
+            .transition(.scale(scale: 0.01))
+        }
+      }
+      .accessibilityHidden(true)
       .transaction(value: isSpin) { transaction in
         transaction.animation = self.reduceMotion ? nil : .easeOut(duration: 0.2)
         if !isSpin, !self.reduceMotion {
@@ -464,10 +471,12 @@ struct MicButtonWithPulse: View {
   }
 
   private func decoratedPulse(pulse: PulseRings, show: Bool) -> some View {
-    pulse
-      .opacity(show ? 1 : 0)
-      .scaleEffect(show ? 1 : 0.69)
-      .animation(.easeOut(duration: 0.4), value: show)
+    Color.clear
+      .frame(width: pulse.maxWidth, height: pulse.maxHeight)
+      .overlay {
+        if show { pulse }
+      }
+      .accessibilityHidden(true)
       .allowsHitTesting(false)
   }
 }
