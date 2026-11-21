@@ -143,21 +143,21 @@ class KeyboardSafetyContracts(unittest.TestCase):
         self.assertIn("currentLLMFieldMatches()", actions)
         self.assertIn("self.keyboardState.llmError = .storageUnavailable", actions)
 
-    def test_bottom_emoji_and_globe_use_only_native_input_mode_selector(self):
+    def test_bottom_emoji_opens_local_page_and_globe_keeps_native_touch_ownership(self):
         layout = source("SayboardKeyboard/Views/Layouts/AlphabeticKeyboardLayout.swift")
         chrome = source("SayboardKeyboard/Views/Layouts/KeyboardChrome.swift")
         native = source("SayboardKeyboard/Views/NativeInputModeSwitchKey.swift")
         controller = source("SayboardKeyboard/KeyboardViewController.swift")
 
         bottom = chrome.split("struct KeyboardBottomRow: View", 1)[1]
-        emoji = bottom.split("if self.onEmojiAction != nil", 1)[1].split(
+        emoji = bottom.split("if let openEmoji = self.onEmojiAction", 1)[1].split(
             "} else if self.keyboardState.showsGlobeButton", 1
         )[0]
-        self.assertIn("NativeInputModeSwitchKey(", emoji)
-        self.assertIn('iconName: "nativeEmoji"', emoji)
-        self.assertIn("configure: self.keyboardState.configureInputModeListButton", emoji)
-        self.assertNotIn("openEmoji()", emoji)
-        self.assertNotIn("KeyButton(", emoji)
+        self.assertIn("KeyButton(", emoji)
+        self.assertIn("content: .nativeEmojiGlyph", emoji)
+        self.assertEqual(emoji.count("openEmoji()"), 1)
+        self.assertNotIn("NativeInputModeSwitchKey(", emoji)
+        self.assertNotIn("configureInputModeListButton", emoji)
         self.assertIn('iconName: "globe"', bottom)
         self.assertIn("NativeInputModeSwitchKey(", bottom)
         self.assertIn("onEmojiAction: { self.openEmojiPage() }", layout)
@@ -218,9 +218,15 @@ class KeyboardSafetyContracts(unittest.TestCase):
         self.assertIn("lastHeartbeat.withLock", audio)
         self.assertNotIn("settings.isSessionActive = false", ping)
         self.assertNotIn("settings.isRecording = false", ping)
-        self.assertIn("keyboardState.isRecording = false", ping)
+        self.assertNotIn("keyboardState.isRecording = false", ping)
+        self.assertNotIn("keyboardState.isStartingRecording = false", ping)
+        self.assertIn("guard !keyboardState.isStartingRecording, !keyboardState.isRecording", ping)
+        self.assertIn("!keyboardState.isProcessing, !keyboardState.isLLMProcessing", ping)
+        self.assertIn("DictationStartupPolicy.request(", ping)
         self.assertLess(ping.index("DictationRequestPolicy.hasRecentAudioHeartbeat("),
-                        ping.index("keyboardState.isRecording = false"))
+                        ping.index("keyboardState.isSessionActive = false"))
+        self.assertLess(ping.index("DictationStartupPolicy.request("),
+                        ping.index("keyboardState.isSessionActive = false"))
 
     def test_armed_mic_fallback_is_token_scoped_and_cancels_on_hide(self):
         controller = source("SayboardKeyboard/KeyboardViewController.swift")
