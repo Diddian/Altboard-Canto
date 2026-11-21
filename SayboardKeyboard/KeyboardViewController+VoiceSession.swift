@@ -9,6 +9,8 @@ extension KeyboardViewController {
     let timer = Timer(timeInterval: VoiceSessionPolicy.keyboardRenewalInterval, repeats: true) { [weak self] _ in
       DispatchQueue.main.async { [weak self] in
         guard let self else { return }
+        guard self.voiceSessionActivityTimer?.isValid == true,
+              self.dictationStartupVisible else { return }
         guard self.viewIfLoaded?.window != nil, Self.activeInstance === self else {
           self.stopVoiceSessionActivity()
           return

@@ -12,6 +12,8 @@ class VoiceSessionContractTests(unittest.TestCase):
         self.assertIn("guard self.hasFullAccess", source)
         self.assertIn("keyboardVoiceActivityChanged", source)
         self.assertIn("forMode: .common", source)
+        self.assertIn("self.voiceSessionActivityTimer?.isValid == true", source)
+        self.assertIn("self.dictationStartupVisible else { return }", source)
         for forbidden in ("startSession(", "startCapture(", "requestStartDictation", "hostBundleId", "documentContext"):
             self.assertNotIn(forbidden, source)
 
