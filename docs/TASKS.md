@@ -8,11 +8,17 @@ SideStore IPAs. Latest verified successful development IPA as of 2026-11-10:
 IPA validation, artifact upload and development release publication passed.
 #179 remains a previous usable IPA. Physical iPhone acceptance is pending.
 
-**Historical caution:** Older task descriptions below mention temporary feature
-branches and a custom Emoji catalog. They are archival notes, not current
-instructions. The native iOS keyboard picker is retained; the project's Emoji
-glyph is only the button icon. Do not merge obsolete QA branches or revive
-the retired catalog without a new reviewed request.
+**Keyboard navigation contract:** The Emoji button opens Altboard's local
+Emoji page; it must not change input language or invoke the iOS keyboard
+picker. `AlphabeticKeyboardLayout` owns the page and text insertion;
+`EmojiKeyboardView` supplies the chooser. The separate Globe button uses
+`NativeInputModeSwitchKey` and UIKit's `handleInputModeList(from:with:)`
+for system keyboard switching. `scripts/test_emoji_navigation.py`
+covers these separate actions.
+
+**Historical caution:** Older task descriptions and temporary branches
+are archival. They do not override this contract or authorise merging
+obsolete branches.
 
 GitHub Issues are disabled in this repository (GitHub API 410). This file is
 the versioned task board until Issues are enabled.

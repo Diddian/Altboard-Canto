@@ -1501,7 +1501,7 @@
   "additionalReviewAreas": [
     {
       "id": "E01",
-      "name": "Native Globe / Emoji picker",
+      "name": "Native Globe keyboard picker",
       "source": [
         "SayboardKeyboard/Views/NativeInputModeSwitchKey.swift",
         "SayboardKeyboard/KeyboardViewController.swift"
@@ -1519,7 +1519,7 @@
         "return",
         "extension_reload"
       ],
-      "invariant": "iOS/UIViewController owns picker and keyboard selection, no custom Emoji UI or duplicate recognizers",
+      "invariant": "iOS/UIKit owns system keyboard switching through the Globe key. The separate Emoji action opens Altboard's local Emoji page owned by S28. Do not substitute either action for the other or add competing gesture recognizers.",
       "status": "requires_latest_main_submachine_verification"
     },
     {
@@ -1672,7 +1672,7 @@
     "ASR workers and text-model work require compatible leases and cancel-and-join.",
     "Result insertion requires original document epoch and matching request; acknowledge consumption.",
     "IME, swipe, cursor and AI must invalidate stale document-bound work.",
-    "iOS owns system Globe/Emoji selection; preserve UIKit and accessibility ownership.",
+    "iOS/UIKit owns system keyboard switching through Globe; Altboard owns its local Emoji page and insertion. Preserve separate actions, UIKit touch ownership and accessibility.",
     "Haptics have one pulse per accepted gesture; reset generation is validated.",
     "Conversation/Meeting audio remains recoverable across restarts.",
     "No diagnostic event records typed text, transcripts, audio or credentials."
