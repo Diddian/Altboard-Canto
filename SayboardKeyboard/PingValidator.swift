@@ -23,11 +23,16 @@ final class PingValidator {
           DiagnosticLog.write("keyboard: session ping delayed; live audio state retained")
           return
         }
+        // A readiness probe cannot terminate a token-owned operation. The
+        // controller's startup/finalization watchdogs reconcile those states.
+        guard !keyboardState.isStartingRecording, !keyboardState.isRecording,
+              !keyboardState.isProcessing, !keyboardState.isLLMProcessing,
+              DictationStartupPolicy.request(
+                for: settings.dictationSessionToken, defaults: settings.defaults
+              ) == nil else { return }
         // Recover a stale keyboard view locally. Only the containing app
         // owns and may clear the persisted AVAudioSession lifecycle flags.
         keyboardState.isSessionActive = false
-        keyboardState.isRecording = false
-        keyboardState.isStartingRecording = false
         keyboardState.stopLevelPolling()
         DiagnosticLog.write("keyboard: no recent audio heartbeat; local state reset")
       }

@@ -209,6 +209,12 @@ struct KeyboardStatusStrip: View {
           .accessibilityLabel("Inserted dictation: \(preview)")
       } else if self.keyboardState.isDictationLocked {
         Text("Dictation locked").font(.caption2).foregroundStyle(.secondary)
+      } else if self.keyboardState.hasUsableModel && self.keyboardState.isMicrophoneAuthorized {
+        Text(self.keyboardState.isSessionActive ? "Voice ready" : "Tap mic to start voice",
+             tableName: "VoiceSession")
+          .font(.caption2)
+          .foregroundStyle(.secondary)
+          .lineLimit(1)
       }
     }
     .multilineTextAlignment(.center)
@@ -295,15 +301,15 @@ struct KeyboardBottomRow: View {
           action()
         }
       }
-      if self.onEmojiAction != nil {
-        // The bottom Emoji-shaped key is another native keyboard selector.
-        // Do not invoke the legacy in-extension Emoji page.
-        NativeInputModeSwitchKey(
-          configure: self.keyboardState.configureInputModeListButton,
-          iconName: "nativeEmoji"
-        )
-        .frame(width: self.metrics.sideButtonWidth,
-               height: KeyboardChromeMetrics.keyHeight)
+      if let openEmoji = self.onEmojiAction {
+        KeyButton(
+          content: .nativeEmojiGlyph,
+          fixedWidth: self.metrics.sideButtonWidth
+        ) {
+          openEmoji()
+        }
+        .accessibilityLabel("Emoji")
+        .accessibilityHint("Open the Emoji keyboard")
       } else if self.keyboardState.showsGlobeButton {
         NativeInputModeSwitchKey(
           configure: self.keyboardState.configureInputModeListButton,

@@ -385,6 +385,7 @@ private struct SayboardRootView: View {
   }
 
   private func handleScenePhaseChange(_ phase: ScenePhase) {
+    self.speechService.session.setHostForeground(phase != .background)
     if phase == .background {
       self.showsHostReturnHint = false
     }

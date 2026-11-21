@@ -8,12 +8,14 @@ struct EmojiKeyboardView: View {
   let onAlphabet: () -> Void
   let onNumbers: () -> Void
   let onClose: () -> Void
+  let onInsertEmoji: (String) -> Void
 
   @State private var search = ""
   @State private var searchActive = false
   @State private var selectedGroup = "Recent"
   @State private var recent = EmojiCatalog.common
   @State private var pageIndex: Int? = 0
+  @State private var tonePickerCells = Set<String>()
 
   private let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 8)
   private static let categories: [(name: String, icon: String)] = [
@@ -66,6 +68,7 @@ struct EmojiKeyboardView: View {
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     .onAppear { self.recent = EmojiCatalog.recent() }
+    .onDisappear { self.tonePickerCells.removeAll() }
     .onChange(of: self.search) { _, _ in
       self.pageIndex = 0
     }
@@ -77,43 +80,69 @@ struct EmojiKeyboardView: View {
 
   private var emojiPager: some View {
     GeometryReader { geometry in
-      ScrollView(.horizontal) {
-        LazyHStack(spacing: 0) {
-          ForEach(self.pages.indices, id: \.self) { index in
-            LazyVGrid(columns: self.columns,
-                      spacing: KeyboardLayoutGeometry.alphabetRowSpacing.kbScaled) {
-              ForEach(Array(self.pages[index].entries.enumerated()),
-                      id: \.offset) { column, entry in
-                EmojiTouchCell(
-                  entry: entry,
-                  column: column % 8,
-                  onChoose: { choice, tone in
-                    KeyboardHaptics.key()
-                    if let tone { EmojiCatalog.preferredTone = tone }
-                    self.proxy.insertText(choice)
-                    // Persist for the next Emoji keyboard visit. Keep this
-                    // visible page fixed so consecutive taps hit the same cell.
-                    _ = EmojiCatalog.remember(choice)
-                  }
-                )
+      let pages = self.pages
+      if pages.isEmpty {
+        Text("No Emoji found")
+          .font(.callout)
+          .foregroundStyle(.secondary)
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
+      } else {
+        ScrollView(.horizontal) {
+          LazyHStack(spacing: 0) {
+            ForEach(pages.indices, id: \.self) { index in
+              LazyVGrid(columns: self.columns,
+                        spacing: KeyboardLayoutGeometry.alphabetRowSpacing.kbScaled) {
+                ForEach(Array(pages[index].entries.enumerated()),
+                        id: \.offset) { column, entry in
+                  EmojiTouchCell(
+                    entry: entry,
+                    column: column % 8,
+                    row: column / 8,
+                    cellWidth: max(1, (geometry.size.width - 10.kbScaled) / 8),
+                    pagerSize: geometry.size,
+                    onChoosingChanged: { choosing in
+                      let id = "\(index):\(column)"
+                      if choosing { self.tonePickerCells.insert(id) }
+                      else { self.tonePickerCells.remove(id) }
+                    },
+                    onChoose: { choice, tone in
+                      KeyboardHaptics.key()
+                      if let tone { EmojiCatalog.preferredTone = tone }
+                      self.onInsertEmoji(choice)
+                      FeatureDiagnostics.record(.keyboardEmoji, .selected)
+                      // Persist for the next Emoji keyboard visit. Keep this
+                      // visible page fixed so consecutive taps hit the same cell.
+                      _ = EmojiCatalog.remember(choice)
+                    }
+                  )
+                }
               }
+              .padding(.horizontal, 5.kbScaled)
+              .frame(width: geometry.size.width, height: geometry.size.height,
+                     alignment: .top)
+              .id(index)
             }
-            .padding(.horizontal, 5.kbScaled)
-            .frame(width: geometry.size.width, height: geometry.size.height,
-                   alignment: .top)
-            .id(index)
           }
+          .scrollTargetLayout()
         }
-        .scrollTargetLayout()
+        .scrollTargetBehavior(.paging)
+        .scrollPosition(id: self.$pageIndex)
+        .scrollIndicators(.hidden)
+        .scrollDisabled(!self.tonePickerCells.isEmpty)
+        .scrollClipDisabled()
       }
-      .scrollTargetBehavior(.paging)
-      .scrollPosition(id: self.$pageIndex)
-      .scrollIndicators(.hidden)
     }
   }
 
   private var searchToolbar: some View {
     HStack(spacing: 7.kbScaled) {
+      if self.keyboardState.needsInputModeSwitchKey || self.keyboardState.showGlobeKey {
+        NativeInputModeSwitchKey(
+          configure: self.keyboardState.configureInputModeListButton,
+          iconName: "globe"
+        )
+        .frame(width: 44.kbScaled, height: KeyboardChromeMetrics.keyHeight)
+      }
       HStack(spacing: 6.kbScaled) {
         Image(systemName: "magnifyingglass")
           .foregroundStyle(.secondary)
@@ -201,29 +230,36 @@ struct EmojiKeyboardView: View {
       KeyButton(content: .symbol("123", fontSize: 16), fixedWidth: 48.kbScaled) {
         self.onNumbers()
       }
-      ScrollView(.horizontal) {
-        HStack(spacing: 4.kbScaled) {
-          ForEach(Array(Self.categories.enumerated()), id: \.offset) { _, category in
-            Button {
-              self.selectedGroup = category.name
-              self.search = ""
-              self.searchActive = false
-              self.pageIndex = self.pages.firstIndex { $0.group == category.name }
-            } label: {
-              Image(systemName: category.icon)
-                .font(.system(size: 19.kbScaled, weight: .regular))
-                .foregroundStyle(
-                  self.selectedGroup == category.name ? Color.primary : Color.secondary
-                )
-                .frame(width: 44.kbScaled, height: KeyboardChromeMetrics.keyHeight)
-                .contentShape(Rectangle())
+      if self.searchActive {
+        KeyButton(content: .text("Space")) {
+          self.search += " "
+        }
+        .accessibilityLabel("Space in Emoji search")
+      } else {
+        ScrollView(.horizontal) {
+          HStack(spacing: 4.kbScaled) {
+            ForEach(Array(Self.categories.enumerated()), id: \.offset) { _, category in
+              Button {
+                self.selectedGroup = category.name
+                self.search = ""
+                self.searchActive = false
+                self.pageIndex = self.pages.firstIndex { $0.group == category.name }
+              } label: {
+                Image(systemName: category.icon)
+                  .font(.system(size: 19.kbScaled, weight: .regular))
+                  .foregroundStyle(
+                    self.selectedGroup == category.name ? Color.primary : Color.secondary
+                  )
+                  .frame(width: 44.kbScaled, height: KeyboardChromeMetrics.keyHeight)
+                  .contentShape(Rectangle())
+              }
+              .buttonStyle(.plain)
+              .accessibilityLabel(category.name)
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel(category.name)
           }
         }
+        .scrollIndicators(.hidden)
       }
-      .scrollIndicators(.hidden)
 
       KeyButton(content: .systemImage("delete.left"), fixedWidth: 46.kbScaled) {
         if self.searchActive && !self.search.isEmpty {
@@ -232,6 +268,7 @@ struct EmojiKeyboardView: View {
           self.proxy.deleteBackward()
         }
       }
+      .accessibilityLabel(self.searchActive ? "Delete search text" : "Delete backward")
       KeyButton(content: .systemImage("return.left"), fixedWidth: 48.kbScaled) {
         if self.searchActive {
           self.searchActive = false
@@ -239,6 +276,7 @@ struct EmojiKeyboardView: View {
           self.proxy.insertText("\n")
         }
       }
+      .accessibilityLabel(self.searchActive ? "Show Emoji results" : "Return")
     }
     .padding(.horizontal, KeyboardLayoutGeometry.alphabetSpecialRowInset.kbScaled)
     .padding(.bottom, 4.kbScaled)
@@ -250,20 +288,42 @@ struct EmojiKeyboardView: View {
 private struct EmojiTouchCell: View {
   let entry: EmojiCatalogEntry
   let column: Int
+  let row: Int
+  let cellWidth: CGFloat
+  let pagerSize: CGSize
+  let onChoosingChanged: (Bool) -> Void
   let onChoose: (String, Int?) -> Void
 
+  @Environment(\.layoutDirection) private var layoutDirection
   @State private var pressed = false
   @State private var choosing = false
   @State private var selection = 0
-  @State private var initialX: CGFloat = 0
+  @State private var latestTouch = CGPoint.zero
   @State private var holdTask: Task<Void, Never>?
 
   private var variants: [EmojiCatalogEntry] {
     EmojiCatalog.skinVariants(for: self.entry.emoji)
   }
 
-  private var popupWidth: CGFloat {
-    CGFloat(self.variants.count) * 36.kbScaled + 12.kbScaled
+  private var pickerGeometry: EmojiTonePickerGeometry {
+    let physicalColumn = self.layoutDirection == .leftToRight ? self.column : 7 - self.column
+    let cellX = 5.kbScaled + CGFloat(physicalColumn) * self.cellWidth
+    let cellY = CGFloat(self.row) * (
+      KeyboardChromeMetrics.keyHeight + KeyboardLayoutGeometry.alphabetRowSpacing.kbScaled
+    )
+    let toolbarHeight = KeyboardChromeMetrics.keyHeight
+      + KeyboardLayoutGeometry.alphabetToolbarTopInset.kbScaled
+      + KeyboardLayoutGeometry.alphabetToolbarBottomInset.kbScaled
+    return EmojiTonePickerGeometry(
+      cellWidth: Double(self.cellWidth), itemWidth: Double(36.kbScaled),
+      itemHeight: Double((self.variants.count > 6 ? 36 : 43).kbScaled),
+      padding: Double(6.kbScaled), itemCount: self.variants.count,
+      alignRight: physicalColumn >= 4,
+      bounds: .init(
+        minX: Double(-cellX), maxX: Double(self.pagerSize.width - cellX),
+        minY: Double(-toolbarHeight - cellY), maxY: Double(self.pagerSize.height - cellY)
+      )
+    )
   }
 
   var body: some View {
@@ -289,11 +349,11 @@ private struct EmojiTouchCell: View {
         )
         .accessibilityHidden(true)
       }
-      .overlay(alignment: .topLeading) {
+      .overlay(alignment: .top) {
         if self.choosing {
           self.skinPopup
-            .offset(x: self.column >= 4
-              ? 40.kbScaled - self.popupWidth : 0, y: -49.kbScaled)
+            .offset(x: CGFloat(self.pickerGeometry.centerOffsetX),
+                    y: CGFloat(self.pickerGeometry.originY))
             .allowsHitTesting(false)
         }
       }
@@ -301,30 +361,49 @@ private struct EmojiTouchCell: View {
       .accessibilityElement()
       .accessibilityAddTraits(.isButton)
       .accessibilityLabel(self.entry.name)
-      .accessibilityHint(self.variants.isEmpty ? "" : "Hold to choose a skin tone")
+      .accessibilityHint(self.variants.isEmpty ? "" : "Additional actions choose a skin tone")
       .accessibilityAction {
         self.onChoose(EmojiCatalog.emoji(
           self.entry.emoji, withTone: EmojiCatalog.preferredTone
         ), nil)
       }
-      .onDisappear { self.holdTask?.cancel() }
+      .accessibilityActions {
+        ForEach(self.variants) { variant in
+          Button(variant.name) {
+            self.cancel()
+            self.onChoose(variant.emoji, EmojiCatalog.selectedTone(for: variant.emoji))
+          }
+        }
+      }
+      .onDisappear { self.cancel() }
   }
 
   private var skinPopup: some View {
-    HStack(spacing: 0) {
-      ForEach(Array(self.variants.enumerated()), id: \.offset) { index, item in
-        Text(verbatim: item.emoji)
-          .font(.system(size: 25.kbScaled))
-          .frame(width: 36.kbScaled, height: 43.kbScaled)
-          .background {
-            if index == self.selection {
-              RoundedRectangle(cornerRadius: 7.kbScaled)
-                .fill(Color(uiColor: KeyboardPalette.pressedFill))
-            }
+    let geometry = self.pickerGeometry
+    let variants = self.variants
+    return VStack(alignment: .leading, spacing: 0) {
+      ForEach(0..<geometry.rows, id: \.self) { row in
+        HStack(spacing: 0) {
+          ForEach(row * geometry.columns..<min((row + 1) * geometry.columns, variants.count),
+                  id: \.self) { index in
+            Text(verbatim: variants[index].emoji)
+              .font(.system(size: 25.kbScaled))
+              .frame(width: CGFloat(geometry.resolvedItemWidth),
+                     height: CGFloat(geometry.resolvedItemHeight))
+              .background {
+                if index == self.selection {
+                  RoundedRectangle(cornerRadius: 7.kbScaled)
+                    .fill(Color(uiColor: KeyboardPalette.pressedFill))
+                }
+              }
           }
+        }
+        .frame(width: CGFloat(geometry.popupWidth - 2 * geometry.padding), alignment: .leading)
       }
     }
-    .padding(6.kbScaled)
+    .fixedSize(horizontal: true, vertical: true)
+    .padding(CGFloat(geometry.padding))
+    .environment(\.layoutDirection, .leftToRight)
     .background(
       Color(uiColor: KeyboardPalette.keyFill),
       in: RoundedRectangle(cornerRadius: 18.kbScaled)
@@ -333,26 +412,36 @@ private struct EmojiTouchCell: View {
   }
 
   private func begin(at point: CGPoint) {
-    self.holdTask?.cancel()
+    self.cancel()
     self.pressed = true
-    self.choosing = false
-    self.initialX = point.x
+    self.latestTouch = point
     guard self.variants.count > 1 else { return }
     self.holdTask = Task { @MainActor in
       do { try await Task.sleep(for: .milliseconds(325)) } catch { return }
       guard !Task.isCancelled, self.pressed else { return }
-      self.choosing = true
-      self.selection = 0
+      self.setChoosing(true)
+      self.updateSelection()
       KeyboardHaptics.key()
     }
   }
 
   private func move(to point: CGPoint) {
-    guard self.choosing, !self.variants.isEmpty else { return }
-    let delta = self.column >= 4
-      ? self.initialX - point.x : point.x - self.initialX
-    self.selection = min(self.variants.count - 1,
-      max(0, Int(max(0, delta) / 36.kbScaled)))
+    self.latestTouch = point
+    if self.choosing { self.updateSelection() }
+  }
+
+  private func updateSelection() {
+    if let index = self.pickerGeometry.selection(
+      atX: Double(self.latestTouch.x), y: Double(self.latestTouch.y)
+    ) {
+      self.selection = index
+    }
+  }
+
+  private func setChoosing(_ value: Bool) {
+    guard self.choosing != value else { return }
+    self.choosing = value
+    self.onChoosingChanged(value)
   }
 
   private func end(at point: CGPoint) {
@@ -370,6 +459,6 @@ private struct EmojiTouchCell: View {
     self.holdTask?.cancel()
     self.holdTask = nil
     self.pressed = false
-    self.choosing = false
+    self.setChoosing(false)
   }
 }

@@ -74,6 +74,11 @@ struct DictationSettingsView: View {
     } label: {
       Label("Auto-Stop", systemImage: "timer")
     }
+    Text("The countdown starts when you leave Altboard and its keyboard. Typing or dictating keeps an enabled session ready.",
+         tableName: "VoiceSession")
+      .font(.footnote)
+      .foregroundStyle(.secondary)
+      .fixedSize(horizontal: false, vertical: true)
   }
 
   @ViewBuilder
@@ -112,7 +117,14 @@ struct ActiveSessionToggle: View {
 
   var body: some View {
     Toggle(isOn: self.sessionBinding) {
-      Label("Active Session", systemImage: "mic")
+      VStack(alignment: .leading, spacing: 4) {
+        Label("Active Session", systemImage: "mic")
+        Text("Enable once, then dictate from the keyboard. The orange system indicator stays on while voice is ready.",
+             tableName: "VoiceSession")
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+          .fixedSize(horizontal: false, vertical: true)
+      }
     }
     .tint(.orange)
     .alert("Active Session Unavailable", isPresented: Binding(

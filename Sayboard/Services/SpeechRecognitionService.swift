@@ -682,6 +682,7 @@ final class SpeechRecognitionService: ObservableObject {
   private var requestStopObserver: DarwinNotificationObserver?
   private var requestCancelObserver: DarwinNotificationObserver?
   private var sessionStatusObserver: DarwinNotificationObserver?
+  private var keyboardVoiceActivityObserver: DarwinNotificationObserver?
 
   private var maxDurationTimer: Timer?
 
@@ -776,6 +777,11 @@ extension SpeechRecognitionService {
 
   func setupDarwinObservers() {
     self.setupDictationObservers()
+    self.keyboardVoiceActivityObserver = TranscriptionBridge.observeDarwinNotification(
+      DarwinNotificationName.keyboardVoiceActivityChanged
+    ) { [weak self] in
+      Task { @MainActor [weak self] in self?.session.keyboardActivityDidChange() }
+    }
     self.sessionStatusObserver = TranscriptionBridge.observeDarwinNotification(
       DarwinNotificationName.requestSessionStatus
     ) { [weak self] in

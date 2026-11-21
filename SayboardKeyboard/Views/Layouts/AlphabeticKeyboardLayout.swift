@@ -77,12 +77,12 @@ struct AlphabeticKeyboardLayout: View {
 
   private var offersCantonese: Bool {
     !self.keyboardState.hostInputTraits.usesASCIITypingOnly
-      && SharedSettings().preferredSpokenLanguages.contains("yue")
+      && SharedSettings().preferredTypingLanguages.contains("yue")
   }
 
   private var offersChineseInput: Bool {
     !InputMethodCatalog.available(
-      for: SharedSettings().preferredSpokenLanguages
+      for: SharedSettings().preferredTypingLanguages
     ).isEmpty
   }
 
@@ -103,7 +103,7 @@ struct AlphabeticKeyboardLayout: View {
   }
 
   private var usesChinesePunctuation: Bool {
-    !Set(SharedSettings().preferredSpokenLanguages).isDisjoint(with: ["yue", "zh"])
+    !Set(SharedSettings().preferredTypingLanguages).isDisjoint(with: ["yue", "zh"])
   }
 
   private var isChineseSymbolsPage: Bool {
@@ -147,7 +147,8 @@ struct AlphabeticKeyboardLayout: View {
           keyboardState: self.keyboardState,
           onAlphabet: { self.closeEmojiPage(returningTo: .letters) },
           onNumbers: { self.closeEmojiPage(returningTo: .numbers) },
-          onClose: { self.closeEmojiPage(returningTo: self.emojiReturnPage) }
+          onClose: { self.closeEmojiPage(returningTo: self.emojiReturnPage) },
+          onInsertEmoji: { self.insertEmoji($0) }
         )
       } else {
       self.toolbar
@@ -304,6 +305,19 @@ struct AlphabeticKeyboardLayout: View {
       self.clearComposition()
       self.clearShapeComposition()
       self.swipeTrail.clear()
+      self.updateCandidates()
+    }
+    .onChange(of: SharedSettings().preferredTypingLanguages) { _, _ in
+      self.latinRefreshTask?.cancel()
+      self.cantoneseRefreshTask?.cancel()
+      self.clearComposition()
+      self.clearShapeComposition()
+      self.nextCantoneseWords.removeAll()
+      self.nextLatinWords.removeAll()
+      self.expandedLatinSuggestions.removeAll()
+      self.swipeAlternatives.removeAll()
+      self.swipeTrail.clear()
+      self.syncExpectedLetterRows()
       self.updateCandidates()
     }
     .onChange(of: self.autoCapitalize) { _, _ in self.refreshAutomaticShift() }
@@ -499,7 +513,7 @@ struct AlphabeticKeyboardLayout: View {
       self.shapeCandidates = Array(all.prefix(12))
     } else if self.isLatinGrid, let typed = self.activeLatinWord {
       let all = LatinWordSuggestions.shared.choices(
-        for: typed, preferred: SharedSettings().preferredSpokenLanguages, limit: 48,
+        for: typed, preferred: SharedSettings().preferredTypingLanguages, limit: 48,
         spellCheckEnabled: self.spellCheckingEnabled
       )
       self.expandedLatinSuggestions = all
@@ -529,7 +543,7 @@ struct AlphabeticKeyboardLayout: View {
     guard self.isLatinGrid, let word = self.activeLatinWord,
           (3...32).contains(word.count),
           !LatinWordSuggestions.shared.recognizesWholeWord(
-            word, preferred: SharedSettings().preferredSpokenLanguages
+            word, preferred: SharedSettings().preferredTypingLanguages
           ) else { return nil }
     return word
   }
@@ -561,7 +575,7 @@ struct AlphabeticKeyboardLayout: View {
     for _ in 0..<(current.count + 1) { self.proxy.deleteBackward() }
     self.proxy.insertText(value + " ")
     LatinWordSuggestions.shared.rememberSwipeAlternative(
-      value, preferred: SharedSettings().preferredSpokenLanguages
+      value, preferred: SharedSettings().preferredTypingLanguages
     )
     self.swipeAlternatives.removeAll()
     self.refreshAutomaticShift()
@@ -647,7 +661,7 @@ struct AlphabeticKeyboardLayout: View {
     // Revalidate the live host context: a cursor move must never insert a
     // candidate that belonged to another field or an earlier word.
     let context = self.proxy.documentContextBeforeInput()
-    let preferred = SharedSettings().preferredSpokenLanguages
+    let preferred = SharedSettings().preferredTypingLanguages
     guard LatinWordSuggestions.shared.nextWords(
       after: context, preferred: preferred
     ).contains(where: { $0.id == choice.id }) else {
@@ -713,7 +727,7 @@ struct AlphabeticKeyboardLayout: View {
               ?? self.currentLiteral, width: width, showDivider: true) {
               if let learnable {
                 _ = LatinWordSuggestions.shared.rememberCustom(
-                  learnable, preferred: SharedSettings().preferredSpokenLanguages
+                  learnable, preferred: SharedSettings().preferredTypingLanguages
                 )
               }
               self.latinRefreshTask?.cancel()
@@ -1181,7 +1195,7 @@ struct AlphabeticKeyboardLayout: View {
         return
       }
       let typed = self.shapeLatinBuffer
-      let preferred = SharedSettings().preferredSpokenLanguages
+      let preferred = SharedSettings().preferredTypingLanguages
       let immediate = LatinWordSuggestions.shared.fastChoices(
         for: typed, preferred: preferred, spellCheckEnabled: self.spellCheckingEnabled
       )
@@ -1226,7 +1240,7 @@ struct AlphabeticKeyboardLayout: View {
           && JyutpingDictionary.shared.hasExactEntry(for: prefix)
         let recognizedLatin = exactPhrase
           && LatinWordSuggestions.shared.recognizesWholeWord(
-            prefix, preferred: SharedSettings().preferredSpokenLanguages
+            prefix, preferred: SharedSettings().preferredTypingLanguages
           )
         guard !Task.isCancelled, self.composition.buffer == prefix else { return }
         let durationMs = Int((ProcessInfo.processInfo.systemUptime - startedAt) * 1_000)
@@ -1260,7 +1274,7 @@ struct AlphabeticKeyboardLayout: View {
     if typed == nil && self.page == .letters && self.composition.isEmpty {
       self.nextLatinWords = LatinWordSuggestions.shared.nextWords(
         after: self.proxy.documentContextBeforeInput(),
-        preferred: SharedSettings().preferredSpokenLanguages
+        preferred: SharedSettings().preferredTypingLanguages
       )
     } else {
       self.nextLatinWords.removeAll()
@@ -1271,7 +1285,7 @@ struct AlphabeticKeyboardLayout: View {
       return
     }
     // Keep stable suggestions on-screen between asynchronous dictionary lookups.
-    let preferred = SharedSettings().preferredSpokenLanguages
+    let preferred = SharedSettings().preferredTypingLanguages
     let immediate = LatinWordSuggestions.shared.fastChoices(
       for: typed, preferred: preferred, spellCheckEnabled: self.spellCheckingEnabled
     )
@@ -1572,7 +1586,7 @@ struct AlphabeticKeyboardLayout: View {
       let isLatin = self.chineseMode != .stroke
         && LatinWordSuggestions.shared.recognizesWholeWord(
           self.shapeLatinBuffer,
-          preferred: SharedSettings().preferredSpokenLanguages
+          preferred: SharedSettings().preferredTypingLanguages
         )
       if isLatin {
         self.commitShapeLatin(self.shapeLatinBuffer, addSpace: true)
@@ -1599,7 +1613,7 @@ struct AlphabeticKeyboardLayout: View {
            hasExactEntry: JyutpingDictionary.shared.hasExactEntry(for: spelling),
            hostMatches: self.trackedTextMatches,
            recognizesLatinWord: LatinWordSuggestions.shared.recognizesWholeWord(
-             spelling, preferred: SharedSettings().preferredSpokenLanguages
+             spelling, preferred: SharedSettings().preferredTypingLanguages
            )
          ) {
         self.candidateLookupSpelling = spelling
@@ -1622,7 +1636,7 @@ struct AlphabeticKeyboardLayout: View {
        let typed = LatinWordSuggestionPolicy.trailingWord(in: context),
        LatinWordSuggestionPolicy.canReplace(typed, in: context),
        let correction = LatinWordSuggestions.shared.automaticCorrection(
-         for: typed, preferred: SharedSettings().preferredSpokenLanguages
+         for: typed, preferred: SharedSettings().preferredTypingLanguages
        ) {
       for _ in typed { self.proxy.deleteBackward() }
       self.proxy.insertText(correction)
@@ -1641,7 +1655,7 @@ struct AlphabeticKeyboardLayout: View {
       if self.chineseMode != .stroke
         && LatinWordSuggestions.shared.recognizesWholeWord(
           self.shapeLatinBuffer,
-          preferred: SharedSettings().preferredSpokenLanguages
+          preferred: SharedSettings().preferredTypingLanguages
         ) {
         self.commitShapeLatin(self.shapeLatinBuffer, addSpace: false)
       } else if let first = self.shapeCandidates.first {
@@ -1671,8 +1685,8 @@ struct AlphabeticKeyboardLayout: View {
     self.keyboardState.liveDebugAction?(.emojiOpened)
     #endif
     self.emojiReturnPage = self.page
-    self.clearShapeComposition()
-    self.clearComposition()
+    // Page navigation must not discard a code the user has not selected yet.
+    self.cantoneseRefreshTask?.cancel()
     self.swipeAlternatives.removeAll()
     self.nextCantoneseWords.removeAll()
     self.nextLatinWords.removeAll()
@@ -1683,6 +1697,23 @@ struct AlphabeticKeyboardLayout: View {
     self.showsCandidateGrid = false
     self.showsEmojiPage = true
     FeatureDiagnostics.record(.keyboardEmoji, .started)
+  }
+
+  private func insertEmoji(_ emoji: String) {
+    let epoch = self.keyboardState.documentEpoch
+    let preserveShape = !self.shapeBuffer.isEmpty
+      && self.shapeHostAnchor == self.proxy.documentContextBeforeInput()
+    // Phonetic letters are already in the host. End their suggestion span
+    // without replacing them or selecting an unconfirmed Chinese candidate.
+    self.clearComposition()
+    self.proxy.insertText(emoji)
+    if preserveShape && epoch == self.keyboardState.documentEpoch {
+      self.shapeHostAnchor = self.proxy.documentContextBeforeInput()
+    } else if !self.shapeBuffer.isEmpty {
+      self.clearShapeComposition()
+    }
+    self.predictionAnchor = nil
+    self.refreshAutomaticShift()
   }
 
   private func closeEmojiPage(returningTo page: AlphabeticPage) {

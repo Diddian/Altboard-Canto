@@ -3,6 +3,7 @@ import SwiftUI
 /// A first-install guide: iOS enables the extension; only the extension can
 /// confirm that the user actually selected Altboard in a host text field.
 struct OnboardingKeyboardView: View {
+  var allowsTypingWithoutFullAccess = false
   let onContinue: () -> Void
 
   var body: some View {
@@ -44,17 +45,22 @@ struct OnboardingKeyboardView: View {
         self.verificationStatus
           .padding(.horizontal, 20)
           .padding(.top, 12)
-        if self.hasSeenAltboard && self.hasFreshFullAccess {
+        if self.allowsTypingWithoutFullAccess || (self.hasSeenAltboard && self.hasFreshFullAccess) {
           Button {
             self.confirmedKeyboardVisible.toggle()
           } label: {
-            Label(
-              self.confirmedKeyboardVisible
-                ? "Altboard's keys and action bar are visible"
-                : "I can see Altboard's keys and action bar",
-              systemImage: self.confirmedKeyboardVisible
-                ? "checkmark.square.fill" : "square"
-            )
+            Label {
+              if self.allowsTypingWithoutFullAccess {
+                Text("I selected Altboard with the Globe key and typed here", tableName: "KeyboardSetup")
+              } else {
+                Text(self.confirmedKeyboardVisible
+                  ? "Altboard's keys and action bar are visible"
+                  : "I can see Altboard's keys and action bar")
+              }
+            } icon: {
+              Image(systemName: self.confirmedKeyboardVisible
+                ? "checkmark.square.fill" : "square")
+            }
             .frame(maxWidth: .infinity, alignment: .leading)
           }
           .buttonStyle(.bordered)
@@ -80,15 +86,18 @@ struct OnboardingKeyboardView: View {
           isEnabled: self.canFinish,
           action: {
             self.testFieldFocused = false
+            FeatureDiagnostics.record(.keyboardSetup, .completed)
             self.onContinue()
           }
         )
         if !self.canFinish {
           OnboardingSecondaryButton(title: "Open Settings", action: self.openSettings)
         }
-        OnboardingSecondaryButton(title: "Back to Full Access") {
+        OnboardingSecondaryButton(title: self.allowsTypingWithoutFullAccess ? "Back" : "Back to Full Access") {
           self.testFieldFocused = false
-          withAnimation(OnboardingView.stepAnimation) { self.page = .fullAccess }
+          withAnimation(OnboardingView.stepAnimation) {
+            self.page = self.allowsTypingWithoutFullAccess ? .add : .fullAccess
+          }
         }
       }
     }
@@ -143,7 +152,12 @@ struct OnboardingKeyboardView: View {
   }
 
   private var canFinish: Bool {
-    self.hasSeenAltboard && self.hasFreshFullAccess
+    if self.allowsTypingWithoutFullAccess {
+      return KeyboardSetupPolicy.canFinishTypingTest(
+        confirmedKeyboard: self.confirmedKeyboardVisible, text: self.testText
+      )
+    }
+    return self.hasSeenAltboard && self.hasFreshFullAccess
       && self.confirmedKeyboardVisible
       && (!self.requiresLetterTest
         || !self.testText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -168,7 +182,16 @@ struct OnboardingKeyboardView: View {
 
   private var verificationStatus: some View {
     Group {
-      if !self.hasSeenAltboard {
+      if self.allowsTypingWithoutFullAccess {
+        Label {
+          Text(self.canFinish
+            ? "Typing setup confirmed by you. Voice can be added later."
+            : "Choose Altboard with the Globe key, type a few characters, then confirm below. Full Access is optional for typing.",
+            tableName: "KeyboardSetup")
+        } icon: {
+          Image(systemName: self.canFinish ? "checkmark.circle.fill" : "keyboard")
+        }
+      } else if !self.hasSeenAltboard {
         Label("Waiting for Altboard to open", systemImage: "globe")
       } else if !self.hasFreshFullAccess {
         Label(
@@ -210,17 +233,25 @@ struct OnboardingKeyboardView: View {
   private func next() {
     switch self.page {
     case .add:
-      withAnimation(OnboardingView.stepAnimation) { self.page = .fullAccess }
+      if self.allowsTypingWithoutFullAccess {
+        self.startKeyboardTest()
+      } else {
+        withAnimation(OnboardingView.stepAnimation) { self.page = .fullAccess }
+      }
     case .fullAccess:
-      self.permissionService.refreshAll()
-      self.testStartedAt = CFAbsoluteTimeGetCurrent()
-      self.hasSeenAltboard = false
-      self.confirmedKeyboardVisible = false
-      self.testText = ""
-      withAnimation(OnboardingView.stepAnimation) { self.page = .test }
+      self.startKeyboardTest()
     case .test:
       break
     }
+  }
+
+  private func startKeyboardTest() {
+    self.permissionService.refreshAll()
+    self.testStartedAt = CFAbsoluteTimeGetCurrent()
+    self.hasSeenAltboard = false
+    self.confirmedKeyboardVisible = false
+    self.testText = ""
+    withAnimation(OnboardingView.stepAnimation) { self.page = .test }
   }
 
   private func openSettings() {

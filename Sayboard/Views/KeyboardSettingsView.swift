@@ -65,6 +65,15 @@ struct KeyboardSettingsView: View {
       }
 
       if self.selectedKind == .alphabetic {
+        NavigationLink {
+          KeyboardInputSetupView()
+        } label: {
+          Label {
+            Text("Typing languages and methods", tableName: "KeyboardSetup")
+          } icon: {
+            Image(systemName: "character.bubble")
+          }
+        }
         Picker(selection: self.$letterArrangementRaw) {
           Text("QWERTY (English)").tag(LetterKeyArrangement.qwerty.rawValue)
           Text("QWERTZ").tag(LetterKeyArrangement.qwertz.rawValue)
@@ -116,7 +125,7 @@ struct KeyboardSettingsView: View {
         showAIButton: self.showAIButton
       )
       .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
-      Text("Tap preview keys to test haptics. The Emoji key beside ?123 opens the iOS keyboard picker; hold to choose Emoji. iOS may require a Globe in the action bar even when Extra Globe is off.")
+      Text("Tap preview keys to test haptics. The Emoji key opens Altboard's emoji page. Use the separate Globe key to switch iOS keyboards; iOS may require it even when Extra Globe is off.", tableName: "KeyboardSetup")
         .font(.footnote)
         .foregroundStyle(.secondary)
     } header: {

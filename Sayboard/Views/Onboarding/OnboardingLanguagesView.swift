@@ -7,14 +7,20 @@ struct OnboardingLanguagesView: View {
   let previousChoice: ModelVariant?
   @Binding var draft: OnboardingLanguageDraft
 
+  let onTypingOnly: () -> Void
   let onChoose: (ModelVariant) -> Void
 
   var body: some View {
     OnboardingScreen {
-      OnboardingHeader(
-        title: "Your Languages",
-        subtitle: "Which languages do you dictate in? We’ll pick a speech model for them.",
-      )
+      VStack(spacing: 8) {
+        Text("Add voice dictation", tableName: "KeyboardSetup")
+          .font(.title.bold())
+        Text("Choose the languages you speak. Your typing languages stay separate. Voice needs a speech model; typing does not.", tableName: "KeyboardSetup")
+          .foregroundStyle(.secondary)
+      }
+      .multilineTextAlignment(.center)
+      .padding(.horizontal, 28)
+      .padding(.top, 32)
       Spacer(minLength: Self.firstSectionSpacing)
       self.languagesSection
       OnboardingModelStatusView(variant: self.suggested, modelLabel: self.modelLine)
@@ -27,6 +33,10 @@ struct OnboardingLanguagesView: View {
       }
       OnboardingSecondaryButton(title: "Choose Another Model") {
         self.showsOtherModels = true
+      }
+      Button(action: self.onTypingOnly) {
+        Text("Start typing without a download", tableName: "KeyboardSetup")
+          .frame(maxWidth: .infinity, minHeight: 44)
       }
     }
     .onAppear {

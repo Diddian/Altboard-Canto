@@ -10,7 +10,7 @@ import Glibc
 enum FeatureDiagnostics {
   enum Area: String, Sendable {
     case speech, speechAudio, speechDecode, speechFinalization, liveDictation, voiceOutput, aiActions, speechModel, textModel, keyboardGlobe, haptics
-    case meeting, meetingTranslation, conversation, data, storage, language, swipe, chineseInput, bridge, keyboardRender, keyboardEmoji, appStartup
+    case meeting, meetingTranslation, conversation, data, storage, language, swipe, chineseInput, bridge, keyboardRender, keyboardEmoji, appStartup, voiceSession, keyboardSetup
   }
 
   enum Event: String, Sendable {
@@ -20,6 +20,7 @@ enum FeatureDiagnostics {
     case unavailable, interrupted, firstUpdate, firstChunkReady, firstHostInsert, rotated
     case rootWaiting, rootReady, layoutMounted, letterRowMounted
     case strokeGridMounted, trailOverlayMounted, llmPromptMounted
+    case idleStarted, idleCancelled, timedOut, ready
   }
 
   private struct Entry: Codable, Sendable {

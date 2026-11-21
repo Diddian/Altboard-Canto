@@ -80,6 +80,28 @@ struct SharedSettings {
     nonmutating set { defaults.set(newValue.rawValue, forKey: SharedKey.sessionAutoStopPolicy) }
   }
 
+  var voiceKeyboardActivity: VoiceSessionPolicy.KeyboardActivity? {
+    get {
+      guard let data = self.defaults.data(forKey: SharedKey.voiceKeyboardActivity) else { return nil }
+      guard let activity = try? JSONDecoder().decode(VoiceSessionPolicy.KeyboardActivity.self, from: data)
+      else { return nil }
+      let ended = self.defaults.data(forKey: SharedKey.voiceKeyboardActivityEnded).flatMap {
+        try? JSONDecoder().decode(VoiceSessionPolicy.KeyboardActivity.self, from: $0)
+      }
+      return activity.applyingEnd(ended)
+    }
+    nonmutating set {
+      if let newValue, let data = try? JSONEncoder().encode(newValue) {
+        // A disappearing keyboard must not overwrite a newer keyboard's lease.
+        let key = newValue.visible ? SharedKey.voiceKeyboardActivity : SharedKey.voiceKeyboardActivityEnded
+        self.defaults.set(data, forKey: key)
+      } else {
+        self.defaults.removeObject(forKey: SharedKey.voiceKeyboardActivity)
+        self.defaults.removeObject(forKey: SharedKey.voiceKeyboardActivityEnded)
+      }
+    }
+  }
+
   /// Explicit Microphone Only appearance. Old height slider values are
   /// intentionally ignored; no height preference can resize Alphabet.
   var microphoneKeyboardLayout: MicrophoneKeyboardLayout {
@@ -189,7 +211,23 @@ struct SharedSettings {
         : PreferredVoiceLanguages.normalized(Array(legacy).sorted())
     }
     nonmutating set {
+      // Preserve the previous typing configuration when speech is first
+      // changed after upgrading from the shared-language preference.
+      if defaults.object(forKey: SharedKey.preferredTypingLanguages) == nil {
+        defaults.set(self.preferredSpokenLanguages, forKey: SharedKey.preferredTypingLanguages)
+      }
       defaults.set(PreferredVoiceLanguages.normalized(newValue), forKey: SharedKey.preferredSpokenLanguages)
+    }
+  }
+
+  var preferredTypingLanguages: [String] {
+    get {
+      guard let stored = defaults.stringArray(forKey: SharedKey.preferredTypingLanguages)
+      else { return self.preferredSpokenLanguages }
+      return PreferredVoiceLanguages.normalized(stored)
+    }
+    nonmutating set {
+      defaults.set(PreferredVoiceLanguages.normalized(newValue), forKey: SharedKey.preferredTypingLanguages)
     }
   }
 

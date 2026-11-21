@@ -65,6 +65,11 @@ final class KeyboardViewController: UIInputViewController {
   var processingTimeoutGeneration = UUID()
   var processingStartTime: Date?
   var receivedPingDuringProcessing = false
+  var dictationStartupTimer: Timer?
+  var dictationStartupGeneration = UUID()
+  var dictationStartupVisible = false
+  var voiceSessionActivityTimer: Timer?
+  var voiceSessionActivityOwner = UUID()
 
   override func loadView() {
     self.traceFirstKeyboardLoad()
@@ -186,6 +191,9 @@ final class KeyboardViewController: UIInputViewController {
 
   override func viewWillDisappear(_ animated: Bool) {
     super.viewWillDisappear(animated)
+    self.dictationStartupVisible = false
+    self.pauseDictationStartup()
+    self.stopVoiceSessionActivity()
     self.staleFallbackTimer?.invalidate()
     self.staleFallbackTimer = nil
     self.warmStartSessionAcknowledged = false
@@ -729,6 +737,7 @@ final class KeyboardViewController: UIInputViewController {
       DispatchQueue.main.async {
         guard let vc = Self.activeInstance else { return }
         vc.keyboardState.syncVoiceProcessingProgress()
+        vc.resumeDictationStartupIfNeeded()
         vc.resumeProcessingTimeoutIfNeeded()
       }
     }
@@ -757,14 +766,32 @@ final class KeyboardViewController: UIInputViewController {
       name: UIApplication.willEnterForegroundNotification,
       object: nil,
     )
+    NotificationCenter.default.addObserver(
+      self, selector: #selector(self.hostDidEnterBackground),
+      name: UIApplication.didEnterBackgroundNotification, object: nil
+    )
+  }
+
+  @objc
+  private func hostDidEnterBackground() {
+    self.dictationStartupVisible = false
+    self.pauseDictationStartup()
+    self.stopVoiceSessionActivity()
+    self.staleFallbackTimer?.invalidate()
+    self.staleFallbackTimer = nil
+    self.pingValidator.cancel()
+    self.pauseProcessingTimeout()
   }
 
   @objc
   private func hostDidEnterForeground() {
     guard self.viewIfLoaded?.window != nil else { return }
+    self.dictationStartupVisible = true
     self.syncFullAccessIfChanged()
     self.keyboardState.refresh()
     self.recoverActiveDictationAfterReentry()
+    self.startVoiceSessionActivity()
+    self.resumeDictationStartupIfNeeded()
     self.refreshHostInputTraits()
     self.keyboardState.keyboardAppearanceRevision &+= 1
     self.updateKeyboardHeight(actionBarVisible: false)
@@ -803,6 +830,7 @@ final class KeyboardViewController: UIInputViewController {
           captureAcknowledged: true, heartbeat: settings.mainAppHeartbeat,
           now: CFAbsoluteTimeGetCurrent()
         ) else { return }
+        vc.finishDictationStartup(for: settings.dictationSessionToken)
         vc.stoppedBeforeCaptureToken = nil
         vc.keyboardState.syncVoiceProcessingProgress()
         // Stop can be requested before the capture acknowledgment arrives.
@@ -878,6 +906,7 @@ final class KeyboardViewController: UIInputViewController {
   }
 
   func finalizeProcessingPipeline() {
+    self.finishDictationStartup(for: self.dictationRequestToken)
     self.cancelProcessingTimeout()
     self.keyboardState.isRecording = false
     self.keyboardState.isStartingRecording = false
@@ -955,8 +984,12 @@ final class KeyboardViewController: UIInputViewController {
       cancelled: settings.dictationCancellationRequested) == true
     let stopPending = settings.dictationSessionToken != nil
       && TranscriptionBridge.stopToken() == settings.dictationSessionToken
+    let startupRequest = DictationStartupPolicy.request(
+      for: settings.dictationSessionToken, defaults: settings.defaults
+    )
     guard !settings.dictationCancellationRequested,
-          (settings.isRecording || settings.isKeyboardRequestRecent() || finalizing || stopPending),
+          (settings.isRecording || settings.isKeyboardRequestRecent() || finalizing
+            || stopPending || startupRequest != nil),
           let token = settings.dictationSessionToken,
           UUID(uuidString: token) != nil else { return }
     let document = self.availableDocumentIdentifier()
@@ -969,6 +1002,8 @@ final class KeyboardViewController: UIInputViewController {
       self.keyboardState.isStartingRecording = false
       self.keyboardState.isProcessing = true
       self.keyboardState.syncVoiceProcessingProgress()
+    } else if startupRequest != nil {
+      self.keyboardState.isStartingRecording = true
     }
     if self.dictationRequestToken == token,
        self.dictationDocumentID == document, sameField,
@@ -1001,12 +1036,12 @@ final class KeyboardViewController: UIInputViewController {
       Self.blockedLiveSessionToken = token
       FeatureDiagnostics.record(.bridge, .fallback, operationID: token)
     }
-    self.keyboardState.isSessionActive = settings.isSessionActive
+    self.keyboardState.syncVoiceSessionReadiness()
     // Recover control/field ownership, never capture truth from persisted flags.
     // Appearance sends a status ping; only dictationStarted can show the wave.
     self.keyboardState.isRecording = false
     self.keyboardState.isStartingRecording = !self.keyboardState.isProcessing
-      && settings.isKeyboardRequestRecent()
+      && (settings.isKeyboardRequestRecent() || startupRequest != nil)
     self.keyboardState.recordingStartedAt = 0
   }
 
@@ -1026,6 +1061,7 @@ final class KeyboardViewController: UIInputViewController {
       self.keyboardState.isStartingRecording = true
       self.keyboardState.stopLevelPolling()
       self.warmStartSessionAcknowledged = false
+      self.beginDictationStartup(token: token)
       self.pingMainAppForSessionStatus()
       self.verifyReenteredRecording(token: token)
       return
@@ -1055,6 +1091,7 @@ final class KeyboardViewController: UIInputViewController {
     self.warmStartSessionAcknowledged = false
     self.staleFallbackTimer?.invalidate()
     self.staleFallbackTimer = nil
+    self.beginDictationStartup(token: token)
     let direct = DictationRequestPolicy.shouldRequestWarmSession(
       keyboardActive: self.keyboardState.isSessionActive,
       appActive: settings.isSessionActive,
@@ -1100,7 +1137,7 @@ final class KeyboardViewController: UIInputViewController {
           acknowledged: self.warmStartSessionAcknowledged,
           heartbeat: settings.mainAppHeartbeat, now: CFAbsoluteTimeGetCurrent()
         ) else {
-          self.keyboardState.isStartingRecording = false
+          self.resumeDictationStartupIfNeeded()
           FeatureDiagnostics.record(.speech, .blocked,
             failureReason: .warmStartUnacknowledged, operationID: token)
           return
@@ -1109,6 +1146,7 @@ final class KeyboardViewController: UIInputViewController {
         // one fresh, destination-bound request using the existing fallback.
         FeatureDiagnostics.record(.speech, .fallback,
           failureReason: .warmStartUnacknowledged, operationID: token)
+        self.finishDictationStartup(for: token)
         self.keyboardState.isSessionActive = false
         self.keyboardState.isRecording = false
         self.keyboardState.isStartingRecording = false
@@ -1133,10 +1171,15 @@ final class KeyboardViewController: UIInputViewController {
         let settings = SharedSettings()
         settings.synchronize()
         let now = CFAbsoluteTimeGetCurrent()
+        self.keyboardState.syncVoiceProcessingProgress()
         guard DictationRequestPolicy.isCurrent(
           started: token, current: settings.dictationSessionToken,
           cancelled: settings.dictationCancellationRequested
-        ), self.viewIfLoaded?.window != nil, !self.keyboardState.isRecording else { return }
+        ), self.viewIfLoaded?.window != nil, !self.keyboardState.isRecording,
+          !self.keyboardState.isProcessing else {
+          self.resumeDictationStartupIfNeeded()
+          return
+        }
 
         let audioAlive = settings.isSessionActive
           && DictationRequestPolicy.hasRecentAudioHeartbeat(
@@ -1151,6 +1194,10 @@ final class KeyboardViewController: UIInputViewController {
           self.scheduleWarmStartCheck(token: token, retryCount: 1)
           return
         }
+        if settings.isModelLoading && audioAlive {
+          self.resumeDictationStartupIfNeeded()
+          return
+        }
         if DictationRequestPolicy.shouldOpenColdFallback(
           requestToken: token, currentToken: settings.dictationSessionToken,
           cancelled: settings.dictationCancellationRequested,
@@ -1163,9 +1210,8 @@ final class KeyboardViewController: UIInputViewController {
           self.openDictateDeepLinkFallback(reason: "no active audio engine")
           return
         }
-        self.keyboardState.isStartingRecording = false
-        FeatureDiagnostics.record(.speech, .failed)
-        DiagnosticLog.write("keyboard: warm dictation not acknowledged; stayed in host")
+        self.resumeDictationStartupIfNeeded()
+        DiagnosticLog.write("keyboard: awaiting request-scoped capture acknowledgment")
       }
     }
   }
@@ -1195,6 +1241,7 @@ extension KeyboardViewController {
 
   func cancelDictationViaDarwin() {
     if self.dictationRequestToken == nil { self.recoverActiveDictationAfterReentry() }
+    self.finishDictationStartup(for: self.dictationRequestToken)
     self.cancelExperimentalLiveText()
     self.keyboardState.liveSourcePreview = nil
     self.staleFallbackTimer?.invalidate()
@@ -1224,6 +1271,7 @@ extension KeyboardViewController {
 
   func stopDictationViaDarwin() {
     if self.dictationRequestToken == nil { self.recoverActiveDictationAfterReentry() }
+    self.finishDictationStartup(for: self.dictationRequestToken)
     self.staleFallbackTimer?.invalidate()
     self.staleFallbackTimer = nil
     self.saveHostBundleId()
@@ -1255,7 +1303,7 @@ extension KeyboardViewController {
         let isProc = vc.keyboardState.isProcessing
         vc.pingValidator.cancel()
         // Audio-session existence alone is not a recording-start acknowledgment.
-        vc.keyboardState.isSessionActive = true
+        vc.keyboardState.syncVoiceSessionReadiness()
         if isProc || vc.keyboardState.isLLMProcessing {
           vc.receivedPingDuringProcessing = true
         } else {
@@ -1278,6 +1326,7 @@ extension KeyboardViewController {
         vc.keyboardState.recordingStartedAt = 0
         vc.keyboardState.isStartingRecording = false
         vc.keyboardState.isProcessing = finalizing
+        vc.resumeDictationStartupIfNeeded()
         if finalizing { vc.startProcessingTimeout() }
       }
     }
@@ -1556,7 +1605,10 @@ extension KeyboardViewController {
 
   override func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
+    self.dictationStartupVisible = true
+    self.startVoiceSessionActivity()
     self.insertDeferredAppearanceText()
+    self.resumeDictationStartupIfNeeded()
     self.resumeProcessingTimeoutIfNeeded()
     self.recordKeyboardTrace(.didAppear)
     self.startMemoryWatch()

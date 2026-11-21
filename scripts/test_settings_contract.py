@@ -702,7 +702,8 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("onboardingKeyboardTestProcessID", marker)
         self.assertIn("isOnboardingKeyboardTestHost", state)
         self.assertIn("case .keyboard: return false", progress)
-        self.assertIn("OnboardingKeyboardView { self.pass(.keyboard) }", routing)
+        self.assertIn("OnboardingKeyboardView(allowsTypingWithoutFullAccess: self.record.prefersTypingOnly)", routing)
+        self.assertIn("self.pass(.keyboard)", routing)
         self.assertNotIn("advancesWhenReady", guide)
         setup = read("Sayboard/Views/SetupView.swift")
         self.assertIn('Label("Test Altboard Keyboard", systemImage: "keyboard")', setup)
@@ -951,7 +952,7 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("mode: .ordered(", languages)
         self.assertNotIn("updated.subtracting", languages)
 
-    def test_native_emoji_switcher_and_opt_in_top_globe(self):
+    def test_custom_emoji_page_and_opt_in_top_globe(self):
         keyboard = read("SayboardKeyboard/Views/Layouts/KeyboardChrome.swift")
         state = read("SayboardKeyboard/KeyboardState.swift")
         config = read("Shared/SharedSettings.swift")
@@ -973,17 +974,16 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn('iconName = "globe"', native)
         self.assertIn('self.key("globe", width: 48)', preview)
         bottom = keyboard.split("struct KeyboardBottomRow: View", 1)[1]
-        emoji = bottom.split("if self.onEmojiAction != nil", 1)[1].split(
+        emoji = bottom.split("if let openEmoji = self.onEmojiAction", 1)[1].split(
             "} else if self.keyboardState.showsGlobeButton", 1
         )[0]
-        self.assertIn("NativeInputModeSwitchKey(", emoji)
-        self.assertIn('iconName: "nativeEmoji"', emoji)
-        self.assertIn("configure: self.keyboardState.configureInputModeListButton", emoji)
-        self.assertNotIn("openEmoji()", emoji)
-        self.assertNotIn("KeyButton(", emoji)
+        self.assertIn("KeyButton(", emoji)
+        self.assertIn("content: .nativeEmojiGlyph", emoji)
+        self.assertIn("openEmoji()", emoji)
+        self.assertNotIn("NativeInputModeSwitchKey(", emoji)
+        self.assertNotIn("configureInputModeListButton", emoji)
         self.assertIn('var onEmojiAction:', keyboard)
-        # The old page still exists in a cross-worker file, but the key must
-        # never invoke its callback. Removal belongs to integration.
+        # Emoji opens the local page; the independent Globe owns system switching.
         self.assertIn('onEmojiAction: { self.openEmojiPage() }', alphabet)
         self.assertIn('keyboardState.effectiveTypingKind == .alphabetic', keyboard)
         self.assertIn('Label("Writing Style", systemImage: "text.alignleft")',

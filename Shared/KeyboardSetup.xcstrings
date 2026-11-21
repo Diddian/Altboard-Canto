@@ -1,0 +1,534 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "Make the keyboard yours": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Make the keyboard yours"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "揀返你慣用嘅打法"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Tastatur einrichten"
+          }
+        }
+      }
+    },
+    "Choose how you type. You can add voice next, or start typing offline straight away.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose how you type. You can add voice next, or start typing offline straight away."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先揀打字方式。下一步可以設定口述，亦可以直接開始離線打字。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle deine Eingabemethode. Danach kannst du Diktieren einrichten oder direkt offline tippen."
+          }
+        }
+      }
+    },
+    "Typing languages and methods": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Typing languages and methods"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打字語言及輸入法"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tipp-Sprachen und Eingabemethoden"
+          }
+        }
+      }
+    },
+    "Typing languages": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Typing languages"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打字語言"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tipp-Sprachen"
+          }
+        }
+      }
+    },
+    "Use more than one if you mix languages. This does not change the app language or voice languages.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use more than one if you mix languages. This does not change the app language or voice languages."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "中英德混寫可以揀多種語言。呢度唔會改動介面語言或者口述語言。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle mehrere Sprachen, wenn du sie beim Schreiben mischst. Die App-Sprache und die Diktatsprachen bleiben unverändert."
+          }
+        }
+      }
+    },
+    "How do you type Chinese?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How do you type Chinese?"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你平時點打中文字？"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wie tippst du Chinesisch?"
+          }
+        }
+      }
+    },
+    "Quick and Cangjie accept both third- and fifth-generation codes. You do not have to choose a generation.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quick and Cangjie accept both third- and fifth-generation codes. You do not have to choose a generation."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "速成同倉頡都接受三代、五代碼，唔使預先揀定用邊代。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quick und Cangjie unterstützen Codes der dritten und fünften Generation. Du musst keine Generation auswählen."
+          }
+        }
+      }
+    },
+    "Change these choices later in Settings → Keyboard → Typing languages and methods. The keyboard's input-method button also switches Chinese methods.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change these choices later in Settings → Keyboard → Typing languages and methods. The keyboard's input-method button also switches Chinese methods."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日後可去「設定 → 鍵盤 → 打字語言及輸入法」更改。鍵盤上嘅輸入法掣亦可以切換中文打法。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Du kannst dies später unter Einstellungen → Tastatur → Tipp-Sprachen und Eingabemethoden ändern. Die Eingabemethoden-Taste wechselt ebenfalls die chinesische Eingabe."
+          }
+        }
+      }
+    },
+    "Type the code or radicals you would use for 你. For strokes, enter its first five strokes. We suggest a method only after an exact match.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type the code or radicals you would use for 你. For strokes, enter its first five strokes. We suggest a method only after an exact match."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "試下輸入你平時打「你」用嘅碼或者字根；筆畫輸入就打頭五筆。完全吻合先會建議輸入法。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gib den Code oder die Radikale für 你 ein. Bei Strichen reichen die ersten fünf. Nur bei genauer Übereinstimmung wird eine Methode vorgeschlagen."
+          }
+        }
+      }
+    },
+    "For example: nei5, OF, ONF or 丿丨丿乛丨": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For example: nei5, OF, ONF or 丿丨丿乛丨"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "例如：nei5、OF、ONF 或 丿丨丿乛丨"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zum Beispiel: nei5, OF, ONF oder 丿丨丿乛丨"
+          }
+        }
+      }
+    },
+    "Use this method": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use this method"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用呢種打法"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Methode verwenden"
+          }
+        }
+      }
+    },
+    "No exact match yet. You can choose any method above; this short example cannot identify every spelling or generation.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No exact match yet. You can choose any method above; this short example cannot identify every spelling or generation."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暫時未完全吻合。你可以直接揀上面嘅打法；單靠呢個例字，唔能夠分辨所有拼法或者代別。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noch keine genaue Übereinstimmung. Du kannst oben eine Methode wählen. Dieses kurze Beispiel erkennt nicht jede Schreibweise oder Generation."
+          }
+        }
+      }
+    },
+    "Not sure? Try a word": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not sure? Try a word"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "唔記得個名？試打一個字"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unsicher? Probiere ein Zeichen"
+          }
+        }
+      }
+    },
+    "Add voice dictation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add voice dictation"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "要唔要加埋口述？"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diktieren hinzufügen"
+          }
+        }
+      }
+    },
+    "Choose the languages you speak. Your typing languages stay separate. Voice needs a speech model; typing does not.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose the languages you speak. Your typing languages stay separate. Voice needs a speech model; typing does not."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "揀你講嘅語言，唔會影響打字語言。口述需要下載語音模型；只打字就唔使。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle deine gesprochenen Sprachen unabhängig von deinen Tipp-Sprachen. Diktieren braucht ein Sprachmodell; Tippen nicht."
+          }
+        }
+      }
+    },
+    "Start typing without a download": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start typing without a download"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "唔下載，直接開始打字"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ohne Download mit Tippen beginnen"
+          }
+        }
+      }
+    },
+    "I selected Altboard with the Globe key and typed here": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I selected Altboard with the Globe key and typed here"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我已經用地球掣揀咗 Altboard，並喺呢度試打過字"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ich habe Altboard über die Globus-Taste gewählt und hier getippt"
+          }
+        }
+      }
+    },
+    "Typing setup confirmed by you. Voice can be added later.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Typing setup confirmed by you. Voice can be added later."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你已確認打字設定。口述可以日後再加。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Du hast die Tippeinrichtung bestätigt. Diktieren kannst du später hinzufügen."
+          }
+        }
+      }
+    },
+    "Choose Altboard with the Globe key, type a few characters, then confirm below. Full Access is optional for typing.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose Altboard with the Globe key, type a few characters, then confirm below. Full Access is optional for typing."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用地球掣揀 Altboard，試打幾個字，再喺下面確認。打字唔需要「完整取用權」。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle Altboard über die Globus-Taste, tippe einige Zeichen und bestätige unten. Zum Tippen ist kein Vollzugriff nötig."
+          }
+        }
+      }
+    },
+    "Cantonese spelling · 粵語拼音": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cantonese spelling · 粵語拼音"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "粵語拼音"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kantonesische Lautschrift · 粵語拼音"
+          }
+        }
+      }
+    },
+    "Quick · 速成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quick · 速成"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "速成"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quick · 速成"
+          }
+        }
+      }
+    },
+    "Cangjie · 倉頡": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cangjie · 倉頡"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "倉頡"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cangjie · 倉頡"
+          }
+        }
+      }
+    },
+    "Strokes · 筆畫": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Strokes · 筆畫"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "筆畫"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Striche · 筆畫"
+          }
+        }
+      }
+    },
+    "Tap preview keys to test haptics. The Emoji key opens Altboard's emoji page. Use the separate Globe key to switch iOS keyboards; iOS may require it even when Extra Globe is off.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap preview keys to test haptics. The Emoji key opens Altboard's emoji page. Use the separate Globe key to switch iOS keyboards; iOS may require it even when Extra Globe is off."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "撳預覽鍵可以試震動。Emoji 掣會開 Altboard 自家 Emoji 頁；另一個地球掣用嚟切換 iOS 鍵盤。即使關咗「額外地球掣」，iOS 仍可能要求顯示。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tippe auf Vorschautasten, um die Haptik zu testen. Die Emoji-Taste öffnet Altboards Emoji-Seite. Mit der separaten Globus-Taste wechselst du iOS-Tastaturen. iOS kann sie auch verlangen, wenn der zusätzliche Globus ausgeschaltet ist."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

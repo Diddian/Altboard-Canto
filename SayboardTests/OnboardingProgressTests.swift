@@ -6,8 +6,9 @@ import Testing
 struct OnboardingProgressTests {
 
   @Test
-  func `a fresh install starts with the languages`() {
-    #expect(Self.progress().currentStep == .languages)
+  func `a fresh install starts with typing preferences`() {
+    #expect(Self.progress().currentStep == .inputMethod)
+    #expect(Self.progress().nextStep(after: .inputMethod) == .languages)
   }
 
   @Test
@@ -18,7 +19,7 @@ struct OnboardingProgressTests {
 
   @Test
   func `a usable model skips the languages`() {
-    #expect(Self.progress(hasUsableModel: true).currentStep == .microphone)
+    #expect(Self.progress(Self.record(passed: [.inputMethod]), hasUsableModel: true).currentStep == .microphone)
   }
 
   @Test
@@ -208,17 +209,17 @@ struct OnboardingProgressTests {
 
   @Test
   func `the step indicator counts only the screens this run shows`() {
-    let progress = Self.progress(microphone: true, keyboard: true, hasUsableModel: true)
-    #expect(progress.shownSteps(current: .keyboardType) == [.keyboard, .keyboardType, .writingStyle, .practice])
+    let progress = Self.progress(Self.record(passed: [.keyboard]), microphone: true, keyboard: true, hasUsableModel: true)
+    #expect(progress.shownSteps(current: .keyboardType) == [.inputMethod, .keyboard, .keyboardType, .writingStyle, .practice])
   }
 
   @Test
   func `a screen already passed keeps its place in the count`() {
-    let record = Self.record(passed: [.languages, .microphone], chosenModel: Self.chosenModel)
+    let record = Self.record(passed: [.languages, .microphone, .keyboard], chosenModel: Self.chosenModel)
     let progress = Self.progress(record, microphone: true, keyboard: true)
     let steps = progress.shownSteps(current: .keyboardType)
-    #expect(steps == [.languages, .microphone, .keyboard, .keyboardType, .writingStyle, .practice])
-    #expect(steps.firstIndex(of: .keyboardType) == 3)
+    #expect(steps == [.inputMethod, .languages, .microphone, .keyboard, .keyboardType, .writingStyle, .practice])
+    #expect(steps.firstIndex(of: .keyboardType) == 4)
   }
 
   @Test
@@ -227,6 +228,55 @@ struct OnboardingProgressTests {
     record.isWalkthrough = true
     let progress = Self.progress(record, microphone: true, keyboard: true, hasUsableModel: true)
     #expect(progress.shownSteps(current: .languages) == OnboardingStep.allCases)
+  }
+
+  @Test
+  func `typing only proceeds to the keyboard without permissions or a model`() {
+    var record = Self.record(passed: [.inputMethod])
+    record.postponeVoiceSetup()
+    let progress = Self.progress(record)
+    #expect(progress.currentStep == .keyboard)
+    #expect(progress.nextStep(after: .languages) == .keyboard)
+    #expect(progress.nextStep(after: .keyboard) == nil)
+    #expect(!progress.shownSteps(current: .keyboard).contains(.practice))
+    #expect(progress.shownSteps(current: .keyboard) == [.inputMethod, .languages, .keyboard])
+  }
+
+  @Test
+  func `typing only remains optional when microphone access is already granted`() {
+    var record = Self.record(passed: [.inputMethod])
+    record.postponeVoiceSetup()
+    #expect(Self.progress(record, microphone: true, keyboard: true, hasUsableModel: true)
+      .nextStep(after: .keyboard) == nil)
+  }
+
+  @Test
+  func `typing only survives saving and does not reopen voice practice`() throws {
+    var record = Self.record(passed: [.inputMethod])
+    record.postponeVoiceSetup()
+    record.pass(.keyboard)
+    let restored = try JSONDecoder().decode(OnboardingRecord.self, from: JSONEncoder().encode(record))
+    #expect(restored == record)
+    #expect(Self.progress(restored, microphone: true, keyboard: true, hasUsableModel: true).currentStep == nil)
+  }
+
+  @Test
+  func `a finished legacy record is not reset by the input method step`() throws {
+    let json = #"{"passedSteps":["languages","microphone","keyboard","keyboardType","writingStyle","practice"]}"#
+    let record = try JSONDecoder().decode(OnboardingRecord.self, from: Data(json.utf8))
+    #expect(!record.prefersTypingOnly)
+    #expect(Self.progress(record).currentStep == nil)
+  }
+
+  @Test
+  func `choosing voice again restores permission and practice gates`() {
+    var record = Self.record(passed: [.inputMethod])
+    record.postponeVoiceSetup()
+    record.prefersTypingOnly = false
+    record.chosenModel = Self.chosenModel
+    record.pass(.languages)
+    #expect(Self.progress(record).nextStep(after: .languages) == .microphone)
+    #expect(Self.progress(record, microphone: true).nextStep(after: .languages) == .keyboard)
   }
 
   private static let chosenModel = "parakeet-v3"
@@ -238,7 +288,7 @@ struct OnboardingProgressTests {
     chosenModel: String? = nil,
   ) -> OnboardingRecord {
     var record = OnboardingRecord()
-    record.passedSteps = Set(passed)
+    record.passedSteps = Set(passed).union([.inputMethod])
     record.postponedSteps = postponed
     record.chosenModel = chosenModel
     return record

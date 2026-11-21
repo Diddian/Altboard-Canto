@@ -1,0 +1,314 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "Voice ready": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "語音已就緒"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "语音已就绪"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spracheingabe bereit"
+          }
+        }
+      }
+    },
+    "Tap mic to start voice": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "撳咪啟用語音"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点按麦克风启用语音"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mikrofon zum Starten antippen"
+          }
+        }
+      }
+    },
+    "The countdown starts when you leave Altboard and its keyboard. Typing or dictating keeps an enabled session ready.": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "離開 Altboard 同鍵盤後先開始倒數。打字或口述期間，已啟用嘅語音時段會保持就緒。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "离开 Altboard 和键盘后才开始倒计时。打字或口述期间，已启用的语音时段会保持就绪。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Countdown beginnt, wenn du Altboard und seine Tastatur verlässt. Beim Tippen oder Diktieren bleibt eine aktivierte Sitzung bereit."
+          }
+        }
+      }
+    },
+    "Enable once, then dictate from the keyboard. The orange system indicator stays on while voice is ready.": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "啟用一次，就可以喺鍵盤繼續口述。語音就緒期間，系統橙點會保持亮起。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "启用一次，就可以在键盘继续口述。语音就绪期间，系统橙点会保持亮起。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einmal aktivieren, dann über die Tastatur diktieren. Die orange Systemanzeige bleibt an, solange die Spracheingabe bereit ist."
+          }
+        }
+      }
+    },
+    "The orange indicator": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "橙色指示燈"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "橙色指示灯"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die orange Anzeige"
+          }
+        }
+      }
+    },
+    "The orange dot means iOS microphone input is active. An enabled voice session keeps that input available between dictations.": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "橙點代表 iOS 正在使用咪。啟用語音時段後，兩次口述之間會保持咪輸入可用。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "橙点代表 iOS 正在使用麦克风。启用语音时段后，两次口述之间会保持麦克风输入可用。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der orange Punkt bedeutet, dass iOS das Mikrofon verwendet. Eine aktivierte Sprachsitzung hält den Mikrofoneingang zwischen Diktaten verfügbar."
+          }
+        }
+      }
+    },
+    "When audio is saved": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "幾時會儲存錄音"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "何时会保存录音"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wann Audio gespeichert wird"
+          }
+        }
+      }
+    },
+    "While voice is ready, unused microphone buffers are discarded. Recording and transcription start when you press the microphone. Saved recordings follow your History & Storage settings.": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "語音待機時，未用到嘅咪輸入會即時丟棄。撳咪先會開始錄音同轉錄。錄音會按「歷史記錄與儲存空間」設定保留。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "语音待机时，未使用的麦克风输入会即时丢弃。点按麦克风才会开始录音和转录。录音会按“历史记录与存储空间”设置保留。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Während die Spracheingabe bereit ist, werden ungenutzte Mikrofonpuffer verworfen. Aufnahme und Transkription beginnen beim Antippen des Mikrofons. Gespeicherte Aufnahmen richten sich nach deinen Einstellungen unter Verlauf & Speicher."
+          }
+        }
+      }
+    },
+    "Fewer app switches": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "減少來回切換 app"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "减少来回切换应用"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weniger App-Wechsel"
+          }
+        }
+      }
+    },
+    "Enable a voice session once, then return to your conversation. While the session stays active, you can dictate again from the keyboard. Auto-Stop counts idle time after you leave the app and keyboard.": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "啟用一次語音時段，再返回對話。時段有效期間，可以直接喺鍵盤繼續口述。「自動停止」只會喺離開 app 同鍵盤後計閒置時間。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "启用一次语音时段，再返回对话。时段有效期间，可以直接在键盘继续口述。“自动停止”只会在离开应用和键盘后计算闲置时间。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktiviere eine Sprachsitzung und kehre dann zu deinem Gespräch zurück. Solange die Sitzung aktiv ist, kannst du erneut über die Tastatur diktieren. Auto-Stopp zählt die Leerlaufzeit, nachdem du App und Tastatur verlassen hast."
+          }
+        }
+      }
+    },
+    "Stop the session": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "結束語音時段"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "结束语音时段"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sitzung beenden"
+          }
+        }
+      }
+    },
+    "Turn off Active Session to release the microphone. Never disables the idle timeout; it uses more battery while the session is active. Closing the app or an iOS interruption can still end the session.": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "關閉「語音時段」就會釋放咪。揀「永不」會取消閒置逾時，但時段啟用期間會較耗電。完全關閉 app 或 iOS 中斷仍可能結束時段。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭“语音时段”就会释放麦克风。选择“永不”会取消闲置超时，但时段启用期间会更耗电。完全关闭应用或 iOS 中断仍可能结束时段。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deaktiviere die aktive Sitzung, um das Mikrofon freizugeben. Nie deaktiviert das Leerlauf-Timeout und verbraucht bei aktiver Sitzung mehr Akku. Das Schließen der App oder eine iOS-Unterbrechung kann die Sitzung weiterhin beenden."
+          }
+        }
+      }
+    },
+    "Voice ready. Tap to record; hold to talk.": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "語音已就緒。撳一下錄音，或者按住講。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "语音已就绪。点按录音，或者按住说话。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spracheingabe bereit. Zum Aufnehmen tippen oder zum Sprechen gedrückt halten."
+          }
+        }
+      }
+    },
+    "Voice needs activation. Tap to start a session.": {
+      "localizations": {
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "語音尚未啟用。撳一下開始語音時段。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "语音尚未启用。点按开始语音时段。"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spracheingabe muss aktiviert werden. Tippe, um eine Sitzung zu starten."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

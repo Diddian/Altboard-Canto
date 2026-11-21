@@ -13,11 +13,11 @@ struct OnboardingKeyboardTypeView: View {
       )
       Spacer(minLength: Self.sectionSpacing)
       VStack(spacing: Self.columnSpacing) {
+        self.option(.alphabetic, subtitle: "Type with QWERTZ or QWERTY, plus voice dictation")
         self.cardsLayout {
           self.option(.standard, subtitle: "Large microphone for dictation")
           self.option(.extended, subtitle: "Numbers, symbols and a microphone")
         }
-        self.option(.alphabetic, subtitle: "Type with QWERTZ or QWERTY, plus voice dictation")
       }
       .fixedSize(horizontal: false, vertical: true)
       .padding(.horizontal, 16)

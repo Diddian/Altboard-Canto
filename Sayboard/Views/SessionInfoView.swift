@@ -1,90 +1,39 @@
 import SwiftUI
 
-private struct PillContent: View {
-
-  let showingMic: Bool
-  let timeString: String
-
-  var body: some View {
-    Text(self.timeString)
-      .font(Self.pillFont)
-      .hidden()
-      .overlay {
-        if self.showingMic {
-          Image(systemName: "mic.fill")
-            .font(.system(size: Self.pillIconSize, weight: .semibold))
-        } else {
-          Text(self.timeString)
-            .font(Self.pillFont)
-        }
-      }
-      .foregroundStyle(.white)
-      .padding(.horizontal, Self.pillPaddingH)
-      .padding(.vertical, Self.pillPaddingV)
-      .background(Color.orange, in: Capsule())
-  }
-
-  private static let pillFont = Font.system(size: 10, weight: .semibold)
-  private static let pillIconSize: CGFloat = 10
-  private static let pillPaddingH: CGFloat = 11
-  private static let pillPaddingV: CGFloat = 5
-}
-
 struct SessionInfoView: View {
-
   var body: some View {
     ScrollView {
-      self.composedText
-        .onAppear { self.renderPill() }
-        .onReceive(self.timer) { _ in
-          self.showingMic.toggle()
-          self.renderPill()
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
+      VStack(alignment: .leading, spacing: 24) {
+        self.explanation(
+          "The orange indicator", symbol: "mic.fill",
+          body: "The orange dot means iOS microphone input is active. An enabled voice session keeps that input available between dictations."
+        )
+        self.explanation(
+          "When audio is saved", symbol: "waveform",
+          body: "While voice is ready, unused microphone buffers are discarded. Recording and transcription start when you press the microphone. Saved recordings follow your History & Storage settings."
+        )
+        self.explanation(
+          "Fewer app switches", symbol: "keyboard",
+          body: "Enable a voice session once, then return to your conversation. While the session stays active, you can dictate again from the keyboard. Auto-Stop counts idle time after you leave the app and keyboard."
+        )
+        self.explanation(
+          "Stop the session", symbol: "stop.circle",
+          body: "Turn off Active Session to release the microphone. Never disables the idle timeout; it uses more battery while the session is active. Closing the app or an iOS interruption can still end the session."
+        )
+      }
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .padding()
     }
     .navigationTitle("Active Session Info")
     .navigationBarTitleDisplayMode(.inline)
   }
 
-  private static let toggleInterval: TimeInterval = 3
-  private static let pillTrailingPad: CGFloat = 10
-
-  private static let pillBaselineOffset: CGFloat = {
-    let bodyFont = UIFont.preferredFont(forTextStyle: .body)
-    let pillFont = UIFont.systemFont(ofSize: 10, weight: .semibold)
-    let pillHeight = pillFont.lineHeight + 2 * 5
-    return (bodyFont.ascender + bodyFont.descender - pillHeight) / 2
-  }()
-
-  private static let infoText: LocalizedStringKey = "\u{2014} if you spot this orange indicator in the corner, there\u{2019}s nothing to worry about. It simply means Altboard is keeping the microphone session ready, so the keyboard can start dictation the instant you want it. Nothing is recorded in the background \u{2014} the microphone only turns on when you press the record button. Whatever you say stays on your device and never leaves it. Altboard\u{2019}s code is open \u{2014} if you like, you can go through it yourself and see first-hand that this is true.\n\nWhen you tap record, you\u{2019}ll see the app open for a moment. The system doesn\u{2019}t allow keyboards to use the microphone directly, so Altboard briefly opens to turn it on, and then you\u{2019}re back to what you were typing. Prefer to see that less often? Increase the \u{201C}Auto-Stop\u{201D} time \u{2014} the lower it is, the more often you\u{2019}ll make that round trip.\n\nThe convenience of instant dictation does come at a small battery cost \u{2014} usually up to about 15% of your charge over a full day."
-
-  @Environment(\.displayScale) private var displayScale
-
-  @State private var showingMic = true
-  @State private var pillImage: Image?
-
-  private let timer = Timer
-    .publish(every: Self.toggleInterval, on: .main, in: .common)
-    .autoconnect()
-
-  private var composedText: Text {
-    if let image = self.pillImage {
-      Text(image).baselineOffset(Self.pillBaselineOffset) + Text(Self.infoText)
-    } else {
-      Text(Self.infoText)
-    }
-  }
-
-  @MainActor
-  private func renderPill() {
-    let timeString = Date.now.formatted(.dateTime.hour().minute())
-    let content = PillContent(showingMic: self.showingMic, timeString: timeString)
-      .padding(.trailing, Self.pillTrailingPad)
-    let renderer = ImageRenderer(content: content)
-    renderer.scale = self.displayScale
-    if let uiImage = renderer.uiImage {
-      self.pillImage = Image(uiImage: uiImage)
+  private func explanation(_ title: LocalizedStringKey, symbol: String, body: LocalizedStringKey) -> some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Label { Text(title, tableName: "VoiceSession") } icon: { Image(systemName: symbol) }
+        .font(.headline)
+      Text(body, tableName: "VoiceSession")
+        .fixedSize(horizontal: false, vertical: true)
     }
   }
 }

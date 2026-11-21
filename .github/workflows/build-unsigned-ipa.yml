@@ -41,6 +41,39 @@ jobs:
           sudo xcode-select -s "$XCODE"
           xcodebuild -version
 
+      - name: Verify development download contracts
+        run: python3 -m unittest discover -s scripts -p 'test_development_delivery.py'
+
+      - name: Verify voice session and startup ownership
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s scripts -p 'test_voice_session_contract.py'
+          python3 -m unittest discover -s scripts -p 'test_dictation_startup_contract.py'
+          swiftc -swift-version 6 -o "$RUNNER_TEMP/voice-session-smoke" \
+            Shared/VoiceSessionPolicy.swift scripts/verify-voice-session.swift
+          "$RUNNER_TEMP/voice-session-smoke"
+          swiftc -swift-version 6 -o "$RUNNER_TEMP/dictation-startup-smoke" \
+            Shared/DictationStartupPolicy.swift scripts/verify-dictation-startup.swift
+          "$RUNNER_TEMP/dictation-startup-smoke"
+
+      - name: Verify Emoji navigation and tone selection
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s scripts -p 'test_emoji_navigation.py'
+          swiftc -swift-version 6 -o "$RUNNER_TEMP/emoji-tone-picker-smoke" \
+            Shared/EmojiTonePickerGeometry.swift scripts/verify-emoji-tone-picker.swift
+          "$RUNNER_TEMP/emoji-tone-picker-smoke"
+
+      - name: Verify keyboard setup and saved choices
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s scripts -p 'test_keyboard_setup.py'
+          swiftc -o "$RUNNER_TEMP/keyboard-setup-smoke" \
+            Shared/ChineseInputMode.swift Shared/KeyboardSetupPolicy.swift \
+            Sayboard/Helpers/SetupChecklist.swift Sayboard/Helpers/OnboardingProgress.swift \
+            scripts/verify-keyboard-setup.swift
+          "$RUNNER_TEMP/keyboard-setup-smoke"
+
       - name: Install XcodeGen
         run: |
           set -euo pipefail
@@ -449,72 +482,71 @@ jobs:
             --expected-primary-language mul \
             --expect-emoji-catalog --expect-merged-shapes
 
-      # TEST-labelled integration builds are only available as a run artifact.
-      # Do not replace the last usable rolling development IPA before iPhone QA.
-      - name: Package named A-E TEST IPA
-        if: contains(github.event.head_commit.message, '[TEST IPA]')
+      - name: Name the development IPA
+        id: package
         shell: bash
         run: |
           set -euo pipefail
-          cp dist/Altboard-Canto-SideStore.ipa dist/Altboard-Canto-TEST.ipa
-          unzip -t dist/Altboard-Canto-TEST.ipa | tail -n 1
-          echo "### A-E integration TEST IPA" >> "$GITHUB_STEP_SUMMARY"
-          echo "Source: \`$GITHUB_SHA\` · iPhone acceptance pending" >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload A-E TEST IPA
-        if: contains(github.event.head_commit.message, '[TEST IPA]')
-        uses: actions/upload-artifact@v7
-        with:
-          name: Altboard-Canto-TEST-IPA
-          path: dist/Altboard-Canto-TEST.ipa
-          archive: false
-          if-no-files-found: error
-          retention-days: 14
+          IPA_NAME="Altboard-Canto-Development-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}.ipa"
+          IPA="dist/$IPA_NAME"
+          cp dist/Altboard-Canto-SideStore.ipa "$IPA"
+          test -s "$IPA"
+          echo "ipa_name=$IPA_NAME" >> "$GITHUB_OUTPUT"
+          echo "ipa_path=$IPA" >> "$GITHUB_OUTPUT"
 
       - name: Upload IPA to this Actions run
-        if: ${{ !contains(github.event.head_commit.message, '[TEST IPA]') }}
+        id: ipa
         uses: actions/upload-artifact@v7
         with:
-          name: Altboard-Canto-Unsigned-IPA
-          path: dist/Altboard-Canto-SideStore.ipa
+          path: ${{ steps.package.outputs.ipa_path }}
           archive: false
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 30
 
-      # Artifact v7 with archive:false downloads the .ipa directly.
-      # Keep prior branch preview releases (including #68) untouched.
-      # Only main publishes to its own stable development URL.
-      - name: Publish direct IPA to rolling development release
-        if: ${{ !contains(github.event.head_commit.message, '[TEST IPA]') }}
+      - name: Link the Actions download
         env:
-          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_URL: ${{ steps.ipa.outputs.artifact-url }}
         shell: bash
         run: |
           set -euo pipefail
-          TAG="altboard-canto-main-dev"
-          IPA="dist/Altboard-Canto-SideStore.ipa"
+          test -n "$ARTIFACT_URL"
+          {
+            echo "### Development build #$GITHUB_RUN_NUMBER"
+            echo "[Download IPA from this run]($ARTIFACT_URL) (GitHub sign-in required)"
+            echo "Source: \`$GITHUB_SHA\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # A separate tag per attempt keeps every earlier download intact.
+      # Development builds never replace the previously accepted rolling IPA.
+      - name: Publish direct development IPA download
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IPA_NAME: ${{ steps.package.outputs.ipa_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="altboard-canto-dev-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
+          IPA="dist/$IPA_NAME"
           test -s "$IPA"
-          NOTES="Unsigned SideStore IPA built from commit $GITHUB_SHA on branch $GITHUB_REF_NAME. Install using SideStore, which must re-sign the IPA."
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release upload "$TAG" "$IPA" --repo "$GITHUB_REPOSITORY" --clobber
-            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --notes "$NOTES"
-          else
-            gh release create "$TAG" "$IPA" \
-              --repo "$GITHUB_REPOSITORY" \
-              --target "$GITHUB_SHA" \
-              --title "Altboard-Canto development IPA" \
-              --notes "$NOTES" \
-              --prerelease
-          fi
-          # Keep the release tag and its download tied to the latest built SHA.
-          gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/$TAG" \
-            -f "sha=$GITHUB_SHA" -F "force=true" >/dev/null
-          DIRECT="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/Altboard-Canto-SideStore.ipa"
-          echo "### Direct IPA download" >> "$GITHUB_STEP_SUMMARY"
-          echo "[$DIRECT]($DIRECT)" >> "$GITHUB_STEP_SUMMARY"
-          echo "Built from commit: \`$GITHUB_SHA\`" >> "$GITHUB_STEP_SUMMARY"
-
-
-
-
-
+          IPA_SHA256="$(shasum -a 256 "$IPA" | awk '{print $1}')"
+          NOTES_FILE="$RUNNER_TEMP/development-release.md"
+          {
+            echo "Development build #$GITHUB_RUN_NUMBER. Install with SideStore to re-sign the IPA."
+            echo
+            echo "Source: $GITHUB_SHA"
+            echo "IPA SHA-256: $IPA_SHA256"
+            echo "Build: https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          } > "$NOTES_FILE"
+          gh release create "$TAG" "$IPA" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Altboard Canto Development #$GITHUB_RUN_NUMBER (attempt $GITHUB_RUN_ATTEMPT)" \
+            --notes-file "$NOTES_FILE" \
+            --prerelease --latest=false
+          DIRECT="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$IPA_NAME"
+          {
+            echo "### Direct IPA download"
+            echo "[Download Altboard Canto Development #$GITHUB_RUN_NUMBER]($DIRECT)"
+            echo "[Build downloads](https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG)"
+            echo "IPA SHA-256: \`$IPA_SHA256\`"
+          } >> "$GITHUB_STEP_SUMMARY"

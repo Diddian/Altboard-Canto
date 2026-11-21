@@ -2,6 +2,7 @@
 import Foundation
 
 enum OnboardingStep: String, CaseIterable, Codable, Sendable {
+  case inputMethod
   case languages
   case microphone
   case keyboard
@@ -16,6 +17,14 @@ struct OnboardingRecord: Codable, Equatable, Sendable {
   var postponedSteps = Set<OnboardingStep>()
   var chosenModel: String?
   var isWalkthrough = false
+  var prefersTypingOnly = false
+
+  mutating func postponeVoiceSetup() {
+    self.prefersTypingOnly = true
+    self.chosenModel = nil
+    self.pass(.languages, postponed: true)
+    self.pass(.microphone, postponed: true)
+  }
 
   mutating func pass(_ step: OnboardingStep, postponed: Bool = false) {
     self.passedSteps.insert(step)
@@ -36,6 +45,7 @@ extension OnboardingRecord {
     self.postponedSteps = Self.steps(in: container, forKey: .postponedSteps)
     self.chosenModel = try container.decodeIfPresent(String.self, forKey: .chosenModel)
     self.isWalkthrough = try container.decodeIfPresent(Bool.self, forKey: .isWalkthrough) ?? false
+    self.prefersTypingOnly = try container.decodeIfPresent(Bool.self, forKey: .prefersTypingOnly) ?? false
   }
 
   private static func steps(in container: KeyedDecodingContainer<CodingKeys>, forKey key: CodingKeys) -> Set<OnboardingStep> {
@@ -58,7 +68,8 @@ struct OnboardingProgress: Equatable, Sendable {
 
   func shownSteps(current: OnboardingStep?) -> [OnboardingStep] {
     OnboardingStep.allCases.filter {
-      $0 == current || self.record.passedSteps.contains($0) || !self.isSkipped($0)
+      if self.skippedInTypingOnlyFlow($0), $0 != current { return false }
+      return $0 == current || self.record.passedSteps.contains($0) || !self.isSkipped($0)
     }
   }
 
@@ -68,6 +79,7 @@ struct OnboardingProgress: Equatable, Sendable {
   }
 
   private var canPractice: Bool {
+    guard !self.record.prefersTypingOnly else { return false }
     let hasModel = self.hasUsableModel || (self.record.chosenModel != nil && !self.record.postponedSteps.contains(.languages))
     return self.microphoneGranted && self.keyboardReady && hasModel && !self.isDictationLocked
       && self.record.passedSteps.contains(.keyboard)
@@ -75,14 +87,21 @@ struct OnboardingProgress: Equatable, Sendable {
   }
 
   private func isSkipped(_ step: OnboardingStep) -> Bool {
+    if self.skippedInTypingOnlyFlow(step) { return true }
     if self.record.isWalkthrough { return false }
     switch step {
+    case .inputMethod: return self.record.passedSteps.contains(.keyboardType)
     case .languages: return self.hasUsableModel
     case .microphone: return self.microphoneGranted
     case .keyboard: return false // A permission flag is not proof of keyboard selection.
     case .practice: return !self.canPractice
     case .keyboardType, .writingStyle: return false
     }
+  }
+
+  private func skippedInTypingOnlyFlow(_ step: OnboardingStep) -> Bool {
+    self.record.prefersTypingOnly
+      && [.microphone, .keyboardType, .writingStyle, .practice].contains(step)
   }
 }
 

@@ -29,6 +29,7 @@ struct OnboardingView: View {
 
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @EnvironmentObject private var permissionService: PermissionService
+  @EnvironmentObject private var downloadService: ModelDownloadService
   @AppStorage(SharedKey.hasUsableModel, store: UserDefaults(suiteName: AppGroup.identifier))
   private var hasUsableModel = false
   @State private var record = OnboardingRecord()
@@ -94,11 +95,16 @@ struct OnboardingView: View {
   @ViewBuilder
   private func screen(for step: OnboardingStep) -> some View {
     switch step {
+    case .inputMethod:
+      OnboardingInputMethodView { self.pass(.inputMethod) }
+
     case .languages:
       OnboardingLanguagesView(
         previousChoice: self.chosenModel,
         draft: self.$languageDraft,
+        onTypingOnly: self.continueWithTyping,
       ) { variant in
+        self.record.prefersTypingOnly = false
         self.record.chosenModel = variant.rawValue
         self.pass(.languages)
       }
@@ -110,7 +116,9 @@ struct OnboardingView: View {
       )
 
     case .keyboard:
-      OnboardingKeyboardView { self.pass(.keyboard) }
+      OnboardingKeyboardView(allowsTypingWithoutFullAccess: self.record.prefersTypingOnly) {
+        self.pass(.keyboard)
+      }
 
     case .keyboardType:
       OnboardingKeyboardTypeView { self.pass(.keyboardType) }
@@ -147,7 +155,24 @@ struct OnboardingView: View {
 
   private func postponeCurrentStep() {
     guard let step = self.step else { return }
+    if step == .languages {
+      self.continueWithTyping()
+      return
+    }
     self.pass(step, postponed: true)
+  }
+
+  private func continueWithTyping() {
+    guard self.step == .languages, self.pendingStep == nil else { return }
+    if let chosen = self.chosenModel,
+       case .downloading(let progress) = self.downloadService.state(for: chosen),
+       progress < ModelDownloadService.downloadProgressCeiling {
+      self.downloadService.cancelDownload(variant: chosen)
+    }
+    SharedSettings().keyboardKind = .alphabetic
+    self.record.postponeVoiceSetup()
+    FeatureDiagnostics.record(.keyboardSetup, .fallback)
+    self.pass(.languages, postponed: true)
   }
 
   private func goBack() {

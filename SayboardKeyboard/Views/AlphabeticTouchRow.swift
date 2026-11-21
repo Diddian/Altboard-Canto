@@ -215,7 +215,7 @@ struct AlphabeticTouchRow: View {
         width: self.swipeWidth(for: width)
       )
       let preferred = LatinWordSuggestionPolicy.preferredCodes(
-        SharedSettings().preferredSpokenLanguages
+        SharedSettings().preferredTypingLanguages
       )
       let codes = preferred.filter { $0 == "en" || $0 == "de" }
       let languages = codes.isEmpty ? ["en", "de"] : codes

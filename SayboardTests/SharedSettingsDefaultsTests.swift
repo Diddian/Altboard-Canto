@@ -196,6 +196,60 @@ struct SharedSettingsDefaultsTests {
   }
 
   @Test
+  func legacySpokenLanguagesRemainTheTypingDefaultWithoutWriting() throws {
+    let suiteName = Self.uniqueSuiteName()
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { Self.cleanup(suiteName: suiteName) }
+    defaults.set(["yue", "de"], forKey: SharedKey.preferredSpokenLanguages)
+    let settings = SharedSettings(defaults: defaults)
+    #expect(settings.preferredTypingLanguages == ["yue", "de"])
+    #expect(defaults.object(forKey: SharedKey.preferredTypingLanguages) == nil)
+  }
+
+  @Test
+  func firstSpeechChangePreservesLegacyTypingLanguages() throws {
+    let suiteName = Self.uniqueSuiteName()
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { Self.cleanup(suiteName: suiteName) }
+    defaults.set(["yue", "de"], forKey: SharedKey.preferredSpokenLanguages)
+    let settings = SharedSettings(defaults: defaults)
+    settings.preferredSpokenLanguages = ["en"]
+    #expect(settings.preferredSpokenLanguages == ["en"])
+    #expect(SharedSettings(defaults: defaults).preferredTypingLanguages == ["yue", "de"])
+  }
+
+  @Test
+  func explicitTypingLanguagesSurviveSpeechChangesAndReopen() throws {
+    let suiteName = Self.uniqueSuiteName()
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { Self.cleanup(suiteName: suiteName) }
+    let settings = SharedSettings(defaults: defaults)
+    settings.preferredTypingLanguages = ["de", "en", "de"]
+    settings.preferredSpokenLanguages = ["yue"]
+    settings.synchronize()
+    let reopened = SharedSettings(defaults: defaults)
+    #expect(reopened.preferredTypingLanguages == ["de", "en"])
+    #expect(reopened.preferredSpokenLanguages == ["yue"])
+  }
+
+  @Test
+  func lateKeyboardHideCannotReplaceNewVisibility() throws {
+    let suiteName = Self.uniqueSuiteName()
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { Self.cleanup(suiteName: suiteName) }
+    let settings = SharedSettings(defaults: defaults)
+    let previousOwner = UUID()
+    let nextOwner = UUID()
+    settings.voiceKeyboardActivity = .init(owner: previousOwner, updatedAt: 100, visible: true)
+    settings.voiceKeyboardActivity = .init(owner: nextOwner, updatedAt: 101, visible: true)
+    settings.voiceKeyboardActivity = .init(owner: previousOwner, updatedAt: 102, visible: false)
+    #expect(settings.voiceKeyboardActivity?.owner == nextOwner)
+    #expect(settings.voiceKeyboardActivity?.isActive(at: 103) == true)
+    settings.voiceKeyboardActivity = .init(owner: nextOwner, updatedAt: 104, visible: false)
+    #expect(settings.voiceKeyboardActivity?.isActive(at: 104) == false)
+  }
+
+  @Test
   func spellingPreferencesDefaultOffAndPersist() throws {
     let suiteName = Self.uniqueSuiteName()
     let defaults = try #require(UserDefaults(suiteName: suiteName))

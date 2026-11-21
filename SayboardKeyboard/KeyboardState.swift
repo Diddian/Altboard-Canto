@@ -159,6 +159,17 @@ final class KeyboardState: ObservableObject {
     self.keyboardHapticsEnabled = self.settings.keyboardHapticsEnabled
   }
 
+  func syncVoiceSessionReadiness() {
+    self.settings.synchronize()
+    let ready = VoiceSessionPolicy.isReady(
+      active: self.settings.isSessionActive,
+      heartbeat: self.settings.mainAppHeartbeat,
+      now: Date().timeIntervalSinceReferenceDate
+    )
+    if ready && !self.isSessionActive { FeatureDiagnostics.record(.voiceSession, .ready) }
+    self.isSessionActive = ready
+  }
+
   func refresh() {
     self.settings.synchronize()
     self.isStartingRecording = false
@@ -166,7 +177,7 @@ final class KeyboardState: ObservableObject {
     // acknowledgment may turn the recording animation back on.
     self.isRecording = false
     self.recordingStartedAt = 0
-    self.isSessionActive = self.settings.isSessionActive
+    self.syncVoiceSessionReadiness()
     self.isProcessing = false
     self.voiceProcessingProgress = nil
     self.syncVoiceProcessingProgress()

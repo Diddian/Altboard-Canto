@@ -1,6 +1,7 @@
 import Accelerate
 @preconcurrency import AVFoundation
 import os
+import UIKit
 
 private struct TapState: @unchecked Sendable {
   let accumulator: AudioBufferAccumulator
@@ -107,6 +108,9 @@ final class BackgroundAudioSession: ObservableObject {
       self.endSession()
     }
     DictationBreadcrumb.record("audio: startSession entered")
+    FeatureDiagnostics.record(.voiceSession, .started)
+    self.settings.mainAppHeartbeat = 0
+    self.lastHeartbeatTime.withLock { $0 = 0 }
     let audioSession = AVAudioSession.sharedInstance()
     var sessionActivated = false
     var tapAttempted = false
@@ -135,13 +139,13 @@ final class BackgroundAudioSession: ObservableObject {
         try? audioSession.setActive(false, options: .notifyOthersOnDeactivation)
       }
       self.settings.isSessionActive = false
+      FeatureDiagnostics.record(.voiceSession, .failed)
       DictationBreadcrumb.record("audio: session activation failed; resources released")
       throw error
     }
     Self.activeSession = self
     self.isSessionActive = true
     self.settings.isSessionActive = true
-    self.settings.mainAppHeartbeat = CFAbsoluteTimeGetCurrent()
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.sessionStarted)
 
     self.setupInterruptionObserver()
@@ -185,6 +189,10 @@ final class BackgroundAudioSession: ObservableObject {
     if Self.activeSession === self { Self.activeSession = nil }
     self.isSessionActive = false
     self.settings.isSessionActive = false
+    self.settings.mainAppHeartbeat = 0
+    self.idleCountdown.reset()
+    self.wasCountingIdle = false
+    FeatureDiagnostics.record(.voiceSession, .stopped)
     if notifyEnded {
       TranscriptionBridge.postDarwinNotification(DarwinNotificationName.sessionEnded)
     }
@@ -306,9 +314,23 @@ final class BackgroundAudioSession: ObservableObject {
     self.resetInactivityTimer()
   }
 
+  func setHostForeground(_ foreground: Bool) {
+    guard self.hostIsForeground != foreground else { return }
+    self.hostIsForeground = foreground
+    self.reconcileInactivity()
+  }
+
+  func keyboardActivityDidChange() {
+    self.settings.synchronize()
+    self.reconcileInactivity()
+  }
+
   private let settings = SharedSettings()
   private nonisolated let tapState = OSAllocatedUnfairLock<TapState?>(initialState: nil)
   private var inactivityTimer: Timer?
+  private var idleCountdown = VoiceSessionPolicy.IdleTimer()
+  private var wasCountingIdle = false
+  private var hostIsForeground = UIApplication.shared.applicationState != .background
   private nonisolated let lastFlushTime = OSAllocatedUnfairLock<CFAbsoluteTime>(initialState: 0)
   private nonisolated let lastHeartbeatTime = OSAllocatedUnfairLock<CFAbsoluteTime>(initialState: 0)
   private nonisolated let previousLevel = OSAllocatedUnfairLock<Float>(initialState: 0)
@@ -330,6 +352,9 @@ final class BackgroundAudioSession: ObservableObject {
   private func cancelInactivityTimer() {
     self.inactivityTimer?.invalidate()
     self.inactivityTimer = nil
+    self.idleCountdown.reset()
+    if self.wasCountingIdle { FeatureDiagnostics.record(.voiceSession, .idleCancelled) }
+    self.wasCountingIdle = false
   }
 
   private func installPersistentTap() throws {
@@ -352,15 +377,19 @@ final class BackgroundAudioSession: ObservableObject {
     try ObjCExceptionCatcher.catchException {
       inputNode.installTap(onBus: 0, bufferSize: 4096, format: nil) { @Sendable buffer, _ in
         let now = CFAbsoluteTimeGetCurrent()
-        let shouldHeartbeat = lastHeartbeat.withLock { last -> Bool in
+        let heartbeat = lastHeartbeat.withLock { last -> (write: Bool, first: Bool) in
           if now - last >= 0.5 {
+            let first = last == 0
             last = now
-            return true
+            return (true, first)
           }
-          return false
+          return (false, false)
         }
-        if shouldHeartbeat {
+        if heartbeat.write {
           AppGroup.sharedDefaults?.set(now, forKey: SharedKey.mainAppHeartbeat)
+          if heartbeat.first {
+            TranscriptionBridge.postDarwinNotification(DarwinNotificationName.sessionStarted)
+          }
         }
 
         // Deactivation waits for the last callback before finalization drains
@@ -415,22 +444,50 @@ final class BackgroundAudioSession: ObservableObject {
   }
 
   private func resetInactivityTimer() {
+    self.idleCountdown.reset()
+    self.reconcileInactivity()
+  }
+
+  private func reconcileInactivity() {
     self.inactivityTimer?.invalidate()
+    self.inactivityTimer = nil
     guard self.isSessionActive else {
-      self.inactivityTimer = nil
+      self.idleCountdown.reset()
+      self.wasCountingIdle = false
       return
     }
-    let policy = self.settings.sessionAutoStopPolicy
-    guard let timeout = policy.timeoutSeconds else {
-      self.inactivityTimer = nil
+    let now = Date().timeIntervalSinceReferenceDate
+    let decision = self.idleCountdown.evaluate(
+      now: now, timeout: self.settings.sessionAutoStopPolicy.timeoutSeconds,
+      appForeground: self.hostIsForeground, capturing: self.captureOwner != nil,
+      keyboard: self.settings.voiceKeyboardActivity
+    )
+    let delay: TimeInterval?
+    let countingIdle: Bool
+    switch decision {
+    case .active(let checkAfter):
+      delay = checkAfter
+      countingIdle = false
+    case .unlimited:
+      delay = nil
+      countingIdle = false
+    case .idle(let deadline):
+      delay = max(0.1, deadline - now)
+      countingIdle = true
+    case .expired:
+      FeatureDiagnostics.record(.voiceSession, .timedOut)
+      self.endSession()
       return
     }
-    self.inactivityTimer = Timer.scheduledTimer(
-      withTimeInterval: timeout,
-      repeats: false,
-    ) { [weak self] _ in
+    if countingIdle != self.wasCountingIdle {
+      FeatureDiagnostics.record(.voiceSession, countingIdle ? .idleStarted : .idleCancelled)
+      self.wasCountingIdle = countingIdle
+    }
+    guard let delay else { return }
+    self.inactivityTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
       Task { @MainActor [weak self] in
-        self?.endSession()
+        self?.settings.synchronize()
+        self?.reconcileInactivity()
       }
     }
   }
@@ -463,6 +520,7 @@ final class BackgroundAudioSession: ObservableObject {
 
     switch type {
     case .began:
+      FeatureDiagnostics.record(.voiceSession, .interrupted)
       if self.recoveryGate.isParked {
         self.endSession()
         return

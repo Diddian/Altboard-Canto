@@ -132,18 +132,21 @@ struct MicAnimatedButton: View {
       ? "Cancel dictation processing" : "Dictation microphone")
     .accessibilityHint(self.keyboardState.isProcessing
       ? "Stop pending recognition so the microphone can be used again." : "")
+    .accessibilityValue(self.voiceStateDescription)
     .onChange(of: self.keyboardState.isRecording, self.handleRecordingChanged)
     .task(id: self.keyboardState.isProcessing, self.observeProcessing)
-    .task(id: self.keyboardState.isStartingRecording) {
-      guard self.keyboardState.isStartingRecording else { return }
-      do { try await Task.sleep(for: .seconds(8)) } catch { return }
-      guard self.keyboardState.isStartingRecording else { return }
-      self.keyboardState.isStartingRecording = false
-      self.keyboardState.dictationOutcome = .activationFailed
-    }
   }
 
   private static let spinnerDelay = Duration.milliseconds(600)
+
+  private var voiceStateDescription: Text {
+    if self.keyboardState.isRecording { return Text("Recording") }
+    if self.keyboardState.isStartingRecording { return Text("Activating…") }
+    if self.keyboardState.isProcessing { return Text("Processing") }
+    return Text(self.keyboardState.isSessionActive
+      ? "Voice ready. Tap to record; hold to talk."
+      : "Voice needs activation. Tap to start a session.", tableName: "VoiceSession")
+  }
 
   @State private var isPressed = false
   @State private var isVisible = false
@@ -203,6 +206,14 @@ struct MicAnimatedButton: View {
         )
 
       self.spinnerView(isSpin: isSpin && !compactStatus)
+      if isIdle && !compactStatus {
+        Image(systemName: self.keyboardState.isSessionActive
+          ? "checkmark.circle.fill" : "arrow.up.forward.app")
+          .font(.system(size: 11, weight: .semibold))
+          .foregroundStyle(.secondary)
+          .offset(x: self.sizing.labelWidth / 2 + 8, y: self.sizing.labelHeight / 2 - 3)
+          .accessibilityHidden(true)
+      }
       if compactStatus {
         KeyboardStatusStrip(keyboardState: self.keyboardState, compact: true)
           .padding(.horizontal, 10)

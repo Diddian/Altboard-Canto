@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 
 /// Native system keyboard switcher, including the system Emoji keyboard.
-/// UIKit owns the picker gesture; no custom Emoji catalog is mounted.
+/// UIKit owns this picker gesture; the dedicated Emoji key opens its own page.
 struct NativeInputModeSwitchKey: UIViewRepresentable {
   @Environment(\.colorScheme) private var colorScheme
   let configure: ((UIButton) -> Void)?

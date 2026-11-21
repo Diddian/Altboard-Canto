@@ -32,6 +32,13 @@ struct SettingsView: View {
     SetupChecklist(permissions: self.permissionService, hasUsableModel: self.hasUsableModel)
   }
 
+  private var versionDescription: String {
+    let info = Bundle.main.infoDictionary ?? [:]
+    let version = info["CFBundleShortVersionString"] as? String ?? "—"
+    let build = info["CFBundleVersion"] as? String ?? "—"
+    return "\(version) (\(build))"
+  }
+
   var body: some View {
     Form {
       if !self.setupChecklist.isComplete || self.showsLowStorageWarning {
@@ -122,8 +129,9 @@ struct SettingsView: View {
         } label: {
           Label("Help", systemImage: "questionmark.circle")
         }
-        LabeledContent("Version", value:
-          Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown")
+        LabeledContent("Version", value: self.versionDescription)
+          .monospacedDigit()
+          .textSelection(.enabled)
       } header: {
         Text("App")
       } footer: {
