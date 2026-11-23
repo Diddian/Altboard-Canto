@@ -458,8 +458,8 @@ final class SpeechRecognitionService: ObservableObject {
       self.settings.lastDictationOutcome = .processingFailed
       self.currentRawTranscription = ExperimentalLiveTranscription.read()?.text ?? ""
       self.currentTranscription = self.currentRawTranscription
-      self.saveHistoryRecord(preserveUntranscribedAudio: true)
       self.accumulator.reset()
+      guard self.isCurrentDictation(finalizationToken) else { return }
       self.settings.isRecording = false
       self.settings.dictationSessionToken = nil
       self.settings.synchronize()
@@ -467,6 +467,7 @@ final class SpeechRecognitionService: ObservableObject {
       FeatureDiagnostics.record(.speechFinalization, .failed,
         durationMs: Int((CFAbsoluteTimeGetCurrent() - finalizationStartedAt) * 1_000))
       TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStopped)
+      self.saveHistoryRecord(preserveUntranscribedAudio: true)
       return
     }
     // Only the final recognizer needs these samples now; release the queued copy.
@@ -517,6 +518,7 @@ final class SpeechRecognitionService: ObservableObject {
        !TranscriptionBridge.writeTranscription(self.currentTranscription, token: finalizationToken) {
       self.settings.lastDictationOutcome = .processingFailed
     }
+    guard self.isCurrentDictation(finalizationToken) else { return }
     let finalizationEvent: FeatureDiagnostics.Event
     switch self.settings.lastDictationOutcome {
     case nil: finalizationEvent = .completed
@@ -531,11 +533,6 @@ final class SpeechRecognitionService: ObservableObject {
     // An explicit no-speech result retains the prior silence-handling policy.
     let retainUndecodedAudio = self.settings.lastDictationOutcome == .engineFailed
       || self.settings.lastDictationOutcome == .processingFailed
-    self.saveHistoryRecord(preserveUntranscribedAudio: retainUndecodedAudio)
-    if finalizationEvent == .completed {
-      self.settings.chargeFreeWords(WordCounter.count(self.currentTranscription))
-    }
-
     self.isStopping = false
     self.settings.isRecording = false
     self.settings.dictationSessionToken = nil
@@ -545,6 +542,13 @@ final class SpeechRecognitionService: ObservableObject {
       TranscriptionBridge.postDarwinNotification(DarwinNotificationName.transcriptionReady)
     }
     TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStopped)
+
+    // History may synchronously trim long recordings. Retire this request
+    // before that work so finishing it cannot clear a new keyboard request.
+    if finalizationEvent == .completed {
+      self.settings.chargeFreeWords(WordCounter.count(self.currentTranscription))
+    }
+    self.saveHistoryRecord(preserveUntranscribedAudio: retainUndecodedAudio)
   }
 
   func cancelRecording() {

@@ -720,6 +720,8 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertLess(service.rindex("self.isCurrentDictation(finalizationToken)", 0, publish), publish)
         self.assertLess(publish, service.rindex("self.settings.dictationSessionToken = nil", 0, ready))
         self.assertLess(service.rindex("self.settings.synchronize()", 0, ready), ready)
+        self.assertLess(ready, service.index("self.saveHistoryRecord(preserveUntranscribedAudio: retainUndecodedAudio)"))
+        self.assertIn("guard self.isCurrentDictation(finalizationToken)", service[publish:ready])
 
     def test_bounded_cross_process_lock_and_result_owner(self):
         bridge = source("Shared/LLMBridge.swift")
