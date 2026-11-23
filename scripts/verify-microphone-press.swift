@@ -70,59 +70,25 @@ struct VerifyMicrophonePress {
     precondition(DictationRequestPolicy.destinationFingerprint(
       sessionToken: nil, document: field
     ) == nil)
-    // Recovery requires the original document and completed request token.
-    // Mutable session flags may be cleared only after the main app finishes.
+    // Even a matching document cannot substitute for continuously held focus.
     let epoch = UUID()
-    precondition(DictationRequestPolicy.mayRecoverCompleted(
-      requestedToken: nil, activeToken: nil, deliveryToken: token,
-      deliveryEpoch: epoch, currentDocument: field, fingerprint: fingerprint,
-      recording: false, cancelled: false, hasSelection: false
-    ))
-    precondition(!DictationRequestPolicy.mayRecoverCompleted(
-      requestedToken: token, activeToken: nil, deliveryToken: token,
-      deliveryEpoch: epoch, currentDocument: field, fingerprint: fingerprint,
-      recording: false, cancelled: false, hasSelection: false
-    ))
-    precondition(!DictationRequestPolicy.mayRecoverCompleted(
-      requestedToken: nil, activeToken: token, deliveryToken: token,
-      deliveryEpoch: epoch, currentDocument: field, fingerprint: fingerprint,
-      recording: false, cancelled: false, hasSelection: false
-    ))
-    precondition(!DictationRequestPolicy.mayRecoverCompleted(
-      requestedToken: nil, activeToken: nil, deliveryToken: UUID().uuidString,
-      deliveryEpoch: epoch, currentDocument: field, fingerprint: fingerprint,
-      recording: false, cancelled: false, hasSelection: false
-    ))
-    precondition(!DictationRequestPolicy.mayRecoverCompleted(
-      requestedToken: nil, activeToken: nil, deliveryToken: token,
-      deliveryEpoch: epoch, currentDocument: UUID(), fingerprint: fingerprint,
-      recording: false, cancelled: false, hasSelection: false
-    ))
-    precondition(!DictationRequestPolicy.mayRecoverCompleted(
-      requestedToken: nil, activeToken: nil, deliveryToken: token,
-      deliveryEpoch: epoch, currentDocument: nil, fingerprint: fingerprint,
-      recording: false, cancelled: false, hasSelection: false
-    ))
-    precondition(!DictationRequestPolicy.mayRecoverCompleted(
-      requestedToken: nil, activeToken: nil, deliveryToken: token,
-      deliveryEpoch: nil, currentDocument: field, fingerprint: fingerprint,
-      recording: false, cancelled: false, hasSelection: false
-    ))
-    precondition(!DictationRequestPolicy.mayRecoverCompleted(
-      requestedToken: nil, activeToken: nil, deliveryToken: token,
-      deliveryEpoch: epoch, currentDocument: field, fingerprint: fingerprint,
-      recording: false, cancelled: true, hasSelection: false
-    ))
-    precondition(!DictationRequestPolicy.mayRecoverCompleted(
-      requestedToken: nil, activeToken: nil, deliveryToken: token,
-      deliveryEpoch: epoch, currentDocument: field, fingerprint: fingerprint,
-      recording: true, cancelled: false, hasSelection: false
-    ))
-    precondition(!DictationRequestPolicy.mayRecoverCompleted(
-      requestedToken: nil, activeToken: nil, deliveryToken: token,
-      deliveryEpoch: epoch, currentDocument: field, fingerprint: fingerprint,
-      recording: false, cancelled: false, hasSelection: true
-    ))
+    let focused = DictationRequestPolicy.Focus(
+      document: field, epoch: epoch, before: "粵語 und English", after: " Ende"
+    )
+    precondition(focused.matches(focused))
+    precondition(!focused.matches(nil))
+    precondition(!focused.matches(.init(
+      document: UUID(), epoch: epoch, before: "粵語 und English", after: " Ende"
+    )))
+    precondition(!focused.matches(.init(
+      document: field, epoch: UUID(), before: "粵語 und English", after: " Ende"
+    )))
+    precondition(!focused.matches(.init(
+      document: field, epoch: epoch, before: "粵語 und", after: " English Ende"
+    )))
+    precondition(!focused.matches(.init(
+      document: field, epoch: epoch, before: "粵語 und English", after: " Start"
+    )))
     let origin = DictationRequestPolicy.originProcessMarker(
       token: token, process: (pid: 1234, version: 7)
     )
@@ -137,11 +103,6 @@ struct VerifyMicrophonePress {
     precondition(DictationRequestPolicy.originProcessMarker(
       token: nil, process: (pid: 1234, version: 7)
     ) == nil)
-    precondition(!DictationRequestPolicy.mayRecoverCompleted(
-      requestedToken: nil, activeToken: nil, deliveryToken: token,
-      deliveryEpoch: epoch, currentDocument: nil, fingerprint: fingerprint,
-      recording: false, cancelled: false, hasSelection: false
-    ))
     precondition(LiveDictationChunkPolicy.firstWindowOptions.first == 1_600)
     precondition(LiveDictationChunkPolicy.retryFirstWindow(after: 1_600) == 3_200)
     let gib: UInt64 = 1_073_741_824

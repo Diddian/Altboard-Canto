@@ -99,6 +99,7 @@ extension KeyboardViewController {
     self.llmDirectSelectedText = nil
     self.llmRequestID = nil
     self.llmSourceDeliveryID = nil
+    self.llmDictationRequestToken = nil
     self.llmDocumentIdentifier = nil
     self.llmSelectionContextBefore = nil
     self.llmSelectionContextAfter = nil
@@ -163,6 +164,7 @@ extension KeyboardViewController {
     )
     self.llmRequestID = request.requestID
     self.llmSourceDeliveryID = sourceDeliveryID
+    self.llmDictationRequestToken = sourceDeliveryID == nil ? nil : self.dictationRequestToken
     // The bridge checks for previous requests/results under a cross-process
     // lock. Never delete a different keyboard's unfinished output.
     guard LLMBridge.writeRequest(request) else {
@@ -343,6 +345,10 @@ extension KeyboardViewController {
       FeatureDiagnostics.record(.bridge, .fallback, failureReason: .destinationChanged)
       return false
     }
+    if let source = self.llmSourceDeliveryID {
+      guard self.dictationAutoActionStillFocused(token: self.llmDictationRequestToken),
+            TranscriptionBridge.acknowledgeDelivery(source) else { return false }
+    }
     self.keyboardState.llmHistorySuffix = self.insertSpacedText(fallbackText).trailing
     self.pendingAutoActionText = nil
     return true
@@ -359,6 +365,11 @@ extension KeyboardViewController {
       DiagnosticLog.write("llm/kb: notified complete but bridge held no result")
       self.insertPendingAutoActionFallback()
       self.keyboardState.isLLMProcessing = false
+      return
+    }
+    if self.llmSourceDeliveryID != nil,
+       !self.dictationAutoActionStillFocused(token: self.llmDictationRequestToken) {
+      self.deferLLMResultForManualRecovery()
       return
     }
     DiagnosticLog.write("llm/kb: inserting \(result.count) chars")
@@ -406,6 +417,11 @@ extension KeyboardViewController {
       return
     }
 
+    if let source = self.llmSourceDeliveryID,
+       !TranscriptionBridge.acknowledgeDelivery(source) {
+      self.deferLLMResultForManualRecovery()
+      return
+    }
     for _ in 0 ..< expected.count {
       textDocumentProxy.deleteBackward()
     }
@@ -465,6 +481,7 @@ extension KeyboardViewController {
     self.llmDirectSelectedText = nil
     self.llmRequestID = nil
     self.llmSourceDeliveryID = nil
+    self.llmDictationRequestToken = nil
     self.llmDocumentIdentifier = nil
     self.llmSelectionContextBefore = nil
     self.llmSelectionContextAfter = nil

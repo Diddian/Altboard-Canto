@@ -32,22 +32,23 @@ enum DictationRequestPolicy {
     return Data(SHA256.hash(data: input)).base64EncodedString()
   }
 
-  /// Finished results may regain auto-insertion only in the original
-  /// UIKit document. A host process alone is not field identity.
-  static func mayRecoverCompleted(
-    requestedToken: String?, activeToken: String?, deliveryToken: String,
-    deliveryEpoch: UUID?, currentDocument: UUID?, fingerprint: String?,
-    recording: Bool, cancelled: Bool, hasSelection: Bool
-  ) -> Bool {
-    guard requestedToken == nil, activeToken == nil,
-          !recording, !cancelled, !hasSelection,
-          deliveryEpoch != nil, UUID(uuidString: deliveryToken) != nil else {
-      return false
+  /// A controller-local snapshot. Never put host context in App Group or diagnostics.
+  struct Focus: Equatable {
+    let document: UUID
+    let epoch: UUID
+    private let before: String
+    private let after: String
+
+    init(document: UUID, epoch: UUID, before: String?, after: String?) {
+      self.document = document
+      self.epoch = epoch
+      self.before = String((before ?? "").suffix(48))
+      self.after = String((after ?? "").prefix(48))
     }
-    return isSameDestination(
-      sessionToken: deliveryToken, document: currentDocument,
-      fingerprint: fingerprint
-    )
+
+    func matches(_ current: Focus?) -> Bool {
+      current == self
+    }
   }
 
   /// Keep the originating keyboard request across a cold containing-app

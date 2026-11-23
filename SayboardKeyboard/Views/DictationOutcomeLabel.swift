@@ -26,18 +26,15 @@ struct DictationOutcomeLabel: View {
   private static let visibleDuration = Duration.seconds(4)
 
   private var labelText: Text {
-    let text = Text(self.message)
+    let text: Text = switch self.outcome {
+    case .noSpeech: Text("No speech detected")
+    case .engineFailed: Text("Recognition failed")
+    case .processingFailed: Text("Translation failed")
+    case .activationFailed: Text("Mic activation failed")
+    case .sessionRequired: Text("Enable Active Session in Altboard Settings.", tableName: "VoiceSession")
+    case .unexpectedLanguage: Text("Unexpected language")
+    }
     guard self.outcome != .noSpeech else { return text }
     return Text(verbatim: "\u{26A0}\u{FE0F} ") + text
-  }
-
-  private var message: LocalizedStringKey {
-    switch self.outcome {
-    case .noSpeech: "No speech detected"
-    case .engineFailed: "Recognition failed"
-    case .processingFailed: "Translation failed"
-    case .activationFailed: "Mic activation failed"
-    case .unexpectedLanguage: "Unexpected language"
-    }
   }
 }

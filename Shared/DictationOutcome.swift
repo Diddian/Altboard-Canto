@@ -10,5 +10,7 @@ enum DictationOutcome: String, Sendable {
 
   case activationFailed
 
+  case sessionRequired
+
   case unexpectedLanguage
 }

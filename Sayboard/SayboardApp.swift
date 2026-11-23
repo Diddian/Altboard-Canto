@@ -463,9 +463,15 @@ private struct SayboardRootView: View {
 
     switch url.host {
     case DeepLink.dictateHost:
-      guard DeepLinkValidator.isFromKeyboard() else {
-        return
-      }
+      let settings = SharedSettings()
+      settings.synchronize()
+      guard let token = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+              .queryItems?.first(where: { $0.name == "request" })?.value,
+            DictationRequestPolicy.isCurrent(started: token,
+              current: settings.dictationSessionToken,
+              cancelled: settings.dictationCancellationRequested),
+            TranscriptionBridge.cancellationToken() != token,
+            settings.consumeKeyboardRequestIfRecent() else { return }
       self.handleDictateDeepLink()
 
     case DeepLink.stopHost:
@@ -528,9 +534,6 @@ private struct SayboardRootView: View {
     guard !self.speechService.isStopping else { return }
 
     let settings = SharedSettings()
-    if settings.dictationSessionToken == nil {
-      settings.dictationSessionToken = UUID().uuidString
-    }
     self.speechService.downloadService = self.downloadService
     self.speechService.llmCoordinator = self.llmCoordinator
     self.llmCoordinator.speechService = self.speechService
@@ -539,6 +542,9 @@ private struct SayboardRootView: View {
     guard self.tryStartDictation() else {
       self.hostActivationFailed = true
       settings.dictationSessionToken = nil
+      settings.lastDictationOutcome = .activationFailed
+      settings.synchronize()
+      TranscriptionBridge.postDarwinNotification(DarwinNotificationName.dictationStopped)
       DictationBreadcrumb.record("host: microphone activation failed")
       return
     }
@@ -566,6 +572,11 @@ private struct SayboardRootView: View {
         return
       }
       try? await Task.sleep(for: .seconds(Self.dismissToBackgroundDelay))
+      let settings = SharedSettings()
+      settings.synchronize()
+      guard self.speechService.activeDictationToken == token,
+            !settings.dictationCancellationRequested,
+            TranscriptionBridge.cancellationToken() != token else { return }
       let opened = HostAppOpener.open(bundleId: host)
       DictationBreadcrumb.record("host: requested return to \(host), dispatched=\(opened)")
       self.showsHostReturnHint = true

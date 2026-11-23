@@ -122,7 +122,7 @@ final class BackgroundAudioSession: ObservableObject {
       )
       try audioSession.setAllowHapticsAndSystemSoundsDuringRecording(true)
       DictationBreadcrumb.record("audio: activating AVAudioSession")
-      try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+      try audioSession.setActive(true)
       sessionActivated = true
       DictationBreadcrumb.record("audio: installing persistent input tap")
       tapAttempted = true

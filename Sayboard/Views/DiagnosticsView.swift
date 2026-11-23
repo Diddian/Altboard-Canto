@@ -351,6 +351,12 @@ struct DiagnosticsView: View {
     self.rawASRResult = ""
     self.testResult = "Preparing speech model..."
     Task {
+      let settings = SharedSettings()
+      settings.synchronize()
+      if settings.dictationSessionToken == nil {
+        settings.dictationCancellationRequested = false
+        settings.synchronize()
+      }
       await self.speech.startRecordingAfterModelLoad()
       self.testResult = self.speech.isRecording
         ? "Recording. Speak and tap Stop and transcribe."

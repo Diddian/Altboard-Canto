@@ -150,7 +150,9 @@ extension SpeechRecognitionService {
       self.liveDictationStatus = "Stopped"
       return true
     }
-    if await self.awaitExperimentalLiveWorkerExit(task) {
+    let workerExited = await self.awaitExperimentalLiveWorkerExit(task)
+    guard !Task.isCancelled else { return false }
+    if workerExited {
       self.liveDictationStatus = "Stopped"
       return true
     }

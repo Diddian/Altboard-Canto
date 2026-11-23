@@ -17,7 +17,10 @@ enum AppGroup {
   }()
 }
 struct SharedSettings {
-  var dictationSessionToken: String? { "00000000-0000-0000-0000-000000000001" }
+  nonisolated(unsafe) static var activeToken: String?
+  var dictationSessionToken: String? { Self.activeToken }
+  var dictationCancellationRequested: Bool { false }
+  func synchronize() {}
   var dictationDestinationEpoch: UUID? { UUID(uuidString: "00000000-0000-0000-0000-000000000002") }
 }
 enum DarwinNotificationName {
@@ -96,9 +99,13 @@ enum VerifyOperationContracts {
     precondition(preservedPendingBytes == Data("malformed-pending-request".utf8))
     try FileManager.default.removeItem(at: malformedURL)
 
-    precondition(TranscriptionBridge.writeTranscription("synthetic final text"))
+    let requestToken = UUID().uuidString
+    SharedSettings.activeToken = requestToken
+    precondition(!TranscriptionBridge.writeTranscription("stale", token: UUID().uuidString))
+    precondition(TranscriptionBridge.writeTranscription("synthetic final text", token: requestToken))
+    precondition(TranscriptionBridge.readDelivery() == nil)
+    SharedSettings.activeToken = nil
     let pending = TranscriptionBridge.readDelivery()!
-    let requestToken = SharedSettings().dictationSessionToken
     let requestEpoch = SharedSettings().dictationDestinationEpoch
     precondition(TranscriptionBridge.readDelivery(matching: requestToken,
       destinationEpoch: requestEpoch)?.resultID == pending.resultID)
@@ -114,8 +121,24 @@ enum VerifyOperationContracts {
       maxAgeSeconds: 1_800
     )?.resultID == pending.resultID)
     precondition(TranscriptionBridge.readDelivery(maxAgeSeconds: -1) == nil)
-    precondition(TranscriptionBridge.writeTranscription("a newer synthetic result"))
-    TranscriptionBridge.acknowledgeDelivery(pending.resultID)
+    let cancelledToken = UUID().uuidString
+    SharedSettings.activeToken = cancelledToken
+    precondition(TranscriptionBridge.writeTranscription("discard after cancel", token: cancelledToken))
+    let cancelled = TranscriptionBridge.readDelivery(
+      matching: cancelledToken, allowAnyDestination: true, includeUncommitted: true
+    )!
+    TranscriptionBridge.requestCancellation(for: cancelledToken)
+    precondition(!TranscriptionBridge.writeTranscription("cancelled", token: cancelledToken))
+    let nextToken = UUID().uuidString
+    SharedSettings.activeToken = nextToken
+    precondition(TranscriptionBridge.readDelivery(
+      matching: cancelledToken, allowAnyDestination: true
+    ) == nil)
+    precondition(TranscriptionBridge.acknowledgeDelivery(cancelled.resultID))
+    precondition(TranscriptionBridge.writeTranscription("a newer synthetic result", token: nextToken))
+    SharedSettings.activeToken = nil
+    precondition(TranscriptionBridge.acknowledgeDelivery(pending.resultID))
+    precondition(!TranscriptionBridge.acknowledgeDelivery(pending.resultID))
     let newer = TranscriptionBridge.readDelivery()!
     precondition(newer.resultID != pending.resultID)
     precondition(newer.text == "a newer synthetic result")

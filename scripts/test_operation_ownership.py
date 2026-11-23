@@ -36,14 +36,11 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("if notifyEnded { self.onSessionEnded?() }", audio)
         self.assertIn("if self.recoveryGate.isParked {", audio)
         self.assertIn("try self.startSession()", resumed)
-        self.assertIn("let parkedAudio = coldQwen && self.session.suspendForModelLoad()", stop)
-        self.assertIn("self.restoreParkedAudioSession(", stop)
+        self.assertNotIn("self.session.suspendForModelLoad()", stop)
+        self.assertNotIn("self.session.endSession()", stop)
         self.assertIn("self.activeDictationToken == finalizationToken", stop)
-        self.assertIn("!self.settings.dictationCancellationRequested", stop)
-        self.assertIn("modelLoadMemoryRelease", diagnostics)
+        self.assertIn("self.isCurrentDictation(finalizationToken)", stop)
         self.assertIn("audioSessionRestoreFailed", diagnostics)
-        self.assertLess(stop.index("self.session.endCapture(owner: .dictation)"),
-                        stop.index("self.session.suspendForModelLoad()"))
         self.assertIn("self.session.isSessionHealthy", speech)
         self.assertIn("LiveWarmupMemoryPolicy.allowsWarmup(", speech)
         self.assertIn("releaseInactiveSpeechEnginesForQwen()", speech)
@@ -88,16 +85,11 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("&& keyboardVisible && !recording && !appAcknowledged", policy)
         self.assertIn("timeout: direct ? Self.staleFallbackTimeout : 0.8", controller)
 
-    def test_blocked_live_field_retains_preview_without_unverified_insertion(self):
-        live = function("SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift",
-                        "func applyExperimentalLiveUpdate()",
-                        "func completeExperimentalLiveText(")
-        self.assertLess(live.index("self.keyboardState.liveSourcePreview ="),
-                        live.index("self.liveTranscriptionBlockedToken != update.sessionToken"))
-        self.assertLess(live.index("Self.blockedLiveSessionToken != update.sessionToken"),
-                        live.index("let proxy = self.textDocumentProxy"))
-        self.assertIn("guard let document = self.availableDocumentIdentifier()", live)
-        self.assertIn("self.blockExperimentalLiveChanges(token: update.sessionToken)", live)
+    def test_live_preview_has_no_host_mutation(self):
+        live = source("SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift")
+        self.assertIn("self.keyboardState.liveSourcePreview =", live)
+        for mutation in ("textDocumentProxy", "insertText(", "deleteBackward("):
+            self.assertNotIn(mutation, live)
 
     def test_haptic_recovery_is_idempotent_and_uses_direct_uikit_fallback(self):
         haptic = source("Shared/KeyboardHaptics.swift")
@@ -140,7 +132,7 @@ class OperationOwnershipTests(unittest.TestCase):
                             "private func scheduleWarmStartCheck(",
                             "private func openDictateDeepLinkFallback(")
         self.assertIn("failureReason: .warmStartUnacknowledged", schedule)
-        self.assertIn("private func recoverCompletedDictationDestination()", controller)
+        self.assertIn("private func currentDictationFocus()", controller)
         self.assertIn("self.insertSpacedText(text)", controller)
 
     def test_cold_app_launch_keeps_valid_host_dictation_token(self):
@@ -158,7 +150,7 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("operationID: preservedToken, phase: .accepted", app_init)
         self.assertEqual(app_init.count("settings.dictationSessionToken = nil"), 1)
         service = source("Sayboard/Services/SpeechRecognitionService+Transcription.swift")
-        self.assertIn("TranscriptionBridge.writeTranscription(finalOutput)", service)
+        self.assertIn("self.currentTranscription = finalOutput", service)
         controller = source("SayboardKeyboard/KeyboardViewController.swift")
         self.assertIn("self.insertDeferredAppearanceText()", controller)
         self.assertIn("self.insertSpacedText(text)", controller)
@@ -220,7 +212,7 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("self.processingTimeoutGeneration == generation", timeout)
         self.assertLess(timeout.index("self.processingTimeoutTimer = nil"), timeout.index("guard self.viewIfLoaded?.window != nil", timeout.index("Timer.scheduledTimer")))
         insertion = function("SayboardKeyboard/KeyboardViewController.swift", "func insertTranscribedText()", "func pingMainAppForSessionStatus()")
-        self.assertLess(insertion.index("guard self.viewIfLoaded?.window != nil"), insertion.index("self.insertSpacedText(text)"))
+        self.assertLess(insertion.index("guard self.dictationStartupVisible, self.viewIfLoaded?.window != nil"), insertion.index("self.insertSpacedText(text)"))
         self.assertIn("defer { self.refreshRecoverableLLMResult() }", insertion)
         observer = function("SayboardKeyboard/KeyboardViewController.swift", "private func setupTranscriptionObserver()", "private func setupVoiceProgressObserver()")
         self.assertIn("if vc.insertTranscribedText()", observer)
@@ -271,24 +263,17 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("return token == nil && destinationEpoch == nil ? latest : nil", body)
         observer = function("SayboardKeyboard/KeyboardViewController.swift",
                             "Self.dictationStoppedObserver =", "self.setupSessionLifecycleObservers()")
-        self.assertIn("TranscriptionBridge.readDelivery(matching: vc.dictationRequestToken", observer)
+        self.assertIn("vc.insertTranscribedText()", observer)
         self.assertNotIn("TranscriptionBridge.readTranscription()", observer)
 
-    def test_completed_dictation_reattaches_to_original_input(self):
+    def test_dismissal_and_cursor_changes_revoke_auto_insert(self):
         controller = source("SayboardKeyboard/KeyboardViewController.swift")
-        policy = source("Shared/DictationRequestPolicy.swift")
-        recovery = function("SayboardKeyboard/KeyboardViewController.swift",
-                            "private func recoverCompletedDictationDestination()",
-                            "func insertTranscribedText()")
-        self.assertIn("static func mayRecoverCompleted(", policy)
-        self.assertIn("return isSameDestination(", policy)
-        self.assertIn("maxAgeSeconds: Self.automaticRecoveryWindow", recovery)
-        self.assertIn("DictationRequestPolicy.mayRecoverCompleted(", recovery)
-        self.assertIn("fingerprint: settings.dictationDestinationFingerprint", recovery)
-        self.assertIn("self.keyboardState.documentEpoch = epoch", recovery)
-        self.assertIn("guard sameDocument else { return }", recovery)
-        self.assertNotIn("mayDeliverWithoutDocumentIdentifier", policy)
-        self.assertIn("static let automaticRecoveryWindow: TimeInterval = 90", controller)
+        for callback in ("override func viewWillDisappear", "private func hostDidEnterBackground"):
+            self.assertIn("self.dictationFocus = nil", controller.split(callback, 1)[1].split("\n  }", 1)[0])
+        for callback in ("override func textDidChange", "override func selectionDidChange"):
+            self.assertIn("self.invalidateChangedDictationFocus()", controller.split(callback, 1)[1].split("\n  }", 1)[0])
+        recovery = controller.split("func recoverActiveDictationAfterReentry()", 1)[1].split("private func startDictationViaDarwin()", 1)[0]
+        self.assertNotIn("self.dictationFocus = self.currentDictationFocus()", recovery)
 
     def test_documentless_and_history_cross_field_mutations_fail_closed(self):
         policy = source("Shared/DictationRequestPolicy.swift")
@@ -297,7 +282,7 @@ class OperationOwnershipTests(unittest.TestCase):
         state = source("SayboardKeyboard/KeyboardState.swift")
         self.assertNotIn("mayDeliverWithoutDocumentIdentifier(", policy + keyboard)
         self.assertIn("static func originProcessMarker(", policy)
-        self.assertIn("guard sameDocument else { return }", keyboard)
+        self.assertIn("let document = self.availableDocumentIdentifier() else { return nil }", keyboard)
         self.assertIn("self.keyboardState.llmHistoryDocumentIdentifier", llm)
         self.assertIn("self.availableDocumentIdentifier() == origin", llm)
         self.assertIn("self.keyboardState.llmHistoryEpoch == self.keyboardState.documentEpoch", llm)
@@ -320,7 +305,7 @@ class OperationOwnershipTests(unittest.TestCase):
         controller = source("SayboardKeyboard/KeyboardViewController.swift")
         insert = function("SayboardKeyboard/KeyboardViewController.swift",
                           "func insertTranscribedText()", "func pingMainAppForSessionStatus")
-        self.assertIn("self.recoverCompletedDictationDestination()", insert)
+        self.assertIn("self.dictationFocus?.matches(self.currentDictationFocus())", insert)
         self.assertIn("self.dictationRequestToken.flatMap { token in", insert)
         self.assertIn("matching: token, allowAnyDestination: true", insert)
         self.assertNotIn("defer { TranscriptionBridge.acknowledgeDelivery", insert)
@@ -334,21 +319,12 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertNotIn("func insertPendingDictation()", controller)
         self.assertNotIn("refreshPendingDictation()", controller)
 
-    def test_uncertain_live_reconciliation_never_acknowledges(self):
-        live = source("SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift")
-        controller = source("SayboardKeyboard/KeyboardViewController.swift")
-        self.assertIn("enum LiveFinalDeliveryResult", live)
-        self.assertIn("case notApplicable, inserted, review", live)
-        self.assertIn("return .review", live)
-        self.assertIn("return .inserted", live)
+    def test_outbox_is_consumed_before_automatic_proxy_write(self):
         handling = function("SayboardKeyboard/KeyboardViewController.swift",
                             "func insertTranscribedText()", "func pingMainAppForSessionStatus")
-        self.assertIn("case .inserted:", handling)
-        self.assertIn("case .review:", handling)
-        reviewed = handling.split("case .review:", 1)[1].split("case .notApplicable:", 1)[0]
-        self.assertNotIn("acknowledgeDelivery", reviewed)
-        self.assertNotIn("showFinalOutputPreview(delivery.text)", handling)
-        self.assertIn("self.recoverCompletedDictationDestination()", controller)
+        claim = handling.index("guard TranscriptionBridge.acknowledgeDelivery(delivery.resultID)")
+        self.assertLess(handling.index("matchesDocument else"), claim)
+        self.assertLess(claim, handling.index("self.insertSpacedText(text)"))
 
     def test_completed_ai_request_does_not_send_failure_notification(self):
         body = function("Sayboard/Services/LLMProcessingCoordinator.swift",
@@ -363,13 +339,13 @@ class OperationOwnershipTests(unittest.TestCase):
         body = function("Sayboard/Services/SpeechRecognitionService.swift", "self.requestCancelObserver =", "self.requestStopObserver =")
         self.assertLess(body.index("OperationPolicy.ownsCancellation"), body.index("self.cancelRecording()"))
 
-    def test_cancellation_cannot_end_conversation(self):
+    def test_cancellation_releases_capture_without_releasing_session(self):
         body = function("Sayboard/Services/SpeechRecognitionService.swift", "func cancelRecording()", "func transcribeSamples")
-        self.assertLess(body.index("ConversationCoordinator.shared.recordingSide == nil"), body.index("self.session.endSession()"))
-        self.assertIn("self.cancellationTask == nil", body)
-        self.assertIn("await self.awaitExperimentalLiveWorkerExit(cancelledLive)", body)
-        self.assertIn("defer { self.cancellationTask = nil }", body)
-        self.assertLess(body.index("cancelledLive?.cancel()"), body.index("await self.awaitExperimentalLiveWorkerExit"))
+        self.assertIn("self.session.endCapture(owner: .dictation)", body)
+        self.assertNotIn("self.session.endSession()", body)
+        self.assertIn("self.finalizationTask?.cancel()", body)
+        self.assertIn("self.experimentalLiveTask?.cancel()", body)
+        self.assertNotIn("await ", body)
 
     def test_start_stop_finalization_uses_owned_session_and_explicit_failure_paths(self):
         service = source("Sayboard/Services/SpeechRecognitionService.swift")
@@ -381,8 +357,8 @@ class OperationOwnershipTests(unittest.TestCase):
                          "func runFinalTranscription(", "func saveHistoryRecord(")
         self.assertLess(capture.index("!self.settings.dictationCancellationRequested"),
                         capture.index("try self.startAudioCapture()"))
-        self.assertLess(capture.index("self.speechWorkers == 0"),
-                        capture.index("try self.startAudioCapture()"))
+        self.assertLess(stop.index("while (self.speechWorkers > 0"),
+                        stop.index("await self.runFinalTranscription("))
         self.assertLess(stop.index("self.session.endCapture(owner: .dictation)"),
                         stop.index("await self.stopExperimentalLive()"))
         self.assertLess(stop.index("guard self.isCurrentDictation(finalizationToken) else { return }"),
@@ -420,25 +396,19 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("self.settings.dictationSessionToken = nil", cancel)
         self.assertIn("self.settings.dictationCancellationRequested = true", cancel)
         self.assertIn("ExperimentalLiveTranscription.clear()", cancel)
-        self.assertIn("TranscriptionBridge.clearTranscription()", cancel)
+        self.assertIn("matching: token, allowAnyDestination: true, includeUncommitted: true", cancel)
         self.assertIn("guard self.isCurrentDictation(requestToken) else { return }", final)
         self.assertIn("guard !Task.isCancelled, self.isRecording else { break }", live)
         self.assertIn("if ExperimentalLiveTranscription.write(", live)
 
-    def test_cancel_wait_is_bounded_and_keeps_native_worker_accounted(self):
-        cancel = function("Sayboard/Services/SpeechRecognitionService.swift", "func cancelRecording()", "func transcribeSamples")
-        live = function("Sayboard/Services/SpeechRecognitionService+ExperimentalLive.swift", "func awaitExperimentalLiveWorkerExit", "func stopExperimentalLive")
-        stop = function("Sayboard/Services/SpeechRecognitionService+ExperimentalLive.swift", "func stopExperimentalLive")
-        self.assertIn("for _ in 0..<40", live)
-        self.assertLess(live.index("if self.speechWorkers == 0"), live.index("await task?.value"))
-        self.assertIn("return false", live)
-        self.assertIn("await self.awaitExperimentalLiveWorkerExit(task)", stop)
-        self.assertLess(cancel.index("self.cancellationTask == nil"), cancel.index("self.cancellationTask = Task"))
-        self.assertIn("if !nativeWorkerExited", cancel)
-        self.assertLess(cancel.index("await self.awaitExperimentalLiveWorkerExit(cancelledLive)"), cancel.index("self.isStopping = false"))
-        self.assertIn("self.speechWorkers == 0 else", function("Sayboard/Services/SpeechRecognitionService.swift", "func startCapture()", "func scheduleQwenWarmupAfterCapture"))
-        self.assertIn("defer { self.speechWorkers -= 1 }", function("Sayboard/Services/SpeechRecognitionService.swift", "func transcribeSamples", "func loadModelIfAvailable"))
-
+    def test_retry_records_before_old_decoder_releases_model(self):
+        start = function("Sayboard/Services/SpeechRecognitionService.swift", "func startCapture()", "private func awaitCaptureConfirmation")
+        self.assertNotIn("self.speechWorkers", start)
+        finish = function("Sayboard/Services/SpeechRecognitionService.swift", "private func finishRecording", "func cancelRecording()")
+        self.assertIn("let deadline = clock.now.advanced(by: .seconds(15))", finish)
+        self.assertLess(finish.index("while (self.speechWorkers > 0"), finish.index("await self.runFinalTranscription("))
+        decode = function("Sayboard/Services/SpeechRecognitionService.swift", "func transcribeSamples", "func loadModelIfAvailable")
+        self.assertIn("defer { self.speechWorkers -= 1 }", decode)
 
     def test_cold_and_warm_microphone_share_one_request_owner(self):
         controller = source("SayboardKeyboard/KeyboardViewController.swift")
@@ -467,7 +437,7 @@ class OperationOwnershipTests(unittest.TestCase):
                            "func recoverActiveDictationAfterReentry()", "private func startDictationViaDarwin")
         self.assertIn("DictationRequestPolicy.isSameDestination(", restore)
         self.assertIn("self.dictationDocumentID = nil", restore)
-        self.assertIn("self.liveTranscriptionBlockedToken = token", restore)
+        self.assertIn("self.dictationFocus = nil", restore)
         self.assertIn("self.keyboardState.documentEpoch = epoch", restore)
         self.assertIn("func stopDictationViaDarwin()", controller)
         self.assertIn("TranscriptionBridge.requestStop(for: self.dictationRequestToken)", controller)
@@ -589,16 +559,12 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("ConversationTurnPolicy.validAudioFileName", body)
         self.assertIn("decode([ConversationTurn].self", body)
 
-    def test_live_session_is_scoped_to_host_field_and_epoch(self):
+    def test_live_preview_is_scoped_to_visible_current_request(self):
         live = source("SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift")
-        for guard in ("LiveDeliveryPolicy.accepts(", "LiveDeliveryPolicy.matchesField(",
-                      "liveTranscriptionOwnerToken", "liveTranscriptionDocumentEpoch",
-                      "liveTranscriptionContextAfter"):
-            self.assertIn(guard, live)
-        controller = source("SayboardKeyboard/KeyboardViewController.swift")
-        self.assertIn("if Self.blockedLiveSessionToken != settings.dictationSessionToken", controller)
-        self.assertIn("currentDocument == self.dictationDocumentID", controller)
-        self.assertIn("DictationRequestPolicy.isSameDestination(", controller)
+        for gate in ("self.dictationStartupVisible", "update.sessionToken == self.dictationRequestToken",
+                     "update.sessionToken == settings.dictationSessionToken",
+                     "update.revision > self.liveTranscriptionRevision"):
+            self.assertIn(gate, live)
 
     def test_meeting_does_not_end_a_borrowed_audio_session(self):
         body = function("Sayboard/Services/MeetingRecordingCoordinator.swift", "func start(", "private func heartbeat()")
@@ -630,22 +596,19 @@ class OperationOwnershipTests(unittest.TestCase):
         controller = source("SayboardKeyboard/KeyboardViewController.swift")
         self.assertIn("O_WRONLY | O_CREAT | O_EXCL", store)
         self.assertIn("hostReceiptPrefix + token + \".receipt\"", store)
-        self.assertIn("claimHostInsertion(for: update.sessionToken)", live)
-        self.assertLess(live.index("claimHostInsertion(for: update.sessionToken)"),
-                        live.index("proxy.insertText(prefix + update.text)"))
-        self.assertIn("self.liveTranscriptionOwnerToken != token", controller)
+        self.assertNotIn("claimHostInsertion(", live)
+        self.assertNotIn(".insertText(", live)
         self.assertIn("hasHostInsertionStarted(for: delivery.sessionToken)", controller)
         self.assertIn("failureReason: .awaitingUserInsertion", controller)
 
-    def test_live_final_plan_and_cancel_tombstone(self):
+    def test_cancelled_live_packets_cannot_resurface(self):
         live = source("SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift")
-        contract = source("Shared/OperationContracts.swift")
-        self.assertIn("LiveFinalReconciliation.plan(", live)
-        self.assertIn("self.liveTranscriptionOwnerToken ?? self.dictationRequestToken", live)
-        for case in ("case .unchanged:", "case .append(let suffix):",
-                     "case .replace(let replacement):", "case .review:"):
-            self.assertIn(case, live)
-        self.assertIn("guard before?.hasSuffix(marked) == true else { return .review }", contract)
+        self.assertIn("!settings.dictationCancellationRequested", live)
+        self.assertIn("update.sessionToken != TranscriptionBridge.cancellationToken()", live)
+        cancel = function("SayboardKeyboard/KeyboardViewController.swift",
+                          "func cancelDictationViaDarwin()", "func stopDictationViaDarwin()")
+        self.assertIn("self.keyboardState.liveSourcePreview = nil", cancel)
+        self.assertIn("self.dictationRequestToken = nil", cancel)
 
     def test_ai_handoff_and_orphan_recovery_use_single_persisted_owner(self):
         controller = source("SayboardKeyboard/KeyboardViewController.swift")
@@ -691,7 +654,9 @@ class OperationOwnershipTests(unittest.TestCase):
         self.assertIn("guard self.currentLLMFieldMatches()", fallback)
         self.assertIn("return false", fallback)
         self.assertEqual(actions.count("acknowledgeSource: insertedFallback"), 2)
-        self.assertEqual(result.count("self.deferLLMResultForManualRecovery()"), 3)
+        self.assertIn("self.dictationAutoActionStillFocused(token: self.llmDictationRequestToken)", result)
+        self.assertLess(result.index("TranscriptionBridge.acknowledgeDelivery(source)"),
+                        result.index("for _ in 0 ..< expected.count"))
         self.assertNotIn("UIPasteboard.general.string = result", result.split(
             "if self.llmClipboardOnly", 1)[1].split(
             "if let originalSelection", 1)[1])
@@ -729,36 +694,32 @@ class OperationOwnershipTests(unittest.TestCase):
         controller = source("SayboardKeyboard/KeyboardViewController+LLM.swift")
         self.assertIn("LLMBridge.writeStatus(.cancelled, requestID: id)", controller)
 
-    def test_stale_live_block_is_request_scoped(self):
-        controller = source("SayboardKeyboard/KeyboardViewController.swift")
-        self.assertIn("self.liveTranscriptionBlockedToken == delivery.sessionToken", controller)
-        self.assertIn("Self.blockedLiveSessionToken == delivery.sessionToken", controller)
-        self.assertIn("self.abandonExperimentalLiveOwnership()", controller)
+    def test_cold_fallback_is_scoped_and_development_only(self):
+        controller = function("SayboardKeyboard/KeyboardViewController.swift",
+                              "private func openDictateDeepLinkFallback", "func cancelDictationViaDarwin")
+        self.assertIn("#if APPSTORE", controller)
+        self.assertIn("self.keyboardState.dictationOutcome = .sessionRequired", controller)
+        self.assertIn("DeepLink.dictateURL(token: token)", controller)
+        handler = function("Sayboard/SayboardApp.swift", "case DeepLink.dictateHost:", "case DeepLink.stopHost:")
+        self.assertIn("settings.consumeKeyboardRequestIfRecent()", handler)
+        self.assertIn("current: settings.dictationSessionToken", handler)
+        self.assertIn("TranscriptionBridge.cancellationToken() != token", handler)
 
     def test_outbox_limits_do_not_delete_unacknowledged_text(self):
         bridge = source("Shared/TranscriptionBridge.swift")
         self.assertIn("guard pending.count < 64", bridge)
         self.assertIn("data.count <= 128 * 1_024", bridge)
-        self.assertIn("self.postDarwinNotification(DarwinNotificationName.transcriptionReady)", bridge)
+        self.assertNotIn("DarwinNotificationName.transcriptionReady", bridge)
         self.assertNotIn("dropFirst(64)", bridge)
 
-    def test_final_delivery_uses_captured_identity_after_shared_token_clears(self):
-        final = function(
-            "SayboardKeyboard/KeyboardViewController+ExperimentalLive.swift",
-            "func completeExperimentalLiveText(", "func cancelExperimentalLiveText()"
-        )
-        self.assertIn("LiveFinalDeliveryPolicy.mayReconcile(", final)
-        self.assertNotIn("SharedSettings().dictationSessionToken", final)
-        self.assertIn("cancelled: cancellationRequested", final)
-        self.assertIn("LiveFinalReconciliation.plan(", final)
-        insertion = function("SayboardKeyboard/KeyboardViewController.swift",
-                             "func insertTranscribedText()", "func pingMainAppForSessionStatus")
-        self.assertIn("!settings.dictationCancellationRequested", insertion)
-        self.assertIn("delivery, cancellationRequested: settings.dictationCancellationRequested", insertion)
-        policy = source("Shared/OperationContracts.swift")
-        self.assertIn("delivery.canInsert(requestToken: requestToken", policy)
-        self.assertIn("requestDocument == ownedDocument", policy)
-        self.assertIn("blockedToken != delivery.sessionToken", policy)
+    def test_final_delivery_signals_after_host_releases_request(self):
+        service = function("Sayboard/Services/SpeechRecognitionService.swift",
+                           "private func finishRecording", "func cancelRecording()")
+        publish = service.index("TranscriptionBridge.writeTranscription(self.currentTranscription, token: finalizationToken)")
+        ready = service.index("DarwinNotificationName.transcriptionReady")
+        self.assertLess(service.rindex("self.isCurrentDictation(finalizationToken)", 0, publish), publish)
+        self.assertLess(publish, service.rindex("self.settings.dictationSessionToken = nil", 0, ready))
+        self.assertLess(service.rindex("self.settings.synchronize()", 0, ready), ready)
 
     def test_bounded_cross_process_lock_and_result_owner(self):
         bridge = source("Shared/LLMBridge.swift")

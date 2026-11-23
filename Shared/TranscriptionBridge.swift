@@ -3,9 +3,11 @@ import Foundation
 struct TranscriptionBridge: Sendable {
 
   @discardableResult
-  static func writeTranscription(_ text: String) -> Bool {
+  static func writeTranscription(_ text: String, token: String?) -> Bool {
     let settings = SharedSettings()
-    guard let folder = deliveryDirectory, let token = settings.dictationSessionToken else {
+    settings.synchronize()
+    guard let folder = deliveryDirectory, let token, token == settings.dictationSessionToken,
+          !settings.dictationCancellationRequested, self.cancellationToken() != token else {
       FeatureDiagnostics.record(.bridge, .unavailable)
       return false
     }
@@ -34,7 +36,6 @@ struct TranscriptionBridge: Sendable {
         to: url, options: [.atomic, .completeFileProtectionUnlessOpen]
       )
       FeatureDiagnostics.record(.bridge, .queued, operationID: token, phase: .completed)
-      self.postDarwinNotification(DarwinNotificationName.transcriptionReady)
       return true
     } catch {
       FeatureDiagnostics.record(.bridge, .failed, operationID: token, phase: .failed)
@@ -44,7 +45,8 @@ struct TranscriptionBridge: Sendable {
 
   static func readDelivery(
     matching token: String? = nil, destinationEpoch: UUID? = nil,
-    allowAnyDestination: Bool = false, maxAgeSeconds: TimeInterval? = nil
+    allowAnyDestination: Bool = false, maxAgeSeconds: TimeInterval? = nil,
+    includeUncommitted: Bool = false
   ) -> DictationDelivery? {
     guard let folder = deliveryDirectory else { return nil }
     let files = (try? FileManager.default.contentsOfDirectory(at: folder,
@@ -54,6 +56,10 @@ struct TranscriptionBridge: Sendable {
         > ((try? $1.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast)
     }
     var latest: DictationDelivery?
+    let settings = SharedSettings()
+    settings.synchronize()
+    let active = includeUncommitted ? nil : settings.dictationSessionToken
+    let cancelled = includeUncommitted ? nil : self.cancellationToken()
     for url in sorted.prefix(64) {
       if let maxAgeSeconds {
         guard let modified = try? url.resourceValues(
@@ -64,7 +70,8 @@ struct TranscriptionBridge: Sendable {
       }
       guard let bytes = try? Data(contentsOf: url),
             let result = try? JSONDecoder().decode(DictationDelivery.self, from: bytes),
-            result.schemaVersion == 1 else { continue }
+            result.schemaVersion == 1, result.sessionToken != cancelled,
+            result.sessionToken != active else { continue }
       if latest == nil { latest = result }
       if let token, result.sessionToken == token,
          (allowAnyDestination || result.destinationEpoch == destinationEpoch) { return result }
@@ -75,9 +82,17 @@ struct TranscriptionBridge: Sendable {
 
   static func readTranscription() -> String? { self.readDelivery()?.text }
 
-  static func acknowledgeDelivery(_ resultID: UUID) {
-    guard let url = deliveryDirectory?.appendingPathComponent(resultID.uuidString + ".json") else { return }
-    try? FileManager.default.removeItem(at: url)
+  @discardableResult
+  static func acknowledgeDelivery(_ resultID: UUID) -> Bool {
+    guard let url = deliveryDirectory?.appendingPathComponent(resultID.uuidString + ".json") else {
+      return false
+    }
+    do {
+      try FileManager.default.removeItem(at: url)
+      return true
+    } catch {
+      return false
+    }
   }
 
   static func requestCancellation(for token: String?) {
@@ -155,8 +170,10 @@ struct TranscriptionBridge: Sendable {
   }
 
   static func clearTranscription() {
-    if let delivery = self.readDelivery(),
-       delivery.sessionToken == SharedSettings().dictationSessionToken {
+    if let token = SharedSettings().dictationSessionToken,
+       let delivery = self.readDelivery(
+         matching: token, allowAnyDestination: true, includeUncommitted: true
+       ) {
       self.acknowledgeDelivery(delivery.resultID)
     }
     guard let url = transcriptionFileURL else { return }

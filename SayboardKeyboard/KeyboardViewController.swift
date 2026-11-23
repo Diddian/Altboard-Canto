@@ -26,6 +26,7 @@ final class KeyboardViewController: UIInputViewController {
   var dictationDocumentID: UUID?
   var llmRequestID: UUID?
   var llmSourceDeliveryID: UUID?
+  var llmDictationRequestToken: String?
   var llmDocumentIdentifier: UUID?
   var llmSelectionContextBefore: String?
   var llmSelectionContextAfter: String?
@@ -35,16 +36,9 @@ final class KeyboardViewController: UIInputViewController {
   var lastTouchDocumentID: UUID?
   var cursorPreferredColumn: Int?
   var cursorPreferredDocumentID: UUID?
-  var liveTranscriptionDocumentID: UUID?
-  var liveTranscriptionDocumentEpoch: UUID?
-  var liveTranscriptionOwnerToken: String?
-  var liveTranscriptionContextAfter: String?
-  var liveTranscriptionMarkedText = ""
-  var liveTranscriptionCommittedRaw = ""
-  var liveTranscriptionPrefix = ""
+  private var dictationFocus: DictationRequestPolicy.Focus?
+  private var recoverableDictationID: UUID?
   var liveTranscriptionRevision = 0
-  var liveTranscriptionBlockedToken: String?
-  static var blockedLiveSessionToken: String?
 
   let keyboardState = KeyboardState()
   private let keyboardTraceSession = String(UUID().uuidString.prefix(8))
@@ -203,11 +197,7 @@ final class KeyboardViewController: UIInputViewController {
     KeyboardHaptics.suspend(owner: self)
     self.renderProbeGeneration &+= 1
     KeyboardTouchLearning.shared.invalidate()
-    if self.liveTranscriptionDocumentID != nil {
-      let token = self.liveTranscriptionOwnerToken
-      self.liveTranscriptionBlockedToken = token
-      Self.blockedLiveSessionToken = token
-    }
+    self.dictationFocus = nil
     self.keyboardState.stopLevelPolling()
     self.recordKeyboardTrace(.willDisappear)
   }
@@ -486,6 +476,7 @@ final class KeyboardViewController: UIInputViewController {
     let pending = TranscriptionBridge.readDelivery(
       maxAgeSeconds: Self.manualRecoveryWindow
     )
+    self.recoverableDictationID = pending?.resultID
     let excerpt = pending?.text.trimmingCharacters(in: .whitespacesAndNewlines)
     self.keyboardState.recoverableDictationPreview = excerpt.flatMap {
       $0.isEmpty ? nil : String($0.prefix(64))
@@ -493,7 +484,7 @@ final class KeyboardViewController: UIInputViewController {
   }
 
   private func insertSavedDictationByUser() {
-    guard self.viewIfLoaded?.window != nil else { return }
+    guard self.dictationStartupVisible, self.viewIfLoaded?.window != nil else { return }
     let settings = SharedSettings()
     settings.synchronize()
     guard !settings.isRecording, !self.keyboardState.isRecording,
@@ -503,6 +494,8 @@ final class KeyboardViewController: UIInputViewController {
           let delivery = TranscriptionBridge.readDelivery(
             maxAgeSeconds: Self.manualRecoveryWindow
           ),
+          self.recoverableDictationID == delivery.resultID,
+          !LLMBridge.ownsDelivery(delivery.resultID),
           TranscriptionBridge.cancellationToken() != delivery.sessionToken,
           !delivery.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     else {
@@ -513,55 +506,41 @@ final class KeyboardViewController: UIInputViewController {
     }
     // The user can inspect the current field and choose this specific text.
     // Never reuse this explicit action to weaken automatic field validation.
+    guard TranscriptionBridge.acknowledgeDelivery(delivery.resultID) else { return }
     self.insertSpacedText(delivery.text)
-    TranscriptionBridge.acknowledgeDelivery(delivery.resultID)
-    FeatureDiagnostics.record(.bridge, .completed,
+    FeatureDiagnostics.record(.bridge, .resumed,
       operationID: delivery.sessionToken, phase: .completed)
     self.keyboardState.showFinalOutputPreview(delivery.text)
     self.refreshRecoverableDictation()
   }
 
-  private static let automaticRecoveryWindow: TimeInterval = 90
-
-  /// A completed dictation may outlive the keyboard process and the main
-  /// app's mutable session token. Only the original UIKit field can regain
-  /// automatic insertion; no host text or document identifier is persisted.
-  private func recoverCompletedDictationDestination() {
-    guard self.dictationRequestToken == nil else { return }
-    let settings = SharedSettings()
-    settings.synchronize()
-    guard let delivery = TranscriptionBridge.readDelivery(
-            maxAgeSeconds: Self.automaticRecoveryWindow
-          ),
-          TranscriptionBridge.cancellationToken() != delivery.sessionToken
-    else { return }
-    let document = self.availableDocumentIdentifier()
-    let selected = !(self.textDocumentProxy.selectedText?.isEmpty ?? true)
-    let sameDocument = DictationRequestPolicy.mayRecoverCompleted(
-      requestedToken: self.dictationRequestToken,
-      activeToken: settings.dictationSessionToken,
-      deliveryToken: delivery.sessionToken,
-      deliveryEpoch: delivery.destinationEpoch, currentDocument: document,
-      fingerprint: settings.dictationDestinationFingerprint,
-      recording: settings.isRecording,
-      cancelled: settings.dictationCancellationRequested,
-      hasSelection: selected
+  private func currentDictationFocus() -> DictationRequestPolicy.Focus? {
+    let proxy = self.textDocumentProxy
+    guard self.dictationStartupVisible, self.viewIfLoaded?.window != nil,
+          proxy.isSecureTextEntry != true, proxy.selectedText?.isEmpty != false,
+          let document = self.availableDocumentIdentifier() else { return nil }
+    return DictationRequestPolicy.Focus(
+      document: document, epoch: self.keyboardState.documentEpoch,
+      before: proxy.documentContextBeforeInput, after: proxy.documentContextAfterInput
     )
-    guard sameDocument else { return }
-    self.dictationRequestToken = delivery.sessionToken
-    self.dictationDocumentID = document
-    if let epoch = delivery.destinationEpoch {
-      self.keyboardState.documentEpoch = epoch
+  }
+
+  private func invalidateChangedDictationFocus() {
+    if let focus = self.dictationFocus, focus != self.currentDictationFocus() {
+      self.dictationFocus = nil
     }
-    FeatureDiagnostics.record(.bridge, .fallback,
-      operationID: delivery.sessionToken, phase: .accepted)
+  }
+
+  func dictationAutoActionStillFocused(token: String?) -> Bool {
+    guard let token, token == self.dictationRequestToken,
+          token != TranscriptionBridge.cancellationToken() else { return false }
+    return self.dictationFocus?.matches(self.currentDictationFocus()) == true
   }
 
   @discardableResult
   func insertTranscribedText() -> Bool {
-    guard self.viewIfLoaded?.window != nil else { return false }
+    guard self.dictationStartupVisible, self.viewIfLoaded?.window != nil else { return false }
     defer { self.refreshRecoverableDictation() }
-    self.recoverCompletedDictationDestination()
     // Never use an unscoped latest result for automatic insertion or
     // display. A fresh keyboard must first recover its scoped request;
     // never select the newest unrelated transcript.
@@ -589,11 +568,13 @@ final class KeyboardViewController: UIInputViewController {
       currentEpoch: self.keyboardState.documentEpoch
     ) && self.dictationDocumentID != nil
       && currentDocument == self.dictationDocumentID
+      && self.dictationFocus?.matches(self.currentDictationFocus()) == true
       && DictationRequestPolicy.isSameDestination(
         sessionToken: self.dictationRequestToken, document: currentDocument,
         fingerprint: settings.dictationDestinationFingerprint
       )
     guard !settings.dictationCancellationRequested,
+          TranscriptionBridge.cancellationToken() != delivery.sessionToken,
           matchesDocument else {
       // Keep the pending delivery in the outbox and in History. A new keyboard
       // can stop capture, but may not write into an unverified host field.
@@ -608,8 +589,7 @@ final class KeyboardViewController: UIInputViewController {
     // A new controller has no proof whether an earlier live partial reached
     // UIKit. A durable receipt blocks both partial replay and duplicate final
     // insertion; keep the original outbox result for manual recovery.
-    if ExperimentalLiveTranscription.hasHostInsertionStarted(for: delivery.sessionToken)
-        && self.liveTranscriptionOwnerToken != delivery.sessionToken {
+    if ExperimentalLiveTranscription.hasHostInsertionStarted(for: delivery.sessionToken) {
       FeatureDiagnostics.record(.bridge, .fallback,
         failureReason: .awaitingUserInsertion, operationID: delivery.sessionToken)
       return true
@@ -620,29 +600,6 @@ final class KeyboardViewController: UIInputViewController {
       self.keyboardState.clearLLMHistory()
     }
 
-    let blockedLiveEdit = self.liveTranscriptionBlockedToken == delivery.sessionToken
-      || Self.blockedLiveSessionToken == delivery.sessionToken
-    if blockedLiveEdit {
-      self.abandonExperimentalLiveOwnership()
-      Self.blockedLiveSessionToken = nil
-      self.liveTranscriptionBlockedToken = nil
-      FeatureDiagnostics.record(.bridge, .fallback)
-      return true
-    }
-    switch self.completeExperimentalLiveText(
-      delivery, cancellationRequested: settings.dictationCancellationRequested
-    ) {
-    case .inserted:
-      TranscriptionBridge.acknowledgeDelivery(delivery.resultID)
-      self.keyboardState.showFinalOutputPreview(text)
-      FeatureDiagnostics.record(.bridge, .completed)
-      return true
-    case .review:
-      FeatureDiagnostics.record(.bridge, .fallback)
-      return true
-    case .notApplicable:
-      break
-    }
     if LLMBridge.ownsDelivery(delivery.resultID) {
       // The original ASR outbox remains owned until the AI output or fallback
       // is committed. A recreated keyboard must not re-run the same request.
@@ -655,9 +612,12 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     DiagnosticLog.write("keyboard: inserting \(text.count) chars into textDocumentProxy")
+    guard TranscriptionBridge.acknowledgeDelivery(delivery.resultID) else { return true }
+    self.dictationFocus = nil
     self.insertSpacedText(text)
-    TranscriptionBridge.acknowledgeDelivery(delivery.resultID)
-    FeatureDiagnostics.record(.bridge, .completed)
+    LiveDictationLatency.mark(.firstHostInsert, token: delivery.sessionToken)
+    FeatureDiagnostics.record(.bridge, .completed,
+      operationID: delivery.sessionToken, phase: .completed)
     self.keyboardState.showFinalOutputPreview(text)
     return true
   }
@@ -775,6 +735,7 @@ final class KeyboardViewController: UIInputViewController {
   @objc
   private func hostDidEnterBackground() {
     self.dictationStartupVisible = false
+    self.dictationFocus = nil
     self.pauseDictationStartup()
     self.stopVoiceSessionActivity()
     self.staleFallbackTimer?.invalidate()
@@ -847,13 +808,6 @@ final class KeyboardViewController: UIInputViewController {
         vc.keyboardState.isRecording = true
         // A capture acknowledgment is stronger than an idle session ping.
         vc.warmStartSessionAcknowledged = true
-        // A delayed start callback cannot restore this same blocked session.
-        if vc.liveTranscriptionBlockedToken != settings.dictationSessionToken {
-          vc.liveTranscriptionBlockedToken = nil
-        }
-        if Self.blockedLiveSessionToken != settings.dictationSessionToken {
-          Self.blockedLiveSessionToken = nil
-        }
         vc.keyboardState.recordingStartedAt = SharedSettings().recordingStartedAt
         vc.keyboardState.isStartingRecording = false
         if !vc.isPerformingHistoryNavigation {
@@ -891,12 +845,6 @@ final class KeyboardViewController: UIInputViewController {
         vc.keyboardState.syncModelLoading()
         vc.keyboardState.syncDictationLock()
         vc.insertTranscribedText()
-        if vc.liveTranscriptionDocumentID != nil,
-           (SharedSettings().dictationCancellationRequested
-             || (TranscriptionBridge.readDelivery(matching: vc.dictationRequestToken,
-                 destinationEpoch: vc.keyboardState.documentEpoch)?.text ?? "").isEmpty) {
-          vc.cancelExperimentalLiveText()
-        }
         vc.finalizeProcessingPipeline()
       }
     }
@@ -961,7 +909,8 @@ final class KeyboardViewController: UIInputViewController {
   func prepareDictationDestination() {
     let settings = SharedSettings()
     self.dictationRequestToken = settings.dictationSessionToken
-    self.dictationDocumentID = self.availableDocumentIdentifier()
+    self.dictationFocus = self.currentDictationFocus()
+    self.dictationDocumentID = self.dictationFocus?.document
     settings.dictationDestinationEpoch = self.dictationDocumentID == nil
       ? nil : self.keyboardState.documentEpoch
     settings.dictationDestinationFingerprint = DictationRequestPolicy.destinationFingerprint(
@@ -1014,26 +963,9 @@ final class KeyboardViewController: UIInputViewController {
     if sameField, let epoch = settings.dictationDestinationEpoch {
       self.dictationDocumentID = document
       self.keyboardState.documentEpoch = epoch
-      // A matching field does not prove whether a previous keyboard process
-      // already inserted live text. Only the controller that owns the live
-      // insertion may resume it; another controller stays preview-only.
-      if self.liveTranscriptionOwnerToken != token,
-         ExperimentalLiveTranscription.hasHostInsertionStarted(for: token) {
-        self.liveTranscriptionBlockedToken = token
-        Self.blockedLiveSessionToken = token
-        FeatureDiagnostics.record(.liveDictation, .fallback, operationID: token)
-      } else if self.liveTranscriptionOwnerToken == token {
-        if self.liveTranscriptionBlockedToken == token {
-          self.liveTranscriptionBlockedToken = nil
-        }
-        if Self.blockedLiveSessionToken == token {
-          Self.blockedLiveSessionToken = nil
-        }
-      }
     } else {
       self.dictationDocumentID = nil
-      self.liveTranscriptionBlockedToken = token
-      Self.blockedLiveSessionToken = token
+      self.dictationFocus = nil
       FeatureDiagnostics.record(.bridge, .fallback, operationID: token)
     }
     self.keyboardState.syncVoiceSessionReadiness()
@@ -1049,7 +981,7 @@ final class KeyboardViewController: UIInputViewController {
     let settings = SharedSettings()
     settings.synchronize()
     self.keyboardState.syncVoiceProcessingProgress()
-    guard !self.keyboardState.isProcessing else { return }
+    guard self.hasFullAccess, !self.keyboardState.isProcessing else { return }
     // A persisted recording flag is not proof of a live capture. Probe the
     // host before reusing its token or changing the destination field.
     if settings.isRecording && settings.isSessionActive
@@ -1079,10 +1011,8 @@ final class KeyboardViewController: UIInputViewController {
     self.saveHostBundleId()
     self.keyboardState.isStartingRecording = true
     let token = UUID().uuidString
-    // A blocked previous session must not suppress a fresh request.
-    self.liveTranscriptionBlockedToken = nil
-    Self.blockedLiveSessionToken = nil
-    self.abandonExperimentalLiveOwnership()
+    self.liveTranscriptionRevision = 0
+    self.keyboardState.liveSourcePreview = nil
     settings.dictationSessionToken = token
     LiveDictationLatency.begin(token: token)
     self.prepareDictationDestination()
@@ -1218,21 +1148,24 @@ final class KeyboardViewController: UIInputViewController {
 
   private func openDictateDeepLinkFallback(reason _: String) {
     let settings = SharedSettings()
-    // The keyboard does not own the app's audio-session state.
+    #if APPSTORE
+    self.cancelDictationViaDarwin()
+    self.keyboardState.dictationOutcome = .sessionRequired
+    #else
+    guard let token = self.dictationRequestToken,
+          token == settings.dictationSessionToken else { return }
+    self.dictationFocus = nil
     settings.keyboardRequestedDictationAt = CFAbsoluteTimeGetCurrent()
     settings.keyboardRequestedDictation = true
-    if settings.dictationSessionToken == nil {
-      settings.dictationSessionToken = UUID().uuidString
-    }
     settings.synchronize()
-    // Only the containing app may set the actual session state.
     self.keyboardState.isStartingRecording = true
-    guard let url = DeepLink.dictateURL else { return }
+    guard let url = DeepLink.dictateURL(token: token) else { return }
     if let openAction = self.keyboardState.openURLAction {
       openAction(url)
     } else {
       self.openURL(url)
     }
+    #endif
   }
 
 }
@@ -1242,8 +1175,9 @@ extension KeyboardViewController {
   func cancelDictationViaDarwin() {
     if self.dictationRequestToken == nil { self.recoverActiveDictationAfterReentry() }
     self.finishDictationStartup(for: self.dictationRequestToken)
-    self.cancelExperimentalLiveText()
+    self.dictationFocus = nil
     self.keyboardState.liveSourcePreview = nil
+    self.keyboardState.voiceProcessingProgress = nil
     self.staleFallbackTimer?.invalidate()
     self.staleFallbackTimer = nil
     self.warmStartSessionAcknowledged = false
@@ -1255,7 +1189,11 @@ extension KeyboardViewController {
     self.keyboardState.stopLevelPolling()
     let settings = SharedSettings()
     let cancelled = self.dictationRequestToken
+    settings.synchronize()
     TranscriptionBridge.requestCancellation(for: cancelled)
+    if let cancelled {
+      FeatureDiagnostics.record(.speech, .cancelled, operationID: cancelled, phase: .cancelled)
+    }
     if OperationPolicy.ownsCancellation(requested: cancelled, active: settings.dictationSessionToken) {
       settings.keyboardRequestedDictation = false
       settings.dictationCancellationRequested = true
@@ -1453,7 +1391,6 @@ extension KeyboardViewController {
         self?.advanceToNextInputMode()
       },
       openURL: { [weak self] url in
-        if url.host == DeepLink.dictateHost { self?.prepareDictationDestination() }
         self?.openURL(url)
       },
       startDictation: { [weak self] in
@@ -1545,6 +1482,11 @@ extension KeyboardViewController {
 
 extension KeyboardViewController {
 
+  override func selectionDidChange(_ textInput: (any UITextInput)?) {
+    super.selectionDidChange(textInput)
+    self.invalidateChangedDictationFocus()
+  }
+
   override func textWillChange(_ textInput: (any UITextInput)?) {
     super.textWillChange(textInput)
     self.refreshHostInputTraits()
@@ -1552,6 +1494,7 @@ extension KeyboardViewController {
 
   override func textDidChange(_ textInput: (any UITextInput)?) {
     super.textDidChange(textInput)
+    self.invalidateChangedDictationFocus()
     #if !APPSTORE
     let modeLanguage = self.textDocumentProxy.documentInputMode?.primaryLanguage
     if modeLanguage != self.lastObservedDocumentInputModeLanguage {
@@ -1681,7 +1624,8 @@ extension KeyboardViewController {
   }
 
   private func insertDeferredAppearanceText() {
-    guard self.hasDeferredAppearanceInsert, self.viewIfLoaded?.window != nil else { return }
+    guard self.hasDeferredAppearanceInsert, self.dictationStartupVisible,
+          self.viewIfLoaded?.window != nil else { return }
     self.hasDeferredAppearanceInsert = false
     if self.insertTranscribedText() { self.finalizeProcessingPipeline() }
     self.checkForPendingLLMResult()

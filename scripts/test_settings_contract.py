@@ -188,7 +188,7 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("Date(timeIntervalSinceReferenceDate: progress.startedAt)", timeout)
         self.assertGreaterEqual(host.count("self.resumeProcessingTimeoutIfNeeded()"), 2)
         self.assertIn("self.cancelDictationViaDarwin()", timeout)
-        self.assertIn('Cancel dictation processing', mic)
+        self.assertIn('Text("Cancel dictation", tableName: "VoiceSession")', mic)
         self.assertIn("if self.keyboardState.isProcessing {", mic)
         self.assertIn("self.proxy.cancelDictation()", mic)
         self.assertNotIn(".allowsHitTesting(!self.keyboardState.isProcessing)", mic)
@@ -210,7 +210,7 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("if firstChunk && !published", speech)
         self.assertIn("firstWindow = next", speech)
         self.assertIn("readOffset += samples.count", speech)
-        self.assertIn("LiveDictationLatency.mark(.firstHostInsert", keyboard)
+        self.assertIn("LiveDictationLatency.mark(.firstHostInsert", host)
         self.assertIn("LiveDictationLatency.begin(token: token)", host)
         self.assertIn("enum LiveDictationLatency", shared)
         self.assertIn("Never persist recognized or host text", shared)
@@ -252,10 +252,8 @@ class SettingsContractTests(unittest.TestCase):
         speech = read("Sayboard/Services/SpeechRecognitionService+ExperimentalLive.swift")
         self.assertNotIn("guard settings.voiceOutputTarget == .original else { return }", extension)
         self.assertIn("liveSourcePreview = String(update.text.suffix(240))", extension)
-        self.assertIn("func completeExperimentalLiveText(", extension)
-        self.assertIn("_ delivery: DictationDelivery, cancellationRequested: Bool", extension)
-        self.assertIn("LiveFinalDeliveryPolicy.mayReconcile(", extension)
-        self.assertIn("LiveDeliveryPolicy.matchesField(", extension)
+        self.assertNotIn("insertText(", extension)
+        self.assertNotIn("deleteBackward(", extension)
         self.assertIn('Text("Live Transcription")', chrome)
         self.assertIn("self.keyboardState.liveSourcePreview", chrome)
         self.assertIn("self.liveSourcePreview = nil", keyboard)
@@ -765,8 +763,8 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn("CantoneseOutput.normalizeDictation(", final)
         self.assertIn('preferredLanguages.first == "yue"', converter)
         self.assertNotIn("guard settings.voiceOutputTarget == .original else { return }", bridge)
-        self.assertIn("proxy.insertText(prefix + update.text)", bridge)
-        self.assertIn("LiveDeliveryPolicy.matchesField(", bridge)
+        self.assertIn("self.keyboardState.liveSourcePreview", bridge)
+        self.assertNotIn("insertText(", bridge)
         self.assertIn("FeatureDiagnostics.record(.liveDictation, .firstUpdate,", live)
 
     def test_listening_animation_respects_accessibility(self):
@@ -799,7 +797,13 @@ class SettingsContractTests(unittest.TestCase):
         self.assertIn('Label("History & Storage", systemImage: "externaldrive")', home)
         self.assertNotIn('VoiceOutputSettingsView()', home)
         self.assertEqual(home.count("ActiveSessionToggle()"), 1)
-        self.assertNotIn("ActiveSessionToggle()", read("Sayboard/Views/SettingsNavigationViews.swift"))
+        navigation = read("Sayboard/Views/SettingsNavigationViews.swift")
+        self.assertNotIn("ActiveSessionToggle()", navigation)
+        toggle = navigation.split("struct ActiveSessionToggle", 1)[1].split("private var sessionBinding", 1)[0]
+        self.assertIn('Toggle(isOn: self.sessionBinding)', toggle)
+        self.assertIn('Label("Active Session", systemImage: "mic")', toggle)
+        self.assertNotIn("VStack", toggle)
+        self.assertIn(".accessibilityHint", toggle)
         self.assertIn('selectedKind: self.keyboardKindBinding, inline: true', home)
 
     def test_corrupt_voice_notes_can_export_original_audio_and_index(self):
@@ -851,7 +855,7 @@ class SettingsContractTests(unittest.TestCase):
             "private func handleRecordingChanged", 1
         )[0]
         self.assertIn(
-            "if self.keyboardState.isRecording || self.keyboardState.isStartingRecording", tap
+            "if self.keyboardState.isRecording {", tap
         )
         self.assertIn("self.requestHeldStop()", tap)
         self.assertEqual(tap.count("self.proxy.cancelDictation()"), 1)

@@ -128,13 +128,22 @@ struct MicAnimatedButton: View {
     }
     // A stuck inference must never disable the only microphone control.
     // During processing it becomes an explicit, token-scoped Cancel action.
-    .accessibilityLabel(self.keyboardState.isProcessing
-      ? "Cancel dictation processing" : "Dictation microphone")
-    .accessibilityHint(self.keyboardState.isProcessing
-      ? "Stop pending recognition so the microphone can be used again." : "")
+    .accessibilityLabel(self.cancelsDictation
+      ? Text("Cancel dictation", tableName: "VoiceSession") : Text("Dictation microphone"))
+    .accessibilityActions {
+      if self.keyboardState.isRecording {
+        Button(action: self.cancelDictation) {
+          Text("Cancel dictation", tableName: "VoiceSession")
+        }
+      }
+    }
     .accessibilityValue(self.voiceStateDescription)
     .onChange(of: self.keyboardState.isRecording, self.handleRecordingChanged)
     .task(id: self.keyboardState.isProcessing, self.observeProcessing)
+  }
+
+  private var cancelsDictation: Bool {
+    self.keyboardState.isStartingRecording || self.keyboardState.isProcessing
   }
 
   private static let spinnerDelay = Duration.milliseconds(600)
@@ -167,8 +176,7 @@ struct MicAnimatedButton: View {
   @ViewBuilder
   private var micButtonLabel: some View {
     let shouldShowWave = self.keyboardState.isRecording
-    let isLoading = self.keyboardState.isModelLoading && !self.keyboardState.isRecording
-    let isSpin = self.showSpinner || self.keyboardState.isStartingRecording || isLoading
+    let isSpin = self.showSpinner || self.keyboardState.isStartingRecording
     let compactStatus = self.keyboardState.keyboardKind == .standard
       && KeyboardMetrics.isCompactStandard
       && !self.keyboardState.isRecording
@@ -224,6 +232,10 @@ struct MicAnimatedButton: View {
   }
 
   private func handleButtonAction() {
+    if self.cancelsDictation {
+      self.cancelDictation()
+      return
+    }
     // A Button action fires only for an accepted tap, not a cancelled touch.
     // It can run before or after SwiftUI reports the finger-up transition.
     if self.pressPolicy.isActive {
@@ -241,7 +253,7 @@ struct MicAnimatedButton: View {
   }
 
   private func handleMicPressChange(isDown: Bool) {
-    if self.keyboardState.isProcessing { return }
+    if self.cancelsDictation { return }
     if isDown {
       KeyboardHaptics.key()
       // Keep native Button semantics for accepted taps and VoiceOver.
@@ -325,17 +337,14 @@ struct MicAnimatedButton: View {
   }
 
   private func handleTap() {
-    if self.keyboardState.isProcessing {
-      self.showSpinner = false
-      self.proxy.cancelDictation()
+    if self.cancelsDictation {
+      self.cancelDictation()
       return
     }
     self.keyboardState.clearFinalOutputPreview()
     self.keyboardState.dismissMicHint()
-    if self.keyboardState.isRecording || self.keyboardState.isStartingRecording {
-      // A second tap always requests Stop & Transcribe. A quick tap must
-      // never silently cancel captured speech or discard test output.
-      // The token-scoped intent also handles a stop before start acknowledgment.
+    if self.keyboardState.isRecording {
+      // The waveform finishes recording. The loading indicator cancels.
       self.requestHeldStop()
     } else if self.keyboardState.isDictationLocked {
       if let url = DeepLink.unlockURL { self.proxy.openURL(url) }
@@ -343,6 +352,19 @@ struct MicAnimatedButton: View {
       // The controller owns both cold and warm requests, token and destination.
       self.proxy.startDictation()
     }
+  }
+
+  private func cancelDictation() {
+    self.holdActivationTask?.cancel()
+    self.holdActivationTask = nil
+    self.pressPolicy.cancel()
+    self.holdStartedRecording = false
+    self.suppressButtonAction = false
+    self.showSpinner = false
+    self.resetMicTransitions()
+    var transaction = Transaction(animation: nil)
+    transaction.disablesAnimations = true
+    withTransaction(transaction) { self.proxy.cancelDictation() }
   }
 
   private func handleRecordingChanged(oldValue: Bool, isRecording: Bool) {
@@ -398,6 +420,7 @@ struct MicAnimatedButton: View {
       }
       .accessibilityHidden(true)
       .transaction(value: isSpin) { transaction in
+        guard !transaction.disablesAnimations else { return }
         transaction.animation = self.reduceMotion ? nil : .easeOut(duration: 0.2)
         if !isSpin, !self.reduceMotion {
           transaction.addAnimationCompletion {

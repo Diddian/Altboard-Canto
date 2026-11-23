@@ -74,6 +74,11 @@ struct DictationSettingsView: View {
     } label: {
       Label("Auto-Stop", systemImage: "timer")
     }
+    Text("Enable once, then dictate from the keyboard. The orange system indicator stays on while voice is ready.",
+         tableName: "VoiceSession")
+      .font(.footnote)
+      .foregroundStyle(.secondary)
+      .fixedSize(horizontal: false, vertical: true)
     Text("The countdown starts when you leave Altboard and its keyboard. Typing or dictating keeps an enabled session ready.",
          tableName: "VoiceSession")
       .font(.footnote)
@@ -84,7 +89,11 @@ struct DictationSettingsView: View {
   @ViewBuilder
   private var liveRows: some View {
     Toggle(isOn: self.liveBinding) {
-      Label("Live Dictation", systemImage: "waveform")
+      Label {
+        Text("Live Dictation Preview", tableName: "VoiceSession")
+      } icon: {
+        Image(systemName: "waveform")
+      }
     }
   }
 
@@ -117,16 +126,10 @@ struct ActiveSessionToggle: View {
 
   var body: some View {
     Toggle(isOn: self.sessionBinding) {
-      VStack(alignment: .leading, spacing: 4) {
-        Label("Active Session", systemImage: "mic")
-        Text("Enable once, then dictate from the keyboard. The orange system indicator stays on while voice is ready.",
-             tableName: "VoiceSession")
-          .font(.footnote)
-          .foregroundStyle(.secondary)
-          .fixedSize(horizontal: false, vertical: true)
-      }
+      Label("Active Session", systemImage: "mic")
     }
-    .tint(.orange)
+    .accessibilityHint(Text("Enable once, then dictate from the keyboard. The orange system indicator stays on while voice is ready.",
+                            tableName: "VoiceSession"))
     .alert("Active Session Unavailable", isPresented: Binding(
       get: { self.activationError != nil },
       set: { if !$0 { self.activationError = nil } }

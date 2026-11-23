@@ -20,7 +20,7 @@ class KeyboardSafetyContracts(unittest.TestCase):
         self.assertLess(check, pipeline.index("self.currentRawTranscription = rawText"))
         llm = pipeline.index("await self.llmCoordinator?.processVoiceDictation")
         check = pipeline.index("guard self.isCurrentDictation(requestToken)", llm)
-        self.assertLess(check, pipeline.index("TranscriptionBridge.writeTranscription(finalOutput)"))
+        self.assertLess(check, pipeline.index("self.currentTranscription = finalOutput"))
 
     def test_meeting_and_dictation_finalization_are_mutually_exclusive(self):
         meeting = source("Sayboard/Services/MeetingRecordingCoordinator.swift")
@@ -184,7 +184,7 @@ class KeyboardSafetyContracts(unittest.TestCase):
         self.assertIn("self.settings.synchronize()", pipeline)
         last_selection = pipeline.rindex("VoiceOutputSelectionPolicy.decide(")
         punctuation = pipeline.index("VoicePunctuationPolicy.render(")
-        delivery = pipeline.index("TranscriptionBridge.writeTranscription(finalOutput)")
+        delivery = pipeline.index("self.currentTranscription = finalOutput")
         self.assertLess(last_selection, punctuation)
         self.assertLess(punctuation, delivery)
         self.assertIn("enabled: options.punctuationEnabled", pipeline)

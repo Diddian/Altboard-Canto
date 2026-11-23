@@ -50,8 +50,9 @@ enum DeepLink {
   static let setupMicHost = "setup-mic"
   static let unlockHost = "unlock"
 
-  static var dictateURL: URL? {
-    URL(string: "\(scheme)://\(dictateHost)")
+  static func dictateURL(token: String) -> URL? {
+    guard UUID(uuidString: token) != nil else { return nil }
+    return URL(string: "\(scheme)://\(dictateHost)?request=\(token)")
   }
 
   static var settingsURL: URL? {

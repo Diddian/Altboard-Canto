@@ -112,12 +112,6 @@ struct RecordingPolicyChecks {
       document: nil, fingerprint: proof))
     precondition(!p.isSameDestination(sessionToken: deliveryToken,
       document: UUID(), fingerprint: proof))
-    precondition(!p.mayRecoverCompleted(
-      requestedToken: nil, activeToken: nil, deliveryToken: deliveryToken,
-      deliveryEpoch: UUID(), currentDocument: nil, fingerprint: proof,
-      recording: false, cancelled: false, hasSelection: false
-    ))
-
     var envelope = AudioWaveformPeaks()
     precondition(envelope.waveform(count: 3) == [1, 1, 1])
     precondition(envelope.waveform(count: 0).isEmpty)

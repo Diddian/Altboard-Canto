@@ -6,17 +6,13 @@ extension SpeechRecognitionService {
 
   func isCurrentDictation(_ token: String?) -> Bool {
     self.settings.synchronize()
-    let current = DictationRequestPolicy.isCurrent(
+    guard let token, self.activeDictationToken == token else { return false }
+    let current = !Task.isCancelled && DictationRequestPolicy.isCurrent(
       started: token, current: self.settings.dictationSessionToken,
       cancelled: self.settings.dictationCancellationRequested
+        || TranscriptionBridge.cancellationToken() == token
     )
-    if !current {
-      if token != nil && token == self.settings.dictationSessionToken {
-        self.cancelRecording()
-      } else {
-        FeatureDiagnostics.record(.speech, .cancelled)
-      }
-    }
+    if !current { self.cancelRecording() }
     return current
   }
 
@@ -223,17 +219,13 @@ extension SpeechRecognitionService {
           break
         }
 
+        guard self.isCurrentDictation(requestToken) else { return }
         self.settings.lastVoiceOutputProcessed = options.needsLLM && !modelOutputMissing
         TranscriptionBridge.writeVoiceProgress(.finalizing)
         let finalOutput = VoicePunctuationPolicy.render(
           bridgeText, enabled: options.punctuationEnabled
         )
         self.currentTranscription = finalOutput
-        self.settings.chargeFreeWords(WordCounter.count(finalOutput))
-        guard TranscriptionBridge.writeTranscription(finalOutput) else {
-          self.settings.lastDictationOutcome = .processingFailed
-          return
-        }
         deliveredText = finalOutput
         break
       }
@@ -251,11 +243,10 @@ extension SpeechRecognitionService {
 
       FeatureDiagnostics.record(.speech, .completed,
         durationMs: Int((CFAbsoluteTimeGetCurrent() - recognitionStarted) * 1_000))
-      DiagnosticLog.write("transcribe: SUCCESS \(bridgeText.count) chars -> bridge")
+      DiagnosticLog.write("transcribe: SUCCESS \(bridgeText.count) chars recognized")
     } else {
       self.currentWordBoundaries = nil
-      let reason = if case .failed(let message) = result { message } else { "no speech detected" }
-      DiagnosticLog.write("transcribe: NO TEXT — \(reason)")
+      DiagnosticLog.write("transcribe: no deliverable text")
     }
   }
 
